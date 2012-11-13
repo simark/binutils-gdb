@@ -365,6 +365,16 @@ struct target_ops
 
   /* Return true if target supports range stepping.  */
   int (*supports_range_stepping) (void);
+
+  /* Define and manipulate global breakpoints, which can trigger
+     on processes not already attached.  */
+  char * (*define_global_breakpoint) (char *, CORE_ADDR, char *, int);
+  char * (*insert_global_breakpoint) (int, int);
+  char * (*delete_global_breakpoint) (int);
+
+  /* Called when the host GDB has disconnected, in case a target wants
+     to do cleanup before another GDB connection comes in.  */
+  void (*host_disconnected) (void);
 };
 
 extern struct target_ops *the_target;

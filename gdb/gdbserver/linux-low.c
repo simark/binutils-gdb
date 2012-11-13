@@ -5747,6 +5747,323 @@ linux_low_read_btrace (struct btrace_target_info *tinfo, struct buffer *buffer,
 }
 #endif /* HAVE_LINUX_BTRACE */
 
+/* Global breakpoint bits.  */
+
+#define BREAKPOINT_DEVICE "/dev/breakpoint"
+
+#define MAX_GB_PACKET 200
+
+int gbfd = -1;
+
+int gbcount = 0;
+
+static int gb_event_handler (int error, void *context);
+
+/* Open the breakpoint device, and add a handler to monitor it for
+   events.  */
+
+static void
+open_gb_device (void)
+{
+  /* Be idempotent.  */
+  if (gbfd >= 0)
+    return;
+
+  gbfd = open (BREAKPOINT_DEVICE, O_RDWR);
+  /* (should check for error?) */
+
+  add_file_handler (gbfd, gb_event_handler, NULL);
+}
+
+void
+close_gb_device (void)
+{
+  /* Be idempotent.  */
+  if (gbfd < 0)
+    return;
+
+  delete_file_handler (gbfd);
+
+  close (gbfd);
+  gbfd = -1;
+}
+
+/* Given a reply that is telling us about a breakpoint that has been
+   hit, pass it up to GDB so the user can decide whether to attach to
+   the process.  */
+
+/* Convert number NIB to a hex digit.  */
+
+static int
+tohex (int nib)
+{
+  if (nib < 10)
+    return '0' + nib;
+  else
+    return 'a' + nib - 10;
+}
+
+static void
+linux_handle_breakpoint_hit (char *reply)
+{
+  int pid, gbnum, i;
+  CORE_ADDR addr;
+  char packet[MAX_GB_PACKET], *buf;
+
+  /* Parse the breakpoint device's result.  */
+
+  pid = strtol (reply + 1, &reply, 16);
+  gbnum = strtol (reply + 1, &reply, 16);
+  addr = (CORE_ADDR) strtol (reply + 1, NULL, 16);
+
+  /* Now compose a protocol packet.  */
+
+  sprintf (packet, "Hit:%x:%x:", pid, gbnum);
+
+  buf = packet + strlen (packet);
+  for (i = sizeof (void *) * 2; i > 0; i--)
+    *buf++ = tohex ((addr >> (i - 1) * 4) & 0xf);
+  *buf = '\0';
+
+  putpkt_notif (packet);
+}
+
+/* Given a reply that is telling us about a breakpoint that the device
+   installed, pass it up to GDB to be recorded.  */
+
+static void
+linux_record_breakpoint (char *reply)
+{
+  int pid, gbnum;
+  char packet[MAX_GB_PACKET];
+
+  pid = strtol (reply + 1, &reply, 16);
+  gbnum = strtol (reply + 1, &reply, 16);
+
+  sprintf (packet, "BP:%x:%x", pid, gbnum);
+  putpkt_notif (packet);
+}
+
+/* Read from the breakpoint device until we get a reply instead of a
+   notification.  */
+
+static void
+get_gb_reply (char *reply, int reply_max)
+{
+  int gotten;
+
+  while (1)
+    {
+      gotten = read (gbfd, reply, reply_max);
+      reply[gotten] = '\0';
+      if (gotten > 0)
+	{
+	  if (reply[0] == '%')
+	    linux_handle_breakpoint_hit (reply);
+	  else if (reply[0] == '#')
+	    linux_record_breakpoint (reply);
+	  else
+	    /* The expected form of reply, return it.  */
+	    break;
+	}
+    }
+}
+
+char *
+linux_define_global_breakpoint (char *filename, CORE_ADDR addr,
+				char *uname, int flags)
+{
+  char cmd[MAX_GB_PACKET], reply[MAX_GB_PACKET];
+  int written, gbnum = 0;
+  int uid;
+  struct stat st;
+  __dev_t dev = 0;
+  __ino_t inode = 0;
+  char *rslt = (char *) xmalloc (400);
+
+  if (debug_threads)
+    fprintf (stderr, "Defining global breakpoint "
+	     "at 0x%lx of %s, user %s, flags 0x%x\n",
+	     (long) addr, filename, (uname ? uname : ""), flags);
+
+  open_gb_device ();
+
+  if (gbfd < 0)
+    {
+      sprintf (rslt, _("E.global breakpoints not available (%s not opened)"),
+	       BREAKPOINT_DEVICE);
+      return rslt;
+    }
+
+  if (filename && stat (filename, &st) == 0)
+    {
+      dev = st.st_dev;
+      inode = st.st_ino;
+    }
+
+  /* Translate the optionally-supplied username into a numeric uid.  */
+  uid = 0;
+  if (uname)
+    {
+      struct passwd *pw = getpwnam (uname);
+
+      if (pw)
+	uid = pw->pw_uid;
+      else
+	{
+	  sprintf (rslt, _("E.user name '%s' not found"), uname);
+	  return rslt;
+	}
+    }
+  else
+    /* If no user name supplied, restrict the effect to processes
+       owned by the same user that started this GDBserver.  */
+    uid = getuid ();
+
+  sprintf (cmd, "b %s %s %s %x %x",
+	   phex_nz (dev, 0), phex_nz (inode, 0), phex_nz (addr, 0),
+	   uid, flags);
+  written = write (gbfd, cmd, strlen (cmd) + 1);
+  if (written < 0)
+    {
+      sprintf (rslt, _("E.write to %s failed"), BREAKPOINT_DEVICE);
+      return rslt;
+    }
+
+  get_gb_reply (reply, MAX_GB_PACKET);
+
+  if (debug_threads)
+    fprintf (stderr, "Sent command '%s' to %s, reply was '%s'\n",
+	     cmd, BREAKPOINT_DEVICE, reply);
+
+  if (reply[0] == 'B')
+    {
+      gbnum = strtoul (reply + 1, NULL, 16);
+      sprintf (rslt, "%x", gbnum);
+
+      ++gbcount;
+    }
+  else
+    sprintf (rslt, _("E.error from device: '%s'"), reply);
+
+  /* Expect the caller to free.  */
+  return rslt;
+}
+
+static char *
+linux_insert_global_breakpoint (int gbnum, int pid)
+{
+  char cmd[MAX_GB_PACKET], reply[MAX_GB_PACKET];
+  int written;
+  char *rslt = NULL;
+
+  open_gb_device ();
+
+  if (gbfd < 0)
+    {
+      rslt = (char *) xmalloc (400);
+      sprintf (rslt, _("E.global breakpoints not available (%s not opened)"),
+	       BREAKPOINT_DEVICE);
+      return rslt;
+    }
+
+  sprintf (cmd, "i %x %x", gbnum, pid);
+  written = write (gbfd, cmd, strlen (cmd) + 1);
+  if (written < 0)
+    {
+      rslt = (char *) xmalloc (400);
+      sprintf (rslt, _("E.write to %s failed"), BREAKPOINT_DEVICE);
+      return rslt;
+    }
+
+  get_gb_reply (reply, MAX_GB_PACKET);
+
+  if (debug_threads)
+    fprintf (stderr, "Sent command '%s' to %s, reply was '%s'\n",
+	     cmd, BREAKPOINT_DEVICE, reply);
+
+  if (strcmp (reply, "OK") != 0)
+    {
+      rslt = (char *) xmalloc (50 + strlen (reply));
+      sprintf (rslt, _("E.error from device: '%s'\n"), reply);
+    }
+
+  return rslt;
+}
+
+static char *
+linux_delete_global_breakpoint (int gbnum)
+{
+  char cmd[MAX_GB_PACKET], reply[MAX_GB_PACKET];
+  int written;
+  char *rslt = NULL;
+
+  open_gb_device ();
+
+  if (gbfd < 0)
+    {
+      rslt = (char *) xmalloc (400);
+      sprintf (rslt, _("E.global breakpoints not available (%s not opened)"),
+	       BREAKPOINT_DEVICE);
+      return rslt;
+    }
+
+  sprintf (cmd, "d %x", gbnum);
+  written = write (gbfd, cmd, strlen (cmd) + 1);
+  if (written < 0)
+    {
+      rslt = (char *) xmalloc (400);
+      sprintf (rslt, _("E.write to %s failed"), BREAKPOINT_DEVICE);
+      return rslt;
+    }
+
+  get_gb_reply (reply, MAX_GB_PACKET);
+
+  if (debug_threads)
+    fprintf (stderr, "Sent command '%s' to %s, reply was '%s'\n",
+	     cmd, BREAKPOINT_DEVICE, reply);
+
+  if (strcmp (reply, "OK") != 0)
+    {
+      rslt = (char *) xmalloc (50 + strlen (reply));
+      sprintf (rslt, _("E.error from breakpoint device: '%s'\n"), reply);
+      return rslt;
+    }
+
+  --gbcount;
+
+  /* If this was the last global breakpoint, close the device.  */
+  if (gbcount == 0)
+    close_gb_device ();
+
+  return NULL;
+}
+
+static int
+gb_event_handler (int error, void *context)
+{
+  int gotten;
+  char reply[MAX_GB_PACKET];
+
+  gotten = read (gbfd, reply, MAX_GB_PACKET);
+  reply[gotten] = '\0';
+
+  if (gotten > 0)
+    {
+      printf ("Got \"%s\"\n", reply);
+
+      if (reply[0] == '%')
+	linux_handle_breakpoint_hit (reply);
+      else if (reply[0] == '#')
+	linux_record_breakpoint (reply);
+      else
+	warning (_("Breakpoint device returned unrecognized packet \"%s\""),
+		 reply);
+    }
+
+  return 0;
+}
+
 static struct target_ops linux_target_ops = {
   linux_create_inferior,
   linux_attach,
@@ -5825,6 +6142,10 @@ static struct target_ops linux_target_ops = {
   NULL,
 #endif
   linux_supports_range_stepping,
+  linux_define_global_breakpoint,
+  linux_insert_global_breakpoint,
+  linux_delete_global_breakpoint,
+  close_gb_device,
 };
 
 static void

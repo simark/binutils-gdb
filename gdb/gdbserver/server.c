@@ -609,6 +609,83 @@ handle_general_set (char *own_buf)
       return;
     }
 
+  if (strncmp (own_buf, "QBreakDefine:", strlen ("QBreakDefine:")) == 0)
+    {
+      char *packet = own_buf + strlen ("QBreakDefine:");
+      char *saved, *filename, *username;
+      int len;
+      ULONGEST addr, flags;
+      char *rslt;
+
+      saved = packet;
+      packet = strchr (packet, ':');
+      len = (packet - saved) / 2;
+      filename = xmalloc (len + 1);
+      unhexify (filename, saved, len);
+      filename[len] = '\0';
+      ++packet;
+      packet = unpack_varlen_hex (packet, &addr);
+      ++packet;
+      saved = packet;
+      packet = strchr (packet, ':');
+      if (packet != saved)
+	{
+	  len = (packet - saved) / 2;
+	  username = xmalloc (len + 1);
+	  unhexify (username, saved, len);
+	  username[len] = '\0';
+	}
+      else
+	username = NULL;
+      ++packet;
+      packet = unpack_varlen_hex (packet, &flags);
+
+      rslt = (*the_target->define_global_breakpoint) (filename, addr,
+						      username, flags);
+      /* Send back the number/error assigned by the low-level code.  */
+      strcpy (own_buf, rslt);
+      free (rslt);
+      return;
+    }
+
+  if (strncmp (own_buf, "QBreakInsert:", strlen ("QBreakInsert:")) == 0)
+    {
+      char *packet = own_buf + strlen ("QBreakInsert:");
+      ULONGEST gbnum, pid;
+      char *rslt;
+      
+      packet = unpack_varlen_hex (packet, &gbnum);
+      ++packet;
+      packet = unpack_varlen_hex (packet, &pid);
+      rslt = (*the_target->insert_global_breakpoint) (gbnum, pid);
+      if (rslt)
+	{
+	  strcpy (own_buf, rslt);
+	  free (rslt);
+	}
+      else
+	write_ok (own_buf);
+      return;
+    }
+
+  if (strncmp (own_buf, "QBreakDelete:", strlen ("QBreakDelete:")) == 0)
+    {
+      char *packet = own_buf + strlen ("QBreakDelete:");
+      ULONGEST gbnum;
+      char *rslt;
+
+      packet = unpack_varlen_hex (packet, &gbnum);
+      rslt = (*the_target->delete_global_breakpoint) (gbnum);
+      if (rslt)
+	{
+	  strcpy (own_buf, rslt);
+	  free (rslt);
+	}
+      else
+	write_ok (own_buf);
+      return;
+    }
+
   if (target_supports_tracepoints ()
       && handle_tracepoint_general_set (own_buf))
     return;
@@ -1682,6 +1759,11 @@ handle_query (char *own_buf, int packet_len, int *new_packet_len_p)
 		 (long)text, (long)data, (long)data);
       else
 	write_enn (own_buf);
+
+      /* Always report availability if the target-specific method is
+	 defined, so user can do driver setup later if desired.  */
+      if (the_target->define_global_breakpoint != NULL)
+	strcat (own_buf, ";GlobalBreakpoints+");
 
       return;
     }
@@ -3007,6 +3089,9 @@ main (int argc, char *argv[])
 	      exit (1);
 	    }
 	}
+
+      if (the_target->host_disconnected)
+	(*the_target->host_disconnected) ();
 
       fprintf (stderr,
 	       "Remote side has terminated connection.  "
