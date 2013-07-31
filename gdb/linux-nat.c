@@ -67,6 +67,8 @@
 #include "nat/linux-namespaces.h"
 #include "fileio.h"
 
+#include "ust_tracepoints.h"
+
 #ifndef SPUFS_MAGIC
 #define SPUFS_MAGIC 0x23c9b64e
 #endif
@@ -546,6 +548,7 @@ linux_child_follow_fork (struct target_ops *ops, int follow_child,
   				    "LCFF: waiting for VFORK_DONE on %d\n",
   				    parent_pid);
 	      parent_lp->stopped = 1;
+	      tracepoint(gdb, inf_stop, parent_lp->ptid.pid, __FILE__, __LINE__);
 
 	      /* We'll handle the VFORK_DONE event like any other
 		 event, in target_wait.  */
@@ -597,6 +600,7 @@ linux_child_follow_fork (struct target_ops *ops, int follow_child,
 	      parent_lp->status = 0;
 	      parent_lp->waitstatus.kind = TARGET_WAITKIND_VFORK_DONE;
 	      parent_lp->stopped = 1;
+	      tracepoint(gdb, inf_stop, parent_lp->ptid.pid, __FILE__, __LINE__);
 
 	      /* If we're in async mode, need to tell the event loop
 		 there's something here to process.  */
@@ -611,6 +615,7 @@ linux_child_follow_fork (struct target_ops *ops, int follow_child,
 
       child_lp = add_lwp (inferior_ptid);
       child_lp->stopped = 1;
+      tracepoint(gdb, inf_stop, child_lp->ptid.pid, __FILE__, __LINE__);
       child_lp->last_resume_kind = resume_stop;
 
       /* Let the thread_db layer learn about this new process.  */
@@ -917,6 +922,7 @@ linux_nat_switch_fork (ptid_t new_ptid)
 
   lp = add_lwp (new_ptid);
   lp->stopped = 1;
+  tracepoint(gdb, inf_stop, lp->ptid.pid, __FILE__, __LINE__);
 
   /* This changes the thread's ptid while preserving the gdb thread
      num.  Also changes the inferior pid, while preserving the
@@ -1147,6 +1153,7 @@ linux_nat_attach (struct target_ops *ops, const char *args, int from_tty)
       if (WIFEXITED (status))
 	{
 	  int exit_code = WEXITSTATUS (status);
+	  tracepoint(gdb, inf_exit, GET_LWP (lp->ptid), __FILE__, __LINE__);
 
 	  target_terminal_ours ();
 	  target_mourn_inferior ();
@@ -1176,6 +1183,7 @@ linux_nat_attach (struct target_ops *ops, const char *args, int from_tty)
     }
 
   lp->stopped = 1;
+  tracepoint(gdb, inf_stop, lp->ptid.pid, __FILE__, __LINE__);
 
   /* Save the wait status to report later.  */
   lp->resumed = 1;
@@ -2841,6 +2849,7 @@ linux_nat_filter_event (int lwpid, int status)
 
       lp = add_lwp (ptid_build (lwpid, lwpid, 0));
       lp->stopped = 1;
+      tracepoint(gdb, inf_stop, lp->ptid.pid, __FILE__, __LINE__);
       lp->resumed = 1;
       add_thread (lp->ptid);
     }
@@ -2859,8 +2868,9 @@ linux_nat_filter_event (int lwpid, int status)
      our list, i.e. not part of the current process.  This can happen
      if we detach from a program we originally forked and then it
      exits.  */
-  if (!WIFSTOPPED (status) && !lp)
+  if (!WIFSTOPPED (status) && !lp) {
     return NULL;
+  }
 
   /* This LWP is stopped now.  (And if dead, this prevents it from
      ever being continued.)  */
@@ -4114,7 +4124,6 @@ cleanup_target_stop (void *arg)
   ptid_t *ptid = (ptid_t *) arg;
 
   gdb_assert (arg != NULL);
-
   /* Unpause all */
   target_resume (*ptid, 0, GDB_SIGNAL_0);
 }

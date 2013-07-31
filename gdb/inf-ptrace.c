@@ -32,7 +32,7 @@
 #include "inf-child.h"
 #include "gdbthread.h"
 
-
+#include "ust_tracepoints.h"
 
 #ifdef PT_GET_PROCESS_STATE
 
@@ -149,6 +149,8 @@ inf_ptrace_mourn_inferior (struct target_ops *ops)
   waitpid (ptid_get_pid (inferior_ptid), &status, 0);
 
   inf_child_mourn_inferior (ops);
+
+  tracepoint(gdb, inf_exit, ptid_get_pid (inferior_ptid), __FILE__, __LINE__);
 }
 
 /* Attach to the process specified by ARGS.  If FROM_TTY is non-zero,
@@ -201,6 +203,8 @@ inf_ptrace_attach (struct target_ops *ops, const char *args, int from_tty)
 #else
   error (_("This system does not support attaching to a process"));
 #endif
+
+  tracepoint(gdb, inf_attach, pid, __FILE__, __LINE__);
 
   inf = current_inferior ();
   inferior_appeared (inf, pid);
@@ -355,6 +359,13 @@ inf_ptrace_resume (struct target_ops *ops,
      already written a new program counter value to the child.  */
   errno = 0;
   ptrace (request, pid, (PTRACE_TYPE_ARG3)1, gdb_signal_to_host (signal));
+  if (request == PT_STEP) {
+      // tp step
+      tracepoint(gdb, inf_step, pid, __FILE__, __LINE__);
+  } else {
+      // tp continue
+      tracepoint(gdb, inf_cont, pid, __FILE__, __LINE__);
+  }
   if (errno != 0)
     perror_with_name (("ptrace"));
 }
@@ -382,6 +393,8 @@ inf_ptrace_wait (struct target_ops *ops,
       while (pid == -1 && errno == EINTR);
 
       clear_sigint_trap ();
+
+
 
       if (pid == -1)
 	{
@@ -532,6 +545,7 @@ inf_ptrace_xfer_partial (struct target_ops *ops, enum target_object object,
 	    ptrace (PT_WRITE_D, pid,
 		    (PTRACE_TYPE_ARG3)(uintptr_t)rounded_offset,
 		    buffer.word);
+	    tracepoint(gdb, inf_write, pid, rounded_offset, buffer.word, errno == 0, __FILE__, __LINE__);
 	    if (errno)
 	      {
 		/* Using the appropriate one (I or D) is necessary for
@@ -548,9 +562,11 @@ inf_ptrace_xfer_partial (struct target_ops *ops, enum target_object object,
 	if (readbuf)
 	  {
 	    errno = 0;
+
 	    buffer.word = ptrace (PT_READ_I, pid,
 				  (PTRACE_TYPE_ARG3)(uintptr_t)rounded_offset,
 				  0);
+	    tracepoint(gdb, inf_read, pid, rounded_offset, (errno == 0) ? buffer.word : 0, errno == 0, __FILE__, __LINE__);
 	    if (errno)
 	      return TARGET_XFER_EOF;
 	    /* Copy appropriate bytes out of the buffer.  */

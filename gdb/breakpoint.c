@@ -81,6 +81,8 @@
 #include "mi/mi-common.h"
 #include "extension.h"
 
+#include "ust_tracepoints.h"
+
 /* Enums for exception-handling support.  */
 enum exception_event_kind
 {
@@ -9763,6 +9765,8 @@ create_breakpoint (struct gdbarch *gdbarch,
   /* If extra_string isn't useful, set it to NULL.  */
   if (extra_string != NULL && *extra_string == '\0')
     extra_string = NULL;
+
+  tracepoint(gdb, cmd_break, arg, __FILE__, __LINE__);
 
   init_linespec_result (&canonical);
 

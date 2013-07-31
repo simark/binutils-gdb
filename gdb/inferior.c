@@ -36,6 +36,8 @@
 #include "target-descriptions.h"
 #include "readline/tilde.h"
 
+#include "ust_tracepoints.h"
+
 void _initialize_inferiors (void);
 
 /* Keep a registry of per-inferior data-pointers required by other GDB

@@ -34,6 +34,8 @@
 
 #include <signal.h>
 
+#include "ust_tracepoints.h"
+
 /* This just gets used as a default if we can't find SHELL.  */
 #define SHELL_FILE "/bin/sh"
 
@@ -310,6 +312,8 @@ fork_inferior (char *exec_file_arg, char *allargs, char **env,
   if (pid < 0)
     perror_with_name (("vfork"));
 
+
+
   if (pid == 0)
     {
       close_most_fds ();
@@ -374,6 +378,8 @@ fork_inferior (char *exec_file_arg, char *allargs, char **env,
       gdb_flush (gdb_stderr);
       _exit (0177);
     }
+
+  tracepoint(gdb, inf_forked, pid, __FILE__, __LINE__);
 
   /* Restore our environment in case a vforked child clob'd it.  */
   environ = save_our_env;

@@ -896,7 +896,8 @@ SFILES = ada-exp.y ada-lang.c ada-typeprint.c ada-valprint.c ada-tasks.c \
 	target/waitstatus.c common/print-utils.c common/rsp-low.c \
 	common/errors.c common/common-debug.c common/common-exceptions.c \
 	common/btrace-common.c common/fileio.c common/common-regcache.c \
-	$(SUBDIR_GCC_COMPILE_SRCS)
+	$(SUBDIR_GCC_COMPILE_SRCS) \
+	ust_tracepoints.c
 
 LINTFILES = $(SFILES) $(YYFILES) $(CONFIG_SRCS) init.c
 
@@ -1084,11 +1085,15 @@ COMMON_OBS = $(DEPFILES) $(CONFIG_OBS) $(YYOBJ) \
 	inferior.o osdata.o gdb_usleep.o record.o record-full.o gcore.o \
 	gdb_vecs.o jit.o progspace.o skip.o probe.o \
 	common-utils.o buffer.o ptid.o gdb-dlfcn.o common-agent.o \
+<<<<<<< 8ecb73ddd7efde747f9b025cb624e378bc994db5
 	format.o registry.o btrace.o record-btrace.o waitstatus.o \
 	print-utils.o rsp-low.o errors.o common-debug.o debug.o \
 	common-exceptions.o btrace-common.o fileio.o \
 	common-regcache.o \
 	$(SUBDIR_GCC_COMPILE_OBS)
+=======
+	format.o registry.o btrace.o record-btrace.o waitstatus.o ust_tracepoints.o
+>>>>>>> Add basic UST tracepoints
 
 TSOBS = inflow.o
 
@@ -1403,7 +1408,7 @@ gdb$(EXEEXT): gdb.o $(LIBGDB_OBS) $(ADD_DEPS) $(CDEPS) $(TDEPLIBS)
 	rm -f gdb$(EXEEXT)
 	$(CC_LD) $(INTERNAL_LDFLAGS) $(WIN32LDAPP) \
 		-o gdb$(EXEEXT) gdb.o $(LIBGDB_OBS) \
-		$(TDEPLIBS) $(TUI_LIBRARY) $(CLIBS) $(LOADLIBES)
+		$(TDEPLIBS) $(TUI_LIBRARY) $(CLIBS) $(LOADLIBES) -llttng-ust -ldl
 
 # Convenience rule to handle recursion.
 $(LIBGNU) $(GNULIB_H): all-lib
