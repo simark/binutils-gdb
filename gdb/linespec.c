@@ -2390,7 +2390,7 @@ linespec_state_constructor (struct linespec_state *self,
   self->default_symtab = default_symtab;
   self->default_line = default_line;
   self->canonical = canonical;
-  self->program_space = current_program_space;
+  self->program_space = get_current_program_space();
   self->addr_set = htab_create_alloc (10, hash_address_entry, eq_address_entry,
 				      xfree, xcalloc, xfree);
   self->is_linespec = 0;
@@ -2743,7 +2743,7 @@ initialize_defaults (struct symtab **default_symtab, int *default_line)
 CORE_ADDR
 linespec_expression_to_pc (const char **exp_ptr)
 {
-  if (current_program_space->executing_startup)
+  if (get_current_program_space()->executing_startup)
     /* The error message doesn't really matter, because this case
        should only hit during breakpoint reset.  */
     throw_error (NOT_FOUND_ERROR, _("cannot evaluate expressions while "

@@ -1038,7 +1038,7 @@ call_function_by_hand_dummy (struct value *function,
     struct symtab_and_line sal;
 
     init_sal (&sal);		/* initialize to zeroes */
-    sal.pspace = current_program_space;
+    sal.pspace = get_current_program_space();
     sal.pc = bp_addr;
     sal.section = find_pc_overlay (sal.pc);
     /* Sanity.  The exact same SP value is returned by

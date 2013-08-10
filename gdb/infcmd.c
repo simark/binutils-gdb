@@ -57,6 +57,8 @@
 #include "infcall.h"
 #include "thread-fsm.h"
 
+#include "ust_tracepoints.h"
+
 /* Local functions: */
 
 static void nofp_registers_info (char *, int);
@@ -432,13 +434,13 @@ post_create_inferior (struct target_ops *target, int from_tty)
   if (exec_bfd)
     {
       const unsigned solib_add_generation
-	= current_program_space->solib_add_generation;
+	= get_current_program_space()->solib_add_generation;
 
       /* Create the hooks to handle shared library load and unload
 	 events.  */
       solib_create_inferior_hook (from_tty);
 
-      if (current_program_space->solib_add_generation == solib_add_generation)
+      if (get_current_program_space()->solib_add_generation == solib_add_generation)
 	{
 	  /* The platform-specific hook should load initial shared libraries,
 	     but didn't.  FROM_TTY will be incorrectly 0 but such solib
@@ -527,6 +529,8 @@ run_command_1 (char *args, int from_tty, int tbreak_at_main)
   struct target_ops *run_target;
   int async_exec;
   struct cleanup *args_chain;
+
+  tracepoint(gdb, cmd_run, __FILE__, __LINE__);
 
   dont_repeat ();
 
@@ -770,6 +774,8 @@ continue_command (char *args, int from_tty)
   struct cleanup *args_chain;
 
   ERROR_NO_INFERIOR;
+
+  tracepoint(gdb, cmd_continue, __FILE__, __LINE__);
 
   /* Find out whether we must run in the background.  */
   args = strip_bg_char (args, &async_exec);

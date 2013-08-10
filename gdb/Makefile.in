@@ -1085,15 +1085,12 @@ COMMON_OBS = $(DEPFILES) $(CONFIG_OBS) $(YYOBJ) \
 	inferior.o osdata.o gdb_usleep.o record.o record-full.o gcore.o \
 	gdb_vecs.o jit.o progspace.o skip.o probe.o \
 	common-utils.o buffer.o ptid.o gdb-dlfcn.o common-agent.o \
-<<<<<<< 8ecb73ddd7efde747f9b025cb624e378bc994db5
 	format.o registry.o btrace.o record-btrace.o waitstatus.o \
 	print-utils.o rsp-low.o errors.o common-debug.o debug.o \
 	common-exceptions.o btrace-common.o fileio.o \
 	common-regcache.o \
-	$(SUBDIR_GCC_COMPILE_OBS)
-=======
-	format.o registry.o btrace.o record-btrace.o waitstatus.o ust_tracepoints.o
->>>>>>> Add basic UST tracepoints
+	$(SUBDIR_GCC_COMPILE_OBS) \
+	ust_tracepoints.o
 
 TSOBS = inflow.o
 

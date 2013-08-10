@@ -1731,7 +1731,7 @@ is_watchpoint (const struct breakpoint *bpt)
 static int
 watchpoint_in_thread_scope (struct watchpoint *b)
 {
-  return (b->base.pspace == current_program_space
+  return (b->base.pspace == get_current_program_space()
 	  && (ptid_equal (b->watchpoint_thread, null_ptid)
 	      || (ptid_equal (inferior_ptid, b->watchpoint_thread)
 		  && !is_executing (inferior_ptid))));
@@ -3352,7 +3352,7 @@ create_internal_breakpoint (struct gdbarch *gdbarch,
 
   sal.pc = address;
   sal.section = find_pc_overlay (sal.pc);
-  sal.pspace = current_program_space;
+  sal.pspace = get_current_program_space();
 
   b = set_raw_breakpoint (gdbarch, sal, type, ops);
   b->number = internal_breakpoint_number--;
@@ -3789,12 +3789,12 @@ update_breakpoints_after_exec (void)
      here instead, because there may be other attempts to delete
      breakpoints after detecting an exec and before reaching here.  */
   ALL_BP_LOCATIONS (bploc, bplocp_tmp)
-    if (bploc->pspace == current_program_space)
+    if (bploc->pspace == get_current_program_space())
       gdb_assert (!bploc->inserted);
 
   ALL_BREAKPOINTS_SAFE (b, b_tmp)
   {
-    if (b->pspace != current_program_space)
+    if (b->pspace != get_current_program_space())
       continue;
 
     /* Solib breakpoints must be explicitly reset after an exec().  */
@@ -4113,7 +4113,7 @@ mark_breakpoints_out (void)
   struct bp_location *bl, **blp_tmp;
 
   ALL_BP_LOCATIONS (bl, blp_tmp)
-    if (bl->pspace == current_program_space)
+    if (bl->pspace == get_current_program_space())
       bl->inserted = 0;
 }
 
@@ -4135,7 +4135,7 @@ breakpoint_init_inferior (enum inf_context context)
   struct breakpoint *b, *b_tmp;
   struct bp_location *bl, **blp_tmp;
   int ix;
-  struct program_space *pspace = current_program_space;
+  struct program_space *pspace = get_current_program_space();
 
   /* If breakpoint locations are shared across processes, then there's
      nothing to do.  */
@@ -4866,9 +4866,9 @@ static void
 print_solib_event (int is_catchpoint)
 {
   int any_deleted
-    = !VEC_empty (char_ptr, current_program_space->deleted_solibs);
+    = !VEC_empty (char_ptr, get_current_program_space()->deleted_solibs);
   int any_added
-    = !VEC_empty (so_list_ptr, current_program_space->added_solibs);
+    = !VEC_empty (so_list_ptr, get_current_program_space()->added_solibs);
 
   if (!is_catchpoint)
     {
@@ -4895,7 +4895,7 @@ print_solib_event (int is_catchpoint)
       cleanup = make_cleanup_ui_out_list_begin_end (current_uiout,
 						    "removed");
       for (ix = 0;
-	   VEC_iterate (char_ptr, current_program_space->deleted_solibs,
+	   VEC_iterate (char_ptr, get_current_program_space()->deleted_solibs,
 			ix, name);
 	   ++ix)
 	{
@@ -4918,7 +4918,7 @@ print_solib_event (int is_catchpoint)
       cleanup = make_cleanup_ui_out_list_begin_end (current_uiout,
 						    "added");
       for (ix = 0;
-	   VEC_iterate (so_list_ptr, current_program_space->added_solibs,
+	   VEC_iterate (so_list_ptr, get_current_program_space()->added_solibs,
 			ix, iter);
 	   ++ix)
 	{
@@ -7507,7 +7507,7 @@ set_breakpoint_location_function (struct bp_location *loc, int explicit_loc)
 	{
 	  struct breakpoint *b = loc->owner;
 
-	  gdb_assert (loc->pspace == current_program_space);
+	  gdb_assert (loc->pspace == get_current_program_space());
 	  if (gnu_ifunc_resolve_name (function_name,
 				      &loc->requested_address))
 	    {
@@ -7614,7 +7614,7 @@ set_longjmp_breakpoint (struct thread_info *tp, struct frame_id frame)
      longjmp "master" breakpoints.  Here, we simply create momentary
      clones of those and enable them for the requested thread.  */
   ALL_BREAKPOINTS_SAFE (b, b_tmp)
-    if (b->pspace == current_program_space
+    if (b->pspace == get_current_program_space()
 	&& (b->type == bp_longjmp_master
 	    || b->type == bp_exception_master))
       {
@@ -7669,7 +7669,7 @@ set_longjmp_breakpoint_for_call_dummy (void)
   struct breakpoint *b, *retval = NULL;
 
   ALL_BREAKPOINTS (b)
-    if (b->pspace == current_program_space && b->type == bp_longjmp_master)
+    if (b->pspace == get_current_program_space() && b->type == bp_longjmp_master)
       {
 	struct breakpoint *new_b;
 
@@ -7764,7 +7764,7 @@ set_std_terminate_breakpoint (void)
   struct breakpoint *b, *b_tmp;
 
   ALL_BREAKPOINTS_SAFE (b, b_tmp)
-    if (b->pspace == current_program_space
+    if (b->pspace == get_current_program_space()
 	&& b->type == bp_std_terminate_master)
       {
 	momentary_breakpoint_from_master (b, bp_std_terminate,
@@ -7824,7 +7824,7 @@ remove_jit_event_breakpoints (void)
 
   ALL_BREAKPOINTS_SAFE (b, b_tmp)
     if (b->type == bp_jit_event
-	&& b->loc->pspace == current_program_space)
+	&& b->loc->pspace == get_current_program_space())
       delete_breakpoint (b);
 }
 
@@ -7835,7 +7835,7 @@ remove_solib_event_breakpoints (void)
 
   ALL_BREAKPOINTS_SAFE (b, b_tmp)
     if (b->type == bp_shlib_event
-	&& b->loc->pspace == current_program_space)
+	&& b->loc->pspace == get_current_program_space())
       delete_breakpoint (b);
 }
 
@@ -7914,7 +7914,7 @@ disable_breakpoints_in_shlibs (void)
 	 || (b->type == bp_jit_event)
 	 || (b->type == bp_hardware_breakpoint)
 	 || (is_tracepoint (b)))
-	&& loc->pspace == current_program_space
+	&& loc->pspace == get_current_program_space()
 	&& !loc->shlib_disabled
 	&& solib_name_from_address (loc->pspace, loc->address)
 	)
@@ -8396,7 +8396,7 @@ check_status_catch_solib (struct bpstats *bs)
       struct so_list *iter;
 
       for (ix = 0;
-	   VEC_iterate (so_list_ptr, current_program_space->added_solibs,
+	   VEC_iterate (so_list_ptr, get_current_program_space()->added_solibs,
 			ix, iter);
 	   ++ix)
 	{
@@ -8410,7 +8410,7 @@ check_status_catch_solib (struct bpstats *bs)
       char *iter;
 
       for (ix = 0;
-	   VEC_iterate (char_ptr, current_program_space->deleted_solibs,
+	   VEC_iterate (char_ptr, get_current_program_space()->deleted_solibs,
 			ix, iter);
 	   ++ix)
 	{
@@ -8598,7 +8598,7 @@ init_catchpoint (struct breakpoint *b,
   struct symtab_and_line sal;
 
   init_sal (&sal);
-  sal.pspace = current_program_space;
+  sal.pspace = get_current_program_space();
 
   init_raw_breakpoint (b, gdbarch, sal, bp_catchpoint, ops);
 
@@ -8877,7 +8877,7 @@ disable_breakpoints_before_startup (void)
 void
 enable_breakpoints_after_startup (void)
 {
-  current_program_space->executing_startup = 0;
+  get_current_program_space()->executing_startup = 0;
   breakpoint_re_set ();
 }
 
@@ -9937,7 +9937,7 @@ create_breakpoint (struct gdbarch *gdbarch,
       b->enable_state = enabled ? bp_enabled : bp_disabled;
       if ((type_wanted != bp_breakpoint
            && type_wanted != bp_hardware_breakpoint) || thread != -1)
-	b->pspace = current_program_space;
+	b->pspace = get_current_program_space();
 
       install_breakpoint (internal, b, 0);
     }
@@ -11365,7 +11365,7 @@ watch_command_1 (const char *arg, int accessflag, int from_tty,
 					  &watchpoint_breakpoint_ops);
   b->thread = thread;
   b->disposition = disp_donttouch;
-  b->pspace = current_program_space;
+  b->pspace = get_current_program_space();
   w->exp = exp;
   w->exp_valid_block = exp_valid_block;
   w->cond_exp_valid_block = cond_exp_valid_block;
@@ -14662,7 +14662,7 @@ breakpoint_re_set_thread (struct breakpoint *b)
 	 selected as current, and unless this was a vfork will have a
 	 different program space from the original thread.  Reset that
 	 as well.  */
-      b->loc->pspace = current_program_space;
+      b->loc->pspace = get_current_program_space();
     }
 }
 

@@ -433,7 +433,7 @@ filename_is_in_auto_load_safe_path_vec (const char *filename,
        ++ix)
     if (*filename_realp == NULL && filename_is_in_pattern (filename, pattern))
       break;
-  
+
   if (pattern == NULL)
     {
       if (*filename_realp == NULL)
@@ -760,7 +760,7 @@ maybe_add_script_text (struct auto_load_pspace_info *pspace_info,
 static void
 clear_section_scripts (void)
 {
-  struct program_space *pspace = current_program_space;
+  struct program_space *pspace = get_current_program_space();
   struct auto_load_pspace_info *info;
 
   info = ((struct auto_load_pspace_info *)
@@ -1336,7 +1336,7 @@ auto_load_info_scripts (char *pattern, int from_tty,
 
   dont_repeat ();
 
-  pspace_info = get_auto_load_pspace_data (current_program_space);
+  pspace_info = get_auto_load_pspace_data (get_current_program_space());
 
   if (pattern && *pattern)
     {

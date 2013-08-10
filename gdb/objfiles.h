@@ -607,12 +607,12 @@ extern void default_iterate_over_objfiles_in_search_order
   for ((obj) = ss->objfiles; (obj) != NULL; (obj) = (obj)->next)
 
 #define ALL_OBJFILES(obj)			    \
-  for ((obj) = current_program_space->objfiles; \
+  for ((obj) = get_current_program_space()->objfiles; \
        (obj) != NULL;				    \
        (obj) = (obj)->next)
 
 #define ALL_OBJFILES_SAFE(obj,nxt)			\
-  for ((obj) = current_program_space->objfiles;	\
+  for ((obj) = get_current_program_space()->objfiles;	\
        (obj) != NULL? ((nxt)=(obj)->next,1) :0;	\
        (obj) = (nxt))
 
@@ -688,7 +688,7 @@ extern void default_iterate_over_objfiles_in_search_order
       well (as OSECT will be different from OBJFILE->sections_end).  */
 
 #define ALL_OBJSECTIONS(objfile, osect)					\
-  for ((objfile) = current_program_space->objfiles,			\
+  for ((objfile) = get_current_program_space()->objfiles,			\
 	 (objfile) != NULL ? ((osect) = (objfile)->sections_end) : 0;	\
        (objfile) != NULL						\
 	 && (osect) == (objfile)->sections_end;				\

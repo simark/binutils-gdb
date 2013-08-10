@@ -137,7 +137,7 @@ find_pretty_printer_from_progspace (PyObject *value)
 {
   PyObject *pp_list;
   PyObject *function;
-  PyObject *obj = pspace_to_pspace_object (current_program_space);
+  PyObject *obj = pspace_to_pspace_object (get_current_program_space());
 
   if (!obj)
     return NULL;

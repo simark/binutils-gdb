@@ -320,7 +320,7 @@ bpfinishpy_init (PyObject *self, PyObject *args, PyObject *kwargs)
   self_bpfinish->py_bp.is_finish_bp = 1;
 
   /* Bind the breakpoint with the current program space.  */
-  self_bpfinish->py_bp.bp->pspace = current_program_space;
+  self_bpfinish->py_bp.bp->pspace = get_current_program_space();
 
   return 0;
 }

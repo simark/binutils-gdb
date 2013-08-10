@@ -213,21 +213,22 @@ struct program_space
 /* The object file that the main symbol table was loaded from (e.g. the
    argument to the "symbol-file" or "file" command).  */
 
-#define symfile_objfile current_program_space->symfile_object_file
+#define symfile_objfile get_current_program_space()->symfile_object_file
 
 /* All known objfiles are kept in a linked list.  This points to the
    root of this list.  */
-#define object_files current_program_space->objfiles
+#define object_files get_current_program_space()->objfiles
 
 /* The set of target sections matching the sections mapped into the
    current program space.  */
-#define current_target_sections (&current_program_space->target_sections)
+#define current_target_sections (&get_current_program_space()->target_sections)
 
 /* The list of all program spaces.  There's always at least one.  */
 extern struct program_space *program_spaces;
 
 /* The current program space.  This is always non-null.  */
-extern struct program_space *current_program_space;
+//extern struct program_space *current_program_space;
+struct program_space* get_current_program_space(void);
 
 #define ALL_PSPACES(pspace) \
   for ((pspace) = program_spaces; (pspace) != NULL; (pspace) = (pspace)->next)

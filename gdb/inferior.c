@@ -1044,8 +1044,8 @@ initialize_inferiors (void)
      that.  Do this after initialize_progspace, due to the
      current_program_space reference.  */
   current_inferior_ = add_inferior (0);
-  current_inferior_->pspace = current_program_space;
-  current_inferior_->aspace = current_program_space->aspace;
+  current_inferior_->pspace = get_current_program_space();
+  current_inferior_->aspace = get_current_program_space()->aspace;
   /* The architecture will be initialized shortly, by
      initialize_current_architecture.  */
 

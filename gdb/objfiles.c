@@ -418,7 +418,7 @@ allocate_objfile (bfd *abfd, const char *name, int flags)
     }
 
   objfile->per_bfd = get_objfile_bfd_data (objfile, abfd);
-  objfile->pspace = current_program_space;
+  objfile->pspace = get_current_program_space();
 
   terminate_minimal_symbol_table (objfile);
 
@@ -1442,12 +1442,12 @@ find_pc_section (CORE_ADDR pc)
   if (s)
     return s;
 
-  pspace_info = get_objfile_pspace_data (current_program_space);
+  pspace_info = get_objfile_pspace_data (get_current_program_space());
   if (pspace_info->section_map_dirty
       || (pspace_info->new_objfiles_available
 	  && !pspace_info->inhibit_updates))
     {
-      update_section_map (current_program_space,
+      update_section_map (get_current_program_space(),
 			  &pspace_info->sections,
 			  &pspace_info->num_sections);
 
@@ -1500,7 +1500,7 @@ void
 objfiles_changed (void)
 {
   /* Rebuild section map next time we need it.  */
-  get_objfile_pspace_data (current_program_space)->section_map_dirty = 1;
+  get_objfile_pspace_data (get_current_program_space())->section_map_dirty = 1;
 }
 
 /* See comments in objfiles.h.  */

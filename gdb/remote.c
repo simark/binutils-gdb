@@ -1775,7 +1775,7 @@ remote_add_inferior (int fake_pid_p, int pid, int attached,
 	 However, each inferior may still have its own address
 	 space.  */
       inf->aspace = maybe_new_address_space ();
-      inf->pspace = current_program_space;
+      inf->pspace = get_current_program_space();
     }
   else
     {

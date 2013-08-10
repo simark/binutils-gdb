@@ -1533,7 +1533,7 @@ line_info (char *arg, int from_tty)
   for (i = 0; i < sals.nelts; i++)
     {
       sal = sals.sals[i];
-      if (sal.pspace != current_program_space)
+      if (sal.pspace != get_current_program_space())
 	continue;
 
       if (sal.symtab == 0)

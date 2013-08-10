@@ -550,7 +550,7 @@ get_tcb_types_info (void)
 
   /* Set all the out parameters all at once, now that we are certain
      that there are no potential error() anymore.  */
-  pspace_data = get_ada_tasks_pspace_data (current_program_space);
+  pspace_data = get_ada_tasks_pspace_data (get_current_program_space());
   pspace_data->initialized_p = 1;
   pspace_data->atcb_type = type;
   pspace_data->atcb_common_type = common_type;
@@ -571,7 +571,7 @@ ptid_from_atcb_common (struct value *common_value)
   struct value *ll_value;
   ptid_t ptid;
   const struct ada_tasks_pspace_data *pspace_data
-    = get_ada_tasks_pspace_data (current_program_space);
+    = get_ada_tasks_pspace_data (get_current_program_space());
 
   ll_value = value_field (common_value, pspace_data->atcb_fieldno.ll);
 
@@ -601,7 +601,7 @@ read_atcb (CORE_ADDR task_id, struct ada_task_info *task_info)
   int called_task_fieldno = -1;
   static const char ravenscar_task_name[] = "Ravenscar task";
   const struct ada_tasks_pspace_data *pspace_data
-    = get_ada_tasks_pspace_data (current_program_space);
+    = get_ada_tasks_pspace_data (get_current_program_space());
 
   if (!pspace_data->initialized_p)
     get_tcb_types_info ();
@@ -815,7 +815,7 @@ read_known_tasks_list (struct ada_tasks_inferior_data *data)
   gdb_byte *known_tasks = (gdb_byte *) alloca (target_ptr_byte);
   CORE_ADDR task_id;
   const struct ada_tasks_pspace_data *pspace_data
-    = get_ada_tasks_pspace_data (current_program_space);
+    = get_ada_tasks_pspace_data (get_current_program_space());
 
   /* Sanity check.  */
   if (pspace_data->atcb_fieldno.activation_link < 0)

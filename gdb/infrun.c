@@ -1044,7 +1044,7 @@ handle_vfork_child_exec_or_exit (int exec)
 
       inf->vfork_parent = NULL;
 
-      gdb_assert (current_program_space == inf->pspace);
+      gdb_assert (get_current_program_space() == inf->pspace);
 
       if (non_stop && resume_parent != -1)
 	{
@@ -1216,7 +1216,7 @@ follow_exec (ptid_t ptid, char *execd_pathname)
       target_clear_description ();
     }
 
-  gdb_assert (current_program_space == inf->pspace);
+  gdb_assert (get_current_program_space() == inf->pspace);
 
   /* That a.out is now the one to use.  */
   exec_file_attach (execd_pathname, 0);

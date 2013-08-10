@@ -90,7 +90,7 @@ set_solib_ops (struct gdbarch *gdbarch, const struct target_so_ops *new_ops)
 struct target_so_ops *current_target_so_ops;
 
 /* List of known shared objects */
-#define so_list_head current_program_space->so_list
+#define so_list_head get_current_program_space()->so_list
 
 /* Local function prototypes */
 
@@ -850,7 +850,7 @@ update_solib_list (int from_tty, struct target_ops *target)
 	     unloaded before we remove it from GDB's tables.  */
 	  observer_notify_solib_unloaded (gdb);
 
-	  VEC_safe_push (char_ptr, current_program_space->deleted_solibs,
+	  VEC_safe_push (char_ptr, get_current_program_space()->deleted_solibs,
 			 xstrdup (gdb->so_name));
 
 	  *gdb_link = gdb->next;
@@ -886,8 +886,8 @@ update_solib_list (int from_tty, struct target_ops *target)
       for (i = inferior; i; i = i->next)
 	{
 
-	  i->pspace = current_program_space;
-	  VEC_safe_push (so_list_ptr, current_program_space->added_solibs, i);
+	  i->pspace = get_current_program_space();
+	  VEC_safe_push (so_list_ptr, get_current_program_space()->added_solibs, i);
 
 	  TRY
 	    {

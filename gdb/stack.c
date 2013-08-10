@@ -2543,7 +2543,7 @@ func_command (char *arg, int from_tty)
   make_cleanup (xfree, func_bounds);
   for (i = 0; (i < sals.nelts && !found); i++)
     {
-      if (sals.sals[i].pspace != current_program_space)
+      if (sals.sals[i].pspace != get_current_program_space())
 	func_bounds[i].low = func_bounds[i].high = 0;
       else if (sals.sals[i].pc == 0
 	       || find_pc_partial_function (sals.sals[i].pc, NULL,

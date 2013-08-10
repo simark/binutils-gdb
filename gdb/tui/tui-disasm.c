@@ -256,7 +256,7 @@ tui_set_disassem_content (struct gdbarch *gdbarch, CORE_ADDR pc)
 
       /* See whether there is a breakpoint installed.  */
       src->has_break = (!src->is_exec_point
-			&& breakpoint_here_p (current_program_space->aspace,
+			&& breakpoint_here_p (get_current_program_space()->aspace,
 					      pc)
 			!= no_breakpoint_here);
 

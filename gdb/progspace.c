@@ -25,6 +25,8 @@
 #include "solib.h"
 #include "gdbthread.h"
 
+#include "ust_tracepoints.h"
+
 /* The last program space number assigned.  */
 int last_program_space_num = 0;
 
@@ -32,7 +34,7 @@ int last_program_space_num = 0;
 struct program_space *program_spaces;
 
 /* Pointer to the current program space.  */
-struct program_space *current_program_space;
+static struct program_space *current_program_space;
 
 /* The last address space number assigned.  */
 static int highest_address_space_num;
@@ -144,6 +146,8 @@ add_program_space (struct address_space *aspace)
       last->next = pspace;
     }
 
+  tracepoint(gdb, pgspace_new, pspace->num, pspace->ebfd ? bfd_get_filename(pspace->ebfd) : "", pspace->aspace->num, __FILE__, __LINE__);
+
   return pspace;
 }
 
@@ -202,19 +206,35 @@ clone_program_space (struct program_space *dest, struct program_space *src)
 /* Sets PSPACE as the current program space.  It is the caller's
    responsibility to make sure that the currently selected
    inferior/thread matches the selected program space.  */
-
+#include <execinfo.h>
 void
 set_current_program_space (struct program_space *pspace)
 {
+  void *array[10];
+  size_t size;
+  char **strings;
   if (current_program_space == pspace)
     return;
 
-  gdb_assert (pspace != NULL);
+  gdb_assert(pspace != NULL);
+
+  // get void*'s for all entries on the stack
+  size = backtrace (array, 10);
+
+  strings = backtrace_symbols (array, size);
+
+  tracepoint(gdb, pgspace_switch, pspace->num,
+	     pspace->ebfd ? bfd_get_filename(pspace->ebfd) : "", __FILE__,
+	     __LINE__, strings);
 
   current_program_space = pspace;
 
   /* Different symbols change our view of the frame chain.  */
   reinit_frame_cache ();
+}
+
+struct program_space* get_current_program_space(void) {
+  return current_program_space;
 }
 
 /* A cleanups callback, helper for save_current_program_space

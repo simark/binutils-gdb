@@ -704,7 +704,7 @@ gdbpy_solib_name (PyObject *self, PyObject *args)
   if (!PyArg_ParseTuple (args, GDB_PY_LL_ARG, &pc))
     return NULL;
 
-  soname = solib_name_from_address (current_program_space, pc);
+  soname = solib_name_from_address (get_current_program_space(), pc);
   if (soname)
     str_obj = PyString_Decode (soname, strlen (soname), host_charset (), NULL);
   else
@@ -1268,7 +1268,7 @@ gdbpy_get_current_progspace (PyObject *unused1, PyObject *unused2)
 {
   PyObject *result;
 
-  result = pspace_to_pspace_object (current_program_space);
+  result = pspace_to_pspace_object (get_current_program_space());
   if (result)
     Py_INCREF (result);
   return result;

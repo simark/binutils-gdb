@@ -1723,7 +1723,7 @@ do_one_display (struct display *d)
 
   if (d->block)
     {
-      if (d->pspace == current_program_space)
+      if (d->pspace == get_current_program_space())
 	within_current_scope = contained_in (get_selected_block (0), d->block);
       else
 	within_current_scope = 0;

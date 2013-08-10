@@ -1513,7 +1513,7 @@ get_current_frame (void)
   if (current_frame == NULL)
     {
       struct frame_info *sentinel_frame =
-	create_sentinel_frame (current_program_space, get_current_regcache ());
+	create_sentinel_frame (get_current_program_space(), get_current_regcache ());
       if (catch_exceptions (current_uiout, unwind_to_current_frame,
 			    sentinel_frame, RETURN_MASK_ERROR) != 0)
 	{
@@ -1657,7 +1657,7 @@ create_new_frame (CORE_ADDR addr, CORE_ADDR pc)
 
   fi = FRAME_OBSTACK_ZALLOC (struct frame_info);
 
-  fi->next = create_sentinel_frame (current_program_space,
+  fi->next = create_sentinel_frame (get_current_program_space(),
 				    get_current_regcache ());
 
   /* Set/update this frame's cached PC value, found in the next frame.

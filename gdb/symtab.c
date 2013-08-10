@@ -3130,7 +3130,7 @@ find_pc_sect_line (CORE_ADDR pc, struct obj_section *section, int notcurrent)
 
   init_sal (&val);		/* initialize to zeroes */
 
-  val.pspace = current_program_space;
+  val.pspace = get_current_program_space();
 
   /* It's tempting to assume that, if we can't find debugging info for
      any function enclosing PC, that we shouldn't search for line

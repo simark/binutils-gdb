@@ -91,7 +91,7 @@ jv_per_objfile_free (struct objfile *objfile, void *data)
     dict_free (jv_data->dict);
   xfree (jv_data);
 
-  set_program_space_data (current_program_space,
+  set_program_space_data (get_current_program_space(),
 			  jv_dynamics_progspace_key,
 			  NULL);
 }
@@ -124,7 +124,7 @@ get_dynamics_objfile (struct gdbarch *gdbarch)
       data = XCNEW (struct jv_per_objfile_data);
       set_objfile_data (dynamics_objfile, jv_dynamics_objfile_data_key, data);
 
-      set_program_space_data (current_program_space,
+      set_program_space_data (get_current_program_space(),
 			      jv_dynamics_progspace_key,
 			      dynamics_objfile);
     }
