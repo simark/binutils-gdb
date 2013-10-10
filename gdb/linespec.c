@@ -246,7 +246,7 @@ typedef enum ls_token_type linespec_token_type;
 
 /* List of keywords  */
 
-static const char * const linespec_keywords[] = { "if", "thread", "task" };
+static const char * const linespec_keywords[] = { "if", "thread", "task", "process"};
 
 /* A token of the linespec lexer  */
 

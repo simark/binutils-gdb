@@ -508,6 +508,78 @@ default_execution_direction (struct target_ops *self)
 to_execution_direction must be implemented for reverse async");
 }
 
+int
+target_define_global_breakpoint (bfd *abfd, CORE_ADDR addr, char *uname,
+				 int flags)
+{
+  struct target_ops *t;
+  int rslt;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    {
+      if (t->to_define_global_breakpoint)
+	{
+	  rslt = t->to_define_global_breakpoint (abfd, addr, uname, flags);
+	  if (targetdebug)
+	    fprintf_unfiltered (gdb_stdlog,
+				"target_define_global_breakpoint (bfd of %s, %s, %s, 0x%x) = %d\n",
+				abfd->filename,
+				paddress (target_gdbarch (), addr),
+				uname, flags, rslt);
+	  return rslt;
+	}
+    }
+
+  internal_error (__FILE__, __LINE__,
+		  "could not find a target to define global breakpoint");
+
+  return -1;
+}
+
+void
+target_insert_global_breakpoint (int gbpnum, int pid)
+{
+  struct target_ops *t;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    {
+      if (t->to_insert_global_breakpoint)	
+	{
+	  (t->to_insert_global_breakpoint) (gbpnum, pid);
+	  if (targetdebug)
+	    fprintf_unfiltered (gdb_stdlog,
+				"target_insert_global_breakpoint (%d, %d)\n",
+				gbpnum, pid);
+	  return;
+	}
+    }
+
+  internal_error (__FILE__, __LINE__,
+		  "could not find a target to insert global breakpoint");
+}
+
+void
+target_delete_global_breakpoint (int gbpnum)
+{
+  struct target_ops *t;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    {
+      if (t->to_delete_global_breakpoint)	
+	{
+	  (t->to_delete_global_breakpoint) (gbpnum);
+	  if (targetdebug)
+	    fprintf_unfiltered (gdb_stdlog,
+				"target_delete_global_breakpoint (%d)\n",
+				gbpnum);
+	  return;
+	}
+    }
+
+  internal_error (__FILE__, __LINE__,
+		  "could not find a target to delete global breakpoint");
+}
+
 /* Go through the target stack from top to bottom, copying over zero
    entries in current_target, then filling in still empty entries.  In
    effect, we are doing class inheritance through the pushed target
@@ -2522,6 +2594,16 @@ target_thread_address_space (ptid_t ptid)
 }
 
 
+static int
+find_default_define_global_breakpoint (bfd *abfd, CORE_ADDR addr,
+				       char *uname, int flags)
+{
+  struct target_ops *t;
+
+  t = find_default_run_target ("define global breakpoint");
+  return (t->to_define_global_breakpoint) (abfd, addr, uname, flags);
+}
+
 /* Target file operations.  */
 
 static struct target_ops *
@@ -2967,6 +3049,8 @@ init_dummy_target (void)
   dummy_target.to_has_stack = return_zero;
   dummy_target.to_has_registers = return_zero;
   dummy_target.to_has_execution = return_zero_has_execution;
+  dummy_target.to_define_global_breakpoint =
+    find_default_define_global_breakpoint;
   dummy_target.to_magic = OPS_MAGIC;
 
   install_dummy_methods (&dummy_target);
@@ -3410,6 +3494,39 @@ void
 target_done_generating_core (void)
 {
   current_target.to_done_generating_core (&current_target);
+}
+
+static int
+debug_to_define_global_breakpoint (bfd *abfd, CORE_ADDR addr,
+				   char *uname, int flags)
+{
+  int rslt;
+
+  rslt = debug_target.to_define_global_breakpoint (abfd, addr, uname, flags);
+
+  fprintf_unfiltered (gdb_stdlog, "target_to_define_global_breakpoint (0x%x, %s, %s, %d) = %d\n",
+		      (int) abfd, paddress (target_gdbarch (), addr),
+		      (uname ? uname : "<NULL>"), flags, rslt);
+
+  return rslt;
+}
+
+static void
+debug_to_insert_global_breakpoint (int gbpnum, int pid)
+{
+  debug_target.to_insert_global_breakpoint (gbpnum, pid);
+
+  fprintf_unfiltered (gdb_stdlog, "target_to_insert_global_breakpoint (%d, %d)\n",
+		      gbpnum, pid);
+}
+
+static void
+debug_to_delete_global_breakpoint (int gbpnum)
+{
+  debug_target.to_delete_global_breakpoint (gbpnum);
+
+  fprintf_unfiltered (gdb_stdlog, "target_to_delete_global_breakpoint (%d)\n",
+		      gbpnum);
 }
 
 static void
