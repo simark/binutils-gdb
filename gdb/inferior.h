@@ -44,6 +44,7 @@ struct target_desc_info;
 
 #include "progspace.h"
 #include "registry.h"
+#include "gdb_vecs.h"
 
 struct infcall_suspend_state;
 struct infcall_control_state;

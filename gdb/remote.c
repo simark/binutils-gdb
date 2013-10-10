@@ -71,6 +71,8 @@
 #include "agent.h"
 #include "btrace.h"
 
+#include "breakpoint.h" /* for global breakpoint decls */
+
 /* Temp hacks for tracepoint encoding migration.  */
 static char *target_buf;
 static long target_buf_size;
@@ -225,6 +227,8 @@ static int peek_stop_reply (ptid_t ptid);
 
 static void remote_async_inferior_event_handler (gdb_client_data);
 
+static void remote_async_attach_handler (gdb_client_data);
+
 static void remote_terminal_ours (void);
 
 static int remote_read_description_p (struct target_ops *target);
@@ -366,6 +370,9 @@ struct remote_state
   /* True if the stub supports qXfer:libraries-svr4:read with a
      non-empty annex.  */
   int augmented_libraries_svr4_read;
+
+  /* True if the stub reports support for global breakpoints.  */
+  int global_breakpoints;
 
   /* Nonzero if the user has pressed Ctrl-C, but the target hasn't
      responded to that.  */
@@ -1369,6 +1376,7 @@ enum {
   PACKET_Qbtrace_off,
   PACKET_Qbtrace_bts,
   PACKET_qXfer_btrace,
+  PACKET_GlobalBreakpoints,
   PACKET_MAX
 };
 
@@ -1467,6 +1475,11 @@ static struct async_signal_handler *async_sigint_remote_token;
    when we have pending events ready to be passed to the core.  */
 
 static struct async_event_handler *remote_async_inferior_event_token;
+
+
+/* Asynchronous signal handler for %Hit notications.  */
+
+static struct async_event_handler *remote_async_get_gb_hit_token;
 
 
 
@@ -3071,12 +3084,16 @@ remote_close (void)
      everything of this target.  */
   discard_pending_stop_replies_in_queue ();
 
+  discard_attach_requests ();
+
   if (remote_async_inferior_event_token)
     delete_async_event_handler (&remote_async_inferior_event_token);
 
   remote_notif_state_xfree (rs->notif_state);
 
   trace_reset_local_state ();
+  if (remote_async_get_gb_hit_token)
+    delete_async_event_handler (&remote_async_get_gb_hit_token);
 }
 
 /* Query the remote side for the text, data and bss offsets.  */
@@ -3982,6 +3999,16 @@ remote_string_tracing_feature (const struct protocol_feature *feature,
 }
 
 static void
+remote_global_breakpoint_feature (const struct protocol_feature *feature,
+				  enum packet_support support,
+				  const char *value)
+{
+  struct remote_state *rs = get_remote_state ();
+
+  rs->global_breakpoints = (support == PACKET_ENABLE);
+}
+
+static void
 remote_augmented_libraries_svr4_read_feature
   (const struct protocol_feature *feature,
    enum packet_support support, const char *value)
@@ -4065,7 +4092,9 @@ static const struct protocol_feature remote_protocol_features[] = {
   { "Qbtrace:off", PACKET_DISABLE, remote_supported_packet, PACKET_Qbtrace_off },
   { "Qbtrace:bts", PACKET_DISABLE, remote_supported_packet, PACKET_Qbtrace_bts },
   { "qXfer:btrace:read", PACKET_DISABLE, remote_supported_packet,
-    PACKET_qXfer_btrace }
+    PACKET_qXfer_btrace },
+  { "GlobalBreakpoints", PACKET_DISABLE, remote_global_breakpoint_feature,
+     PACKET_GlobalBreakpoints },
 };
 
 static char *remote_support_xml;
@@ -4339,6 +4368,9 @@ remote_open_1 (char *name, int from_tty,
     = create_async_event_handler (remote_async_inferior_event_handler,
 				  NULL);
   rs->notif_state = remote_notif_state_allocate ();
+  remote_async_get_gb_hit_token
+    = create_async_event_handler (remote_async_attach_handler,
+				  NULL);
 
   /* Reset the target state; these things will be queried either by
      remote_query_supported or as they are needed.  */
@@ -11427,6 +11459,88 @@ remote_augmented_libraries_svr4_read (void)
   return rs->augmented_libraries_svr4_read;
 }
 
+/* Compose a packet defining a global breakpoint, send it, and try
+   to get a global breakpoint number out of the response.  */
+
+static int
+remote_define_global_breakpoint (bfd *abfd, CORE_ADDR addr,
+				 char *uname, int flags)
+{
+  struct remote_state *rs = get_remote_state ();
+  int len;
+  ULONGEST gbnum = 0;
+  char addrbuf[40];
+
+  if (bfd_get_filename (abfd) == NULL)
+    error (_("Error defining global breakpoint: no file name for location"));
+
+  if (!rs->global_breakpoints)
+    error (_("Remote does not support global breakpoints"));
+
+  /* Build the packet.  */
+  strcpy (rs->buf, "QGBreakDefine:");
+  len = strlen (rs->buf);
+  len += 2 * bin2hex ((gdb_byte *) abfd->filename, rs->buf + len, 0);
+  sprintf_vma (addrbuf, addr);
+  len += sprintf (rs->buf + len, ":0:%s:", addrbuf);
+  if (uname)
+    len += 2 * bin2hex ((gdb_byte *) uname, rs->buf + len, 0);
+  sprintf (rs->buf + len, ":%x", flags);
+
+  /* Send it out.  */
+  putpkt (rs->buf);
+  getpkt (&rs->buf, &rs->buf_size, 0);
+
+  if (rs->buf[0] == 'E' && rs->buf[1] == '.')
+    error (_("Error defining global breakpoint: %s"), &(rs->buf[2]));
+  else if (rs->buf[0] == '\0')
+    error (_("Remote does not support global breakpoints"));
+  else
+    unpack_varlen_hex (rs->buf, &gbnum);
+
+  return gbnum;
+}
+
+/* Instruct the remote target to insert the given global breakpoint
+   into the process with the given pid.  */
+
+static void
+remote_insert_global_breakpoint (int gbnum, int pid)
+{
+  struct remote_state *rs = get_remote_state ();
+
+  if (!rs->global_breakpoints)
+    error (_("Remote does not support global breakpoints"));
+
+  sprintf (rs->buf, "QBreakInsert:%x:%x", gbnum, pid);
+  putpkt (rs->buf);
+  getpkt (&rs->buf, &rs->buf_size, 0);
+
+  if (rs->buf[0] == 'E' && rs->buf[1] == '.')
+    error (_("Error inserting global breakpoint: %s"), &(rs->buf[2]));
+  else if (rs->buf[0] == '\0')
+    error (_("Remote does not support global breakpoints"));
+}
+
+/* Instruct the remote target to delete the given global breakpoint.  */
+
+static void
+remote_delete_global_breakpoint (int gbnum)
+{
+  struct remote_state *rs = get_remote_state ();
+
+  if (!rs->global_breakpoints)
+    error (_("Remote does not support global breakpoints"));
+
+  sprintf (rs->buf, "QBreakDelete:%x", gbnum);
+  putpkt (rs->buf);
+  getpkt (&rs->buf, &rs->buf_size, 0);
+  if (rs->buf[0] == 'E' && rs->buf[1] == '.')
+    error (_("Error deleting global breakpoint: %s"), &(rs->buf[2]));
+  else if (rs->buf[0] == '\0')
+    error (_("Remote does not support global breakpoints"));
+}
+
 static void
 init_remote_ops (void)
 {
@@ -11550,6 +11664,10 @@ Specify the serial device it is connected to\n\
   remote_ops.to_read_btrace = remote_read_btrace;
   remote_ops.to_augmented_libraries_svr4_read =
     remote_augmented_libraries_svr4_read;
+
+  remote_ops.to_define_global_breakpoint = remote_define_global_breakpoint;
+  remote_ops.to_insert_global_breakpoint = remote_insert_global_breakpoint;
+  remote_ops.to_delete_global_breakpoint = remote_delete_global_breakpoint;
 }
 
 /* Set up the extended remote vector by making a copy of the standard
@@ -11622,6 +11740,17 @@ static void
 remote_async_inferior_event_handler (gdb_client_data data)
 {
   inferior_event_handler (INF_REG_EVENT, NULL);
+}
+
+/* The attach handler asks generic code to try to handle its queue; if
+   there are any left, we re-mark the event handler for another
+   go-round.  */
+
+static void
+remote_async_attach_handler (gdb_client_data data)
+{
+  if (handle_attach_requests ())
+    mark_async_event_handler (remote_async_get_gb_hit_token);
 }
 
 static void

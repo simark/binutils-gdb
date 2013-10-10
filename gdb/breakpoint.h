@@ -587,7 +587,7 @@ struct breakpoint_ops
      This function is called inside `create_breakpoint'.  */
   void (*create_breakpoints_sal) (struct gdbarch *,
 				  struct linespec_result *,
-				  char *, char *,
+				  char *, char *, char *,
 				  enum bptype, enum bpdisp, int, int,
 				  int, const struct breakpoint_ops *,
 				  int, int, int, unsigned);
@@ -740,6 +740,10 @@ struct breakpoint
     /* Ada task number for task-specific breakpoint, 
        or 0 if don't care.  */
     int task;
+
+    /* Processes/inferiors in which to insert this breakpoint; NULL
+       for the current process only.  */
+    char *process_string;
 
     /* Count of the number of times this breakpoint was taken, dumped
        with the info, but not used for anything else.  Useful for
@@ -1554,5 +1558,23 @@ extern struct gdbarch *get_sal_arch (struct symtab_and_line sal);
 extern void breakpoint_free_objfile (struct objfile *objfile);
 
 extern char *ep_parse_optional_if_clause (char **arg);
+
+/* Definitions related to global breakpoints.  */
+
+#define ALL_CURRENT_PROCESSES(flags) ((flags) & 0x1)
+#define ALL_FUTURE_PROCESSES(flags) ((flags) & 0x2)
+
+#define SET_ALL_CURRENT_PROCESSES(flags) ((flags) |= 0x1)
+#define SET_ALL_FUTURE_PROCESSES(flags) ((flags) |= 0x2)
+
+			 /*extern VEC(int) *parse_process_string (char *p, char **uid, int *flags);*/
+
+extern void queue_attach_request (int pid, int gbnum, CORE_ADDR addr);
+extern int handle_attach_requests (void);
+extern void discard_attach_requests (void);
+extern void record_breakpoint (int pid, int gbpnum);
+extern int number_of_global_breakpoints (void);
+struct inferior;
+extern void printf_global_breakpoint (struct ui_out *uiout, struct inferior *inf);
 
 #endif /* !defined (BREAKPOINT_H) */

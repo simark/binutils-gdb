@@ -607,6 +607,8 @@ print_inferior (struct ui_out *uiout, char *requested_inferiors)
 	  ui_out_field_int (uiout, "vfork-child", inf->vfork_child->num);
 	}
 
+      printf_global_breakpoint (uiout, inf);
+
       ui_out_text (uiout, "\n");
       do_cleanups (chain2);
     }

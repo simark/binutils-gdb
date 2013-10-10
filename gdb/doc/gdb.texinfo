@@ -3305,6 +3305,7 @@ running or not, what process it is, and why it stopped.
                                 Skipping over functions and files
 * Signals::                     Signals
 * Thread Stops::                Stopping and starting multi-thread programs
+* Global Breakpoints::		Stopping multiple processes
 @end menu
 
 @node Breakpoints
@@ -3420,8 +3421,11 @@ C@t{++}, a function name may refer to more than one possible place to break.
 that situation.
 
 It is also possible to insert a breakpoint that will stop the program
-only if a specific thread (@pxref{Thread-Specific Breakpoints})
-or a specific task (@pxref{Ada Tasks}) hits that breakpoint.
+only if a specific thread (@pxref{Thread-Specific Breakpoints}) or a
+specific task (@pxref{Ada Tasks}) hits that breakpoint.  In addition,
+a global breakpoint (@pxref{Global Breakpoints}) may be set to stop
+processes not under GDB's control and give you a chance to attach to
+them.
 
 @item break
 When called without any arguments, @code{break} sets a breakpoint at
@@ -6022,6 +6026,74 @@ program execution.  When this variable is @code{off}, the
 
 @item show may-interrupt
 Show the current permission to interrupt or stop the program.
+
+@end table
+
+@node Global Breakpoints
+@section Using Global Breakpoints to Stop Processes
+
+If you are trying to debug a problem in a system with many interacting
+programs and processes, it may prove difficult to find the right
+process in which to set a breakpoint. In the usual @value{GDBN} usage
+model, you choose a process first, then attach and set breakpoints;
+but this is impossible if you don't already know which process is of
+interest.  With global breakpoints, you can go the other way around,
+by setting a breakpoint on a set of processes, then attaching to a
+process only when it hits the breakpoint.
+
+You can set a global breakpoint to trigger on particular processes, on
+all current processes, and/or any future process.  On a multi-user
+target, by default the processes will only be those you own, but you
+can ask to set a breakpoint in any user's process, and with sufficient
+privileges this will work.  However, @value{GDBN} will not insert
+global breakpoints into its own process, nor any process that is under
+a debugger's control.
+
+@table @code
+@item break @var{location} process @var{processes}
+Set a breakpoint at the given @var{location} in all of the processes
+specified by @var{processes}
+
+If any of the specified processes encounters the breakpoint, then
+@value{GDBN} will notify you of the hit and ask if you want to attach
+to that process.  If you agree, then @value{GDBN} attaches to the
+process in the usual way and shows you the program stopped at
+@var{location}, after which you can debug it normally.
+
+If the current inferior is included in @var{processes}, then the
+breakpoint also acts as a normal breakpoint for the inferior.
+
+Global breakpoints remain in effect after you detach from a process.
+@end table
+
+The process specification is basically a comma-separated list of pids
+and wild cards.  The specification may not have any whitespace
+embedded.
+
+@table @code
+@item @var{pid}
+Specifies the process whose ID is @var{pid}.
+
+@item *
+Specifies all current processes, defined as those in existence at the
+moment that the global breakpoint was defined.
+
+@item future
+@itemx +
+Specifies all processes that are created after the moment that the
+global breakpoint was defined.
+
+@item all
+Specifies all current and future processes.
+
+@item /*
+Says the specification applies to all users' processes.
+
+@item /@var{name}
+Says that the specification applies to all processes of user @var{name}.
+
+@item @var{spec1},@var{spec2},@dots{}
+Specifies the union of the individual specifications @var{spec1}, etc.
 
 @end table
 
@@ -38382,6 +38454,42 @@ indicating that it may.  (The target can then use this to set up its
 own internals optimally, for instance if the debugger never expects to
 insert breakpoints, it may not need to install its own trap handler.)
 
+@item QGBreakDefine:@var{filename}:@var{segment/section}:@var{offset}:@var{username}:@var{flags}
+@cindex @samp{QBreakDefine} packet
+
+Request the target to create a global breakpoint (@pxref{Global
+Breakpoints}).  @var{filename} is a hex-encoded string specifying the
+executable or shared library, while @var{segment/section} and
+@var{offset} are hex numbers representing position in @var{filename}.
+The exact interpretation of these is target-specific; for GNU/Linux,
+@var{segment/section} is 0, while @var{offset} is relative to the
+entry point of @var{filename} once it is mapped in.  Similarly,
+@var{username} is an optional target-specific hex-encoded string,
+intended to restrict breakpoints to be set only in processes owned by
+the named user.  @var{flags} consists of bit flags; bit 0 indicates
+that the breakpoint should apply to all current processes, bit 1
+indicates that it should apply to all future processes, and additional
+bits are unused.
+
+The reply to this packet is a single hexadecimal number, 1 or higher,
+that is the number assigned to this breakpoint by the target.  (Note
+that this is not the same as the user-visible breakpoint number.)  Any
+other result indicates an error.
+
+@item QGBreakDelete:@var{gbnum}
+@cindex @samp{QBreakDelete} packet
+Request the target to delete the global breakpoint @var{gbnum}, where
+the number is as returned by @code{QBreakDefine}.
+
+If the deletion is successful, the target should return @code{OK}.
+
+@item QGBreakInsert:@var{gbnum}:@var{pid}
+@cindex @samp{QBreakInsert} packet
+Request the target to insert the global breakpoint @var{gbnum} into
+the process @var{pid}.
+
+If the deletion is successful, the target should return @code{OK}.
+
 @item qC
 @cindex current thread, remote request
 @cindex @samp{qC} packet
@@ -39064,6 +39172,11 @@ These are the currently defined stub features and their properties:
 @tab @samp{-}
 @tab No
 
+@item @samp{GlobalBreakpoints}
+@tab No
+@tab @samp{-}
+@tab No
+
 @end multitable
 
 These are the currently defined stub features, in more detail:
@@ -39236,6 +39349,10 @@ The remote stub understands the @samp{Qbtrace:off} packet.
 
 @item Qbtrace:bts
 The remote stub understands the @samp{Qbtrace:bts} packet.
+
+@item GlobalBreakpoints
+The remote stub accepts and implements global breakpoints
+(@pxref{Global Breakpoints}).
 
 @end table
 
@@ -40543,6 +40660,18 @@ The following notifications are defined:
 described in @ref{Stop Reply Packets}.  Refer to @ref{Remote Non-Stop},
 for information on how these notifications are acknowledged by 
 @value{GDBN}.
+
+@item Hit: @var{pid} : @var{gbnum} : @var{addr}
+Report that global breakpoint number @var{gbnum} has been hit at
+address @var{addr} in process @var{pid}.  Typically @value{GDBN} will
+then ask the user whether to attach to the given process.
+
+@item BP: @var{pid} : @var{gbnum}
+Report that global breakpoint number @var{gbnum} has been installed
+in process @var{pid}.  @value{GDBN} records the occurrence, and if
+it ever attaches to @var{pid}, it will install a regular breakpoint
+at the location of the global breakpoint.
+
 @tab Report an asynchronous stop event in non-stop mode.
 
 @end multitable

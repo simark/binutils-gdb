@@ -143,6 +143,49 @@ handle_notification (struct remote_notif_state *state, char *buf)
   if (nc == NULL)
     return;
 
+#if 0
+  else if (strncmp (buf, "Hit:", strlen ("Hit:")) == 0)
+    {
+      /* Parse attach notification. */
+      char *packet = buf + strlen ("Hit:");
+      ULONGEST pid, gbnum, addr;
+
+      /* pid:gbnum:addr */
+      packet = unpack_varlen_hex (packet, &pid);
+      ++packet;
+      packet = unpack_varlen_hex (packet, &gbnum);
+      ++packet;
+      packet = unpack_varlen_hex (packet, &addr);
+
+      /* Stash the hit info into a queue of requests to attach
+	 to various processes.  */
+      queue_attach_request (pid, gbnum, addr);
+
+      mark_async_event_handler (remote_async_get_gb_hit_token);
+
+      if (remote_debug)
+	fprintf_unfiltered (gdb_stdlog, "gb hit notification captured\n");
+    }
+  else if (strncmp (buf, "BP:", strlen ("BP:")) == 0)
+    {
+      /* Parse breakpoint record notification. */
+      char *packet = buf + strlen ("BP:");
+      ULONGEST pid, gbnum, addr;
+
+      /* pid:gbnum */
+      packet = unpack_varlen_hex (packet, &pid);
+      ++packet;
+      packet = unpack_varlen_hex (packet, &gbnum);
+
+      /* We're just silently making a note, so don't need to queue it
+	 up or anything like that.  */
+      record_breakpoint (pid, gbnum);
+
+      if (remote_debug)
+	fprintf_unfiltered (gdb_stdlog, "record bp notification captured\n");
+    }
+#endif
+
   if (state->pending_event[nc->id] != NULL)
     {
       /* We've already parsed the in-flight reply, but the stub for some

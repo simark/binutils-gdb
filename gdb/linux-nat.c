@@ -63,6 +63,7 @@
 #include "linux-tdep.h"
 #include "symfile.h"
 #include "agent.h"
+#include "breakpoint.h"
 #include "tracepoint.h"
 #include "exceptions.h"
 #include "linux-ptrace.h"
@@ -4810,6 +4811,238 @@ linux_nat_core_of_thread (struct target_ops *ops, ptid_t ptid)
   return -1;
 }
 
+/* Global breakpoint bits.  */
+
+#define BREAKPOINT_DEVICE "/dev/breakpoint"
+
+#define MAX_GB_PACKET 200
+
+int gbfd = -1;
+
+static void gb_event_handler (int error, void *context);
+
+/* Open the breakpoint device, and add a handler to monitor it for
+   events.  */
+
+static void
+open_gb_device (void)
+{
+  if (gbfd >= 0)
+    return;
+
+  gbfd = open (BREAKPOINT_DEVICE, O_RDWR);
+
+  add_file_handler (gbfd, gb_event_handler, NULL);
+}
+
+static void
+close_gb_device (void)
+{
+  if (gbfd < 0)
+    return;
+
+  delete_file_handler (gbfd);
+
+  close (gbfd);
+  gbfd = -1;
+}
+
+/* Given a raw notification of a global breakpoint hit, parse it and
+   queue up a request to attach to the process; it may be a while
+   before the user responds to the request.  */
+
+static void
+linux_nat_parse_attach_request (char *reply)
+{
+  long pid, gbnum;
+  CORE_ADDR addr;
+
+  pid = strtol (reply + 1, &reply, 16);
+  gbnum = strtol (reply + 1, &reply, 16);
+  addr = strtoulst (reply + 1, NULL, 16);
+
+  queue_attach_request (pid, gbnum, addr);
+  /* For now, just handle immediately.  */
+  handle_attach_requests ();
+}
+
+/* Given a reply that is telling us about a breakpoint that the device
+   installed, parse and record it.  */
+
+static void
+linux_nat_record_breakpoint (char *reply)
+{
+  int pid, gbpnum;
+
+  pid = strtol (reply + 1, &reply, 16);
+
+  gbpnum = strtol (reply + 1, &reply, 16);
+
+  printf_filtered ("Install trap for gb %d in pid %d\n", gbpnum, pid);
+
+  record_breakpoint (pid, gbpnum);
+}
+
+/* Read from the breakpoint device until we get a reply instead of a
+   notification.  */
+
+static void
+get_gb_reply (char *reply, int reply_max)
+{
+  int gotten;
+
+  /* Should add a timeout?  */
+  while (1)
+    {
+      /* Note that this is a blocking read; we expect the breakpoint
+	 device to always have some sort of response to a command.  */
+      gotten = read (gbfd, reply, reply_max);
+      reply[gotten] = '\0';
+      if (gotten > 0)
+	{
+	  /* Check for and handle notification-like returns.  */
+	  if (reply[0] == '%')
+	    linux_nat_parse_attach_request (reply);
+	  else if (reply[0] == '#')
+	    linux_nat_record_breakpoint (reply);
+	  else
+	    /* The expected form of reply, return it.  */
+	    break;
+	}
+    }
+}
+
+static int
+linux_nat_define_global_breakpoint (bfd *abfd, CORE_ADDR addr,
+				    char *uname, int flags)
+{
+  char cmd[MAX_GB_PACKET], reply[MAX_GB_PACKET];
+  int written, gotten, gbnum = 0;
+  int uid;
+  struct stat abfd_stat;
+  __dev_t dev = 0;
+  __ino_t inode = 0;
+
+  open_gb_device ();
+
+  if (gbfd < 0)
+    {
+      warning (_("global breakpoints not available (%s not open), treating as a regular breakpoint"),
+	       BREAKPOINT_DEVICE);
+      return -1;
+    }
+
+  if (abfd && bfd_stat (abfd, &abfd_stat) == 0)
+    {
+      dev = abfd_stat.st_dev;
+      inode = abfd_stat.st_ino;
+    }
+
+  /* Translate the optionally-supplied username into a numeric uid.  */
+  uid = 0;
+  if (uname)
+    {
+      struct passwd *pw = getpwnam (uname);
+      if (pw)
+	uid = pw->pw_uid;
+      else
+	warning (_("user name '%s' not found"), uname);
+    }
+  else
+    uid = getuid ();
+
+  sprintf (cmd, "b %s %s %s %x %x",
+	   phex_nz (dev, 0), phex_nz (inode, 0), phex_nz (addr, 0),
+	   uid, flags);
+  written = write (gbfd, cmd, strlen (cmd) + 1);
+  if (written < 0)
+    {
+      warning (_("global breakpoints not available (write to %s failed), treating as a regular breakpoint"),
+	       BREAKPOINT_DEVICE);
+      return -1;
+    }
+
+  get_gb_reply (reply, MAX_GB_PACKET);
+
+  if (reply[0] == 'B')
+    gbnum = strtoul (reply + 1, NULL, 16);
+  else
+    warning (_("Global breakpoint error: '%s'\n"), reply);
+
+  return gbnum;
+}
+
+static void
+linux_nat_insert_global_breakpoint (int gbpnum, int pid)
+{
+  char cmd[MAX_GB_PACKET], reply[MAX_GB_PACKET];
+  int written;
+
+  open_gb_device ();
+
+  if (gbfd < 0)
+    return;
+
+  sprintf (cmd, "i %x %x", gbpnum, pid);
+
+  written = write (gbfd, cmd, strlen (cmd) + 1);
+  if (written < 0)
+    return;
+
+  get_gb_reply (reply, MAX_GB_PACKET);
+
+  if (strcmp (reply, "OK") != 0)
+    warning (_("Insertion error: '%s'\n"), reply);
+}
+
+static void
+linux_nat_delete_global_breakpoint (int gbpnum)
+{
+  char cmd[MAX_GB_PACKET], reply[MAX_GB_PACKET];
+  int written;
+
+  open_gb_device ();
+
+  if (gbfd < 0)
+    return;
+
+  sprintf (cmd, "d %x", gbpnum);
+
+  written = write (gbfd, cmd, strlen (cmd) + 1);
+  if (written < 0)
+    return;
+
+  get_gb_reply (reply, MAX_GB_PACKET);
+
+  if (strcmp (reply, "OK") != 0)
+    warning (_("Global breakpoint deletion error: '%s'\n"), reply);
+
+  /* If this was the last global breakpoint, close the device.  */
+  if (number_of_global_breakpoints () == 0)
+    close_gb_device ();
+}
+
+static void
+gb_event_handler (int error, void *context)
+{
+  int gotten;
+  char reply[MAX_GB_PACKET];
+
+  gotten = read (gbfd, reply, MAX_GB_PACKET);
+  reply[gotten] = '\0';
+
+  if (gotten > 0)
+    {
+      if (reply[0] == '%')
+	linux_nat_parse_attach_request (reply);
+      else if (reply[0] == '#')
+	linux_nat_record_breakpoint (reply);
+      else
+	warning (_("Breakpoint device returned unrecognized packet \"%s\""),
+		 reply);
+    }
+}
+
 void
 linux_nat_add_target (struct target_ops *t)
 {
@@ -4855,6 +5088,10 @@ linux_nat_add_target (struct target_ops *t)
     = linux_nat_supports_disable_randomization;
 
   t->to_core_of_thread = linux_nat_core_of_thread;
+
+  t->to_define_global_breakpoint = linux_nat_define_global_breakpoint;
+  t->to_insert_global_breakpoint = linux_nat_insert_global_breakpoint;
+  t->to_delete_global_breakpoint = linux_nat_delete_global_breakpoint;
 
   /* We don't change the stratum; this target will sit at
      process_stratum and thread_db will set at thread_stratum.  This
