@@ -2390,7 +2390,7 @@ remove_symbol_file_command (char *args, int from_tty)
   char **argv;
   struct objfile *objf = NULL;
   struct cleanup *my_cleanups;
-  struct program_space *pspace = current_program_space;
+  struct program_space *pspace = get_current_program_space ();
   struct gdbarch *gdbarch = get_current_arch ();
 
   dont_repeat ();

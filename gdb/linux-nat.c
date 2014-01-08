@@ -1153,7 +1153,7 @@ linux_nat_attach (struct target_ops *ops, const char *args, int from_tty)
       if (WIFEXITED (status))
 	{
 	  int exit_code = WEXITSTATUS (status);
-	  tracepoint(gdb, inf_exit, GET_LWP (lp->ptid), __FILE__, __LINE__);
+	  tracepoint(gdb, inf_exit, ptid_get_lwp (lp->ptid), __FILE__, __LINE__);
 
 	  target_terminal_ours ();
 	  target_mourn_inferior ();

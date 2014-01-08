@@ -1105,7 +1105,7 @@ source_section_scripts (struct objfile *objfile, const char *section_name,
   const char *p;
   struct auto_load_pspace_info *pspace_info;
 
-  pspace_info = get_auto_load_pspace_data_for_loading (current_program_space);
+  pspace_info = get_auto_load_pspace_data_for_loading (get_current_program_space ());
 
   for (p = start; p < end; ++p)
     {
