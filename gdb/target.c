@@ -3504,8 +3504,8 @@ debug_to_define_global_breakpoint (bfd *abfd, CORE_ADDR addr,
 
   rslt = debug_target.to_define_global_breakpoint (abfd, addr, uname, flags);
 
-  fprintf_unfiltered (gdb_stdlog, "target_to_define_global_breakpoint (0x%x, %s, %s, %d) = %d\n",
-		      (int) abfd, paddress (target_gdbarch (), addr),
+  fprintf_unfiltered (gdb_stdlog, "target_to_define_global_breakpoint (%p, %s, %s, %d) = %d\n",
+		       abfd, paddress (target_gdbarch (), addr),
 		      (uname ? uname : "<NULL>"), flags, rslt);
 
   return rslt;

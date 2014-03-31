@@ -3475,6 +3475,7 @@ rank_one_type (struct type *parm, struct type *arg, struct value *value)
     default:
       return INCOMPATIBLE_TYPE_BADNESS;
     }				/* switch (TYPE_CODE (arg)) */
+  return INCOMPATIBLE_TYPE_BADNESS;
 }
 
 /* End of functions for overload resolution.  */
