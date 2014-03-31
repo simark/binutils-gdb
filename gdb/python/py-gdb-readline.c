@@ -34,11 +34,12 @@
 
 static char *
 gdbpy_readline_wrapper (FILE *sys_stdin, FILE *sys_stdout,
-			char *prompt)
+			const char *prompt_const)
 {
   int n;
   char *p = NULL, *q;
   volatile struct gdb_exception except;
+  char *prompt = (char*) prompt_const;
 
   TRY_CATCH (except, RETURN_MASK_ALL)
     p = command_line_input (prompt, 0, "python");

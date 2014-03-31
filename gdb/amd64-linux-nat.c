@@ -1119,6 +1119,7 @@ amd64_linux_read_description (struct target_ops *ops)
       else
 	return tdesc_i386_linux;
     }
+  return NULL;
 }
 
 /* Enable branch tracing.  */
