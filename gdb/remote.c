@@ -11588,87 +11588,87 @@ remote_load (struct target_ops *self, const char *name, int from_tty)
   generic_load (name, from_tty);
 }
 
-/* Compose a packet defining a global breakpoint, send it, and try
-   to get a global breakpoint number out of the response.  */
-
-static int
-remote_define_global_breakpoint (bfd *abfd, CORE_ADDR addr,
-				 char *uname, int flags)
-{
-  struct remote_state *rs = get_remote_state ();
-  int len;
-  ULONGEST gbnum = 0;
-  char addrbuf[40];
-
-  if (bfd_get_filename (abfd) == NULL)
-    error (_("Error defining global breakpoint: no file name for location"));
-
-  if (!rs->global_breakpoints)
-    error (_("Remote does not support global breakpoints"));
-
-  /* Build the packet.  */
-  strcpy (rs->buf, "QGBreakDefine:");
-  len = strlen (rs->buf);
-  len += 2 * bin2hex ((gdb_byte *) abfd->filename, rs->buf + len, 0);
-  sprintf_vma (addrbuf, addr);
-  len += sprintf (rs->buf + len, ":0:%s:", addrbuf);
-  if (uname)
-    len += 2 * bin2hex ((gdb_byte *) uname, rs->buf + len, 0);
-  sprintf (rs->buf + len, ":%x", flags);
-
-  /* Send it out.  */
-  putpkt (rs->buf);
-  getpkt (&rs->buf, &rs->buf_size, 0);
-
-  if (rs->buf[0] == 'E' && rs->buf[1] == '.')
-    error (_("Error defining global breakpoint: %s"), &(rs->buf[2]));
-  else if (rs->buf[0] == '\0')
-    error (_("Remote does not support global breakpoints"));
-  else
-    unpack_varlen_hex (rs->buf, &gbnum);
-
-  return gbnum;
-}
-
-/* Instruct the remote target to insert the given global breakpoint
-   into the process with the given pid.  */
-
-static void
-remote_insert_global_breakpoint (int gbnum, int pid)
-{
-  struct remote_state *rs = get_remote_state ();
-
-  if (!rs->global_breakpoints)
-    error (_("Remote does not support global breakpoints"));
-
-  sprintf (rs->buf, "QBreakInsert:%x:%x", gbnum, pid);
-  putpkt (rs->buf);
-  getpkt (&rs->buf, &rs->buf_size, 0);
-
-  if (rs->buf[0] == 'E' && rs->buf[1] == '.')
-    error (_("Error inserting global breakpoint: %s"), &(rs->buf[2]));
-  else if (rs->buf[0] == '\0')
-    error (_("Remote does not support global breakpoints"));
-}
-
-/* Instruct the remote target to delete the given global breakpoint.  */
-
-static void
-remote_delete_global_breakpoint (int gbnum)
-{
-  struct remote_state *rs = get_remote_state ();
-
-  if (!rs->global_breakpoints)
-    error (_("Remote does not support global breakpoints"));
-
-  sprintf (rs->buf, "QBreakDelete:%x", gbnum);
-  putpkt (rs->buf);
-  getpkt (&rs->buf, &rs->buf_size, 0);
-  if (rs->buf[0] == 'E' && rs->buf[1] == '.')
-    error (_("Error deleting global breakpoint: %s"), &(rs->buf[2]));
-  else if (rs->buf[0] == '\0')
-    error (_("Remote does not support global breakpoints"));
-}
+///* Compose a packet defining a global breakpoint, send it, and try
+//   to get a global breakpoint number out of the response.  */
+//
+//static int
+//remote_define_global_breakpoint (bfd *abfd, CORE_ADDR addr,
+//				 char *uname, int flags)
+//{
+//  struct remote_state *rs = get_remote_state ();
+//  int len;
+//  ULONGEST gbnum = 0;
+//  char addrbuf[40];
+//
+//  if (bfd_get_filename (abfd) == NULL)
+//    error (_("Error defining global breakpoint: no file name for location"));
+//
+//  if (!rs->global_breakpoints)
+//    error (_("Remote does not support global breakpoints"));
+//
+//  /* Build the packet.  */
+//  strcpy (rs->buf, "QGBreakDefine:");
+//  len = strlen (rs->buf);
+//  len += 2 * bin2hex ((gdb_byte *) abfd->filename, rs->buf + len, 0);
+//  sprintf_vma (addrbuf, addr);
+//  len += sprintf (rs->buf + len, ":0:%s:", addrbuf);
+//  if (uname)
+//    len += 2 * bin2hex ((gdb_byte *) uname, rs->buf + len, 0);
+//  sprintf (rs->buf + len, ":%x", flags);
+//
+//  /* Send it out.  */
+//  putpkt (rs->buf);
+//  getpkt (&rs->buf, &rs->buf_size, 0);
+//
+//  if (rs->buf[0] == 'E' && rs->buf[1] == '.')
+//    error (_("Error defining global breakpoint: %s"), &(rs->buf[2]));
+//  else if (rs->buf[0] == '\0')
+//    error (_("Remote does not support global breakpoints"));
+//  else
+//    unpack_varlen_hex (rs->buf, &gbnum);
+//
+//  return gbnum;
+//}
+//
+///* Instruct the remote target to insert the given global breakpoint
+//   into the process with the given pid.  */
+//
+//static void
+//remote_insert_global_breakpoint (int gbnum, int pid)
+//{
+//  struct remote_state *rs = get_remote_state ();
+//
+//  if (!rs->global_breakpoints)
+//    error (_("Remote does not support global breakpoints"));
+//
+//  sprintf (rs->buf, "QBreakInsert:%x:%x", gbnum, pid);
+//  putpkt (rs->buf);
+//  getpkt (&rs->buf, &rs->buf_size, 0);
+//
+//  if (rs->buf[0] == 'E' && rs->buf[1] == '.')
+//    error (_("Error inserting global breakpoint: %s"), &(rs->buf[2]));
+//  else if (rs->buf[0] == '\0')
+//    error (_("Remote does not support global breakpoints"));
+//}
+//
+///* Instruct the remote target to delete the given global breakpoint.  */
+//
+//static void
+//remote_delete_global_breakpoint (int gbnum)
+//{
+//  struct remote_state *rs = get_remote_state ();
+//
+//  if (!rs->global_breakpoints)
+//    error (_("Remote does not support global breakpoints"));
+//
+//  sprintf (rs->buf, "QBreakDelete:%x", gbnum);
+//  putpkt (rs->buf);
+//  getpkt (&rs->buf, &rs->buf_size, 0);
+//  if (rs->buf[0] == 'E' && rs->buf[1] == '.')
+//    error (_("Error deleting global breakpoint: %s"), &(rs->buf[2]));
+//  else if (rs->buf[0] == '\0')
+//    error (_("Remote does not support global breakpoints"));
+//}
 
 static void
 init_remote_ops (void)
@@ -11794,9 +11794,9 @@ Specify the serial device it is connected to\n\
   remote_ops.to_augmented_libraries_svr4_read =
     remote_augmented_libraries_svr4_read;
 
-  remote_ops.to_define_global_breakpoint = remote_define_global_breakpoint;
+  /*remote_ops.to_define_global_breakpoint = remote_define_global_breakpoint;
   remote_ops.to_insert_global_breakpoint = remote_insert_global_breakpoint;
-  remote_ops.to_delete_global_breakpoint = remote_delete_global_breakpoint;
+  remote_ops.to_delete_global_breakpoint = remote_delete_global_breakpoint;*/
 }
 
 /* Set up the extended remote vector by making a copy of the standard

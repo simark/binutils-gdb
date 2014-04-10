@@ -1566,7 +1566,7 @@ extern char *ep_parse_optional_if_clause (char **arg);
 
 			 /*extern VEC(int) *parse_process_string (char *p, char **uid, int *flags);*/
 
-extern void queue_attach_request (int pid, int gbnum, CORE_ADDR addr);
+extern void queue_attach_request (int pid, int gb_num);
 extern int handle_attach_requests (void);
 extern void discard_attach_requests (void);
 extern void record_breakpoint (int pid, int gbpnum);

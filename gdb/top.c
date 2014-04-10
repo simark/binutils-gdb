@@ -1374,7 +1374,7 @@ quit_confirm (void)
 }
 
 /* Quit without asking for confirmation.  */
-
+int linux_nat_global_breakpoints_teardown(void);
 void
 quit_force (char *args, int from_tty)
 {
@@ -1411,6 +1411,8 @@ quit_force (char *args, int from_tty)
     {
       disconnect_tracing ();
       iterate_over_inferiors (kill_or_detach, &qt);
+      // This is meh
+      linux_nat_global_breakpoints_teardown();
     }
   DO_PRINT_EX;
 

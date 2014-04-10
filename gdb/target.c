@@ -509,8 +509,7 @@ to_execution_direction must be implemented for reverse async");
 }
 
 int
-target_define_global_breakpoint (bfd *abfd, CORE_ADDR addr, char *uname,
-				 int flags)
+target_define_global_breakpoint (bfd *abfd, CORE_ADDR addr, int flags)
 {
   struct target_ops *t;
   int rslt;
@@ -519,13 +518,13 @@ target_define_global_breakpoint (bfd *abfd, CORE_ADDR addr, char *uname,
     {
       if (t->to_define_global_breakpoint)
 	{
-	  rslt = t->to_define_global_breakpoint (abfd, addr, uname, flags);
+	  rslt = t->to_define_global_breakpoint (abfd, addr, flags);
 	  if (targetdebug)
 	    fprintf_unfiltered (gdb_stdlog,
-				"target_define_global_breakpoint (bfd of %s, %s, %s, 0x%x) = %d\n",
+				"target_define_global_breakpoint (%s:%s, %x) = %d\n",
 				abfd->filename,
 				paddress (target_gdbarch (), addr),
-				uname, flags, rslt);
+				flags, rslt);
 	  return rslt;
 	}
     }
@@ -537,7 +536,7 @@ target_define_global_breakpoint (bfd *abfd, CORE_ADDR addr, char *uname,
 }
 
 void
-target_insert_global_breakpoint (int gbpnum, int pid)
+target_insert_global_breakpoint (int gbpnum)
 {
   struct target_ops *t;
 
@@ -545,11 +544,11 @@ target_insert_global_breakpoint (int gbpnum, int pid)
     {
       if (t->to_insert_global_breakpoint)	
 	{
-	  (t->to_insert_global_breakpoint) (gbpnum, pid);
+	  (t->to_insert_global_breakpoint) (gbpnum);
 	  if (targetdebug)
 	    fprintf_unfiltered (gdb_stdlog,
-				"target_insert_global_breakpoint (%d, %d)\n",
-				gbpnum, pid);
+				"target_insert_global_breakpoint (%d)\n",
+				gbpnum);
 	  return;
 	}
     }
@@ -729,6 +728,7 @@ pop_all_targets_above (enum strata above_stratum)
 {
   while ((int) (current_target.to_stratum) > (int) above_stratum)
     {
+      printf("Unpush %s target\n", target_stack->to_longname);
       if (!unpush_target (target_stack))
 	{
 	  fprintf_unfiltered (gdb_stderr,
@@ -3497,36 +3497,36 @@ target_done_generating_core (void)
 }
 
 static int
-debug_to_define_global_breakpoint (bfd *abfd, CORE_ADDR addr,
-				   char *uname, int flags)
+debug_to_define_global_breakpoint (bfd *abfd, CORE_ADDR addr, int flags)
 {
   int rslt;
 
-  rslt = debug_target.to_define_global_breakpoint (abfd, addr, uname, flags);
+  rslt = debug_target.to_define_global_breakpoint (abfd, addr, flags);
 
-  fprintf_unfiltered (gdb_stdlog, "target_to_define_global_breakpoint (%p, %s, %s, %d) = %d\n",
-		       abfd, paddress (target_gdbarch (), addr),
-		      (uname ? uname : "<NULL>"), flags, rslt);
+  fprintf_unfiltered (gdb_stdlog, "target_to_define_global_breakpoint (%p, %s, %d) = %d\n",
+		       abfd, paddress (target_gdbarch (), addr), flags, rslt);
 
   return rslt;
 }
 
-static void
-debug_to_insert_global_breakpoint (int gbpnum, int pid)
+static int
+debug_to_insert_global_breakpoint (int gbpnum)
 {
-  debug_target.to_insert_global_breakpoint (gbpnum, pid);
+  int ret = debug_target.to_insert_global_breakpoint (gbpnum);
 
-  fprintf_unfiltered (gdb_stdlog, "target_to_insert_global_breakpoint (%d, %d)\n",
-		      gbpnum, pid);
+  fprintf_unfiltered (gdb_stdlog, "target_to_insert_global_breakpoint (%d)\n",
+		      gbpnum);
+  return ret;
 }
 
-static void
+static int
 debug_to_delete_global_breakpoint (int gbpnum)
 {
-  debug_target.to_delete_global_breakpoint (gbpnum);
+  int ret = debug_target.to_delete_global_breakpoint (gbpnum);
 
   fprintf_unfiltered (gdb_stdlog, "target_to_delete_global_breakpoint (%d)\n",
 		      gbpnum);
+  return ret;
 }
 
 static void

@@ -2052,8 +2052,6 @@ in which its expression is valid.\n"),
     select_frame (frame_find_by_id (saved_frame_id));
 }
 
-static VEC(int) *parse_process_string (char *p, char **uid_p, int *flags);
-
 struct breakpoint_inferior_data
 {
   /* This is a list of breakpoint numbers that were reported as having
@@ -2088,39 +2086,39 @@ get_breakpoint_inferior_data (struct inferior *inf)
    given inferior INF and therefore should have its locations
    inserted.  */
 
-static int
-breakpoint_applies_to_inferior (struct breakpoint *b, struct inferior *inf)
-{
-  int flags = 0, ix, pid, bnum;
-  VEC(int) *pids;
-  struct breakpoint_inferior_data *data = get_breakpoint_inferior_data (inf);
-
-  if (!b->process_string)
-    return 1;
-
-  pids = parse_process_string (b->process_string, NULL, &flags);
-
-  for (ix = 0; VEC_iterate (int, pids, ix, pid); ix++)
-    {
-      if (pid == inf->pid)
-	{
-	  VEC_free (int, pids);
-	  return 1;
-	}
-    }
-
-  VEC_free (int, pids);
-
-  /* See if the global breakpoint agent told us that this breakpoint
-     needs to be installed (for instance, because the agent found that
-     the inferior matched a wildcard in the breakpoint's process
-     list).  */
-  for (ix = 0; VEC_iterate (int, data->installed_breakpoints, ix, bnum); ix++)
-    if (bnum == b->number)
-      return 1;
-
-  return 0;
-}
+//static int
+//breakpoint_applies_to_inferior (struct breakpoint *b, struct inferior *inf)
+//{
+//  int flags = 0, ix, pid, bnum;
+//  VEC(int) *pids;
+//  struct breakpoint_inferior_data *data = get_breakpoint_inferior_data (inf);
+//
+//  if (!b->process_string)
+//    return 1;
+//
+//  pids = parse_process_string (b->process_string, NULL, &flags);
+//
+//  for (ix = 0; VEC_iterate (int, pids, ix, pid); ix++)
+//    {
+//      if (pid == inf->pid)
+//	{
+//	  VEC_free (int, pids);
+//	  return 1;
+//	}
+//    }
+//
+//  VEC_free (int, pids);
+//
+//  /* See if the global breakpoint agent told us that this breakpoint
+//     needs to be installed (for instance, because the agent found that
+//     the inferior matched a wildcard in the breakpoint's process
+//     list).  */
+//  for (ix = 0; VEC_iterate (int, data->installed_breakpoints, ix, bnum); ix++)
+//    if (bnum == b->number)
+//      return 1;
+//
+//  return 0;
+//}
 
 /* Returns 1 iff breakpoint location should be
    inserted in the inferior.  We don't differentiate the type of BL's owner
@@ -3007,11 +3005,11 @@ update_inserted_breakpoint_locations (void)
 	continue;
 
      /* Multi-process breakpoint might not be relevant to this inferior.  */
-     if (bl->owner->process_string
+ /*    if (bl->owner->process_string
 	 && !breakpoint_applies_to_inferior (bl->owner,
 					     find_inferior_pid
 					     (ptid_get_pid (inferior_ptid))))
-       continue;
+       continue;*/
 
       val = insert_bp_location (bl, tmp_error_stream, &disabled_breaks,
 				    &hw_breakpoint_error, &hw_bp_details_reported);
@@ -9510,13 +9508,6 @@ init_breakpoint_sal (struct breakpoint *b, struct gdbarch *gdbarch,
 	  if (*arg)
               error (_("Garbage '%s' follows condition"), arg);
 	}
-
-      /* Note that we still go through global breakpoint definition
-	 process even if the process spec is exactly the same pid as
-	 inferior_ptid, since we want it to continue to be active even
-	 if GDB detaches from that process.  */
-      if (b->process_string)
-	define_global_breakpoint (loc);
 
       /* Note that we still go through global breakpoint definition
 	 process even if the process spec is exactly the same pid as
@@ -16298,87 +16289,11 @@ breakpoint_free_objfile (struct objfile *objfile)
       loc->symtab = NULL;
 }
 
-/* Parse a string that specifies a combination of process ids and
-   wildcards.  */
-
-static VEC(int) *
-parse_process_string (char *p, char **uid_p, int *flags)
-{
-  int pid;
-  VEC(int) *result = NULL;
-
-  if (uid_p)
-    *uid_p = NULL;
-  if (flags)
-    *flags = 0;
-
-  do
-    {
-      while (isspace (*p))
-	++p;
-
-      if (isdigit (*p))
-	{
-	  pid = strtol (p, &p, 10);
-	  VEC_safe_push (int, result, pid);
-	}
-      else if (*p == '*')
-	{
-	  if (flags)
-	    SET_ALL_CURRENT_PROCESSES (*flags);
-	  ++p;
-	}
-      else if (*p == '+')
-	{
-	  if (flags)
-	    SET_ALL_FUTURE_PROCESSES (*flags);
-	  ++p;
-	}
-      else if (strncmp (p, "all", strlen ("all")) == 0)
-	{
-	  if (flags)
-	    {
-	      SET_ALL_CURRENT_PROCESSES (*flags);
-	      SET_ALL_FUTURE_PROCESSES (*flags);
-	    }
-	  p += strlen ("all");
-	}
-      else if (strncmp (p, "future", strlen ("future")) == 0)
-	{
-	  if (flags)
-	    SET_ALL_FUTURE_PROCESSES (*flags);
-	  p += strlen ("future");
-	}
-      else if (*p == '/')
-	{
-	  /* Parse various flavors of user specification.  */
-	  char *uname = xstrdup (++p);
-	  char *end;
-
-	  end = strchr (uname, ',');
-	  if (end)
-	    *end = '\0';
-
-	  if (uid_p)
-	    *uid_p = uname;
-	  else
-	    xfree (uname);
-	}
-      else
-	{
-	  warning (_("problem in process spec at '%s'"), p);
-	  return result;
-	}
-    }
-  while (p && *p++ == ',');
-
-  return result;
-}
 
 /* This structure tracks the correspondence between GDB's breakpoint
    numbers and numbers used by the global breakpoint agent.  */
 
-struct gb {
+struct global_breakpoint {
 
   /* The breakpoint number.  */
   int bp_number;
@@ -16393,11 +16308,12 @@ struct gb {
      or may not match the bp location address.  */
   CORE_ADDR gb_address;
 };
-typedef struct gb gb_s;
 
-DEF_VEC_O(gb_s);
+typedef struct global_breakpoint global_breakpoint_s;
 
-static VEC(gb_s) *gbps;
+DEF_VEC_O(global_breakpoint_s);
+
+static VEC(global_breakpoint_s) *gbps;
 
 /* Dump out the whole list verbatim, useful for debugging sync
    issues.  */
@@ -16406,9 +16322,9 @@ static void
 dump_gbps_command (char *args, int from_tty)
 {
   int ix;
-  struct gb *gb;
+  struct global_breakpoint *gb;
 
-  for (ix = 0; VEC_iterate (gb_s, gbps, ix, gb); ++ix)
+  for (ix = 0; VEC_iterate (global_breakpoint_s, gbps, ix, gb); ++ix)
     printf_filtered ("BP %d at %s is GB %d at %s\n",
 		     gb->bp_number,
 		     paddress (get_current_arch (), gb->bp_loc_address),
@@ -16445,87 +16361,74 @@ clear_global_breakpoints (struct inferior *inf)
 static void
 define_global_breakpoint (struct bp_location *loc)
 {
-  int flags;
-  int ix, pid, gbnum;
+  int flags = 0;
+  int ix, pid, gbnum = -1;
   int done = 0;
-  VEC(int) *pids;
-  char *uname;
-  bfd *abfd;
+  bfd *abfd = NULL;
   CORE_ADDR offset;
-  struct gb gb;
+  struct global_breakpoint gb;
 
   /* First decide if this is a solib or a main executable location.  */
-  char *soname = solib_name_from_address (loc->pspace, loc->address);
-  struct so_list *so = NULL;
+  //char *soname = solib_name_from_address (loc->pspace, loc->address);
+  struct so_list *so;
 
-  abfd = exec_bfd;
   offset = loc->address;
-  for (so = loc->pspace->so_list; so; so = so->next)
+  for (so = loc->pspace->so_list; so && !done; so = so->next)
     {
       struct target_section *p;
 
-      for (p = so->sections; p < so->sections_end; p++)
+      for (p = so->sections; p < so->sections_end && !done; p++)
 	if (p->addr <= loc->address && loc->address < p->endaddr)
 	  {
 	    abfd = so->abfd;
 	    /* Derive the offset that this symbol will be at when
 	       the solib is loaded.  */
 	    offset -= so->addr_low;
+
+	    // TODO: Should that be removed ?
 	    offset += p->the_bfd_section->vma;
 	    done = 1;
-	    break;
 	  }
-      if (done)
-	break;
     }
 
   /* If not in a solib, figure out the offset in the executable.  */
-  if (!done && abfd)
+  if (abfd == NULL)
     {
       struct target_section *sec;
 
+      abfd = exec_bfd;
+
       sec = target_section_by_addr (&current_target, loc->address);
       if (sec)
+	// TODO: need to add vma, really ?
 	offset -= (sec->the_bfd_section->vma - sec->the_bfd_section->filepos);
     }
 
-  pids = parse_process_string (loc->owner->process_string, &uname, &flags);
+  printf("I guess I should set a GB at %lx in %s\n", offset, abfd->filename);
 
-  gbnum = target_define_global_breakpoint (abfd, offset, uname, flags);
+  gbnum = target_define_global_breakpoint (abfd, offset, flags);
+
+  printf("Target code returned %d\n", gbnum);
+
 
   /* If anything went wrong in target-specific code, give up.  */
-  if (gbnum <= 0)
+  if (gbnum < 0)
     {
-      VEC_free (int, pids);
-      xfree (uname);
       return;
     }
 
   /* Record the breakpoint & global breakpoint pair.  */
-  gb.bp_number = loc->owner->number;
+  gb.bp_number = breakpoint_count + 1;//loc->owner->number;
   gb.bp_loc_address = loc->address;
   gb.gb_number = gbnum;
   gb.gb_address = 0;
-  VEC_safe_push (gb_s, gbps, &gb);
-
-  /* If any enumerated processes, send insert commands also.  */
-  for (ix = 0; VEC_iterate (int, pids, ix, pid); ix++)
-    {
-      /* Note that we want to issue an insert command for the pid
-	 being debugged as well, so that it's on record if GDB
-	 detaches later.  The agent will detect the ptraced status and
-	 avoid actual insertion.  */
-
-      target_insert_global_breakpoint (gbnum, pid);
-    }
+  VEC_safe_push (global_breakpoint_s, gbps, &gb);
 
   /* If this breakpoint is wildcarded for all current processes, go
      ahead and add to each inferior.  */
-  if (ALL_CURRENT_PROCESSES (flags))
-    iterate_over_inferiors (add_breakpoint_to_inferior, loc->owner);
+ // if (ALL_CURRENT_PROCESSES (flags))
+ //   iterate_over_inferiors (add_breakpoint_to_inferior, loc->owner);
 
-  VEC_free (int, pids);
-  xfree (uname);
 }
 
 /* Delete a global breakpoint by issuing deletes for any locations
@@ -16535,13 +16438,13 @@ static void
 delete_global_breakpoint (struct breakpoint *b)
 {
   int ix, gbnum;
-  struct gb *gb;
+  struct global_breakpoint *gb;
 
-  for (ix = 0; VEC_iterate (gb_s, gbps, ix, gb); ++ix)
+  for (ix = 0; VEC_iterate (global_breakpoint_s, gbps, ix, gb); ++ix)
     if (gb->bp_number == b->number)
       {
 	gbnum = gb->gb_number;
-	VEC_ordered_remove (gb_s, gbps, ix);
+	VEC_ordered_remove (global_breakpoint_s, gbps, ix);
 	target_delete_global_breakpoint (gbnum);
       }
 }
@@ -16549,7 +16452,7 @@ delete_global_breakpoint (struct breakpoint *b)
 int
 number_of_global_breakpoints (void)
 {
-  return VEC_length (gb_s, gbps);
+  return VEC_length (global_breakpoint_s, gbps);
 }
 
 void
@@ -16581,14 +16484,13 @@ struct attach_request
 static struct attach_request *attach_request_queue = NULL;
 
 void
-queue_attach_request (int pid, int gbnum, CORE_ADDR addr)
+queue_attach_request (int pid, int gb_num)
 {
   struct attach_request *req, *last;
 
   req = XMALLOC (struct attach_request);
   req->pid = pid;
-  req->gbnum = gbnum;
-  req->addr = addr;
+  req->gbnum = gb_num;
   req->next = NULL;
 
   /* Add to the end of the queue.  */
@@ -16634,16 +16536,21 @@ handle_attach_requests (void)
   struct breakpoint *b = NULL;
   struct bp_location *loc, **loc_temp;
   int ix;
-  struct gb *gb;
+  struct global_breakpoint *gb;
+  struct inferior *new_inf;
 
   if (!req)
     return 0;
 
+
+
+
+  /* Pop corn */
   attach_request_queue = req->next;
 
   /* Look in our list of global breakpoints.  */
-  for (ix = 0; VEC_iterate (gb_s, gbps, ix, gb); ++ix)
-    if (req->gbnum == gb->gb_number && req->addr == gb->bp_loc_address)
+  for (ix = 0; VEC_iterate (global_breakpoint_s, gbps, ix, gb); ++ix)
+    if (req->gbnum == gb->gb_number/* && req->addr == gb->bp_loc_address*/)
       {
 	b = get_breakpoint (gb->bp_number);
 	break;
@@ -16666,6 +16573,14 @@ handle_attach_requests (void)
       /* Notify the user that this is not any old attach request.  */
       printf_filtered (_("Process %d has hit global breakpoint %d\n"),
 		       req->pid, b->number);
+
+      new_inf = add_inferior_with_spaces();
+
+      set_current_inferior (new_inf);
+      switch_to_thread (null_ptid);
+
+
+      set_current_program_space (new_inf->pspace);
 
       sprintf (args, "%d", req->pid);
 
@@ -16701,9 +16616,9 @@ record_breakpoint (int pid, int gbpnum)
 {
   struct breakpoint *b = NULL;
   int ix;
-  struct gb *gb;
+  struct global_breakpoint *gb;
 
-  for (ix = 0; VEC_iterate (gb_s, gbps, ix, gb); ++ix)
+  for (ix = 0; VEC_iterate (global_breakpoint_s, gbps, ix, gb); ++ix)
     if (gbpnum == gb->gb_number)
       {
 	b = get_breakpoint (gb->bp_number);
