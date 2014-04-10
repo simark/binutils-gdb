@@ -887,9 +887,9 @@ struct target_ops
        non-empty annex.  */
     int (*to_augmented_libraries_svr4_read) (void);
 
-    int (*to_define_global_breakpoint) (bfd *, CORE_ADDR, char *, int);
-    void (*to_insert_global_breakpoint) (int, int);
-    void (*to_delete_global_breakpoint) (int);
+    int (*to_define_global_breakpoint) (bfd *, CORE_ADDR, int);
+    int (*to_insert_global_breakpoint) (int);
+    int (*to_delete_global_breakpoint) (int);
 
     int to_magic;
     /* Need sub-structure for target machine related rather than comm related?
@@ -1759,9 +1759,8 @@ extern char *target_fileio_read_stralloc (const char *filename);
 #define target_can_use_agent() \
   (*current_target.to_can_use_agent) ()
 
-int target_define_global_breakpoint (bfd *abfd, CORE_ADDR addr,
-				     char *uname, int flags);
-void target_insert_global_breakpoint (int gbpnum, int pid);
+int target_define_global_breakpoint (bfd *abfd, CORE_ADDR addr, int flags);
+void target_insert_global_breakpoint (int gbpnum);
 void target_delete_global_breakpoint (int gbpnum);
 
 #define target_augmented_libraries_svr4_read() \
