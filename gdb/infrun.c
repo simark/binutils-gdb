@@ -1780,6 +1780,7 @@ resume (int step, enum gdb_signal sig)
      single-step).  When deciding whether "set scheduler-locking step"
      applies, it's the callers intention that counts.  */
   const int entry_step = step;
+  enum breakpoint_here bp_here;
 
   QUIT;
 
@@ -1811,11 +1812,13 @@ resume (int step, enum gdb_signal sig)
 			target_pid_to_str (inferior_ptid),
 			paddress (gdbarch, pc));
 
+  bp_here = breakpoint_here_p (aspace, pc);
+
   /* Normally, by the time we reach `resume', the breakpoints are either
      removed or inserted, as appropriate.  The exception is if we're sitting
      at a permanent breakpoint; we need to step over it, but permanent
      breakpoints can't be removed.  So we have to test for it here.  */
-  if (breakpoint_here_p (aspace, pc) == permanent_breakpoint_here)
+  if (bp_here == permanent_breakpoint_here)
     {
       if (gdbarch_skip_permanent_breakpoint_p (gdbarch))
 	gdbarch_skip_permanent_breakpoint (gdbarch, regcache);
@@ -1824,6 +1827,11 @@ resume (int step, enum gdb_signal sig)
 The program is stopped at a permanent breakpoint, but GDB does not know\n\
 how to step past a permanent breakpoint on this architecture.  Try using\n\
 a command like `return' or `jump' to continue execution."));
+    }
+  else if (bp_here == global_breakpoint_here)
+    {
+      printf("OMG WE'RE ON A GB\n");
+      tp->control.trap_expected = 0;
     }
 
   /* If we have a breakpoint to step over, make sure to do a single
@@ -2195,6 +2203,7 @@ proceed (CORE_ADDR addr, enum gdb_signal siggnal, int step)
   struct thread_info *tp;
   CORE_ADDR pc;
   struct address_space *aspace;
+  enum breakpoint_here bp_here;
 
   /* If we're stopped at a fork/vfork, follow the branch set by the
      "set follow-fork-mode" command; otherwise, we'll just proceed
@@ -2224,11 +2233,13 @@ proceed (CORE_ADDR addr, enum gdb_signal siggnal, int step)
 
   /* Fill in with reasonable starting values.  */
   init_thread_stepping_state (tp);
+  bp_here = breakpoint_here_p (aspace, pc);
 
   if (addr == (CORE_ADDR) -1)
     {
-      if (pc == stop_pc && breakpoint_here_p (aspace, pc)
+      if (pc == stop_pc && bp_here != no_breakpoint_here
 	  && execution_direction != EXEC_REVERSE)
+	{
 	/* There is a breakpoint at the address we will resume at,
 	   step one instruction before inserting breakpoints so that
 	   we do not stop right away (and report a second hit at this
@@ -2237,7 +2248,10 @@ proceed (CORE_ADDR addr, enum gdb_signal siggnal, int step)
 	   Note, we don't do this in reverse, because we won't
 	   actually be executing the breakpoint insn anyway.
 	   We'll be (un-)executing the previous instruction.  */
-	tp->stepping_over_breakpoint = 1;
+	  printf("Proceed bp_here = %d\n", bp_here);
+	  if (bp_here != global_breakpoint_here)
+	    tp->stepping_over_breakpoint = 1;
+	}
       else if (gdbarch_single_step_through_delay_p (gdbarch)
 	       && gdbarch_single_step_through_delay (gdbarch,
 						     get_current_frame ()))

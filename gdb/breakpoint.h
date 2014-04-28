@@ -470,6 +470,8 @@ struct bp_location
      to find the corresponding source file name.  */
 
   struct symtab *symtab;
+
+  int from_global_br;
 };
 
 /* This structure is a collection of function pointers that, if available,
@@ -748,6 +750,8 @@ struct breakpoint
 
     /* Same as py_bp_object, but for Scheme.  */
     struct gdbscm_breakpoint_object *scm_bp_object;
+
+    int iz_global_breakpoint;
   };
 
 /* An instance of this type is used to represent a watchpoint.  It
@@ -1111,7 +1115,8 @@ enum breakpoint_here
   {
     no_breakpoint_here = 0,
     ordinary_breakpoint_here,
-    permanent_breakpoint_here
+    permanent_breakpoint_here,
+    global_breakpoint_here,
   };
 
 
