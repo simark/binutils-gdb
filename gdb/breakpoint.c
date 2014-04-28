@@ -3972,6 +3972,7 @@ breakpoint_here_p (struct address_space *aspace, CORE_ADDR pc)
 {
   struct bp_location *bl, **blp_tmp;
   int any_breakpoint_here = 0;
+  int there_is_a_global_breakpoint_here = 0;
 
   ALL_BP_LOCATIONS (bl, blp_tmp)
     {
@@ -3990,9 +3991,16 @@ breakpoint_here_p (struct address_space *aspace, CORE_ADDR pc)
 	    continue;		/* unmapped overlay -- can't be a match */
 	  else if (bl->owner->enable_state == bp_permanent)
 	    return permanent_breakpoint_here;
+	  else if (bl->owner->iz_global_breakpoint)
+	    there_is_a_global_breakpoint_here = 1;
 	  else
 	    any_breakpoint_here = 1;
 	}
+    }
+
+  if (there_is_a_global_breakpoint_here)
+    {
+      return global_breakpoint_here;
     }
 
   return any_breakpoint_here ? ordinary_breakpoint_here : 0;
@@ -9239,12 +9247,16 @@ init_breakpoint_sal (struct breakpoint *b, struct gdbarch *gdbarch,
               error (_("Garbage '%s' follows condition"), arg);
 	}
 
+      loc->from_global_br = 0;
       /* Note that we still go through global breakpoint definition
 	 process even if the process spec is exactly the same pid as
 	 inferior_ptid, since we want it to continue to be active even
 	 if GDB detaches from that process.  */
       if (b->process_string)
-	define_global_breakpoint (loc);
+	{
+	  b->iz_global_breakpoint = 1;
+	  define_global_breakpoint (loc);
+	}
 
       /* Dynamic printf requires and uses additional arguments on the
 	 command line, otherwise it's an error.  */
@@ -16213,8 +16225,9 @@ handle_attach_requests (void)
       catch_command_errors (attach_command, args, 0, RETURN_MASK_ALL);
 
       /* FIXME what if the attach query is rejected? */
+      add_breakpoint_to_inferior(new_inf, b);
 
-      iterate_over_inferiors (add_breakpoint_to_inferior, b);
+      //iterate_over_inferiors (add_breakpoint_to_inferior, b);
     }
   else
     {

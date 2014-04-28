@@ -468,6 +468,8 @@ struct bp_location
      to find the corresponding source file name.  */
 
   struct symtab *symtab;
+
+  int from_global_br;
 };
 
 /* Return values for bpstat_explains_signal.  Note that the order of
@@ -762,6 +764,8 @@ struct breakpoint
        can sometimes be NULL for enabled GDBs as not all breakpoint
        types are tracked by the Python scripting API.  */
     struct breakpoint_object *py_bp_object;
+
+    int iz_global_breakpoint;
   };
 
 /* An instance of this type is used to represent a watchpoint.  It
@@ -1126,7 +1130,8 @@ enum breakpoint_here
   {
     no_breakpoint_here = 0,
     ordinary_breakpoint_here,
-    permanent_breakpoint_here
+    permanent_breakpoint_here,
+    global_breakpoint_here,
   };
 
 

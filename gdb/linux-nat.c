@@ -4923,13 +4923,14 @@ linux_nat_global_breakpoints_teardown (void)
 }
 
 void
-linux_nat_global_breakpoint_continue_pid (pid_t pid);
+linux_nat_global_breakpoint_continue_pid (pid_t pid, int traced);
 void
-linux_nat_global_breakpoint_continue_pid (pid_t pid)
+linux_nat_global_breakpoint_continue_pid (pid_t pid, int traced)
 {
   int ret;
+  char action = traced ? 't' : 'c';
 
-  ret = fprintf (gb_active_file, "c %d\n", pid);
+  ret = fprintf (gb_active_file, "%c %d\n", action, pid);
 
   if (ret < 0)
     {
@@ -4948,11 +4949,13 @@ static void linux_nat_global_attach_request(pid_t pid, int gb_num)
   /* Add a new inferior.  */
   //inf = add_inferior (pid);
 
+
+
   queue_attach_request (pid, gb_num);
   /* For now, just handle immediately.  */
   handle_attach_requests ();
 
-  //linux_nat_global_breakpoint_continue_pid(pid);
+  //linux_nat_global_breakpoint_continue_pid(pid, 1);
 }
 
 
@@ -5140,7 +5143,7 @@ gb_event_handler (int error, void *context)
 	  // We couldn't identify the global breakpoint number. Continue the
 	  // process so it doesn't hang forever.
 	  warning(_("Could not determine global breakpoint number."));
-	  linux_nat_global_breakpoint_continue_pid(active_pid);
+	  linux_nat_global_breakpoint_continue_pid(active_pid, 0);
 	}
     }
   else if (ret == 0)
