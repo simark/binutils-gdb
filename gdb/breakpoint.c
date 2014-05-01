@@ -16213,7 +16213,7 @@ handle_attach_requests (void)
       if (inf)
 	{
 	  /* We are already attached. */
-	  struct execution_control_state ecs;
+
 	}
       else
 	{
