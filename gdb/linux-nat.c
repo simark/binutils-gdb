@@ -4978,9 +4978,7 @@ linux_nat_global_breakpoints_teardown (void)
   return 0;
 }
 
-void
-linux_nat_global_breakpoint_continue_pid (pid_t pid, int traced);
-void
+static void
 linux_nat_global_breakpoint_continue_pid (pid_t pid, int traced)
 {
   int ret;

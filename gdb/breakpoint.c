@@ -16554,9 +16554,6 @@ handle_attach_requests (void)
   if (!req)
     return 0;
 
-
-
-
   /* Pop corn */
   attach_request_queue = req->next;
 
@@ -16582,26 +16579,34 @@ handle_attach_requests (void)
 
   if (b)
     {
+      struct inferior *inf;
       /* Notify the user that this is not any old attach request.  */
       printf_filtered (_("Process %d has hit global breakpoint %d\n"),
 		       req->pid, b->number);
+      inf = find_inferior_pid (req->pid);
+      if (inf)
+	{
+	  /* We are already attached. */
+	  struct execution_control_state ecs;
+	}
+      else
+	{
+	  new_inf = add_inferior_with_spaces();
 
-      new_inf = add_inferior_with_spaces();
-
-      set_current_inferior (new_inf);
-      switch_to_thread (null_ptid);
+	  set_current_inferior (new_inf);
+	  switch_to_thread (null_ptid);
 
 
-      set_current_program_space (new_inf->pspace);
+	  set_current_program_space (new_inf->pspace);
 
-      sprintf (args, "%d", req->pid);
+	  sprintf (args, "%d", req->pid);
 
-      catch_command_errors (attach_command, args, 0, RETURN_MASK_ALL);
+	  catch_command_errors (attach_command, args, 0, RETURN_MASK_ALL);
 
-      /* FIXME what if the attach query is rejected? */
-      add_breakpoint_to_inferior(new_inf, b);
+	  add_breakpoint_to_inferior(new_inf, b);
 
-      //iterate_over_inferiors (add_breakpoint_to_inferior, b);
+	  //iterate_over_inferiors (add_breakpoint_to_inferior, b);
+	}
     }
   else
     {
