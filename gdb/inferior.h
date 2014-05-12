@@ -646,4 +646,6 @@ extern void signal_catch_update (const unsigned int *);
 
 enum gdb_signal gdb_signal_from_command (int num);
 
+void fake_breakpoint_hit (ptid_t ptid);
+
 #endif /* !defined (INFERIOR_H) */
