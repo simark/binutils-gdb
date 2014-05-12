@@ -521,4 +521,6 @@ extern int number_of_inferiors (void);
 
 extern struct inferior *add_inferior_with_spaces (void);
 
+void fake_breakpoint_hit (ptid_t ptid);
+
 #endif /* !defined (INFERIOR_H) */

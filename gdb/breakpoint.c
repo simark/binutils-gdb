@@ -16580,13 +16580,25 @@ handle_attach_requests (void)
   if (b)
     {
       struct inferior *inf;
+      struct thread_info *thread_iter, *th = NULL;
       /* Notify the user that this is not any old attach request.  */
       printf_filtered (_("Process %d has hit global breakpoint %d\n"),
 		       req->pid, b->number);
       inf = find_inferior_pid (req->pid);
-      if (inf)
+
+      ALL_THREADS (thread_iter) {
+	if (ptid_get_lwp(thread_iter->ptid) == req->pid) {
+	    th = thread_iter;
+	    break;
+	}
+      }
+
+
+
+      if (th)
 	{
 	  /* We are already attached. */
+	  fake_breakpoint_hit(th->ptid);
 
 	}
       else

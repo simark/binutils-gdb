@@ -7147,7 +7147,18 @@ clear_exit_convenience_vars (void)
   clear_internalvar (lookup_internalvar ("_exitsignal"));
   clear_internalvar (lookup_internalvar ("_exitcode"));
 }
-
+
+void fake_breakpoint_hit (ptid_t ptid)
+{
+  struct execution_control_state ecs;
+  ecs.ws.kind = TARGET_WAITKIND_STOPPED;
+  ecs.ws.value.sig = GDB_SIGNAL_TRAP;
+  ecs.ptid = ptid;
+
+  printf("Fake breakpoint hit for pid=%d lwp=%ld\n", ptid.pid, ptid.lwp);
+
+  handle_inferior_event(&ecs);
+}
 
 /* User interface for reverse debugging:
    Set exec-direction / show exec-direction commands

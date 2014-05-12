@@ -5004,12 +5004,12 @@ static void linux_nat_global_attach_request(pid_t pid, int gb_num)
   //inf = add_inferior (pid);
 
 
-
+  linux_nat_global_breakpoint_continue_pid(pid, 1);
   queue_attach_request (pid, gb_num);
   /* For now, just handle immediately.  */
   handle_attach_requests ();
 
-  //linux_nat_global_breakpoint_continue_pid(pid, 1);
+
 }
 
 
