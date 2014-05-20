@@ -30,7 +30,7 @@
 
 static char *
 gdbpy_readline_wrapper (FILE *sys_stdin, FILE *sys_stdout,
-			const char *prompt_const)
+			char *prompt_const)
 {
   int n;
   char *p = NULL, *q;
