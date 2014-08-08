@@ -68,6 +68,7 @@
 #include "target-descriptions.h"
 #include "filestuff.h"
 #include "objfiles.h"
+#include <sys/ioctl.h>
 
 #ifndef SPUFS_MAGIC
 #define SPUFS_MAGIC 0x23c9b64e
@@ -4868,44 +4869,22 @@ linux_nat_core_of_thread (struct target_ops *ops, ptid_t ptid)
 }
 
 /* Global breakpoint bits.  */
-#define GLOBAL_BREAKPOINTS_NAME_FORMAT "gdb/b%d"
-#define GLOBAL_BREAKPOINTS_UPROBE_EVENTS_PATH "/sys/kernel/debug/tracing/uprobe_events"
-#define GLOBAL_BREAKPOINTS_ENABLE_PATH "/sys/kernel/debug/tracing/events/" GLOBAL_BREAKPOINTS_NAME_FORMAT "/enable"
-#define GLOBAL_BREAKPOINTS_ACTIVE_PATH "/sys/kernel/debug/tracing/uprobe_gb_active"
-#define GLOBAL_BREAKPOINTS_EXCLUDE_PATH "/sys/kernel/debug/tracing/uprobe_gb_exclude"
-
 #define MAX_GB_PACKET 1234
 
-FILE *gb_active_file = NULL;
+int gb_session_fd = -1;
 
 static void gb_event_handler (int error, void *context);
 
-/* Open the breakpoint device, and add a handler to monitor it for
-   events.  */
+#if defined(__i386__)
+#define __NR_gbp_session_create 354
 
-static int
-linux_nat_global_breakpoints_write_exclude (pid_t pid, int exclude)
-{
-  /* e: exclude , a: allow */
-  char c = exclude ? 'e' : 'a';
-  FILE *exclude_file;
+#elif defined(__x86_64__)
+#define __NR_gbp_session_create 317
 
-  printf("EXCLUDE\n");
+#else
+#error missing syscall number
+#endif
 
-  exclude_file = fopen (GLOBAL_BREAKPOINTS_EXCLUDE_PATH, "w");
-  if (!exclude_file)
-    {
-      warning (_("Could not open global breakpoints exclude file (%s)"),
-	       GLOBAL_BREAKPOINTS_EXCLUDE_PATH);
-      return 0;
-    }
-
-  fprintf(exclude_file, "%c%d\n", c, pid);
-
-  fclose(exclude_file);
-
-  return 1;
-}
 
 static int
 linux_nat_global_breakpoints_setup (void)
@@ -4915,34 +4894,20 @@ linux_nat_global_breakpoints_setup (void)
   FILE *tmp;
 
   /* Already enabled ? */
-  if (gb_active_file != NULL)
+  if (gb_session_fd > 0)
     return 1;
 
   self_pid = getpid ();
 
-  gb_active_file = fopen (GLOBAL_BREAKPOINTS_ACTIVE_PATH, "w+");
-  if (gb_active_file == NULL)
+  gb_session_fd = syscall(__NR_gbp_session_create, 0);
+  if (gb_session_fd < 0)
     {
-      warning (_("Could not open global breakpoints device (%s): %s"),
-               GLOBAL_BREAKPOINTS_ACTIVE_PATH, strerror(errno));
+      warning (_("Could not create global breakpoint session"));
       return 0;
     }
-
-  ret = linux_nat_global_breakpoints_write_exclude (self_pid, 1);
-  if (ret == 0)
-    {
-      fclose (gb_active_file);
-      gb_active_file = NULL;
-      return 0;
-    }
-
-  // Hack: truncate uprobe events so that there is no unknown gb
-  tmp = fopen(GLOBAL_BREAKPOINTS_UPROBE_EVENTS_PATH, "w");
-  fprintf(tmp, "\n");
-  fclose(tmp);
 
   printf("Adding gb file handler\n");
-  add_file_handler (fileno(gb_active_file), gb_event_handler, NULL);
+  add_file_handler (gb_session_fd, gb_event_handler, NULL);
 
   if (debug_linux_nat)
     fprintf_unfiltered (gdb_stdlog, "linux-nat: global breakpoints enabled\n");
@@ -4959,91 +4924,69 @@ linux_nat_global_breakpoints_teardown (void)
   FILE* tmp;
 
   /* Already disabled ? */
-  if (gb_active_file == NULL)
+  if (gb_session_fd < 0)
     return 0;
 
-  delete_file_handler (fileno(gb_active_file));
+  delete_file_handler (gb_session_fd);
 
-  self_pid = getpid();
-  linux_nat_global_breakpoints_write_exclude (self_pid, 0);
+  close(gb_session_fd);
 
-  // Hack: truncate uprobe events to leave that clean
-  tmp = fopen(GLOBAL_BREAKPOINTS_UPROBE_EVENTS_PATH, "w");
-  fprintf(tmp, "\n");
-  fclose(tmp);
-
-  fclose (gb_active_file);
-  gb_active_file = NULL;
+  gb_session_fd = -1;
 
   return 0;
 }
 
 static void
-linux_nat_global_breakpoint_continue_pid (pid_t pid, int traced)
+linux_nat_global_breakpoint_continue_pid (pid_t pid)
 {
   int ret;
-  char action = traced ? 't' : 'c';
+  //char action = traced ? 't' : 'c';
 
-  ret = fprintf (gb_active_file, "%c %d\n", action, pid);
+  ret = write(gb_session_fd, &pid, sizeof(pid));
 
-  if (ret < 0)
+  if (ret != sizeof(pid))
     {
-      printf("Error writing to gb_active_file\n");
+      printf("Error writing to gb_session_fd\n");
     }
 
-  fflush (gb_active_file);
+  printf("Wrote %d to session fd\n", pid);
 }
 
-static void linux_nat_global_attach_request(pid_t pid, int gb_num)
+void hello(pid_t pid);
+void hello(pid_t pid)
+{
+  linux_nat_global_breakpoint_continue_pid(pid);
+}
+
+static void linux_nat_global_attach_request(pid_t pid)
 {
   struct inferior *inf;
   struct thread_info *tp;
 
-  printf("Yo dawg, pid %d hit global breakpoint num %d\n", pid, gb_num);
+  printf("Yo dawg, pid %d hit global breakpoint\n", pid);
   /* Add a new inferior.  */
   //inf = add_inferior (pid);
 
 
-  linux_nat_global_breakpoint_continue_pid(pid, 1);
-  queue_attach_request (pid, gb_num);
+  //linux_nat_global_breakpoint_continue_pid(pid, 1);
+  queue_attach_request (pid);
   /* For now, just handle immediately.  */
   handle_attach_requests ();
 
 
 }
 
+struct gbp_information {
+        int32_t fd;
+        int32_t ___pad0;
+        uint64_t offset;
+        uint8_t __pad1[16];
+};
 
 
-static int
-linux_nat_enable_global_breakpoint (int gb_num)
-{
-  char *enable_path;
-  FILE *enable_file;
-  int ret;
-  struct cleanup *old_chain;
 
-  enable_path = xstrprintf(GLOBAL_BREAKPOINTS_ENABLE_PATH, gb_num);
-  old_chain = make_cleanup(xfree, enable_path);
-
-  enable_file = fopen(enable_path, "w");
-  if (enable_file == NULL)
-    {
-      // Do I need to call do_cleanups here ?
-      error(_("Could not open %s"), enable_path);
-    }
-
-  ret = fprintf(enable_file, "1\n");
-  if (ret < 0)
-    {
-      error(_("Could not write to %s"), enable_path);
-    }
-
-  fclose(enable_file);
-
-  do_cleanups(old_chain);
-
-  return ret;
-}
+#define GBP_ADD         _IOW('G', 32, struct gbp_information)
+#define GBP_REMOVE      _IOW('G', 33, struct gbp_information)
 
 /*
  * Returns the global breakpoint number, or -1 on error.
@@ -5052,16 +4995,20 @@ static int
 linux_nat_define_global_breakpoint (bfd *abfd, CORE_ADDR addr, int flags)
 {
   static int gb_num = 0;
-
-  FILE *uprobe_events_file;
+  const char *bin_name = abfd->filename;
+  int bin_fd;
   int ret;
+  struct gbp_information gbp_info;
   int new_gb_num;
+  memset(&gbp_info, 0, sizeof(gbp_info));
 
-  const char *filename;
 
-  gdb_assert(abfd != NULL);
-  filename = abfd->filename;
-  gdb_assert(filename != NULL);
+  bin_fd = open(bin_name, O_RDWR);
+  if (bin_fd < 0)
+    {
+      warning(_("Error opening bin %s\n"), bin_name);
+      return -1;
+    }
 
   ret = linux_nat_global_breakpoints_setup ();
   if (ret == 0)
@@ -5071,58 +5018,24 @@ linux_nat_define_global_breakpoint (bfd *abfd, CORE_ADDR addr, int flags)
 
   new_gb_num = gb_num++;
 
-  uprobe_events_file = fopen (GLOBAL_BREAKPOINTS_UPROBE_EVENTS_PATH, "a");
-  if (uprobe_events_file == NULL)
-    {
-      warning (_("Could not open %s"), GLOBAL_BREAKPOINTS_UPROBE_EVENTS_PATH);
-      return -1;
-    }
+  gbp_info.offset = addr;
+  gbp_info.fd = bin_fd;
 
-  ret = fprintf (uprobe_events_file,
-		 "g:" GLOBAL_BREAKPOINTS_NAME_FORMAT " %s:0x%lx\n", new_gb_num,
-		 filename, addr);
+  ret = ioctl (gb_session_fd, GBP_ADD, &gbp_info);
+  if (ret < 0) {
+    warning(_("ret ioctl add: %d"), ret);
+    return -1;
+  }
 
-  if (ret < 0)
-    {
-      warning (_("Error writing to %s"), GLOBAL_BREAKPOINTS_UPROBE_EVENTS_PATH);
-      fclose (uprobe_events_file);
-      return -1;
-    }
-
-  fclose (uprobe_events_file);
-
-  linux_nat_enable_global_breakpoint (new_gb_num);
+  close(bin_fd);
 
   return new_gb_num;
 }
 
 static int
-linux_nat_insert_global_breakpoint (int gbpnum)
-{
-  FILE *enable_file = NULL;
-  // This is meh
-  char enable_path[1234];
-
-  sprintf(enable_path, GLOBAL_BREAKPOINTS_ENABLE_PATH, gbpnum);
-
-  enable_file = fopen(enable_path, "w");
-  if (enable_file == NULL)
-    {
-      warning(_("Could not open enable file %s\n"), enable_path);
-      return 0;
-    }
-
-  fprintf(enable_file, "1\n");
-
-  fclose(enable_file);
-
-  return 1;
-}
-
-static int
 linux_nat_delete_global_breakpoint (int gb_num)
 {
-  FILE *uprobe_events_file;
+  /*FILE *uprobe_events_file;
   int ret;
 
   uprobe_events_file = fopen (GLOBAL_BREAKPOINTS_UPROBE_EVENTS_PATH, "a");
@@ -5144,22 +5057,9 @@ linux_nat_delete_global_breakpoint (int gb_num)
 
   if (0) {
       linux_nat_global_breakpoints_teardown();
-  }
+  }*/
 
   return 1;
-}
-
-static int gb_extract_num_from_name(char *gb_name)
-{
-  int num, ret;
-  ret = sscanf(gb_name, "b%d\n", &num);
-
-  if (ret != 1)
-    {
-      return -1;
-    }
-
-  return num;
 }
 
 static void
@@ -5172,43 +5072,15 @@ gb_event_handler (int error, void *context)
   pid_t active_pid = 0;
   printf("event!!!!\n");
 
-  // For now we handle one inferior per call, if there are multiple we'll get
-  // called multiple times.
-  // Read at least one complete line, this is meh
-  lseek(fileno(gb_active_file), 0, SEEK_SET);
-  ret = read (fileno(gb_active_file), buf, sizeof(buf));
-  lseek(fileno(gb_active_file), 0, SEEK_SET);
 
-  if (ret > 0)
-    {
-      active_pid = strtol(buf, &endptr, 10);
+  ret = read(gb_session_fd, &active_pid, sizeof(active_pid));
 
-      // Skip space
-      endptr++;
+  if (ret < 0) {
+      warning(_("ret read: %d\n"), ret);
+      return;
+  }
 
-      gb_num = gb_extract_num_from_name(endptr);
-
-      if (gb_num >= 0)
-	{
-	  linux_nat_global_attach_request(active_pid, gb_num);
-	}
-      else
-	{
-	  // We couldn't identify the global breakpoint number. Continue the
-	  // process so it doesn't hang forever.
-	  warning(_("Could not determine global breakpoint number."));
-	  linux_nat_global_breakpoint_continue_pid(active_pid, 0);
-	}
-    }
-  else if (ret == 0)
-    {
-      // This file should never EOF...
-      warning(_("Global breakpoints device reported end-of-file."));
-    }
-  else
-    {
-      warning(_("Global breakpoints read() error."));
-    }
+  linux_nat_global_attach_request(active_pid);
 }
 
 void
@@ -5260,7 +5132,6 @@ linux_nat_add_target (struct target_ops *t)
   t->to_core_of_thread = linux_nat_core_of_thread;
 
   t->to_define_global_breakpoint = linux_nat_define_global_breakpoint;
-  t->to_insert_global_breakpoint = linux_nat_insert_global_breakpoint;
   t->to_delete_global_breakpoint = linux_nat_delete_global_breakpoint;
 
   /* We don't change the stratum; this target will sit at

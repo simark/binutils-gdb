@@ -536,28 +536,6 @@ target_define_global_breakpoint (bfd *abfd, CORE_ADDR addr, int flags)
 }
 
 void
-target_insert_global_breakpoint (int gbpnum)
-{
-  struct target_ops *t;
-
-  for (t = current_target.beneath; t != NULL; t = t->beneath)
-    {
-      if (t->to_insert_global_breakpoint)	
-	{
-	  (t->to_insert_global_breakpoint) (gbpnum);
-	  if (targetdebug)
-	    fprintf_unfiltered (gdb_stdlog,
-				"target_insert_global_breakpoint (%d)\n",
-				gbpnum);
-	  return;
-	}
-    }
-
-  internal_error (__FILE__, __LINE__,
-		  "could not find a target to insert global breakpoint");
-}
-
-void
 target_delete_global_breakpoint (int gbpnum)
 {
   struct target_ops *t;
