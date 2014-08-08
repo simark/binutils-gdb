@@ -16122,13 +16122,13 @@ struct attach_request
 static struct attach_request *attach_request_queue = NULL;
 
 void
-queue_attach_request (int pid, int gb_num)
+queue_attach_request (int pid)
 {
   struct attach_request *req, *last;
 
   req = XMALLOC (struct attach_request);
   req->pid = pid;
-  req->gbnum = gb_num;
+  //req->gbnum = gb_num;
   req->next = NULL;
 
   /* Add to the end of the queue.  */
@@ -16165,7 +16165,7 @@ discard_attach_requests (void)
 /* Pull an attach request from the queue and ask the user what to do
    about it.  Returns 1 if anything is remaining in the queue,
    otherwise 0.  */
-
+void hello(pid_t pid);
 int
 handle_attach_requests (void)
 {
@@ -16176,6 +16176,8 @@ handle_attach_requests (void)
   int ix;
   struct global_breakpoint *gb;
   struct inferior *new_inf;
+  struct inferior *inf;
+  struct thread_info *thread_iter, *th = NULL;
 
   if (!req)
     return 0;
@@ -16183,78 +16185,46 @@ handle_attach_requests (void)
   /* Pop corn */
   attach_request_queue = req->next;
 
-  /* Look in our list of global breakpoints.  */
-  for (ix = 0; VEC_iterate (global_breakpoint_s, gbps, ix, gb); ++ix)
-    if (req->gbnum == gb->gb_number/* && req->addr == gb->bp_loc_address*/)
-      {
-	b = get_breakpoint (gb->bp_number);
-	break;
-      }
 
-  /* As a fallback, try looking at other breakpoints.  */
-  if (!b)
+  /* Notify the user that this is not any old attach request.  */
+  printf_filtered (_("Process %d has hit global breakpoint\n"), req->pid);
+  inf = find_inferior_pid (req->pid);
+
+  ALL_THREADS (thread_iter)
     {
-      ALL_BP_LOCATIONS (loc, loc_temp)
-	if (req->addr == loc->address
-	    && loc->owner->process_string)
-	  {
-	    b = loc->owner;
-	    break;
-	  }
+      if (ptid_get_lwp (thread_iter->ptid) == req->pid)
+	{
+	  th = thread_iter;
+	  break;
+	}
     }
 
-  if (b)
+  if (th)
     {
-      struct inferior *inf;
-      struct thread_info *thread_iter, *th = NULL;
-      /* Notify the user that this is not any old attach request.  */
-      printf_filtered (_("Process %d has hit global breakpoint %d\n"),
-		       req->pid, b->number);
-      inf = find_inferior_pid (req->pid);
-
-      ALL_THREADS (thread_iter) {
-	if (ptid_get_lwp(thread_iter->ptid) == req->pid) {
-	    th = thread_iter;
-	    break;
-	}
-      }
-
-
-
-      if (th)
-	{
-	  /* We are already attached. */
-	  fake_breakpoint_hit(th->ptid);
-
-	}
-      else
-	{
-	  new_inf = add_inferior_with_spaces();
-
-	  set_current_inferior (new_inf);
-	  switch_to_thread (null_ptid);
-
-
-	  set_current_program_space (new_inf->pspace);
-
-	  sprintf (args, "%d", req->pid);
-
-	  catch_command_errors (attach_command, args, 0, RETURN_MASK_ALL);
-
-	  add_breakpoint_to_inferior(new_inf, b);
-
-	  //iterate_over_inferiors (add_breakpoint_to_inferior, b);
-	}
+      /* We are already attached. */
+      fake_breakpoint_hit (th->ptid);
     }
   else
     {
-      /* If we don't have any breakpoints here, it could be indicative
-	 of a problem, or simply a race condition.  Warn the user of
-	 the anomaly, but without a GDB breakpoint, there is nothing
-	 more we can do.  */
-      warning (_("Global breakpoint hit reported at %s in %d but no breakpoint defined there, ignoring"),
-	       paddress (target_gdbarch (), req->addr), req->pid);
+      new_inf = add_inferior_with_spaces ();
+
+      set_current_inferior (new_inf);
+      switch_to_thread (null_ptid);
+
+      set_current_program_space (new_inf->pspace);
+
+      sprintf (args, "%d", req->pid);
+      printf("starting attach\n");
+      catch_command_errors (attach_command, args, 0, RETURN_MASK_ALL);
+      printf("done attach");
+
+      //hello(req->pid);
+
+      //add_breakpoint_to_inferior(new_inf, b);
+
+      //iterate_over_inferiors (add_breakpoint_to_inferior, b);
     }
+
 
   /* (should do as cleanup?) */
   xfree (req);
