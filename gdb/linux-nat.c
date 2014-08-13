@@ -225,6 +225,10 @@ struct simple_pid_list
 };
 struct simple_pid_list *stopped_pids;
 
+/* Global breakpoint stuff */
+static int gb_session_fd = -1;
+static void linux_nat_global_breakpoint_continue_pid (pid_t pid);
+
 /* Async mode support.  */
 
 /* The read/write ends of the pipe registered as waitable file in the
@@ -1372,6 +1376,11 @@ linux_nat_attach (struct target_ops *ops, char *args, int from_tty)
 
   /* Add the initial process as the first LWP to the list.  */
   lp = add_initial_lwp (ptid);
+
+  if (gb_session_fd > 0)
+    {
+      linux_nat_global_breakpoint_continue_pid(ptid_get_pid (inferior_ptid));
+    }
 
   status = linux_nat_post_attach_wait (lp->ptid, 1, &lp->cloned,
 				       &lp->signalled);
@@ -4811,11 +4820,6 @@ linux_nat_core_of_thread (struct target_ops *ops, ptid_t ptid)
     return info->core;
   return -1;
 }
-
-/* Global breakpoint bits.  */
-#define MAX_GB_PACKET 1234
-
-int gb_session_fd = -1;
 
 static void gb_event_handler (int error, void *context);
 
