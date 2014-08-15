@@ -2075,7 +2075,7 @@ get_breakpoint_inferior_data (struct inferior *inf)
   data = inferior_data (inf, breakpoint_inferior_data_handle);
   if (data == NULL)
     {
-      data = XZALLOC (struct breakpoint_inferior_data);
+      data = XCNEW (struct breakpoint_inferior_data);
       set_inferior_data (inf, breakpoint_inferior_data_handle, data);
     }
 
@@ -14035,7 +14035,7 @@ strace_marker_p (struct breakpoint *b)
   return b->ops == &strace_marker_breakpoint_ops;
 }
 
-static void delete_global_breakpoint (struct breakpoint *b);
+//static void delete_global_breakpoint (struct breakpoint *b);
 
 /* Delete a breakpoint and clean up all traces of it in the data
    structures.  */
@@ -14096,8 +14096,8 @@ delete_breakpoint (struct breakpoint *bpt)
   if (bpt->number)
     observer_notify_breakpoint_deleted (bpt);
 
-  if (bpt->process_string)
-    delete_global_breakpoint (bpt);
+  /*if (bpt->process_string)
+    delete_global_breakpoint (bpt);*/
 
   if (breakpoint_chain == bpt)
     breakpoint_chain = bpt->next;
@@ -16445,7 +16445,7 @@ define_global_breakpoint (struct bp_location *loc)
 
 /* Delete a global breakpoint by issuing deletes for any locations
    that might have agent-assigned numbers.  */
-
+/*
 static void
 delete_global_breakpoint (struct breakpoint *b)
 {
@@ -16459,7 +16459,7 @@ delete_global_breakpoint (struct breakpoint *b)
 	VEC_ordered_remove (global_breakpoint_s, gbps, ix);
 	target_delete_global_breakpoint (gbnum);
       }
-}
+}*/
 
 int
 number_of_global_breakpoints (void)
@@ -16500,7 +16500,7 @@ queue_attach_request (int pid)
 {
   struct attach_request *req, *last;
 
-  req = XMALLOC (struct attach_request);
+  req = xmalloc (sizeof(struct attach_request));
   req->pid = pid;
   //req->gbnum = gb_num;
   req->next = NULL;
@@ -16564,7 +16564,7 @@ handle_attach_requests (void)
   printf_filtered (_("Process %d has hit global breakpoint\n"), req->pid);
   inf = find_inferior_pid (req->pid);
 
-  ALL_THREADS (thread_iter)
+  ALL_NON_EXITED_THREADS (thread_iter)
     {
       if (ptid_get_lwp (thread_iter->ptid) == req->pid)
 	{
@@ -16589,7 +16589,8 @@ handle_attach_requests (void)
 
       sprintf (args, "%d", req->pid);
       printf("starting attach\n");
-      catch_command_errors (attach_command, args, 0, RETURN_MASK_ALL);
+      //catch_command_errors (attach_command, args, 0, RETURN_MASK_ALL);
+      attach_command(args, 0);
       printf("done attach");
 
       //hello(req->pid);

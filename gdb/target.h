@@ -1136,8 +1136,6 @@ struct target_ops
       TARGET_DEFAULT_IGNORE ();
 
     int (*to_define_global_breakpoint) (bfd *, CORE_ADDR, int);
-    int (*to_insert_global_breakpoint) (int);
-    int (*to_delete_global_breakpoint) (int);
 
     int to_magic;
     /* Need sub-structure for target machine related rather than comm related?
@@ -2026,8 +2024,6 @@ extern char *target_fileio_read_stralloc (const char *filename);
   (*current_target.to_can_use_agent) (&current_target)
 
 int target_define_global_breakpoint (bfd *abfd, CORE_ADDR addr, int flags);
-void target_insert_global_breakpoint (int gbpnum);
-void target_delete_global_breakpoint (int gbpnum);
 
 #define target_augmented_libraries_svr4_read() \
   (*current_target.to_augmented_libraries_svr4_read) (&current_target)

@@ -316,48 +316,6 @@ struct remote_state
   /* The status of the stub support for the various vCont actions.  */
   struct vCont_action_support supports_vCont;
 
-<<<<<<< HEAD
-=======
-  /* True if the stub reports support for conditional tracepoints.  */
-  int cond_tracepoints;
-
-  /* True if the stub reports support for target-side breakpoint
-     conditions.  */
-  int cond_breakpoints;
-
-  /* True if the stub reports support for target-side breakpoint
-     commands.  */
-  int breakpoint_commands;
-
-  /* True if the stub reports support for fast tracepoints.  */
-  int fast_tracepoints;
-
-  /* True if the stub reports support for static tracepoints.  */
-  int static_tracepoints;
-
-  /* True if the stub reports support for installing tracepoint while
-     tracing.  */
-  int install_in_trace;
-
-  /* True if the stub can continue running a trace while GDB is
-     disconnected.  */
-  int disconnected_tracing;
-
-  /* True if the stub reports support for enabling and disabling
-     tracepoints while a trace experiment is running.  */
-  int enable_disable_tracepoints;
-
-  /* True if the stub can collect strings using tracenz bytecode.  */
-  int string_tracing;
-
-  /* True if the stub supports qXfer:libraries-svr4:read with a
-     non-empty annex.  */
-  int augmented_libraries_svr4_read;
-
-  /* True if the stub reports support for global breakpoints.  */
-  int global_breakpoints;
-
->>>>>>> global breakpoint: gdb
   /* Nonzero if the user has pressed Ctrl-C, but the target hasn't
      responded to that.  */
   int ctrlc_pending_p;
@@ -1354,7 +1312,6 @@ enum {
   PACKET_Qbtrace_off,
   PACKET_Qbtrace_bts,
   PACKET_qXfer_btrace,
-<<<<<<< HEAD
 
   /* Support for the QNonStop packet.  */
   PACKET_QNonStop,
@@ -1376,9 +1333,6 @@ enum {
   /* Support for qXfer:libraries-svr4:read with a non-empty annex.  */
   PACKET_augmented_libraries_svr4_read_feature,
 
-=======
-  PACKET_GlobalBreakpoints,
->>>>>>> global breakpoint: gdb
   PACKET_MAX
 };
 
@@ -3910,137 +3864,6 @@ remote_packet_size (const struct protocol_feature *feature,
   rs->explicit_packet_size = packet_size;
 }
 
-<<<<<<< HEAD
-=======
-static void
-remote_multi_process_feature (const struct protocol_feature *feature,
-			      enum packet_support support, const char *value)
-{
-  struct remote_state *rs = get_remote_state ();
-
-  rs->multi_process_aware = (support == PACKET_ENABLE);
-}
-
-static void
-remote_non_stop_feature (const struct protocol_feature *feature,
-			      enum packet_support support, const char *value)
-{
-  struct remote_state *rs = get_remote_state ();
-
-  rs->non_stop_aware = (support == PACKET_ENABLE);
-}
-
-static void
-remote_cond_tracepoint_feature (const struct protocol_feature *feature,
-				       enum packet_support support,
-				       const char *value)
-{
-  struct remote_state *rs = get_remote_state ();
-
-  rs->cond_tracepoints = (support == PACKET_ENABLE);
-}
-
-static void
-remote_cond_breakpoint_feature (const struct protocol_feature *feature,
-				enum packet_support support,
-				const char *value)
-{
-  struct remote_state *rs = get_remote_state ();
-
-  rs->cond_breakpoints = (support == PACKET_ENABLE);
-}
-
-static void
-remote_breakpoint_commands_feature (const struct protocol_feature *feature,
-				    enum packet_support support,
-				    const char *value)
-{
-  struct remote_state *rs = get_remote_state ();
-
-  rs->breakpoint_commands = (support == PACKET_ENABLE);
-}
-
-static void
-remote_fast_tracepoint_feature (const struct protocol_feature *feature,
-				enum packet_support support,
-				const char *value)
-{
-  struct remote_state *rs = get_remote_state ();
-
-  rs->fast_tracepoints = (support == PACKET_ENABLE);
-}
-
-static void
-remote_static_tracepoint_feature (const struct protocol_feature *feature,
-				  enum packet_support support,
-				  const char *value)
-{
-  struct remote_state *rs = get_remote_state ();
-
-  rs->static_tracepoints = (support == PACKET_ENABLE);
-}
-
-static void
-remote_install_in_trace_feature (const struct protocol_feature *feature,
-				 enum packet_support support,
-				 const char *value)
-{
-  struct remote_state *rs = get_remote_state ();
-
-  rs->install_in_trace = (support == PACKET_ENABLE);
-}
-
-static void
-remote_disconnected_tracing_feature (const struct protocol_feature *feature,
-				     enum packet_support support,
-				     const char *value)
-{
-  struct remote_state *rs = get_remote_state ();
-
-  rs->disconnected_tracing = (support == PACKET_ENABLE);
-}
-
-static void
-remote_enable_disable_tracepoint_feature (const struct protocol_feature *feature,
-					  enum packet_support support,
-					  const char *value)
-{
-  struct remote_state *rs = get_remote_state ();
-
-  rs->enable_disable_tracepoints = (support == PACKET_ENABLE);
-}
-
-static void
-remote_string_tracing_feature (const struct protocol_feature *feature,
-			       enum packet_support support,
-			       const char *value)
-{
-  struct remote_state *rs = get_remote_state ();
-
-  rs->string_tracing = (support == PACKET_ENABLE);
-}
-
-static void
-remote_global_breakpoint_feature (const struct protocol_feature *feature,
-				  enum packet_support support,
-				  const char *value)
-{
-  struct remote_state *rs = get_remote_state ();
-
-  rs->global_breakpoints = (support == PACKET_ENABLE);
-}
-
-static void
-remote_augmented_libraries_svr4_read_feature
-  (const struct protocol_feature *feature,
-   enum packet_support support, const char *value)
-{
-  struct remote_state *rs = get_remote_state ();
-
-  rs->augmented_libraries_svr4_read = (support == PACKET_ENABLE);
-}
-
->>>>>>> global breakpoint: gdb
 static const struct protocol_feature remote_protocol_features[] = {
   { "PacketSize", PACKET_DISABLE, remote_packet_size, -1 },
   { "qXfer:auxv:read", PACKET_DISABLE, remote_supported_packet,
@@ -4116,8 +3939,6 @@ static const struct protocol_feature remote_protocol_features[] = {
   { "Qbtrace:bts", PACKET_DISABLE, remote_supported_packet, PACKET_Qbtrace_bts },
   { "qXfer:btrace:read", PACKET_DISABLE, remote_supported_packet,
     PACKET_qXfer_btrace },
-  { "GlobalBreakpoints", PACKET_DISABLE, remote_global_breakpoint_feature,
-     PACKET_GlobalBreakpoints },
 };
 
 static char *remote_support_xml;

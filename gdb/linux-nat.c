@@ -5036,35 +5036,6 @@ linux_nat_define_global_breakpoint (bfd *abfd, CORE_ADDR addr, int flags)
   return new_gb_num;
 }
 
-static int
-linux_nat_delete_global_breakpoint (int gb_num)
-{
-  /*FILE *uprobe_events_file;
-  int ret;
-
-  uprobe_events_file = fopen (GLOBAL_BREAKPOINTS_UPROBE_EVENTS_PATH, "a");
-  if (uprobe_events_file == NULL)
-    {
-      warning (_("Could not open %s"), GLOBAL_BREAKPOINTS_UPROBE_EVENTS_PATH);
-      return 0;
-    }
-
-  ret = fprintf (uprobe_events_file, "- gdb/bp%d\n", gb_num);
-  if (ret < 0)
-    {
-      warning (_("Error writing to %s"), GLOBAL_BREAKPOINTS_UPROBE_EVENTS_PATH);
-      fclose (uprobe_events_file);
-      return 0;
-    }
-
-  fclose (uprobe_events_file);
-
-  if (0) {
-      linux_nat_global_breakpoints_teardown();
-  }*/
-
-  return 1;
-}
 
 static void
 gb_event_handler (int error, void *context)
@@ -5136,7 +5107,6 @@ linux_nat_add_target (struct target_ops *t)
   t->to_core_of_thread = linux_nat_core_of_thread;
 
   t->to_define_global_breakpoint = linux_nat_define_global_breakpoint;
-  t->to_delete_global_breakpoint = linux_nat_delete_global_breakpoint;
 
   /* We don't change the stratum; this target will sit at
      process_stratum and thread_db will set at thread_stratum.  This
