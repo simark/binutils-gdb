@@ -117,7 +117,7 @@ static void create_sals_from_address_default (char **,
 
 static void create_breakpoints_sal_default (struct gdbarch *,
 					    struct linespec_result *,
-					    char *, char *, char *,
+					    char *, char *,
 					    enum bptype,
 					    enum bpdisp, int, int,
 					    int,
@@ -4174,7 +4174,7 @@ breakpoint_here_p (struct address_space *aspace, CORE_ADDR pc)
 	    continue;		/* unmapped overlay -- can't be a match */
 	  else if (bl->owner->enable_state == bp_permanent)
 	    return permanent_breakpoint_here;
-	  else if (bl->owner->iz_global_breakpoint)
+	  else if (bl->owner->type == bp_global_breakpoint)
 	    there_is_a_global_breakpoint_here = 1;
 	  else
 	    any_breakpoint_here = 1;
@@ -5032,8 +5032,9 @@ watchpoints_triggered (struct target_waitstatus *ws)
 /* Ignore this watchpoint, no matter if the value changed or not.  */
 #define WP_IGNORE 4
 
-#define BP_TEMPFLAG 1
-#define BP_HARDWAREFLAG 2
+#define BP_TEMPFLAG (1 << 0)
+#define BP_HARDWAREFLAG (1 << 1)
+#define BP_GLOBALFLAG (1 << 2)
 
 /* Evaluate watchpoint condition expression and check if its value
    changed.
@@ -5893,13 +5894,13 @@ bpstat_what (bpstat bs_head)
 	  gnu_ifunc_resolver_return_stop (b);
 	  break;
 	}
-      if (b->process_string)
+     /* if (b->process_string)
 	{
-	  /* FIXME:
+	   FIXME:
 	  ui_out_text (uiout, " process ");
 	  ui_out_field_string (uiout, "process", b->process_string);
-	  */
-	}
+
+	}*/
     }
 
   return retval;
@@ -7209,6 +7210,7 @@ init_bp_location (struct bp_location *loc, const struct bp_location_ops *ops,
     case bp_tracepoint:
     case bp_fast_tracepoint:
     case bp_static_tracepoint:
+    case bp_global_breakpoint:
       loc->loc_type = bp_loc_other;
       break;
     default:
@@ -9401,7 +9403,7 @@ static void
 init_breakpoint_sal (struct breakpoint *b, struct gdbarch *gdbarch,
 		     struct symtabs_and_lines sals, char *addr_string,
 		     char *filter, char *cond_string,
-		     char *process_string, char *extra_string,
+		     char *extra_string,
 		     enum bptype type, enum bpdisp disposition,
 		     int thread, int task, int ignore_count,
 		     const struct breakpoint_ops *ops, int from_tty,
@@ -9446,7 +9448,6 @@ init_breakpoint_sal (struct breakpoint *b, struct gdbarch *gdbarch,
 	  init_raw_breakpoint (b, gdbarch, sal, type, ops);
 	  b->thread = thread;
 	  b->task = task;
-	  b->process_string = process_string;
 
 	  b->cond_string = cond_string;
 	  b->extra_string = extra_string;
@@ -9517,14 +9518,12 @@ init_breakpoint_sal (struct breakpoint *b, struct gdbarch *gdbarch,
               error (_("Garbage '%s' follows condition"), arg);
 	}
 
-      loc->from_global_br = 0;
       /* Note that we still go through global breakpoint definition
 	 process even if the process spec is exactly the same pid as
 	 inferior_ptid, since we want it to continue to be active even
 	 if GDB detaches from that process.  */
-      if (b->process_string)
+      if (type == bp_global_breakpoint)
 	{
-	  b->iz_global_breakpoint = 1;
 	  define_global_breakpoint (loc);
 	}
 
@@ -9555,8 +9554,7 @@ init_breakpoint_sal (struct breakpoint *b, struct gdbarch *gdbarch,
 static void
 create_breakpoint_sal (struct gdbarch *gdbarch,
 		       struct symtabs_and_lines sals, char *addr_string,
-		       char *filter, char *cond_string,
-		       char *process_string, char *extra_string,
+		       char *filter, char *cond_string, char *extra_string,
 		       enum bptype type, enum bpdisp disposition,
 		       int thread, int task, int ignore_count,
 		       const struct breakpoint_ops *ops, int from_tty,
@@ -9580,7 +9578,7 @@ create_breakpoint_sal (struct gdbarch *gdbarch,
 
   init_breakpoint_sal (b, gdbarch,
 		       sals, addr_string,
-		       filter, cond_string, process_string,
+		       filter, cond_string,
 		       extra_string, type, disposition,
 		       thread, task, ignore_count,
 		       ops, from_tty,
@@ -9609,7 +9607,7 @@ create_breakpoint_sal (struct gdbarch *gdbarch,
 static void
 create_breakpoints_sal (struct gdbarch *gdbarch,
 			struct linespec_result *canonical,
-			char *cond_string, char *process_string,
+			char *cond_string,
 			char *extra_string,
 			enum bptype type, enum bpdisp disposition,
 			int thread, int task, int ignore_count,
@@ -9636,7 +9634,7 @@ create_breakpoints_sal (struct gdbarch *gdbarch,
       create_breakpoint_sal (gdbarch, lsal->sals,
 			     addr_string,
 			     filter_string,
-			     cond_string, process_string, extra_string,
+			     cond_string, extra_string,
 			     type, disposition,
 			     thread, task, ignore_count, ops,
 			     from_tty, enabled, internal, flags,
@@ -9795,7 +9793,7 @@ invalid_thread_id_error (int id)
 static void
 find_condition_and_thread (const char *tok, CORE_ADDR pc,
 			   char **cond_string, int *thread, int *task,
-			   char **process_string, char **rest)
+			   char **rest)
 {
   *cond_string = NULL;
   *thread = -1;
@@ -9842,23 +9840,6 @@ find_condition_and_thread (const char *tok, CORE_ADDR pc,
 	  if (!valid_thread_id (*thread))
 	    invalid_thread_id_error (*thread);
 	  tok = tmptok;
-	}
-      else if (toklen >= 1 && strncmp (tok, "process", toklen) == 0)
-	{
-	  const char *proc_start, *proc_end, *proc_str;
-
-	  tok = end_tok + 1;
-	  while (isspace (*tok == ' '))
-	    tok++;
-	  proc_start = tok;
-
-	  while (*tok && !isspace (*tok))
-	    tok++;
-	  proc_end = tok;
-
-	  proc_str = savestring (proc_start, proc_end - proc_start);
-
-	  *process_string = (char *) proc_str;
 	}
       else if (toklen >= 1 && strncmp (tok, "task", toklen) == 0)
 	{
@@ -9960,7 +9941,6 @@ create_breakpoint (struct gdbarch *gdbarch,
   struct cleanup *bkpt_chain = NULL;
   int pending = 0;
   int task = 0;
-  char *process_string = NULL;
   int prev_bkpt_count = breakpoint_count;
 
   gdb_assert (ops != NULL);
@@ -10072,7 +10052,7 @@ create_breakpoint (struct gdbarch *gdbarch,
 	     re-parse it in context of each sal.  */
 
 	  find_condition_and_thread (arg, lsal->sals.sals[0].pc, &cond_string,
-				     &thread, &task, &process_string,
+				     &thread, &task,
 				     &rest);
 	  if (cond_string)
 	    make_cleanup (xfree, cond_string);
@@ -10101,7 +10081,7 @@ create_breakpoint (struct gdbarch *gdbarch,
         }
 
       ops->create_breakpoints_sal (gdbarch, &canonical,
-				   cond_string, process_string, extra_string,
+				   cond_string, extra_string,
 				   type_wanted,
 				   tempflag ? disp_del : disp_donttouch,
 				   thread, task, ignore_count, ops,
@@ -10180,11 +10160,16 @@ static void
 break_command_1 (char *arg, int flag, int from_tty)
 {
   int tempflag = flag & BP_TEMPFLAG;
-  enum bptype type_wanted = (flag & BP_HARDWAREFLAG
-			     ? bp_hardware_breakpoint
-			     : bp_breakpoint);
+  enum bptype type_wanted;
   struct breakpoint_ops *ops;
   const char *arg_cp = arg;
+
+  if (flag & BP_HARDWAREFLAG)
+    type_wanted = bp_hardware_breakpoint;
+  else if (flag & BP_GLOBALFLAG)
+    type_wanted = bp_global_breakpoint;
+  else
+    type_wanted = bp_breakpoint;
 
   /* Matching breakpoints on probes.  */
   if (arg && probe_linespec_to_ops (&arg_cp) != NULL)
@@ -10284,6 +10269,11 @@ static void
 thbreak_command (char *arg, int from_tty)
 {
   break_command_1 (arg, (BP_TEMPFLAG | BP_HARDWAREFLAG), from_tty);
+}
+
+static void gbreak_command (char *arg, int from_tty)
+{
+  break_command_1 (arg, BP_GLOBALFLAG, from_tty);
 }
 
 static void
@@ -13180,7 +13170,6 @@ static void
 base_breakpoint_create_breakpoints_sal (struct gdbarch *gdbarch,
 					struct linespec_result *c,
 					char *cond_string,
-					char *process_string,
 					char *extra_string,
 					enum bptype type_wanted,
 					enum bpdisp disposition,
@@ -13461,7 +13450,6 @@ static void
 bkpt_create_breakpoints_sal (struct gdbarch *gdbarch,
 			     struct linespec_result *canonical,
 			     char *cond_string,
-			     char *process_string,
 			     char *extra_string,
 			     enum bptype type_wanted,
 			     enum bpdisp disposition,
@@ -13472,7 +13460,7 @@ bkpt_create_breakpoints_sal (struct gdbarch *gdbarch,
 			     int internal, unsigned flags)
 {
   create_breakpoints_sal_default (gdbarch, canonical,
-				  cond_string, process_string, extra_string,
+				  cond_string, extra_string,
 				  type_wanted,
 				  disposition, thread, task,
 				  ignore_count, ops, from_tty,
@@ -13803,7 +13791,6 @@ static void
 tracepoint_create_breakpoints_sal (struct gdbarch *gdbarch,
 				   struct linespec_result *canonical,
 				   char *cond_string,
-				   char *process_string,
 				   char *extra_string,
 				   enum bptype type_wanted,
 				   enum bpdisp disposition,
@@ -13814,7 +13801,7 @@ tracepoint_create_breakpoints_sal (struct gdbarch *gdbarch,
 				   int internal, unsigned flags)
 {
   create_breakpoints_sal_default (gdbarch, canonical,
-				  cond_string, process_string, extra_string,
+				  cond_string, extra_string,
 				  type_wanted,
 				  disposition, thread, task,
 				  ignore_count, ops, from_tty,
@@ -13955,7 +13942,6 @@ static void
 strace_marker_create_breakpoints_sal (struct gdbarch *gdbarch,
 				      struct linespec_result *canonical,
 				      char *cond_string,
-				      char *process_string,
 				      char *extra_string,
 				      enum bptype type_wanted,
 				      enum bpdisp disposition,
@@ -13992,7 +13978,7 @@ strace_marker_create_breakpoints_sal (struct gdbarch *gdbarch,
       tp = XCNEW (struct tracepoint);
       init_breakpoint_sal (&tp->base, gdbarch, expanded,
 			   addr_string, NULL,
-			   cond_string, NULL, extra_string,
+			   cond_string, extra_string,
 			   type_wanted, disposition,
 			   thread, task, ignore_count, ops,
 			   from_tty, enabled, internal, flags,
@@ -14619,17 +14605,14 @@ addr_string_to_sals (struct breakpoint *b, char *addr_string, int *found)
 	{
 	  char *cond_string, *extra_string;
 	  int thread, task;
-	  char *process_string = NULL;
 
 	  find_condition_and_thread (s, sals.sals[0].pc,
 				     &cond_string, &thread, &task,
-				     &process_string, &extra_string);
+				     &extra_string);
 	  if (cond_string)
 	    b->cond_string = cond_string;
 	  b->thread = thread;
 	  b->task = task;
-	  if (process_string)
-	    b->process_string = process_string;
 	  if (extra_string)
 	    b->extra_string = extra_string;
 	  b->condition_not_parsed = 0;
@@ -14698,7 +14681,6 @@ static void
 create_breakpoints_sal_default (struct gdbarch *gdbarch,
 				struct linespec_result *canonical,
 				char *cond_string,
-				char *process_string,
 				char *extra_string,
 				enum bptype type_wanted,
 				enum bpdisp disposition,
@@ -14709,7 +14691,7 @@ create_breakpoints_sal_default (struct gdbarch *gdbarch,
 				int internal, unsigned flags)
 {
   create_breakpoints_sal (gdbarch, canonical, cond_string,
-			  process_string, extra_string,
+			  extra_string,
 			  type_wanted, disposition,
 			  thread, task, ignore_count, ops, from_tty,
 			  enabled, internal, flags);
@@ -16905,6 +16887,12 @@ Like \"hbreak\" except the breakpoint is only temporary,\n\
 so it will be deleted when hit.\n\
 \n"
 BREAK_ARGS_HELP ("thbreak")));
+  set_cmd_completer (c, location_completer);
+
+  c = add_com ("gbreak", class_breakpoint, gbreak_command, _("\
+Set a global breakpoint\n.\
+\n"
+BREAK_ARGS_HELP ("gbreak")));
   set_cmd_completer (c, location_completer);
 
   add_prefix_cmd ("enable", class_breakpoint, enable_command, _("\

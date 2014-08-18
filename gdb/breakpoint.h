@@ -59,6 +59,7 @@ enum bptype
     bp_none = 0,		/* Eventpoint has been deleted */
     bp_breakpoint,		/* Normal breakpoint */
     bp_hardware_breakpoint,	/* Hardware assisted breakpoint */
+    bp_global_breakpoint,
     bp_until,			/* used by until command */
     bp_finish,			/* used by finish command */
     bp_watchpoint,		/* Watchpoint */
@@ -470,8 +471,6 @@ struct bp_location
      to find the corresponding source file name.  */
 
   struct symtab *symtab;
-
-  int from_global_br;
 };
 
 /* This structure is a collection of function pointers that, if available,
@@ -575,7 +574,7 @@ struct breakpoint_ops
      This function is called inside `create_breakpoint'.  */
   void (*create_breakpoints_sal) (struct gdbarch *,
 				  struct linespec_result *,
-				  char *, char *, char *,
+				  char *, char *,
 				  enum bptype, enum bpdisp, int, int,
 				  int, const struct breakpoint_ops *,
 				  int, int, int, unsigned);
@@ -726,10 +725,6 @@ struct breakpoint
        or 0 if don't care.  */
     int task;
 
-    /* Processes/inferiors in which to insert this breakpoint; NULL
-       for the current process only.  */
-    char *process_string;
-
     /* Count of the number of times this breakpoint was taken, dumped
        with the info, but not used for anything else.  Useful for
        seeing how many times you hit a break prior to the program
@@ -750,8 +745,6 @@ struct breakpoint
 
     /* Same as py_bp_object, but for Scheme.  */
     struct gdbscm_breakpoint_object *scm_bp_object;
-
-    int iz_global_breakpoint;
   };
 
 /* An instance of this type is used to represent a watchpoint.  It
