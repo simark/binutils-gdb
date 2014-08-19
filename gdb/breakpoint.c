@@ -6102,6 +6102,7 @@ bptype_string (enum bptype type)
     {bp_none, "?deleted?"},
     {bp_breakpoint, "breakpoint"},
     {bp_hardware_breakpoint, "hw breakpoint"},
+    {bp_global_breakpoint, "global breakpoint"},
     {bp_until, "until"},
     {bp_finish, "finish"},
     {bp_watchpoint, "watchpoint"},
@@ -14021,7 +14022,7 @@ strace_marker_p (struct breakpoint *b)
   return b->ops == &strace_marker_breakpoint_ops;
 }
 
-//static void delete_global_breakpoint (struct breakpoint *b);
+static void delete_global_breakpoint (struct breakpoint *b);
 
 /* Delete a breakpoint and clean up all traces of it in the data
    structures.  */
@@ -14082,9 +14083,6 @@ delete_breakpoint (struct breakpoint *bpt)
   if (bpt->number)
     observer_notify_breakpoint_deleted (bpt);
 
-  /*if (bpt->process_string)
-    delete_global_breakpoint (bpt);*/
-
   if (breakpoint_chain == bpt)
     breakpoint_chain = bpt->next;
 
@@ -14094,6 +14092,9 @@ delete_breakpoint (struct breakpoint *bpt)
       b->next = bpt->next;
       break;
     }
+
+  if (bpt->type == bp_global_breakpoint)
+    delete_global_breakpoint (bpt);
 
   /* Be sure no bpstat's are pointing at the breakpoint after it's
      been freed.  */
@@ -16427,7 +16428,7 @@ define_global_breakpoint (struct bp_location *loc)
 
 /* Delete a global breakpoint by issuing deletes for any locations
    that might have agent-assigned numbers.  */
-/*
+
 static void
 delete_global_breakpoint (struct breakpoint *b)
 {
@@ -16438,10 +16439,11 @@ delete_global_breakpoint (struct breakpoint *b)
     if (gb->bp_number == b->number)
       {
 	gbnum = gb->gb_number;
+	printf("Deleting gb #%d\n", gbnum);
 	VEC_ordered_remove (global_breakpoint_s, gbps, ix);
 	target_delete_global_breakpoint (gbnum);
       }
-}*/
+}
 
 int
 number_of_global_breakpoints (void)

@@ -4998,12 +4998,10 @@ struct gbp_information {
 static int
 linux_nat_define_global_breakpoint (bfd *abfd, CORE_ADDR addr, int flags)
 {
-  static int gb_num = 0;
   const char *bin_name = abfd->filename;
   int bin_fd;
   int ret;
   struct gbp_information gbp_info;
-  int new_gb_num;
   memset(&gbp_info, 0, sizeof(gbp_info));
 
 
@@ -5020,8 +5018,6 @@ linux_nat_define_global_breakpoint (bfd *abfd, CORE_ADDR addr, int flags)
       return -1;
     }
 
-  new_gb_num = gb_num++;
-
   gbp_info.offset = addr;
   gbp_info.fd = bin_fd;
 
@@ -5033,9 +5029,13 @@ linux_nat_define_global_breakpoint (bfd *abfd, CORE_ADDR addr, int flags)
 
   close(bin_fd);
 
-  return new_gb_num;
+  return ret;
 }
 
+static int linux_nat_delete_global_breakpoint (int gbnum)
+{
+  return ioctl (gb_session_fd, GBP_REMOVE, gbnum);
+}
 
 static void
 gb_event_handler (int error, void *context)
@@ -5107,6 +5107,7 @@ linux_nat_add_target (struct target_ops *t)
   t->to_core_of_thread = linux_nat_core_of_thread;
 
   t->to_define_global_breakpoint = linux_nat_define_global_breakpoint;
+  t->to_delete_global_breakpoint = linux_nat_delete_global_breakpoint;
 
   /* We don't change the stratum; this target will sit at
      process_stratum and thread_db will set at thread_stratum.  This

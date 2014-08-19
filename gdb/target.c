@@ -535,6 +535,32 @@ target_define_global_breakpoint (bfd *abfd, CORE_ADDR addr, int flags)
   return -1;
 }
 
+int
+target_delete_global_breakpoint (int gbnum)
+{
+  struct target_ops *t;
+  int rslt;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    {
+      if (t->to_delete_global_breakpoint)
+	{
+	  rslt = t->to_delete_global_breakpoint (gbnum);
+	  if (targetdebug)
+	    fprintf_unfiltered (gdb_stdlog,
+				"target_delete_global_breakpoint (%d) = %d\n",
+				gbnum,
+				rslt);
+	  return rslt;
+	}
+    }
+
+  internal_error (__FILE__, __LINE__,
+		  "could not find a target to delete global breakpoint");
+
+  return -1;
+}
+
 /* Go through the target stack from top to bottom, copying over zero
    entries in current_target, then filling in still empty entries.  In
    effect, we are doing class inheritance through the pushed target
@@ -2558,6 +2584,15 @@ find_default_define_global_breakpoint (bfd *abfd, CORE_ADDR addr, int flags)
   return (t->to_define_global_breakpoint) (abfd, addr, flags);
 }
 
+static int
+find_default_delete_global_breakpoint (int gbnum)
+{
+  struct target_ops *t;
+
+  t = find_default_run_target ("delete global breakpoint");
+  return (t->to_delete_global_breakpoint) (gbnum);
+}
+
 /* Target file operations.  */
 
 static struct target_ops *
@@ -3005,6 +3040,7 @@ init_dummy_target (void)
   dummy_target.to_has_execution = return_zero_has_execution;
   dummy_target.to_magic = OPS_MAGIC;
   dummy_target.to_define_global_breakpoint = find_default_define_global_breakpoint;
+  dummy_target.to_delete_global_breakpoint = find_default_delete_global_breakpoint;
 
   install_dummy_methods (&dummy_target);
 }
