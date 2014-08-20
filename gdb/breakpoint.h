@@ -471,6 +471,10 @@ struct bp_location
      to find the corresponding source file name.  */
 
   struct symtab *symtab;
+
+  /* When owner->type == global_breakpoint_type, the corresponding global
+     breakpoint number. Otherwise, it is unused.*/
+  int gb_number;
 };
 
 /* This structure is a collection of function pointers that, if available,
@@ -1567,7 +1571,7 @@ extern char *ep_parse_optional_if_clause (char **arg);
 extern void queue_attach_request (int pid);
 extern int handle_attach_requests (void);
 extern void discard_attach_requests (void);
-extern void record_breakpoint (int pid, int gbpnum);
+//extern void record_breakpoint (int pid, int gbpnum);
 extern int number_of_global_breakpoints (void);
 struct inferior;
 extern void printf_global_breakpoint (struct ui_out *uiout, struct inferior *inf);

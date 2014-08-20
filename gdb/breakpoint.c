@@ -16291,7 +16291,7 @@ breakpoint_free_objfile (struct objfile *objfile)
 struct global_breakpoint {
 
   /* The breakpoint number.  */
-  int bp_number;
+  //int bp_number;
 
   /* The address of one of the breakpoint's locations.  */
   CORE_ADDR bp_loc_address;
@@ -16301,7 +16301,7 @@ struct global_breakpoint {
 
   /* The global breakpoint address, returned by the agent.  This may
      or may not match the bp location address.  */
-  CORE_ADDR gb_address;
+  //CORE_ADDR gb_address;
 };
 
 typedef struct global_breakpoint global_breakpoint_s;
@@ -16320,16 +16320,14 @@ dump_gbps_command (char *args, int from_tty)
   struct global_breakpoint *gb;
 
   for (ix = 0; VEC_iterate (global_breakpoint_s, gbps, ix, gb); ++ix)
-    printf_filtered ("BP %d at %s is GB %d at %s\n",
-		     gb->bp_number,
-		     paddress (get_current_arch (), gb->bp_loc_address),
+    printf_filtered ("GB %d at %s\n",
 		     gb->gb_number,
-		     paddress (get_current_arch (), gb->gb_address));
+		     paddress (get_current_arch (), gb->bp_loc_address));
 }
 
 /* Add a breakpoint to the list of (global) breakpoints that should be
    installed in the inferior after attaching.  */
-
+/*
 static int
 add_breakpoint_to_inferior (struct inferior *inf, void *data)
 {
@@ -16340,7 +16338,7 @@ add_breakpoint_to_inferior (struct inferior *inf, void *data)
     VEC_safe_push (int, inf_data->installed_breakpoints, b->number);
 
   return 0;
-}
+}*/
 
 static void
 clear_global_breakpoints (struct inferior *inf)
@@ -16413,11 +16411,10 @@ define_global_breakpoint (struct bp_location *loc)
     }
 
   /* Record the breakpoint & global breakpoint pair.  */
-  gb.bp_number = breakpoint_count + 1;//loc->owner->number;
   gb.bp_loc_address = loc->address;
   gb.gb_number = gbnum;
-  gb.gb_address = 0;
   VEC_safe_push (global_breakpoint_s, gbps, &gb);
+  loc->gb_number = gbnum;
 
   /* If this breakpoint is wildcarded for all current processes, go
      ahead and add to each inferior.  */
@@ -16434,15 +16431,25 @@ delete_global_breakpoint (struct breakpoint *b)
 {
   int ix, gbnum;
   struct global_breakpoint *gb;
+  struct bp_location *loc, **loc_tmp;
 
-  for (ix = 0; VEC_iterate (global_breakpoint_s, gbps, ix, gb); ++ix)
+  ALL_BP_LOCATIONS (loc, loc_tmp) {
+    printf("owner = %p, b = %p\n", loc->owner, b);
+    if (loc->owner == b) {
+	printf("Deleting gb #%d\n", loc->gb_number);
+	//VEC_ordered_remove (global_breakpoint_s, gbps, ix);
+	target_delete_global_breakpoint (loc->gb_number);
+    }
+  }
+
+  /*for (ix = 0; VEC_iterate (global_breakpoint_s, gbps, ix, gb); ++ix)
     if (gb->bp_number == b->number)
       {
 	gbnum = gb->gb_number;
 	printf("Deleting gb #%d\n", gbnum);
 	VEC_ordered_remove (global_breakpoint_s, gbps, ix);
 	target_delete_global_breakpoint (gbnum);
-      }
+      }*/
 }
 
 int
@@ -16595,7 +16602,7 @@ handle_attach_requests (void)
    process.  This lets us know whether to install that breakpoint
    ourselves, should we ever find ourselves debugging that
    process.  */
-
+/*
 void
 record_breakpoint (int pid, int gbpnum)
 {
@@ -16614,7 +16621,7 @@ record_breakpoint (int pid, int gbpnum)
     return;
 
   iterate_over_inferiors (add_breakpoint_to_inferior, b);
-}
+}*/
 
 void
 initialize_breakpoint_ops (void)
