@@ -5032,7 +5032,7 @@ gb_event_handler (int error, void *context)
   char *gb_name_start;
   int ret, gb_num;
   pid_t active_pid = 0;
-  printf("event!!!!\n");
+  //printf("event!!!!\n");
 
 
   ret = read(gb_session_fd, &active_pid, sizeof(active_pid));
