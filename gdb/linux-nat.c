@@ -4910,13 +4910,13 @@ linux_nat_global_breakpoints_setup (void)
       return 0;
     }
 
-  printf("Adding gb file handler\n");
+  //printf("Adding gb file handler\n");
   add_file_handler (gb_session_fd, gb_event_handler, NULL);
 
   if (debug_linux_nat)
     fprintf_unfiltered (gdb_stdlog, "linux-nat: global breakpoints enabled\n");
 
-  printf("linux-nat: global breakpoints enabled\n");
+  //printf("linux-nat: global breakpoints enabled\n");
   return 1;
 }
 int
@@ -4953,7 +4953,7 @@ linux_nat_global_breakpoint_continue_pid (pid_t pid)
       printf("Error writing to gb_session_fd\n");
     }
 
-  printf("Wrote %d to session fd\n", pid);
+  //printf("Wrote %d to session fd\n", pid);
 }
 
 void hello(pid_t pid);
@@ -4967,17 +4967,10 @@ static void linux_nat_global_attach_request(pid_t pid)
   struct inferior *inf;
   struct thread_info *tp;
 
-  printf("Yo dawg, pid %d hit global breakpoint\n", pid);
-  /* Add a new inferior.  */
-  //inf = add_inferior (pid);
-
-
   //linux_nat_global_breakpoint_continue_pid(pid, 1);
   queue_attach_request (pid);
   /* For now, just handle immediately.  */
   handle_attach_requests ();
-
-
 }
 
 struct gbp_information {

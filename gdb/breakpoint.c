@@ -16397,11 +16397,11 @@ define_global_breakpoint (struct bp_location *loc)
 	offset -= (sec->the_bfd_section->vma - sec->the_bfd_section->filepos);
     }
 
-  printf("I guess I should set a GB at %lx in %s\n", offset, abfd->filename);
+  //printf("I guess I should set a GB at %lx in %s\n", offset, abfd->filename);
 
   gbnum = target_define_global_breakpoint (abfd, offset, flags);
 
-  printf("Target code returned %d\n", gbnum);
+  //printf("Target code returned %d\n", gbnum);
 
 
   /* If anything went wrong in target-specific code, give up.  */
@@ -16434,9 +16434,9 @@ delete_global_breakpoint (struct breakpoint *b)
   struct bp_location *loc, **loc_tmp;
 
   ALL_BP_LOCATIONS (loc, loc_tmp) {
-    printf("owner = %p, b = %p\n", loc->owner, b);
+    //printf("owner = %p, b = %p\n", loc->owner, b);
     if (loc->owner == b) {
-	printf("Deleting gb #%d\n", loc->gb_number);
+	//printf("Deleting gb #%d\n", loc->gb_number);
 	//VEC_ordered_remove (global_breakpoint_s, gbps, ix);
 	target_delete_global_breakpoint (loc->gb_number);
     }
@@ -16579,10 +16579,10 @@ handle_attach_requests (void)
       set_current_program_space (new_inf->pspace);
 
       sprintf (args, "%d", req->pid);
-      printf("starting attach\n");
+      //printf("starting attach\n");
       //catch_command_errors (attach_command, args, 0, RETURN_MASK_ALL);
       attach_command(args, 0);
-      printf("done attach");
+      //printf("done attach");
 
       //hello(req->pid);
 
