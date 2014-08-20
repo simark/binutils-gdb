@@ -1,0 +1,30 @@
+standard_testfile
+
+if {[prepare_for_testing $testfile.exp $testfile $srcfile debug]} {
+    untested $testfile.exp
+    return -1
+}
+
+set wrapper_src "${srcdir}/${subdir}/gbp-wrapper.c"
+set wrapper_bin "gbp-wrapper"
+
+if { [gdb_compile "${wrapper_src}" "${wrapper_bin}" executable ""] != "" } {
+    puts "Could not compile gbp-wrapper."
+    untested $testfile.exp
+    return -1
+}
+
+# Insert global breakpoint
+gdb_test "gbreak main" ".*line 24.*" "insert global breakpoint"
+
+# Start external program
+#set testpid1 [eval exec gbp-wrapper $binfile &]
+
+set testpid [eval exec "./${wrapper_bin}" "${binfile}" &]
+
+sleep 1
+
+gdb_test "" ".*in main.*" "application was attached"
+
+gdb_test "print getpid()" ".*${testpid}" "good pid"
+
