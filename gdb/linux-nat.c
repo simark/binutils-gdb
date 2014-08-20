@@ -4956,12 +4956,6 @@ linux_nat_global_breakpoint_continue_pid (pid_t pid)
   //printf("Wrote %d to session fd\n", pid);
 }
 
-void hello(pid_t pid);
-void hello(pid_t pid)
-{
-  linux_nat_global_breakpoint_continue_pid(pid);
-}
-
 static void linux_nat_global_attach_request(pid_t pid)
 {
   struct inferior *inf;
