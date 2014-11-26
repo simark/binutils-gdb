@@ -62,7 +62,7 @@ struct subfile
   /* Space for this is malloc'd.  */
   char *name;
   /* Space for this is malloc'd.  */
-  struct linetable *line_vector;
+  struct linetable line_vector;
   int line_vector_length;
   /* The "containing" compunit.  */
   struct buildsym_compunit *buildsym_compunit;

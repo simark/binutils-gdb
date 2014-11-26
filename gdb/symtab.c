@@ -2351,7 +2351,7 @@ find_pc_sect_line (CORE_ADDR pc, struct obj_section *section, int notcurrent)
       l = SYMTAB_LINETABLE (iter_s);
       if (!l)
 	continue;
-      len = l->nitems;
+      len = get_linetable_size(l);
       if (len <= 0)
 	{
 	  /* I think len can be zero if the symtab lacks line numbers
@@ -2362,7 +2362,7 @@ find_pc_sect_line (CORE_ADDR pc, struct obj_section *section, int notcurrent)
 	}
 
       prev = NULL;
-      item = l->item;		/* Get first line info.  */
+      item = VEC_address(linetable_entry_s, l->the_items);	/* Get first line info.  */
 
       /* Is this file's first line closer than the first lines of other files?
          If so, record this file, and its first line, as best alternate.  */
@@ -2510,7 +2510,7 @@ find_line_symtab (struct symtab *symtab, int line,
       struct symtab *s;
 
       if (best_index >= 0)
-	best = best_linetable->item[best_index].line;
+	best = VEC_index(linetable_entry_s, best_linetable->the_items, best_index)->line;
       else
 	best = 0;
 
@@ -2542,9 +2542,9 @@ find_line_symtab (struct symtab *symtab, int line,
 		best_symtab = s;
 		goto done;
 	      }
-	    if (best == 0 || l->item[ind].line < best)
+	    if (best == 0 || VEC_index(linetable_entry_s, l->the_items, ind)->line < best)
 	      {
-		best = l->item[ind].line;
+		best = VEC_index(linetable_entry_s, l->the_items, ind)->line;
 		best_index = ind;
 		best_linetable = l;
 		best_symtab = s;
@@ -2574,6 +2574,7 @@ find_pcs_for_symtab_line (struct symtab *symtab, int line,
 {
   int start = 0;
   VEC (CORE_ADDR) *result = NULL;
+  struct linetable *lt = SYMTAB_LINETABLE (symtab);
 
   /* First, collect all the PCs that are at this line.  */
   while (1)
@@ -2581,14 +2582,14 @@ find_pcs_for_symtab_line (struct symtab *symtab, int line,
       int was_exact;
       int idx;
 
-      idx = find_line_common (SYMTAB_LINETABLE (symtab), line, &was_exact,
-			      start);
+      idx = find_line_common (lt, line, &was_exact, start);
       if (idx < 0)
 	break;
 
       if (!was_exact)
 	{
-	  struct linetable_entry *item = &SYMTAB_LINETABLE (symtab)->item[idx];
+	  struct linetable_entry *item = VEC_index(linetable_entry_s,
+						   lt->the_items, idx);
 
 	  if (*best_item == NULL || item->line < (*best_item)->line)
 	    *best_item = item;
@@ -2597,7 +2598,7 @@ find_pcs_for_symtab_line (struct symtab *symtab, int line,
 	}
 
       VEC_safe_push (CORE_ADDR, result,
-		     SYMTAB_LINETABLE (symtab)->item[idx].pc);
+		     VEC_index(linetable_entry_s, lt->the_items, idx)->pc);
       start = idx + 1;
     }
 
@@ -2623,7 +2624,7 @@ find_line_pc (struct symtab *symtab, int line, CORE_ADDR *pc)
   if (symtab != NULL)
     {
       l = SYMTAB_LINETABLE (symtab);
-      *pc = l->item[ind].pc;
+      *pc = get_linetable_entry(l, ind)->pc;
       return 1;
     }
   else
@@ -2697,10 +2698,10 @@ find_line_common (struct linetable *l, int lineno,
   if (l == 0)
     return -1;
 
-  len = l->nitems;
+  len = get_linetable_size(l);
   for (i = start; i < len; i++)
     {
-      struct linetable_entry *item = &(l->item[i]);
+      struct linetable_entry *item = get_linetable_entry(l, i);
 
       if (item->line == lineno)
 	{
@@ -2773,6 +2774,7 @@ skip_prologue_using_lineinfo (CORE_ADDR func_addr, struct symtab *symtab)
 {
   CORE_ADDR func_start, func_end;
   struct linetable *l;
+  struct linetable_entry *item;
   int i;
 
   /* Give up if this symbol has no lineinfo table.  */
@@ -2789,10 +2791,8 @@ skip_prologue_using_lineinfo (CORE_ADDR func_addr, struct symtab *symtab)
      symtab.h where `struct linetable' is defined.  Thus, the first
      entry whose PC is in the range [FUNC_START..FUNC_END[ is the
      address we are looking for.  */
-  for (i = 0; i < l->nitems; i++)
+  ALL_LINETABLE_ENTRIES(l, i, item)
     {
-      struct linetable_entry *item = &(l->item[i]);
-
       /* Don't use line numbers of zero, they mark special entries in
 	 the table.  See the commentary on symtab.h before the
 	 definition of struct linetable.  */
@@ -3022,13 +3022,13 @@ skip_prologue_using_sal (struct gdbarch *gdbarch, CORE_ADDR func_addr)
 
 	  /* Skip any earlier lines, and any end-of-sequence marker
 	     from a previous function.  */
-	  while (linetable->item[idx].pc != prologue_sal.pc
-		 || linetable->item[idx].line == 0)
+	  while (get_linetable_entry(linetable, idx)->pc != prologue_sal.pc
+		 || get_linetable_entry(linetable, idx)->line == 0)
 	    idx++;
 
-	  if (idx+1 < linetable->nitems
-	      && linetable->item[idx+1].line != 0
-	      && linetable->item[idx+1].pc == start_pc)
+	  if (idx + 1 < get_linetable_size(linetable)
+	      && get_linetable_entry(linetable, idx + 1)->line != 0
+	      && get_linetable_entry(linetable, idx + 1)->pc == start_pc)
 	    return start_pc;
 	}
 
@@ -5225,7 +5225,22 @@ allocate_template_symbol (struct objfile *objfile)
   return result;
 }
 
-
+struct linetable_entry *
+get_linetable_entry (struct linetable *linetable, int index)
+{
+  return VEC_index (linetable_entry_s, linetable->the_items, index);
+}
+
+struct linetable_entry *
+get_linetable_last_entry(struct linetable *linetable)
+{
+  return VEC_last(linetable_entry_s, linetable->the_items);
+}
+
+unsigned int get_linetable_size (struct linetable *linetable)
+{
+  return VEC_length (linetable_entry_s, linetable->the_items);
+}
 
 void
 _initialize_symtab (void)
@@ -5304,3 +5319,4 @@ A value greater than 1 provides more verbose information."),
 
   observer_attach_executable_changed (symtab_observer_executable_changed);
 }
+

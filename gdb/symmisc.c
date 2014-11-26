@@ -311,12 +311,13 @@ dump_symtab_1 (struct objfile *objfile, struct symtab *symtab,
   l = SYMTAB_LINETABLE (symtab);
   if (l)
     {
+      struct linetable_entry *lte;
       fprintf_filtered (outfile, "\nLine table:\n\n");
-      len = l->nitems;
-      for (i = 0; i < len; i++)
+
+      ALL_LINETABLE_ENTRIES(l, i, lte)
 	{
-	  fprintf_filtered (outfile, " line %d at ", l->item[i].line);
-	  fputs_filtered (paddress (gdbarch, l->item[i].pc), outfile);
+	  fprintf_filtered (outfile, " line %d at ", lte->line);
+	  fputs_filtered (paddress (gdbarch, lte->pc), outfile);
 	  fprintf_filtered (outfile, "\n");
 	}
     }

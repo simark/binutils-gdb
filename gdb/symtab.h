@@ -816,6 +816,9 @@ struct linetable_entry
   CORE_ADDR pc;
 };
 
+typedef struct linetable_entry linetable_entry_s;
+DEF_VEC_O(linetable_entry_s);
+
 /* The order of entries in the linetable is significant.  They should
    be sorted by increasing values of the pc field.  If there is more than
    one entry for a given pc, then I'm not sure what should happen (and
@@ -833,15 +836,24 @@ struct linetable_entry
    acceptable, though wasteful of table space, for such a range to be
    zero length.  */
 
+#define ALL_LINETABLE_ENTRIES(linetable, index, linetable_entry_pointer) \
+  for ((index) = 0; VEC_iterate(linetable_entry_s, linetable->the_items, index, linetable_entry_pointer); \
+           index++)
+
 struct linetable
 {
-  int nitems;
-
   /* Actually NITEMS elements.  If you don't like this use of the
      `struct hack', you can shove it up your ANSI (seriously, if the
      committee tells us how to do it, we can probably go along).  */
-  struct linetable_entry item[1];
+  VEC(linetable_entry_s) *the_items;
+  //struct linetable_entry item[1];
 };
+
+extern struct linetable_entry * get_linetable_entry (
+    struct linetable *linetable, int index);
+extern struct linetable_entry * get_linetable_last_entry(
+    struct linetable *linetable);
+extern unsigned int get_linetable_size (struct linetable *linetable);
 
 /* How to relocate the symbols from each section in a symbol file.
    Each struct contains an array of offsets.
@@ -886,7 +898,7 @@ struct symtab
   /* Table mapping core addresses to line numbers for this file.
      Can be NULL if none.  Never shared between different symtabs.  */
 
-  struct linetable *linetable;
+  struct linetable linetable;
 
   /* Name of this source file.  This pointer is never NULL.  */
 

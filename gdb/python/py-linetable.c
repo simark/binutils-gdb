@@ -201,6 +201,7 @@ ltpy_has_line (PyObject *self, PyObject *args)
   struct symtab *symtab;
   gdb_py_longest py_line;
   int index;
+  struct linetable_entry *lte;
 
   LTPY_REQUIRE_VALID (self, symtab);
 
@@ -214,10 +215,9 @@ ltpy_has_line (PyObject *self, PyObject *args)
       return NULL;
     }
 
-  for (index = 0; index < SYMTAB_LINETABLE (symtab)->nitems; index++)
+  ALL_LINETABLE_ENTRIES(SYMTAB_LINETABLE (symtab), index, lte)
     {
-      struct linetable_entry *item = &(SYMTAB_LINETABLE (symtab)->item[index]);
-      if (item->line == py_line)
+      if (lte->line == py_line)
 	  Py_RETURN_TRUE;
     }
 
@@ -237,6 +237,7 @@ ltpy_get_all_source_lines (PyObject *self, PyObject *args)
   PyObject *source_list, *source_dict, *line;
   struct linetable_entry *item;
   Py_ssize_t list_size;
+  int i;
 
   LTPY_REQUIRE_VALID (self, symtab);
 
@@ -251,10 +252,8 @@ ltpy_get_all_source_lines (PyObject *self, PyObject *args)
   if (source_dict == NULL)
     return NULL;
 
-  for (index = 0; index < SYMTAB_LINETABLE (symtab)->nitems; index++)
+  ALL_LINETABLE_ENTRIES(SYMTAB_LINETABLE (symtab), i, item)
     {
-      item = &(SYMTAB_LINETABLE (symtab)->item[index]);
-
       /* 0 is used to signify end of line table information.  Do not
 	 include in the source set. */
       if (item->line > 0)
@@ -430,10 +429,10 @@ ltpy_iternext (PyObject *self)
 
   LTPY_REQUIRE_VALID (iter_obj->source, symtab);
 
-  if (iter_obj->current_index >= SYMTAB_LINETABLE (symtab)->nitems)
+  if (iter_obj->current_index >= get_linetable_size(SYMTAB_LINETABLE (symtab)))
     goto stop_iteration;
 
-  item = &(SYMTAB_LINETABLE (symtab)->item[iter_obj->current_index]);
+  item = VEC_index(linetable_entry_s, SYMTAB_LINETABLE(symtab)->the_items, iter_obj->current_index);
 
   /* Skip over internal entries such as 0.  0 signifies the end of
      line table data and is not useful to the API user.  */
@@ -442,9 +441,9 @@ ltpy_iternext (PyObject *self)
       iter_obj->current_index++;
 
       /* Exit if the internal value is the last item in the line table.  */
-      if (iter_obj->current_index >= SYMTAB_LINETABLE (symtab)->nitems)
+      if (iter_obj->current_index >= get_linetable_size(SYMTAB_LINETABLE (symtab)))
 	goto stop_iteration;
-      item = &(SYMTAB_LINETABLE (symtab)->item[iter_obj->current_index]);
+      item = VEC_index(linetable_entry_s, SYMTAB_LINETABLE(symtab)->the_items, iter_obj->current_index);
     }
 
   obj = build_linetable_entry (item->line, item->pc);

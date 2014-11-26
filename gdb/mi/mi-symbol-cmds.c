@@ -35,6 +35,7 @@ mi_cmd_symbol_list_lines (char *command, char **argv, int argc)
   int i;
   struct cleanup *cleanup_stack, *cleanup_tuple;
   struct ui_out *uiout = current_uiout;
+  struct linetable_entry *lte;
 
   if (argc != 1)
     error (_("-symbol-list-lines: Usage: SOURCE_FILENAME"));
@@ -52,13 +53,12 @@ mi_cmd_symbol_list_lines (char *command, char **argv, int argc)
   gdbarch = get_objfile_arch (SYMTAB_OBJFILE (s));
   cleanup_stack = make_cleanup_ui_out_list_begin_end (uiout, "lines");
 
-  if (SYMTAB_LINETABLE (s) != NULL && SYMTAB_LINETABLE (s)->nitems > 0)
-    for (i = 0; i < SYMTAB_LINETABLE (s)->nitems; i++)
+  if (SYMTAB_LINETABLE (s) != NULL)
+    ALL_LINETABLE_ENTRIES(SYMTAB_LINETABLE (s), i, lte)
     {
       cleanup_tuple = make_cleanup_ui_out_tuple_begin_end (uiout, NULL);
-      ui_out_field_core_addr (uiout, "pc", gdbarch,
-			      SYMTAB_LINETABLE (s)->item[i].pc);
-      ui_out_field_int (uiout, "line", SYMTAB_LINETABLE (s)->item[i].line);
+      ui_out_field_core_addr (uiout, "pc", gdbarch, lte->pc);
+      ui_out_field_int (uiout, "line", lte->line);
       do_cleanups (cleanup_tuple);
     }
 

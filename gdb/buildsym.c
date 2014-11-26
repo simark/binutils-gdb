@@ -835,6 +835,8 @@ void
 record_line (struct subfile *subfile, int line, CORE_ADDR pc)
 {
   struct linetable_entry *e;
+  struct linetable_entry new_entry;
+  int idx;
 
   /* Ignore the dummy line number in libg.o */
   if (line == 0xffff)
@@ -842,26 +844,7 @@ record_line (struct subfile *subfile, int line, CORE_ADDR pc)
       return;
     }
 
-  /* Make sure line vector exists and is big enough.  */
-  if (!subfile->line_vector)
-    {
-      subfile->line_vector_length = INITIAL_LINE_VECTOR_LENGTH;
-      subfile->line_vector = (struct linetable *)
-	xmalloc (sizeof (struct linetable)
-	   + subfile->line_vector_length * sizeof (struct linetable_entry));
-      subfile->line_vector->nitems = 0;
-      have_line_numbers = 1;
-    }
-
-  if (subfile->line_vector->nitems + 1 >= subfile->line_vector_length)
-    {
-      subfile->line_vector_length *= 2;
-      subfile->line_vector = (struct linetable *)
-	xrealloc ((char *) subfile->line_vector,
-		  (sizeof (struct linetable)
-		   + (subfile->line_vector_length
-		      * sizeof (struct linetable_entry))));
-    }
+  have_line_numbers = 1;
 
   /* Normally, we treat lines as unsorted.  But the end of sequence
      marker is special.  We sort line markers at the same PC by line
@@ -876,19 +859,20 @@ record_line (struct subfile *subfile, int line, CORE_ADDR pc)
      end of sequence markers.  All we lose is the ability to set
      breakpoints at some lines which contain no instructions
      anyway.  */
-  if (line == 0 && subfile->line_vector->nitems > 0)
+  if (line == 0 && get_linetable_size(subfile->line_vector) > 0)
     {
-      e = subfile->line_vector->item + subfile->line_vector->nitems - 1;
-      while (subfile->line_vector->nitems > 0 && e->pc == pc)
+      e = get_linetable_last_entry(subfile->line_vector);
+
+      while (get_linetable_size(subfile->line_vector) > 0 && e->pc == pc)
 	{
-	  e--;
-	  subfile->line_vector->nitems--;
+	  VEC_pop (linetable_entry_s, subfile->line_vector->the_items);
+	  e = get_linetable_last_entry(subfile->line_vector);
 	}
     }
 
-  e = subfile->line_vector->item + subfile->line_vector->nitems++;
-  e->line = line;
-  e->pc = pc;
+  new_entry.line = line;
+  new_entry.pc = pc;
+  VEC_safe_push(linetable_entry_s, subfile->line_vector, &new_entry);
 }
 
 /* Needed in order to sort line tables from IBM xcoff files.  Sigh!  */
@@ -1285,15 +1269,15 @@ end_symtab_with_blockvector (struct block *static_block,
 
       if (subfile->line_vector)
 	{
-	  linetablesize = sizeof (struct linetable) +
+	  vector_size = sizeof(VEC(linetable_entry_s)) + get_linetable_size()
 	    subfile->line_vector->nitems * sizeof (struct linetable_entry);
 
 	  /* Like the pending blocks, the line table may be
 	     scrambled in reordered executables.  Sort it if
 	     OBJF_REORDERED is true.  */
 	  if (objfile->flags & OBJF_REORDERED)
-	    qsort (subfile->line_vector->item,
-		   subfile->line_vector->nitems,
+	    qsort (VEC_address(linetable_entry_s, subfile->line_vector->the_items),
+		   get_linetable_size(subfile->line_vector),
 		   sizeof (struct linetable_entry), compare_line_numbers);
 	}
 

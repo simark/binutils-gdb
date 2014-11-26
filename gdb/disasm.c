@@ -420,8 +420,8 @@ gdb_disassembly (struct gdbarch *gdbarch, struct ui_out *uiout,
   if (symtab != NULL && SYMTAB_LINETABLE (symtab) != NULL)
     {
       /* Convert the linetable to a bunch of my_line_entry's.  */
-      le = SYMTAB_LINETABLE (symtab)->item;
-      nlines = SYMTAB_LINETABLE (symtab)->nitems;
+      le = VEC_address(linetable_entry_s, SYMTAB_LINETABLE (symtab)->the_items);
+      nlines = VEC_length(linetable_entry_s, SYMTAB_LINETABLE (symtab)->the_items);
     }
 
   if (!(flags & DISASSEMBLY_SOURCE) || nlines <= 0
