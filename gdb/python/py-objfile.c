@@ -42,6 +42,10 @@ typedef struct
 
   /* The frame filter list of functions.  */
   PyObject *frame_filters;
+
+  /* The frame sniffers list of functions.  */
+  PyObject *frame_sniffers;
+
   /* The type-printer list.  */
   PyObject *type_printers;
 
@@ -162,6 +166,7 @@ objfpy_dealloc (PyObject *o)
   Py_XDECREF (self->dict);
   Py_XDECREF (self->printers);
   Py_XDECREF (self->frame_filters);
+  Py_XDECREF (self->frame_sniffers);
   Py_XDECREF (self->type_printers);
   Py_XDECREF (self->xmethods);
   Py_TYPE (self)->tp_free (self);
@@ -182,6 +187,10 @@ objfpy_initialize (objfile_object *self)
 
   self->frame_filters = PyDict_New ();
   if (self->frame_filters == NULL)
+    return 0;
+
+  self->frame_sniffers = PyList_New (0);
+  if (self->frame_sniffers == NULL)
     return 0;
 
   self->type_printers = PyList_New (0);
@@ -286,6 +295,48 @@ objfpy_set_frame_filters (PyObject *o, PyObject *filters, void *ignore)
   tmp = self->frame_filters;
   Py_INCREF (filters);
   self->frame_filters = filters;
+  Py_XDECREF (tmp);
+
+  return 0;
+}
+
+/* Return the frame sniffers attribute for this object file.  */
+
+PyObject *
+objfpy_get_frame_sniffers (PyObject *o, void *ignore)
+{
+  objfile_object *self = (objfile_object *) o;
+
+  Py_INCREF (self->frame_sniffers);
+  return self->frame_sniffers;
+}
+
+/* Set this object file's frame sniffers list to SNIFFERS.  */
+
+static int
+objfpy_set_frame_sniffers (PyObject *o, PyObject *sniffers, void *ignore)
+{
+  PyObject *tmp;
+  objfile_object *self = (objfile_object *) o;
+
+  if (!sniffers)
+    {
+      PyErr_SetString (PyExc_TypeError,
+		       _("Cannot delete the frame sniffers attribute."));
+      return -1;
+    }
+
+  if (!PyList_Check (sniffers))
+    {
+      PyErr_SetString (PyExc_TypeError,
+		       _("The frame_sniffers attribute must be a list."));
+      return -1;
+    }
+
+  /* Take care in case the LHS and RHS are related somehow.  */
+  tmp = self->frame_sniffers;
+  Py_INCREF (sniffers);
+  self->frame_sniffers = sniffers;
   Py_XDECREF (tmp);
 
   return 0;
@@ -618,6 +669,8 @@ static PyGetSetDef objfile_getset[] =
     "Pretty printers.", NULL },
   { "frame_filters", objfpy_get_frame_filters,
     objfpy_set_frame_filters, "Frame Filters.", NULL },
+  { "frame_sniffers", objfpy_get_frame_sniffers,
+    objfpy_set_frame_sniffers, "Frame Sniffers", NULL },
   { "type_printers", objfpy_get_type_printers, objfpy_set_type_printers,
     "Type printers.", NULL },
   { "xmethods", objfpy_get_xmethods, NULL,

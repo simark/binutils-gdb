@@ -28,7 +28,7 @@ class _GdbFile (object):
     # These two are needed in Python 3
     encoding = "UTF-8"
     errors = "strict"
-    
+
     def close(self):
         # Do nothing.
         return None
@@ -71,6 +71,8 @@ type_printers = []
 xmethods = []
 # Initial frame filters.
 frame_filters = {}
+# Initial frame sniffers.
+frame_sniffers = []
 
 # Convenience variable to GDB's python directory
 PYTHONDIR = os.path.dirname(os.path.dirname(__file__))

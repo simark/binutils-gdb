@@ -144,6 +144,7 @@ optional arguments while skipping others.  Example:
 * Frame Filter API::            Filtering Frames.
 * Frame Decorator API::         Decorating Frames.
 * Writing a Frame Filter::      Writing a Frame Filter.
+* Writing a Frame Unwinder::    Writing a frame unwinder in Python.
 * Xmethods In Python::          Adding and replacing methods of C++ classes.
 * Xmethod API::                 Xmethod types.
 * Writing an Xmethod::          Writing an xmethod.
@@ -2177,6 +2178,57 @@ printed hierarchically.  Another approach would be to combine the
 @code{function} method, and the @code{elided} method to both print a
 marker in the inlined frame, and also show the hierarchical
 relationship.
+
+@node Writing a Frame Unwinder
+@subsubsection Writing a Frame Unwinder in Python
+@cindex Writing a frame unwinder in Python.
+
+You can tell GDB how to unwind certain types of frames by writing a
+sniffer function and adding it to the list of the sniffers. 
+
+@subheading Frame Sniffer API
+
+A sniffer function receives a single argument describing the frame to
+be examined (a @code{gdb.SnifferInfo} object). It returns frame unwind
+information described below if it knows how to unwind the frame, or
+@code{None} otherwise.
+
+
+The @code{gdb.SnifferInfo} class has a single method:
+
+@defun SnifferInfo.read_register (self, regnum)
+
+This method returns the contents of the register @var{regnum} in the
+frame as a @code{gdb.Value} object. @var{regnum} values are
+platform-specific.
+@end defun
+
+The frame unwind information returned by your sniffer should be a pair
+(@var{registers}, @var{id_register_numbers}), where
+@var{registers} describe the registers that can be unwound (i.e.,
+the registers from the previous frame that have been saved in this
+frame), and @var{id_register_numbers} provides the data for the
+construction of the frame ID of the previous frame.
+
+The @var{registers} is a list of (@var{regnum}, @var{regdata})
+pairs, where @var{regnum} is a (platform-specific) register number,
+and @var{regdata} is register contents (a @code{gdb.Value} object).
+
+The @var{id_register_numbers} is either (@var{sp}), (@var{sp}, @var{pc}),
+or (@var{sp}, @var{pc}, @var{special}) tuple, where @var{sp},
+@var{pc}, @var{special} are register numbers, and the referenced
+registers should be present in @var{registers}. The frame ID is
+constructed by calling
+@code{make_id_build_wild}(@var{ValueOf}(@var{sp}),
+@code{make_id_build}(@var{ValueOf}(@var{sp}), @var{ValueOf}(@var{pc}),
+or @code{make_id_build}(@var{ValueOf}(@var{sp}),
+@var{ValueOf}(@var{pc}, @var{ValueOf}(@var{special}) respectively.
+
+@subheading Registering a Sniffer
+
+@code{gdb.Objfile}, @code{gdb.Progspace}, and @code{gdb} itself have
+@code{frame_sniffers} attribute containing a list of the
+sniffers. Register your sniffer by adding it to one of them.
 
 @node Xmethods In Python
 @subsubsection Xmethods In Python

@@ -62,6 +62,7 @@ PYTHON_FILE_LIST = \
 	gdb/FrameDecorator.py \
 	gdb/types.py \
 	gdb/printing.py \
+	gdb/sniffers.py \
 	gdb/prompt.py \
 	gdb/xmethod.py \
 	gdb/command/__init__.py \

@@ -41,6 +41,10 @@ typedef struct
 
   /* The frame filter list of functions.  */
   PyObject *frame_filters;
+
+  /* The frame sniffer list.  */
+  PyObject *frame_sniffers;
+
   /* The type-printer list.  */
   PyObject *type_printers;
 
@@ -82,6 +86,7 @@ pspy_dealloc (PyObject *self)
   Py_XDECREF (ps_self->dict);
   Py_XDECREF (ps_self->printers);
   Py_XDECREF (ps_self->frame_filters);
+  Py_XDECREF (ps_self->frame_sniffers);
   Py_XDECREF (ps_self->type_printers);
   Py_XDECREF (ps_self->xmethods);
   Py_TYPE (self)->tp_free (self);
@@ -102,6 +107,10 @@ pspy_initialize (pspace_object *self)
 
   self->frame_filters = PyDict_New ();
   if (self->frame_filters == NULL)
+    return 0;
+
+  self->frame_sniffers = PyList_New (0);
+  if (self->frame_sniffers == NULL)
     return 0;
 
   self->type_printers = PyList_New (0);
@@ -206,6 +215,48 @@ pspy_set_frame_filters (PyObject *o, PyObject *frame, void *ignore)
   tmp = self->frame_filters;
   Py_INCREF (frame);
   self->frame_filters = frame;
+  Py_XDECREF (tmp);
+
+  return 0;
+}
+
+/* Return the list of the frame sniffers for this program space.  */
+
+PyObject *
+pspy_get_frame_sniffers (PyObject *o, void *ignore)
+{
+  pspace_object *self = (pspace_object *) o;
+
+  Py_INCREF (self->frame_sniffers);
+  return self->frame_sniffers;
+}
+
+/* Set this program space's list of the sniffers to SNIFFERS.  */
+
+static int
+pspy_set_frame_sniffers (PyObject *o, PyObject *sniffers, void *ignore)
+{
+  PyObject *tmp;
+  pspace_object *self = (pspace_object *) o;
+
+  if (!sniffers)
+    {
+      PyErr_SetString (PyExc_TypeError,
+		       "cannot delete the frame sniffers list");
+      return -1;
+    }
+
+  if (!PyList_Check (sniffers))
+    {
+      PyErr_SetString (PyExc_TypeError,
+		       "the frame sniffers attribute must be a list");
+      return -1;
+    }
+
+  /* Take care in case the LHS and RHS are related somehow.  */
+  tmp = self->frame_sniffers;
+  Py_INCREF (sniffers);
+  self->frame_sniffers = sniffers;
   Py_XDECREF (tmp);
 
   return 0;
@@ -345,6 +396,8 @@ static PyGetSetDef pspace_getset[] =
     "Pretty printers.", NULL },
   { "frame_filters", pspy_get_frame_filters, pspy_set_frame_filters,
     "Frame filters.", NULL },
+  { "frame_sniffers", pspy_get_frame_sniffers, pspy_set_frame_sniffers,
+    "Frame sniffers.", NULL },
   { "type_printers", pspy_get_type_printers, pspy_set_type_printers,
     "Type printers.", NULL },
   { "xmethods", pspy_get_xmethods, NULL,
