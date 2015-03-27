@@ -1113,6 +1113,11 @@ m:char *:gcc_target_options:void:::default_gcc_target_options::0
 # returns the BFD architecture name, which is correct in nearly every
 # case.
 m:const char *:gnu_triplet_regexp:void:::default_gnu_triplet_regexp::0
+
+# Return the size in bytes of an addressable memory unit on this architecture.
+# This corresponds to the number of bytes associated to each address in memory.
+m:int:addressable_memory_unit_size:void:::default_addressable_memory_unit_size::0
+
 EOF
 }
 
