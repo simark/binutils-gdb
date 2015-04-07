@@ -1464,11 +1464,7 @@ target_read_code (CORE_ADDR memaddr, gdb_byte *myaddr, ssize_t len)
     return TARGET_XFER_E_IO;
 }
 
-/* Write LEN bytes from MYADDR to target memory at address MEMADDR.
-   Returns either 0 for success or TARGET_XFER_E_IO if any
-   error occurs.  If an error occurs, no guarantee is made about how
-   much data got written.  Callers that can deal with partial writes
-   should call target_write.  */
+/* See target/target.h.  */
 
 int
 target_write_memory (CORE_ADDR memaddr, const gdb_byte *myaddr, ssize_t len)

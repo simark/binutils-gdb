@@ -49,12 +49,12 @@ extern int target_read_memory (CORE_ADDR memaddr, gdb_byte *myaddr,
 extern int target_read_uint32 (CORE_ADDR memaddr, uint32_t *result);
 
 /* Write LEN bytes from MYADDR to target memory at address MEMADDR.
-   Return zero for success, nonzero if any error occurs.  This
+   Return zero for success or TARGET_XFER_E_IO if any error occurs.  This
    function must be provided by the client.  Implementations of this
-   function may define and use their own error codes, but functions
-   in the common, nat and target directories must treat the return
-   code as opaque.  No guarantee is made about the contents of the
-   data at MEMADDR if any error occurs.  */
+   function may define and use their own error codes, but functions in
+   the common, nat and target directories must treat the return code as
+   opaque.  No guarantee is made about how much data got written if any
+   error occurs.  */
 
 extern int target_write_memory (CORE_ADDR memaddr, const gdb_byte *myaddr,
 				ssize_t len);
