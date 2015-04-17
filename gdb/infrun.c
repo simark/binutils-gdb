@@ -1797,9 +1797,14 @@ displaced_step_prepare_throw (ptid_t ptid)
 
   closure = gdbarch_displaced_step_copy_insn (gdbarch,
 					      original, copy, regcache);
-
-  /* We don't support the fully-simulated case at present.  */
-  gdb_assert (closure);
+  if (closure == NULL)
+    {
+      /* The architecture doesn't know how or want to displaced step
+	 this instruction or instruction sequence.  Fallback to
+	 stepping over the breakpoint in-line.  */
+      do_cleanups (old_cleanups);
+      return -1;
+    }
 
   /* Save the information we need to fix things up if the step
      succeeds.  */
