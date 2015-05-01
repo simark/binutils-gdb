@@ -3103,6 +3103,8 @@ prepare_for_detach (void)
   struct cleanup *old_chain_1;
   struct displaced_step_inferior_state *displaced;
 
+  inf->exit_reason = EXIT_DETACHED;
+
   displaced = get_displaced_stepping_state (inf->pid);
 
   /* Is any thread of this process displaced stepping?  If not,
@@ -3925,6 +3927,7 @@ handle_inferior_event (struct execution_control_state *ecs)
 	  /* Also record this in the inferior itself.  */
 	  current_inferior ()->has_exit_code = 1;
 	  current_inferior ()->exit_code = (LONGEST) ecs->ws.value.integer;
+	  current_inferior ()->exit_reason = EXIT_NORMAL;
 
 	  /* Support the --return-child-result option.  */
 	  return_child_result_value = ecs->ws.value.integer;

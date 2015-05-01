@@ -419,6 +419,8 @@ add_deprecated_target_alias (struct target_ops *t, char *alias)
 void
 target_kill (void)
 {
+  current_inferior ()->exit_reason = EXIT_KILLED;
+
   current_target.to_kill (&current_target);
 }
 

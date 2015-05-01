@@ -284,6 +284,21 @@ struct inferior_suspend_state
 };
 #endif
 
+enum inferior_exit_reason
+{
+  /* The inferior has not exited yet.  */
+  EXIT_NONE,
+
+  /* The inferior exited by itself because it has completed its execution.  */
+  EXIT_NORMAL,
+
+  /* ... because we detached from it.  */
+  EXIT_DETACHED,
+
+  /* Because we murdered it.  */
+  EXIT_KILLED,
+};
+
 /* GDB represents the state of each program execution with an object
    called an inferior.  An inferior typically corresponds to a process
    but is more general and applies also to targets that do not have a
@@ -387,6 +402,9 @@ struct inferior
      In this case, the EXIT_CODE field is also valid.  */
   int has_exit_code;
   LONGEST exit_code;
+
+  /* Why has this inferior last exited.  */
+  enum inferior_exit_reason exit_reason;
 
   /* Default flags to pass to the symbol reading functions.  These are
      used whenever a new objfile is created.  The valid values come

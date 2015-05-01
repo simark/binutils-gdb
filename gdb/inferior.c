@@ -322,6 +322,7 @@ inferior_appeared (struct inferior *inf, int pid)
   inf->pid = pid;
   inf->has_exit_code = 0;
   inf->exit_code = 0;
+  inf->exit_reason = EXIT_NONE;
 
   observer_notify_inferior_appeared (inf);
 }

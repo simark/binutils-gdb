@@ -445,15 +445,34 @@ static void
 mi_inferior_exit (struct inferior *inf)
 {
   struct mi_interp *mi = top_level_interpreter_data ();
+  const char *reason = NULL;
+
+  switch (inf->exit_reason)
+    {
+    case EXIT_NONE:
+      reason = "unknown!!!";
+      break;
+    case EXIT_DETACHED:
+      reason = "detached";
+      break;
+    case EXIT_NORMAL:
+      reason = "done";
+      break;
+    case EXIT_KILLED:
+      reason = "killed";
+      break;
+    default:
+      error(_("Invalid exit reason value."));
+    }
 
   target_terminal_ours ();
   if (inf->has_exit_code)
     fprintf_unfiltered (mi->event_channel,
-			"thread-group-exited,id=\"i%d\",exit-code=\"%s\"",
-			inf->num, int_string (inf->exit_code, 8, 0, 0, 1));
+			"thread-group-exited,id=\"i%d\",exit-code=\"%s\",reason=\"%s\"",
+			inf->num, int_string (inf->exit_code, 8, 0, 0, 1), reason);
   else
     fprintf_unfiltered (mi->event_channel,
-			"thread-group-exited,id=\"i%d\"", inf->num);
+			"thread-group-exited,id=\"i%d\",reason=\"%s\"", inf->num, reason);
 
   gdb_flush (mi->event_channel);  
 }
