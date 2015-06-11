@@ -3675,6 +3675,7 @@ process_serial_event (void)
   unsigned char sig;
   int packet_len;
   int new_packet_len = -1;
+  unsigned int mem_unit_size = target_addressable_memory_unit_size ();
 
   /* Used to decide when gdbserver should exit in
      multi-mode/remote.  */
@@ -3922,7 +3923,7 @@ process_serial_event (void)
       break;
     case 'M':
       require_running (own_buf);
-      decode_M_packet (&own_buf[1], &mem_addr, &len, &mem_buf);
+      decode_M_packet (&own_buf[1], &mem_addr, &len, mem_unit_size, &mem_buf);
       if (gdb_write_memory (mem_addr, mem_buf, len) == 0)
 	write_ok (own_buf);
       else
@@ -3931,7 +3932,7 @@ process_serial_event (void)
     case 'X':
       require_running (own_buf);
       if (decode_X_packet (&own_buf[1], packet_len - 1,
-			   &mem_addr, &len, &mem_buf) < 0
+			   &mem_addr, &len, mem_unit_size, &mem_buf) < 0
 	  || gdb_write_memory (mem_addr, mem_buf, len) != 0)
 	write_enn (own_buf);
       else

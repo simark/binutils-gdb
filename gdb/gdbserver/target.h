@@ -169,6 +169,10 @@ struct target_ops
   int (*write_memory) (CORE_ADDR memaddr, const unsigned char *myaddr,
 		       int len);
 
+  /* Returns the size in byte of the memory unit of the target. */
+
+  unsigned int (*addressable_memory_unit_size) (void);
+
   /* Query GDB for the values of any symbols we're interested in.
      This function is called whenever we receive a "qSymbols::"
      query, which corresponds to every time more symbols (might)
@@ -606,6 +610,10 @@ int kill_inferior (int);
 #define target_stopped_by_hw_breakpoint() \
   (the_target->stopped_by_hw_breakpoint ? \
    (*the_target->stopped_by_hw_breakpoint) () : 0)
+
+#define target_addressable_memory_unit_size() \
+  (the_target->addressable_memory_unit_size ? \
+   the_target->addressable_memory_unit_size () : 1)
 
 /* Start non-stop mode, returns 0 on success, -1 on failure.   */
 

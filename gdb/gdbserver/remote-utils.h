@@ -54,9 +54,11 @@ void decode_address (CORE_ADDR *addrp, const char *start, int len);
 void decode_m_packet (char *from, CORE_ADDR * mem_addr_ptr,
 		      unsigned int *len_ptr);
 void decode_M_packet (char *from, CORE_ADDR * mem_addr_ptr,
-		      unsigned int *len_ptr, unsigned char **to_p);
+		      unsigned int *len_ptr, unsigned int mem_unit_size,
+		      unsigned char **to_p);
 int decode_X_packet (char *from, int packet_len, CORE_ADDR * mem_addr_ptr,
-		     unsigned int *len_ptr, unsigned char **to_p);
+		     unsigned int *len_ptr, unsigned int mem_unit_size,
+		     unsigned char **to_p);
 int decode_xfer_write (char *buf, int packet_len,
 		       CORE_ADDR *offset, unsigned int *len,
 		       unsigned char *data);

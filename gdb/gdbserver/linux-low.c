@@ -6572,6 +6572,7 @@ static struct target_ops linux_target_ops = {
   linux_done_accessing_memory,
   linux_read_memory,
   linux_write_memory,
+  NULL,  /* addressable_memory_unit_size */
   linux_look_up_symbols,
   linux_request_interrupt,
   linux_read_auxv,
