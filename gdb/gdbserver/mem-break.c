@@ -1722,7 +1722,8 @@ validate_breakpoints (void)
 }
 
 void
-check_mem_read (CORE_ADDR mem_addr, unsigned char *buf, int mem_len)
+check_mem_read (CORE_ADDR mem_addr, unsigned char *buf, int mem_len,
+		unsigned int mem_unit_size)
 {
   struct process_info *proc = current_process ();
   struct raw_breakpoint *bp = proc->raw_breakpoints;
@@ -1752,9 +1753,9 @@ check_mem_read (CORE_ADDR mem_addr, unsigned char *buf, int mem_len)
       if (end > mem_end)
 	end = mem_end;
 
-      copy_len = end - start;
-      copy_offset = start - jp->pc;
-      buf_offset = start - mem_addr;
+      copy_len = (end - start) * mem_unit_size;
+      copy_offset = (start - jp->pc) * mem_unit_size;
+      buf_offset = (start - mem_addr) * mem_unit_size;
 
       if (jp->inserted)
 	memcpy (buf + buf_offset,
@@ -1787,9 +1788,9 @@ check_mem_read (CORE_ADDR mem_addr, unsigned char *buf, int mem_len)
       if (end > mem_end)
 	end = mem_end;
 
-      copy_len = end - start;
-      copy_offset = start - bp->pc;
-      buf_offset = start - mem_addr;
+      copy_len = (end - start) * mem_unit_size;
+      copy_offset = (start - bp->pc) * mem_unit_size;
+      buf_offset = (start - mem_addr) * mem_unit_size;
 
       if (bp->inserted > 0)
 	{
@@ -1806,7 +1807,8 @@ check_mem_read (CORE_ADDR mem_addr, unsigned char *buf, int mem_len)
 
 void
 check_mem_write (CORE_ADDR mem_addr, unsigned char *buf,
-		 const unsigned char *myaddr, int mem_len)
+		 const unsigned char *myaddr, int mem_len,
+		 unsigned int mem_unit_size)
 {
   struct process_info *proc = current_process ();
   struct raw_breakpoint *bp = proc->raw_breakpoints;
@@ -1840,9 +1842,9 @@ check_mem_write (CORE_ADDR mem_addr, unsigned char *buf,
       if (end > mem_end)
 	end = mem_end;
 
-      copy_len = end - start;
-      copy_offset = start - jp->pc;
-      buf_offset = start - mem_addr;
+      copy_len = (end - start) * mem_unit_size;
+      copy_offset = (start - jp->pc) * mem_unit_size;
+      buf_offset = (start - mem_addr) * mem_unit_size;
 
       memcpy (fast_tracepoint_jump_shadow (jp) + copy_offset,
 	      myaddr + buf_offset, copy_len);
@@ -1876,9 +1878,9 @@ check_mem_write (CORE_ADDR mem_addr, unsigned char *buf,
       if (end > mem_end)
 	end = mem_end;
 
-      copy_len = end - start;
-      copy_offset = start - bp->pc;
-      buf_offset = start - mem_addr;
+      copy_len = (end - start) * mem_unit_size;
+      copy_offset = (start - bp->pc) * mem_unit_size;
+      buf_offset = (start - mem_addr) * mem_unit_size;
 
       memcpy (bp->old_data + copy_offset, myaddr + buf_offset, copy_len);
       if (bp->inserted > 0)

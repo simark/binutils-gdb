@@ -1801,6 +1801,7 @@ static struct target_ops win32_target_ops = {
   NULL, /* done_accessing_memory */
   win32_read_inferior_memory,
   win32_write_inferior_memory,
+  NULL,  /* addressable_memory_unit_size */
   NULL, /* lookup_symbols */
   win32_request_interrupt,
   NULL, /* read_auxv */

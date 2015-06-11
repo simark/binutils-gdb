@@ -652,6 +652,7 @@ static struct target_ops spu_target_ops = {
   NULL, /* done_accessing_memory */
   spu_read_memory,
   spu_write_memory,
+  NULL,  /* addressable_memory_unit_size */
   spu_look_up_symbols,
   spu_request_interrupt,
   NULL,

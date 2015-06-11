@@ -1288,9 +1288,10 @@ decode_m_packet (char *from, CORE_ADDR *mem_addr_ptr, unsigned int *len_ptr)
 
 void
 decode_M_packet (char *from, CORE_ADDR *mem_addr_ptr, unsigned int *len_ptr,
-		 unsigned char **to_p)
+		 unsigned int mem_unit_size, unsigned char **to_p)
 {
   int i = 0;
+  unsigned int len_bytes;
   char ch;
   *mem_addr_ptr = *len_ptr = 0;
 
@@ -1306,17 +1307,21 @@ decode_M_packet (char *from, CORE_ADDR *mem_addr_ptr, unsigned int *len_ptr,
       *len_ptr |= fromhex (ch) & 0x0f;
     }
 
-  if (*to_p == NULL)
-    *to_p = xmalloc (*len_ptr);
+  len_bytes = *len_ptr * mem_unit_size;
 
-  hex2bin (&from[i++], *to_p, *len_ptr);
+  if (*to_p == NULL)
+    *to_p = xmalloc (len_bytes);
+
+  hex2bin (&from[i++], *to_p, len_bytes);
 }
 
 int
 decode_X_packet (char *from, int packet_len, CORE_ADDR *mem_addr_ptr,
-		 unsigned int *len_ptr, unsigned char **to_p)
+		 unsigned int *len_ptr, unsigned int mem_unit_size,
+		 unsigned char **to_p)
 {
   int i = 0;
+  unsigned int len_bytes;
   char ch;
   *mem_addr_ptr = *len_ptr = 0;
 
@@ -1332,11 +1337,13 @@ decode_X_packet (char *from, int packet_len, CORE_ADDR *mem_addr_ptr,
       *len_ptr |= fromhex (ch) & 0x0f;
     }
 
+  len_bytes = *len_ptr * mem_unit_size;
+
   if (*to_p == NULL)
-    *to_p = xmalloc (*len_ptr);
+    *to_p = xmalloc (len_bytes);
 
   if (remote_unescape_input ((const gdb_byte *) &from[i], packet_len - i,
-			     *to_p, *len_ptr) != *len_ptr)
+			     *to_p, len_bytes) != len_bytes)
     return -1;
 
   return 0;
@@ -1518,6 +1525,7 @@ relocate_instruction (CORE_ADDR *to, CORE_ADDR oldloc)
   char own_buf[266];
   int len;
   ULONGEST written = 0;
+  unsigned int mem_unit_size = target_addressable_memory_unit_size ();
 
   /* Send the request.  */
   strcpy (own_buf, "qRelocInsn:");
@@ -1553,7 +1561,7 @@ relocate_instruction (CORE_ADDR *to, CORE_ADDR oldloc)
       else if (own_buf[0] == 'X')
 	{
 	  if (decode_X_packet (&own_buf[1], len - 1, &mem_addr,
-			       &mem_len, &mem_buf) < 0
+			       &mem_len, mem_unit_size, &mem_buf) < 0
 	      || write_inferior_memory (mem_addr, mem_buf, mem_len) != 0)
 	    write_enn (own_buf);
 	  else
@@ -1561,7 +1569,8 @@ relocate_instruction (CORE_ADDR *to, CORE_ADDR oldloc)
 	}
       else
 	{
-	  decode_M_packet (&own_buf[1], &mem_addr, &mem_len, &mem_buf);
+	  decode_M_packet (&own_buf[1], &mem_addr, &mem_len, mem_unit_size,
+			   &mem_buf);
 	  if (write_inferior_memory (mem_addr, mem_buf, mem_len) == 0)
 	    write_ok (own_buf);
 	  else

@@ -43,8 +43,9 @@ int
 read_inferior_memory (CORE_ADDR memaddr, unsigned char *myaddr, int len)
 {
   int res;
+  unsigned int mem_unit_size = target_addressable_memory_unit_size ();
   res = (*the_target->read_memory) (memaddr, myaddr, len);
-  check_mem_read (memaddr, myaddr, len);
+  check_mem_read (memaddr, myaddr, len, mem_unit_size);
   return res;
 }
 
@@ -73,13 +74,14 @@ write_inferior_memory (CORE_ADDR memaddr, const unsigned char *myaddr,
      one buffer is ever pending by making BUFFER static.  */
   static unsigned char *buffer = 0;
   int res;
+  unsigned int mem_unit_size = target_addressable_memory_unit_size ();
 
   if (buffer != NULL)
     free (buffer);
 
-  buffer = xmalloc (len);
-  memcpy (buffer, myaddr, len);
-  check_mem_write (memaddr, buffer, myaddr, len);
+  buffer = xmalloc (len * mem_unit_size);
+  memcpy (buffer, myaddr, len * mem_unit_size);
+  check_mem_write (memaddr, buffer, myaddr, len, mem_unit_size);
   res = (*the_target->write_memory) (memaddr, buffer, len);
   free (buffer);
   buffer = NULL;

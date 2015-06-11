@@ -736,6 +736,7 @@ static struct target_ops lynx_target_ops = {
   NULL,  /* done_accessing_memory */
   lynx_read_memory,
   lynx_write_memory,
+  NULL,  /* addressable_memory_unit_size */
   NULL,  /* look_up_symbols */
   lynx_request_interrupt,
   NULL,  /* read_auxv */
