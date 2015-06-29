@@ -2557,6 +2557,8 @@ resume (enum gdb_signal sig)
      by applying increasingly restricting conditions.  */
   resume_ptid = user_visible_resume_ptid (user_step);
 
+  set_running(resume_ptid, 1);
+
   /* Maybe resume a single thread after all.  */
   if (target_is_non_stop_p ())
     {
