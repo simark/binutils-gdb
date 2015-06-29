@@ -1392,7 +1392,7 @@ status_command (char *arg, int from_tty)
   struct thread_info *tp;
   int n_threads = 0;
   struct ui_out *uiout = current_uiout;
-  enum itset_width default_width = ITSET_WIDTH_INFERIOR;
+  enum itset_width default_width = ITSET_WIDTH_ALL;
 
   update_thread_list ();
 
