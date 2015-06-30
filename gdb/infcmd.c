@@ -3391,45 +3391,38 @@ disconnect_command (char *args, int from_tty)
 void 
 interrupt_target_1 (int all_threads)
 {
-  ptid_t ptid;
 
-  if (all_threads)
+  struct thread_info *tp;
+
+  if (target_is_non_stop_p ())
     {
-      ptid = minus_one_ptid;
+      /* all_threads means all threads in width. Otherwise, only selected threads.  */
+      enum itset_width default_width =
+	  all_threads ? default_run_control_width () : ITSET_WIDTH_THREAD;
 
-      if (target_is_non_stop_p ())
+      ALL_NON_EXITED_THREADS (tp)
 	{
-	  struct thread_info *tp;
-
-	  ALL_NON_EXITED_THREADS (tp)
+	  if (itset_width_contains_thread (current_itset, default_width, tp))
 	    {
-	      if (itset_width_contains_thread (current_itset,
-					       default_run_control_width (),
-					       tp))
-		{
-		  target_interrupt (tp->ptid);
-		  set_stop_requested (tp->ptid, 1);
-		}
+	      target_interrupt (tp->ptid);
+	      set_stop_requested (tp->ptid, 1);
 	    }
-
-	  return;
 	}
     }
   else
     {
-      ptid = inferior_ptid;
+      ptid_t ptid = all_threads ? minus_one_ptid : inferior_ptid;
+      target_interrupt (ptid);
+
+      /* Tag the thread as having been explicitly requested to stop, so
+         other parts of gdb know not to resume this thread automatically,
+         if it was stopped due to an internal event.  Limit this to
+         non-stop mode, as when debugging a multi-threaded application in
+         all-stop mode, we will only get one stop event --- it's undefined
+         which thread will report the event.  */
+      if (non_stop)
+        set_stop_requested (ptid, 1);
     }
-
-  target_interrupt (ptid);
-
-  /* Tag the thread as having been explicitly requested to stop, so
-     other parts of gdb know not to resume this thread automatically,
-     if it was stopped due to an internal event.  Limit this to
-     non-stop mode, as when debugging a multi-threaded application in
-     all-stop mode, we will only get one stop event --- it's undefined
-     which thread will report the event.  */
-  if (non_stop)
-    set_stop_requested (ptid, 1);
 }
 
 /* interrupt [-a]
