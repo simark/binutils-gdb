@@ -4821,6 +4821,15 @@ itfocus_completer (struct cmd_list_element *ignore,
 /* Provide a prototype to silence -Wmissing-prototypes.  */
 extern initialize_file_ftype _initialize_itset;
 
+struct cmd_list_element *itsets_command_list;
+
+static void
+itset_command (char *args, int from_tty)
+{
+  printf_unfiltered(_("\"itset\" must be followed by a sub-command."));
+  help_list (itsets_command_list, "itset ", all_commands, gdb_stdout);
+}
+
 void
 _initialize_itset (void)
 {
@@ -4845,10 +4854,20 @@ _initialize_itset (void)
   current_itset = itset_reference (itset_create_default ());
   //  current_itset = itset_reference (all_itset);
 
+  add_prefix_cmd("itset", no_class, itset_command,
+		 _("Commands to play with I/T sets."), &itsets_command_list,
+		 "itset ", 0, &cmdlist);
+
+  add_cmd ("view", no_class, viewset_command, _("TODO"), &itsets_command_list);
+  add_cmd ("define", no_class, defset_command, _("TODO"), &itsets_command_list);
+  add_cmd ("undefine", no_class, undefset_command, _("TODO"), &itsets_command_list);
+  add_cmd ("which", no_class, whichsets_command, _("TODO"), &itsets_command_list);
+
   c = add_com ("itfocus", no_class, itfocus_command, _("\
 Change the set of current inferiors/threads."));
   set_cmd_completer (c, itfocus_completer);
   add_com_alias ("a", "itfocus", class_alias, 0);
+  add_com_alias ("it", "itfocus", class_alias, 0);
 
   add_com ("defset", no_class, defset_command, _("\
 Define a new named set.\n\
