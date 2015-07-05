@@ -1604,6 +1604,8 @@ show_chars_per_line (struct ui_file *file, int from_tty,
 /* Current count of lines printed on this page, chars on this line.  */
 static unsigned int lines_printed, chars_printed;
 
+static char nonprintable_sequence = 0;
+
 /* Buffer and start column of buffered text, for doing smarter word-
    wrapping.  When someone calls wrap_here(), we start buffering output
    that comes through fputs_filtered().  If we see a newline, we just
@@ -1760,11 +1762,11 @@ set_width (void)
 
   if (!wrap_buffer)
     {
-      wrap_buffer = (char *) xmalloc (chars_per_line + 2);
+      wrap_buffer = (char *) xmalloc (chars_per_line * 2 + 2);
       wrap_buffer[0] = '\0';
     }
   else
-    wrap_buffer = (char *) xrealloc (wrap_buffer, chars_per_line + 2);
+    wrap_buffer = (char *) xrealloc (wrap_buffer, chars_per_line * 2 + 2);
   wrap_pointer = wrap_buffer;	/* Start it at the beginning.  */
 }
 
@@ -1917,16 +1919,17 @@ reinitialize_more_filter (void)
 void
 wrap_here (char *indent)
 {
-  /* This should have been allocated, but be paranoid anyway.  */
-  if (!wrap_buffer)
-    internal_error (__FILE__, __LINE__,
-		    _("failed internal consistency check"));
+  gdb_assert (wrap_buffer != NULL);
 
   if (wrap_buffer[0])
     {
+      /* There was something in the wrap buffer. We get a new wrapping
+       * point so we can flush/commit this one.  */
       *wrap_pointer = '\0';
       fputs_unfiltered (wrap_buffer, gdb_stdout);
     }
+
+  /* Reset wrap_pointer to start of wrap_buffer.  */
   wrap_pointer = wrap_buffer;
   wrap_buffer[0] = '\0';
   if (chars_per_line == UINT_MAX)	/* No line overflow checking.  */
@@ -2057,6 +2060,22 @@ fputs_maybe_filtered (const char *linebuffer, struct ui_file *stream,
 
       while (*lineptr && *lineptr != '\n')
 	{
+	      if (*lineptr == 1) {
+		  nonprintable_sequence = 1;
+		  lineptr++;
+		  continue;
+	      } else if (*lineptr == 2) {
+		  nonprintable_sequence = 0;
+		  lineptr++;
+		  continue;
+	      } else if (nonprintable_sequence) {
+		    if (wrap_column)
+		      *wrap_pointer++ = *lineptr;
+		    else
+		      fputc_unfiltered (*lineptr, stream);
+		  lineptr++;
+		  continue;
+	      }
 	  /* Print a single line.  */
 	  if (*lineptr == '\t')
 	    {
@@ -2082,6 +2101,7 @@ fputs_maybe_filtered (const char *linebuffer, struct ui_file *stream,
 
 	  if (chars_printed >= chars_per_line)
 	    {
+	      /* We just hit the end of the line.  */
 	      unsigned int save_chars = chars_printed;
 
 	      chars_printed = 0;
