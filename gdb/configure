@@ -11926,8 +11926,24 @@ $as_echo "#define HAVE_SIGSETJMP 1" >>confdefs.h
 fi
 
 
-# Check the return and argument types of ptrace.  No canned test for
-# this, so roll our own.
+# Check the return and argument types of ptrace.
+
+
+for ac_header in sys/ptrace.h ptrace.h
+do :
+  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+eval as_val=\$$as_ac_Header
+   if test "x$as_val" = x""yes; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+
+done
+
+
 gdb_ptrace_headers='
 #include <sys/types.h>
 #if HAVE_SYS_PTRACE_H
@@ -12106,6 +12122,7 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 fi
+
 
 if test "$cross_compiling" = no; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether setpgrp takes no argument" >&5
