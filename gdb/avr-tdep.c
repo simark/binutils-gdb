@@ -1106,8 +1106,6 @@ static struct value *
 avr_frame_prev_register (struct frame_info *this_frame,
 			 void **this_prologue_cache, int regnum)
 {
-  struct gdbarch *gdbarch = get_frame_arch (this_frame);
-  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   struct avr_unwind_cache *info
     = avr_frame_unwind_cache (this_frame, this_prologue_cache);
 

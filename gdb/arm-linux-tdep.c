@@ -815,7 +815,6 @@ arm_linux_get_syscall_number (struct gdbarch *gdbarch,
 			      ptid_t ptid)
 {
   struct regcache *regs = get_thread_regcache (ptid);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
   ULONGEST pc;
   ULONGEST cpsr;
