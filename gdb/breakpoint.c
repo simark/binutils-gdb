@@ -6534,7 +6534,9 @@ print_one_breakpoint (struct breakpoint *b,
   bkpt_chain = make_cleanup_ui_out_tuple_begin_end (uiout, "bkpt");
 
   print_one_breakpoint_location (b, NULL, 0, last_loc, allflag);
-  do_cleanups (bkpt_chain);
+
+  if (!ui_out_is_mi_like_p (uiout))
+    do_cleanups (bkpt_chain);
 
   /* If this breakpoint has custom print function,
      it's already printed.  Otherwise, print individual
@@ -6548,6 +6550,9 @@ print_one_breakpoint (struct breakpoint *b,
 
 	 Note that while hardware watchpoints have several locations
 	 internally, that's not a property exposed to user.  */
+      if (ui_out_is_mi_like_p (uiout))
+	make_cleanup_ui_out_list_begin_end (uiout, "locations");
+
       if (b->loc 
 	  && !is_hardware_watchpoint (b)
 	  && (b->loc->next || !b->loc->enabled))
@@ -6564,6 +6569,9 @@ print_one_breakpoint (struct breakpoint *b,
 	    }
 	}
     }
+
+  if (ui_out_is_mi_like_p (uiout))
+    do_cleanups (bkpt_chain);
 }
 
 static int
