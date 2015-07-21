@@ -1,0 +1,53 @@
+# Copyright (C) 2015 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This test verifies that threads created by child fork are properly
+# handled.
+#
+# See https://sourceware.org/bugzilla/show_bug.cgi?id=18600
+
+# The problem was originally seen on Linux, but the test could be
+# generalized to all targets that support forks and threads.
+if ![istarget *-*-linux*] then {
+    return
+}
+
+# When using gdbserver, even on Linux, we don't get notifications
+# about new threads.  This is expected, so don't test for that.
+if [is_remote target] then {
+    return
+}
+
+standard_testfile
+
+if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable debug] != "" } {
+    return -1
+}
+
+clean_restart ${binfile}
+
+gdb_test_no_output "set non-stop on"
+
+if ![runto_main] then {
+   fail "Can't run to main"
+   return 0
+}
+
+gdb_test_no_output "set detach-on-fork off"
+send_gdb "continue &\n"
+
+sleep 2
+
+gdb_test "info threads" "No threads.*"
