@@ -964,7 +964,7 @@ allocate_value_contents (struct value *val)
     val->contents = (gdb_byte *) xzalloc (TYPE_LENGTH (val->enclosing_type));
 }
 
-/* Allocate a  value  and its contents for type TYPE.  */
+/* Allocate a value and its contents for type TYPE.  */
 
 struct value *
 allocate_value (struct type *type)
