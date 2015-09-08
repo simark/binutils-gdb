@@ -345,6 +345,11 @@ static const char *dprintf_style = dprintf_style_gdb;
 
 static char *dprintf_function = "";
 
+/* The function to use for flushing output after a dynamic printf when
+   dprintf-style is "call".  It works the same way as dprintf_function.  */
+
+static char *dprintf_flush_function = "";
+
 /* The channel to use for dynamic printf if the preferred style is to
    call into the inferior; if a nonempty string, it will be passed to
    the call as the first argument, with the format string as the
@@ -9024,6 +9029,75 @@ bp_loc_is_permanent (struct bp_location *loc)
   return retval;
 }
 
+/* Return an allocated string with the command line for printing a
+   "dprintf-style call" dprintf.  */
+
+static char *
+get_dprintf_call_print_line (char *dprintf_function,
+			     char *dprintf_channel,
+			     char *dprintf_args)
+{
+  char *arg, *printf_line;
+
+  gdb_assert (strcmp (dprintf_style, dprintf_style_call) == 0);
+
+  if (dprintf_function == NULL || strlen (dprintf_function) == 0)
+    {
+      error (_("No function supplied for dprintf call"));
+    }
+
+  if (dprintf_channel != NULL && strlen (dprintf_channel) > 0)
+    {
+      printf_line = xstrprintf ("call (void) %s (%s,%s)",
+				dprintf_function,
+				dprintf_channel,
+				dprintf_args);
+    }
+  else
+    {
+      printf_line = xstrprintf ("call (void) %s (%s)",
+				    dprintf_function,
+				    dprintf_args);
+    }
+
+  return printf_line;
+}
+
+/* Return an allocated string with the command line for flushing the output
+   after a "dprintf-style call" dprintf.  This function returns NULL if
+   dprintf_flush_function is NULL or empty.  */
+
+static char *
+get_dprintf_call_flush_line (char *dprintf_flush_function,
+			      char *dprintf_channel)
+{
+  char *arg, *flush_line;
+
+  gdb_assert (strcmp (dprintf_style, dprintf_style_call) == 0);
+
+  if (dprintf_flush_function == NULL || strlen (dprintf_flush_function) == 0)
+    {
+      return NULL;
+    }
+
+  if (dprintf_channel != NULL && strlen (dprintf_channel) > 0)
+    {
+      arg = dprintf_channel;
+    }
+  else
+    {
+      /* On a 64-bits platform (e.g. x86-64), if we only have minimal
+	 symbols for stdout, calling fflush (stdout) won't work.
+	 stdout will be treated as a 4-bytes integer and only 4 bytes will
+	 be passed to fflush, when in reality it's an 8-bytes pointer.
+	 Taking the address, casting to void** and dereferencing allows to
+	 make sure that we go read and pass the full pointer.  */
+      arg = "*((void **) &stdout)";
+    }
+
+  return xstrprintf ("call (void) %s (%s)", dprintf_flush_function, arg);
+}
+
 /* Build a command list for the dprintf corresponding to the current
    settings of the dprintf style options.  */
 
@@ -9032,6 +9106,7 @@ update_dprintf_command_list (struct breakpoint *b)
 {
   char *dprintf_args = b->extra_string;
   char *printf_line = NULL;
+  char *flush_line = NULL;
 
   if (!dprintf_args)
     return;
@@ -9051,18 +9126,10 @@ update_dprintf_command_list (struct breakpoint *b)
     printf_line = xstrprintf ("printf %s", dprintf_args);
   else if (strcmp (dprintf_style, dprintf_style_call) == 0)
     {
-      if (!dprintf_function)
-	error (_("No function supplied for dprintf call"));
-
-      if (dprintf_channel && strlen (dprintf_channel) > 0)
-	printf_line = xstrprintf ("call (void) %s (%s,%s)",
-				  dprintf_function,
-				  dprintf_channel,
-				  dprintf_args);
-      else
-	printf_line = xstrprintf ("call (void) %s (%s)",
-				  dprintf_function,
-				  dprintf_args);
+      printf_line = get_dprintf_call_print_line (dprintf_function,
+						 dprintf_channel, dprintf_args);
+      flush_line = get_dprintf_call_flush_line (dprintf_flush_function,
+						dprintf_channel);
     }
   else if (strcmp (dprintf_style, dprintf_style_agent) == 0)
     {
@@ -9088,6 +9155,19 @@ update_dprintf_command_list (struct breakpoint *b)
     printf_cmd_line->body_list = NULL;
     printf_cmd_line->next = NULL;
     printf_cmd_line->line = printf_line;
+
+    if (flush_line)
+      {
+	struct command_line *flush_cmd_line = XNEW (struct command_line);
+
+	flush_cmd_line->control_type = simple_control;
+	flush_cmd_line->body_count = 0;
+	flush_cmd_line->body_list = NULL;
+	flush_cmd_line->next = NULL;
+	flush_cmd_line->line = flush_line;
+
+	printf_cmd_line->next = flush_cmd_line;
+      }
 
     breakpoint_set_commands (b, printf_cmd_line);
   }
@@ -16437,6 +16517,14 @@ output stream by setting dprintf-function and dprintf-channel."),
 			  &dprintf_function, _("\
 Set the function to use for dynamic printf"), _("\
 Show the function to use for dynamic printf"), NULL,
+			  update_dprintf_commands, NULL,
+			  &setlist, &showlist);
+
+  dprintf_flush_function = xstrdup ("fflush");
+  add_setshow_string_cmd ("dprintf-flush-function", class_support,
+			  &dprintf_flush_function, _("\
+Set the function to use for flushing after a \"call\" dynamic printf"), _("\
+Show the function to use for flushing after a \"call\" dynamic printf"), NULL,
 			  update_dprintf_commands, NULL,
 			  &setlist, &showlist);
 

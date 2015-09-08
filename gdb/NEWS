@@ -36,6 +36,10 @@ set remote multiprocess-extensions-packet
 show remote multiprocess-extensions-packet
   Set/show the use of the remote protocol multiprocess extensions.
 
+set dprintf-flush-function
+show dprintf-flush-function
+  Set/show the function to use for flushing after a "call" dynamic printf.
+
 * The "disassemble" command accepts a new modifier: /s.
   It prints mixed source+disassembly like /m with two differences:
   - disassembled instructions are now printed in program order, and

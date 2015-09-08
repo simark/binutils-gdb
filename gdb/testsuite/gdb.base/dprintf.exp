@@ -123,6 +123,13 @@ proc test_call {} {
 
 	test_dprintf "At foo entry.*arg=1235, g=2222\r\n" "2nd dprintf"
     }
+
+    with_test_prefix "no print function" {
+	restart
+
+	gdb_test_no_output "set dprintf-style call" "set dprintf style to call"
+	gdb_test "set dprintf-function" "No function supplied for dprintf call"
+    }
 }
 
 # The "call" style depends on having I/O functions available.

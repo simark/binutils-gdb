@@ -1,0 +1,57 @@
+#   Copyright (C) 2015 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+standard_testfile
+
+if { [prepare_for_testing "failed to prepare" $testfile $srcfile] } {
+    return -1
+}
+
+
+if ![runto main] {
+    return -1
+}
+
+set dp_location [gdb_get_line_number "dprintf here"]
+set break_location [gdb_get_line_number "breakpoint here"]
+gdb_test "dprintf $dp_location, \"Hello\\n\"" "Dprintf $decimal at $hex: file .*$srcfile, line $dp_location\." "set dprintf"
+gdb_test "break $break_location"
+
+# Test with the default dprintf-channel (stdout).
+gdb_test_no_output "set dprintf-style call"
+gdb_test_no_output "set dprintf-flush-function myflush"
+
+gdb_continue_to_breakpoint "breakpoint here"
+
+gdb_test "print myflush_called" ".* = 1" "myflush was called 1"
+gdb_test "print *((void**)&stdout) == myflush_arg" ".* = 1" "myflush's default arg is stdout"
+
+# Test with a custom dprintf-channel.
+gdb_test_no_output "set dprintf-channel *((void**)&stderr)"
+gdb_test_no_output "set dprintf-function fprintf"
+
+gdb_continue_to_breakpoint "breakpoint here"
+
+gdb_test "print myflush_called" ".* = 2" "myflush was called 2"
+gdb_test "print *((void**)&stderr) == myflush_arg" ".* = 1" "myflush's default arg is stderr"
+
+# Test with an empty dprintf-flush-function (at least that gdb doesn't crash)
+gdb_test_no_output "set dprintf-flush-function" "set empty dprintf-flush-function"
+
+gdb_continue_to_breakpoint "breakpoint here"
+
+# These values shouldn't have changed since the previous test
+gdb_test "print myflush_called" ".* = 2" "myflush was called 2"
+gdb_test "print *((void**)&stderr) == myflush_arg" ".* = 1" "myflush's default arg is stderr"

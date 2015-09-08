@@ -4886,6 +4886,16 @@ default its value is @code{printf}.  You may set it to any expression.
 that @value{GDBN} can evaluate to a function, as per the @code{call}
 command.
 
+@item set dprintf-flush-function @var{function}
+Set the function to call after @code{dprintf-function} if the dprintf
+style is @code{call}.  This function can be used to force the flushing
+of the channel used by the dprintf mechanism, so that debugging
+statements are not buffered.  By default its value is @code{fflush}.
+
+The @code{dprintf-flush-function} must accept a single argument.  If
+@code{dprintf-channel} is set, its value is passed as the argument.
+Otherwise, the value of @code{stdout} is used.
+
 @item set dprintf-channel @var{channel}
 Set a ``channel'' for dprintf.  If set to a non-empty value,
 @value{GDBN} will evaluate it as an expression and pass the result as
