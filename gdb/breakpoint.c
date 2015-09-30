@@ -15129,24 +15129,6 @@ strace_command (char *arg, int from_tty)
   do_cleanups (back_to);
 }
 
-/* Set up a fake reader function that gets command lines from a linked
-   list that was acquired during tracepoint uploading.  */
-
-static struct uploaded_tp *this_utp;
-static int next_cmd;
-
-static char *
-read_uploaded_action (void)
-{
-  char *rslt;
-
-  VEC_iterate (char_ptr, this_utp->cmd_strings, next_cmd, rslt);
-
-  next_cmd++;
-
-  return rslt;
-}
-
 /* Given information about a tracepoint as recorded on a target (which
    can be either a live system or a trace file), attempt to create an
    equivalent GDB tracepoint.  This is not a reliable process, since
@@ -15224,11 +15206,7 @@ create_tracepoint_from_upload (struct uploaded_tp *utp)
     {
       struct command_line *cmd_list;
 
-      this_utp = utp;
-      next_cmd = 0;
-
-      cmd_list = read_command_lines_1 (read_uploaded_action, 1, NULL, NULL);
-
+      cmd_list = create_command_line_from_upload (utp);
       breakpoint_set_commands (&tp->base, cmd_list);
     }
   else if (!VEC_empty (char_ptr, utp->actions)

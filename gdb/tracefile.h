@@ -42,6 +42,8 @@ struct trace_frame_write_ops
   void (*write_v_block) (struct trace_file_writer *self, int32_t num,
 			 uint64_t val);
 
+  void (*write_collect_suff) (struct trace_file_writer *self);
+
   /* The end of the trace frame.  */
   void (*end) (struct trace_file_writer *self);
 };

@@ -422,11 +422,14 @@ struct command_line
     struct command_line **body_list;
   };
 
+typedef void (*read_command_lines_validator_ftype) (char *, void *);
 extern struct command_line *read_command_lines (char *, int, int,
-						void (*)(char *, void *),
+						read_command_lines_validator_ftype,
 						void *);
-extern struct command_line *read_command_lines_1 (char * (*) (void), int,
-						  void (*)(char *, void *),
+
+typedef char *(*read_next_line_ftype) (void *);
+extern struct command_line *read_command_lines_1 (read_next_line_ftype, void *, int,
+						  read_command_lines_validator_ftype,
 						  void *);
 
 extern void free_command_lines (struct command_line **);

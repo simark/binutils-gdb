@@ -2872,10 +2872,18 @@ scope_info (char *args, int from_tty)
    set if the current traceframe was determined to be a while-stepping
    traceframe.  */
 
-static void
+static void trace_dump_actions_callback_print (const char *exp, int from_tty)
+{
+  printf_filtered ("%s = ", exp);
+
+  output_command_const (exp, from_tty);
+  printf_filtered ("\n");
+}
+
+void
 trace_dump_actions (struct command_line *action,
 		    int stepping_actions, int stepping_frame,
-		    int from_tty)
+		    int from_tty, trace_dump_actions_ftype cb)
 {
   const char *action_exp, *next_comma;
 
@@ -2903,7 +2911,7 @@ trace_dump_actions (struct command_line *action,
 
 	  for (i = 0; i < action->body_count; ++i)
 	    trace_dump_actions (action->body_list[i],
-				1, stepping_frame, from_tty);
+				1, stepping_frame, from_tty, cb);
 	}
       else if (cmd_cfunc_eq (cmd, collect_pseudocommand))
 	{
@@ -2958,9 +2966,7 @@ trace_dump_actions (struct command_line *action,
 			  memcpy (cmd, action_exp, len + 1);
 			}
 
-		      printf_filtered ("%s = ", cmd);
-		      output_command_const (cmd, from_tty);
-		      printf_filtered ("\n");
+		      cb(cmd, from_tty);
 		    }
 		  action_exp = next_comma;
 		}
@@ -3074,7 +3080,7 @@ trace_dump_command (char *args, int from_tty)
 
   actions = all_tracepoint_actions_and_cleanup (loc->owner);
 
-  trace_dump_actions (actions, 0, stepping_frame, from_tty);
+  trace_dump_actions (actions, 0, stepping_frame, from_tty, trace_dump_actions_callback_print);
 
   do_cleanups (old_chain);
 }
@@ -3204,6 +3210,8 @@ set_current_traceframe (int num)
 {
   int newnum;
 
+  printf("Traceframe change %d -> %d\n", traceframe_number, num);
+
   if (traceframe_number == num)
     {
       /* Nothing to do.  */
@@ -3287,8 +3295,9 @@ get_uploaded_tp (int num, ULONGEST addr, struct uploaded_tp **utpp)
 }
 
 void
-free_uploaded_tps (struct uploaded_tp **utpp)
+free_uploaded_tps (void *arg)
 {
+  struct uploaded_tp **utpp = (struct uploaded_tp **) arg;
   struct uploaded_tp *next_one;
 
   while (*utpp)
@@ -3392,6 +3401,9 @@ merge_uploaded_tracepoints (struct uploaded_tp **uploaded_tps)
   VEC(breakpoint_p) *modified_tp = NULL;
   int ix;
   struct breakpoint *b;
+  struct cleanup *old_chain;
+
+  old_chain = make_cleanup(free_uploaded_tps, uploaded_tps);
 
   /* Look for GDB tracepoints that match up with our uploaded versions.  */
   for (utp = *uploaded_tps; utp; utp = utp->next)
@@ -3455,7 +3467,7 @@ merge_uploaded_tracepoints (struct uploaded_tp **uploaded_tps)
     observer_notify_breakpoint_modified (b);
 
   VEC_free (breakpoint_p, modified_tp);
-  free_uploaded_tps (uploaded_tps);
+  do_cleanups (old_chain);
 }
 
 /* Trace state variables don't have much to identify them beyond their
@@ -4349,6 +4361,43 @@ static const struct internalvar_funcs sdata_funcs =
   NULL,
   NULL
 };
+
+/* Set up a fake reader function that gets command lines from a linked
+   list that was acquired during tracepoint uploading.  */
+
+struct read_uploaded_action_data {
+  struct uploaded_tp *utp;
+  int next_cmd;
+};
+
+static char *
+read_uploaded_action (void *vdata)
+{
+  char *rslt;
+  struct read_uploaded_action_data *data
+    = (struct read_uploaded_action_data *) vdata;
+
+  VEC_iterate (char_ptr, data->utp->cmd_strings, data->next_cmd, rslt);
+
+  data->next_cmd++;
+
+  return rslt;
+}
+
+struct command_line *
+create_command_line_from_upload (struct uploaded_tp *utp)
+{
+  struct command_line *cmd_list;
+  struct read_uploaded_action_data data;
+
+  data.utp = utp;
+  data.next_cmd = 0;
+
+  cmd_list = read_command_lines_1 (read_uploaded_action, &data, 1, NULL, NULL);
+
+  return cmd_list;
+}
+
 
 /* module initialization */
 void

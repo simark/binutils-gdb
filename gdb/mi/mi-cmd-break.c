@@ -482,17 +482,22 @@ mi_cmd_break_watch (char *command, char **argv, int argc)
    it is not expected that any future code will use read_command_lines_1,
    therefore no point of overengineering.  */
 
-static char **mi_command_line_array;
-static int mi_command_line_array_cnt;
-static int mi_command_line_array_ptr;
+struct mi_read_next_line_data {
+  char **command_line_array;
+  int command_line_array_cnt;
+  int command_line_array_ptr;
+};
 
 static char *
-mi_read_next_line (void)
+mi_read_next_line (void *vdata)
 {
-  if (mi_command_line_array_ptr == mi_command_line_array_cnt)
+  struct mi_read_next_line_data *data
+    = (struct mi_read_next_line_data *) vdata;
+
+  if (data->command_line_array_ptr == data->command_line_array_cnt)
     return NULL;
   else
-    return mi_command_line_array[mi_command_line_array_ptr++];
+    return data->command_line_array[data->command_line_array_ptr++];
 }
 
 void
@@ -502,6 +507,7 @@ mi_cmd_break_commands (char *command, char **argv, int argc)
   char *endptr;
   int bnum;
   struct breakpoint *b;
+  struct mi_read_next_line_data read_next_line_data;
 
   if (argc < 1)
     error (_("USAGE: %s <BKPT> [<COMMAND> [<COMMAND>...]]"), command);
@@ -518,15 +524,16 @@ mi_cmd_break_commands (char *command, char **argv, int argc)
   if (b == NULL)
     error (_("breakpoint %d not found."), bnum);
 
-  mi_command_line_array = argv;
-  mi_command_line_array_ptr = 1;
-  mi_command_line_array_cnt = argc;
+  read_next_line_data.command_line_array = argv;
+  read_next_line_data.command_line_array_ptr = 1;
+  read_next_line_data.command_line_array_cnt = argc;
 
   if (is_tracepoint (b))
-    break_command = read_command_lines_1 (mi_read_next_line, 1,
+    break_command = read_command_lines_1 (mi_read_next_line,
+					  &read_next_line_data, 1,
 					  check_tracepoint_command, b);
   else
-    break_command = read_command_lines_1 (mi_read_next_line, 1, 0, 0);
+    break_command = read_command_lines_1 (mi_read_next_line, NULL, 1, 0, 0);
 
   breakpoint_set_commands (b, break_command);
 }

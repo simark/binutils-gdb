@@ -312,7 +312,7 @@ extern void parse_tsv_definition (char *line, struct uploaded_tsv **utsvp);
 
 extern struct uploaded_tp *get_uploaded_tp (int num, ULONGEST addr,
 					    struct uploaded_tp **utpp);
-extern void free_uploaded_tps (struct uploaded_tp **utpp);
+extern void free_uploaded_tps (void *arg);
 
 extern struct uploaded_tsv *get_uploaded_tsv (int num,
 					      struct uploaded_tsv **utsvp);
@@ -352,5 +352,15 @@ extern int traceframe_available_memory (VEC(mem_range_s) **result,
 extern struct traceframe_info *get_traceframe_info (void);
 
 extern struct bp_location *get_traceframe_location (int *stepping_frame_p);
+
+typedef void (*trace_dump_actions_ftype)(const char *, int from_tty);
+
+extern void
+trace_dump_actions (struct command_line *action,
+		    int stepping_actions, int stepping_frame,
+		    int from_tty, trace_dump_actions_ftype cb);
+
+struct command_line *
+create_command_line_from_upload (struct uploaded_tp *utp);
 
 #endif	/* TRACEPOINT_H */

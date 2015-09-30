@@ -78,6 +78,7 @@
 #define CTF_EVENT_ID_STATUS 4
 #define CTF_EVENT_ID_TSV_DEF 5
 #define CTF_EVENT_ID_TP_DEF 6
+#define CTF_EVENT_ID_COLLECT_STUFF 42
 
 #define CTF_PID (2)
 
@@ -366,7 +367,7 @@ ctf_write_header (struct trace_file_writer *self)
   ctf_save_write_metadata (&writer->tcs, "\n");
   ctf_save_write_metadata (&writer->tcs,
 			   "event {\n\tname = \"memory\";\n\tid = %u;\n"
-			   "\tfields := struct { \n"
+			   "\tfields := struct {\n"
 			   "\t\tuint64_t address;\n"
 			   "\t\tuint16_t length;\n"
 			   "\t\tuint8_t contents[length];\n"
@@ -376,7 +377,7 @@ ctf_write_header (struct trace_file_writer *self)
   ctf_save_write_metadata (&writer->tcs, "\n");
   ctf_save_write_metadata (&writer->tcs,
 			   "event {\n\tname = \"tsv\";\n\tid = %u;\n"
-			   "\tfields := struct { \n"
+			   "\tfields := struct {\n"
 			   "\t\tuint64_t val;\n"
 			   "\t\tuint32_t num;\n"
 			   "\t};\n"
@@ -385,14 +386,14 @@ ctf_write_header (struct trace_file_writer *self)
   ctf_save_write_metadata (&writer->tcs, "\n");
   ctf_save_write_metadata (&writer->tcs,
 			   "event {\n\tname = \"frame\";\n\tid = %u;\n"
-			   "\tfields := struct { \n"
+			   "\tfields := struct {\n"
 			   "\t};\n"
 			   "};\n", CTF_EVENT_ID_FRAME);
 
   ctf_save_write_metadata (&writer->tcs, "\n");
   ctf_save_write_metadata (&writer->tcs,
 			  "event {\n\tname = \"tsv_def\";\n"
-			  "\tid = %u;\n\tfields := struct { \n"
+			  "\tid = %u;\n\tfields := struct {\n"
 			  "\t\tint64_t initial_value;\n"
 			  "\t\tint32_t number;\n"
 			  "\t\tint32_t builtin;\n"
@@ -403,7 +404,7 @@ ctf_write_header (struct trace_file_writer *self)
   ctf_save_write_metadata (&writer->tcs, "\n");
   ctf_save_write_metadata (&writer->tcs,
 			   "event {\n\tname = \"tp_def\";\n"
-			   "\tid = %u;\n\tfields := struct { \n"
+			   "\tid = %u;\n\tfields := struct {\n"
 			   "\t\tuint64_t addr;\n"
 			   "\t\tuint64_t traceframe_usage;\n"
 			   "\t\tint32_t number;\n"
@@ -428,6 +429,15 @@ ctf_write_header (struct trace_file_writer *self)
 			  "\t};\n"
 			  "};\n", CTF_EVENT_ID_TP_DEF);
 
+
+  ctf_save_write_metadata (&writer->tcs, "\n");
+  ctf_save_write_metadata (&writer->tcs,
+			   "event {\n\tname = \"collect\";\n\tid = %u;\n"
+			   "\tfields := struct {\n"
+			   "\t\tchars expression;\n"
+			   "\t};\n"
+			   "};\n", CTF_EVENT_ID_COLLECT_STUFF);
+
   gdb_assert (writer->tcs.content_size == 0);
   gdb_assert (writer->tcs.packet_start == 0);
 
@@ -449,7 +459,7 @@ ctf_write_regblock_type (struct trace_file_writer *self, int size)
 
   ctf_save_write_metadata (&writer->tcs,
 			   "event {\n\tname = \"register\";\n\tid = %u;\n"
-			   "\tfields := struct { \n"
+			   "\tfields := struct {\n"
 			   "\t\tascii contents[%d];\n"
 			   "\t};\n"
 			   "};\n",
@@ -471,7 +481,7 @@ ctf_write_status (struct trace_file_writer *self,
   ctf_save_write_metadata (&writer->tcs, "\n");
   ctf_save_write_metadata (&writer->tcs,
 			   "event {\n\tname = \"status\";\n\tid = %u;\n"
-			   "\tfields := struct { \n"
+			   "\tfields := struct {\n"
 			   "\t\tint32_t stop_reason;\n"
 			   "\t\tint32_t stopping_tracepoint;\n"
 			   "\t\tint32_t traceframe_count;\n"
@@ -739,6 +749,12 @@ ctf_write_frame_v_block (struct trace_file_writer *self,
   ctf_save_align_write (&writer->tcs, (gdb_byte *) &num, 4, 4);
 }
 
+static void
+ctf_write_frame_collect_stuff (struct trace_file_writer *self)
+{
+
+}
+
 /* This is the implementation of trace_frame_write_ops method
    end.  */
 
@@ -784,6 +800,7 @@ static const struct trace_frame_write_ops ctf_write_frame_ops =
   ctf_write_frame_m_block_header,
   ctf_write_frame_m_block_memory,
   ctf_write_frame_v_block,
+  ctf_write_frame_collect_stuff,
   ctf_write_frame_end,
 };
 

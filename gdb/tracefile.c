@@ -22,6 +22,7 @@
 #include "ctf.h"
 #include "exec.h"
 #include "regcache.h"
+#include "valprint.h"
 
 /* Helper macros.  */
 
@@ -47,6 +48,255 @@ trace_file_writer_xfree (void *arg)
   xfree (writer);
 }
 
+static struct uploaded_tp *
+find_uploaded_tp_by_num (struct uploaded_tp *tps, int tp_num)
+{
+  struct uploaded_tp *tp;
+
+  for (tp = tps; tp != NULL; tp = tp->next)
+    {
+      if (tp->number == tp_num)
+	{
+	  return tp;
+	}
+    }
+
+  return NULL;
+}
+
+#define MAX_TRACE_UPLOAD 2000
+
+static void
+trace_save_data_raw (struct trace_file_writer *writer)
+{
+  LONGEST gotten;
+  ULONGEST offset = 0;
+  gdb_byte buf[MAX_TRACE_UPLOAD];
+
+  while (1)
+    {
+      /* We ask for big blocks, in the hopes of efficiency, but
+	 will take less if the target has packet size limitations
+	 or some such.  */
+      gotten = target_get_raw_trace_data (buf, offset, MAX_TRACE_UPLOAD);
+
+      if (gotten < 0)
+	    error (_("Failure to get requested trace buffer data"));
+
+      /* No more data is forthcoming, we're done.  */
+      if (gotten == 0)
+	    break;
+
+      writer->ops->write_trace_buffer (writer, buf, gotten);
+
+      offset += gotten;
+    }
+}
+
+
+static void
+trace_dump_actions_lalala (const char *exp, int from_tty)
+{
+  struct value *val;
+  struct expression *expr;
+  struct value_print_options opts;
+
+/*  printf(" >> %s\n", exp);
+
+  expr = parse_expression (exp);
+  val = evaluate_expression (expr);
+
+  get_no_prettyformat_print_options(&opts);
+  value_print (val, gdb_stdout, &opts);*/
+}
+
+static void
+trace_save_data_frame (struct trace_file_writer *writer,
+		       struct uploaded_tp *uploaded_tps)
+{
+  LONGEST gotten = 0;
+  gdb_byte buf[MAX_TRACE_UPLOAD];
+  ULONGEST offset = 0;
+  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
+  int tfnum = 0;
+
+//  set_current_traceframe();
+  struct cleanup *old_chain = make_cleanup_restore_current_traceframe();
+
+  while (1)
+    {
+      uint16_t tp_num;
+      uint32_t tf_size;
+      struct uploaded_tp *this_tp;
+      struct command_line *cmd_list;
+      struct command_line *iter;
+      /* Parse the trace buffers according to how data are stored
+	 in trace buffer in GDBserver.  */
+
+      gotten = target_get_raw_trace_data (buf, offset, 6);
+
+      /* No more data, we're done.  */
+      if (gotten == 0)
+	break;
+
+      set_current_traceframe(tfnum);
+
+      /* Read the first six bytes in, which is the tracepoint
+	 number and trace frame size.  */
+      tp_num = (uint16_t)
+	extract_unsigned_integer (&buf[0], 2, byte_order);
+
+      tf_size = (uint32_t)
+	extract_unsigned_integer (&buf[2], 4, byte_order);
+
+      writer->ops->frame_ops->start (writer, tp_num);
+      gotten = 6;
+
+      this_tp = find_uploaded_tp_by_num (uploaded_tps, tp_num);
+      //printf_filtered("this_tp = %p\n", this_tp);
+      cmd_list = create_command_line_from_upload (this_tp);
+
+      iter = cmd_list;
+      while (iter) {
+	 // printf(" > %s %d\n", iter->line, iter->control_type);
+
+	  iter = iter->next;
+      }
+
+      trace_dump_actions (cmd_list, 0, 0, 0, trace_dump_actions_lalala);
+
+      if (tf_size > 0)
+	{
+	  unsigned int block;
+
+	  offset += 6;
+
+	  for (block = 0; block < tf_size; )
+	    {
+	      gdb_byte block_type;
+
+	      /* We'll fetch one block each time, in order to
+		 handle the extremely large 'M' block.  We first
+		 fetch one byte to get the type of the block.  */
+	      gotten = target_get_raw_trace_data (buf, offset, 1);
+	      if (gotten < 1)
+		error (_("Failure to get requested trace buffer data"));
+
+	      gotten = 1;
+	      block += 1;
+	      offset += 1;
+
+	      block_type = buf[0];
+	      switch (block_type)
+		{
+		case 'R':
+		  gotten
+		    = target_get_raw_trace_data (buf, offset,
+						 trace_regblock_size);
+		  if (gotten < trace_regblock_size)
+		    error (_("Failure to get requested trace"
+			     " buffer data"));
+
+		  TRACE_WRITE_R_BLOCK (writer, buf,
+				       trace_regblock_size);
+		  break;
+		case 'M':
+		  {
+		    unsigned short mlen;
+		    ULONGEST addr;
+		    LONGEST t;
+		    int j;
+
+		    t = target_get_raw_trace_data (buf,offset, 10);
+		    if (t < 10)
+		      error (_("Failure to get requested trace"
+			       " buffer data"));
+
+		    offset += 10;
+		    block += 10;
+
+		    gotten = 0;
+		    addr = (ULONGEST)
+		      extract_unsigned_integer (buf, 8,
+						byte_order);
+		    mlen = (unsigned short)
+		      extract_unsigned_integer (&buf[8], 2,
+						byte_order);
+
+		    TRACE_WRITE_M_BLOCK_HEADER (writer, addr,
+						mlen);
+
+		    /* The memory contents in 'M' block may be
+		       very large.  Fetch the data from the target
+		       and write them into file one by one.  */
+		    for (j = 0; j < mlen; )
+		      {
+			unsigned int read_length;
+
+			if (mlen - j > MAX_TRACE_UPLOAD)
+			  read_length = MAX_TRACE_UPLOAD;
+			else
+			  read_length = mlen - j;
+
+			t = target_get_raw_trace_data (buf,
+						       offset + j,
+						       read_length);
+			if (t < read_length)
+			  error (_("Failure to get requested"
+				   " trace buffer data"));
+
+			TRACE_WRITE_M_BLOCK_MEMORY (writer, buf,
+						    read_length);
+
+			j += read_length;
+			gotten += read_length;
+		      }
+
+		    break;
+		  }
+		case 'V':
+		  {
+		    int vnum;
+		    LONGEST val;
+
+		    gotten
+		      = target_get_raw_trace_data (buf, offset,
+						   12);
+		    if (gotten < 12)
+		      error (_("Failure to get requested"
+			       " trace buffer data"));
+
+		    vnum  = (int) extract_signed_integer (buf,
+							  4,
+							  byte_order);
+		    val
+		      = extract_signed_integer (&buf[4], 8,
+						byte_order);
+
+		    TRACE_WRITE_V_BLOCK (writer, vnum, val);
+		  }
+		  break;
+		default:
+		  error (_("Unknown block type '%c' (0x%x) in"
+			   " trace frame"),
+			 block_type, block_type);
+		}
+
+	      block += gotten;
+	      offset += gotten;
+	    }
+	}
+      else
+	offset += gotten;
+
+      writer->ops->frame_ops->end (writer);
+
+      tfnum++;
+    }
+
+  do_cleanups (old_chain);
+}
+
 /* Save tracepoint data to file named FILENAME through WRITER.  WRITER
    determines the trace file format.  If TARGET_DOES_SAVE is non-zero,
    the save is performed on the target, otherwise GDB obtains all trace
@@ -60,12 +310,10 @@ trace_save (const char *filename, struct trace_file_writer *writer,
   int status;
   struct uploaded_tp *uploaded_tps = NULL, *utp;
   struct uploaded_tsv *uploaded_tsvs = NULL, *utsv;
+  int done = 0;
+  struct cleanup *old_chain;
 
-  ULONGEST offset = 0;
-#define MAX_TRACE_UPLOAD 2000
-  gdb_byte buf[MAX_TRACE_UPLOAD];
   int written;
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
 
   /* If the target is to save the data to a file on its own, then just
      send the command and be done with it.  */
@@ -118,188 +366,29 @@ trace_save (const char *filename, struct trace_file_writer *writer,
   for (utp = uploaded_tps; utp; utp = utp->next)
     writer->ops->write_uploaded_tp (writer, utp);
 
-  free_uploaded_tps (&uploaded_tps);
+  old_chain = make_cleanup(free_uploaded_tps, &uploaded_tps);
 
   /* Mark the end of the definition section.  */
   writer->ops->write_definition_end (writer);
 
   /* Get and write the trace data proper.  */
-  while (1)
+  if (writer->ops->write_trace_buffer != NULL)
     {
-      LONGEST gotten = 0;
-
       /* The writer supports writing the contents of trace buffer
-	  directly to trace file.  Don't parse the contents of trace
-	  buffer.  */
-      if (writer->ops->write_trace_buffer != NULL)
-	{
-	  /* We ask for big blocks, in the hopes of efficiency, but
-	     will take less if the target has packet size limitations
-	     or some such.  */
-	  gotten = target_get_raw_trace_data (buf, offset,
-					      MAX_TRACE_UPLOAD);
-	  if (gotten < 0)
-	    error (_("Failure to get requested trace buffer data"));
-	  /* No more data is forthcoming, we're done.  */
-	  if (gotten == 0)
-	    break;
-
-	  writer->ops->write_trace_buffer (writer, buf, gotten);
-
-	  offset += gotten;
-	}
-      else
-	{
-	  uint16_t tp_num;
-	  uint32_t tf_size;
-	  /* Parse the trace buffers according to how data are stored
-	     in trace buffer in GDBserver.  */
-
-	  gotten = target_get_raw_trace_data (buf, offset, 6);
-
-	  if (gotten == 0)
-	    break;
-
-	  /* Read the first six bytes in, which is the tracepoint
-	     number and trace frame size.  */
-	  tp_num = (uint16_t)
-	    extract_unsigned_integer (&buf[0], 2, byte_order);
-
-	  tf_size = (uint32_t)
-	    extract_unsigned_integer (&buf[2], 4, byte_order);
-
-	  writer->ops->frame_ops->start (writer, tp_num);
-	  gotten = 6;
-
-	  if (tf_size > 0)
-	    {
-	      unsigned int block;
-
-	      offset += 6;
-
-	      for (block = 0; block < tf_size; )
-		{
-		  gdb_byte block_type;
-
-		  /* We'll fetch one block each time, in order to
-		     handle the extremely large 'M' block.  We first
-		     fetch one byte to get the type of the block.  */
-		  gotten = target_get_raw_trace_data (buf, offset, 1);
-		  if (gotten < 1)
-		    error (_("Failure to get requested trace buffer data"));
-
-		  gotten = 1;
-		  block += 1;
-		  offset += 1;
-
-		  block_type = buf[0];
-		  switch (block_type)
-		    {
-		    case 'R':
-		      gotten
-			= target_get_raw_trace_data (buf, offset,
-						     trace_regblock_size);
-		      if (gotten < trace_regblock_size)
-			error (_("Failure to get requested trace"
-				 " buffer data"));
-
-		      TRACE_WRITE_R_BLOCK (writer, buf,
-					   trace_regblock_size);
-		      break;
-		    case 'M':
-		      {
-			unsigned short mlen;
-			ULONGEST addr;
-			LONGEST t;
-			int j;
-
-			t = target_get_raw_trace_data (buf,offset, 10);
-			if (t < 10)
-			  error (_("Failure to get requested trace"
-				   " buffer data"));
-
-			offset += 10;
-			block += 10;
-
-			gotten = 0;
-			addr = (ULONGEST)
-			  extract_unsigned_integer (buf, 8,
-						    byte_order);
-			mlen = (unsigned short)
-			  extract_unsigned_integer (&buf[8], 2,
-						    byte_order);
-
-			TRACE_WRITE_M_BLOCK_HEADER (writer, addr,
-						    mlen);
-
-			/* The memory contents in 'M' block may be
-			   very large.  Fetch the data from the target
-			   and write them into file one by one.  */
-			for (j = 0; j < mlen; )
-			  {
-			    unsigned int read_length;
-
-			    if (mlen - j > MAX_TRACE_UPLOAD)
-			      read_length = MAX_TRACE_UPLOAD;
-			    else
-			      read_length = mlen - j;
-
-			    t = target_get_raw_trace_data (buf,
-							   offset + j,
-							   read_length);
-			    if (t < read_length)
-			      error (_("Failure to get requested"
-				       " trace buffer data"));
-
-			    TRACE_WRITE_M_BLOCK_MEMORY (writer, buf,
-							read_length);
-
-			    j += read_length;
-			    gotten += read_length;
-			  }
-
-			break;
-		      }
-		    case 'V':
-		      {
-			int vnum;
-			LONGEST val;
-
-			gotten
-			  = target_get_raw_trace_data (buf, offset,
-						       12);
-			if (gotten < 12)
-			  error (_("Failure to get requested"
-				   " trace buffer data"));
-
-			vnum  = (int) extract_signed_integer (buf,
-							      4,
-							      byte_order);
-			val
-			  = extract_signed_integer (&buf[4], 8,
-						    byte_order);
-
-			TRACE_WRITE_V_BLOCK (writer, vnum, val);
-		      }
-		      break;
-		    default:
-		      error (_("Unknown block type '%c' (0x%x) in"
-			       " trace frame"),
-			     block_type, block_type);
-		    }
-
-		  block += gotten;
-		  offset += gotten;
-		}
-	    }
-	  else
-	    offset += gotten;
-
-	  writer->ops->frame_ops->end (writer);
-	}
+          directly to trace file.  Don't parse the contents of trace
+          buffer.  */
+      trace_save_data_raw (writer);
+    }
+  else
+    {
+      /* The writer does not support writing the contents of the trace buffer
+         directly, parse each trace frame and write them one by one.  */
+      trace_save_data_frame (writer, uploaded_tps);
     }
 
   writer->ops->end (writer);
+
+  do_cleanups (old_chain);
 }
 
 static void

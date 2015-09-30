@@ -36,16 +36,17 @@
 /* Prototypes for local functions.  */
 
 static enum command_control_type
-recurse_read_control_structure (char * (*read_next_line_func) (void),
+recurse_read_control_structure (read_next_line_ftype read_next_line_func,
+				void *read_next_line_func_data,
 				struct command_line *current_cmd,
-				void (*validator)(char *, void *),
+				read_command_lines_validator_ftype validator,
 				void *closure);
 
 static char *insert_args (char *line);
 
 static struct cleanup * setup_user_args (char *p);
 
-static char *read_next_line (void);
+static char *read_next_line (void *data);
 
 /* Level of control structure when reading.  */
 static int control_level;
@@ -135,7 +136,7 @@ get_command_line (enum command_control_type type, char *arg)
   old_chain = make_cleanup_free_command_lines (&cmd);
 
   /* Read in the body of this command.  */
-  if (recurse_read_control_structure (read_next_line, cmd, 0, 0)
+  if (recurse_read_control_structure (read_next_line, NULL, cmd, 0, 0)
       == invalid_control)
     {
       warning (_("Error reading in canned sequence of commands."));
@@ -929,7 +930,7 @@ realloc_body_list (struct command_line *command, int new_length)
    from stdin.  */
 
 static char *
-read_next_line (void)
+read_next_line (void *data)
 {
   char *prompt_ptr, control_prompt[256];
   int i = 0;
@@ -962,7 +963,7 @@ read_next_line (void)
 
 static enum misc_command_type
 process_next_line (char *p, struct command_line **command, int parse_commands,
-		   void (*validator)(char *, void *), void *closure)
+		   read_command_lines_validator_ftype validator, void *closure)
 {
   char *p_end;
   char *p_start;
@@ -1126,9 +1127,10 @@ process_next_line (char *p, struct command_line **command, int parse_commands,
    obtain lines of the command.  */
 
 static enum command_control_type
-recurse_read_control_structure (char * (*read_next_line_func) (void),
+recurse_read_control_structure (read_next_line_ftype read_next_line_func,
+				void *read_next_line_func_data,
 				struct command_line *current_cmd,
-				void (*validator)(char *, void *),
+				read_command_lines_validator_ftype validator,
 				void *closure)
 {
   int current_body, i;
@@ -1152,7 +1154,8 @@ recurse_read_control_structure (char * (*read_next_line_func) (void),
       dont_repeat ();
 
       next = NULL;
-      val = process_next_line (read_next_line_func (), &next, 
+      val = process_next_line (read_next_line_func (read_next_line_func_data),
+			       &next,
 			       current_cmd->control_type != python_control
 			       && current_cmd->control_type != guile_control
 			       && current_cmd->control_type != compile_control,
@@ -1216,8 +1219,9 @@ recurse_read_control_structure (char * (*read_next_line_func) (void),
       if (multi_line_command_p (next->control_type))
 	{
 	  control_level++;
-	  ret = recurse_read_control_structure (read_next_line_func, next,
-						validator, closure);
+	  ret = recurse_read_control_structure (read_next_line_func,
+						read_next_line_func_data,
+						next, validator, closure);
 	  control_level--;
 
 	  if (ret != simple_control)
@@ -1249,7 +1253,7 @@ restore_interp (void *arg)
 
 struct command_line *
 read_command_lines (char *prompt_arg, int from_tty, int parse_commands,
-		    void (*validator)(char *, void *), void *closure)
+		    read_command_lines_validator_ftype validator, void *closure)
 {
   struct command_line *head;
 
@@ -1272,14 +1276,14 @@ read_command_lines (char *prompt_arg, int from_tty, int parse_commands,
   /* Reading commands assumes the CLI behavior, so temporarily
      override the current interpreter with CLI.  */
   if (current_interp_named_p (INTERP_CONSOLE))
-    head = read_command_lines_1 (read_next_line, parse_commands,
+    head = read_command_lines_1 (read_next_line, NULL, parse_commands,
 				 validator, closure);
   else
     {
       struct interp *old_interp = interp_set_temp (INTERP_CONSOLE);
       struct cleanup *old_chain = make_cleanup (restore_interp, old_interp);
 
-      head = read_command_lines_1 (read_next_line, parse_commands,
+      head = read_command_lines_1 (read_next_line, NULL, parse_commands,
 				   validator, closure);
       do_cleanups (old_chain);
     }
@@ -1295,8 +1299,10 @@ read_command_lines (char *prompt_arg, int from_tty, int parse_commands,
    obtained using READ_NEXT_LINE_FUNC.  */
 
 struct command_line *
-read_command_lines_1 (char * (*read_next_line_func) (void), int parse_commands,
-		      void (*validator)(char *, void *), void *closure)
+read_command_lines_1 (read_next_line_ftype read_next_line_func,
+		      void *read_next_line_func_data, int parse_commands,
+		      read_command_lines_validator_ftype validator,
+		      void *closure)
 {
   struct command_line *head, *tail, *next;
   struct cleanup *old_chain = make_cleanup (null_cleanup, NULL);
@@ -1309,8 +1315,8 @@ read_command_lines_1 (char * (*read_next_line_func) (void), int parse_commands,
   while (1)
     {
       dont_repeat ();
-      val = process_next_line (read_next_line_func (), &next, parse_commands,
-			       validator, closure);
+      val = process_next_line (read_next_line_func (read_next_line_func_data),
+			       &next, parse_commands, validator, closure);
 
       /* Ignore blank lines or comments.  */
       if (val == nop_command)
@@ -1331,7 +1337,8 @@ read_command_lines_1 (char * (*read_next_line_func) (void), int parse_commands,
       if (multi_line_command_p (next->control_type))
 	{
 	  control_level++;
-	  ret = recurse_read_control_structure (read_next_line_func, next,
+	  ret = recurse_read_control_structure (read_next_line_func,
+						read_next_line_func_data, next,
 						validator, closure);
 	  control_level--;
 
