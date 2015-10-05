@@ -8786,6 +8786,49 @@ arm_register_g_packet_guesses (struct gdbarch *gdbarch)
   /* Otherwise we don't have a useful guess.  */
 }
 
+static int __attribute__((used))
+arm_fast_tracepoint_valid_at (struct gdbarch *gdbarch,
+			      CORE_ADDR addr, char **msg)
+{
+  /* A branch instruction used for fast tracepoint takes 4 bytes.
+     (A 2 bytes branch instruction only gets us 4k away,
+     so will not be enough.)
+
+     target gdbserver will validate that the relative branch
+     distance will fit in the instructions.
+     (16M for Thumb, 32M for ARM)
+
+     We only allow to replace one instruction. (4 bytes)
+     Replacing 2 instructions is not safe. Consider
+     the case where code wants to jump to the 2nd instruction - it
+     will jump into the middle of a branch instruction.   */
+
+  if (arm_pc_is_thumb (gdbarch, addr))
+    {
+      uint16_t insn =
+	read_memory_unsigned_integer (addr, 2,
+				      gdbarch_byte_order_for_code (gdbarch));
+
+      if (thumb_insn_size (insn) == 2)
+	{
+	  if (msg)
+	    *msg = xstrprintf (_("; instruction is only 2 bytes long, "
+				 "need 4 bytes for the jump"));
+	  return 0;
+	}
+    }
+  else
+    {
+      /* In ARM mode, all instructions are 4 bytes long, so there is
+         no restriction related to instruction length.  */
+    }
+
+  if (msg)
+    *msg = NULL;
+
+  return 1;
+}
+
 
 /* Initialize the current architecture based on INFO.  If possible,
    re-use an architecture from ARCHES, which is a list of
