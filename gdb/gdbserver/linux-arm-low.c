@@ -20,6 +20,7 @@
 #include "linux-low.h"
 #include "arch/arm.h"
 #include "linux-aarch32-low.h"
+#include <inttypes.h>
 
 #include <sys/uio.h>
 /* Don't include elf.h if linux/elf.h got included by gdb_proc_service.h.
@@ -1647,6 +1648,140 @@ arm_relocate_insn_thumb32 (struct relocate_insn *rel,
       append_insn_16 (rel->to, insn1);
       append_insn_16 (rel->to, insn2);
     }
+}
+
+static uint32_t
+mk_t_b_rel (CORE_ADDR from, CORE_ADDR to)
+{
+  uint32_t from_ = ((uint32_t) from) & ~1;
+  uint32_t to_   = ((uint32_t) to) & ~1;
+  return to_ - from_ - 4;
+}
+
+static int __attribute__((used))
+mk_t_b_isreachable (CORE_ADDR from, CORE_ADDR to)
+{
+  int32_t rel = mk_t_b_rel (from, to);
+  rel >>= 24;
+  return !rel || !(rel + 1);
+}
+
+static uint16_t * __attribute__((used))
+mk_t_b_instr (uint16_t *mem, CORE_ADDR from, CORE_ADDR to)
+{
+  uint32_t imm10, imm11;
+  uint32_t s, j1, j2;
+  uint32_t rel;
+
+  rel = mk_t_b_rel (from, to);
+  rel >>= 1;
+
+  imm11 = rel & 0x7ff;
+  rel >>= 11;
+  imm10 = rel & 0x3ff;
+  rel >>= 10;
+  s  = (rel > 3);
+  j1 = s ^ !(rel & 2);
+  j2 = s ^ !(rel & 1);
+
+  *mem++ = 0xF000 | (s << 10) | imm10;
+  *mem++ = 0x9000 | (j1 << 13) | (j2 << 11) | imm11;
+
+  return mem;
+}
+
+static uint16_t * __attribute__((used))
+mk_t_blx_instr (uint16_t *mem, int reg)
+{
+  reg &= 0xF;
+  *mem++ = 0x4780 | (reg << 3);
+  return mem;
+}
+
+static uint16_t * __attribute__((used))
+mk_t_load_instr (uint16_t *mem, int reg, uint32_t val)
+{
+  uint32_t imm4, imm3, imm8;
+  uint32_t i;
+
+  imm8 = val & 0x00FF;
+  val >>= 8;
+  imm3 = val & 0x0007;
+  val >>= 3;
+  i = val & 0x0001;
+  val >>= 1;
+  imm4 = val & 0x000F;
+  val >>= 4;
+
+  *mem++ = 0xF240 | (i << 10) | imm4;
+  *mem++ = 0x0000 | (imm3 << 12) | (reg << 8) | imm8;
+
+  imm8 = val & 0x00FF;
+  val >>= 8;
+  imm3 = val & 0x0007;
+  val >>= 3;
+  i = val & 0x0001;
+  val >>= 1;
+  imm4 = val & 0x000F;
+
+  *mem++ = 0xF2C0 | (i << 10) | imm4;
+  *mem++ = 0x0000 | (imm3 << 12) | (reg << 8) | imm8;
+
+  return mem;
+}
+
+static uint32_t
+mk_a_b_rel (CORE_ADDR from, CORE_ADDR to)
+{
+  return (uint32_t) to - (uint32_t) from - 8;
+}
+
+static int __attribute__((used))
+mk_a_b_isreachable (CORE_ADDR from, CORE_ADDR to)
+{
+  int32_t rel = mk_a_b_rel (from, to);
+  rel >>= 25;
+  return !rel || !(rel + 1);
+}
+
+static uint32_t * __attribute__((used))
+mk_a_b_instr (uint32_t *mem, CORE_ADDR from, CORE_ADDR to)
+{
+  uint32_t imm24 = mk_a_b_rel (from, to);
+
+  imm24 >>= 2;
+  imm24 &= 0x00FFFFFF;
+  *mem++ = 0xEA000000 | imm24;
+
+  return mem;
+}
+
+static uint32_t * __attribute__((used))
+mk_a_blx_instr (uint32_t *mem, int reg)
+{
+  *mem++ = 0xE12FFF30 | (reg & 0xF);
+  return mem;
+}
+
+static uint32_t * __attribute__((used))
+mk_a_load_instr (uint32_t *mem, int reg, uint32_t val)
+{
+  uint32_t imm4, imm12;
+
+  imm12 = val & 0x0FFF;
+  val >>= 12;
+  imm4 = val & 0xF;
+  val >>= 4;
+
+  *mem++ = 0xE3000000 | ((reg & 0xF) << 12) | (imm4 << 16) | imm12;
+
+  imm12 = val & 0x0FFF;
+  val >>= 12;
+  imm4 = val & 0xF;
+
+  *mem++ = 0xE3400000 | ((reg & 0xF) << 12) | (imm4 << 16) | imm12;
+
+  return mem;
 }
 
 struct linux_target_ops the_low_target = {
