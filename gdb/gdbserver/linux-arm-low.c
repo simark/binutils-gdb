@@ -1650,6 +1650,49 @@ arm_relocate_insn_thumb32 (struct relocate_insn *rel,
     }
 }
 
+static int
+copy_instruction_arm (CORE_ADDR *to, CORE_ADDR from)
+{
+  struct relocate_insn rel;
+  CORE_ADDR before = *to;
+  uint32_t insn;
+
+  rel.oldloc = from;
+  rel.to = to;
+  rel.result = 0;
+
+  if (read_inferior_memory (from, (unsigned char *) &insn, sizeof (insn)) != 0)
+      return 1;
+
+  arm_relocate_insn_arm (&rel, insn);
+
+  return (before == *to) ? -1 : 1;
+}
+
+static int
+copy_instruction_thumb32 (CORE_ADDR *to, CORE_ADDR from)
+{
+  struct relocate_insn rel;
+  CORE_ADDR before = *to;
+  uint16_t insn1, insn2;
+
+  rel.oldloc = from;
+  rel.to = to;
+  rel.result = 0;
+
+  if (read_inferior_memory (from, (unsigned char *) &insn1,
+			    sizeof (insn1)) != 0)
+      return 1;
+
+  if (read_inferior_memory (from + sizeof (insn1), (unsigned char *) &insn2,
+			    sizeof (insn2)) != 0)
+      return 1;
+
+  arm_relocate_insn_thumb32 (&rel, insn1, insn2);
+
+  return (before == *to) ? -1 : 1;
+}
+
 static uint32_t
 mk_t_b_rel (CORE_ADDR from, CORE_ADDR to)
 {
@@ -1782,6 +1825,221 @@ mk_a_load_instr (uint32_t *mem, int reg, uint32_t val)
   *mem++ = 0xE3400000 | ((reg & 0xF) << 12) | (imm4 << 16) | imm12;
 
   return mem;
+}
+
+static int __attribute__((unused))
+arm_install_fast_tracepoint_jump_pad (struct tracepoint *tp,
+				      CORE_ADDR collector,
+				      CORE_ADDR lockaddr,
+				      CORE_ADDR *jump_entry,
+				      CORE_ADDR *trampoline,
+				      ULONGEST *trampoline_size,
+				      unsigned char *jjump_pad_insn,
+				      ULONGEST *jjump_pad_insn_size,
+				      char *err)
+{
+  unsigned char buf[0x100];
+  CORE_ADDR buildaddr = *jump_entry;
+
+  /* Register usage:
+     r0 - arg1:tpoint   /   tmp
+     r1 - arg2:sp
+     r2 - collector
+     r3 - tmp
+     r4 - lockaddr
+     r5 - saved sp      /   collector_t   */
+
+  if (tp->kind == ARM_BP_KIND_ARM)
+    {
+      uint32_t *ptr = (uint32_t *) buf;
+
+      *ptr++ = 0xe92d5fff;            /* push { r0-r12,lr }  */
+      *ptr++ = 0xe10f0000;            /* mrs r0,cpsr  */
+      *ptr++ = 0xe52d0004;            /* push r0  */
+
+      ptr = mk_a_load_instr (ptr, 0, (uint32_t) tp->address);
+      *ptr++ = 0xe52d0004;            /* push r0 (orig pc)  */
+      *ptr++ = 0xe1a0100d;            /* mov r1, sp (regs:arg2)  */
+
+      ptr = mk_a_load_instr (ptr, 0, 0xffff0fe0);
+      ptr = mk_a_blx_instr (ptr, 0);
+      *ptr++ = 0xe52d0004;            /* push r0 (tls)  */
+
+      ptr = mk_a_load_instr (ptr, 0, (uint32_t) tp->address);
+      *ptr++ = 0xe52d0004;            /* push r0 (tpoint:arg1)  */
+      ptr = mk_a_load_instr (ptr, 2, (uint32_t) collector);
+      ptr = mk_a_load_instr (ptr, 4, (uint32_t) lockaddr);
+
+      *ptr++ = 0xe1a0500d;            /*    mov r5, sp  */
+      *ptr++ = 0xf57ff05f;            /* 1: dmb sy  */
+      *ptr++ = 0xe1943f9f;            /* 2: ldrex r3, [r4]  */
+      *ptr++ = 0xe3530000;            /*    cmp r3, #0  */
+      *ptr++ = 0x1a000002;            /*    bne 3  */
+      *ptr++ = 0xe184ef95;            /*    strex r14, r5, [r4]  */
+      *ptr++ = 0xe35e0000;            /*    cmp r14, #0  */
+      *ptr++ = 0x1afffff9;            /*    bne 2  */
+      *ptr++ = 0xf57ff05f;            /* 3: dmb sy  */
+      *ptr++ = 0x1afffff6;            /*    bne 1  */
+
+      *ptr++ = 0xe3c53007;            /* bic r3, r5, 7  */
+      *ptr++ = 0xe1a0d003;            /* mov sp, r3  */
+      ptr = mk_a_blx_instr (ptr, 2);
+      *ptr++ = 0xe1a0d005;            /* mov sp, r5  */
+
+      *ptr++ = 0xe3a03000;            /* mov r3, #0  */
+      *ptr++ = 0xe5843000;            /* str r3, [r4]  */
+
+      *ptr++ = 0xe28dd00c;            /* add sp, sp, #12  */
+      *ptr++ = 0xe49d0004;            /* pop r0  */
+      *ptr++ = 0xe12cf000;            /* msr cpsr,r0  */
+      *ptr++ = 0xe8bd5fff;            /* pop { r0-r12,lr }  */
+
+      append_insns (&buildaddr, (uint32_t) ptr - (uint32_t) buf, buf);
+
+      tp->adjusted_insn_addr = buildaddr;
+      if (copy_instruction_arm (&buildaddr, tp->address) < 0)
+	{
+	  strcpy (err, "E.Cannot move instruction to jump_pad. "
+		  "Not possible to relocate.");
+	  return 1;
+	}
+      tp->adjusted_insn_addr = buildaddr;
+
+      /* Possible improvements:
+	 This branch can be made non-relative:
+	 B <mem location>:
+	 push    {r0,r1}
+	 movw    r0, #<mem location>
+	 movt    r0, #<mem location>
+	 str     r0, [sp, #4]
+	 pop     {r0,pc}  */
+      if (!mk_a_b_isreachable (buildaddr, tp->address + 4))
+	{
+	  strcpy (err, "E.Cannot construct valid branch "
+		  "instruction for fast tracepoint."
+		  " Too long relative branch.");
+	  return 1;
+	}
+      /* b <tp_addr + 4>  */
+      (void) mk_a_b_instr ((uint32_t *) buf, buildaddr, tp->address + 4);
+      append_insns (&buildaddr, 4, buf);
+
+      /* write tp instr.  */
+      if (!mk_a_b_isreachable (tp->address, *jump_entry))
+	{
+	  strcpy (err, "E.Cannot construct valid branch "
+		  "instruction for fast tracepoint."
+		  " Too long relative branch.");
+	  return 1;
+	}
+      (void) mk_a_b_instr ((uint32_t *) jjump_pad_insn, tp->address, *jump_entry);
+      *jjump_pad_insn_size = 4;
+      *jump_entry = buildaddr;
+    }
+  else if (tp->kind == ARM_BP_KIND_THUMB2)
+    {
+      uint16_t *ptr = (uint16_t *) buf;
+
+      *ptr++ = 0xe92d;            /* push { r0-r12,lr }  */
+      *ptr++ = 0x5fff;
+      *ptr++ = 0xf3ef;            /* mrs r0,cpsr  */
+      *ptr++ = 0x8000;
+      *ptr++ = 0xb401;            /* push r0  */
+
+      ptr = mk_t_load_instr (ptr, 0, (uint32_t) tp->address);
+      *ptr++ = 0xb401;            /* push r0 (orig pc)  */
+      *ptr++ = 0x4669;            /* mov r1, sp (regs:arg2)  */
+
+      ptr = mk_t_load_instr (ptr, 0, 0xffff0fe0);
+      ptr = mk_t_blx_instr (ptr, 0);
+      *ptr++ = 0xb401;		/* push r0 (tls)  */
+
+      ptr = mk_t_load_instr (ptr, 0, (uint32_t) tp->obj_addr_on_target);
+      *ptr++ = 0xb401;		/* push r0 (tpoint:arg1)  */
+      ptr = mk_t_load_instr (ptr, 2, (uint32_t) collector);
+      ptr = mk_t_load_instr (ptr, 4, (uint32_t) lockaddr);
+
+      *ptr++ = 0x466d;		/*    mov r5, sp  */
+      *ptr++ = 0xf3bf;		/* 1: dmb sy  */
+      *ptr++ = 0x8f5f;
+      *ptr++ = 0xe854;		/* 2: ldrex   r3, [r4]	*/
+      *ptr++ = 0x3f00;
+      *ptr++ = 0x2b00;		/*    cmp     r3, #0  */
+      *ptr++ = 0xd104;		/*    bne.n   3	 */
+      *ptr++ = 0xe844;		/*    strex   r14, r5, [r4]  */
+      *ptr++ = 0x5e00;
+      *ptr++ = 0xf1be;		/*    cmp.w   r14, #0  */
+      *ptr++ = 0x0f00;
+      *ptr++ = 0xd1f6;		/*    bne.n   2	 */
+      *ptr++ = 0xf3bf;		/* 3. dmb  sy  */
+      *ptr++ = 0x8f5f;
+      *ptr++ = 0xd1f1;		/*    bne.n   1	 */
+
+      *ptr++ = 0xf025;		/* bic r3, r5, 7  */
+      *ptr++ = 0x0307;
+      *ptr++ = 0x469d;		/* mov sp, r3  */
+      ptr = mk_t_blx_instr (ptr, 2);
+      *ptr++ = 0x46ad;		/* mov sp, r5  */
+
+      *ptr++ = 0xf04f;		/* mov r3, #0  */
+      *ptr++ = 0x0300;
+      *ptr++ = 0x6023;		/* str r3, [r4]	 */
+
+      *ptr++ = 0xb003;		/* add sp, #12	*/
+      *ptr++ = 0xbc01;		/* pop r0  */
+      *ptr++ = 0xf380;		/* msr cpsr,r0	*/
+      *ptr++ = 0x8c00;
+      *ptr++ = 0xe8bd;		/* pop { r0-r12,lr }  */
+      *ptr++ = 0x5fff;
+
+      append_insns (&buildaddr, (uint32_t) ptr - (uint32_t) buf, buf);
+
+      tp->adjusted_insn_addr = buildaddr;
+      if (copy_instruction_thumb32 (&buildaddr, tp->address))
+	{
+	  strcpy (err, "E.Cannot move instruction to jump_pad."
+		  " Not possible to relocate.");
+	  return 1;
+	}
+      tp->adjusted_insn_addr_end = buildaddr;
+
+      /* Possible improvements:
+	 This branch can be made non-relative:
+	 B <mem location>:
+	 push	   {r0,r1}
+	 movw	   r0, #<mem location>
+	 movt	   r0, #<mem location>
+	 str	   r0, [sp, #4]
+	 pop	   {r0,pc}  */
+      if (!mk_t_b_isreachable (buildaddr, tp->address + 4))
+	{
+	  strcpy (err, "E.Cannot construct valid branch "
+		  "instruction for fast tracepoint."
+		  "Too long relative branch.");
+	  return 1;
+	}
+      (void) mk_t_b_instr ((uint16_t *) buf, buildaddr, tp->address + 4);
+      append_insns (&buildaddr, 4, buf);
+
+      /* write tp instr.	*/
+      if (!mk_t_b_isreachable (tp->address, *jump_entry))
+	{
+	  strcpy (err, "E.Cannot construct valid branch "
+		  "instruction for fast tracepoint."
+		  "Too long relative branch.");
+	  return 1;
+	}
+      (void) mk_t_b_instr ((uint16_t *) jjump_pad_insn, tp->address, *jump_entry);
+      *jjump_pad_insn_size = 4;
+      *jump_entry = buildaddr;
+    }
+  else
+    {
+      strcpy (err, "ECan't put a fast tracepoint jump on a two-bytes Thumb "
+	      "instruction.");
+      return 1;
+    }
+  return 0;
 }
 
 struct linux_target_ops the_low_target = {
