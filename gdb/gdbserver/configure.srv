@@ -83,6 +83,7 @@ case "${target}" in
 			srv_linux_usrregs=yes
 			srv_linux_regsets=yes
 			srv_linux_thread_db=yes
+			ipa_obj="arm-linux-ipa.o linux-arm-ipa.o"
 			;;
   arm*-*-mingw32ce*)	srv_regobj=reg-arm.o
 			srv_tgtobj="win32-low.o win32-arm-low.o"
