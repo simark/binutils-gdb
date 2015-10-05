@@ -1164,6 +1164,491 @@ arm_supports_tracepoints (void)
   return 1;
 }
 
+/* Local structure to pass information in and out of the relocate
+   helper functions  */
+struct relocate_insn
+{
+  CORE_ADDR *to;
+  CORE_ADDR oldloc;
+  int result; /* 0: copy unmodif, >0: handled, <0: not possible  */
+};
+
+static int
+append_insns (CORE_ADDR *to, size_t len, const unsigned char *buf)
+{
+  if (write_inferior_memory (*to, buf, len) != 0)
+      return 1;
+
+  *to += len;
+
+  return 0;
+}
+
+static int
+append_insn_32 (CORE_ADDR *to, uint32_t insn)
+{
+  return append_insns (to, 4, (unsigned char *) &insn);
+}
+
+static int
+append_insn_16 (CORE_ADDR *to, uint16_t insn)
+{
+  return append_insns (to, 2, (unsigned char *) &insn);
+}
+
+static void __attribute__((used))
+arm_relocate_insn_arm (struct relocate_insn *rel, uint32_t insn)
+{
+  unsigned int cond = bits (insn, 28, 31);
+  unsigned int op   = (bits (insn, 25, 27) << 1) | bit (insn, 4);
+
+  /* 1111 ---- ---- ---- ---- ---- ---- ---- :
+     unconditional instructions  */
+  if (cond == 15)
+    {
+      /* 1111 0--- ---- ---- ---- ---- ---- ---- :
+	 Memory hints, Advanced SIMD instructions, and
+	 miscellaneous instructions  */
+      if (bit (insn, 27) == 0)
+	{
+	  unsigned int op1 = bits (insn, 20, 26);
+	  unsigned int op2 = bits (insn, 4, 7);
+	  unsigned int rn = bits (insn, 16, 19);
+
+	  /* All variants we are interested in have rn == 15 - check first  */
+	  if (rn == 15)
+	    {
+	      /* 1111 0100 x101 1111 ---- ---- ---- ---- :
+		 PLI (literal)  */
+	      if ((op1 & 0x77) == 0x45)
+		rel->result = -1;
+	      /* 1111 0101 x101 1111 ---- ---- ---- ---- :
+		 PLD (literal)  */
+	      else if ((op1 & 0x77) == 0x55)
+		rel->result = -1;
+	      /* 1111 0110 x101 1111 ---- ---- ---0 ---- :
+		 PLI (register)  */
+	      else if ((op1 & 0x77) == 0x65 && (op2 & 0x1) == 0x0)
+		rel->result = -1;
+	      /* 1111 0111 xx01 1111 ---- ---- ---0 ---- :
+		 PLD, PLDW (register)  */
+	      else if ((op1 & 0x73) == 0x71 && (op2 & 0x1) == 0x0)
+		rel->result = -1;
+	    }
+	}
+      /* 1111 101- ---- ---- ---- ---- ---- ---- :
+	 BL, BLX (immediate)  */
+      else if (bits (insn, 25, 27) == 5)
+	rel->result = -1;
+      /* 1111 110x xxxx ---- ---- ---- ---- ---- :
+	 STC/STC2, LDC/LDC2 ( x != 00x0x)  */
+      else if (bits (insn, 25, 27) == 6 &&
+	       (bits (insn, 20, 24) & 0x1A) != 0x0)
+	{
+	  unsigned int rn = bits (insn, 16, 19);
+	  if (rn == 15)
+	    rel->result = -1;
+	}
+    }
+
+  /* ---- 00x- ---- ---- ---- ---- ---x ---- :
+     Data-processing and miscellaneous instructions  */
+  else if (op <= 3)
+    {
+      unsigned int op1 = bits (insn, 20, 24);
+      unsigned int op2 = bits (insn, 4, 7);
+
+      if (bit (insn, 25) == 0)
+	{
+	  /* ---- 000x xxxx ---- ---- ---- xxx0 ---- :
+	     Data-processing (register) ( x != 10xx0 )  */
+	  if ((op1 & 0x19) != 0x10 && (op2 & 0x1) == 0x0) {
+	    unsigned int rm = bits (insn, 0, 3);
+	    unsigned int rn = bits (insn, 16, 19);
+
+	    /* ---- 000x xxxx nnnn ---- ---- xxx0 mmmm :
+	       AND,EOR,SUB,RSB,ADD,ADC,SBC,RSC,TST,TEQ,
+	       CMP,CMN,ORR,MOV,LSL,LSR,ASR,RRX,ROR,BIC,MVN  */
+	    if (rn == 15 || rm == 15)
+	      rel->result = -1;
+	  }
+	  /* ---- 000x xxxx ---- ---- ---- xxx1 ---- :
+	     Data-processing (register-shifted register)  */
+	  else if ((op1 & 0x19) != 0x10 && (op2 & 0x9) == 0x1)
+	    {
+	      ;
+	    }
+
+	  /* ---- 0001 0xx0 ---- ---- ---- 0xxx ---- :
+	     Miscellaneous instructions  */
+	  else if ((op1 & 0x19) == 0x10 && (op2 & 0x8) == 0x0)
+	    {
+	      /* ---- 0001 0010 ---- ---- ---- 0011 ---- :
+		 BLX (register)  */
+	      if (bits (insn, 4, 6) == 3 && bits (insn, 21, 22) == 1) /* BLX  */
+		rel->result = -1;
+	    }
+	  /* ---- 0001 0xx0 ---- ---- ---- 1xx0 ---- :
+	     Halfword multiply and multiply accumulate  */
+	  else if ((op1 & 0x19) == 0x10 && (op2 & 0x9) == 0x8)
+	    {
+	      ;
+	    }
+	  /* ---- 0000 xxxx ---- ---- ---- 1001 ---- :
+	     Multiply and multiply accumulate  */
+	  else if ((op1 & 0x10) == 0x00 && op2 == 0x9)
+	    {
+	      ;
+	    }
+	  /* ---- 0001 xxxx ---- ---- ---- 1001 ---- :
+	     Synchronization primitives  */
+	  else if ((op1 & 0x10) == 0x10 && op2 == 0x9)
+	    {
+	      ;
+	    }
+	  /* ---- 000x xxxx ---- ---- ---- 1xx1 ---- :
+	     Extra load/store instructions  */
+	  else if (op2 == 0xB || (op2 & 0xd) == 0xd)
+	    {
+	      unsigned int rn = bits (insn, 16, 19);
+	      /* ---- 000x xxxx 1111 ---- ---- 1xx1 ---- :
+		 STRH, LDRH, LDRD, LDRSB  */
+	      if (rn == 15)
+		rel->result = -1;
+	    }
+	}
+      else
+	{
+	  /* ---- 001x xxxx ---- ---- ---- ---- ---- :
+	     Data-processing (immediate)  */
+	  if ((op1 & 0x19) != 0x10)
+	    {
+	      unsigned int op  = bits (insn, 21, 24);
+	      unsigned int op2 = bits (insn, 20, 24);
+	      unsigned int rn = bits (insn, 16, 19);
+
+	      if (rn == 15) /* Only check those with n == 15  */
+		{
+		  /* ---- 0010 xxxx 1111 ---- ---- ---- ---- :
+		     AND, EOR, ADR, RSB, ADR, ADC, SBC, RSC  */
+		  if (op <= 7)
+		    rel->result = -1;
+		  /* ---- 0011 0xx1 1111 ---- ---- ---- ---- :
+		     TST, TEQ, CMP, CMN  */
+		  else if ((op2 & 0x19) == 0x11)
+		    rel->result = -1;
+		  /* ---- 0011 1x0x 1111 ---- ---- ---- ---- :
+		     ORR, BIC  */
+		  else if (op == 0xC || op == 0xE)
+		    rel->result = -1;
+		  /* ---- 0011 1x1x 1111 ---- ---- ---- ---- :
+		     MOV, MVN  */
+		  else if (op == 0xD || op == 0xF)
+		    {
+		      ;
+		    }
+		}
+	    }
+	}
+    }
+
+  /* ---- 01A- ---- ---- ---- ---- ---B ---- :
+     Load/store word and unsigned byte  */
+  else if (op <= 6)
+    {
+      /* unsigned int a = bit (insn, 25); */
+      unsigned int rt = bits (insn, 12, 15);
+      unsigned int rn = bits (insn, 16, 19);
+      unsigned int op1 = bits (insn, 20, 24);
+      unsigned int op1_m1 = (op1 & 0x17);
+      unsigned int op1_m2 = (op1 & 0x5);
+
+      /* a and b can not both be 1 - no need to test for b  */
+
+      /* ---- 01Ax xxxx nnnn ---- ---- ---B ---- :
+	 STR (immediate), STR (register)  */
+      if (op1_m2 == 0x00 && op1_m1 != 0x02)
+	{
+	  if (rt == 15 || rn == 15)
+	    rel->result = -1;
+	}
+      /* ---- 01Ax xxxx nnnn ---- ---- ---B ---- :
+	 STRT  */
+      else if (op1_m1 == 0x02)
+	{
+	  if (rt == 15)
+	    rel->result = -1;
+	}
+      /* ---- 01Ax xxxx nnnn ---- ---- ---B ---- :
+	 LDR (literal)  */
+      else if (op1_m2 == 0x01 && op1_m1 != 0x03)
+	{
+	  if (rn == 15)
+	    rel->result = -1;
+	}
+      /* ---- 01Ax xxxx nnnn ---- ---- ---B ---- :
+	 LDRT  */
+      else if (op1_m1 == 0x03)
+	{
+	  ;
+	}
+      /* ---- 01Ax xxxx nnnn ---- ---- ---B ---- :
+	 STRB (immediate), STRB (register)  */
+      else if (op1_m2 == 0x04 && op1_m1 != 0x06)
+	{
+	  if (rn == 15)
+	    rel->result = -1;
+	}
+      /* ---- 01Ax xxxx nnnn ---- ---- ---B ---- :
+	 STRBT  */
+      else if (op1_m1 == 0x06)
+	{
+	  ;
+	}
+      /* ---- 01Ax xxxx nnnn ---- ---- ---B ---- :
+	 LDRB (immediate), LDRB (register)  */
+      else if (op1_m2 == 0x05 && op1_m1 != 0x07)
+	{
+	  if (rn == 15)
+	    rel->result = -1;
+	}
+      /* ---- 01Ax xxxx nnnn ---- ---- ---B ---- :
+	 LDRBT  */
+      else if (op1_m1 == 0x07)
+	{
+	  ;
+	}
+    }
+
+  /* ---- 011- ---- ---- ---- ---- ---1 ---- :
+     Media instructions  */
+  else if (op <= 7)
+    {
+      ;
+    }
+
+  /* ---- 10x- ---- ---- ---- ---- ---x ---- :
+     Branch, branch with link, and block data transfer  */
+  else if (op <= 11)
+    {
+      /* unsigned int op1 = bits (insn, 20, 24); */
+      unsigned int r = bit (insn, 15);
+      unsigned int rn = bits (insn, 16, 19);
+
+      /* ---- 101x xxxx nnnn r--- ---- ---- ---- :
+	 B, BL, BLX  */
+      if (bit (insn, 25))
+	rel->result = -1;
+      /* ---- 100x xxx0 nnnn r--- ---- ---- ---- :
+	 STMDA, STM, STMDB, STMIB  */
+      else if (bit (insn, 20) == 0)
+	{
+	  if (rn == 15 || r == 1)
+	    rel->result = -1;
+	}
+      /* ---- 100x xxx1 nnnn r--- ---- ---- ---- :
+	 LDMDA, LDM/LDMIALDMFD, LDMDB/LDMEA, LSMIB/LDMED  */
+      else
+	{
+	  ;
+	}
+    }
+
+  /* ---- 11x- ---- ---- ---- ---- ---x ---- :
+     Coprocessor instructions, and Supervisor Call  */
+  else
+    {
+      unsigned int op1 = bits (insn, 20, 25);
+      unsigned int rn = bits (insn, 16, 19);
+      unsigned int coproc = bits (insn, 8, 11);
+      /* unsigned int op = bit (insn, 4); */
+
+      /* ---- 1100 000x nnnn ---- xxxx ---x ---- :
+	 undefined  */
+      /* ---- 1111 xxxx nnnn ---- xxxx ---x ---- :
+	 SVC  */
+      if ((op1 & 0x3E) == 0 || (op1 & 0x30) == 0x30)
+	{
+	  ;
+	}
+      else if ((coproc & 0xE) != 0xA)
+	{
+	  /* ---- 1100 010x nnnn ---- xxxx ---x ---- :
+	     MCRR/MCRR2, MRRC/MRRC2  */
+	  if (op1 == 4 || op1 == 5)
+	    {
+	      ;
+	    }
+	  /* ---- 110x xxxx nnnn ---- xxxx ---x ---- :
+	     STC/STC2, LDC/LDC2  */
+	  else if ((op1 & 0x20) == 0)
+	    {
+	      if (rn == 15)
+		rel->result = -1;
+	    }
+	  /* ---- 1110 xxxx nnnn ---- xxxx ---x ---- :
+	     CDP/CDP2, MCR/MCR2, MRC/MRC2  */
+	  else if ((op1 & 0x30) == 0x20)
+	    {
+	      ;
+	    }
+	}
+      else
+	{
+	  /* ---- 110x xxxx nnnn ---- 101x ---x ---- :
+	     Extension register load/store instructions  */
+	  if ((op1 & 0x20) == 0 && (op1 & 0x3A) != 0)
+	    {
+	      /* ---- 110x xxxx 1111 ---- 101- ---- ---- :
+		 VSTM, VSTR, VLDM, VLDR  */
+	      if (rn == 15)
+		rel->result = -1;
+	    }
+	}
+    }
+
+  if (rel->to && rel->result == 0)
+    {
+      append_insn_32(rel->to, insn);
+    }
+}
+
+
+static void  __attribute__((used))
+arm_relocate_insn_thumb32 (struct relocate_insn *rel,
+			   uint16_t insn1, uint16_t insn2)
+{
+  unsigned int op1 = bits (insn1, 11, 12);
+  unsigned int op2 = bits (insn1, 4, 10);
+  unsigned short op = bit (insn2, 15);
+
+  if (op1 == 1)
+    {
+      /* 1110 100x x1xx ---- x--- ---- ---- ---- :
+	 Load/store dual, load/store excl, table branch  */
+      if ((op2 & 0x64) == 0x04) /*   */
+	{
+	  unsigned int op1 = bits (insn1, 7, 8);
+	  unsigned int op2 = bits (insn1, 4, 5);
+	  /* 1110 1000 1101 ---- ---- ---- 000- ---- :
+	     TBB, TBH  */
+	  if (op1 == 1 && op2 == 1 && bits (insn2, 5, 7) == 0)
+	    rel->result = -1;
+	  /* 1110 1000 x111 1111 ---- ---- ---- ---- :
+	     LDRD (literal)  */
+	  /* 1110 1001 x1x1 1111 ---- ---- ---- ---- :
+	     LDRD (literal)  */
+	  else if (bits (insn1, 0, 3) == 15)
+	    {
+	      if (((op1 & 0x2) == 0 && op2 == 3) ||
+		  ((op1 & 0x2) == 2 && (op2 & 1) == 1))
+		rel->result = -1;
+	    }
+	}
+      /* 1110 11xx xxxx ---- x--- ---- ---- ---- :
+	 Coprocessor, Advanced SIMD, and Floating-point instructions  */
+      else if ((op2 & 0x40) == 0x40)
+	{
+	  unsigned int op3 = bits (insn1, 4, 9);
+	  unsigned int coproc = bits (insn2, 9, 11);
+	  /* 1110 1101 xx01 nnnn ---- 101x ---x ---- :
+	     Extension register load/store instructions / VLDR  */
+	  if (coproc == 5 && (op3 & 0x33) == 0x11)
+	    rel->result = -1;
+	  /* 1110 110x xxx1 nnnn ---- xxxx ---x ---- :
+	     LDC/LDC2 (literal)  */
+	  else if (coproc != 5 && (op3 & 0x21) == 1 &&
+		   (op3 & 0x3A) != 0 && bits (insn1, 0, 3) == 0xF)
+	    rel->result = -1;
+	}
+    }
+
+  else if (op1 == 2)
+    {
+      /* 1111 0xxx xxxx ---- 1--- ---- ---- ---- :
+	 Branches and miscellaneous control  */
+      if (op)
+	{
+	  /* 1111 0xxx xxxx ---- 11xx xxxx ---- ---- :
+	     BL/BLX  */
+	  if (bit (insn2, 14))
+	    rel->result = -1;
+	  /* 1111 0xxx xxxx ---- 10x1 xxxx ---- ---- :
+	     B (unconditional)  */
+	  else if (bit (insn2, 12))
+	    rel->result = -1;
+	  /* 1111 0xxx xxxx ---- 10x0 xxxx ---- ---- :
+	     B (conditional)  */
+	  else if (bits (insn1, 7, 9) != 0x7)
+	    rel->result = -1;
+	}
+      /* 1111 0x1x xxxx ---- 0--- ---- ---- ---- :
+	 Data processing (plain binary immediate)  */
+      else if (bit (insn1, 9))
+	{
+	  int op = bits (insn1, 4, 8);
+	  int rn = bits (insn1, 0, 3);
+	  /* 1111 0x1x x0x0 1111 0--- ---- ---- ---- :
+	     ADR  */
+	  if ((op == 0 || op == 0xa) && rn == 0xf)
+	    rel->result = -1;
+	}
+    }
+
+  else
+    {
+      /* 1111 100x x001 ---- x--- ---- ---- ---- :
+	 Load byte, memory hints  */
+      if ((op2 & 0x67) == 0x1)
+	{
+	  /* 1111 100x x001 nnnn tttt xxxx xx-- ---- :
+	     LDRB (literal), PLD (literal),
+	     LDRSB (literal), PLI (immediate, literal)  */
+	  if (bits (insn1, 0, 3) == 15)
+	    rel->result = -1;
+	}
+      /* 1111 100x x011 ---- x--- ---- ---- ---- :
+	 Load halfword, memory hints  */
+      else if ((op2 & 0x67) == 0x3)
+	{
+	  /* 1111 100x x011 nnnn tttt xxxx xx-- ---- :
+	     LDRH (literal), LDRSH (literal)  */
+	  if (bits (insn1, 0, 3) == 15 && bits (insn2, 12, 15) != 15)
+	    rel->result = -1;
+	}
+      /* 1111 100x x101 ---- x--- ---- ---- ---- :
+	 Load word  */
+      else if ((op2 & 0x67) == 0x5)
+	{
+	  /* int rt = bits (insn2, 12, 15); */
+	  int rn = bits (insn1, 0, 3);
+	  /* 1111 100x x101 1111 ---- xxxx xx-- ---- :
+	     LDR (literal)  */
+	  if (rn == 15)
+	    rel->result = -1;
+	}
+      /* 1111 11xx xxxx ---- x--- ---- ---- ---- :
+	 Coprocessor, Advanced SIMD, and Floating-point instructions  */
+      else if ((op2 & 0x40) == 0x40)
+	{
+	  unsigned int op1_ = bits (insn1, 4, 9);
+
+	  /* 1111 110x xxx1 1111 ---- xxxx ---x ---- :
+	     LDC, LDC2 (literal)  */
+	  if ((bits (insn2, 8, 11) & 0xE) != 0xA &&
+	      (op1_ & 0x21) == 0x01 && (op1_ & 0x3A) != 0 &&
+	      bits (insn1, 0, 3) == 15)
+	    rel->result = -1;
+	}
+    }
+
+  if (rel->to && rel->result == 0)
+    {
+      append_insn_16 (rel->to, insn1);
+      append_insn_16 (rel->to, insn2);
+    }
+}
+
 struct linux_target_ops the_low_target = {
   arm_arch_setup,
   arm_regs_info,
