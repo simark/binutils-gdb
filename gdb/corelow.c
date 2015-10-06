@@ -45,6 +45,7 @@
 #include "gdb_bfd.h"
 #include "completer.h"
 #include "filestuff.h"
+#include "dirname.h"
 
 #ifndef O_LARGEFILE
 #define O_LARGEFILE 0
@@ -72,7 +73,12 @@ static struct gdbarch *core_gdbarch = NULL;
    or shared library bfds.  The core bfd sections are an
    implementation detail of the core target, just like ptrace is for
    unix child targets.  */
-static struct target_section_table *core_data;
+
+static struct {
+  struct target_section_table section_table;
+
+  VEC(mem_range_s) *minicore_dumped_ranges;
+} core_data;
 
 static void core_files_info (struct target_ops *);
 
@@ -201,12 +207,9 @@ core_close (struct target_ops *self)
          comments in clear_solib in solib.c.  */
       clear_solib ();
 
-      if (core_data)
-	{
-	  xfree (core_data->sections);
-	  xfree (core_data);
-	  core_data = NULL;
-	}
+      xfree (core_data.section_table.sections);
+      core_data.section_table.sections = NULL;
+      VEC_free (mem_range_s, core_data.minicore_dumped_ranges);
 
       gdb_bfd_unref (core_bfd);
       core_bfd = NULL;
@@ -264,6 +267,51 @@ add_to_thread_list (bfd *abfd, asection *asect, void *reg_sect_arg)
   if (reg_sect != NULL
       && asect->filepos == reg_sect->filepos)	/* Did we find .reg?  */
     inferior_ptid = ptid;			/* Yes, make it current.  */
+}
+
+static int is_minicore (void)
+{
+  return VEC_length (mem_range_s, core_data.minicore_dumped_ranges) > 0;
+}
+
+static void
+minicore_parse_dumped_ranges (const char *core_path)
+{
+  char *collected_path;
+  char line[1024];
+  const char *dir;
+  FILE *f;
+
+  /* Clear vector from previous runs.  */
+  VEC_free (mem_range_s, core_data.minicore_dumped_ranges);
+
+  dir = mdir_name (core_path);
+  if (dir == NULL)
+    return;
+
+  collected_path = xasprintf ("%s/dumped", dir);
+
+  f = gdb_fopen_cloexec (collected_path, "r");
+  xfree (collected_path);
+  if (f == NULL)
+    return;
+
+  while (fgets (line, sizeof (line), f) != NULL)
+    {
+      CORE_ADDR addr;
+      size_t len;
+      mem_range_s range;
+
+      if (sscanf (line, "dump 0x%lx %zu", &addr, &len) != 2)
+	continue;
+
+      range.start = addr;
+      range.length = len;
+
+      VEC_safe_push (mem_range_s, core_data.minicore_dumped_ranges, &range);
+    }
+
+  normalize_mem_ranges (core_data.minicore_dumped_ranges);
 }
 
 /* This routine opens and sets up the core file bfd.  */
@@ -343,14 +391,14 @@ core_open (const char *arg, int from_tty)
 
   validate_files ();
 
-  core_data = XCNEW (struct target_section_table);
-
   /* Find the data section */
   if (build_section_table (core_bfd,
-			   &core_data->sections,
-			   &core_data->sections_end))
+			   &core_data.section_table.sections,
+			   &core_data.section_table.sections_end))
     error (_("\"%s\": Can't find sections: %s"),
 	   bfd_get_filename (core_bfd), bfd_errmsg (bfd_get_error ()));
+
+  minicore_parse_dumped_ranges (bfd_get_filename (core_bfd));
 
   /* If we have no exec file, try to set the architecture from the
      core file.  We don't do this unconditionally since an exec file
@@ -363,7 +411,7 @@ core_open (const char *arg, int from_tty)
   discard_cleanups (old_chain);
 
   /* Do this before acknowledging the inferior, so if
-     post_create_inferior throws (can happen easilly if you're loading
+     post_create_inferior throws (can happen easily if you're loading
      a core file with the wrong exec), we aren't left with threads
      from the previous inferior.  */
   init_thread_list ();
@@ -641,7 +689,7 @@ get_core_registers (struct target_ops *ops,
 static void
 core_files_info (struct target_ops *t)
 {
-  print_section_info (core_data, core_bfd);
+  print_section_info (&core_data.section_table, core_bfd);
 }
 
 struct spuid_list
@@ -703,6 +751,47 @@ get_core_siginfo (bfd *abfd, gdb_byte *readbuf, ULONGEST offset, ULONGEST len)
   return len;
 }
 
+/* Return the status (available/unavailable) of the contiguous sequence of bytes
+   starting at ADDR.
+
+   Return 1 if they are available bytes, 0 otherwise.  The length of the byte
+   sequence is returned in *NUM.  REQUESTED_LEN is the number of bytes of the
+   original request.  It is only used in case the requested address is past the
+   last available memory range, in which case we wouldn't know what to return as
+   the length.
+ */
+static size_t
+core_bytes_availability_at (CORE_ADDR addr, size_t *num, const size_t requested_len)
+{
+  int idx;
+  mem_range_s *p;
+
+  for (idx = 0;
+       VEC_iterate (mem_range_s, core_data.minicore_dumped_ranges, idx, p);
+       idx++)
+    {
+      if (addr < p->start)
+	{
+	  /* The address is in the gap just before the range.  Bytes are
+	     unavailable until the start of the range.  */
+	  *num = p->start - addr;
+	  return 0;
+	}
+      else if (addr >= p->start && addr < (p->start + p->length))
+	{
+	  /* The address is in the range.  Bytes are available until the end
+	     of the range.  */
+	  *num = p->start + p->length - addr;
+	  return 1;
+	}
+    }
+
+  /* The address is past the last range, thus unavailable. Return "unavailable"
+     with the length that was requested.  */
+  *num = requested_len;
+  return 0;
+}
+
 static enum target_xfer_status
 core_xfer_partial (struct target_ops *ops, enum target_object object,
 		   const char *annex, gdb_byte *readbuf,
@@ -711,12 +800,44 @@ core_xfer_partial (struct target_ops *ops, enum target_object object,
 {
   switch (object)
     {
+    gdb_assert (readbuf != NULL);
+    gdb_assert (writebuf == NULL);
     case TARGET_OBJECT_MEMORY:
-      return section_table_xfer_memory_partial (readbuf, writebuf,
-						offset, len, xfered_len,
-						core_data->sections,
-						core_data->sections_end,
-						NULL);
+    {
+      size_t num;
+      int avail_in_minicore;
+
+      avail_in_minicore = core_bytes_availability_at (offset, &num, len);
+      len = min (num, len);
+
+      if (avail_in_minicore || !is_minicore ())
+	{
+	  /* It's available, read from the core.  */
+	  return section_table_xfer_memory_partial (
+	      readbuf, writebuf, offset, len, xfered_len,
+	      core_data.section_table.sections,
+	      core_data.section_table.sections_end,
+	      NULL);
+	}
+      else
+	{
+	  /* It's unavailable, try to read from the executable's readonly sections.  */
+	  enum target_xfer_status status;
+
+	  status = exec_read_partial_read_only (readbuf, offset, len,
+						xfered_len);
+	  if (status == TARGET_XFER_OK)
+	    {
+	      return TARGET_XFER_OK;
+	    }
+	  else
+	    {
+	      *xfered_len = len;
+	      return TARGET_XFER_UNAVAILABLE;
+	    }
+	}
+    }
+
 
     case TARGET_OBJECT_AUXV:
       if (readbuf)

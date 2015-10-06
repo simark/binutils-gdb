@@ -62,7 +62,7 @@ bfd *core_bfd = NULL;
 struct target_ops *core_target;
 
 
-/* Backward compatability with old way of specifying core files.  */
+/* Backward compatibility with old way of specifying core files.  */
 
 void
 core_file_command (char *filename, int from_tty)
