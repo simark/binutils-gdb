@@ -428,13 +428,17 @@ filename_is_in_auto_load_safe_path_vec (const char *filename,
 {
   char *pattern;
   int ix;
+  char *found = NULL;
 
   for (ix = 0; VEC_iterate (char_ptr, auto_load_safe_path_vec, ix, pattern);
        ++ix)
     if (*filename_realp == NULL && filename_is_in_pattern (filename, pattern))
-      break;
-  
-  if (pattern == NULL)
+      {
+	found = pattern;
+	break;
+      }
+
+  if (found == NULL)
     {
       if (*filename_realp == NULL)
 	{
@@ -450,15 +454,18 @@ filename_is_in_auto_load_safe_path_vec (const char *filename,
 	for (ix = 0;
 	     VEC_iterate (char_ptr, auto_load_safe_path_vec, ix, pattern); ++ix)
 	  if (filename_is_in_pattern (*filename_realp, pattern))
-	    break;
+	    {
+	      found = pattern;
+	      break;
+	    }
     }
 
-  if (pattern != NULL)
+  if (found != NULL)
     {
       if (debug_auto_load)
 	fprintf_unfiltered (gdb_stdlog, _("auto-load: File \"%s\" matches "
 					  "directory \"%s\".\n"),
-			    filename, pattern);
+			    filename, found);
       return 1;
     }
 

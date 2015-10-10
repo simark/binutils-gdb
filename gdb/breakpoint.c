@@ -15140,7 +15140,8 @@ read_uploaded_action (void)
 {
   char *rslt;
 
-  VEC_iterate (char_ptr, this_utp->cmd_strings, next_cmd, rslt);
+  if (!VEC_iterate (char_ptr, this_utp->cmd_strings, next_cmd, rslt))
+    rslt = NULL;
 
   next_cmd++;
 

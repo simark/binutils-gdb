@@ -203,7 +203,6 @@ signal_catchpoint_breakpoint_hit (const struct bp_location *bl,
 	if (signal_number == iter)
 	  return 1;
       /* Not the same.  */
-      gdb_assert (!iter);
       return 0;
     }
   else
