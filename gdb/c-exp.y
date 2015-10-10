@@ -2211,7 +2211,7 @@ parse_string_or_char (const char *tokptr, const char **outptr,
   /* Skip the quote.  */
   quote = *tokptr;
   if (quote == '\'')
-    type |= C_CHAR;
+    type = (enum c_string_type) (type | C_CHAR);
   ++tokptr;
 
   *host_chars = 0;
