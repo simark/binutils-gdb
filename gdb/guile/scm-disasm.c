@@ -133,7 +133,7 @@ static void
 gdbscm_disasm_memory_error (int status, bfd_vma memaddr,
 			    struct disassemble_info *info)
 {
-  memory_error (status, memaddr);
+  memory_error ((enum target_xfer_status) status, memaddr);
 }
 
 /* disassemble_info.print_address_func for gdbscm_print_insn_from_port.
