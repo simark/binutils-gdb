@@ -766,7 +766,7 @@ try_thread_db_load_1 (struct thread_db_info *info)
       struct ui_file *file;
       const char *library;
 
-      library = dladdr_to_soname (*info->td_ta_new_p);
+      library = dladdr_to_soname ((void *) *info->td_ta_new_p);
       if (library == NULL)
 	library = LIBTHREAD_DB_SO;
 
@@ -839,7 +839,7 @@ try_thread_db_load (const char *library, int check_auto_load_safe)
       td_init = dlsym (handle, "td_init");
       if (td_init != NULL)
         {
-          const char *const libpath = dladdr_to_soname (td_init);
+          const char *const libpath = dladdr_to_soname ((void*) td_init);
 
           if (libpath != NULL)
             fprintf_unfiltered (gdb_stdlog, _("Host %s resolved to: %s.\n"),
