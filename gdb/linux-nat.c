@@ -4879,14 +4879,8 @@ linux_nat_core_of_thread (struct target_ops *ops, ptid_t ptid)
 
 static void gb_event_handler (int error, void *context);
 
-#if defined(__i386__)
-#define __NR_gbp_session_create 354
-
-#elif defined(__x86_64__)
-#define __NR_gbp_session_create 317
-
-#else
-#error missing syscall number
+#ifndef __NR_gbp_session_create
+#error "missing gbp_session_create syscall number"
 #endif
 
 
