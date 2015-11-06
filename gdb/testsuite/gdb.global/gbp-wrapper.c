@@ -4,8 +4,8 @@
 #include <sys/prctl.h>
 #include <string.h>
 
-#define PR_SET_GLOBAL_BREAKPOINT        43
-#define PR_GET_GLOBAL_BREAKPOINT        44
+#define PR_SET_GLOBAL_BREAKPOINT        48
+#define PR_GET_GLOBAL_BREAKPOINT        49
 # define PR_GLOBAL_BREAKPOINT_EN        (1 << 0)
 # define PR_GLOBAL_BREAKPOINT_FORK      (1 << 1)
 # define PR_GLOBAL_BREAKPOINT_EN_FORK   (PR_GLOBAL_BREAKPOINT_EN | \
