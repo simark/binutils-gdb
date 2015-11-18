@@ -32,6 +32,7 @@
 
 #include "arch/arm.h"
 #include "arch/arm-get-next-pcs.h"
+#include "tracepoint.h"
 
 /* Defined in auto-generated files.  */
 void init_registers_arm (void);

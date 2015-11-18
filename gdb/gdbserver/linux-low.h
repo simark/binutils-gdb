@@ -211,17 +211,14 @@ struct linux_target_ops
 
   /* Install a fast tracepoint jump pad.  See target.h for
      comments.  */
-  int (*install_fast_tracepoint_jump_pad) (CORE_ADDR tpoint, CORE_ADDR tpaddr,
+  int (*install_fast_tracepoint_jump_pad) (struct tracepoint *tp,
 					   CORE_ADDR collector,
 					   CORE_ADDR lockaddr,
-					   ULONGEST orig_size,
 					   CORE_ADDR *jump_entry,
 					   CORE_ADDR *trampoline,
 					   ULONGEST *trampoline_size,
 					   unsigned char *jjump_pad_insn,
 					   ULONGEST *jjump_pad_insn_size,
-					   CORE_ADDR *adjusted_insn_addr,
-					   CORE_ADDR *adjusted_insn_addr_end,
 					   char *err);
 
   /* Return the bytecode operations vector for the current inferior.

@@ -31,6 +31,7 @@
 struct emit_ops;
 struct buffer;
 struct process_info;
+struct tracepoint;
 
 /* This structure describes how to resume a particular thread (or all
    threads) based on the client's request.  If thread is -1, then this
@@ -356,17 +357,14 @@ struct target_ops
      return the address range where the instruction at TPADDR was relocated
      to.  If an error occurs, the ERR may be used to pass on an error
      message.  */
-  int (*install_fast_tracepoint_jump_pad) (CORE_ADDR tpoint, CORE_ADDR tpaddr,
+  int (*install_fast_tracepoint_jump_pad) (struct tracepoint *tp,
 					   CORE_ADDR collector,
 					   CORE_ADDR lockaddr,
-					   ULONGEST orig_size,
 					   CORE_ADDR *jump_entry,
 					   CORE_ADDR *trampoline,
 					   ULONGEST *trampoline_size,
 					   unsigned char *jjump_pad_insn,
 					   ULONGEST *jjump_pad_insn_size,
-					   CORE_ADDR *adjusted_insn_addr,
-					   CORE_ADDR *adjusted_insn_addr_end,
 					   char *err);
 
   /* Return the bytecode operations vector for the current inferior.
@@ -571,25 +569,23 @@ int kill_inferior (int);
 	(*the_target->stabilize_threads) ();  	\
     } while (0)
 
-#define install_fast_tracepoint_jump_pad(tpoint, tpaddr,		\
-					 collector, lockaddr,		\
-					 orig_size,			\
+#define install_fast_tracepoint_jump_pad(tp,				\
+					 collector,			\
+					 lockaddr,			\
 					 jump_entry,			\
-					 trampoline, trampoline_size,	\
+					 trampoline,			\
+					 trampoline_size,		\
 					 jjump_pad_insn,		\
 					 jjump_pad_insn_size,		\
-					 adjusted_insn_addr,		\
-					 adjusted_insn_addr_end,	\
 					 err)				\
-  (*the_target->install_fast_tracepoint_jump_pad) (tpoint, tpaddr,	\
-						   collector,lockaddr,	\
-						   orig_size, jump_entry, \
+  (*the_target->install_fast_tracepoint_jump_pad) (tp,			\
+						   collector,		\
+						   lockaddr,		\
+						   jump_entry, 		\
 						   trampoline,		\
 						   trampoline_size,	\
 						   jjump_pad_insn,	\
 						   jjump_pad_insn_size, \
-						   adjusted_insn_addr,	\
-						   adjusted_insn_addr_end, \
 						   err)
 
 #define target_emit_ops() \
