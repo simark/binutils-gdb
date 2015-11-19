@@ -35,6 +35,8 @@
 #include "auxv.h"
 #include "xml-syscall.h"
 
+#include "arch/arm.h"
+#include "arch/arm-get-next-pcs.h"
 #include "arm-tdep.h"
 #include "arm-linux-tdep.h"
 #include "linux-tdep.h"
@@ -256,6 +258,14 @@ static const gdb_byte arm_linux_thumb2_le_breakpoint[] = { 0xf0, 0xf7, 0x00, 0xa
 #define ARM_OABI_SYSCALL_RESTART_SYSCALL 0xef900000
 #define ARM_LDR_PC_SP_12		0xe49df00c
 #define ARM_LDR_PC_SP_4			0xe49df004
+
+/* Operation function pointers for get_next_pcs.  */
+static struct arm_get_next_pcs_ops arm_linux_get_next_pcs_ops = {
+  arm_get_next_pcs_read_memory_unsigned_integer,
+  arm_get_next_pcs_collect_register_unsigned,
+  arm_get_next_pcs_syscall_next_pc,
+  arm_get_next_pcs_addr_bits_remove
+};
 
 static void
 arm_linux_sigtramp_cache (struct frame_info *this_frame,
@@ -912,27 +922,44 @@ arm_linux_software_single_step (struct frame_info *frame)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
   struct address_space *aspace = get_frame_address_space (frame);
-  CORE_ADDR next_pc;
-
-  if (arm_deal_with_atomic_sequence (frame))
-    return 1;
+  struct arm_gdb_get_next_pcs next_pcs_ctx;
+  CORE_ADDR pc;
+  int i;
+  VEC (CORE_ADDR) *next_pcs = NULL;
 
   /* If the target does have hardware single step, GDB doesn't have
      to bother software single step.  */
   if (target_can_do_single_step () == 1)
     return 0;
 
-  next_pc = arm_get_next_pc (frame, get_frame_pc (frame));
+  next_pcs_ctx.gdbarch = gdbarch;
+  next_pcs_ctx.frame = frame;
+  next_pcs_ctx.base.ops = &arm_linux_get_next_pcs_ops;
+  next_pcs_ctx.base.byte_order = gdbarch_byte_order (gdbarch);
+  next_pcs_ctx.base.byte_order_for_code = gdbarch_byte_order_for_code (gdbarch);
+  next_pcs_ctx.base.is_thumb = arm_frame_is_thumb (frame);
+  next_pcs_ctx.base.arm_apcs_32 = arm_apcs_32;
+  next_pcs_ctx.base.arm_linux_thumb2_breakpoint
+    = gdbarch_tdep (gdbarch)->thumb2_breakpoint;
 
-  /* The Linux kernel offers some user-mode helpers in a high page.  We can
-     not read this page (as of 2.6.23), and even if we could then we couldn't
-     set breakpoints in it, and even if we could then the atomic operations
-     would fail when interrupted.  They are all called as functions and return
-     to the address in LR, so step to there instead.  */
-  if (next_pc > 0xffff0000)
-    next_pc = get_frame_register_unsigned (frame, ARM_LR_REGNUM);
+  next_pcs = arm_get_next_pcs ((struct arm_get_next_pcs *) &next_pcs_ctx,
+			       get_frame_pc (frame));
 
-  arm_insert_single_step_breakpoint (gdbarch, aspace, next_pc);
+  for (i = 0; VEC_iterate (CORE_ADDR, next_pcs, i, pc); i++)
+    {
+      /* The Linux kernel offers some user-mode helpers in a high page.  We can
+	 not read this page (as of 2.6.23), and even if we could then we
+	 couldn't set breakpoints in it, and even if we could then the atomic
+	 operations would fail when interrupted.  They are all called as
+	 functions and return to the address in LR, so step to there
+	 instead.  */
+      if (pc > 0xffff0000)
+	pc = get_frame_register_unsigned (frame, ARM_LR_REGNUM);
+
+      arm_insert_single_step_breakpoint (gdbarch, aspace, pc);
+    }
+
+  VEC_free (CORE_ADDR, next_pcs);
 
   return 1;
 }

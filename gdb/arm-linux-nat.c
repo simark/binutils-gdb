@@ -27,6 +27,8 @@
 #include "observer.h"
 #include "gdbthread.h"
 
+#include "arch/arm.h"
+#include "arch/arm-get-next-pcs.h"
 #include "arm-tdep.h"
 #include "arm-linux-tdep.h"
 #include "aarch32-linux-nat.h"

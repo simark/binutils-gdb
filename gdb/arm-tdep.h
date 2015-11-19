@@ -23,6 +23,9 @@
 struct gdbarch;
 struct regset;
 struct address_space;
+struct get_next_pcs;
+struct arm_get_next_pcs;
+struct gdb_get_next_pcs;
 
 #include "arch/arm.h"
 
@@ -250,11 +253,27 @@ extern void
 		       ULONGEST val, enum pc_write_style write_pc);
 
 CORE_ADDR arm_skip_stub (struct frame_info *, CORE_ADDR);
-CORE_ADDR arm_get_next_pc (struct frame_info *, CORE_ADDR);
+
+ULONGEST arm_get_next_pcs_read_memory_unsigned_integer (CORE_ADDR memaddr,
+							int len,
+							int byte_order);
+
+CORE_ADDR
+arm_get_next_pcs_addr_bits_remove (struct arm_get_next_pcs *self,
+				   CORE_ADDR val);
+
+ULONGEST
+arm_get_next_pcs_collect_register_unsigned (struct arm_get_next_pcs *self,
+					    int n);
+
+CORE_ADDR
+arm_get_next_pcs_syscall_next_pc (struct arm_get_next_pcs *self, CORE_ADDR pc);
+
+int arm_software_single_step (struct frame_info *frame);
+
 void arm_insert_single_step_breakpoint (struct gdbarch *,
 					struct address_space *, CORE_ADDR);
-int arm_deal_with_atomic_sequence (struct frame_info *);
-int arm_software_single_step (struct frame_info *);
+
 int arm_frame_is_thumb (struct frame_info *frame);
 
 extern struct displaced_step_closure *

@@ -31,6 +31,7 @@
 #include <signal.h>
 
 #include "arch/arm.h"
+#include "arch/arm-get-next-pcs.h"
 
 /* Defined in auto-generated files.  */
 void init_registers_arm (void);
@@ -146,6 +147,28 @@ static int arm_regmap[] = {
   64
 };
 
+/* Forward declarations needed for get_next_pcs ops.  */
+static ULONGEST
+get_next_pcs_read_memory_unsigned_integer (CORE_ADDR memaddr, int len,
+					   int byte_order);
+
+static ULONGEST
+get_next_pcs_collect_register_unsigned (struct arm_get_next_pcs *self, int n);
+
+static CORE_ADDR
+get_next_pcs_addr_bits_remove (struct arm_get_next_pcs *self, CORE_ADDR val);
+
+static CORE_ADDR
+get_next_pcs_syscall_next_pc (struct arm_get_next_pcs *self, CORE_ADDR pc);
+
+/* get_next_pcs operations.  */
+static struct arm_get_next_pcs_ops get_next_pcs_ops = {
+  get_next_pcs_read_memory_unsigned_integer,
+  get_next_pcs_collect_register_unsigned,
+  get_next_pcs_syscall_next_pc,
+  get_next_pcs_addr_bits_remove
+};
+
 static int
 arm_cannot_store_register (int regno)
 {
@@ -206,6 +229,13 @@ arm_fill_vfpregset (struct regcache *regcache, void *buf)
     return;
 
   arm_fill_vfpregset_num (regcache, buf, num);
+}
+
+/* Wrapper of UNMAKE_THUMB_ADDR for get_next_pcs.  */
+static CORE_ADDR
+get_next_pcs_addr_bits_remove (struct arm_get_next_pcs *self, CORE_ADDR val)
+{
+  return UNMAKE_THUMB_ADDR (val);
 }
 
 static void
@@ -315,6 +345,38 @@ arm_breakpoint_at (CORE_ADDR where)
     }
 
   return 0;
+}
+
+/* Wrapper of collect_register for get_next_pcs.  */
+
+static ULONGEST
+get_next_pcs_collect_register_unsigned (struct arm_get_next_pcs* self, int n)
+{
+  struct arm_gdbserver_get_next_pcs *next_pcs
+    = (struct arm_gdbserver_get_next_pcs*) self;
+  ULONGEST res = 0;
+  int size = register_size (next_pcs->regcache->tdesc, n);
+
+  if (size > (int) sizeof (ULONGEST))
+    error (_("That operation is not available on integers of more than"
+	     "%d bytes."),
+	   (int) sizeof (ULONGEST));
+
+  collect_register (next_pcs->regcache, n, &res);
+  return res;
+}
+
+/* Read memory from the inferiror.
+   BYTE_ORDER is ignored and there to keep compatiblity with GDB's
+   read_memory_unsigned_integer. */
+static ULONGEST
+get_next_pcs_read_memory_unsigned_integer (CORE_ADDR memaddr, int len,
+					   int byte_order)
+{
+  ULONGEST res;
+
+  (*the_target->read_memory) (memaddr, (unsigned char *) &res, len);
+  return res;
 }
 
 /* Fetch the thread-local storage pointer for libthread_db.  */
@@ -801,6 +863,52 @@ arm_prepare_to_resume (struct lwp_info *lwp)
       }
 }
 
+/* When PC is at a syscall instruction, return the PC of the next
+   instruction to be executed.  */
+static CORE_ADDR
+get_next_pcs_syscall_next_pc (struct arm_get_next_pcs *self, CORE_ADDR pc)
+{
+  CORE_ADDR return_addr = 0;
+  int is_thumb = self->is_thumb;
+  ULONGEST svc_number = 0;
+
+  if (is_thumb)
+    {
+      svc_number = self->ops->collect_register_unsigned (self, 7);
+      return_addr = pc + 2;
+    }
+  else
+    {
+      unsigned long this_instr = self->ops->read_memory_unsigned_integer
+	((CORE_ADDR) pc, 4, self->byte_order_for_code);
+
+      unsigned long svc_operand = (0x00ffffff & this_instr);
+      if (svc_operand)  /* OABI.  */
+	{
+	  svc_number = svc_operand - 0x900000;
+	}
+      else /* EABI.  */
+	{
+	  svc_number = self->ops->collect_register_unsigned (self, 7);
+	}
+
+      return_addr = pc + 4;
+    }
+
+  /* Is this a sigreturn or rt_sigreturn syscall?
+     If so it is currently not handeled.  */
+  if (svc_number == 119 || svc_number == 173)
+    {
+      if (debug_threads)
+	debug_printf ("Unhandled sigreturn or rt_sigreturn syscall\n");
+    }
+
+  /* Addresses for calling Thumb functions have the bit 0 set.  */
+  if (is_thumb)
+    return_addr = MAKE_THUMB_ADDR (return_addr);
+
+  return return_addr;
+}
 
 static int
 arm_get_hwcap (unsigned long *valp)
@@ -888,6 +996,31 @@ arm_arch_setup (void)
     have_ptrace_getregset = 1;
   else
     have_ptrace_getregset = 0;
+}
+
+/* Fetch the next possible PCs after the current instruction executes.  */
+
+static VEC (CORE_ADDR) *
+arm_gdbserver_get_next_pcs (CORE_ADDR pc, struct regcache *regcache)
+{
+  struct arm_gdbserver_get_next_pcs next_pcs_ctx;
+  VEC (CORE_ADDR) *next_pcs = NULL;
+
+  next_pcs_ctx.base.ops = &get_next_pcs_ops;
+  /* Byte order is ignored for GDBServer.  */
+  next_pcs_ctx.base.byte_order = 0;
+  next_pcs_ctx.base.byte_order_for_code = 0;
+  next_pcs_ctx.base.is_thumb = arm_is_thumb_mode ();
+  /* 32-bit mode supported only in GDBServer.  */
+  next_pcs_ctx.base.arm_apcs_32 = 1;
+  next_pcs_ctx.base.arm_linux_thumb2_breakpoint
+    = (const gdb_byte *) &thumb2_breakpoint;
+  next_pcs_ctx.regcache = regcache;
+
+  next_pcs = arm_get_next_pcs ((struct arm_get_next_pcs *) &next_pcs_ctx,
+			       pc);
+
+  return next_pcs;
 }
 
 /* Support for hardware single step.  */
@@ -1032,7 +1165,7 @@ struct linux_target_ops the_low_target = {
   arm_set_pc,
   arm_breakpoint_kind_from_pc,
   arm_sw_breakpoint_from_kind,
-  NULL, /* get_next_pcs */
+  arm_gdbserver_get_next_pcs,
   0,
   arm_breakpoint_at,
   arm_supports_z_point_type,
