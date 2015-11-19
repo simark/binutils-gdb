@@ -159,7 +159,7 @@ proc pending_tracepoint_works { trace_type } {
 
 	gdb_test "tstop" "\[\r\n\]+" "stop trace experiment"
 
-	gdb_test "tfind start" "#0 .*" "tfind test frame 0"
+	gdb_test "tfind start" ".*Found trace frame 0.*" "tfind test frame 0"
 	gdb_test "tfind" "Found trace frame 1, tracepoint 1.*" \
 	    "tfind test frame 1"
 	gdb_test "tfind" "Found trace frame 2, tracepoint 1.*" \
@@ -234,7 +234,7 @@ proc pending_tracepoint_resolved_during_trace { trace_type } \
 \[0-9\]+\[\t \]+\(fast |\)tracepoint\[ \]+keep y.*pendfunc2.*" \
 	"tracepoint is resolved"
 
-    gdb_test "tfind start" "#0 .*" "tfind test frame 0"
+    gdb_test "tfind start" ".*Found trace frame 0.*" "tfind test frame 0"
     gdb_test "tfind" "Target failed to find requested trace frame..*" "tfind test frame"
 }}
 
@@ -307,7 +307,7 @@ proc pending_tracepoint_installed_during_trace { trace_type } \
 \[0-9\]+\[\t \]+\(fast |\)tracepoint\[ \]+keep y.*pendfunc2.*" \
 	"tracepoint is resolved"
 
-    gdb_test "tfind start" "#0  $hex in pendfunc2 .*" "tfind test frame 0"
+    gdb_test "tfind start" ".*$hex in pendfunc2 .*" "tfind test frame 0"
     gdb_test "tfind" "Target failed to find requested trace frame..*" "tfind test frame"
 }}
 

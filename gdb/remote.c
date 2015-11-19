@@ -239,6 +239,8 @@ static int stop_reply_queue_length (void);
 
 static void readahead_cache_invalidate (void);
 
+static int remote_supports_tracepoint_kinds (void);
+
 /* For "remote".  */
 
 static struct cmd_list_element *remote_cmdlist;
@@ -1477,6 +1479,9 @@ enum {
 
   /* Support for query supported vCont actions.  */
   PACKET_vContSupported,
+
+  /* Support target dependant tracepoint kinds.  */
+  PACKET_TracepointKinds,
 
   PACKET_MAX
 };
@@ -4392,7 +4397,10 @@ static const struct protocol_feature remote_protocol_features[] = {
     PACKET_exec_event_feature },
   { "Qbtrace-conf:pt:size", PACKET_DISABLE, remote_supported_packet,
     PACKET_Qbtrace_conf_pt_size },
-  { "vContSupported", PACKET_DISABLE, remote_supported_packet, PACKET_vContSupported }
+  { "vContSupported", PACKET_DISABLE, remote_supported_packet,
+    PACKET_vContSupported },
+  { "TracepointKinds", PACKET_DISABLE, remote_supported_packet,
+    PACKET_TracepointKinds }
 };
 
 static char *remote_support_xml;
@@ -11452,6 +11460,12 @@ remote_can_run_breakpoint_commands (struct target_ops *self)
   return packet_support (PACKET_BreakpointCommands) == PACKET_ENABLE;
 }
 
+static int
+remote_supports_tracepoint_kinds (void)
+{
+  return packet_support (PACKET_TracepointKinds) == PACKET_ENABLE;
+}
+
 static void
 remote_trace_init (struct target_ops *self)
 {
@@ -11540,6 +11554,7 @@ remote_download_tracepoint (struct target_ops *self, struct bp_location *loc)
   char *pkt;
   struct breakpoint *b = loc->owner;
   struct tracepoint *t = (struct tracepoint *) b;
+  int bpsize;
 
   encode_actions_rsp (loc, &tdp_actions, &stepping_actions);
   old_chain = make_cleanup (free_actions_list_cleanup_wrapper,
@@ -11548,11 +11563,17 @@ remote_download_tracepoint (struct target_ops *self, struct bp_location *loc)
 		       stepping_actions);
 
   tpaddr = loc->address;
+
+  /* The length field should be set to the size of a breakpoint
+     instruction, even though we aren't inserting one ourselves.  */
+  gdbarch_remote_breakpoint_from_pc (target_gdbarch(), &tpaddr, &bpsize);
+
   sprintf_vma (addrbuf, tpaddr);
   xsnprintf (buf, BUF_SIZE, "QTDP:%x:%s:%c:%lx:%x", b->number,
 	     addrbuf, /* address */
 	     (b->enable_state == bp_enabled ? 'E' : 'D'),
 	     t->step_count, t->pass_count);
+
   /* Fast tracepoints are mostly handled by the target, but we can
      tell the target how big of an instruction block should be moved
      around.  */
@@ -11620,6 +11641,14 @@ remote_download_tracepoint (struct target_ops *self, struct bp_location *loc)
       else
 	warning (_("Target does not support conditional tracepoints, "
 		   "ignoring tp %d cond"), b->number);
+    }
+
+  /* Tracepoint Kinds are modeled after the breakpoint Z0 kind packet.
+     Send the tracepoint kind if we support it.  */
+  if (remote_supports_tracepoint_kinds ())
+    {
+      xsnprintf (buf + strlen (buf), BUF_SIZE - strlen (buf), ":K%x",
+		 bpsize);
     }
 
   if (b->commands || *default_collect)
@@ -13480,6 +13509,10 @@ Show the maximum size of the address (in bits) in a memory packet."), NULL,
 
   add_packet_config_cmd (&remote_protocol_packets[PACKET_exec_event_feature],
 			 "exec-event-feature", "exec-event-feature", 0);
+
+  add_packet_config_cmd (&remote_protocol_packets[PACKET_TracepointKinds],
+			 "TracepointKinds",
+			 "tracepoint-kinds", 0);
 
   /* Assert that we've registered "set remote foo-packet" commands
      for all packet configs.  */
