@@ -281,12 +281,12 @@ can_hardware_single_step (void)
 }
 
 /* True if the low target can software single-step.  Such targets
-   implement the BREAKPOINT_REINSERT_ADDR callback.  */
+   implement the GET_NEXT_PCS callback.  */
 
 static int
 can_software_single_step (void)
 {
-  return (the_low_target.breakpoint_reinsert_addr != NULL);
+  return (the_low_target.get_next_pcs != NULL);
 }
 
 /* True if the low target supports memory breakpoints.  If so, we'll
@@ -3876,6 +3876,27 @@ enqueue_pending_signal (struct lwp_info *lwp, int signal, siginfo_t *info)
   lwp->pending_signals = p_sig;
 }
 
+/* Install breakpoints for software single stepping.  */
+
+static void
+install_software_single_step_breakpoints (struct lwp_info *lwp)
+{
+  int i;
+  CORE_ADDR pc;
+  struct regcache *regcache = get_thread_regcache (current_thread, 1);
+  VEC (CORE_ADDR) *next_pcs = NULL;
+
+  pc = get_pc (lwp);
+  next_pcs = (*the_low_target.get_next_pcs) (pc, regcache);
+
+  for (i = 0; VEC_iterate (CORE_ADDR, next_pcs, i, pc); ++i)
+    {
+      set_reinsert_breakpoint (pc);
+    }
+
+  VEC_free (CORE_ADDR, next_pcs);
+}
+
 /* Resume execution of LWP.  If STEP is nonzero, single-step it.  If
    SIGNAL is nonzero, give it that signal.  */
 
@@ -4439,8 +4460,7 @@ start_step_over (struct lwp_info *lwp)
     }
   else if (can_software_single_step ())
     {
-      CORE_ADDR raddr = (*the_low_target.breakpoint_reinsert_addr) ();
-      set_reinsert_breakpoint (raddr);
+      install_software_single_step_breakpoints (lwp);
       step = 0;
     }
   else
