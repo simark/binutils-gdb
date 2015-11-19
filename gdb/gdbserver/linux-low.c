@@ -5515,7 +5515,7 @@ linux_look_up_symbols (void)
   /* If the kernel supports tracing clones, then we don't need to
      use the magic thread event breakpoint to learn about
      threads.  */
-  thread_db_init (!linux_supports_traceclone ());
+  thread_db_init ();
 #endif
 }
 
