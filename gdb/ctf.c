@@ -202,26 +202,26 @@ ctf_save_next_packet (struct trace_write_handler *handler)
 static void
 ctf_save_metadata_header (struct trace_write_handler *handler)
 {
-  const char metadata_fmt[] =
-  "\ntrace {\n"
-  "	major = %u;\n"
-  "	minor = %u;\n"
-  "	byte_order = %s;\n"		/* be or le */
-  "	packet.header := struct {\n"
-  "		uint32_t magic;\n"
-  "	};\n"
+#define metadata_fmt \
+  "\ntrace {\n" \
+  "	major = %u;\n" \
+  "	minor = %u;\n" \
+  "	byte_order = %s;\n"		/* be or le */ \
+  "	packet.header := struct {\n" \
+  "		uint32_t magic;\n" \
+  "	};\n" \
+  "};\n" \
+  "\n" \
+  "stream {\n" \
+  "	packet.context := struct {\n" \
+  "		uint32_t content_size;\n" \
+  "		uint32_t packet_size;\n" \
+  "		uint16_t tpnum;\n" \
+  "	};\n" \
+  "	event.header := struct {\n" \
+  "		uint32_t id;\n" \
+  "	};\n" \
   "};\n"
-  "\n"
-  "stream {\n"
-  "	packet.context := struct {\n"
-  "		uint32_t content_size;\n"
-  "		uint32_t packet_size;\n"
-  "		uint16_t tpnum;\n"
-  "	};\n"
-  "	event.header := struct {\n"
-  "		uint32_t id;\n"
-  "	};\n"
-  "};\n";
 
   ctf_save_write_metadata (handler, "/* CTF %d.%d */\n",
 			   CTF_SAVE_MAJOR, CTF_SAVE_MINOR);
@@ -266,6 +266,7 @@ ctf_save_metadata_header (struct trace_write_handler *handler)
 			   CTF_SAVE_MAJOR, CTF_SAVE_MINOR,
 			   HOST_ENDIANNESS);
   ctf_save_write_metadata (handler, "\n");
+#undef metadata_fmt
 }
 
 /* CTF trace writer.  */
