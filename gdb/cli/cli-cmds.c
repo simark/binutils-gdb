@@ -1425,7 +1425,7 @@ alias_command (char *args, int from_tty)
   static const char usage[] = N_("Usage: alias [-a] [--] ALIAS = COMMAND");
 
   if (args == NULL || strchr (args, '=') == NULL)
-    error (_(usage));
+    error ("%s", _(usage));
 
   args2 = xstrdup (args);
   cleanup = make_cleanup (xfree, args2);
@@ -1454,7 +1454,7 @@ alias_command (char *args, int from_tty)
 
   if (alias_argv[0] == NULL || command_argv[0] == NULL
       || *alias_argv[0] == '\0' || *command_argv[0] == '\0')
-    error (_(usage));
+    error ("%s", _(usage));
 
   for (i = 0; alias_argv[i] != NULL; ++i)
     {
