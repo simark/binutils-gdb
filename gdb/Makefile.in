@@ -544,7 +544,7 @@ HAVE_NATIVE_GCORE_TARGET = @HAVE_NATIVE_GCORE_TARGET@
 # should be according to Posix).
 DEFS = @DEFS@
 GDB_CFLAGS = -I. -I$(srcdir) -I$(srcdir)/common -I$(srcdir)/config \
-	-DLOCALEDIR="\"$(localedir)\"" $(DEFS)
+	-DLOCALEDIR="\"$(localedir)\"" $(DEFS) -Wno-invalid-offsetof
 
 # MH_CFLAGS, if defined, has host-dependent CFLAGS from the config directory.
 GLOBAL_CFLAGS = $(MH_CFLAGS)
