@@ -3374,7 +3374,7 @@ proc gdb_compile {source dest type options} {
     # dynamically load one by basename, we must specify rpath.  If we
     # are using a remote host, DejaGNU will link to the shared library
     # using a relative path, so again we must specify an rpath.
-    if { $shlib_load || ($shlib_found && [is_remote target]) } {
+    if { $shlib_load || $shlib_found } {
 	if { ([istarget "*-*-mingw*"]
 	      || [istarget *-*-cygwin*]
 	      || [istarget *-*-pe*]) } {
@@ -3585,7 +3585,7 @@ proc gdb_compile_shlib {sources dest options} {
 		set name ${dest}
 	    }
 	    lappend link_options "additional_flags=-Wl,--out-implib,${name}.a"
-	} elseif [is_remote target] {
+	} else {
 	    # By default, we do not set the soname.  This causes the linker
 	    # on ELF systems to create a DT_NEEDED entry in the executable
 	    # refering to the full path name of the library.  This is a
@@ -4218,13 +4218,26 @@ proc gdb_download { filename } {
 # Copy the listed libraries to the target.
 
 proc gdb_load_shlibs { args } {
-    if {![is_remote target]} {
-	return
+    if {[is_remote target]} {
+	foreach file $args {
+	    # When the target is remote, we simply send the file to the target.
+	    gdb_download [shlib_target_file $file]
+	}
+    } else {
+	foreach from $args {
+	    # When the target is native, we copy the files to the test directory
+	    # (next to the executable), except if that's already where it is.
+	    set to [standard_output_file [file tail $from]]
+
+	    set from [file normalize $from]
+	    set to [file normalize $to]
+
+	    if {"$from" != "$to"} {
+		file copy -force $from $to
+	    }
+	}
     }
 
-    foreach file $args {
-	gdb_download [shlib_target_file $file]
-    }
 
     # Even if the target supplies full paths for shared libraries,
     # they may not be paths for this system.
