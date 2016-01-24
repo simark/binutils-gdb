@@ -13,12 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if {[is_remote target]} {
-    # gdbserver prints the warning message but expect is parsing only the
-    # GDB output, not the gdbserver output.
-    return 0
-}
-
 standard_testfile
 
 if { [prepare_for_testing ${testfile}.exp ${testfile}] } {
@@ -27,6 +21,12 @@ if { [prepare_for_testing ${testfile}.exp ${testfile}] } {
 
 if ![runto breakpt] {
     return -1
+}
+
+if {[gdb_is_target_remote]} {
+    # gdbserver prints the warning message but expect is parsing only the
+    # GDB output, not the gdbserver output.
+    return 0
 }
 
 # Basic attempt to read memory from globals.
