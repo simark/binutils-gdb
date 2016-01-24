@@ -28,7 +28,7 @@
 # (and thus aren't affected by shared library unloading) are not
 # disabled prematurely.
 
-if { [skip_shlib_tests] || [is_remote target] } {
+if { [skip_shlib_tests] } {
     return 0
 }
 
@@ -75,6 +75,11 @@ foreach libsepdebug {NO IN SEP} { with_test_prefix "$libsepdebug" {
     if ![runto_main] then {
       fail "Can't run to main"
       return 0
+    }
+
+    # This test uses run, so it's pointless to test on stub targets.
+    if { $use_gdb_stub } {
+        return 0
     }
 
     gdb_test "display a_global" "1: a_global = 41"
