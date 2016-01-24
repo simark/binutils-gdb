@@ -14,7 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 # are we on a target board
-if {[is_remote target] || [skip_shlib_tests]} {
+if {[skip_shlib_tests]} {
     return
 }
 
@@ -41,6 +41,15 @@ if { [get_compiler_info]
 }
 
 clean_restart $executable
+
+# If we are running remote, we don't have an easy way of injecting a value
+# in the process environment.  So let's just skip this.
+# gdb_is_target_remote is to cover target extended-remote case, use_gdb_stub
+# target remote case.
+if {[gdb_is_target_remote] || $use_gdb_stub} {
+    return
+}
+
 gdb_load_shlibs ${binlibfile}
 
 gdb_test_no_output "set env LD_LIBRARY_PATH=:"

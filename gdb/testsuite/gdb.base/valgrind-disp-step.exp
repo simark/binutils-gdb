@@ -18,9 +18,12 @@
 # really tests is that GDB falls back to in-line stepping
 # automatically instead of getting stuck or crashing.
 
-if [is_remote target] {
-    # The test always runs locally.
-    return 0
+set board_name [board_info target name]
+if {$board_name != "unix"} {
+    # This test is special, in that it connects by hand to valgrind's stub.
+    # Therefore, it makes little sense to run it with another target board tha
+    # unix, the basic local board.
+    return
 }
 
 standard_testfile .c

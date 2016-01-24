@@ -60,13 +60,16 @@ proc selftest_setup { executable function } {
     set timeout 600
     verbose "Timeout is now $timeout seconds" 2
 
-    global gdb_file_cmd_debug_info
+    global gdb_file_cmd_debug_info use_gdb_stub
     set gdb_file_cmd_debug_info "unset"
 
     set result [gdb_load $executable]
     set timeout $oldtimeout
     verbose "Timeout is now $timeout seconds" 2
 
+    if {$use_gdb_stub} {
+        return -1
+    }
     if { $result != 0 } then {
 	return -1
     }

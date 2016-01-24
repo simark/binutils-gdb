@@ -13,10 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if { [is_remote target] || ![isnative] } then {
-    continue
-}
-
 # Until "catch exec" is implemented on other targets...
 #
 if {![istarget "*-linux*"]} then {
@@ -51,6 +47,10 @@ clean_restart ${exec1}
 #
 if ![runto_main] then {
     perror "Couldn't run ${binfile1}"
+    return
+}
+
+if {$use_gdb_stub} {
     return
 }
 
