@@ -18,11 +18,6 @@
 # Check if environment variables are correctly passed to inferiors
 #
 
-# There's no support for passing environment variables in the remote protocol.
-if { [is_remote target] } {
-    return 0
-}
-
 standard_testfile .c
 
 # Compile binary
@@ -35,6 +30,11 @@ if { [prepare_for_testing ${testfile}.exp ${binfile} ${srcfile}] } {
 # make sure $pc is sane, in case we're talking to a board.
 if { ![runto_main] } {
     gdb_suppress_tests
+}
+
+# There's no support for passing environment variables in the remote protocol.
+if { [gdb_is_target_remote] } {
+    return 0
 }
 
 set bp_line [gdb_get_line_number "set breakpoint here"]
