@@ -13,11 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Don't try this for remote targets.
-if [is_remote target] then {
-    continue
-}
-
 if { [prepare_for_testing term.exp term term.c] } {
     return -1
 }
@@ -30,6 +25,11 @@ gdb_test "info terminal" \
 if ![runto_main] then {
     fail "Can't run to main"
     return 0
+}
+
+# Don't try this for remote targets.
+if [gdb_is_target_remote] then {
+    continue
 }
 
 # Once while the program is running and stopped.
