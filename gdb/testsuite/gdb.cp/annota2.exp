@@ -40,7 +40,7 @@ if ![runto_main] {
 # when using annotation level 2.
 #
 if [gdb_is_target_remote] {
-    return 0
+    return
 }
 
 clean_restart ${binfile}
