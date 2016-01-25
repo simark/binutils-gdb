@@ -370,15 +370,18 @@ if { [gdb_compile_shlib ${srcdir}/${subdir}/${srcfile2} $libbin {debug}] != ""
     return -1
 }
 
-clean_restart $binfile
-gdb_load_shlib $libbin
+if {!$use_gdb_stub} {
+    clean_restart $binfile
+    gdb_load_shlib $libbin
 
-if ![runto_main] {
-    return -1
+    if ![runto_main] {
+        fail "Couldn't run to main."
+	return -1
+    }
+
+    gdb_test_no_output "compile code shlib_func ();" "call shared library function"
+    gdb_test "p globalvar" " = 1" "expect 1"
+
+    gdb_test_no_output "compile code shlibvar += 5;" "modify shared library variable"
+    gdb_test "p shlibvar" " = 15" "expect 15"
 }
-
-gdb_test_no_output "compile code shlib_func ();" "call shared library function"
-gdb_test "p globalvar" " = 1" "expect 1"
-
-gdb_test_no_output "compile code shlibvar += 5;" "modify shared library variable"
-gdb_test "p shlibvar" " = 15" "expect 15"
