@@ -357,7 +357,7 @@ thread_db_look_up_symbols (void)
   CORE_ADDR unused;
 
   for (sym_list = thread_db->td_symbol_list_p (); *sym_list; sym_list++)
-    look_up_one_symbol (*sym_list, &unused, 1);
+    look_up_one_symbol (*sym_list, &unused, NULL, 1);
 
   /* We're not interested in any other libraries loaded after this
      point, only in symbols in libpthread.so.  */
@@ -375,7 +375,7 @@ thread_db_look_up_one_symbol (const char *name, CORE_ADDR *addrp)
      in any libraries loaded after that point, only in symbols in
      libpthread.so.  It might not be an appropriate time to look
      up a symbol, e.g. while we're trying to fetch registers.  */
-  return look_up_one_symbol (name, addrp, may_ask_gdb);
+  return look_up_one_symbol (name, addrp, NULL, may_ask_gdb);
 }
 
 int

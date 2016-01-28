@@ -37234,7 +37234,7 @@ The target requests the value of symbol @var{sym_name} (hex encoded).
 below.
 @end table
 
-@item qSymbol:@var{sym_value}:@var{sym_name}
+@item qSymbol:@var{sym_value}:@var{sym_name}:@var{sym_flags}
 Set the value of @var{sym_name} to @var{sym_value}.
 
 @var{sym_name} (hex encoded) is the name of a symbol whose value the
@@ -37243,6 +37243,9 @@ target has previously requested.
 @var{sym_value} (hex) is the value for symbol @var{sym_name}.  If
 @value{GDBN} cannot supply a value for @var{sym_name}, then this field
 will be empty.
+
+@var{sym_flags} (decimal) is the value of target-specific flags for this
+symbol.
 
 Reply:
 @table @samp

@@ -28,5 +28,5 @@ find_minimal_symbol_address (const char *name, CORE_ADDR *addr,
 {
   gdb_assert (objfile == NULL);
 
-  return look_up_one_symbol (name, addr, 1) != 1;
+  return look_up_one_symbol (name, addr, NULL, 1) != 1;
 }

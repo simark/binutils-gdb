@@ -326,7 +326,7 @@ tracepoint_look_up_symbols (void)
       CORE_ADDR *addrp =
 	(CORE_ADDR *) ((char *) &ipa_sym_addrs + symbol_list[i].offset);
 
-      if (look_up_one_symbol (symbol_list[i].name, addrp, 1) == 0)
+      if (look_up_one_symbol (symbol_list[i].name, addrp, NULL, 1) == 0)
 	{
 	  if (debug_threads)
 	    debug_printf ("symbol `%s' not found\n", symbol_list[i].name);

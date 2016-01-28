@@ -65,7 +65,15 @@ int decode_search_memory_packet (const char *buf, int packet_len,
 				 unsigned int *pattern_lenp);
 
 void clear_symbol_cache (struct sym_cache **symcache_p);
-int look_up_one_symbol (const char *name, CORE_ADDR *addrp, int may_ask_gdb);
+
+/* Get the address of symbol NAME, and return it in *ADDR_PTR if found.  Return
+   target-specific flags in *TARGET_FLAGS_PTR, if non-NULL.  If MAY_ASK_GDB is
+   false, assume symbol cache misses are failures.
+
+   Return 1 if the symbol is found, 0 if it is not, -1 on error.  */
+
+int look_up_one_symbol (const char *name, CORE_ADDR *addr_ptr,
+			int *target_flags_ptr, int may_ask_gdb);
 
 int relocate_instruction (CORE_ADDR *to, CORE_ADDR oldloc);
 

@@ -97,6 +97,7 @@ struct sym_cache
 {
   char *name;
   CORE_ADDR addr;
+  int target_flags;
   struct sym_cache *next;
 };
 
@@ -1455,15 +1456,17 @@ clear_symbol_cache (struct sym_cache **symcache_p)
   *symcache_p = NULL;
 }
 
-/* Get the address of NAME, and return it in ADDRP if found.  if
-   MAY_ASK_GDB is false, assume symbol cache misses are failures.
-   Returns 1 if the symbol is found, 0 if it is not, -1 on error.  */
+/* See remote-utils.h.  */
 
 int
-look_up_one_symbol (const char *name, CORE_ADDR *addrp, int may_ask_gdb)
+look_up_one_symbol (const char *name, CORE_ADDR *addr_ptr,
+		    int *target_flags_ptr, int may_ask_gdb)
 {
-  char own_buf[266], *p, *q;
-  int len;
+  char own_buf[266];
+  char *addr_start, *addr_end;
+  char *name_start, *name_end;
+  char *target_flags_start, *target_flags_end;
+  int len, target_flags;
   struct sym_cache *sym;
   struct process_info *proc;
 
@@ -1473,7 +1476,9 @@ look_up_one_symbol (const char *name, CORE_ADDR *addrp, int may_ask_gdb)
   for (sym = proc->symbol_cache; sym; sym = sym->next)
     if (strcmp (name, sym->name) == 0)
       {
-	*addrp = sym->addr;
+	*addr_ptr = sym->addr;
+	if (target_flags_ptr)
+	  *target_flags_ptr = sym->target_flags;
 	return 1;
       }
 
@@ -1520,30 +1525,57 @@ look_up_one_symbol (const char *name, CORE_ADDR *addrp, int may_ask_gdb)
     }
 
   if (!startswith (own_buf, "qSymbol:"))
-    {
-      warning ("Malformed response to qSymbol, ignoring: %s\n", own_buf);
-      return -1;
-    }
+    goto error;
 
-  p = own_buf + strlen ("qSymbol:");
-  q = p;
-  while (*q && *q != ':')
-    q++;
+  /* Get value start/end.  */
+  addr_start = own_buf + strlen ("qSymbol:");
+  addr_end = strchrnul (addr_start, ':');
 
-  /* Make sure we found a value for the symbol.  */
-  if (p == q || *q == '\0')
+  /* We expect another field, complain if it's missing.  */
+  if (*addr_end != ':')
+    goto error;
+
+  /* Get name start/end.  */
+  name_start = addr_end + 1;
+  name_end = strchrnul (name_start, ':');
+
+  /* We expect another field, complain if it's missing.  */
+  if (*name_end != ':')
+    goto error;
+
+  /* Get target flags start/end.  */
+  target_flags_start = name_end + 1;
+  target_flags_end = strchrnul (target_flags_start, ':');
+
+  /* Some validation.  */
+  if ((name_end - name_start) == 0
+      || (target_flags_end - target_flags_start) == 0)
+    goto error;
+
+  /* An empty address field means there is no match.  */
+  if ((addr_end - addr_start) == 0)
     return 0;
 
-  decode_address (addrp, p, q - p);
+  decode_address (addr_ptr, addr_start, addr_end - addr_start);
+  target_flags = atoi (target_flags_start);
+
+  if (target_flags_ptr)
+    *target_flags_ptr = target_flags;
 
   /* Save the symbol in our cache.  */
   sym = XNEW (struct sym_cache);
   sym->name = xstrdup (name);
-  sym->addr = *addrp;
+  sym->addr = *addr_ptr;
+  sym->target_flags = target_flags;
   sym->next = proc->symbol_cache;
+
   proc->symbol_cache = sym;
 
   return 1;
+
+error:
+  warning ("Malformed response to qSymbol, ignoring: %s\n", own_buf);
+  return -1;
 }
 
 /* Relocate an instruction to execute at a different address.  OLDLOC
