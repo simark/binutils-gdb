@@ -257,6 +257,9 @@ struct arm_prologue_cache
      to identify this frame.  */
   CORE_ADDR prev_sp;
 
+  /* Is the stack available ? 1 if is , 0 otherwise.  */
+  int stack_avail;
+
   /* The frame base for this frame is just prev_sp - frame size.
      FRAMESIZE is the distance from the frame pointer to the
      initial stack pointer.  */
@@ -1790,7 +1793,20 @@ arm_make_prologue_cache (struct frame_info *this_frame)
   cache = FRAME_OBSTACK_ZALLOC (struct arm_prologue_cache);
   cache->saved_regs = trad_frame_alloc_saved_regs (this_frame);
 
-  arm_scan_prologue (this_frame, cache);
+  TRY
+    {
+      arm_scan_prologue (this_frame, cache);
+    }
+    CATCH (ex, RETURN_MASK_ERROR)
+    {
+      if (ex.error != NOT_AVAILABLE_ERROR)
+	throw_exception (ex);
+      else
+	return cache;
+    }
+  END_CATCH
+
+  cache->stack_avail = 1;
 
   unwound_fp = get_frame_register_unsigned (this_frame, cache->framereg);
   if (unwound_fp == 0)
@@ -1848,6 +1864,11 @@ arm_prologue_this_id (struct frame_info *this_frame,
     *this_cache = arm_make_prologue_cache (this_frame);
   cache = (struct arm_prologue_cache *) *this_cache;
 
+  if (!cache->stack_avail)
+    {
+      (*this_id) = frame_id_build_unavailable_stack (cache->prev_sp);
+      return;
+    }
   /* Use function start address as part of the frame ID.  If we cannot
      identify the start address (due to missing symbol information),
      fall back to just using the current PC.  */
@@ -2735,7 +2756,20 @@ arm_make_stub_cache (struct frame_info *this_frame)
   cache = FRAME_OBSTACK_ZALLOC (struct arm_prologue_cache);
   cache->saved_regs = trad_frame_alloc_saved_regs (this_frame);
 
-  cache->prev_sp = get_frame_register_unsigned (this_frame, ARM_SP_REGNUM);
+  TRY
+    {
+      cache->prev_sp = get_frame_register_unsigned (this_frame, ARM_SP_REGNUM);
+    }
+  CATCH (ex, RETURN_MASK_ERROR)
+    {
+      if (ex.error != NOT_AVAILABLE_ERROR)
+	throw_exception (ex);
+      else
+	return cache;
+    }
+  END_CATCH
+
+  cache->stack_avail = 1;
 
   return cache;
 }
@@ -2753,7 +2787,10 @@ arm_stub_this_id (struct frame_info *this_frame,
     *this_cache = arm_make_stub_cache (this_frame);
   cache = (struct arm_prologue_cache *) *this_cache;
 
-  *this_id = frame_id_build (cache->prev_sp, get_frame_pc (this_frame));
+  if (!cache->stack_avail)
+    *this_id = frame_id_build_unavailable_stack (cache->prev_sp);
+  else
+    *this_id = frame_id_build (cache->prev_sp, get_frame_pc (this_frame));
 }
 
 static int
@@ -2800,14 +2837,24 @@ arm_m_exception_cache (struct frame_info *this_frame)
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   struct arm_prologue_cache *cache;
-  CORE_ADDR unwound_sp;
+  CORE_ADDR unwound_sp = 0;
   LONGEST xpsr;
 
   cache = FRAME_OBSTACK_ZALLOC (struct arm_prologue_cache);
   cache->saved_regs = trad_frame_alloc_saved_regs (this_frame);
 
-  unwound_sp = get_frame_register_unsigned (this_frame,
-					    ARM_SP_REGNUM);
+  TRY
+    {
+      unwound_sp = get_frame_register_unsigned (this_frame, ARM_SP_REGNUM);
+    }
+  CATCH (ex, RETURN_MASK_ERROR)
+    {
+      if (ex.error != NOT_AVAILABLE_ERROR)
+	throw_exception (ex);
+      else
+	return cache;
+    }
+  END_CATCH
 
   /* The hardware saves eight 32-bit words, comprising xPSR,
      ReturnAddress, LR (R14), R12, R3, R2, R1, R0.  See details in
@@ -2830,6 +2877,8 @@ arm_m_exception_cache (struct frame_info *this_frame)
       && (xpsr & (1 << 9)) != 0)
     cache->prev_sp += 4;
 
+  cache->stack_avail = 1;
+
   return cache;
 }
 
@@ -2847,8 +2896,11 @@ arm_m_exception_this_id (struct frame_info *this_frame,
     *this_cache = arm_m_exception_cache (this_frame);
   cache = (struct arm_prologue_cache *) *this_cache;
 
-  /* Our frame ID for a stub frame is the current SP and LR.  */
-  *this_id = frame_id_build (cache->prev_sp,
+  if (!cache->stack_avail)
+    *this_id = frame_id_build_unavailable_stack (cache->prev_sp);
+  else
+    /* Our frame ID for a stub frame is the current SP and LR.  */
+    *this_id = frame_id_build (cache->prev_sp,
 			     get_frame_pc (this_frame));
 }
 
