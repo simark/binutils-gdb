@@ -27,6 +27,9 @@
 #include <unistd.h>
 #include "gdb_sys_time.h"
 #include <inttypes.h>
+#include <stdint.h>
+#include <sys/mman.h>
+
 #include "ax.h"
 #include "tdesc.h"
 
@@ -7403,10 +7406,12 @@ initialize_tracepoint (void)
 	  = (char *) mmap ((void *) addr,
 			   pagesize * SCRATCH_BUFFER_NPAGES,
 			   PROT_READ | PROT_WRITE | PROT_EXEC,
-			   MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED,
+			   MAP_PRIVATE | MAP_ANONYMOUS,
 			   -1, 0);
-	if (gdb_jump_pad_buffer != MAP_FAILED)
+	if (gdb_jump_pad_buffer == (void *)addr)
 	  break;
+	if (gdb_jump_pad_buffer != MAP_FAILED)
+	  munmap(gdb_jump_pad_buffer, pagesize * SCRATCH_BUFFER_NPAGES);
       }
 
     if (addr == 0)
