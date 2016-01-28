@@ -5544,7 +5544,8 @@ fast_tracepoint_from_ipa_tpoint_address (CORE_ADDR ipa_tpoint_obj)
 
 typedef struct collecting_t
 {
-  /* The fast tracepoint number currently collecting.  */
+  /* The fast tracepoint object address in the inferior currently
+     collecting.  */
   uintptr_t tpoint;
 
   /* A number that GDBserver can use to identify the thread that is
