@@ -464,12 +464,20 @@ static CORE_ADDR target_malloc (ULONGEST size);
 
 #endif
 
+#ifndef ATTR_PACKED
+#  if defined(__GNUC__)
+#    define ATTR_PACKED __attribute__ ((packed))
+#  else
+#    define ATTR_PACKED /* nothing */
+#  endif
+#endif
+
 /* Base action.  Concrete actions inherit this.  */
 
 struct tracepoint_action
 {
   char type;
-};
+} ATTR_PACKED;
 
 /* An 'M' (collect memory) action.  */
 struct collect_memory_action
@@ -479,14 +487,14 @@ struct collect_memory_action
   ULONGEST addr;
   ULONGEST len;
   int32_t basereg;
-};
+} ATTR_PACKED;
 
 /* An 'R' (collect registers) action.  */
 
 struct collect_registers_action
 {
   struct tracepoint_action base;
-};
+} ATTR_PACKED;
 
 /* An 'X' (evaluate expression) action.  */
 
@@ -495,13 +503,13 @@ struct eval_expr_action
   struct tracepoint_action base;
 
   struct agent_expr *expr;
-};
+} ATTR_PACKED;
 
 /* An 'L' (collect static trace data) action.  */
 struct collect_static_trace_data_action
 {
   struct tracepoint_action base;
-};
+} ATTR_PACKED;
 
 #ifndef IN_PROCESS_AGENT
 static CORE_ADDR
@@ -809,14 +817,6 @@ IP_AGENT_EXPORT_VAR struct trace_state_variable *trace_state_variables;
    block within a trace frame remains contiguous.  Things get messy
    when the wrapped-around trace frame is the one being discarded; the
    free space ends up in two parts at opposite ends of the buffer.  */
-
-#ifndef ATTR_PACKED
-#  if defined(__GNUC__)
-#    define ATTR_PACKED __attribute__ ((packed))
-#  else
-#    define ATTR_PACKED /* nothing */
-#  endif
-#endif
 
 /* The data collected at a tracepoint hit.  This object should be as
    small as possible, since there may be a great many of them.  We do
