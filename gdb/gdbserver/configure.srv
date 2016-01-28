@@ -86,6 +86,10 @@ case "${target}" in
 			srv_linux_usrregs=yes
 			srv_linux_regsets=yes
 			srv_linux_thread_db=yes
+			ipa_obj="arm-core-ipa.o arm-with-neon-ipa.o"
+			ipa_obj="${ipa_obj} arm-with-vfpv2-ipa.o"
+			ipa_obj="${ipa_obj} arm-with-vfpv3-ipa.o"
+			ipa_obj="${ipa_obj} linux-arm-ipa.o"
 			;;
   arm*-*-mingw32ce*)	srv_regobj=reg-arm.o
 			srv_tgtobj="win32-low.o win32-arm-low.o"
