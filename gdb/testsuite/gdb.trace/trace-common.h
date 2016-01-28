@@ -40,12 +40,20 @@ x86_trace_dummy ()
        "    call " SYMBOL(x86_trace_dummy) "\n" \
        )
 
-#elif (defined __aarch64__) || (defined __powerpc__)
+#elif (defined __aarch64__) || (defined __powerpc__) || (defined __arm__ && !defined __thumb__)
 
 #define FAST_TRACEPOINT_LABEL(name) \
   asm ("    .global " SYMBOL(name) "\n" \
        SYMBOL(name) ":\n" \
        "    nop\n" \
+       )
+
+#elif (defined __arm__ && defined __thumb2__)
+
+#define FAST_TRACEPOINT_LABEL(name) \
+  asm ("    .global " SYMBOL(name) "\n" \
+       SYMBOL(name) ":\n" \
+       "    nop.w\n" \
        )
 
 #else
