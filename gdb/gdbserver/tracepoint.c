@@ -2293,7 +2293,8 @@ cmd_qtinit (char *packet)
     }
 
   clear_trace_buffer ();
-  clear_inferior_trace_buffer ();
+  if (agent_loaded_p ())
+    clear_inferior_trace_buffer ();
 
   write_ok (packet);
 }
@@ -3118,6 +3119,13 @@ cmd_qtstart (char *packet)
 {
   struct tracepoint *tpoint, *prev_ftpoint, *prev_stpoint;
   CORE_ADDR tpptr = 0, prev_tpptr = 0;
+
+  if (current_thread == NULL)
+    {
+      trace_debug ("Trying to start the trace without inferior");
+      strcpy (packet, "E.No process attached.");
+      return;
+    }
 
   trace_debug ("Starting the trace");
 
