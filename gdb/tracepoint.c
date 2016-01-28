@@ -123,7 +123,7 @@ static VEC(tsv_s) *tvariables;
 static int next_tsv_number = 1;
 
 /* Number of last traceframe collected.  */
-static int traceframe_number;
+static int traceframe_number = -1;
 
 /* Tracepoint for last traceframe collected.  */
 static int tracepoint_number;
@@ -1913,6 +1913,18 @@ trace_start_command (char *args, int from_tty)
       if (from_tty
 	  && !query (_("A trace is running already.  Start a new run? ")))
 	error (_("New trace run not started."));
+    }
+  if (traceframe_number >= 0)
+    {
+      if (from_tty
+	  && !query (_("Currently examining trace data. "
+		       "Start a new run? ")))
+	error (_("New trace run not started."));
+      /* Reset our local state.  */
+      set_traceframe_num (-1);
+      set_tracepoint_num (-1);
+      set_traceframe_context (NULL);
+      clear_traceframe_info ();
     }
 
   start_tracing (args);

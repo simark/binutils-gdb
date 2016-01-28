@@ -165,7 +165,12 @@ proc test_fast_tracepoints {} {
     if [gdb_is_target_remote] {
 	gdb_test "set remote fast-tracepoints-packet off"
 
+	set question "Currently examining trace data. Start a new run\\? \\(y or n\\) "
 	gdb_test_multiple "tstart" $test {
+	    -re "(${question})$" {
+		send_gdb "y\n"
+		exp_continue
+	    }
 	    -re "warning: Target does not support fast tracepoints, downloading .* as regular tracepoint.*\r\n$gdb_prompt $" {
 		pass $test
 	    }
