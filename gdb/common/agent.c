@@ -73,9 +73,16 @@ static struct ipa_sym_addresses ipa_sym_addrs;
 
 static int all_agent_symbols_looked_up = 0;
 
+#ifdef GDBSERVER
+#include <inferiors.h>
+#endif
 int
 agent_loaded_p (void)
 {
+#ifdef GDBSERVER
+  if (current_thread == NULL)
+    return 0;
+#endif
   return all_agent_symbols_looked_up;
 }
 
