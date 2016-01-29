@@ -1688,7 +1688,10 @@ status_pending_p_callback (struct inferior_list_entry *entry, void *arg)
   if (!ptid_match (ptid_of (thread), ptid))
     return 0;
 
-  if (!lwp_resumed (lp))
+  /* If we are stabilizing threads, threads have been stopped except the
+     ones that are moving out of the jump pad. The events of those threads
+     need to be reported whatever the last_resume_kind is.  */
+  if (!lwp_resumed (lp) && !stabilizing_threads)
     return 0;
 
   if (lp->status_pending_p
@@ -4238,14 +4241,7 @@ linux_resume_one_lwp_throw (struct lwp_info *lwp,
 		      " single-stepping\n",
 		      lwpid_of (thread));
 
-      if (can_hardware_single_step ())
-	step = 1;
-      else
-	{
-	  internal_error (__FILE__, __LINE__,
-			  "moving out of jump pad single-stepping"
-			  " not implemented on this target");
-	}
+      step = single_step (lwp);
     }
 
   /* If we have while-stepping actions in this thread set it stepping.
