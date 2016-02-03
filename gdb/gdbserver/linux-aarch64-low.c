@@ -1767,8 +1767,8 @@ static const struct aarch64_insn_visitor visitor =
 
 static int
 aarch64_install_fast_tracepoint_jump_pad (struct tracepoint *tp,
-					  CORE_ADDR collector,
-					  CORE_ADDR lockaddr,
+					  struct ipa_symbol *collector,
+					  struct ipa_symbol *lockaddr,
 					  CORE_ADDR *jump_entry,
 					  CORE_ADDR *trampoline,
 					  ULONGEST *trampoline_size,
@@ -1972,7 +1972,7 @@ aarch64_install_fast_tracepoint_jump_pad (struct tracepoint *tp,
 
      */
 
-  p += emit_mov_addr (p, x0, lockaddr);
+  p += emit_mov_addr (p, x0, lockaddr->addr);
   p += emit_mov (p, x1, register_operand (sp));
 
   p += emit_sevl (p);
@@ -2002,7 +2002,7 @@ aarch64_install_fast_tracepoint_jump_pad (struct tracepoint *tp,
   p += emit_mov_addr (p, x0, tp->obj_addr_on_target);
   p += emit_add (p, x1, sp, immediate_operand (16));
 
-  p += emit_mov_addr (p, ip0, collector);
+  p += emit_mov_addr (p, ip0, collector->addr);
   p += emit_blr (p, ip0);
 
   /* Release the lock.
@@ -2019,7 +2019,7 @@ aarch64_install_fast_tracepoint_jump_pad (struct tracepoint *tp,
        STLR xzr, [x0]
 
      */
-  p += emit_mov_addr (p, x0, lockaddr);
+  p += emit_mov_addr (p, x0, lockaddr->addr);
   p += emit_stlr (p, xzr, x0);
 
   /* Free collecting_t object:

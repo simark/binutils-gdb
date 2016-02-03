@@ -212,8 +212,8 @@ struct linux_target_ops
   /* Install a fast tracepoint jump pad.  See target.h for
      comments.  */
   int (*install_fast_tracepoint_jump_pad) (struct tracepoint *tp,
-					   CORE_ADDR collector,
-					   CORE_ADDR lockaddr,
+					   struct ipa_symbol *collector,
+					   struct ipa_symbol *lockaddr,
 					   CORE_ADDR *jump_entry,
 					   CORE_ADDR *trampoline,
 					   ULONGEST *trampoline_size,

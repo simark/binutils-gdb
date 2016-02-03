@@ -146,36 +146,36 @@ trace_vdebug (const char *fmt, ...)
 
 struct ipa_sym_addresses
 {
-  CORE_ADDR addr_gdb_tp_heap_buffer;
-  CORE_ADDR addr_gdb_jump_pad_buffer;
-  CORE_ADDR addr_gdb_jump_pad_buffer_end;
-  CORE_ADDR addr_gdb_trampoline_buffer;
-  CORE_ADDR addr_gdb_trampoline_buffer_end;
-  CORE_ADDR addr_gdb_trampoline_buffer_error;
-  CORE_ADDR addr_collecting;
-  CORE_ADDR addr_gdb_collect;
-  CORE_ADDR addr_stop_tracing;
-  CORE_ADDR addr_flush_trace_buffer;
-  CORE_ADDR addr_about_to_request_buffer_space;
-  CORE_ADDR addr_trace_buffer_is_full;
-  CORE_ADDR addr_stopping_tracepoint;
-  CORE_ADDR addr_expr_eval_result;
-  CORE_ADDR addr_error_tracepoint;
-  CORE_ADDR addr_tracepoints;
-  CORE_ADDR addr_tracing;
-  CORE_ADDR addr_trace_buffer_ctrl;
-  CORE_ADDR addr_trace_buffer_ctrl_curr;
-  CORE_ADDR addr_trace_buffer_lo;
-  CORE_ADDR addr_trace_buffer_hi;
-  CORE_ADDR addr_traceframe_read_count;
-  CORE_ADDR addr_traceframe_write_count;
-  CORE_ADDR addr_traceframes_created;
-  CORE_ADDR addr_trace_state_variables;
-  CORE_ADDR addr_get_raw_reg;
-  CORE_ADDR addr_get_trace_state_variable_value;
-  CORE_ADDR addr_set_trace_state_variable_value;
-  CORE_ADDR addr_ust_loaded;
-  CORE_ADDR addr_ipa_tdesc_idx;
+  struct ipa_symbol addr_gdb_tp_heap_buffer;
+  struct ipa_symbol addr_gdb_jump_pad_buffer;
+  struct ipa_symbol addr_gdb_jump_pad_buffer_end;
+  struct ipa_symbol addr_gdb_trampoline_buffer;
+  struct ipa_symbol addr_gdb_trampoline_buffer_end;
+  struct ipa_symbol addr_gdb_trampoline_buffer_error;
+  struct ipa_symbol addr_collecting;
+  struct ipa_symbol addr_gdb_collect;
+  struct ipa_symbol addr_stop_tracing;
+  struct ipa_symbol addr_flush_trace_buffer;
+  struct ipa_symbol addr_about_to_request_buffer_space;
+  struct ipa_symbol addr_trace_buffer_is_full;
+  struct ipa_symbol addr_stopping_tracepoint;
+  struct ipa_symbol addr_expr_eval_result;
+  struct ipa_symbol addr_error_tracepoint;
+  struct ipa_symbol addr_tracepoints;
+  struct ipa_symbol addr_tracing;
+  struct ipa_symbol addr_trace_buffer_ctrl;
+  struct ipa_symbol addr_trace_buffer_ctrl_curr;
+  struct ipa_symbol addr_trace_buffer_lo;
+  struct ipa_symbol addr_trace_buffer_hi;
+  struct ipa_symbol addr_traceframe_read_count;
+  struct ipa_symbol addr_traceframe_write_count;
+  struct ipa_symbol addr_traceframes_created;
+  struct ipa_symbol addr_trace_state_variables;
+  struct ipa_symbol addr_get_raw_reg;
+  struct ipa_symbol addr_get_trace_state_variable_value;
+  struct ipa_symbol addr_set_trace_state_variable_value;
+  struct ipa_symbol addr_ust_loaded;
+  struct ipa_symbol addr_ipa_tdesc_idx;
 };
 
 static struct
@@ -238,7 +238,7 @@ in_process_agent_supports_ust (void)
     {
       /* Agent understands static tracepoint, then check whether UST is in
 	 fact loaded in the inferior.  */
-      if (read_inferior_integer (ipa_sym_addrs.addr_ust_loaded, &loaded))
+      if (read_inferior_integer (ipa_sym_addrs.addr_ust_loaded.addr, &loaded))
 	{
 	  warning ("Error reading ust_loaded in lib");
 	  return 0;
@@ -323,10 +323,13 @@ tracepoint_look_up_symbols (void)
 
   for (i = 0; i < sizeof (symbol_list) / sizeof (symbol_list[0]); i++)
     {
-      CORE_ADDR *addrp =
-	(CORE_ADDR *) ((char *) &ipa_sym_addrs + symbol_list[i].offset);
+      struct ipa_symbol *is = (struct ipa_symbol *)
+	 (((char *) &ipa_sym_addrs) + symbol_list[i].offset);
+      CORE_ADDR *addr_ptr = &is->addr;
+      int *target_flags_ptr = &is->target_flags;
 
-      if (look_up_one_symbol (symbol_list[i].name, addrp, NULL, 1) == 0)
+      if (look_up_one_symbol (symbol_list[i].name, addr_ptr,
+			      target_flags_ptr, 1) == 0)
 	{
 	  if (debug_threads)
 	    debug_printf ("symbol `%s' not found\n", symbol_list[i].name);
@@ -1327,9 +1330,9 @@ clear_inferior_trace_buffer (void)
   struct traceframe ipa_traceframe = { 0 };
   struct ipa_trace_buffer_control ipa_trace_buffer_ctrl;
 
-  read_inferior_data_pointer (ipa_sym_addrs.addr_trace_buffer_lo,
+  read_inferior_data_pointer (ipa_sym_addrs.addr_trace_buffer_lo.addr,
 			      &ipa_trace_buffer_lo);
-  read_inferior_data_pointer (ipa_sym_addrs.addr_trace_buffer_hi,
+  read_inferior_data_pointer (ipa_sym_addrs.addr_trace_buffer_hi.addr,
 			      &ipa_trace_buffer_hi);
 
   ipa_trace_buffer_ctrl.start = ipa_trace_buffer_lo;
@@ -1338,20 +1341,20 @@ clear_inferior_trace_buffer (void)
   ipa_trace_buffer_ctrl.wrap = ipa_trace_buffer_hi;
 
   /* A traceframe with zeroed fields marks the end of trace data.  */
-  write_inferior_memory (ipa_sym_addrs.addr_trace_buffer_ctrl,
+  write_inferior_memory (ipa_sym_addrs.addr_trace_buffer_ctrl.addr,
 			 (unsigned char *) &ipa_trace_buffer_ctrl,
 			 sizeof (ipa_trace_buffer_ctrl));
 
-  write_inferior_uinteger (ipa_sym_addrs.addr_trace_buffer_ctrl_curr, 0);
+  write_inferior_uinteger (ipa_sym_addrs.addr_trace_buffer_ctrl_curr.addr, 0);
 
   /* A traceframe with zeroed fields marks the end of trace data.  */
   write_inferior_memory (ipa_trace_buffer_lo,
 			 (unsigned char *) &ipa_traceframe,
 			 sizeof (ipa_traceframe));
 
-  write_inferior_uinteger (ipa_sym_addrs.addr_traceframe_write_count, 0);
-  write_inferior_uinteger (ipa_sym_addrs.addr_traceframe_read_count, 0);
-  write_inferior_integer (ipa_sym_addrs.addr_traceframes_created, 0);
+  write_inferior_uinteger (ipa_sym_addrs.addr_traceframe_write_count.addr, 0);
+  write_inferior_uinteger (ipa_sym_addrs.addr_traceframe_read_count.addr, 0);
+  write_inferior_integer (ipa_sym_addrs.addr_traceframes_created.addr, 0);
 }
 
 #endif
@@ -2809,8 +2812,8 @@ get_jump_space_head (void)
 {
   if (gdb_jump_pad_head == 0)
     {
-      if (read_inferior_data_pointer (ipa_sym_addrs.addr_gdb_jump_pad_buffer,
-				      &gdb_jump_pad_head))
+      if (read_inferior_data_pointer (
+	    ipa_sym_addrs.addr_gdb_jump_pad_buffer.addr, &gdb_jump_pad_head))
 	{
 	  internal_error (__FILE__, __LINE__,
 			  "error extracting jump_pad_buffer");
@@ -2842,15 +2845,17 @@ claim_trampoline_space (ULONGEST used, CORE_ADDR *trampoline)
 {
   if (!trampoline_buffer_head)
     {
-      if (read_inferior_data_pointer (ipa_sym_addrs.addr_gdb_trampoline_buffer,
-				      &trampoline_buffer_tail))
+      if (read_inferior_data_pointer (
+	    ipa_sym_addrs.addr_gdb_trampoline_buffer.addr,
+	    &trampoline_buffer_tail))
 	{
 	  internal_error (__FILE__, __LINE__,
 			  "error extracting trampoline_buffer");
 	}
 
-      if (read_inferior_data_pointer (ipa_sym_addrs.addr_gdb_trampoline_buffer_end,
-				      &trampoline_buffer_head))
+      if (read_inferior_data_pointer (
+	    ipa_sym_addrs.addr_gdb_trampoline_buffer_end.addr,
+	    &trampoline_buffer_head))
 	{
 	  internal_error (__FILE__, __LINE__,
 			  "error extracting trampoline_buffer_end");
@@ -2885,8 +2890,8 @@ have_fast_tracepoint_trampoline_buffer (char *buf)
 {
   CORE_ADDR trampoline_end, errbuf;
 
-  if (read_inferior_data_pointer (ipa_sym_addrs.addr_gdb_trampoline_buffer_end,
-				  &trampoline_end))
+  if (read_inferior_data_pointer (
+        ipa_sym_addrs.addr_gdb_trampoline_buffer_end.addr, &trampoline_end))
     {
       internal_error (__FILE__, __LINE__,
 		      "error extracting trampoline_buffer_end");
@@ -2896,8 +2901,8 @@ have_fast_tracepoint_trampoline_buffer (char *buf)
     {
       buf[0] = '\0';
       strcpy (buf, "was claiming");
-      if (read_inferior_data_pointer (ipa_sym_addrs.addr_gdb_trampoline_buffer_error,
-				  &errbuf))
+      if (read_inferior_data_pointer (
+	    ipa_sym_addrs.addr_gdb_trampoline_buffer_error.addr, &errbuf))
 	{
 	  internal_error (__FILE__, __LINE__,
 			  "error extracting errbuf");
@@ -2982,8 +2987,8 @@ install_fast_tracepoint (struct tracepoint *tpoint, char *errbuf)
 
   /* Install the jump pad.  */
   err = install_fast_tracepoint_jump_pad (tpoint,
-					  ipa_sym_addrs.addr_gdb_collect,
-					  ipa_sym_addrs.addr_collecting,
+					  &ipa_sym_addrs.addr_gdb_collect,
+					  &ipa_sym_addrs.addr_collecting,
 					  &jentry,
 					  &trampoline, &trampoline_size,
 					  fjump, &fjump_size,
@@ -3114,14 +3119,14 @@ cmd_qtstart (char *packet)
   if (agent_loaded_p ())
     {
       /* Tell IPA about the correct tdesc.  */
-      if (write_inferior_integer (ipa_sym_addrs.addr_ipa_tdesc_idx,
+      if (write_inferior_integer (ipa_sym_addrs.addr_ipa_tdesc_idx.addr,
 				  target_get_ipa_tdesc_idx ()))
         error ("Error setting ipa_tdesc_idx variable in lib");
     }
 
   /* Start out empty.  */
   if (agent_loaded_p ())
-    write_inferior_data_pointer (ipa_sym_addrs.addr_tracepoints, 0);
+    write_inferior_data_pointer (ipa_sym_addrs.addr_tracepoints.addr, 0);
 
   /* Download and install tracepoints.  */
   for (tpoint = tracepoints; tpoint; tpoint = tpoint->next)
@@ -3225,7 +3230,8 @@ cmd_qtstart (char *packet)
 	  if (tpoint == tracepoints)
 	    /* First object in list, set the head pointer in the
 	       inferior.  */
-	    write_inferior_data_pointer (ipa_sym_addrs.addr_tracepoints, tpptr);
+	    write_inferior_data_pointer (ipa_sym_addrs.addr_tracepoints.addr,
+					  tpptr);
 	  else
 	    write_inferior_data_pointer (prev_tpptr
 					 + offsetof (struct tracepoint, next),
@@ -3261,34 +3267,35 @@ cmd_qtstart (char *packet)
 
   if (agent_loaded_p ())
     {
-      if (write_inferior_integer (ipa_sym_addrs.addr_tracing, 1))
+      if (write_inferior_integer (ipa_sym_addrs.addr_tracing.addr, 1))
 	{
 	  internal_error (__FILE__, __LINE__,
 			  "Error setting tracing variable in lib");
 	}
 
-      if (write_inferior_data_pointer (ipa_sym_addrs.addr_stopping_tracepoint,
-				       0))
+      if (write_inferior_data_pointer (
+	    ipa_sym_addrs.addr_stopping_tracepoint.addr, 0))
 	{
 	  internal_error (__FILE__, __LINE__,
 			  "Error clearing stopping_tracepoint variable"
 			  " in lib");
 	}
 
-      if (write_inferior_integer (ipa_sym_addrs.addr_trace_buffer_is_full, 0))
+      if (write_inferior_integer (
+	    ipa_sym_addrs.addr_trace_buffer_is_full.addr, 0))
 	{
 	  internal_error (__FILE__, __LINE__,
 			  "Error clearing trace_buffer_is_full variable"
 			  " in lib");
 	}
 
-      stop_tracing_bkpt = set_breakpoint_at (ipa_sym_addrs.addr_stop_tracing,
-					     stop_tracing_handler);
+      stop_tracing_bkpt = set_breakpoint_at (
+	ipa_sym_addrs.addr_stop_tracing.addr, stop_tracing_handler);
       if (stop_tracing_bkpt == NULL)
 	error ("Error setting stop_tracing breakpoint");
 
       flush_trace_buffer_bkpt
-	= set_breakpoint_at (ipa_sym_addrs.addr_flush_trace_buffer,
+	= set_breakpoint_at (ipa_sym_addrs.addr_flush_trace_buffer.addr,
 			     flush_trace_buffer_handler);
       if (flush_trace_buffer_bkpt == NULL)
 	error ("Error setting flush_trace_buffer breakpoint");
@@ -3328,7 +3335,7 @@ stop_tracing (void)
   tracing = 0;
   if (agent_loaded_p ())
     {
-      if (write_inferior_integer (ipa_sym_addrs.addr_tracing, 0))
+      if (write_inferior_integer (ipa_sym_addrs.addr_tracing.addr, 0))
 	{
 	  internal_error (__FILE__, __LINE__,
 			  "Error clearing tracing variable in lib");
@@ -4386,7 +4393,7 @@ handle_tracepoint_bkpts (struct thread_info *tinfo, CORE_ADDR stop_pc)
 
   /* Check if the in-process agent had decided we should stop
      tracing.  */
-  if (stop_pc == ipa_sym_addrs.addr_stop_tracing)
+  if (stop_pc == ipa_sym_addrs.addr_stop_tracing.addr)
     {
       int ipa_trace_buffer_is_full;
       CORE_ADDR ipa_stopping_tracepoint;
@@ -4395,20 +4402,21 @@ handle_tracepoint_bkpts (struct thread_info *tinfo, CORE_ADDR stop_pc)
 
       trace_debug ("lib stopped at stop_tracing");
 
-      read_inferior_integer (ipa_sym_addrs.addr_trace_buffer_is_full,
+      read_inferior_integer (ipa_sym_addrs.addr_trace_buffer_is_full.addr,
 			     &ipa_trace_buffer_is_full);
 
-      read_inferior_data_pointer (ipa_sym_addrs.addr_stopping_tracepoint,
+      read_inferior_data_pointer (ipa_sym_addrs.addr_stopping_tracepoint.addr,
 				  &ipa_stopping_tracepoint);
-      write_inferior_data_pointer (ipa_sym_addrs.addr_stopping_tracepoint, 0);
+      write_inferior_data_pointer (ipa_sym_addrs.addr_stopping_tracepoint.addr,
+				   0);
 
-      read_inferior_data_pointer (ipa_sym_addrs.addr_error_tracepoint,
+      read_inferior_data_pointer (ipa_sym_addrs.addr_error_tracepoint.addr,
 				  &ipa_error_tracepoint);
-      write_inferior_data_pointer (ipa_sym_addrs.addr_error_tracepoint, 0);
+      write_inferior_data_pointer (ipa_sym_addrs.addr_error_tracepoint.addr, 0);
 
-      read_inferior_integer (ipa_sym_addrs.addr_expr_eval_result,
+      read_inferior_integer (ipa_sym_addrs.addr_expr_eval_result.addr,
 			     &ipa_expr_eval_result);
-      write_inferior_integer (ipa_sym_addrs.addr_expr_eval_result, 0);
+      write_inferior_integer (ipa_sym_addrs.addr_expr_eval_result.addr, 0);
 
       trace_debug ("lib: trace_buffer_is_full: %d, "
 		   "stopping_tracepoint: %s, "
@@ -4443,7 +4451,7 @@ handle_tracepoint_bkpts (struct thread_info *tinfo, CORE_ADDR stop_pc)
       stop_tracing ();
       return 1;
     }
-  else if (stop_pc == ipa_sym_addrs.addr_flush_trace_buffer)
+  else if (stop_pc == ipa_sym_addrs.addr_flush_trace_buffer.addr)
     {
       trace_debug ("lib stopped at flush_trace_buffer");
       return 1;
@@ -5459,7 +5467,7 @@ typedef struct collecting_t
 void
 force_unlock_trace_buffer (void)
 {
-  write_inferior_data_pointer (ipa_sym_addrs.addr_collecting, 0);
+  write_inferior_data_pointer (ipa_sym_addrs.addr_collecting.addr, 0);
 }
 
 /* Check if the thread identified by THREAD_AREA which is stopped at
@@ -5512,27 +5520,29 @@ fast_tracepoint_collecting (CORE_ADDR thread_area,
   needs_breakpoint = 0;
   trace_debug ("fast_tracepoint_collecting");
 
-  if (read_inferior_data_pointer (ipa_sym_addrs.addr_gdb_jump_pad_buffer,
+  if (read_inferior_data_pointer (ipa_sym_addrs.addr_gdb_jump_pad_buffer.addr,
 				  &ipa_gdb_jump_pad_buffer))
     {
       internal_error (__FILE__, __LINE__,
 		      "error extracting `gdb_jump_pad_buffer'");
     }
-  if (read_inferior_data_pointer (ipa_sym_addrs.addr_gdb_jump_pad_buffer_end,
-				  &ipa_gdb_jump_pad_buffer_end))
+  if (read_inferior_data_pointer (
+        ipa_sym_addrs.addr_gdb_jump_pad_buffer_end.addr,
+	&ipa_gdb_jump_pad_buffer_end))
     {
       internal_error (__FILE__, __LINE__,
 		      "error extracting `gdb_jump_pad_buffer_end'");
     }
 
-  if (read_inferior_data_pointer (ipa_sym_addrs.addr_gdb_trampoline_buffer,
+  if (read_inferior_data_pointer (ipa_sym_addrs.addr_gdb_trampoline_buffer.addr,
 				  &ipa_gdb_trampoline_buffer))
     {
       internal_error (__FILE__, __LINE__,
 		      "error extracting `gdb_trampoline_buffer'");
     }
-  if (read_inferior_data_pointer (ipa_sym_addrs.addr_gdb_trampoline_buffer_end,
-				  &ipa_gdb_trampoline_buffer_end))
+  if (read_inferior_data_pointer (
+        ipa_sym_addrs.addr_gdb_trampoline_buffer_end.addr,
+	&ipa_gdb_trampoline_buffer_end))
     {
       internal_error (__FILE__, __LINE__,
 		      "error extracting `gdb_trampoline_buffer_end'");
@@ -5598,7 +5608,7 @@ fast_tracepoint_collecting (CORE_ADDR thread_area,
 	 may or not be the one holding the lock.  We have to read the
 	 lock to find out.  */
 
-      if (read_inferior_data_pointer (ipa_sym_addrs.addr_collecting,
+      if (read_inferior_data_pointer (ipa_sym_addrs.addr_collecting.addr,
 				      &ipa_collecting))
 	{
 	  trace_debug ("fast_tracepoint_collecting:"
@@ -5768,19 +5778,19 @@ gdb_collect (struct tracepoint *tpoint, unsigned char *regs)
 CORE_ADDR
 get_raw_reg_func_addr (void)
 {
-  return ipa_sym_addrs.addr_get_raw_reg;
+  return ipa_sym_addrs.addr_get_raw_reg.addr;
 }
 
 CORE_ADDR
 get_get_tsv_func_addr (void)
 {
-  return ipa_sym_addrs.addr_get_trace_state_variable_value;
+  return ipa_sym_addrs.addr_get_trace_state_variable_value.addr;
 }
 
 CORE_ADDR
 get_set_tsv_func_addr (void)
 {
-  return ipa_sym_addrs.addr_set_trace_state_variable_value;
+  return ipa_sym_addrs.addr_set_trace_state_variable_value.addr;
 }
 
 static void
@@ -5848,8 +5858,8 @@ target_malloc (ULONGEST size)
   if (target_tp_heap == 0)
     {
       /* We have the pointer *address*, need what it points to.  */
-      if (read_inferior_data_pointer (ipa_sym_addrs.addr_gdb_tp_heap_buffer,
-				      &target_tp_heap))
+      if (read_inferior_data_pointer (
+	    ipa_sym_addrs.addr_gdb_tp_heap_buffer.addr, &target_tp_heap))
 	{
 	  internal_error (__FILE__, __LINE__,
 			  "couldn't get target heap head pointer");
@@ -6094,9 +6104,8 @@ download_tracepoint (struct tracepoint *tpoint)
   else
     /* First object in list, set the head pointer in the
        inferior.  */
-    write_inferior_data_pointer (ipa_sym_addrs.addr_tracepoints,
+    write_inferior_data_pointer (ipa_sym_addrs.addr_tracepoints.addr,
 				 tpoint->obj_addr_on_target);
-
 }
 
 static void
@@ -6106,7 +6115,8 @@ download_trace_state_variables (void)
   struct trace_state_variable *tsv;
 
   /* Start out empty.  */
-  write_inferior_data_pointer (ipa_sym_addrs.addr_trace_state_variables, 0);
+  write_inferior_data_pointer (ipa_sym_addrs.addr_trace_state_variables.addr,
+			       0);
 
   for (tsv = trace_state_variables; tsv != NULL; tsv = tsv->next)
     {
@@ -6127,8 +6137,8 @@ download_trace_state_variables (void)
 	  /* First object in list, set the head pointer in the
 	     inferior.  */
 
-	  write_inferior_data_pointer (ipa_sym_addrs.addr_trace_state_variables,
-				       ptr);
+	  write_inferior_data_pointer (
+	    ipa_sym_addrs.addr_trace_state_variables.addr, ptr);
 	}
       else
 	{
@@ -6190,7 +6200,7 @@ upload_fast_traceframes (void)
   CORE_ADDR ipa_trace_buffer_lo;
   CORE_ADDR ipa_trace_buffer_hi;
 
-  if (read_inferior_uinteger (ipa_sym_addrs.addr_traceframe_read_count,
+  if (read_inferior_uinteger (ipa_sym_addrs.addr_traceframe_read_count.addr,
 			      &ipa_traceframe_read_count_racy))
     {
       /* This will happen in most targets if the current thread is
@@ -6198,7 +6208,7 @@ upload_fast_traceframes (void)
       return;
     }
 
-  if (read_inferior_uinteger (ipa_sym_addrs.addr_traceframe_write_count,
+  if (read_inferior_uinteger (ipa_sym_addrs.addr_traceframe_write_count.addr,
 			      &ipa_traceframe_write_count_racy))
     return;
 
@@ -6212,10 +6222,10 @@ upload_fast_traceframes (void)
     return;
 
   about_to_request_buffer_space_bkpt
-    = set_breakpoint_at (ipa_sym_addrs.addr_about_to_request_buffer_space,
+    = set_breakpoint_at (ipa_sym_addrs.addr_about_to_request_buffer_space.addr,
 			 NULL);
 
-  if (read_inferior_uinteger (ipa_sym_addrs.addr_trace_buffer_ctrl_curr,
+  if (read_inferior_uinteger (ipa_sym_addrs.addr_trace_buffer_ctrl_curr.addr,
 			      &ipa_trace_buffer_ctrl_curr))
     return;
 
@@ -6237,7 +6247,7 @@ upload_fast_traceframes (void)
 				  | curr_tbctrl_idx);
   }
 
-  if (write_inferior_uinteger (ipa_sym_addrs.addr_trace_buffer_ctrl_curr,
+  if (write_inferior_uinteger (ipa_sym_addrs.addr_trace_buffer_ctrl_curr.addr,
 			       ipa_trace_buffer_ctrl_curr))
     return;
 
@@ -6254,10 +6264,10 @@ upload_fast_traceframes (void)
      incrementing the counter tokens more than once (due to event loop
      nesting), which would break the IP agent's "effective" detection
      (see trace_alloc_trace_buffer).  */
-  if (read_inferior_uinteger (ipa_sym_addrs.addr_traceframe_read_count,
+  if (read_inferior_uinteger (ipa_sym_addrs.addr_traceframe_read_count.addr,
 			      &ipa_traceframe_read_count))
     return;
-  if (read_inferior_uinteger (ipa_sym_addrs.addr_traceframe_write_count,
+  if (read_inferior_uinteger (ipa_sym_addrs.addr_traceframe_write_count.addr,
 			      &ipa_traceframe_write_count))
     return;
 
@@ -6275,7 +6285,7 @@ upload_fast_traceframes (void)
   /* Get the address of the current TBC object (the IP agent has an
      array of 3 such objects).  The index is stored in the TBC
      token.  */
-  ipa_trace_buffer_ctrl_addr = ipa_sym_addrs.addr_trace_buffer_ctrl;
+  ipa_trace_buffer_ctrl_addr = ipa_sym_addrs.addr_trace_buffer_ctrl.addr;
   ipa_trace_buffer_ctrl_addr
     += sizeof (struct ipa_trace_buffer_control) * curr_tbctrl_idx;
 
@@ -6284,10 +6294,10 @@ upload_fast_traceframes (void)
 			    sizeof (struct ipa_trace_buffer_control)))
     return;
 
-  if (read_inferior_data_pointer (ipa_sym_addrs.addr_trace_buffer_lo,
+  if (read_inferior_data_pointer (ipa_sym_addrs.addr_trace_buffer_lo.addr,
 				  &ipa_trace_buffer_lo))
     return;
-  if (read_inferior_data_pointer (ipa_sym_addrs.addr_trace_buffer_hi,
+  if (read_inferior_data_pointer (ipa_sym_addrs.addr_trace_buffer_hi.addr,
 				  &ipa_trace_buffer_hi))
     return;
 
@@ -6416,7 +6426,7 @@ upload_fast_traceframes (void)
 			     sizeof (struct ipa_trace_buffer_control)))
     return;
 
-  write_inferior_integer (ipa_sym_addrs.addr_traceframe_read_count,
+  write_inferior_integer (ipa_sym_addrs.addr_traceframe_read_count.addr,
 			  ipa_traceframe_read_count);
 
   trace_debug ("Done uploading traceframes [%d]\n", curr_tbctrl_idx);

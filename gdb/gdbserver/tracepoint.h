@@ -67,6 +67,12 @@ void initialize_tracepoint (void);
 # define IP_AGENT_EXPORT_VAR_DECL extern
 #endif
 
+struct ipa_symbol
+{
+  CORE_ADDR addr;
+  int target_flags;
+};
+
 IP_AGENT_EXPORT_VAR_DECL int tracing;
 
 extern int disconnected_tracing;

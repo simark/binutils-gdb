@@ -1048,8 +1048,8 @@ push_opcode (unsigned char *buf, char *op)
 
 static int
 amd64_install_fast_tracepoint_jump_pad (struct tracepoint *tp,
-					CORE_ADDR collector,
-					CORE_ADDR lockaddr,
+					struct ipa_symbol *collector,
+					struct ipa_symbol *lockaddr,
 					CORE_ADDR *jump_entry,
 					CORE_ADDR *trampoline,
 					ULONGEST *trampoline_size,
@@ -1107,7 +1107,7 @@ amd64_install_fast_tracepoint_jump_pad (struct tracepoint *tp,
   /* spin-lock.  */
   i = 0;
   i += push_opcode (&buf[i], "48 be");		/* movl <lockaddr>,%rsi */
-  memcpy (&buf[i], (void *) &lockaddr, 8);
+  memcpy (&buf[i], (void *) &lockaddr->addr, 8);
   i += 8;
   i += push_opcode (&buf[i], "48 89 e1");       /* mov %rsp,%rcx */
   i += push_opcode (&buf[i], "31 c0");		/* xor %eax,%eax */
@@ -1134,7 +1134,7 @@ amd64_install_fast_tracepoint_jump_pad (struct tracepoint *tp,
      >31-bits away off the jump pad.  */
   i = 0;
   i += push_opcode (&buf[i], "48 b8");          /* mov $collector,%rax */
-  memcpy (buf + i, &collector, 8);
+  memcpy (buf + i, &collector->addr, 8);
   i += 8;
   i += push_opcode (&buf[i], "ff d0");          /* callq *%rax */
   append_insns (&buildaddr, i, buf);
@@ -1143,7 +1143,7 @@ amd64_install_fast_tracepoint_jump_pad (struct tracepoint *tp,
   i = 0;
   i += push_opcode (&buf[i], "31 c0");		/* xor %eax,%eax */
   i += push_opcode (&buf[i], "48 a3");		/* mov %rax, lockaddr */
-  memcpy (buf + i, &lockaddr, 8);
+  memcpy (buf + i, &lockaddr->addr, 8);
   i += 8;
   append_insns (&buildaddr, i, buf);
 
@@ -1234,8 +1234,8 @@ amd64_install_fast_tracepoint_jump_pad (struct tracepoint *tp,
 
 static int
 i386_install_fast_tracepoint_jump_pad (struct tracepoint *tp,
-				       CORE_ADDR collector,
-				       CORE_ADDR lockaddr,
+				       struct ipa_symbol *collector,
+				       struct ipa_symbol *lockaddr,
 				       CORE_ADDR *jump_entry,
 				       CORE_ADDR *trampoline,
 				       ULONGEST *trampoline_size,
@@ -1287,7 +1287,7 @@ i386_install_fast_tracepoint_jump_pad (struct tracepoint *tp,
   i += push_opcode (&buf[i], "31 c0");		/* xor %eax,%eax */
   i += push_opcode (&buf[i], "f0 0f b1 25");    /* lock cmpxchg
 						   %esp,<lockaddr> */
-  memcpy (&buf[i], (void *) &lockaddr, 4);
+  memcpy (&buf[i], (void *) &lockaddr->addr, 4);
   i += 4;
   i += push_opcode (&buf[i], "85 c0");		/* test %eax,%eax */
   i += push_opcode (&buf[i], "75 f2");		/* jne <again> */
@@ -1312,7 +1312,7 @@ i386_install_fast_tracepoint_jump_pad (struct tracepoint *tp,
   append_insns (&buildaddr, i, buf);
 
   buf[0] = 0xe8; /* call <reladdr> */
-  offset = collector - (buildaddr + sizeof (jump_insn));
+  offset = collector->addr - (buildaddr + sizeof (jump_insn));
   memcpy (buf + 1, &offset, 4);
   append_insns (&buildaddr, 5, buf);
   /* Clean up after the call.  */
@@ -1327,7 +1327,7 @@ i386_install_fast_tracepoint_jump_pad (struct tracepoint *tp,
   i = 0;
   i += push_opcode (&buf[i], "31 c0");		/* xor %eax,%eax */
   i += push_opcode (&buf[i], "a3");		/* mov %eax, lockaddr */
-  memcpy (buf + i, &lockaddr, 4);
+  memcpy (buf + i, &lockaddr->addr, 4);
   i += 4;
   append_insns (&buildaddr, i, buf);
 
@@ -1414,8 +1414,8 @@ i386_install_fast_tracepoint_jump_pad (struct tracepoint *tp,
 
 static int
 x86_install_fast_tracepoint_jump_pad (struct tracepoint *tp,
-				      CORE_ADDR collector,
-				      CORE_ADDR lockaddr,
+				      struct ipa_symbol *collector,
+				      struct ipa_symbol *lockaddr,
 				      CORE_ADDR *jump_entry,
 				      CORE_ADDR *trampoline,
 				      ULONGEST *trampoline_size,

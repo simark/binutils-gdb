@@ -33,6 +33,7 @@ struct emit_ops;
 struct buffer;
 struct process_info;
 struct tracepoint;
+struct ipa_symbol;
 
 /* This structure describes how to resume a particular thread (or all
    threads) based on the client's request.  If thread is -1, then this
@@ -360,8 +361,8 @@ struct target_ops
      to.  If an error occurs, the ERR may be used to pass on an error
      message.  */
   int (*install_fast_tracepoint_jump_pad) (struct tracepoint *tp,
-					   CORE_ADDR collector,
-					   CORE_ADDR lockaddr,
+					   struct ipa_symbol *collector,
+					   struct ipa_symbol *lockaddr,
 					   CORE_ADDR *jump_entry,
 					   CORE_ADDR *trampoline,
 					   ULONGEST *trampoline_size,
