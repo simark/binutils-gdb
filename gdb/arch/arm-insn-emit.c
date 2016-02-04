@@ -16,9 +16,9 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "common-defs.h"
-#include "arm-insn.h"
+#include "arm-insn-emit.h"
 
-/* See arm-insn.h.  */
+/* See arm-insn-emit.h.  */
 
 uint32_t
 arm_thumb_branch_relative_distance (CORE_ADDR from, CORE_ADDR to)
@@ -28,7 +28,7 @@ arm_thumb_branch_relative_distance (CORE_ADDR from, CORE_ADDR to)
   return to_ - from_ - 4;
 }
 
-/* See arm-insn.h.  */
+/* See arm-insn-emit.h.  */
 
 int
 arm_thumb_is_reachable (CORE_ADDR from, CORE_ADDR to)
@@ -38,7 +38,7 @@ arm_thumb_is_reachable (CORE_ADDR from, CORE_ADDR to)
   return !rel || !(rel + 1);
 }
 
-/* See arm-insn.h.  */
+/* See arm-insn-emit.h.  */
 
 uint16_t *
 arm_emit_thumb_branch_insn (uint16_t *mem, CORE_ADDR from, CORE_ADDR to)
@@ -64,7 +64,7 @@ arm_emit_thumb_branch_insn (uint16_t *mem, CORE_ADDR from, CORE_ADDR to)
   return mem;
 }
 
-/* See arm-insn.h.  */
+/* See arm-insn-emit.h.  */
 
 uint16_t *
 arm_emit_thumb_blx_insn (uint16_t *mem, int reg)
@@ -74,7 +74,7 @@ arm_emit_thumb_blx_insn (uint16_t *mem, int reg)
   return mem;
 }
 
-/* See arm-insn.h.  */
+/* See arm-insn-emit.h.  */
 
 uint16_t *
 arm_emit_thumb_load_insn (uint16_t *mem, int reg, uint32_t val)
@@ -108,7 +108,7 @@ arm_emit_thumb_load_insn (uint16_t *mem, int reg, uint32_t val)
   return mem;
 }
 
-/* See arm-insn.h.  */
+/* See arm-insn-emit.h.  */
 
 uint32_t
 arm_arm_branch_relative_distance (CORE_ADDR from, CORE_ADDR to)
@@ -116,7 +116,7 @@ arm_arm_branch_relative_distance (CORE_ADDR from, CORE_ADDR to)
   return (uint32_t) to - (uint32_t) from - 8;
 }
 
-/* See arm-insn.h.  */
+/* See arm-insn-emit.h.  */
 
 int
 arm_arm_is_reachable (CORE_ADDR from, CORE_ADDR to)
@@ -126,7 +126,7 @@ arm_arm_is_reachable (CORE_ADDR from, CORE_ADDR to)
   return !rel || !(rel + 1);
 }
 
-/* See arm-insn.h.  */
+/* See arm-insn-emit.h.  */
 
 uint32_t *
 arm_emit_arm_branch_insn (uint32_t *mem, CORE_ADDR from, CORE_ADDR to)
@@ -140,7 +140,7 @@ arm_emit_arm_branch_insn (uint32_t *mem, CORE_ADDR from, CORE_ADDR to)
   return mem;
 }
 
-/* See arm-insn.h.  */
+/* See arm-insn-emit.h.  */
 
 uint32_t *
 arm_emit_arm_blx_insn (uint32_t *mem, int reg)
@@ -149,7 +149,7 @@ arm_emit_arm_blx_insn (uint32_t *mem, int reg)
   return mem;
 }
 
-/* See arm-insn.h.  */
+/* See arm-insn-emit.h.  */
 
 uint32_t *
 arm_emit_arm_load_insn (uint32_t *mem, int reg, uint32_t val)

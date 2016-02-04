@@ -22,7 +22,7 @@
 #include "arch/arm.h"
 #include "arch/arm-linux.h"
 #include "arch/arm-get-next-pcs.h"
-#include "arch/arm-insn.h"
+#include "arch/arm-insn-emit.h"
 #include "linux-aarch32-low.h"
 
 #include <sys/uio.h>
