@@ -657,7 +657,9 @@ ALL_64_TARGET_OBS = \
 
 # All other target-dependent objects files (used with --enable-targets=all).
 ALL_TARGET_OBS = \
-	armbsd-tdep.o arm.o arm-linux.o arm-insn-emit.o arm-linux-tdep.o \
+	armbsd-tdep.o arm.o arm-linux.o arm-insn-emit.o \
+	arm-insn-reloc.o \
+	arm-linux-tdep.o \
 	arm-get-next-pcs.o arm-symbian-tdep.o \
 	armnbsd-tdep.o armobsd-tdep.o \
 	arm-tdep.o arm-wince-tdep.o \
@@ -988,7 +990,7 @@ common/common-exceptions.h target/target.h common/symbol.h \
 common/common-regcache.h fbsd-tdep.h nat/linux-personality.h \
 common/fileio.h nat/x86-linux.h nat/x86-linux-dregs.h nat/amd64-linux-siginfo.h\
 nat/linux-namespaces.h arch/arm.h common/gdb_sys_time.h arch/aarch64-insn.h \
-tid-parse.h arch/arm-insn-emit.h
+tid-parse.h arch/arm-insn-emit.h arch/arm-insn-reloc.h
 
 # Header files that already have srcdir in them, or which are in objdir.
 
@@ -2309,6 +2311,10 @@ arm-linux.o: ${srcdir}/arch/arm-linux.c
 
 arm-insn-emit.o: ${srcdir}/arch/arm-insn-emit.c
 	$(COMPILE) $(srcdir)/arch/arm-insn-emit.c
+	$(POSTCOMPILE)
+
+arm-insn-reloc.o: ${srcdir}/arch/arm-insn-reloc.c
+	$(COMPILE) $(srcdir)/arch/arm-insn-reloc.c
 	$(POSTCOMPILE)
 
 arm-get-next-pcs.o: ${srcdir}/arch/arm-get-next-pcs.c
