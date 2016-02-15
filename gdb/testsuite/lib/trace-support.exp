@@ -88,6 +88,19 @@ proc gdb_target_supports_trace { } {
     }
 }
 
+#
+# Returns true if the current architecture supports fast tracepoints.
+#
+
+proc gdb_target_supports_fast_trace { } {
+    if {[istarget "x86_64-*-*"]
+	|| [istarget "i\[34567\]86-*-*"]
+	|| [is_aarch64_target]} {
+	return 1
+    }
+
+    return 0;
+}
 
 #
 # Procedure: gdb_delete_tracepoints

@@ -218,6 +218,11 @@ if { [gdb_test "info sharedlibrary" ".*[file tail ${libipa}].*" "IPA loaded"] !=
     return 1
 }
 
+if {![gdb_target_supports_fast_trace]} {
+    unsupported "Target does not support fast tracepoints."
+    return 1
+}
+
 test_fast_tracepoints
 
 # Test conditional goto and simple expression.
