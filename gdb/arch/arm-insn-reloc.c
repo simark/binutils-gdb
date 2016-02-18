@@ -744,3 +744,109 @@ arm_relocate_insn_thumb_32bit (uint16_t insn1, uint16_t insn2,
 
   return err;
 }
+
+static int
+thumb_decode_pc_relative_16bit (uint16_t insn,
+				struct thumb_16bit_insn_reloc_visitor *visitor,
+				struct arm_insn_reloc_data *data)
+{
+  unsigned int rd = bits (insn, 8, 10);
+  unsigned int imm8 = bits (insn, 0, 7);
+
+  return visitor->pc_relative_16bit (insn, data, rd, imm8);
+}
+
+int
+arm_relocate_insn_thumb_16bit (uint16_t insn1,
+			       struct thumb_16bit_insn_reloc_visitor *visitor,
+			       struct arm_insn_reloc_data *data)
+{
+  unsigned short op_bit_12_15 = bits (insn1, 12, 15);
+  unsigned short op_bit_10_11 = bits (insn1, 10, 11);
+  int err = 0;
+
+  /* 16-bit thumb instructions.  */
+  switch (op_bit_12_15)
+    {
+      /* Shift (imme), add, subtract, move and compare.  */
+    case 0: case 1: case 2: case 3:
+      err = visitor->others (insn1, "shift/add/sub/mov/cmp", data);
+      break;
+    case 4:
+      switch (op_bit_10_11)
+	{
+	case 0: /* Data-processing */
+	  err = visitor->others (insn1, "data-processing", data);
+	  break;
+	case 1: /* Special data instructions and branch and exchange.  */
+	  {
+	    unsigned short op = bits (insn1, 7, 9);
+	    if (op == 6 || op == 7) /* BX or BLX */
+	      err = visitor->bx_blx_reg (insn1, data);
+	    else if (bits (insn1, 6, 7) != 0) /* ADD/MOV/CMP high registers.  */
+	      err = visitor->alu_reg (insn1, data);
+	    else
+	      err = visitor->others (insn1, "special data", data);
+	  }
+	  break;
+	default: /* LDR (literal) */
+	  err = visitor->load_literal (insn1, data);
+	}
+      break;
+    case 5: case 6: case 7: case 8: case 9: /* Load/Store single data item */
+      err = visitor->others (insn1, "ldr/str", data);
+      break;
+    case 10:
+      if (op_bit_10_11 < 2) /* Generate PC-relative address */
+	err = thumb_decode_pc_relative_16bit (insn1, visitor, data);
+      else /* Generate SP-relative address */
+	err = visitor->others (insn1, "sp-relative", data);
+      break;
+    case 11: /* Misc 16-bit instructions */
+      {
+	switch (bits (insn1, 8, 11))
+	  {
+	  case 1: case 3:  case 9: case 11: /* CBNZ, CBZ */
+	    err = visitor->cbnz_cbz (insn1, data);
+	    break;
+	  case 12: case 13: /* POP */
+	    if (bit (insn1, 8)) /* PC is in register list.  */
+	      err = visitor->pop_pc_16bit (insn1, data);
+	    else
+	      err = visitor->others (insn1, "pop", data);
+	    break;
+	  case 15: /* If-Then, and hints */
+	    if (bits (insn1, 0, 3))
+	      /* If-Then makes up to four following instructions conditional.
+		 IT instruction itself is not conditional, so handle it as a
+		 common unmodified instruction.  */
+	      err = visitor->others (insn1, "If-Then", data);
+	    else
+	      err = visitor->others (insn1, "hints", data);
+	    break;
+	  default:
+	    err = visitor->others (insn1, "misc", data);
+	  }
+      }
+      break;
+    case 12:
+      if (op_bit_10_11 < 2) /* Store multiple registers */
+	err = visitor->others (insn1, "stm", data);
+      else /* Load multiple registers */
+	err = visitor->others (insn1, "ldm", data);
+      break;
+    case 13: /* Conditional branch and supervisor call */
+      if (bits (insn1, 9, 11) != 7) /* conditional branch */
+	err = visitor->b (insn1, data);
+      else
+	err = visitor->svc (insn1, data);
+      break;
+    case 14: /* Unconditional branch */
+      err = visitor->b (insn1, data);
+      break;
+    default:
+      err = 1;
+    }
+
+  return err;
+}
