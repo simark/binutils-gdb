@@ -42,8 +42,39 @@ struct arm_insn_reloc_visitor
   int (*unpred) (uint32_t insn, struct arm_insn_reloc_data *data);
 };
 
+struct thumb_32bit_insn_reloc_visitor
+{
+  int (*alu_imm) (uint16_t insn1, uint16_t insn2,
+		  struct arm_insn_reloc_data *data);
+  int (*b_bl_blx) (uint16_t insn1, uint16_t insn2,
+		   struct arm_insn_reloc_data *data);
+  int (*block_xfer) (uint16_t insn1, uint16_t insn2,
+		     struct arm_insn_reloc_data *data);
+  int (*copro_load_store) (uint16_t insn1, uint16_t insn2,
+			   struct arm_insn_reloc_data *data);
+  int (*load_literal) (uint16_t insn1, uint16_t insn2,
+		       struct arm_insn_reloc_data *data, int size);
+  int (*load_reg_imm) (uint16_t insn1, uint16_t insn2,
+		       struct arm_insn_reloc_data *data, int writeback,
+		       int immed);
+  int (*others) (uint16_t insn1, uint16_t insn2, const char *iname,
+		 struct arm_insn_reloc_data *data);
+  int (*pc_relative_32bit) (uint16_t insn1, uint16_t insn2,
+			    struct arm_insn_reloc_data *data);
+  int (*preload) (uint16_t insn1, uint16_t insn2,
+		  struct arm_insn_reloc_data *data);
+  int (*undef) (uint16_t insn1, uint16_t insn2,
+		struct arm_insn_reloc_data *data);
+  int (*table_branch) (uint16_t insn1, uint16_t insn2,
+		       struct arm_insn_reloc_data *data);
+};
+
 extern int arm_relocate_insn_arm (uint32_t insn,
 				  struct arm_insn_reloc_visitor *visitor,
 				  struct arm_insn_reloc_data *data);
+extern int arm_relocate_insn_thumb_32bit (
+  uint16_t insn1, uint16_t insn2,
+  struct thumb_32bit_insn_reloc_visitor *visitor,
+  struct arm_insn_reloc_data *data);
 
 #endif /* ARM_INSN_RELOC_H */
