@@ -9766,8 +9766,6 @@ create_breakpoint (struct gdbarch *gdbarch,
   if (extra_string != NULL && *extra_string == '\0')
     extra_string = NULL;
 
-  tracepoint(gdb, cmd_break, arg, __FILE__, __LINE__);
-
   init_linespec_result (&canonical);
 
   TRY

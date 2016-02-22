@@ -34,7 +34,7 @@ int last_program_space_num = 0;
 struct program_space *program_spaces;
 
 /* Pointer to the current program space.  */
-static struct program_space *current_program_space;
+static struct program_space *_current_program_space;
 
 /* The last address space number assigned.  */
 static int highest_address_space_num;
@@ -227,14 +227,14 @@ set_current_program_space (struct program_space *pspace)
 	     pspace->ebfd ? bfd_get_filename(pspace->ebfd) : "", __FILE__,
 	     __LINE__, strings);
 
-  current_program_space = pspace;
+  _current_program_space = pspace;
 
   /* Different symbols change our view of the frame chain.  */
   reinit_frame_cache ();
 }
 
 struct program_space* get_current_program_space(void) {
-  return current_program_space;
+  return _current_program_space;
 }
 
 /* A cleanups callback, helper for save_current_program_space
@@ -544,5 +544,5 @@ initialize_progspace (void)
      modules have done that.  Do this before
      initialize_current_architecture, because that accesses exec_bfd,
      which in turn dereferences current_program_space.  */
-  current_program_space = add_program_space (new_address_space ());
+  _current_program_space = add_program_space (new_address_space ());
 }

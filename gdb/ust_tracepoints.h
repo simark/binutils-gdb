@@ -183,6 +183,48 @@ extern "C"
       )
   )
 
+  TRACEPOINT_EVENT(
+      gdb,
+      compunit_read_start,
+      TP_ARGS(int, name, char*, filename, int, line),
+      TP_FIELDS(
+	  ctf_integer(int, name, name)
+	  ctf_string(filename, filename)
+	  ctf_integer(int, line, line)
+      )
+  )
+
+  TRACEPOINT_EVENT(
+      gdb,
+      compunit_read_end,
+      TP_ARGS(int, name, char*, filename, int, line),
+      TP_FIELDS(
+	  ctf_integer(int, name, name)
+	  ctf_string(filename, filename)
+	  ctf_integer(int, line, line)
+      )
+  )
+
+  TRACEPOINT_EVENT(
+      gdb,
+      symbol_read_start,
+      TP_ARGS(char*, filename, int, line),
+      TP_FIELDS(
+	  ctf_string(filename, filename)
+	  ctf_integer(int, line, line)
+      )
+  )
+
+  TRACEPOINT_EVENT(
+      gdb,
+      symbol_read_end,
+      TP_ARGS(char*, filename, int, line),
+      TP_FIELDS(
+	  ctf_string(filename, filename)
+	  ctf_integer(int, line, line)
+      )
+  )
+
 #endif /* UST_TRACEPOINTS_H */
 
 #include <lttng/tracepoint-event.h>

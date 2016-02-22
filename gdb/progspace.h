@@ -226,6 +226,8 @@ struct program_space
 /* The list of all program spaces.  There's always at least one.  */
 extern struct program_space *program_spaces;
 
+#define current_program_space get_current_program_space()
+
 /* The current program space.  This is always non-null.  */
 //extern struct program_space *current_program_space;
 struct program_space* get_current_program_space(void);

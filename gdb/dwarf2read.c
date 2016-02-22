@@ -70,7 +70,7 @@
 #include "filestuff.h"
 #include "build-id.h"
 #include "namespace.h"
-
+#include "ust_tracepoints.h"
 #include <fcntl.h>
 #include <sys/types.h>
 
@@ -4252,7 +4252,7 @@ dwarf2_initialize_objfile (struct objfile *objfile)
 void
 dwarf2_build_psymtabs (struct objfile *objfile)
 {
-
+  printf("Build psymtabs for %s\n", objfile->original_name);
   if (objfile->global_psymbols.size == 0 && objfile->static_psymbols.size == 0)
     {
       init_psymbol_list (objfile, 1024);
@@ -6452,6 +6452,8 @@ dwarf2_build_psymtabs_hard (struct objfile *objfile)
   struct obstack temp_obstack;
   int i;
 
+  tracepoint(gdb, symbol_read_start, __FILE__, __LINE__);
+
   if (dwarf_read_debug)
     {
       fprintf_unfiltered (gdb_stdlog, "Building psymtabs of objfile %s ...\n",
@@ -6481,7 +6483,10 @@ dwarf2_build_psymtabs_hard (struct objfile *objfile)
     {
       struct dwarf2_per_cu_data *per_cu = dw2_get_cutu (i);
 
+      tracepoint(gdb, compunit_read_start, i,__FILE__, __LINE__);
       process_psymtab_comp_unit (per_cu, 0, language_minimal);
+      tracepoint(gdb, compunit_read_end, i,__FILE__, __LINE__);
+
     }
 
   /* This has to wait until we read the CUs, we need the list of DWOs.  */
@@ -6504,7 +6509,7 @@ dwarf2_build_psymtabs_hard (struct objfile *objfile)
   discard_cleanups (addrmap_cleanup);
 
   do_cleanups (back_to);
-
+  tracepoint(gdb, symbol_read_end, __FILE__, __LINE__);
   if (dwarf_read_debug)
     fprintf_unfiltered (gdb_stdlog, "Done building psymtabs of %s\n",
 			objfile_name (objfile));
