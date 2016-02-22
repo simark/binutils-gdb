@@ -6444,6 +6444,7 @@ set_partial_user (struct objfile *objfile)
 
 /* Build the partial symbol table by doing a quick pass through the
    .debug_info and .debug_abbrev sections.  */
+#include <sys/time.h>
 
 static void
 dwarf2_build_psymtabs_hard (struct objfile *objfile)
@@ -6451,6 +6452,10 @@ dwarf2_build_psymtabs_hard (struct objfile *objfile)
   struct cleanup *back_to, *addrmap_cleanup;
   struct obstack temp_obstack;
   int i;
+  struct timeval t1, t2;
+  double elapsedTime;
+
+  gettimeofday(&t1, NULL);
 
   tracepoint(gdb, symbol_read_start, __FILE__, __LINE__);
 
@@ -6510,6 +6515,12 @@ dwarf2_build_psymtabs_hard (struct objfile *objfile)
 
   do_cleanups (back_to);
   tracepoint(gdb, symbol_read_end, __FILE__, __LINE__);
+  gettimeofday(&t2, NULL);
+
+  elapsedTime = (t2.tv_sec - t1.tv_sec) * 1000.0;      // sec to ms
+      elapsedTime += (t2.tv_usec - t1.tv_usec) / 1000.0;   // us to ms
+   printf("%f ms\n", elapsedTime);
+
   if (dwarf_read_debug)
     fprintf_unfiltered (gdb_stdlog, "Done building psymtabs of %s\n",
 			objfile_name (objfile));
