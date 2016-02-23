@@ -20,6 +20,35 @@
 #include "arm.h"
 #include "arm-insn-reloc.h"
 
+
+/* See arch/arm-insn-reloc.h.  */
+
+int
+arm_insn_references_pc (uint32_t insn, uint32_t bitmask)
+{
+  uint32_t lowbit = 1;
+
+  while (bitmask != 0)
+    {
+      uint32_t mask;
+
+      for (; lowbit && (bitmask & lowbit) == 0; lowbit <<= 1)
+	;
+
+      if (!lowbit)
+	break;
+
+      mask = lowbit * 0xf;
+
+      if ((insn & mask) == mask)
+	return 1;
+
+      bitmask &= ~mask;
+    }
+
+  return 0;
+}
+
 static int
 arm_decode_misc_memhint_neon (uint32_t insn,
 			      struct arm_insn_reloc_visitor *visitor,

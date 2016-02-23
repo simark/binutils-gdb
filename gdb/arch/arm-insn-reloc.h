@@ -84,6 +84,14 @@ struct thumb_16bit_insn_reloc_visitor
   int (*svc) (uint16_t insn, struct arm_insn_reloc_data *data);
 };
 
+/* This function is used to concisely determine if an instruction INSN
+   references PC.  Register fields of interest in INSN should have the
+   corresponding fields of BITMASK set to 0b1111.  The function
+   returns return 1 if any of these fields in INSN reference the PC
+   (also 0b1111, r15), else it returns 0.  */
+
+extern int arm_insn_references_pc (uint32_t insn, uint32_t bitmask);
+
 extern int arm_relocate_insn_arm (uint32_t insn,
 				  struct arm_insn_reloc_visitor *visitor,
 				  struct arm_insn_reloc_data *data);
