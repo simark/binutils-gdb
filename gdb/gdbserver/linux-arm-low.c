@@ -23,6 +23,7 @@
 #include "arch/arm-linux.h"
 #include "arch/arm-get-next-pcs.h"
 #include "arch/arm-insn-emit.h"
+#include "arch/arm-insn-reloc.h"
 #include "linux-aarch32-low.h"
 
 #include <sys/uio.h>
@@ -1010,15 +1011,6 @@ arm_supports_tracepoints (void)
   return 1;
 }
 
-/* Local structure to pass information in and out of the relocate
-   helper functions  */
-struct relocate_insn
-{
-  CORE_ADDR *to;
-  CORE_ADDR oldloc;
-  int result; /* 0: copy unmodif, >0: handled, <0: not possible  */
-};
-
 static int
 append_insns (CORE_ADDR *to, size_t len, const unsigned char *buf)
 {
@@ -1033,6 +1025,8 @@ append_insns (CORE_ADDR *to, size_t len, const unsigned char *buf)
 static int
 append_insn_32 (CORE_ADDR *to, uint32_t insn)
 {
+  printf ("append_insn_32: Copying instruction %x to %s\n", insn,
+	  paddress (*to));
   return append_insns (to, 4, (unsigned char *) &insn);
 }
 
@@ -1042,484 +1036,246 @@ append_insn_16 (CORE_ADDR *to, uint16_t insn)
   return append_insns (to, 2, (unsigned char *) &insn);
 }
 
-static void
-arm_relocate_insn_arm (struct relocate_insn *rel, uint32_t insn)
+struct arm_insn_reloc_data
 {
-  unsigned int cond = bits (insn, 28, 31);
-  unsigned int op = (bits (insn, 25, 27) << 1) | bit (insn, 4);
+  union {
+    uint32_t arm;
+    uint16_t thumb32[2];
+  } insns;
+};
 
-  /* 1111 ---- ---- ---- ---- ---- ---- ---- :
-     unconditional instructions  */
-  if (cond == 15)
-    {
-      /* 1111 0--- ---- ---- ---- ---- ---- ---- :
-	 Memory hints, Advanced SIMD instructions, and
-	 miscellaneous instructions  */
-      if (bit (insn, 27) == 0)
-	{
-	  unsigned int op1 = bits (insn, 20, 26);
-	  unsigned int op2 = bits (insn, 4, 7);
-	  unsigned int rn = bits (insn, 16, 19);
+static int
+arm_reloc_others (uint32_t insn, const char *iname, struct arm_insn_reloc_data *data)
+{
+  data->insns.arm = insn;
 
-	  /* All variants we are interested in have rn == 15 - check first  */
-	  if (rn == 15)
-	    {
-	      /* 1111 0100 x101 1111 ---- ---- ---- ---- :
-		 PLI (literal)  */
-	      if ((op1 & 0x77) == 0x45)
-		rel->result = -1;
-	      /* 1111 0101 x101 1111 ---- ---- ---- ---- :
-		 PLD (literal)  */
-	      else if ((op1 & 0x77) == 0x55)
-		rel->result = -1;
-	      /* 1111 0110 x101 1111 ---- ---- ---0 ---- :
-		 PLI (register)  */
-	      else if ((op1 & 0x77) == 0x65 && (op2 & 0x1) == 0x0)
-		rel->result = -1;
-	      /* 1111 0111 xx01 1111 ---- ---- ---0 ---- :
-		 PLD, PLDW (register)  */
-	      else if ((op1 & 0x73) == 0x71 && (op2 & 0x1) == 0x0)
-		rel->result = -1;
-	    }
-	}
-      /* 1111 101- ---- ---- ---- ---- ---- ---- :
-	 BL, BLX (immediate)  */
-      else if (bits (insn, 25, 27) == 5)
-	rel->result = -1;
-      /* 1111 110x xxxx ---- ---- ---- ---- ---- :
-	 STC/STC2, LDC/LDC2 ( x != 00x0x)  */
-      else if (bits (insn, 25, 27) == 6 && (bits (insn, 20, 24) & 0x1A) != 0x0)
-	{
-	  unsigned int rn = bits (insn, 16, 19);
-	  if (rn == 15)
-	    rel->result = -1;
-	}
-    }
-
-  /* ---- 00x- ---- ---- ---- ---- ---x ---- :
-     Data-processing and miscellaneous instructions  */
-  else if (op <= 3)
-    {
-      unsigned int op1 = bits (insn, 20, 24);
-      unsigned int op2 = bits (insn, 4, 7);
-
-      if (bit (insn, 25) == 0)
-	{
-	  /* ---- 000x xxxx ---- ---- ---- xxx0 ---- :
-	     Data-processing (register) ( x != 10xx0 )  */
-	  if ((op1 & 0x19) != 0x10 && (op2 & 0x1) == 0x0)
-	    {
-	      unsigned int rm = bits (insn, 0, 3);
-	      unsigned int rn = bits (insn, 16, 19);
-
-	      /* ---- 000x xxxx nnnn ---- ---- xxx0 mmmm :
-		 AND,EOR,SUB,RSB,ADD,ADC,SBC,RSC,TST,TEQ,
-		 CMP,CMN,ORR,MOV,LSL,LSR,ASR,RRX,ROR,BIC,MVN  */
-	      if (rn == 15 || rm == 15)
-		rel->result = -1;
-	    }
-	  /* ---- 000x xxxx ---- ---- ---- xxx1 ---- :
-	     Data-processing (register-shifted register)  */
-	  else if ((op1 & 0x19) != 0x10 && (op2 & 0x9) == 0x1)
-	    {
-	      ;
-	    }
-
-	  /* ---- 0001 0xx0 ---- ---- ---- 0xxx ---- :
-	     Miscellaneous instructions  */
-	  else if ((op1 & 0x19) == 0x10 && (op2 & 0x8) == 0x0)
-	    {
-	      /* ---- 0001 0010 ---- ---- ---- 0011 ---- :
-		 BLX (register)  */
-	      if (bits (insn, 4, 6) == 3 && bits (insn, 21, 22) == 1) /* BLX */
-		rel->result = -1;
-	    }
-	  /* ---- 0001 0xx0 ---- ---- ---- 1xx0 ---- :
-	     Halfword multiply and multiply accumulate  */
-	  else if ((op1 & 0x19) == 0x10 && (op2 & 0x9) == 0x8)
-	    {
-	      ;
-	    }
-	  /* ---- 0000 xxxx ---- ---- ---- 1001 ---- :
-	     Multiply and multiply accumulate  */
-	  else if ((op1 & 0x10) == 0x00 && op2 == 0x9)
-	    {
-	      ;
-	    }
-	  /* ---- 0001 xxxx ---- ---- ---- 1001 ---- :
-	     Synchronization primitives  */
-	  else if ((op1 & 0x10) == 0x10 && op2 == 0x9)
-	    {
-	      ;
-	    }
-	  /* ---- 000x xxxx ---- ---- ---- 1xx1 ---- :
-	     Extra load/store instructions  */
-	  else if (op2 == 0xB || (op2 & 0xd) == 0xd)
-	    {
-	      unsigned int rn = bits (insn, 16, 19);
-	      /* ---- 000x xxxx 1111 ---- ---- 1xx1 ---- :
-		 STRH, LDRH, LDRD, LDRSB  */
-	      if (rn == 15)
-		rel->result = -1;
-	    }
-	}
-      else
-	{
-	  /* ---- 001x xxxx ---- ---- ---- ---- ---- :
-	     Data-processing (immediate)  */
-	  if ((op1 & 0x19) != 0x10)
-	    {
-	      unsigned int op = bits (insn, 21, 24);
-	      unsigned int op2 = bits (insn, 20, 24);
-	      unsigned int rn = bits (insn, 16, 19);
-
-	      if (rn == 15) /* Only check those with n == 15  */
-		{
-		  /* ---- 0010 xxxx 1111 ---- ---- ---- ---- :
-		     AND, EOR, ADR, RSB, ADR, ADC, SBC, RSC  */
-		  if (op <= 7)
-		    rel->result = -1;
-		  /* ---- 0011 0xx1 1111 ---- ---- ---- ---- :
-		     TST, TEQ, CMP, CMN  */
-		  else if ((op2 & 0x19) == 0x11)
-		    rel->result = -1;
-		  /* ---- 0011 1x0x 1111 ---- ---- ---- ---- :
-		     ORR, BIC  */
-		  else if (op == 0xC || op == 0xE)
-		    rel->result = -1;
-		  /* ---- 0011 1x1x 1111 ---- ---- ---- ---- :
-		     MOV, MVN  */
-		  else if (op == 0xD || op == 0xF)
-		    {
-		      ;
-		    }
-		}
-	    }
-	}
-    }
-
-  /* ---- 01A- ---- ---- ---- ---- ---B ---- :
-     Load/store word and unsigned byte  */
-  else if (op <= 6)
-    {
-      /* unsigned int a = bit (insn, 25); */
-      unsigned int rt = bits (insn, 12, 15);
-      unsigned int rn = bits (insn, 16, 19);
-      unsigned int op1 = bits (insn, 20, 24);
-      unsigned int op1_m1 = (op1 & 0x17);
-      unsigned int op1_m2 = (op1 & 0x5);
-
-      /* a and b can not both be 1 - no need to test for b  */
-
-      /* ---- 01Ax xxxx nnnn ---- ---- ---B ---- :
-	 STR (immediate), STR (register)  */
-      if (op1_m2 == 0x00 && op1_m1 != 0x02)
-	{
-	  if (rt == 15 || rn == 15)
-	    rel->result = -1;
-	}
-      /* ---- 01Ax xxxx nnnn ---- ---- ---B ---- :
-	 STRT  */
-      else if (op1_m1 == 0x02)
-	{
-	  if (rt == 15)
-	    rel->result = -1;
-	}
-      /* ---- 01Ax xxxx nnnn ---- ---- ---B ---- :
-	 LDR (literal)  */
-      else if (op1_m2 == 0x01 && op1_m1 != 0x03)
-	{
-	  if (rn == 15)
-	    rel->result = -1;
-	}
-      /* ---- 01Ax xxxx nnnn ---- ---- ---B ---- :
-	 LDRT  */
-      else if (op1_m1 == 0x03)
-	{
-	  ;
-	}
-      /* ---- 01Ax xxxx nnnn ---- ---- ---B ---- :
-	 STRB (immediate), STRB (register)  */
-      else if (op1_m2 == 0x04 && op1_m1 != 0x06)
-	{
-	  if (rn == 15)
-	    rel->result = -1;
-	}
-      /* ---- 01Ax xxxx nnnn ---- ---- ---B ---- :
-	 STRBT  */
-      else if (op1_m1 == 0x06)
-	{
-	  ;
-	}
-      /* ---- 01Ax xxxx nnnn ---- ---- ---B ---- :
-	 LDRB (immediate), LDRB (register)  */
-      else if (op1_m2 == 0x05 && op1_m1 != 0x07)
-	{
-	  if (rn == 15)
-	    rel->result = -1;
-	}
-      /* ---- 01Ax xxxx nnnn ---- ---- ---B ---- :
-	 LDRBT  */
-      else if (op1_m1 == 0x07)
-	{
-	  ;
-	}
-    }
-
-  /* ---- 011- ---- ---- ---- ---- ---1 ---- :
-     Media instructions  */
-  else if (op <= 7)
-    {
-      ;
-    }
-
-  /* ---- 10x- ---- ---- ---- ---- ---x ---- :
-     Branch, branch with link, and block data transfer  */
-  else if (op <= 11)
-    {
-      /* unsigned int op1 = bits (insn, 20, 24); */
-      unsigned int r = bit (insn, 15);
-      unsigned int rn = bits (insn, 16, 19);
-
-      /* ---- 101x xxxx nnnn r--- ---- ---- ---- :
-	 B, BL, BLX  */
-      if (bit (insn, 25))
-	rel->result = -1;
-      /* ---- 100x xxx0 nnnn r--- ---- ---- ---- :
-	 STMDA, STM, STMDB, STMIB  */
-      else if (bit (insn, 20) == 0)
-	{
-	  if (rn == 15 || r == 1)
-	    rel->result = -1;
-	}
-      /* ---- 100x xxx1 nnnn r--- ---- ---- ---- :
-	 LDMDA, LDM/LDMIALDMFD, LDMDB/LDMEA, LSMIB/LDMED  */
-      else
-	{
-	  ;
-	}
-    }
-
-  /* ---- 11x- ---- ---- ---- ---- ---x ---- :
-     Coprocessor instructions, and Supervisor Call  */
-  else
-    {
-      unsigned int op1 = bits (insn, 20, 25);
-      unsigned int rn = bits (insn, 16, 19);
-      unsigned int coproc = bits (insn, 8, 11);
-      /* unsigned int op = bit (insn, 4); */
-
-      /* ---- 1100 000x nnnn ---- xxxx ---x ---- :
-	 undefined  */
-      /* ---- 1111 xxxx nnnn ---- xxxx ---x ---- :
-	 SVC  */
-      if ((op1 & 0x3E) == 0 || (op1 & 0x30) == 0x30)
-	{
-	  ;
-	}
-      else if ((coproc & 0xE) != 0xA)
-	{
-	  /* ---- 1100 010x nnnn ---- xxxx ---x ---- :
-	     MCRR/MCRR2, MRRC/MRRC2  */
-	  if (op1 == 4 || op1 == 5)
-	    {
-	      ;
-	    }
-	  /* ---- 110x xxxx nnnn ---- xxxx ---x ---- :
-	     STC/STC2, LDC/LDC2  */
-	  else if ((op1 & 0x20) == 0)
-	    {
-	      if (rn == 15)
-		rel->result = -1;
-	    }
-	  /* ---- 1110 xxxx nnnn ---- xxxx ---x ---- :
-	     CDP/CDP2, MCR/MCR2, MRC/MRC2  */
-	  else if ((op1 & 0x30) == 0x20)
-	    {
-	      ;
-	    }
-	}
-      else
-	{
-	  /* ---- 110x xxxx nnnn ---- 101x ---x ---- :
-	     Extension register load/store instructions  */
-	  if ((op1 & 0x20) == 0 && (op1 & 0x3A) != 0)
-	    {
-	      /* ---- 110x xxxx 1111 ---- 101- ---- ---- :
-		 VSTM, VSTR, VLDM, VLDR  */
-	      if (rn == 15)
-		rel->result = -1;
-	    }
-	}
-    }
-  if (rel->to && rel->result == 0)
-    append_insn_32(rel->to, insn);
+  return 0;
 }
 
-
-static void
-arm_relocate_insn_thumb32 (struct relocate_insn *rel,
-			   uint16_t insn1, uint16_t insn2)
+static int
+arm_reloc_alu_imm (uint32_t insn, struct arm_insn_reloc_data *data)
 {
-  unsigned int op1 = bits (insn1, 11, 12);
-  unsigned int op2 = bits (insn1, 4, 10);
-  unsigned short op = bit (insn2, 15);
-
-  if (op1 == 1)
-    {
-      /* 1110 100x x1xx ---- x--- ---- ---- ---- :
-	 Load/store dual, load/store excl, table branch  */
-      if ((op2 & 0x64) == 0x04) /*   */
-	{
-	  unsigned int op1 = bits (insn1, 7, 8);
-	  unsigned int op2 = bits (insn1, 4, 5);
-	  /* 1110 1000 1101 ---- ---- ---- 000- ---- :
-	     TBB, TBH  */
-	  if (op1 == 1 && op2 == 1 && bits (insn2, 5, 7) == 0)
-	    rel->result = -1;
-	  /* 1110 1000 x111 1111 ---- ---- ---- ---- :
-	     LDRD (literal)  */
-	  /* 1110 1001 x1x1 1111 ---- ---- ---- ---- :
-	     LDRD (literal)  */
-	  else if (bits (insn1, 0, 3) == 15)
-	    {
-	      if (((op1 & 0x2) == 0 && op2 == 3)
-		  || ((op1 & 0x2) == 2 && (op2 & 1) == 1))
-		rel->result = -1;
-	    }
-	}
-      /* 1110 11xx xxxx ---- x--- ---- ---- ---- :
-	 Coprocessor, Advanced SIMD, and Floating-point instructions  */
-      else if ((op2 & 0x40) == 0x40)
-	{
-	  unsigned int op3 = bits (insn1, 4, 9);
-	  unsigned int coproc = bits (insn2, 9, 11);
-	  /* 1110 1101 xx01 nnnn ---- 101x ---x ---- :
-	     Extension register load/store instructions / VLDR  */
-	  if (coproc == 5 && (op3 & 0x33) == 0x11)
-	    rel->result = -1;
-	  /* 1110 110x xxx1 nnnn ---- xxxx ---x ---- :
-	     LDC/LDC2 (literal)  */
-	  else if (coproc != 5 && (op3 & 0x21) == 1 && (op3 & 0x3A) != 0
-		   && bits (insn1, 0, 3) == 0xF)
-	    rel->result = -1;
-	}
-    }
-
-  else if (op1 == 2)
-    {
-      /* 1111 0xxx xxxx ---- 1--- ---- ---- ---- :
-	 Branches and miscellaneous control  */
-      if (op)
-	{
-	  /* 1111 0xxx xxxx ---- 11xx xxxx ---- ---- :
-	     BL/BLX  */
-	  if (bit (insn2, 14))
-	    rel->result = -1;
-	  /* 1111 0xxx xxxx ---- 10x1 xxxx ---- ---- :
-	     B (unconditional)  */
-	  else if (bit (insn2, 12))
-	    rel->result = -1;
-	  /* 1111 0xxx xxxx ---- 10x0 xxxx ---- ---- :
-	     B (conditional)  */
-	  else if (bits (insn1, 7, 9) != 0x7)
-	    rel->result = -1;
-	}
-      /* 1111 0x1x xxxx ---- 0--- ---- ---- ---- :
-	 Data processing (plain binary immediate)  */
-      else if (bit (insn1, 9))
-	{
-	  int op = bits (insn1, 4, 8);
-	  int rn = bits (insn1, 0, 3);
-	  /* 1111 0x1x x0x0 1111 0--- ---- ---- ---- :
-	     ADR  */
-	  if ((op == 0 || op == 0xa) && rn == 0xf)
-	    rel->result = -1;
-	}
-    }
-
-  else
-    {
-      /* 1111 100x x001 ---- x--- ---- ---- ---- :
-	 Load byte, memory hints  */
-      if ((op2 & 0x67) == 0x1)
-	{
-	  /* 1111 100x x001 nnnn tttt xxxx xx-- ---- :
-	     LDRB (literal), PLD (literal),
-	     LDRSB (literal), PLI (immediate, literal)  */
-	  if (bits (insn1, 0, 3) == 15)
-	    rel->result = -1;
-	}
-      /* 1111 100x x011 ---- x--- ---- ---- ---- :
-	 Load halfword, memory hints  */
-      else if ((op2 & 0x67) == 0x3)
-	{
-	  /* 1111 100x x011 nnnn tttt xxxx xx-- ---- :
-	     LDRH (literal), LDRSH (literal)  */
-	  if (bits (insn1, 0, 3) == 15 && bits (insn2, 12, 15) != 15)
-	    rel->result = -1;
-	}
-      /* 1111 100x x101 ---- x--- ---- ---- ---- :
-	 Load word  */
-      else if ((op2 & 0x67) == 0x5)
-	{
-	  /* int rt = bits (insn2, 12, 15); */
-	  int rn = bits (insn1, 0, 3);
-	  /* 1111 100x x101 1111 ---- xxxx xx-- ---- :
-	     LDR (literal)  */
-	  if (rn == 15)
-	    rel->result = -1;
-	}
-      /* 1111 11xx xxxx ---- x--- ---- ---- ---- :
-	 Coprocessor, Advanced SIMD, and Floating-point instructions  */
-      else if ((op2 & 0x40) == 0x40)
-	{
-	  unsigned int op1_ = bits (insn1, 4, 9);
-
-	  /* 1111 110x xxx1 1111 ---- xxxx ---x ---- :
-	     LDC, LDC2 (literal)  */
-	  if ((bits (insn2, 8, 11) & 0xE) != 0xA && (op1_ & 0x21) == 0x01
-	      && (op1_ & 0x3A) != 0 && bits (insn1, 0, 3) == 15)
-	    rel->result = -1;
-	}
-    }
-
-  if (rel->to && rel->result == 0)
-    {
-      append_insn_16 (rel->to, insn1);
-      append_insn_16 (rel->to, insn2);
-    }
+  return 1;
 }
+
+static int
+arm_reloc_alu_reg (uint32_t insn, struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+arm_reloc_alu_shifted_reg (uint32_t insn, struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+arm_reloc_b_bl_blx (uint32_t insn, struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+arm_reloc_block_xfer (uint32_t insn, struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+arm_reloc_bx_blx_reg (uint32_t insn, struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+arm_reloc_copro_load_store (uint32_t insn, struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+arm_reloc_extra_ld_st (uint32_t insn, struct arm_insn_reloc_data *data,
+		 int unprivileged)
+{
+  return 1;
+}
+
+static int
+arm_reloc_ldr_str_ldrb_strb (uint32_t insn, struct arm_insn_reloc_data *data,
+			     int load, int size, int usermode)
+{
+  return 1;
+}
+
+static int
+arm_reloc_preload (uint32_t insn, struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+arm_reloc_preload_reg (uint32_t insn, struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+arm_reloc_svc (uint32_t insn, struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+arm_reloc_undef (uint32_t insn, struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+arm_reloc_unpred (uint32_t insn, struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+struct arm_insn_reloc_visitor arm_insn_reloc_visitor = {
+  arm_reloc_alu_imm,
+  arm_reloc_alu_reg,
+  arm_reloc_alu_shifted_reg,
+  arm_reloc_b_bl_blx,
+  arm_reloc_block_xfer,
+  arm_reloc_bx_blx_reg,
+  arm_reloc_copro_load_store,
+  arm_reloc_extra_ld_st,
+  arm_reloc_ldr_str_ldrb_strb,
+  arm_reloc_others,
+  arm_reloc_preload,
+  arm_reloc_preload_reg,
+  arm_reloc_svc,
+  arm_reloc_undef,
+  arm_reloc_unpred,
+};
 
 static int
 copy_instruction_arm (CORE_ADDR *to, CORE_ADDR from)
 {
-  struct relocate_insn rel;
-  CORE_ADDR before = *to;
   uint32_t insn;
-
-  rel.oldloc = from;
-  rel.to = to;
-  rel.result = 0;
+  struct arm_insn_reloc_data data;
+  int ret;
 
   if (read_inferior_memory (from, (unsigned char *) &insn, sizeof (insn)) != 0)
     return 1;
 
-  arm_relocate_insn_arm (&rel, insn);
+  ret = arm_relocate_insn_arm (insn, &arm_insn_reloc_visitor, &data);
+  if (ret != 0)
+    return -1;
 
-  return (before == *to) ? -1 : 1;
+  append_insn_32(to, data.insns.arm);
+  return 0;
 }
+
+static int
+thumb32_reloc_others (uint16_t insn1, uint16_t insn2, const char *iname,
+		      struct arm_insn_reloc_data *data)
+{
+  data->insns.thumb32[0] = insn1;
+  data->insns.thumb32[1] = insn2;
+
+  return 0;
+}
+
+static int
+thumb32_reloc_alu_imm (uint16_t insn1, uint16_t insn2,
+		       struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+thumb32_reloc_b_bl_blx (uint16_t insn1, uint16_t insn2,
+			struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+thumb32_reloc_block_xfer (uint16_t insn1, uint16_t insn2,
+			  struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+thumb32_reloc_copro_load_store (uint16_t insn1, uint16_t insn2,
+				struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+thumb32_reloc_load_literal (uint16_t insn1, uint16_t insn2,
+			    struct arm_insn_reloc_data *data, int size)
+{
+  return 1;
+}
+
+static int
+thumb32_reloc_load_reg_imm (uint16_t insn1, uint16_t insn2,
+			    struct arm_insn_reloc_data *data, int writeback,
+			    int immed)
+{
+  return 1;
+}
+
+static int
+thumb32_reloc_pc_relative_32bit (uint16_t insn1, uint16_t insn2,
+				 struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+thumb32_reloc_preload (uint16_t insn1, uint16_t insn2,
+		       struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+thumb32_reloc_undef (uint16_t insn1, uint16_t insn2,
+		     struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+thumb32_reloc_table_branch (uint16_t insn1, uint16_t insn2,
+			    struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+
+struct thumb_32bit_insn_reloc_visitor thumb_32bit_insns_reloc_visitor = {
+  thumb32_reloc_alu_imm,
+  thumb32_reloc_b_bl_blx,
+  thumb32_reloc_block_xfer,
+  thumb32_reloc_copro_load_store,
+  thumb32_reloc_load_literal,
+  thumb32_reloc_load_reg_imm,
+  thumb32_reloc_others,
+  thumb32_reloc_pc_relative_32bit,
+  thumb32_reloc_preload,
+  thumb32_reloc_undef,
+  thumb32_reloc_table_branch,
+};
 
 static int
 copy_instruction_thumb32 (CORE_ADDR *to, CORE_ADDR from)
 {
-  struct relocate_insn rel;
-  CORE_ADDR before = *to;
   uint16_t insn1, insn2;
-
-  rel.oldloc = from;
-  rel.to = to;
-  rel.result = 0;
+  struct arm_insn_reloc_data data;
+  int ret;
 
   if (read_inferior_memory (from, (unsigned char *) &insn1,
 			    sizeof (insn1)) != 0)
@@ -1529,9 +1285,15 @@ copy_instruction_thumb32 (CORE_ADDR *to, CORE_ADDR from)
 			    sizeof (insn2)) != 0)
     return 1;
 
-  arm_relocate_insn_thumb32 (&rel, insn1, insn2);
+  ret = arm_relocate_insn_thumb_32bit (insn1, insn2,
+				       &thumb_32bit_insns_reloc_visitor, &data);
+  ;
+  if (ret != 0)
+    return -1;
 
-  return (before == *to) ? -1 : 1;
+  append_insn_16 (to, data.insns.thumb32[0]);
+  append_insn_16 (to, data.insns.thumb32[1]);
+  return 0;
 }
 
 static int
@@ -1572,6 +1334,9 @@ arm_install_fast_tracepoint_jump_pad_arm (struct tracepoint *tp,
   const uint32_t kuser_get_tls = 0xffff0fe0;
   const uint32_t push_r0 = 0xe52d0004;
   uint32_t *ptr = (uint32_t *) buf;
+
+  printf ("arm_install_fast_tracepoint_jump_pad_arm, buildaddr = %s\n",
+	  paddress (buildaddr));
 
   /* Push VFP registers if available.  */
   if (tdesc == tdesc_arm_with_neon || tdesc == tdesc_arm_with_vfpv3)
