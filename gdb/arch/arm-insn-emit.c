@@ -129,13 +129,40 @@ arm_arm_is_reachable (CORE_ADDR from, CORE_ADDR to)
 /* See arm-insn-emit.h.  */
 
 uint32_t *
-arm_emit_arm_branch_insn (uint32_t *mem, CORE_ADDR from, CORE_ADDR to)
+arm_emit_arm_branch_insn (uint32_t *mem, CORE_ADDR from, CORE_ADDR to, int link)
 {
   uint32_t imm24 = arm_arm_branch_relative_distance (from, to);
+  uint32_t insn;
 
   imm24 >>= 2;
   imm24 &= 0x00FFFFFF;
-  *mem++ = 0xEA000000 | imm24;
+  insn = 0xEA000000 | imm24;
+
+  if (link)
+    insn |= (1 << 24);
+
+  *mem++ = insn;
+
+  return mem;
+}
+
+/* See arm-insn-emit.h.  */
+
+uint32_t *
+arm_emit_arm_blx_imm_insn (uint32_t *mem, CORE_ADDR from, CORE_ADDR to)
+{
+  const uint32_t distance = arm_arm_branch_relative_distance (from, to);
+  uint32_t imm24, insn;
+
+  imm24 = distance >> 2;
+  imm24 &= 0x00FFFFFF;
+  insn = 0xFA000000 | imm24;
+
+  /* If the distance is not a multiple of four, set the H bit.  */
+  if (distance & 0x2)
+    insn |= (1 << 24);
+
+  *mem++ = insn;
 
   return mem;
 }
