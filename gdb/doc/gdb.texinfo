@@ -36824,6 +36824,11 @@ These are the currently defined stub features and their properties:
 @tab @samp{-}
 @tab No
 
+@item @samp{TracepointKinds}
+@tab No
+@tab @samp{-}
+@tab No
+
 @end multitable
 
 These are the currently defined stub features, in more detail:
@@ -37045,6 +37050,9 @@ The remote stub understands the @samp{QThreadEvents} packet.
 
 @item no-resumed
 The remote stub reports the @samp{N} stop reply.
+
+@item TracepointKinds
+The remote stub reports the @samp{:K} kind parameter for @samp{QTDP} packets.
 
 @end table
 
@@ -37556,7 +37564,8 @@ details of XML target descriptions for each architecture.
 @subsubsection @acronym{ARM} Breakpoint Kinds
 @cindex breakpoint kinds, @acronym{ARM}
 
-These breakpoint kinds are defined for the @samp{Z0} and @samp{Z1} packets.
+These breakpoint kinds are defined for the @samp{Z0}, @samp{Z1}
+and @samp{QTDP} packets.
 
 @table @r
 
@@ -37636,7 +37645,7 @@ tracepoints (@pxref{Tracepoints}).
 
 @table @samp
 
-@item QTDP:@var{n}:@var{addr}:@var{ena}:@var{step}:@var{pass}[:F@var{flen}][:X@var{len},@var{bytes}]@r{[}-@r{]}
+@item QTDP:@var{n}:@var{addr}:@var{ena}:@var{step}:@var{pass}[:F@var{flen}][:X@var{len},@var{bytes}][:K@var{kind}]@r{[}-@r{]}
 @cindex @samp{QTDP} packet
 Create a new tracepoint, number @var{n}, at @var{addr}.  If @var{ena}
 is @samp{E}, then the tracepoint is enabled; if it is @samp{D}, then
@@ -37647,9 +37656,12 @@ the number of bytes that the target should copy elsewhere to make room
 for the tracepoint.  If an @samp{X} is present, it introduces a
 tracepoint condition, which consists of a hexadecimal length, followed
 by a comma and hex-encoded bytes, in a manner similar to action
-encodings as described below.  If the trailing @samp{-} is present,
-further @samp{QTDP} packets will follow to specify this tracepoint's
-actions.
+encodings as described below. If a @samp{K} is present, it
+indicates a target specific breakpoint length.  E.g., the arm and mips
+can insert either a 2 or 4 byte breakpoint. Some architectures have
+additional meanings for kind see @ref{Architecture-Specific Protocol
+Details}. If the trailing @samp{-} is present, further @samp{QTDP}
+packets will follow to specify this tracepoint's actions.
 
 Replies:
 @table @samp

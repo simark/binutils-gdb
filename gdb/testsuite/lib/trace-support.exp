@@ -39,6 +39,9 @@ if [is_amd64_regs_target] {
 } elseif [istarget "powerpc*-*-*"] {
     set fpreg "r31"
     set spreg "r1"
+} elseif [is_aarch32_target] {
+    set fpreg "sp"
+    set spreg "sp"
     set pcreg "pc"
 } elseif { [istarget "s390*-*-*"] } {
     set fpreg "r11"

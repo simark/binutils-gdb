@@ -741,6 +741,11 @@ struct tracepoint
   /* Link to the next tracepoint in the list.  */
   struct tracepoint *next;
 
+  /* Optional kind of the breakpoint to be used
+   note this can mean different things for different archs as z0
+   breakpoint command */
+  uint32_t kind;
+
 #ifndef IN_PROCESS_AGENT
   /* The list of actions to take when the tracepoint triggers, in
      string/packet form.  */
@@ -1807,6 +1812,7 @@ add_tracepoint (int num, CORE_ADDR addr)
   tpoint->compiled_cond = 0;
   tpoint->handle = NULL;
   tpoint->next = NULL;
+  tpoint->kind = 0;
 
   /* Find a place to insert this tracepoint into list in order to keep
      the tracepoint list still in the ascending order.  There may be
@@ -2478,6 +2484,7 @@ cmd_qtdp (char *own_buf)
   ULONGEST num;
   ULONGEST addr;
   ULONGEST count;
+  ULONGEST kind;
   struct tracepoint *tpoint;
   char *actparm;
   char *packet = own_buf;
@@ -2544,6 +2551,12 @@ cmd_qtdp (char *own_buf)
 	      tpoint->cond = gdb_parse_agent_expr (&actparm);
 	      packet = actparm;
 	    }
+	  else if (*packet == 'K')
+	    {
+	      ++packet;
+	      packet = unpack_varlen_hex (packet, &kind);
+	      tpoint->kind = kind;
+	    }
 	  else if (*packet == '-')
 	    break;
 	  else if (*packet == '\0')
@@ -2558,11 +2571,13 @@ cmd_qtdp (char *own_buf)
 	}
 
       trace_debug ("Defined %stracepoint %d at 0x%s, "
-		   "enabled %d step %" PRIu64 " pass %" PRIu64,
+		   "enabled %d step %" PRIu64 " pass %" PRIu64
+		   " kind %" PRIu32,
 		   tpoint->type == fast_tracepoint ? "fast "
 		   : tpoint->type == static_tracepoint ? "static " : "",
 		   tpoint->number, paddress (tpoint->address), tpoint->enabled,
-		   tpoint->step_count, tpoint->pass_count);
+		   tpoint->step_count,tpoint->pass_count,
+		   tpoint->kind);
     }
   else if (tpoint)
     add_tracepoint_action (tpoint, packet);
@@ -3144,9 +3159,17 @@ install_tracepoint (struct tracepoint *tpoint, char *own_buf)
       /* Tracepoints are installed as memory breakpoints.  Just go
 	 ahead and install the trap.  The breakpoints module
 	 handles duplicated breakpoints, and the memory read
-	 routine handles un-patching traps from memory reads.  */
-      tpoint->handle = set_breakpoint_at (tpoint->address,
+	 routine handles un-patching traps from memory reads.
+         If tracepoint kind is not set, use the default values
+         otherwise what was set from the gdb client will be used.*/
+      if (tpoint->kind == 0)
+	  tpoint->handle = set_breakpoint_at (tpoint->address,
 					  tracepoint_handler);
+      else
+	  tpoint->handle =
+	    set_breakpoint_at_with_kind (tpoint->address,
+					 tracepoint_handler,
+					 tpoint->kind);
     }
   else if (tpoint->type == fast_tracepoint || tpoint->type == static_tracepoint)
     {
@@ -3247,8 +3270,16 @@ cmd_qtstart (char *packet)
 	     ahead and install the trap.  The breakpoints module
 	     handles duplicated breakpoints, and the memory read
 	     routine handles un-patching traps from memory reads.  */
-	  tpoint->handle = set_breakpoint_at (tpoint->address,
-					      tracepoint_handler);
+
+
+	  if (tpoint->kind == 0)
+	    tpoint->handle = set_breakpoint_at (tpoint->address,
+						tracepoint_handler);
+	  else
+	    tpoint->handle =
+	      set_breakpoint_at_with_kind (tpoint->address,
+					   tracepoint_handler,
+					   tpoint->kind);
 	}
       else if (tpoint->type == fast_tracepoint
 	       || tpoint->type == static_tracepoint)
