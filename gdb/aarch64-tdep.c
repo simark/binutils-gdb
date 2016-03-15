@@ -57,6 +57,7 @@
 
 #include "features/aarch64.c"
 
+#include "arch/arm-insn-utils.h"
 #include "arch/aarch64-insn.h"
 
 #include "opcode/aarch64.h"
@@ -2492,7 +2493,7 @@ aarch64_displaced_step_ldr_literal (const int32_t offset, const int is_sw,
   struct aarch64_displaced_step_data *dsd
     = (struct aarch64_displaced_step_data *) data;
   CORE_ADDR address = data->insn_addr + offset;
-  struct aarch64_memory_operand zero = { MEMORY_OPERAND_OFFSET, 0 };
+  struct arm_memory_operand zero = { MEMORY_OPERAND_OFFSET, 0 };
 
   regcache_cooked_write_unsigned (dsd->regs, AARCH64_X0_REGNUM + rt,
 				  address);

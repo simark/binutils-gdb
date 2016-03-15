@@ -117,36 +117,6 @@ struct aarch64_register
   int is64;
 };
 
-enum aarch64_memory_operand_type
-{
-  MEMORY_OPERAND_OFFSET,
-  MEMORY_OPERAND_PREINDEX,
-  MEMORY_OPERAND_POSTINDEX,
-};
-
-/* Representation of a memory operand, used for load and store
-   instructions.
-
-   The types correspond to the following variants:
-
-   MEMORY_OPERAND_OFFSET:    LDR rt, [rn, #offset]
-   MEMORY_OPERAND_PREINDEX:  LDR rt, [rn, #index]!
-   MEMORY_OPERAND_POSTINDEX: LDR rt, [rn], #index  */
-
-struct aarch64_memory_operand
-{
-  /* Type of the operand.  */
-  enum aarch64_memory_operand_type type;
-
-  /* Index from the base register.  */
-  int32_t index;
-};
-
-/* Helper macro to mask and shift a value into a bitfield.  */
-
-#define ENCODE(val, size, offset) \
-  ((uint32_t) ((val & ((1ULL << size) - 1)) << offset))
-
 int aarch64_decode_adr (CORE_ADDR addr, uint32_t insn, int *is_adrp,
 			unsigned *rd, int32_t *offset);
 
@@ -319,6 +289,6 @@ int aarch64_emit_load_store (uint32_t *buf, uint32_t size,
 			     enum aarch64_opcodes opcode,
 			     struct aarch64_register rt,
 			     struct aarch64_register rn,
-			     struct aarch64_memory_operand operand);
+			     struct arm_memory_operand operand);
 
 #endif
