@@ -36,6 +36,10 @@ int arm_thumb_is_reachable (CORE_ADDR from, CORE_ADDR to);
 uint16_t * arm_emit_thumb_branch_insn (uint16_t *mem, CORE_ADDR from,
 				       CORE_ADDR to);
 
+// TODO: to replace with Antoine's new functions.
+uint16_t *
+arm_emit_thumb_bl_blx_imm_insn (uint16_t *mem, CORE_ADDR from, CORE_ADDR to,
+				int exchange);
 /* Make a thumb mode blx (branch/link/exchange) instruction that branches to
    the address stored in register REG.  */
 

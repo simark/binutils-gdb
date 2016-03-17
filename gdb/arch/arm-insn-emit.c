@@ -64,6 +64,35 @@ arm_emit_thumb_branch_insn (uint16_t *mem, CORE_ADDR from, CORE_ADDR to)
   return mem;
 }
 
+uint16_t *
+arm_emit_thumb_bl_blx_imm_insn (uint16_t *mem, CORE_ADDR from, CORE_ADDR to,
+				int exchange)
+{
+  uint32_t imm10, imm11;
+  uint32_t s, j1, j2;
+  uint32_t rel;
+
+  rel = arm_thumb_branch_relative_distance (from, to);
+  rel >>= 1;
+
+  imm11 = rel & 0x7ff;
+  rel >>= 11;
+  imm10 = rel & 0x3ff;
+  rel >>= 10;
+  s  = (rel > 3);
+  j1 = s ^ !(rel & 2);
+  j2 = s ^ !(rel & 1);
+
+  mem[0] = 0xF000 | (s << 10) | imm10;
+  mem[1] = 0xC000 | (j1 << 13) | (j2 << 11) | imm11;
+
+  if (!exchange) {
+      mem[1] |= (1 << 12);
+  }
+
+  return mem;
+}
+
 /* See arm-insn-emit.h.  */
 
 uint16_t *
