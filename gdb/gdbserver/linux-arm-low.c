@@ -1042,6 +1042,9 @@ struct arm_insn_reloc_data
     uint32_t arm;
     uint16_t thumb32[2];
   } insns;
+
+  /* Error message to return to the client in case the relocation fails.  */
+  const char *err;
 };
 
 static int
@@ -1157,18 +1160,28 @@ struct arm_insn_reloc_visitor arm_insn_reloc_visitor = {
 };
 
 static int
-copy_instruction_arm (CORE_ADDR *to, CORE_ADDR from)
+copy_instruction_arm (CORE_ADDR *to, CORE_ADDR from, const char **err)
 {
   uint32_t insn;
   struct arm_insn_reloc_data data;
   int ret;
 
   if (read_inferior_memory (from, (unsigned char *) &insn, sizeof (insn)) != 0)
-    return 1;
+    {
+      *err = "Error reading memory while relocating instruction.";
+      return 1;
+    }
+
+  /* Set a default generic error message, which can be overriden by the
+     relocation functions.  */
+  data.err = "Error relocating instruction";
 
   ret = arm_relocate_insn_arm (insn, &arm_insn_reloc_visitor, &data);
   if (ret != 0)
-    return -1;
+    {
+      *err = data.err;
+      return 1;
+    }
 
   append_insn_32(to, data.insns.arm);
   return 0;
@@ -1271,7 +1284,7 @@ struct thumb_32bit_insn_reloc_visitor thumb_32bit_insns_reloc_visitor = {
 };
 
 static int
-copy_instruction_thumb32 (CORE_ADDR *to, CORE_ADDR from)
+copy_instruction_thumb32 (CORE_ADDR *to, CORE_ADDR from, const char **err)
 {
   uint16_t insn1, insn2;
   struct arm_insn_reloc_data data;
@@ -1279,17 +1292,30 @@ copy_instruction_thumb32 (CORE_ADDR *to, CORE_ADDR from)
 
   if (read_inferior_memory (from, (unsigned char *) &insn1,
 			    sizeof (insn1)) != 0)
-    return 1;
+    {
+      *err = "Error reading memory while relocating instruction.";
+      return 1;
+    }
 
   if (read_inferior_memory (from + sizeof (insn1), (unsigned char *) &insn2,
 			    sizeof (insn2)) != 0)
-    return 1;
+    {
+      *err = "Error reading memory while relocating instruction.";
+      return 1;
+    }
+
+  /* Set a default generic error message, which can be overriden by the
+     relocation functions.  */
+  data.err = "Error relocating instruction";
 
   ret = arm_relocate_insn_thumb_32bit (insn1, insn2,
 				       &thumb_32bit_insns_reloc_visitor, &data);
   ;
   if (ret != 0)
-    return -1;
+    {
+      *err = data.err;
+      return 1;
+    }
 
   append_insn_16 (to, data.insns.thumb32[0]);
   append_insn_16 (to, data.insns.thumb32[1]);
@@ -1334,6 +1360,7 @@ arm_install_fast_tracepoint_jump_pad_arm (struct tracepoint *tp,
   const uint32_t kuser_get_tls = 0xffff0fe0;
   const uint32_t push_r0 = 0xe52d0004;
   uint32_t *ptr = (uint32_t *) buf;
+  const char *copy_insn_err;
 
   printf ("arm_install_fast_tracepoint_jump_pad_arm, buildaddr = %s\n",
 	  paddress (buildaddr));
@@ -1463,11 +1490,9 @@ arm_install_fast_tracepoint_jump_pad_arm (struct tracepoint *tp,
   append_insns (&buildaddr, (uint32_t) ptr - (uint32_t) buf, buf);
 
   tp->adjusted_insn_addr = buildaddr;
-  if (copy_instruction_arm (&buildaddr, tp->address) < 0)
+  if (copy_instruction_arm (&buildaddr, tp->address, &copy_insn_err) != 0)
     {
-      strcpy (err,
-	      "E.Cannot move instruction to jump_pad. "
-	      "Not possible to relocate.");
+      sprintf (err, "E%s", copy_insn_err);
       return 1;
     }
   tp->adjusted_insn_addr = buildaddr;
@@ -1530,6 +1555,7 @@ arm_install_fast_tracepoint_jump_pad_thumb2 (struct tracepoint *tp,
   const uint32_t kuser_get_tls = 0xffff0fe0;
   uint16_t *ptr = (uint16_t *) buf;
   const uint16_t push_r0 = 0xb401;
+  const char *copy_insn_err;
 
   /* Push VFP registers if available.  */
   if (tdesc == tdesc_arm_with_neon || tdesc == tdesc_arm_with_vfpv3)
@@ -1685,11 +1711,9 @@ arm_install_fast_tracepoint_jump_pad_thumb2 (struct tracepoint *tp,
   append_insns (&buildaddr, (uint32_t) ptr - (uint32_t) buf, buf);
 
   tp->adjusted_insn_addr = buildaddr;
-  if (copy_instruction_thumb32 (&buildaddr, tp->address) < 0)
+  if (copy_instruction_thumb32 (&buildaddr, tp->address, &copy_insn_err) != 0)
     {
-      strcpy (err,
-	      "E.Cannot move instruction to jump_pad."
-	      " Not possible to relocate.");
+      sprintf (err, "E%s", copy_insn_err);
       return 1;
     }
   tp->adjusted_insn_addr_end = buildaddr;
