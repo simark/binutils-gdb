@@ -283,7 +283,7 @@ struct dwarf2_per_objfile
      original data was compressed using 'dwz -m'.  */
   struct dwz_file *dwz_file;
 
-  /* A flag indicating wether this objfile has a section loaded at a
+  /* A flag indicating whether this objfile has a section loaded at a
      VMA of 0.  */
   int has_section_at_zero;
 
