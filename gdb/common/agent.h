@@ -36,6 +36,11 @@ int agent_look_up_symbols (void *);
 
 int agent_loaded_p (void);
 
+/* Reset the internal data about the agent, when the debugged process
+   disappears (e.g. exits or is detached).  */
+
+void agent_clear (void);
+
 extern int debug_agent;
 
 extern int use_agent;

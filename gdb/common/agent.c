@@ -79,6 +79,14 @@ agent_loaded_p (void)
   return all_agent_symbols_looked_up;
 }
 
+/* See agent.h.  */
+
+void
+agent_clear (void)
+{
+  all_agent_symbols_looked_up = 0;
+}
+
 /* Look up all symbols needed by agent.  Return 0 if all the symbols are
    found, return non-zero otherwise.  */
 

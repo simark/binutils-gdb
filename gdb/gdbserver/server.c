@@ -2781,7 +2781,11 @@ resume (struct thread_resume *actions, size_t num_actions)
 
       if (last_status.kind == TARGET_WAITKIND_EXITED
           || last_status.kind == TARGET_WAITKIND_SIGNALLED)
-        mourn_inferior (find_process_pid (ptid_get_pid (last_ptid)));
+	{
+	  agent_clear ();
+	  mourn_inferior (find_process_pid (ptid_get_pid (last_ptid)));
+	}
+
     }
 }
 
@@ -4000,6 +4004,8 @@ process_serial_event (void)
 	      join_inferior (pid);
 	      exit (0);
 	    }
+
+	  agent_clear ();
 	}
       break;
     case '!':
@@ -4392,6 +4398,7 @@ handle_target_event (int err, gdb_client_data client_data)
       if (last_status.kind == TARGET_WAITKIND_EXITED
 	  || last_status.kind == TARGET_WAITKIND_SIGNALLED)
 	{
+	  agent_clear ();
 	  mark_breakpoints_out (process);
 	  mourn_inferior (process);
 	}

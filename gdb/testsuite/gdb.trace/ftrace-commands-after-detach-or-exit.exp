@@ -1,0 +1,154 @@
+# Copyright 2015-2016 Free Software Foundation, Inc.
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+load_lib "trace-support.exp"
+
+standard_testfile
+set executable $testfile
+set expfile $testfile.exp
+
+# Some targets have leading underscores on assembly symbols.
+set options [list debug [gdb_target_symbol_prefix_flags]]
+
+# Check that the target supports trace.
+if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile executable $options] != "" } {
+    untested "Couldn't compile test program"
+    return -1
+}
+
+clean_restart ${testfile}
+
+if ![runto_main] {
+    fail "Can't run to main to check for trace support"
+    return -1
+}
+
+if $use_gdb_stub {
+    # This test is about testing commands after detaching from a process or
+    # after letting a process exit, so it doesn't make sense to run it if the
+    # target is stub-like.
+    unsupported "This test is not supported for GDB stub targets."
+    return -1
+}
+
+if ![gdb_target_supports_trace] {
+    unsupported "target does not support trace"
+    return -1
+}
+
+# Compile the test case with the in-process agent library.
+set libipa [get_in_proc_agent]
+gdb_load_shlibs $libipa
+
+lappend options shlib=$libipa
+
+if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile executable $options] != "" } {
+    untested "Couldn't compile test program with in-process agent library"
+    return -1
+}
+
+# This test makes sure that gdbserver doesn't crash when doing a tstatus
+# after detaching from a previously traced process.
+proc test_tstatus_after_detach { } {
+    with_test_prefix "tstatus after detach" {
+        global executable binfile decimal
+        clean_restart ${executable}
+
+        if ![runto_main] {
+            fail "Can't run to main."
+            return -1
+        }
+
+        gdb_test "ftrace set_point" "Fast tracepoint .*"
+        gdb_test_no_output "tstart"
+        gdb_test_no_output "tstop"
+        gdb_test "detach" "Detaching from program: $binfile, process $decimal"
+        gdb_test "tstatus" "Trace stopped by a tstop command.*"
+    }
+}
+
+# This test makes sure that gdbserver doesn't crash when doing a tstatus
+# after a previously traced process has exited.
+proc test_tstatus_after_exit { } {
+    with_test_prefix "tstatus after exit" {
+        global executable
+        clean_restart ${executable}
+
+        if ![runto_main] {
+	    fail "Can't run to main."
+	    return -1
+        }
+
+        gdb_test "ftrace set_point" "Fast tracepoint .*"
+        gdb_test_no_output "tstart"
+        gdb_test_no_output "tstop"
+        gdb_continue_to_end
+        gdb_test "tstatus" "Trace stopped by a tstop command.*"
+    }
+}
+
+# This test makes sure that gdbserver doesn't crash when doing a enable
+# or disable after detaching from a previously traced process.
+proc test_enabledisable_after_detach { } {
+    with_test_prefix "enable/disable after detach" {
+        global executable binfile decimal
+        clean_restart ${executable}
+
+        if ![runto_main] {
+            fail "Can't run to main."
+            return -1
+        }
+
+        gdb_test "ftrace set_point" "Fast tracepoint .*"
+        gdb_test_no_output "tstart"
+        gdb_test_no_output "tstop"
+        gdb_test "detach" "Detaching from program: $binfile, process $decimal"
+        gdb_test_no_output "disable"
+        gdb_test_no_output "enable"
+    }
+}
+
+# This test makes sure that gdbserver doesn't crash when doing a enable
+# or disable after a previously traced process has exited.
+proc test_enabledisable_after_exit { } {
+    with_test_prefix "enable/disable after exit" {
+	global executable
+	clean_restart ${executable}
+
+	if ![runto_main] {
+	    fail "Can't run to main."
+	    return -1
+	}
+
+	gdb_test "ftrace set_point" "Fast tracepoint .*"
+	gdb_test_no_output "tstart"
+	gdb_test_no_output "tstop"
+	gdb_continue_to_end
+	gdb_test_no_output "disable"
+	gdb_test_no_output "enable"
+    }
+}
+
+foreach nonstop { "off" "on" } {
+    save_vars { GDBFLAGS } {
+        append GDBFLAGS " -ex \"set non-stop $nonstop\""
+
+        with_test_prefix "non-stop=$nonstop" {
+            test_tstatus_after_detach
+            test_tstatus_after_exit
+            test_enabledisable_after_detach
+            test_enabledisable_after_exit
+        }
+    }
+}
