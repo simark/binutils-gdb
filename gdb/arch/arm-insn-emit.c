@@ -64,6 +64,35 @@ arm_emit_thumb_branch_insn (uint16_t *mem, CORE_ADDR from, CORE_ADDR to)
   return mem;
 }
 
+
+uint16_t *
+arm_emit_thumb_branch_cond_insn (uint16_t *mem, CORE_ADDR from, CORE_ADDR to, int cond)
+{
+  uint32_t imm6, imm11;
+  uint32_t s, j1, j2;
+  uint32_t rel;
+
+  cond = cond & 0xf;
+
+  rel = arm_thumb_branch_relative_distance (from, to);
+  rel >>= 1;
+
+  imm11 = rel & 0x7ff;
+  rel >>= 11;
+  imm6 = rel & 0x3f;
+  rel >>= 6;
+  s  = (rel > 3);
+  j1 = rel & 0x1;
+  rel >>= 1;
+  j2 = rel & 0x1;
+  rel >>= 1;
+
+  mem[0] = 0xF000 | (s << 10) | (cond << 6) |imm6;
+  mem[1] = 0x8000 | (j1 << 13) | (j2 << 11) | imm11;
+
+  return mem;
+}
+
 uint16_t *
 arm_emit_thumb_bl_blx_imm_insn (uint16_t *mem, CORE_ADDR from, CORE_ADDR to,
 				int exchange)
@@ -71,6 +100,11 @@ arm_emit_thumb_bl_blx_imm_insn (uint16_t *mem, CORE_ADDR from, CORE_ADDR to,
   uint32_t imm10, imm11;
   uint32_t s, j1, j2;
   uint32_t rel;
+
+  if (exchange)
+    {
+      from = from & ~0x3;
+    }
 
   rel = arm_thumb_branch_relative_distance (from, to);
   rel >>= 1;
@@ -158,14 +192,14 @@ arm_arm_is_reachable (CORE_ADDR from, CORE_ADDR to)
 /* See arm-insn-emit.h.  */
 
 uint32_t *
-arm_emit_arm_branch_insn (uint32_t *mem, CORE_ADDR from, CORE_ADDR to, int link)
+arm_emit_arm_branch_insn (uint32_t *mem, CORE_ADDR from, CORE_ADDR to, int cond, int link)
 {
   uint32_t imm24 = arm_arm_branch_relative_distance (from, to);
   uint32_t insn;
 
   imm24 >>= 2;
   imm24 &= 0x00FFFFFF;
-  insn = 0xEA000000 | imm24;
+  insn = ((cond << 28) & 0xf0000000) | 0x0A000000 | imm24;
 
   if (link)
     insn |= (1 << 24);

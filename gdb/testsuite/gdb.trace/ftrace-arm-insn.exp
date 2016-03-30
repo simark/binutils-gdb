@@ -78,6 +78,7 @@ proc do_test { insn } {
 }
 
 do_test arm_b_imm
+do_test arm_b_imm_cond
 do_test arm_bl_imm
 do_test arm_blx_imm
 do_test arm_bx_reg

@@ -32,6 +32,29 @@ arm_b_imm_jump:
 	# return to the function
 	b arm_b_imm_jump_back
 
+/* arm b imm with a false condition */
+.arm
+.type func_arm_b_imm_cond, STT_FUNC
+.global func_arm_b_imm_cond
+func_arm_b_imm_cond:
+	prologue
+
+	/* Force a false condition.  If we mess up the condition and the branch is
+	   taken, the magic number won't get written and the test will fail.  */
+	mov r0, 0
+	cmp r0, 0
+
+insn_arm_b_imm_cond:
+	bne arm_b_imm_jump_cond
+
+	ldr r0, =global_variable
+	ldr r1, =magic_number
+	ldr r1, [r1]
+	str r1, [r0]
+
+arm_b_imm_jump_cond:
+
+	epilogue
 
 /* arm bl imm */
 .arm
@@ -229,19 +252,15 @@ func_thumb_b_imm_cond:
 	cmp r0, r0
 
 insn_thumb_b_imm_cond:
-	beq.w thumb_b_imm_cond_jump
+	bne.w thumb_b_imm_cond_jump
 
-thumb_b_imm_cond_jump_back:
-	epilogue
-
-thumb_b_imm_cond_jump:
 	ldr r0, =global_variable
 	ldr r1, =magic_number
 	ldr r1, [r1]
 	str r1, [r0]
 
-	# return to the function
-	b thumb_b_imm_cond_jump_back
+thumb_b_imm_cond_jump:
+	epilogue
 
 
 /* thumb bl imm */

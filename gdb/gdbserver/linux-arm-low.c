@@ -1120,7 +1120,7 @@ arm_reloc_b_bl_blx (uint32_t insn, struct arm_insn_reloc_data *data)
       int link = exchange || bit (insn, 24);
 
       arm_emit_arm_branch_insn (&data->insns.arm, data->new_loc, absolute_dest,
-				link);
+				cond, link);
     }
 
   return 0;
@@ -1324,12 +1324,18 @@ thumb32_reloc_b_bl_blx (uint16_t insn1, uint16_t insn2,
 	  /* Encoding T3, with a condition and smaller immediate.  */
 
 	  int imm6 = bits (insn1, 0, 5);
+	  int cond = bits (insn1, 6, 9);
 
 	  offset = ((imm11 << 1) |
 		    (imm6 << 12) |
 		    (j1 << 18) |
 		    (j2 << 19) |
 		    (s << 20)) + 4;
+
+	  absolute_dest = data->orig_loc + offset;
+
+	  arm_emit_thumb_branch_cond_insn(data->insns.thumb32, data->new_loc,
+				     absolute_dest, cond);
 	}
       else
 	{
@@ -1341,12 +1347,13 @@ thumb32_reloc_b_bl_blx (uint16_t insn1, uint16_t insn2,
 		    (i2 << 22) |
 		    (i1 << 23) |
 		    (s << 24)) + 4;
+
+	  absolute_dest = data->orig_loc + offset;
+
+	  arm_emit_thumb_branch_insn(data->insns.thumb32, data->new_loc,
+				     absolute_dest);
 	}
 
-      absolute_dest = data->orig_loc + offset;
-
-      arm_emit_thumb_branch_insn(data->insns.thumb32, data->new_loc,
-				 absolute_dest);
       ret = 0;
     }
   else
@@ -1754,7 +1761,7 @@ arm_install_fast_tracepoint_jump_pad_arm (struct tracepoint *tp,
     }
   /* b <tp_addr + 4>  */
   (void) arm_emit_arm_branch_insn ((uint32_t *) buf, buildaddr,
-				   tp->address + 4, 0);
+				   tp->address + 4, 0, INST_AL);
   append_insns (&buildaddr, 4, buf);
 
   /* write tp instr.  */
@@ -1767,7 +1774,7 @@ arm_install_fast_tracepoint_jump_pad_arm (struct tracepoint *tp,
       return 1;
     }
   (void) arm_emit_arm_branch_insn ((uint32_t *) jjump_pad_insn, tp->address,
-				   *jump_entry, 0);
+				   *jump_entry, INST_AL, 0);
   *jjump_pad_insn_size = 4;
   *jump_entry = buildaddr;
 

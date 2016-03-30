@@ -52,6 +52,7 @@ int global_variable;
    }
 
 DEF_TEST_FN (arm_b_imm)
+DEF_TEST_FN (arm_b_imm_cond)
 DEF_TEST_FN (arm_bl_imm)
 DEF_TEST_FN (arm_blx_imm)
 DEF_TEST_FN (arm_bx_reg)
@@ -72,6 +73,7 @@ int
 main (void)
 {
   test_arm_b_imm ();
+  test_arm_b_imm_cond ();
   test_arm_bl_imm ();
   test_arm_blx_imm ();
   test_arm_bx_reg ();

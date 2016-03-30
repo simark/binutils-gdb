@@ -35,6 +35,8 @@ int arm_thumb_is_reachable (CORE_ADDR from, CORE_ADDR to);
 
 uint16_t * arm_emit_thumb_branch_insn (uint16_t *mem, CORE_ADDR from,
 				       CORE_ADDR to);
+uint16_t * arm_emit_thumb_branch_cond_insn (uint16_t *mem, CORE_ADDR from,
+					    CORE_ADDR to, int cond);
 
 // TODO: to replace with Antoine's new functions.
 uint16_t *
@@ -62,7 +64,7 @@ int arm_arm_is_reachable (CORE_ADDR from, CORE_ADDR to);
 /* Make an arm mode relative branch instruction that jumps from FROM to TO.  */
 
 uint32_t * arm_emit_arm_branch_insn (uint32_t *mem, CORE_ADDR from,
-				     CORE_ADDR to, int link);
+				     CORE_ADDR to, int cond, int link);
 
 /* Make an arm mode relative branch-link-exchange instruction that jumps from
    FROM to TO.  */
