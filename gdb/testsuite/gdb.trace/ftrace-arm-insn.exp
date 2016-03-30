@@ -1,0 +1,87 @@
+# Copyright 2015 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+load_lib "trace-support.exp"
+
+standard_testfile
+set expfile $testfile.exp
+
+# Some targets have leading underscores on assembly symbols.
+set additional_flags [gdb_target_symbol_prefix_flags]
+
+set c_file "$srcdir/$subdir/$srcfile"
+set asm_file "$srcdir/$subdir/$testfile.S"
+set source_files "${c_file} ${asm_file}"
+
+if [prepare_for_testing $expfile $binfile $source_files \
+	[list debug $additional_flags]] {
+    untested "failed to prepare for trace tests"
+    return -1
+}
+
+if ![runto_main] {
+    fail "Can't run to main to check for trace support"
+    return -1
+}
+
+set libipa [get_in_proc_agent]
+gdb_load_shlibs $libipa
+
+if ![runto_main] {
+    untested "could not run to main"
+    return -1
+}
+
+if { [gdb_compile $source_files $binfile \
+	  executable [list debug $additional_flags shlib=$libipa] ] != "" } {
+    untested "failed to compile ftrace tests"
+    return -1
+}
+
+proc do_test { insn } {
+    global binfile
+    global decimal
+    global hex
+    global asm_file
+
+    with_test_prefix $insn {
+        # The test function for this instruction
+        set test_function "test_${insn}"
+        # The instruction on which we want to install a fast tracepoint
+        set insn_location "insn_${insn}"
+
+        clean_restart ${binfile}
+        if ![runto $test_function] {
+            fail "Can't run to $test_function"
+            return 0
+        }
+        gdb_breakpoint "break_here"
+
+        gdb_test "ftrace ${insn_location}" "Fast tracepoint ${decimal} at ${hex}: file ${asm_file}, line ${decimal}."
+        gdb_test_no_output "tstart"
+        gdb_continue "break_here"
+        gdb_test_no_output "tstop"
+        gdb_test "tstatus" ".*Collected 1 trace frames.*"
+    }
+}
+
+do_test arm_b_imm
+do_test arm_bl_imm
+do_test arm_blx_imm
+do_test arm_bx_reg
+do_test arm_blx_reg
+do_test arm_ldm
+do_test arm_ldm_pc
+do_test arm_stm
