@@ -1013,3 +1013,104 @@ arm_emit_thumb_vpop (uint16_t *buf,
 				| ENCODE (bits (rs, 0, 3), 4, 12)
 				| ENCODE (2 * len, 8, 0));
 }
+
+/* Load immediate */
+int
+arm_emit_arm_ldr_insn (uint32_t *buf, enum arm_condition_codes cond,
+		       uint8_t rt,
+		       uint8_t rn,
+		       struct arm_memory_operand operand)
+{
+  switch (operand.type)
+    {
+    case MEMORY_OPERAND_OFFSET:
+      {
+	/* Offset P 1 , W 0 */
+	/* Pre indexed P 1 W 1 */
+	/* post indexed P 0 W1 */
+	/* U 1 if offset add */
+	/* U 0 if offset sub */
+
+	/* Offset P1 , W0.  */
+	uint32_t offset_op = ENCODE (1, 1, 24) | ENCODE (0, 1, 21);
+
+	/* U1 if offset added or omitted, U0 if subtracted.  */
+	if (operand.index >= 0)
+	  offset_op |= ENCODE (1, 1, 23);
+
+	return arm_emit_arm_insn (buf, ARM_LDR
+				  | ENCODE (cond, 4, 28)
+				  | offset_op
+				  | ENCODE (rn, 4, 16)
+				  | ENCODE (rt, 4, 12)
+				  | ENCODE (ABS (operand.index), 12, 0)
+				  );
+      }
+    default:
+      {
+	return 0;
+      }
+    }
+}
+
+/* Load immediate encoding T3 */
+int
+arm_emit_thumb_ldr_insn (uint32_t *buf,
+			 uint8_t rt,
+			 uint8_t rn,
+			 struct arm_memory_operand operand)
+{
+  switch (operand.type)
+    {
+      /* This encoding only allows offset.  */
+    case MEMORY_OPERAND_OFFSET:
+      {
+	return arm_emit_arm_insn (buf, THUMB_LDR
+				  | ENCODE (rn, 4, 16)
+				  | ENCODE (rt, 4, 12)
+				  | ENCODE (operand.index, 12, 0)
+				  );
+      }
+    default:
+      {
+	return 0;
+      }
+    }
+}
+
+  /*
+SBFX
+Signed Bitfield Extract extracts any number of adjacent bits at any position from a register, sign-extends them to
+the size of the register, and writes the result to the destination register.
+   */
+
+
+int
+arm_emit_arm_sbfx_insn (uint32_t *buf, enum arm_condition_codes cond,
+			uint8_t rd,
+			uint8_t rn,
+			uint32_t lsb,
+			uint32_t width)
+{
+  return arm_emit_arm_insn (buf, ARM_SBFX
+			    | ENCODE (cond, 4, 28)
+			    | ENCODE ((width - 1), 5, 16)
+			    | ENCODE (rd, 4, 12)
+			    | ENCODE (lsb, 5, 7)
+			    | ENCODE (rn, 4, 0));
+}
+
+int
+arm_emit_thumb_sbfx_insn (uint32_t *buf,
+			  uint8_t rd,
+			  uint8_t rn,
+			  uint32_t lsb,
+			  uint32_t width)
+{
+  return arm_emit_arm_insn (buf, THUMB_SBFX
+			    | ENCODE (rn, 4, 16)
+			    | ENCODE (bits (lsb, 2, 4), 3, 12)
+			    | ENCODE (rd, 4, 8)
+			    | ENCODE (bits (lsb, 0, 1), 2, 6)
+			    | ENCODE ((width - 1), 5, 0));
+}

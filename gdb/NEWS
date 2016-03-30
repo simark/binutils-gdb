@@ -58,6 +58,9 @@ maint info line-table REGEXP
 
 *** Changes in GDB 7.11
 
+* Support for fast tracepoints on ARM linux was added in GDBServer,
+  without JIT compiling fast tracepoint's conditional expression.
+
 * Support for tracepoints on ARM linux was added in GDBServer.
 
 * GDB now supports debugging kernel-based threads on FreeBSD.

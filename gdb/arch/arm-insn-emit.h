@@ -28,6 +28,7 @@ enum arm_opcodes
     ARM_BLX     = 0x012FFF30,
     ARM_CMP     = 0x03500000,
     ARM_DMB     = 0xF57FF050,
+    ARM_LDR     = 0x04100000,
     ARM_LDREX   = 0x01900F9F,
     ARM_MOV     = 0x01A00000,
     ARM_MOVT    = 0x03400000,
@@ -38,6 +39,7 @@ enum arm_opcodes
     ARM_POP_A2  = 0x049D0004,
     ARM_PUSH_A1 = 0x092D0000,
     ARM_PUSH_A2 = 0x052D0004,
+    ARM_SBFX    = 0x07A00050,
     ARM_STR     = 0x04000000,
     ARM_STREX   = 0x01800F90,
     ARM_VPOP    = 0x0CBD0B00,
@@ -56,6 +58,7 @@ enum thumb_opcodes
     THUMB_CMP     = 0x2800,
     THUMB_CMPW    = 0xF1B00F00,
     THUMB_DMB     = 0xF3BF8F50,
+    THUMB_LDR     = 0xF1A00000,
     THUMB_LDREX   = 0xE8500F00,
     THUMB_MOVT    = 0xF2C00000,
     THUMB_MOVW    = 0xF2400000,
@@ -66,6 +69,7 @@ enum thumb_opcodes
     THUMB_POPW    = 0xE8BD0000,
     THUMB_PUSH_T1 = 0xB400,
     THUMB_PUSH_T2 = 0xE92D0000,
+    THUMB_SBFX    = 0XF3400000,
     THUMB_STR     = 0x6000,
     THUMB_STREX   = 0xE8400000,
     THUMB_VPOP    = 0xECBD0B00,
@@ -92,6 +96,7 @@ struct arm_operand
 enum arm_condition_codes
 {
   NE = 0x1, /* NE. Not Equal.  */
+  LT = 0xB, /* Signed less than.  */
   AL = 0xE, /* AL. Always.  */
 };
 
@@ -797,5 +802,28 @@ int arm_emit_thumb_vpop (uint16_t *buf,
 			 uint8_t rs,
 			 uint8_t len);
 
+int arm_emit_arm_ldr_insn (uint32_t *buf, enum arm_condition_codes cond,
+			   uint8_t rt,
+			   uint8_t rn,
+			   struct arm_memory_operand operand);
 
+/* Load immediate encoding T3 */
+int arm_emit_thumb_ldr_insn (uint32_t *buf,
+			     uint8_t rt,
+			     uint8_t rn,
+			     struct arm_memory_operand operand);
+
+
+int arm_emit_arm_sbfx_insn (uint32_t *buf, enum arm_condition_codes cond,
+			    uint8_t rd,
+			    uint8_t rn,
+			    uint32_t lsb,
+			    uint32_t width);
+
+/* Emit thumb SBFX, encoding T1.  */
+int arm_emit_thumb_sbfx_insn (uint32_t *buf,
+			      uint8_t rd,
+			      uint8_t rn,
+			      uint32_t lsb,
+			      uint32_t width);
 #endif /* ARM_INSN_H */
