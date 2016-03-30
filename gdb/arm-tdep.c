@@ -6980,9 +6980,13 @@ install_pc_relative (struct arm_insn_reloc_data *data, int rd)
 }
 
 static int
-thumb_copy_pc_relative_16bit (struct arm_insn_reloc_data *data, int rd,
-			      unsigned int imm)
+thumb_copy_pc_relative_16bit (uint16_t insn, struct arm_insn_reloc_data *data,
+			      int rd, unsigned int imm)
 {
+  if (debug_displaced)
+    fprintf_unfiltered (gdb_stdlog,
+			"displaced: copying thumb adr r%d, #%d insn %.4x\n",
+			rd, imm, insn);
 
   /* Encoding T2: ADDS Rd, #imm */
   data->dsc->modinsn[0] = (0x3000 | (rd << 8) | imm);
@@ -6998,12 +7002,7 @@ thumb_decode_pc_relative_16bit (uint16_t insn, struct arm_insn_reloc_data *data)
   unsigned int rd = bits (insn, 8, 10);
   unsigned int imm8 = bits (insn, 0, 7);
 
-  if (debug_displaced)
-    fprintf_unfiltered (gdb_stdlog,
-			"displaced: copying thumb adr r%d, #%d insn %.4x\n",
-			rd, imm8, insn);
-
-  return thumb_copy_pc_relative_16bit (data, rd, imm8);
+  return thumb_copy_pc_relative_16bit (insn, data, rd, imm8);
 }
 
 static int
