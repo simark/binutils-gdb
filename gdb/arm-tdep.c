@@ -4537,6 +4537,21 @@ struct thumb_32bit_insn_reloc_visitor
 		       struct arm_insn_reloc_data *data);
 };
 
+struct thumb_16bit_insn_reloc_visitor
+{
+  int (*alu_reg) (uint16_t insn, struct arm_insn_reloc_data *data);
+  int (*b) (uint16_t insn, struct arm_insn_reloc_data *data);
+  int (*bx_blx_reg) (uint16_t insn, struct arm_insn_reloc_data *data);
+  int (*cbnz_cbz) (uint16_t insn1, struct arm_insn_reloc_data *data);
+  int (*load_literal) (uint16_t insn1, struct arm_insn_reloc_data *data);
+  int (*others) (uint16_t insn, const char *iname,
+		 struct arm_insn_reloc_data *data);
+  int (*pc_relative_16bit) (uint16_t insn, struct arm_insn_reloc_data *data,
+			    int rd, unsigned int imm);
+  int (*pop_pc_16bit) (uint16_t insn, struct arm_insn_reloc_data *data);
+  int (*svc) (uint16_t insn, struct arm_insn_reloc_data *data);
+};
+
 /* Helper for register reads for displaced stepping.  In particular, this
    returns the PC as it would be seen by the instruction at its original
    location.  */
@@ -7058,12 +7073,14 @@ thumb_copy_pc_relative_16bit (uint16_t insn, struct arm_insn_reloc_data *data,
 }
 
 static int
-thumb_decode_pc_relative_16bit (uint16_t insn, struct arm_insn_reloc_data *data)
+thumb_decode_pc_relative_16bit (uint16_t insn,
+				struct thumb_16bit_insn_reloc_visitor *visitor,
+				struct arm_insn_reloc_data *data)
 {
   unsigned int rd = bits (insn, 8, 10);
   unsigned int imm8 = bits (insn, 0, 7);
 
-  return thumb_copy_pc_relative_16bit (insn, data, rd, imm8);
+  return visitor->pc_relative_16bit (insn, data, rd, imm8);
 }
 
 static int
@@ -7328,7 +7345,9 @@ thumb_copy_pop_pc_16bit (uint16_t insn1, struct arm_insn_reloc_data *data)
 }
 
 static int
-thumb_16bit_relocate_insn (uint16_t insn1, struct arm_insn_reloc_data *data)
+thumb_16bit_relocate_insn (uint16_t insn1,
+			   struct thumb_16bit_insn_reloc_visitor *visitor,
+			   struct arm_insn_reloc_data *data)
 {
   unsigned short op_bit_12_15 = bits (insn1, 12, 15);
   unsigned short op_bit_10_11 = bits (insn1, 10, 11);
@@ -7339,79 +7358,79 @@ thumb_16bit_relocate_insn (uint16_t insn1, struct arm_insn_reloc_data *data)
     {
       /* Shift (imme), add, subtract, move and compare.  */
     case 0: case 1: case 2: case 3:
-      err = thumb_copy_unmodified_16bit (insn1, "shift/add/sub/mov/cmp", data);
+      err = visitor->others (insn1, "shift/add/sub/mov/cmp", data);
       break;
     case 4:
       switch (op_bit_10_11)
 	{
 	case 0: /* Data-processing */
-	  err = thumb_copy_unmodified_16bit (insn1, "data-processing", data);
+	  err = visitor->others (insn1, "data-processing", data);
 	  break;
 	case 1: /* Special data instructions and branch and exchange.  */
 	  {
 	    unsigned short op = bits (insn1, 7, 9);
 	    if (op == 6 || op == 7) /* BX or BLX */
-	      err = thumb_copy_bx_blx_reg (insn1, data);
+	      err = visitor->bx_blx_reg (insn1, data);
 	    else if (bits (insn1, 6, 7) != 0) /* ADD/MOV/CMP high registers.  */
-	      err = thumb_copy_alu_reg (insn1, data);
+	      err = visitor->alu_reg (insn1, data);
 	    else
-	      err = thumb_copy_unmodified_16bit (insn1, "special data", data);
+	      err = visitor->others (insn1, "special data", data);
 	  }
 	  break;
 	default: /* LDR (literal) */
-	  err = thumb_copy_16bit_ldr_literal (insn1, data);
+	  err = visitor->load_literal (insn1, data);
 	}
       break;
     case 5: case 6: case 7: case 8: case 9: /* Load/Store single data item */
-      err = thumb_copy_unmodified_16bit (insn1, "ldr/str", data);
+      err = visitor->others (insn1, "ldr/str", data);
       break;
     case 10:
       if (op_bit_10_11 < 2) /* Generate PC-relative address */
-	err = thumb_decode_pc_relative_16bit (insn1, data);
+	err = thumb_decode_pc_relative_16bit (insn1, visitor, data);
       else /* Generate SP-relative address */
-	err = thumb_copy_unmodified_16bit (insn1, "sp-relative", data);
+	err = visitor->others (insn1, "sp-relative", data);
       break;
     case 11: /* Misc 16-bit instructions */
       {
 	switch (bits (insn1, 8, 11))
 	  {
 	  case 1: case 3:  case 9: case 11: /* CBNZ, CBZ */
-	    err = thumb_copy_cbnz_cbz (insn1, data);
+	    err = visitor->cbnz_cbz (insn1, data);
 	    break;
 	  case 12: case 13: /* POP */
 	    if (bit (insn1, 8)) /* PC is in register list.  */
-	      err = thumb_copy_pop_pc_16bit (insn1, data);
+	      err = visitor->pop_pc_16bit (insn1, data);
 	    else
-	      err = thumb_copy_unmodified_16bit (insn1, "pop", data);
+	      err = visitor->others (insn1, "pop", data);
 	    break;
 	  case 15: /* If-Then, and hints */
 	    if (bits (insn1, 0, 3))
 	      /* If-Then makes up to four following instructions conditional.
 		 IT instruction itself is not conditional, so handle it as a
 		 common unmodified instruction.  */
-	      err = thumb_copy_unmodified_16bit (insn1, "If-Then", data);
+	      err = visitor->others (insn1, "If-Then", data);
 	    else
-	      err = thumb_copy_unmodified_16bit (insn1, "hints", data);
+	      err = visitor->others (insn1, "hints", data);
 	    break;
 	  default:
-	    err = thumb_copy_unmodified_16bit (insn1, "misc", data);
+	    err = visitor->others (insn1, "misc", data);
 	  }
       }
       break;
     case 12:
       if (op_bit_10_11 < 2) /* Store multiple registers */
-	err = thumb_copy_unmodified_16bit (insn1, "stm", data);
+	err = visitor->others (insn1, "stm", data);
       else /* Load multiple registers */
-	err = thumb_copy_unmodified_16bit (insn1, "ldm", data);
+	err = visitor->others (insn1, "ldm", data);
       break;
     case 13: /* Conditional branch and supervisor call */
       if (bits (insn1, 9, 11) != 7) /* conditional branch */
-	err = thumb_copy_b (insn1, data);
+	err = visitor->b (insn1, data);
       else
-	err = thumb_copy_svc (insn1, data);
+	err = visitor->svc (insn1, data);
       break;
     case 14: /* Unconditional branch */
-      err = thumb_copy_b (insn1, data);
+      err = visitor->b (insn1, data);
       break;
     default:
       err = 1;
@@ -7671,6 +7690,19 @@ static struct thumb_32bit_insn_reloc_visitor thumb_32bit_insn_reloc_visitor =
   thumb_32bit_copy_undef,
 };
 
+static struct thumb_16bit_insn_reloc_visitor thumb_16bit_insn_reloc_visitor =
+{
+  thumb_copy_alu_reg,
+  thumb_copy_b,
+  thumb_copy_bx_blx_reg,
+  thumb_copy_cbnz_cbz,
+  thumb_copy_16bit_ldr_literal,
+  thumb_copy_unmodified_16bit,
+  thumb_copy_pc_relative_16bit,
+  thumb_copy_pop_pc_16bit,
+  thumb_copy_svc,
+};
+
 void
 arm_process_displaced_insn (struct gdbarch *gdbarch, CORE_ADDR from,
 			    CORE_ADDR to, struct regcache *regs,
@@ -7730,7 +7762,8 @@ arm_process_displaced_insn (struct gdbarch *gdbarch, CORE_ADDR from,
 					   &reloc_data);
 	}
       else
-        err = thumb_16bit_relocate_insn (insn1, &reloc_data);
+	err = thumb_16bit_relocate_insn (insn1, &thumb_16bit_insn_reloc_visitor,
+					 &reloc_data);
     }
 
   if (err)
