@@ -4510,6 +4510,33 @@ struct arm_insn_reloc_visitor
   int (*unpred) (uint32_t insn, struct arm_insn_reloc_data *data);
 };
 
+struct thumb_32bit_insn_reloc_visitor
+{
+  int (*alu_imm) (uint16_t insn1, uint16_t insn2,
+		  struct arm_insn_reloc_data *data);
+  int (*b_bl_blx) (uint16_t insn1, uint16_t insn2,
+		   struct arm_insn_reloc_data *data);
+  int (*block_xfer) (uint16_t insn1, uint16_t insn2,
+		     struct arm_insn_reloc_data *data);
+  int (*copro_load_store) (uint16_t insn1, uint16_t insn2,
+			   struct arm_insn_reloc_data *data);
+  int (*load_literal) (uint16_t insn1, uint16_t insn2,
+		       struct arm_insn_reloc_data *data, int size);
+  int (*load_reg_imm) (uint16_t insn1, uint16_t insn2,
+		       struct arm_insn_reloc_data *data, int writeback,
+		       int immed);
+  int (*others) (uint16_t insn1, uint16_t insn2, const char *iname,
+		 struct arm_insn_reloc_data *data);
+  int (*pc_relative_32bit) (uint16_t insn1, uint16_t insn2,
+			    struct arm_insn_reloc_data *data);
+  int (*preload) (uint16_t insn1, uint16_t insn2,
+		  struct arm_insn_reloc_data *data);
+  int (*undef) (uint16_t insn1, uint16_t insn2,
+		struct arm_insn_reloc_data *data);
+  int (*table_branch) (uint16_t insn1, uint16_t insn2,
+		       struct arm_insn_reloc_data *data);
+};
+
 /* Helper for register reads for displaced stepping.  In particular, this
    returns the PC as it would be seen by the instruction at its original
    location.  */
@@ -6864,6 +6891,7 @@ arm_decode_ext_reg_ld_st (uint32_t insn, struct arm_insn_reloc_visitor *visitor,
 
 static int
 thumb2_decode_dp_shift_reg (uint16_t insn1, uint16_t insn2,
+			    struct thumb_32bit_insn_reloc_visitor *visitor,
 			    struct arm_insn_reloc_data *data)
 {
   /* PC is only allowed to be used in instruction MOV.  */
@@ -6872,9 +6900,9 @@ thumb2_decode_dp_shift_reg (uint16_t insn1, uint16_t insn2,
   unsigned int rn = bits (insn1, 0, 3);
 
   if (op == 0x2 && rn == 0xf) /* MOV */
-    return thumb2_copy_alu_imm (insn1, insn2, data);
+    return visitor->alu_imm (insn1, insn2, data);
   else
-    return thumb_copy_unmodified_32bit (insn1, insn2, "dp (shift reg)", data);
+    return visitor->others (insn1, insn2, "dp (shift reg)", data);
 }
 
 
@@ -6883,6 +6911,7 @@ thumb2_decode_dp_shift_reg (uint16_t insn1, uint16_t insn2,
 
 static int
 thumb2_decode_ext_reg_ld_st (uint16_t insn1, uint16_t insn2,
+			     struct thumb_32bit_insn_reloc_visitor *visitor,
 			     struct arm_insn_reloc_data *data)
 {
   unsigned int opcode = bits (insn1, 4, 8);
@@ -6890,24 +6919,22 @@ thumb2_decode_ext_reg_ld_st (uint16_t insn1, uint16_t insn2,
   switch (opcode)
     {
     case 0x04: case 0x05:
-      return thumb_copy_unmodified_32bit (insn1, insn2, "vfp/neon vmov", data);
+      return visitor->others (insn1, insn2, "vfp/neon vmov", data);
 
     case 0x08: case 0x0c: /* 01x00 */
     case 0x0a: case 0x0e: /* 01x10 */
     case 0x12: case 0x16: /* 10x10 */
-      return thumb_copy_unmodified_32bit (insn1, insn2,
-					  "vfp/neon vstm/vpush", data);
+      return visitor->others (insn1, insn2, "vfp/neon vstm/vpush", data);
 
     case 0x09: case 0x0d: /* 01x01 */
     case 0x0b: case 0x0f: /* 01x11 */
     case 0x13: case 0x17: /* 10x11 */
-      return thumb_copy_unmodified_32bit (insn1, insn2,
-					  "vfp/neon vldm/vpop", data);
+      return visitor->others (insn1, insn2, "vfp/neon vldm/vpop", data);
 
     case 0x10: case 0x14: case 0x18: case 0x1c:  /* vstr.  */
-      return thumb_copy_unmodified_32bit (insn1, insn2, "vstr", data);
+      return visitor->others (insn1, insn2, "vstr", data);
     case 0x11: case 0x15: case 0x19: case 0x1d:  /* vldr.  */
-      return thumb2_copy_copro_load_store (insn1, insn2, data);
+      return visitor->copro_load_store (insn1, insn2, data);
     }
 
   /* Should be unreachable.  */
@@ -6961,6 +6988,7 @@ arm_decode_svc_copro (uint32_t insn, struct arm_insn_reloc_visitor *visitor,
 
 static int
 thumb2_decode_svc_copro (uint16_t insn1, uint16_t insn2,
+			 struct thumb_32bit_insn_reloc_visitor *visitor,
 			 struct arm_insn_reloc_data *data)
 {
   unsigned int coproc = bits (insn2, 8, 11);
@@ -6971,27 +6999,26 @@ thumb2_decode_svc_copro (uint16_t insn1, uint16_t insn2,
   if (bit_9 == 0)
     {
       if (bit_5_8 == 2)
-	return thumb_copy_unmodified_32bit (
-	  insn1, insn2, "neon 64bit xfer/mrrc/mrrc2/mcrr/mcrr2", data);
+	return visitor->others (insn1, insn2,
+				"neon 64bit xfer/mrrc/mrrc2/mcrr/mcrr2", data);
       else if (bit_5_8 == 0) /* UNDEFINED.  */
-	return thumb_32bit_copy_undef (insn1, insn2, data);
+	return visitor->undef (insn1, insn2, data);
       else
 	{
 	   /*coproc is 101x.  SIMD/VFP, ext registers load/store.  */
 	  if ((coproc & 0xe) == 0xa)
-	    return thumb2_decode_ext_reg_ld_st (insn1, insn2, data);
+	    return thumb2_decode_ext_reg_ld_st (insn1, insn2, visitor, data);
 	  else /* coproc is not 101x.  */
 	    {
 	      if (bit_4 == 0) /* STC/STC2.  */
-		return thumb_copy_unmodified_32bit (insn1, insn2, "stc/stc2",
-						    data);
+		return visitor->others (insn1, insn2, "stc/stc2", data);
 	      else /* LDC/LDC2 {literal, immeidate}.  */
-		return thumb2_copy_copro_load_store (insn1, insn2, data);
+		return visitor->copro_load_store (insn1, insn2, data);
 	    }
 	}
     }
   else
-    return thumb_copy_unmodified_32bit (insn1, insn2, "coproc", data);
+    return visitor->others (insn1, insn2, "coproc", data);
 
   return 0;
 }
@@ -7395,6 +7422,7 @@ thumb_16bit_relocate_insn (uint16_t insn1, struct arm_insn_reloc_data *data)
 
 static int
 decode_thumb_32bit_ld_mem_hints (uint16_t insn1, uint16_t insn2,
+				 struct thumb_32bit_insn_reloc_visitor *visitor,
 				 struct arm_insn_reloc_data *data)
 {
   int rt = bits (insn2, 12, 15);
@@ -7408,32 +7436,29 @@ decode_thumb_32bit_ld_mem_hints (uint16_t insn1, uint16_t insn2,
 	{
 	  if (rn == 0xf)
 	    /* PLD literal or Encoding T3 of PLI(immediate, literal).  */
-	    return thumb2_copy_preload (insn1, insn2, data);
+	    return visitor->preload (insn1, insn2, data);
 	  else
-	    return thumb_copy_unmodified_32bit (insn1, insn2, "pli/pld", data);
+	    return visitor->others (insn1, insn2, "pli/pld", data);
 	}
       else
 	{
 	  if (rn == 0xf) /* LDRB/LDRSB (literal) */
-	    return thumb2_copy_load_literal (insn1, insn2, data, 1);
+	    return visitor->load_literal (insn1, insn2, data, 1);
 	  else
-	    return thumb_copy_unmodified_32bit (insn1, insn2,
-						"ldrb{reg, immediate}/ldrbt",
-						data);
+	    return visitor->others (insn1, insn2, "ldrb{reg, immediate}/ldrbt",
+				    data);
 	}
 
       break;
     case 1: /* Load halfword and memory hints.  */
       if (rt == 0xf) /* PLD{W} and Unalloc memory hint.  */
-	return thumb_copy_unmodified_32bit (insn1, insn2, "pld/unalloc memhint",
-					    data);
+	return visitor->others (insn1, insn2, "pld/unalloc memhint", data);
       else
 	{
 	  if (rn == 0xf)
-	    return thumb2_copy_load_literal (insn1, insn2, data, 2);
+	    return visitor->load_literal (insn1, insn2, data, 2);
 	  else
-	    return thumb_copy_unmodified_32bit (insn1, insn2, "ldrh/ldrht",
-						data);
+	    return visitor->others (insn1, insn2, "ldrh/ldrht", data);
 	}
       break;
     case 2: /* Load word */
@@ -7441,32 +7466,32 @@ decode_thumb_32bit_ld_mem_hints (uint16_t insn1, uint16_t insn2,
 	int insn2_bit_8_11 = bits (insn2, 8, 11);
 
 	if (rn == 0xf)
-	  return thumb2_copy_load_literal (insn1, insn2, data, 4);
+	  return visitor->load_literal (insn1, insn2, data, 4);
 	else if (op1 == 0x1) /* Encoding T3 */
-	  return thumb2_copy_load_reg_imm (insn1, insn2, data, 0, 1);
+	  return visitor->load_reg_imm (insn1, insn2, data, 0, 1);
 	else /* op1 == 0x0 */
 	  {
 	    if (insn2_bit_8_11 == 0xc || (insn2_bit_8_11 & 0x9) == 0x9)
 	      /* LDR (immediate) */
-	      return thumb2_copy_load_reg_imm (insn1, insn2, data,
+	      return visitor->load_reg_imm (insn1, insn2, data,
 					       bit (insn2, 8), 1);
 	    else if (insn2_bit_8_11 == 0xe) /* LDRT */
-	      return thumb_copy_unmodified_32bit (insn1, insn2, "ldrt", data);
+	      return visitor->others (insn1, insn2, "ldrt", data);
 	    else
 	      /* LDR (register) */
-	      return thumb2_copy_load_reg_imm (insn1, insn2, data, 0, 0);
+	      return visitor->load_reg_imm (insn1, insn2, data, 0, 0);
 	  }
 	break;
       }
     default:
-      return thumb_32bit_copy_undef (insn1, insn2, data);
-      break;
+      return visitor->undef (insn1, insn2, data);
     }
   return 0;
 }
 
 static int
 thumb_32bit_relocate_insn (uint16_t insn1, uint16_t insn2,
+			   struct thumb_32bit_insn_reloc_visitor *visitor,
 			   struct arm_insn_reloc_data *data)
 {
   int err = 0;
@@ -7485,24 +7510,22 @@ thumb_32bit_relocate_insn (uint16_t insn1, uint16_t insn2,
 		/* Load/store {dual, execlusive}, table branch.  */
 		if (bits (insn1, 7, 8) == 1 && bits (insn1, 4, 5) == 1
 		    && bits (insn2, 5, 7) == 0)
-		  err = thumb2_copy_table_branch (insn1, insn2, data);
+		  err = visitor->table_branch (insn1, insn2, data);
 		else
 		  /* PC is not allowed to use in load/store {dual, exclusive}
 		     instructions.  */
-		  err = thumb_copy_unmodified_32bit (insn1, insn2,
-						     "load/store dual/ex",
-						     data);
+		  err = visitor->others (insn1, insn2, "load/store dual/ex",
+					 data);
 	      }
 	    else /* load/store multiple */
 	      {
 		switch (bits (insn1, 7, 8))
 		  {
 		  case 0: case 3: /* SRS, RFE */
-		    err = thumb_copy_unmodified_32bit (insn1, insn2, "srs/rfe",
-						       data);
+		    err = visitor->others (insn1, insn2, "srs/rfe", data);
 		    break;
 		  case 1: case 2: /* LDM/STM/PUSH/POP */
-		    err = thumb2_copy_block_xfer (insn1, insn2, data);
+		    err = visitor->block_xfer (insn1, insn2, data);
 		    break;
 		  }
 	      }
@@ -7510,10 +7533,10 @@ thumb_32bit_relocate_insn (uint16_t insn1, uint16_t insn2,
 
 	  case 1:
 	    /* Data-processing (shift register).  */
-	    err = thumb2_decode_dp_shift_reg (insn1, insn2, data);
+	    err = thumb2_decode_dp_shift_reg (insn1, insn2, visitor, data);
 	    break;
 	  default: /* Coprocessor instructions.  */
-	    err = thumb2_decode_svc_copro (insn1, insn2, data);
+	    err = thumb2_decode_svc_copro (insn1, insn2, visitor, data);
 	    break;
 	  }
       break;
@@ -7524,9 +7547,9 @@ thumb_32bit_relocate_insn (uint16_t insn1, uint16_t insn2,
 	  if (bit (insn2, 14)  /* BLX/BL */
 	      || bit (insn2, 12) /* Unconditional branch */
 	      || (bits (insn1, 7, 9) != 0x7)) /* Conditional branch */
-	    err = thumb2_copy_b_bl_blx (insn1, insn2, data);
+	    err = visitor->b_bl_blx (insn1, insn2, data);
 	  else
-	    err = thumb_copy_unmodified_32bit (insn1, insn2, "misc ctrl", data);
+	    err = visitor->others (insn1, insn2, "misc ctrl", data);
 	}
       else
 	{
@@ -7535,12 +7558,12 @@ thumb_32bit_relocate_insn (uint16_t insn1, uint16_t insn2,
 	      int op = bits (insn1, 4, 8);
 	      int rn = bits (insn1, 0, 3);
 	      if ((op == 0 || op == 0xa) && rn == 0xf)
-		err = thumb_copy_pc_relative_32bit (insn1, insn2, data);
+		err = visitor->pc_relative_32bit (insn1, insn2, data);
 	      else
-		err = thumb_copy_unmodified_32bit (insn1, insn2, "dp/pb", data);
+		err = visitor->others (insn1, insn2, "dp/pb", data);
 	    }
 	  else /* Data processing (modified immeidate) */
-	    err = thumb_copy_unmodified_32bit (insn1, insn2, "dp/mi", data);
+	    err = visitor->others (insn1, insn2, "dp/mi", data);
 	}
       break;
     case 3: /* op1 = 3 */
@@ -7548,30 +7571,27 @@ thumb_32bit_relocate_insn (uint16_t insn1, uint16_t insn2,
 	{
 	case 0:
 	  if (bit (insn1, 4))
-	    err = decode_thumb_32bit_ld_mem_hints (insn1, insn2, data);
+	    err = decode_thumb_32bit_ld_mem_hints (insn1, insn2, visitor, data);
 	  else /* NEON Load/Store and Store single data item */
-	    err = thumb_copy_unmodified_32bit (insn1, insn2,
-					       "neon elt/struct load/store",
-					       data);
+	    err = visitor->others (insn1, insn2, "neon elt/struct load/store",
+				   data);
 	  break;
 	case 1: /* op1 = 3, bits (9, 10) == 1 */
 	  switch (bits (insn1, 7, 8))
 	    {
 	    case 0: case 1: /* Data processing (register) */
-	      err = thumb_copy_unmodified_32bit (insn1, insn2, "dp(reg)", data);
+	      err = visitor->others (insn1, insn2, "dp(reg)", data);
 	      break;
 	    case 2: /* Multiply and absolute difference */
-	      err = thumb_copy_unmodified_32bit (insn1, insn2, "mul/mua/diff",
-						 data);
+	      err = visitor->others (insn1, insn2, "mul/mua/diff", data);
 	      break;
 	    case 3: /* Long multiply and divide */
-	      err = thumb_copy_unmodified_32bit (insn1, insn2, "lmul/lmua",
-						 data);
+	      err = visitor->others (insn1, insn2, "lmul/lmua", data);
 	      break;
 	    }
 	  break;
 	default: /* Coprocessor instructions */
-	  err = thumb2_decode_svc_copro (insn1, insn2, data);
+	  err = thumb2_decode_svc_copro (insn1, insn2, visitor, data);
 	  break;
 	}
       break;
@@ -7636,6 +7656,21 @@ static struct arm_insn_reloc_visitor arm_insn_reloc_visitor =
   arm_copy_unpred,
 };
 
+static struct thumb_32bit_insn_reloc_visitor thumb_32bit_insn_reloc_visitor =
+{
+  thumb2_copy_alu_imm,
+  thumb2_copy_b_bl_blx,
+  thumb2_copy_block_xfer,
+  thumb2_copy_copro_load_store,
+  thumb2_copy_load_literal,
+  thumb2_copy_load_reg_imm,
+  thumb_copy_unmodified_32bit,
+  thumb_copy_pc_relative_32bit,
+  thumb2_copy_preload,
+  thumb2_copy_table_branch,
+  thumb_32bit_copy_undef,
+};
+
 void
 arm_process_displaced_insn (struct gdbarch *gdbarch, CORE_ADDR from,
 			    CORE_ADDR to, struct regcache *regs,
@@ -7689,8 +7724,11 @@ arm_process_displaced_insn (struct gdbarch *gdbarch, CORE_ADDR from,
         {
           uint16_t insn2
 	    = read_memory_unsigned_integer (from + 2, 2, byte_order_for_code);
-	  err = thumb_32bit_relocate_insn (insn1, insn2, &reloc_data);
-        }
+
+	  err = thumb_32bit_relocate_insn (insn1, insn2,
+					   &thumb_32bit_insn_reloc_visitor,
+					   &reloc_data);
+	}
       else
         err = thumb_16bit_relocate_insn (insn1, &reloc_data);
     }
