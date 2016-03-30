@@ -52,6 +52,7 @@ int global_variable;
    }
 
 DEF_TEST_FN (arm_b_imm)
+DEF_TEST_FN (arm_b_imm_cond)
 DEF_TEST_FN (arm_bl_imm)
 DEF_TEST_FN (arm_blx_imm)
 DEF_TEST_FN (arm_bx_reg)
@@ -60,10 +61,19 @@ DEF_TEST_FN (arm_ldm)
 DEF_TEST_FN (arm_ldm_pc)
 DEF_TEST_FN (arm_stm)
 
+DEF_TEST_FN (thumb_b_imm)
+DEF_TEST_FN (thumb_b_imm_cond)
+DEF_TEST_FN (thumb_bl_imm)
+DEF_TEST_FN (thumb_blx_imm)
+DEF_TEST_FN (thumb_ldm)
+DEF_TEST_FN (thumb_ldm_pc)
+DEF_TEST_FN (thumb_stm)
+
 int
 main (void)
 {
   test_arm_b_imm ();
+  test_arm_b_imm_cond ();
   test_arm_bl_imm ();
   test_arm_blx_imm ();
   test_arm_bx_reg ();
@@ -71,6 +81,14 @@ main (void)
   test_arm_ldm ();
   test_arm_ldm_pc ();
   test_arm_stm ();
+
+  test_thumb_b_imm ();
+  test_thumb_b_imm_cond ();
+  test_thumb_bl_imm ();
+  test_thumb_blx_imm ();
+  test_thumb_ldm ();
+  test_thumb_ldm_pc ();
+  test_thumb_stm ();
 
   return 0;
 }

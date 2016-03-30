@@ -1300,35 +1300,167 @@ static int
 thumb32_reloc_alu_imm (uint16_t insn1, uint16_t insn2,
 		       struct arm_insn_reloc_data *data)
 {
-  return 1;
+  uint16_t rm = bits (insn2, 0, 3);
+  uint16_t rd = bits (insn2, 8, 11);
+
+  /* This is essentially about the MOV (register, Thumb) instruction.  Allow
+     relocation if it doesn't reference the PC.  */
+  if (rm == ARM_PC_REGNUM || rd == ARM_PC_REGNUM)
+    return arm_reloc_refs_pc_error (data);
+
+  return thumb32_reloc_others (insn1, insn2, "ALU imm", data);
 }
 
 static int
 thumb32_reloc_b_bl_blx (uint16_t insn1, uint16_t insn2,
 			struct arm_insn_reloc_data *data)
 {
-  return 1;
+  int ret = 1;
+  long offset;
+  CORE_ADDR absolute_dest;
+  uint16_t link = bit (insn2, 14);
+
+  int j1 = bit (insn2, 13);
+  int j2 = bit (insn2, 11);
+  int i1 = !(j1 ^ bit (insn1, 10));
+  int i2 = !(j2 ^ bit (insn1, 10));
+  int s = sbits (insn1, 10, 10);
+
+  if (!link)
+    {
+      /* It's a b.  */
+      int imm11 = bits (insn2, 0, 10);
+
+      if (!bit (insn2, 12))
+	{
+	  /* Encoding T3, with a condition and smaller immediate.  */
+
+	  int imm6 = bits (insn1, 0, 5);
+	  int cond = bits (insn1, 6, 9);
+
+	  offset = ((imm11 << 1) |
+		    (imm6 << 12) |
+		    (j1 << 18) |
+		    (j2 << 19) |
+		    (s << 20)) + 4;
+
+	  absolute_dest = data->orig_loc + offset;
+
+	  arm_emit_thumb_bw_cond (data->insns.thumb32, cond,
+				  arm_thumb_branch_relative_distance
+				  (data->new_loc, absolute_dest));
+	}
+      else
+	{
+	  /* Encoding T4, with no condition but a larger immediate  */
+	  int imm10 = bits (insn1, 0, 9);
+
+	  offset = ((imm11 << 1) |
+		    (imm10 << 12) |
+		    (i2 << 22) |
+		    (i1 << 23) |
+		    (s << 24)) + 4;
+
+	  absolute_dest = data->orig_loc + offset;
+
+	  arm_emit_thumb_bw
+	    (data->insns.thumb32, arm_thumb_branch_relative_distance
+	     (data->new_loc, absolute_dest));
+	}
+
+      ret = 0;
+    }
+  else
+    {
+      int exchange = !bit (insn2, 12);
+
+      if (!exchange)
+	{
+	  /* It's a bl.  */
+	  int imm11 = bits (insn2, 0, 10);
+	  int imm10 = bits (insn1, 0, 9);
+
+	  offset = ((imm11 << 1)
+		    | (imm10 << 12)
+		    | (i2 << 22)
+		    | (i1 << 23)
+		    | (s << 24)) + 4;
+
+	  absolute_dest = data->orig_loc + offset;
+
+	  arm_emit_thumb_bl (data->insns.thumb32,
+			      arm_thumb_branch_relative_distance
+			       (data->new_loc, absolute_dest));
+	  ret = 0;
+	}
+      else
+	{
+	  /* It's a blx.  */
+	  int imm10l = bits (insn2, 1, 10);
+	  int imm10h = bits (insn1, 0, 9);
+
+	  offset = ((imm10l << 2)
+		    | (imm10h << 12)
+		    | (i2 << 22)
+		    | (i1 << 23)
+		    | (s << 24)) + 4;
+
+	  absolute_dest = data->orig_loc + offset;
+
+	  arm_emit_thumb_blx (data->insns.thumb32,
+			      immediate_operand
+			      (arm_thumb_to_arm_branch_relative_distance
+			       (data->new_loc, absolute_dest)));
+	  ret = 0;
+	}
+    }
+
+  return ret;
 }
 
 static int
 thumb32_reloc_block_xfer (uint16_t insn1, uint16_t insn2,
 			  struct arm_insn_reloc_data *data)
 {
-  return 1;
+  uint16_t rn = bits (insn1, 0, 3);
+  uint16_t load = bit (insn1, 4);
+
+  /* For LDM/POP instructions, there is not problem executing out of line even
+     if PC is part of the register list.  It will simply result in an absolute
+     jump to the address popped.
+
+     For STM/PUSH instructions in Thumb mode, PC can't be in the register list,
+     unlike in ARM mode.  So we don't need to check if it's present.
+   */
+
+  return thumb32_reloc_others(insn1, insn2, "ldm/stm", data);
 }
 
 static int
 thumb32_reloc_copro_load_store (uint16_t insn1, uint16_t insn2,
 				struct arm_insn_reloc_data *data)
 {
-  return 1;
+  uint16_t rn = bits (insn1, 0, 3);
+
+  if (rn == ARM_PC_REGNUM)
+    return arm_reloc_refs_pc_error (data);
+
+  return thumb32_reloc_others (insn1, insn2, "copro load/store", data);
 }
 
 static int
 thumb32_reloc_load_literal (uint16_t insn1, uint16_t insn2,
 			    struct arm_insn_reloc_data *data, int size)
 {
-  return 1;
+  /* It should be possible to relocate this.  The difficulty is that the
+     12 offset bits are likely not to be enough to encode the offset at the new
+     location.  We might be able to replace it by multiple instructions, loading
+     the absolute offset in a register, and using LDR (immediate, Thumb).  We
+     would need to take care of which register we use and save the relevant
+     registers value.
+   */
+
+  return arm_reloc_refs_pc_error (data);
 }
 
 static int
@@ -1336,27 +1468,45 @@ thumb32_reloc_load_reg_imm (uint16_t insn1, uint16_t insn2,
 			    struct arm_insn_reloc_data *data, int writeback,
 			    int immed)
 {
-  return 1;
+  uint16_t rn = bits (insn1, 0, 3);
+
+  /* If rn is the PC, we should end up in load_literal, and that means the
+     instruction decoder has a bug.  */
+  gdb_assert (rn != ARM_PC_REGNUM);
+
+  /* The instruction is safe even if the destination register (rt) is the PC,
+     as it will simply result in a branch.  */
+  return thumb32_reloc_others(insn1, insn2, "load reg", data);
 }
 
 static int
 thumb32_reloc_pc_relative_32bit (uint16_t insn1, uint16_t insn2,
 				 struct arm_insn_reloc_data *data)
 {
-  return 1;
+  /* Form PC-relative Address.  We could re-encode this instruction with the
+     new PC of the instruction, if we determine that this instruction is common
+     enough for it to be worth it.  */
+
+  return arm_reloc_refs_pc_error (data);
 }
 
 static int
 thumb32_reloc_preload (uint16_t insn1, uint16_t insn2,
 		       struct arm_insn_reloc_data *data)
 {
-  return 1;
+  unsigned int rn = bits (insn1, 0, 3);
+
+  if (rn != ARM_PC_REGNUM)
+    return arm_reloc_refs_pc_error (data);
+
+  return thumb32_reloc_others (insn1, insn2, "preload", data);
 }
 
 static int
 thumb32_reloc_undef (uint16_t insn1, uint16_t insn2,
 		     struct arm_insn_reloc_data *data)
 {
+  data->err = "The instruction is undefined, couldn't relocate.";
   return 1;
 }
 
@@ -1364,9 +1514,12 @@ static int
 thumb32_reloc_table_branch (uint16_t insn1, uint16_t insn2,
 			    struct arm_insn_reloc_data *data)
 {
-  return 1;
-}
+  /* The values in the table are relative offsets to PC.  We could generate a
+     sequence of instructions to reproduce the same behavior. but these
+     instructions are probably not common enough for it to be worth it.  */
 
+  return arm_reloc_refs_pc_error (data);
+}
 
 struct thumb_32bit_insn_reloc_visitor thumb_32bit_insns_reloc_visitor = {
   thumb32_reloc_alu_imm,
@@ -1406,6 +1559,11 @@ copy_instruction_thumb32 (CORE_ADDR *to, CORE_ADDR from, const char **err)
   /* Set a default generic error message, which can be overriden by the
      relocation functions.  */
   data.err = "Error relocating instruction";
+  data.orig_loc = from;
+  data.new_loc = *to;
+  /* A default generic error message, may be overriden by the relocation
+     functions.  */
+  data.err = "Error relocating instruction.";
 
   ret = thumb_32bit_relocate_insn (insn1, insn2,
 				   &thumb_32bit_insns_reloc_visitor, &data);
@@ -1417,6 +1575,7 @@ copy_instruction_thumb32 (CORE_ADDR *to, CORE_ADDR from, const char **err)
 
   append_inferior_memory_16 (to, data.insns.thumb32[0]);
   append_inferior_memory_16 (to, data.insns.thumb32[1]);
+
   return 0;
 }
 
