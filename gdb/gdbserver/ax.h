@@ -64,9 +64,10 @@ void gdb_free_agent_expr (struct agent_expr *aexpr);
    they can be printed or uploaded.  This allocates the buffer,
    callers should free when they are done with it.  */
 char *gdb_unparse_agent_expr (struct agent_expr *aexpr);
-void emit_prologue (void);
-void emit_epilogue (void);
-enum eval_result_type compile_bytecodes (struct agent_expr *aexpr);
+void emit_prologue (struct thread_info *thread);
+void emit_epilogue (struct thread_info *thread);
+enum eval_result_type compile_bytecodes (struct thread_info *thread,
+					 struct agent_expr *aexpr);
 #endif
 
 /* The context when evaluating agent expression.  */

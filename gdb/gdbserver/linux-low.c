@@ -5345,7 +5345,7 @@ register_addr (const struct usrregs_info *usrregs, int regnum)
 
 /* Fetch one register.  */
 static void
-fetch_register (const struct usrregs_info *usrregs,
+fetch_register (struct thread_info *thread, const struct usrregs_info *usrregs,
 		struct regcache *regcache, int regno)
 {
   CORE_ADDR regaddr;
@@ -5355,7 +5355,7 @@ fetch_register (const struct usrregs_info *usrregs,
 
   if (regno >= usrregs->num_regs)
     return;
-  if ((*the_low_target.cannot_fetch_register) (regno))
+  if ((*the_low_target.cannot_fetch_register) (thread, regno))
     return;
 
   regaddr = register_addr (usrregs, regno);
@@ -5367,7 +5367,7 @@ fetch_register (const struct usrregs_info *usrregs,
 	  & -sizeof (PTRACE_XFER_TYPE));
   buf = (char *) alloca (size);
 
-  pid = lwpid_of (current_thread);
+  pid = lwpid_of (thread);
   for (i = 0; i < size; i += sizeof (PTRACE_XFER_TYPE))
     {
       errno = 0;
@@ -5389,7 +5389,7 @@ fetch_register (const struct usrregs_info *usrregs,
 
 /* Store one register.  */
 static void
-store_register (const struct usrregs_info *usrregs,
+store_register (struct thread_info *thread, const struct usrregs_info *usrregs,
 		struct regcache *regcache, int regno)
 {
   CORE_ADDR regaddr;
@@ -5399,7 +5399,7 @@ store_register (const struct usrregs_info *usrregs,
 
   if (regno >= usrregs->num_regs)
     return;
-  if ((*the_low_target.cannot_store_register) (regno))
+  if ((*the_low_target.cannot_store_register) (thread, regno))
     return;
 
   regaddr = register_addr (usrregs, regno);
@@ -5417,7 +5417,7 @@ store_register (const struct usrregs_info *usrregs,
   else
     collect_register (regcache, regno, buf);
 
-  pid = lwpid_of (current_thread);
+  pid = lwpid_of (thread);
   for (i = 0; i < size; i += sizeof (PTRACE_XFER_TYPE))
     {
       errno = 0;
@@ -5435,7 +5435,7 @@ store_register (const struct usrregs_info *usrregs,
 	  if (errno == ESRCH)
 	    return;
 
-	  if ((*the_low_target.cannot_store_register) (regno) == 0)
+	  if ((*the_low_target.cannot_store_register) (thread, regno) == 0)
 	    error ("writing register %d: %s", regno, strerror (errno));
 	}
       regaddr += sizeof (PTRACE_XFER_TYPE);
@@ -5448,7 +5448,8 @@ store_register (const struct usrregs_info *usrregs,
    unless ALL is non-zero.
    Otherwise, REGNO specifies which register (so we can save time).  */
 static void
-usr_fetch_inferior_registers (const struct regs_info *regs_info,
+usr_fetch_inferior_registers (struct thread_info *thread,
+			      const struct regs_info *regs_info,
 			      struct regcache *regcache, int regno, int all)
 {
   struct usrregs_info *usr = regs_info->usrregs;
@@ -5457,10 +5458,10 @@ usr_fetch_inferior_registers (const struct regs_info *regs_info,
     {
       for (regno = 0; regno < usr->num_regs; regno++)
 	if (all || !linux_register_in_regsets (regs_info, regno))
-	  fetch_register (usr, regcache, regno);
+	  fetch_register (thread, usr, regcache, regno);
     }
   else
-    fetch_register (usr, regcache, regno);
+    fetch_register (thread, usr, regcache, regno);
 }
 
 /* Store our register values back into the inferior.
@@ -5469,7 +5470,8 @@ usr_fetch_inferior_registers (const struct regs_info *regs_info,
    unless ALL is non-zero.
    Otherwise, REGNO specifies which register (so we can save time).  */
 static void
-usr_store_inferior_registers (const struct regs_info *regs_info,
+usr_store_inferior_registers (struct thread_info *thread,
+			      const struct regs_info *regs_info,
 			      struct regcache *regcache, int regno, int all)
 {
   struct usrregs_info *usr = regs_info->usrregs;
@@ -5478,10 +5480,10 @@ usr_store_inferior_registers (const struct regs_info *regs_info,
     {
       for (regno = 0; regno < usr->num_regs; regno++)
 	if (all || !linux_register_in_regsets (regs_info, regno))
-	  store_register (usr, regcache, regno);
+	  store_register (thread, usr, regcache, regno);
     }
   else
-    store_register (usr, regcache, regno);
+    store_register (thread, usr, regcache, regno);
 }
 
 #else /* !HAVE_LINUX_USRREGS */
@@ -5493,11 +5495,12 @@ usr_store_inferior_registers (const struct regs_info *regs_info,
 
 
 static void
-linux_fetch_registers (struct regcache *regcache, int regno)
+linux_fetch_registers (struct thread_info *thread, struct regcache *regcache,
+		       int regno)
 {
   int use_regsets;
   int all = 0;
-  const struct regs_info *regs_info = (*the_low_target.regs_info) ();
+  const struct regs_info *regs_info = (*the_low_target.regs_info) (thread);
 
   if (regno == -1)
     {
@@ -5508,7 +5511,7 @@ linux_fetch_registers (struct regcache *regcache, int regno)
 
       all = regsets_fetch_inferior_registers (regs_info->regsets_info, regcache);
       if (regs_info->usrregs != NULL)
-	usr_fetch_inferior_registers (regs_info, regcache, -1, all);
+	usr_fetch_inferior_registers (thread, regs_info, regcache, -1, all);
     }
   else
     {
@@ -5521,23 +5524,24 @@ linux_fetch_registers (struct regcache *regcache, int regno)
 	all = regsets_fetch_inferior_registers (regs_info->regsets_info,
 						regcache);
       if ((!use_regsets || all) && regs_info->usrregs != NULL)
-	usr_fetch_inferior_registers (regs_info, regcache, regno, 1);
+	usr_fetch_inferior_registers (thread, regs_info, regcache, regno, 1);
     }
 }
 
 static void
-linux_store_registers (struct regcache *regcache, int regno)
+linux_store_registers (struct thread_info *thread, struct regcache *regcache,
+		       int regno)
 {
   int use_regsets;
   int all = 0;
-  const struct regs_info *regs_info = (*the_low_target.regs_info) ();
+  const struct regs_info *regs_info = (*the_low_target.regs_info) (thread);
 
   if (regno == -1)
     {
       all = regsets_store_inferior_registers (regs_info->regsets_info,
 					      regcache);
       if (regs_info->usrregs != NULL)
-	usr_store_inferior_registers (regs_info, regcache, regno, all);
+	usr_store_inferior_registers (thread, regs_info, regcache, regno, all);
     }
   else
     {
@@ -5546,7 +5550,7 @@ linux_store_registers (struct regcache *regcache, int regno)
 	all = regsets_store_inferior_registers (regs_info->regsets_info,
 						regcache);
       if ((!use_regsets || all) && regs_info->usrregs != NULL)
-	usr_store_inferior_registers (regs_info, regcache, regno, 1);
+	usr_store_inferior_registers (thread, regs_info, regcache, regno, 1);
     }
 }
 
@@ -5946,12 +5950,13 @@ linux_qxfer_osdata (const char *annex,
    layout of the inferiors' architecture.  */
 
 static void
-siginfo_fixup (siginfo_t *siginfo, gdb_byte *inf_siginfo, int direction)
+siginfo_fixup (struct thread_info *thread, siginfo_t *siginfo,
+	       gdb_byte *inf_siginfo, int direction)
 {
   int done = 0;
 
   if (the_low_target.siginfo_fixup != NULL)
-    done = the_low_target.siginfo_fixup (siginfo, inf_siginfo, direction);
+    done = the_low_target.siginfo_fixup (thread, siginfo, inf_siginfo, direction);
 
   /* If there was no callback, or the callback didn't do anything,
      then just do a straight memcpy.  */
@@ -5965,17 +5970,17 @@ siginfo_fixup (siginfo_t *siginfo, gdb_byte *inf_siginfo, int direction)
 }
 
 static int
-linux_xfer_siginfo (const char *annex, unsigned char *readbuf,
-		    unsigned const char *writebuf, CORE_ADDR offset, int len)
+linux_xfer_siginfo (struct thread_info *thread, const char *annex,
+		    unsigned char *readbuf, unsigned const char *writebuf,
+		    CORE_ADDR offset, int len)
 {
   int pid;
   siginfo_t siginfo;
   gdb_byte inf_siginfo[sizeof (siginfo_t)];
 
-  if (current_thread == NULL)
-    return -1;
+  gdb_assert (thread != NULL);
 
-  pid = lwpid_of (current_thread);
+  pid = lwpid_of (thread);
 
   if (debug_threads)
     debug_printf ("%s siginfo for lwp %d.\n",
@@ -5992,7 +5997,7 @@ linux_xfer_siginfo (const char *annex, unsigned char *readbuf,
      SIGINFO an object with 64-bit layout.  Since debugging a 32-bit
      inferior with a 64-bit GDBSERVER should look the same as debugging it
      with a 32-bit GDBSERVER, we need to convert it.  */
-  siginfo_fixup (&siginfo, inf_siginfo, 0);
+  siginfo_fixup (thread, &siginfo, inf_siginfo, 0);
 
   if (offset + len > sizeof (siginfo))
     len = sizeof (siginfo) - offset;
@@ -6004,7 +6009,7 @@ linux_xfer_siginfo (const char *annex, unsigned char *readbuf,
       memcpy (inf_siginfo + offset, writebuf, len);
 
       /* Convert back to ptrace layout before flushing it out.  */
-      siginfo_fixup (&siginfo, inf_siginfo, 1);
+      siginfo_fixup (thread, &siginfo, inf_siginfo, 1);
 
       if (ptrace (PTRACE_SETSIGINFO, pid, (PTRACE_TYPE_ARG3) 0, &siginfo) != 0)
 	return -1;
@@ -6473,7 +6478,8 @@ linux_done_accessing_memory (void)
 }
 
 static int
-linux_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
+linux_install_fast_tracepoint_jump_pad (struct thread_info *thread,
+					CORE_ADDR tpoint, CORE_ADDR tpaddr,
 					CORE_ADDR collector,
 					CORE_ADDR lockaddr,
 					ULONGEST orig_size,
@@ -6487,7 +6493,7 @@ linux_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
 					char *err)
 {
   return (*the_low_target.install_fast_tracepoint_jump_pad)
-    (tpoint, tpaddr, collector, lockaddr, orig_size,
+    (thread, tpoint, tpaddr, collector, lockaddr, orig_size,
      jump_entry, trampoline, trampoline_size,
      jjump_pad_insn, jjump_pad_insn_size,
      adjusted_insn_addr, adjusted_insn_addr_end,
@@ -6495,18 +6501,18 @@ linux_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
 }
 
 static struct emit_ops *
-linux_emit_ops (void)
+linux_emit_ops (struct thread_info *thread)
 {
   if (the_low_target.emit_ops != NULL)
-    return (*the_low_target.emit_ops) ();
+    return (*the_low_target.emit_ops) (thread);
   else
     return NULL;
 }
 
 static int
-linux_get_min_fast_tracepoint_insn_len (void)
+linux_get_min_fast_tracepoint_insn_len (struct thread_info *thread)
 {
-  return (*the_low_target.get_min_fast_tracepoint_insn_len) ();
+  return (*the_low_target.get_min_fast_tracepoint_insn_len) (thread);
 }
 
 /* Extract &phdr and num_phdr in the inferior.  Return 0 on success.  */

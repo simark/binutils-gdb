@@ -49,14 +49,10 @@ get_thread_regcache (struct thread_info *thread, int fetch)
 
   if (fetch && regcache->registers_valid == 0)
     {
-      struct thread_info *saved_thread = current_thread;
-
-      current_thread = thread;
       /* Invalidate all registers, to prevent stale left-overs.  */
       memset (regcache->register_status, REG_UNAVAILABLE,
 	      regcache->tdesc->num_registers);
-      fetch_inferior_registers (regcache, -1);
-      current_thread = saved_thread;
+      fetch_inferior_registers (thread, regcache, -1);
       regcache->registers_valid = 1;
     }
 
@@ -83,11 +79,7 @@ regcache_invalidate_thread (struct thread_info *thread)
 
   if (regcache->registers_valid)
     {
-      struct thread_info *saved_thread = current_thread;
-
-      current_thread = thread;
-      store_inferior_registers (regcache, -1);
-      current_thread = saved_thread;
+      store_inferior_registers (thread, regcache, -1);
     }
 
   regcache->registers_valid = 0;

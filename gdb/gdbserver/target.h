@@ -130,13 +130,15 @@ struct target_ops
 
      If REGNO is -1, fetch all registers; otherwise, fetch at least REGNO.  */
 
-  void (*fetch_registers) (struct regcache *regcache, int regno);
+  void (*fetch_registers) (struct thread_info *thread,
+			   struct regcache *regcache, int regno);
 
   /* Store registers to the inferior process.
 
      If REGNO is -1, store all registers; otherwise, store at least REGNO.  */
 
-  void (*store_registers) (struct regcache *regcache, int regno);
+  void (*store_registers) (struct thread_info *thread,
+			   struct regcache *regcache, int regno);
 
   /* Prepare to read or write memory from the inferior process.
      Targets use this to do what is necessary to get the state of the
@@ -268,7 +270,8 @@ struct target_ops
 		       int len);
 
   /* Read/Write extra signal info.  */
-  int (*qxfer_siginfo) (const char *annex, unsigned char *readbuf,
+  int (*qxfer_siginfo) (struct thread_info *thread, const char *annex,
+			unsigned char *readbuf,
 			unsigned const char *writebuf,
 			CORE_ADDR offset, int len);
 
@@ -358,7 +361,8 @@ struct target_ops
      return the address range where the instruction at TPADDR was relocated
      to.  If an error occurs, the ERR may be used to pass on an error
      message.  */
-  int (*install_fast_tracepoint_jump_pad) (CORE_ADDR tpoint, CORE_ADDR tpaddr,
+  int (*install_fast_tracepoint_jump_pad) (struct thread_info *thread,
+					   CORE_ADDR tpoint, CORE_ADDR tpaddr,
 					   CORE_ADDR collector,
 					   CORE_ADDR lockaddr,
 					   ULONGEST orig_size,
@@ -373,14 +377,14 @@ struct target_ops
 
   /* Return the bytecode operations vector for the current inferior.
      Returns NULL if bytecode compilation is not supported.  */
-  struct emit_ops *(*emit_ops) (void);
+  struct emit_ops *(*emit_ops) (struct thread_info *thread);
 
   /* Returns true if the target supports disabling randomization.  */
   int (*supports_disable_randomization) (void);
 
   /* Return the minimum length of an instruction that can be safely overwritten
      for use as a fast tracepoint.  */
-  int (*get_min_fast_tracepoint_insn_len) (void);
+  int (*get_min_fast_tracepoint_insn_len) (struct thread_info *thread);
 
   /* Read solib info on SVR4 platforms.  */
   int (*qxfer_libraries_svr4) (const char *annex, unsigned char *readbuf,
@@ -523,11 +527,11 @@ int kill_inferior (int);
 #define mythread_alive(pid) \
   (*the_target->thread_alive) (pid)
 
-#define fetch_inferior_registers(regcache, regno)	\
-  (*the_target->fetch_registers) (regcache, regno)
+#define fetch_inferior_registers(thread, regcache, regno)	\
+  (*the_target->fetch_registers) (thread, regcache, regno)
 
-#define store_inferior_registers(regcache, regno) \
-  (*the_target->store_registers) (regcache, regno)
+#define store_inferior_registers(thread, regcache, regno) \
+  (*the_target->store_registers) (thread, regcache, regno)
 
 #define join_inferior(pid) \
   (*the_target->join) (pid)
@@ -564,9 +568,9 @@ int kill_inferior (int);
 #define target_supports_fast_tracepoints()		\
   (the_target->install_fast_tracepoint_jump_pad != NULL)
 
-#define target_get_min_fast_tracepoint_insn_len()	\
+#define target_get_min_fast_tracepoint_insn_len(thread)	\
   (the_target->get_min_fast_tracepoint_insn_len		\
-   ? (*the_target->get_min_fast_tracepoint_insn_len) () : 0)
+   ? (*the_target->get_min_fast_tracepoint_insn_len) (thread) : 0)
 
 #define thread_stopped(thread) \
   (*the_target->thread_stopped) (thread)
@@ -592,7 +596,7 @@ int kill_inferior (int);
 	(*the_target->stabilize_threads) ();  	\
     } while (0)
 
-#define install_fast_tracepoint_jump_pad(tpoint, tpaddr,		\
+#define install_fast_tracepoint_jump_pad(thread, tpoint, tpaddr,	\
 					 collector, lockaddr,		\
 					 orig_size,			\
 					 jump_entry,			\
@@ -602,7 +606,7 @@ int kill_inferior (int);
 					 adjusted_insn_addr,		\
 					 adjusted_insn_addr_end,	\
 					 err)				\
-  (*the_target->install_fast_tracepoint_jump_pad) (tpoint, tpaddr,	\
+  (*the_target->install_fast_tracepoint_jump_pad) (thread, tpoint, tpaddr, \
 						   collector,lockaddr,	\
 						   orig_size, jump_entry, \
 						   trampoline,		\
@@ -613,8 +617,8 @@ int kill_inferior (int);
 						   adjusted_insn_addr_end, \
 						   err)
 
-#define target_emit_ops() \
-  (the_target->emit_ops ? (*the_target->emit_ops) () : NULL)
+#define target_emit_ops(thread) \
+  (the_target->emit_ops ? (*the_target->emit_ops) (thread) : NULL)
 
 #define target_supports_disable_randomization() \
   (the_target->supports_disable_randomization ? \

@@ -153,223 +153,224 @@ struct bytecode_address
 } *bytecode_address_table;
 
 void
-emit_prologue (void)
+emit_prologue (struct thread_info *thread)
 {
-  target_emit_ops ()->emit_prologue ();
+  target_emit_ops (thread)->emit_prologue ();
 }
 
 void
-emit_epilogue (void)
+emit_epilogue (struct thread_info *thread)
 {
-  target_emit_ops ()->emit_epilogue ();
+  target_emit_ops (thread)->emit_epilogue ();
 }
 
 static void
-emit_add (void)
+emit_add (struct thread_info *thread)
 {
-  target_emit_ops ()->emit_add ();
+  target_emit_ops (thread)->emit_add ();
 }
 
 static void
-emit_sub (void)
+emit_sub (struct thread_info *thread)
 {
-  target_emit_ops ()->emit_sub ();
+  target_emit_ops (thread)->emit_sub ();
 }
 
 static void
-emit_mul (void)
+emit_mul (struct thread_info *thread)
 {
-  target_emit_ops ()->emit_mul ();
+  target_emit_ops (thread)->emit_mul ();
 }
 
 static void
-emit_lsh (void)
+emit_lsh (struct thread_info *thread)
 {
-  target_emit_ops ()->emit_lsh ();
+  target_emit_ops (thread)->emit_lsh ();
 }
 
 static void
-emit_rsh_signed (void)
+emit_rsh_signed (struct thread_info *thread)
 {
-  target_emit_ops ()->emit_rsh_signed ();
+  target_emit_ops (thread)->emit_rsh_signed ();
 }
 
 static void
-emit_rsh_unsigned (void)
+emit_rsh_unsigned (struct thread_info *thread)
 {
-  target_emit_ops ()->emit_rsh_unsigned ();
+  target_emit_ops (thread)->emit_rsh_unsigned ();
 }
 
 static void
-emit_ext (int arg)
+emit_ext (struct thread_info *thread, int arg)
 {
-  target_emit_ops ()->emit_ext (arg);
+  target_emit_ops (thread)->emit_ext (arg);
 }
 
 static void
-emit_log_not (void)
+emit_log_not (struct thread_info *thread)
 {
-  target_emit_ops ()->emit_log_not ();
+  target_emit_ops (thread)->emit_log_not ();
 }
 
 static void
-emit_bit_and (void)
+emit_bit_and (struct thread_info *thread)
 {
-  target_emit_ops ()->emit_bit_and ();
+  target_emit_ops (thread)->emit_bit_and ();
 }
 
 static void
-emit_bit_or (void)
+emit_bit_or (struct thread_info *thread)
 {
-  target_emit_ops ()->emit_bit_or ();
+  target_emit_ops (thread)->emit_bit_or ();
 }
 
 static void
-emit_bit_xor (void)
+emit_bit_xor (struct thread_info *thread)
 {
-  target_emit_ops ()->emit_bit_xor ();
+  target_emit_ops (thread)->emit_bit_xor ();
 }
 
 static void
-emit_bit_not (void)
+emit_bit_not (struct thread_info *thread)
 {
-  target_emit_ops ()->emit_bit_not ();
+  target_emit_ops (thread)->emit_bit_not ();
 }
 
 static void
-emit_equal (void)
+emit_equal (struct thread_info *thread)
 {
-  target_emit_ops ()->emit_equal ();
+  target_emit_ops (thread)->emit_equal ();
 }
 
 static void
-emit_less_signed (void)
+emit_less_signed (struct thread_info *thread)
 {
-  target_emit_ops ()->emit_less_signed ();
+  target_emit_ops (thread)->emit_less_signed ();
 }
 
 static void
-emit_less_unsigned (void)
+emit_less_unsigned (struct thread_info *thread)
 {
-  target_emit_ops ()->emit_less_unsigned ();
+  target_emit_ops (thread)->emit_less_unsigned ();
 }
 
 static void
-emit_ref (int size)
+emit_ref (struct thread_info *thread, int size)
 {
-  target_emit_ops ()->emit_ref (size);
+  target_emit_ops (thread)->emit_ref (size);
 }
 
 static void
-emit_if_goto (int *offset_p, int *size_p)
+emit_if_goto (struct thread_info *thread, int *offset_p, int *size_p)
 {
-  target_emit_ops ()->emit_if_goto (offset_p, size_p);
+  target_emit_ops (thread)->emit_if_goto (offset_p, size_p);
 }
 
 static void
-emit_goto (int *offset_p, int *size_p)
+emit_goto (struct thread_info *thread, int *offset_p, int *size_p)
 {
-  target_emit_ops ()->emit_goto (offset_p, size_p);
+  target_emit_ops (thread)->emit_goto (offset_p, size_p);
 }
 
 static void
-write_goto_address (CORE_ADDR from, CORE_ADDR to, int size)
+write_goto_address (struct thread_info *thread, CORE_ADDR from, CORE_ADDR to,
+		    int size)
 {
-  target_emit_ops ()->write_goto_address (from, to, size);
+  target_emit_ops (thread)->write_goto_address (from, to, size);
 }
 
 static void
-emit_const (LONGEST num)
+emit_const (struct thread_info *thread, LONGEST num)
 {
-  target_emit_ops ()->emit_const (num);
+  target_emit_ops (thread)->emit_const (num);
 }
 
 static void
-emit_reg (int reg)
+emit_reg (struct thread_info *thread, int reg)
 {
-  target_emit_ops ()->emit_reg (reg);
+  target_emit_ops (thread)->emit_reg (reg);
 }
 
 static void
-emit_pop (void)
+emit_pop (struct thread_info *thread)
 {
-  target_emit_ops ()->emit_pop ();
+  target_emit_ops (thread)->emit_pop ();
 }
 
 static void
-emit_stack_flush (void)
+emit_stack_flush (struct thread_info *thread)
 {
-  target_emit_ops ()->emit_stack_flush ();
+  target_emit_ops (thread)->emit_stack_flush ();
 }
 
 static void
-emit_zero_ext (int arg)
+emit_zero_ext (struct thread_info *thread, int arg)
 {
-  target_emit_ops ()->emit_zero_ext (arg);
+  target_emit_ops (thread)->emit_zero_ext (arg);
 }
 
 static void
-emit_swap (void)
+emit_swap (struct thread_info *thread)
 {
-  target_emit_ops ()->emit_swap ();
+  target_emit_ops (thread)->emit_swap ();
 }
 
 static void
-emit_stack_adjust (int n)
+emit_stack_adjust (struct thread_info *thread, int n)
 {
-  target_emit_ops ()->emit_stack_adjust (n);
+  target_emit_ops (thread)->emit_stack_adjust (n);
 }
 
 /* FN's prototype is `LONGEST(*fn)(int)'.  */
 
 static void
-emit_int_call_1 (CORE_ADDR fn, int arg1)
+emit_int_call_1 (struct thread_info *thread, CORE_ADDR fn, int arg1)
 {
-  target_emit_ops ()->emit_int_call_1 (fn, arg1);
+  target_emit_ops (thread)->emit_int_call_1 (fn, arg1);
 }
 
 /* FN's prototype is `void(*fn)(int,LONGEST)'.  */
 
 static void
-emit_void_call_2 (CORE_ADDR fn, int arg1)
+emit_void_call_2 (struct thread_info *thread, CORE_ADDR fn, int arg1)
 {
-  target_emit_ops ()->emit_void_call_2 (fn, arg1);
+  target_emit_ops (thread)->emit_void_call_2 (fn, arg1);
 }
 
 static void
-emit_eq_goto (int *offset_p, int *size_p)
+emit_eq_goto (struct thread_info *thread, int *offset_p, int *size_p)
 {
-  target_emit_ops ()->emit_eq_goto (offset_p, size_p);
+  target_emit_ops (thread)->emit_eq_goto (offset_p, size_p);
 }
 
 static void
-emit_ne_goto (int *offset_p, int *size_p)
+emit_ne_goto (struct thread_info *thread, int *offset_p, int *size_p)
 {
-  target_emit_ops ()->emit_ne_goto (offset_p, size_p);
+  target_emit_ops (thread)->emit_ne_goto (offset_p, size_p);
 }
 
 static void
-emit_lt_goto (int *offset_p, int *size_p)
+emit_lt_goto (struct thread_info *thread, int *offset_p, int *size_p)
 {
-  target_emit_ops ()->emit_lt_goto (offset_p, size_p);
+  target_emit_ops (thread)->emit_lt_goto (offset_p, size_p);
 }
 
 static void
-emit_ge_goto (int *offset_p, int *size_p)
+emit_ge_goto (struct thread_info *thread, int *offset_p, int *size_p)
 {
-  target_emit_ops ()->emit_ge_goto (offset_p, size_p);
+  target_emit_ops (thread)->emit_ge_goto (offset_p, size_p);
 }
 
 static void
-emit_gt_goto (int *offset_p, int *size_p)
+emit_gt_goto (struct thread_info *thread, int *offset_p, int *size_p)
 {
-  target_emit_ops ()->emit_gt_goto (offset_p, size_p);
+  target_emit_ops (thread)->emit_gt_goto (offset_p, size_p);
 }
 
 static void
-emit_le_goto (int *offset_p, int *size_p)
+emit_le_goto (struct thread_info *thread, int *offset_p, int *size_p)
 {
-  target_emit_ops ()->emit_le_goto (offset_p, size_p);
+  target_emit_ops (thread)->emit_le_goto (offset_p, size_p);
 }
 
 /* Scan an agent expression for any evidence that the given PC is the
@@ -399,7 +400,7 @@ is_goto_target (struct agent_expr *aexpr, int pc)
 /* Given an agent expression, turn it into native code.  */
 
 enum eval_result_type
-compile_bytecodes (struct agent_expr *aexpr)
+compile_bytecodes (struct thread_info *thread, struct agent_expr *aexpr)
 {
   int pc = 0;
   int done = 0;
@@ -447,15 +448,15 @@ compile_bytecodes (struct agent_expr *aexpr)
       switch (op)
 	{
 	case gdb_agent_op_add:
-	  emit_add ();
+	  emit_add (thread);
 	  break;
 
 	case gdb_agent_op_sub:
-	  emit_sub ();
+	  emit_sub (thread);
 	  break;
 
 	case gdb_agent_op_mul:
-	  emit_mul ();
+	  emit_mul (thread);
 	  break;
 
 	case gdb_agent_op_div_signed:
@@ -475,15 +476,15 @@ compile_bytecodes (struct agent_expr *aexpr)
 	  break;
 
 	case gdb_agent_op_lsh:
-	  emit_lsh ();
+	  emit_lsh (thread);
 	  break;
 
 	case gdb_agent_op_rsh_signed:
-	  emit_rsh_signed ();
+	  emit_rsh_signed (thread);
 	  break;
 
 	case gdb_agent_op_rsh_unsigned:
-	  emit_rsh_unsigned ();
+	  emit_rsh_unsigned (thread);
 	  break;
 
 	case gdb_agent_op_trace:
@@ -495,30 +496,30 @@ compile_bytecodes (struct agent_expr *aexpr)
 	  break;
 
 	case gdb_agent_op_log_not:
-	  emit_log_not ();
+	  emit_log_not (thread);
 	  break;
 
 	case gdb_agent_op_bit_and:
-	  emit_bit_and ();
+	  emit_bit_and (thread);
 	  break;
 
 	case gdb_agent_op_bit_or:
-	  emit_bit_or ();
+	  emit_bit_or (thread);
 	  break;
 
 	case gdb_agent_op_bit_xor:
-	  emit_bit_xor ();
+	  emit_bit_xor (thread);
 	  break;
 
 	case gdb_agent_op_bit_not:
-	  emit_bit_not ();
+	  emit_bit_not (thread);
 	  break;
 
 	case gdb_agent_op_equal:
 	  next_op = aexpr->bytes[pc];
 	  if (next_op == gdb_agent_op_if_goto
 	      && !is_goto_target (aexpr, pc)
-	      && target_emit_ops ()->emit_eq_goto)
+	      && target_emit_ops (thread)->emit_eq_goto)
 	    {
 	      ax_debug ("Combining equal & if_goto");
 	      pc += 1;
@@ -526,12 +527,13 @@ compile_bytecodes (struct agent_expr *aexpr)
 	      arg = aexpr->bytes[pc++];
 	      arg = (arg << 8) + aexpr->bytes[pc++];
 	      aentry->goto_pc = arg;
-	      emit_eq_goto (&(aentry->from_offset), &(aentry->from_size));
+	      emit_eq_goto (thread, &(aentry->from_offset),
+			    &(aentry->from_size));
 	    }
 	  else if (next_op == gdb_agent_op_log_not
 		   && (aexpr->bytes[pc + 1] == gdb_agent_op_if_goto)
 		   && !is_goto_target (aexpr, pc + 1)
-		   && target_emit_ops ()->emit_ne_goto)
+		   && target_emit_ops (thread)->emit_ne_goto)
 	    {
 	      ax_debug ("Combining equal & log_not & if_goto");
 	      pc += 2;
@@ -539,10 +541,11 @@ compile_bytecodes (struct agent_expr *aexpr)
 	      arg = aexpr->bytes[pc++];
 	      arg = (arg << 8) + aexpr->bytes[pc++];
 	      aentry->goto_pc = arg;
-	      emit_ne_goto (&(aentry->from_offset), &(aentry->from_size));
+	      emit_ne_goto (thread, &(aentry->from_offset),
+			    &(aentry->from_size));
 	    }
 	  else
-	    emit_equal ();
+	    emit_equal (thread);
 	  break;
 
 	case gdb_agent_op_less_signed:
@@ -556,7 +559,8 @@ compile_bytecodes (struct agent_expr *aexpr)
 	      arg = aexpr->bytes[pc++];
 	      arg = (arg << 8) + aexpr->bytes[pc++];
 	      aentry->goto_pc = arg;
-	      emit_lt_goto (&(aentry->from_offset), &(aentry->from_size));
+	      emit_lt_goto (thread, &(aentry->from_offset),
+			    &(aentry->from_size));
 	    }
 	  else if (next_op == gdb_agent_op_log_not
 		   && !is_goto_target (aexpr, pc)
@@ -569,76 +573,77 @@ compile_bytecodes (struct agent_expr *aexpr)
 	      arg = aexpr->bytes[pc++];
 	      arg = (arg << 8) + aexpr->bytes[pc++];
 	      aentry->goto_pc = arg;
-	      emit_ge_goto (&(aentry->from_offset), &(aentry->from_size));
+	      emit_ge_goto (thread, &(aentry->from_offset),
+			    &(aentry->from_size));
 	    }
 	  else
-	    emit_less_signed ();
+	    emit_less_signed (thread);
 	  break;
 
 	case gdb_agent_op_less_unsigned:
-	  emit_less_unsigned ();
+	  emit_less_unsigned (thread);
 	  break;
 
 	case gdb_agent_op_ext:
 	  arg = aexpr->bytes[pc++];
 	  if (arg < (sizeof (LONGEST) * 8))
-	    emit_ext (arg);
+	    emit_ext (thread, arg);
 	  break;
 
 	case gdb_agent_op_ref8:
-	  emit_ref (1);
+	  emit_ref (thread, 1);
 	  break;
 
 	case gdb_agent_op_ref16:
-	  emit_ref (2);
+	  emit_ref (thread, 2);
 	  break;
 
 	case gdb_agent_op_ref32:
-	  emit_ref (4);
+	  emit_ref (thread, 4);
 	  break;
 
 	case gdb_agent_op_ref64:
-	  emit_ref (8);
+	  emit_ref (thread, 8);
 	  break;
 
 	case gdb_agent_op_if_goto:
 	  arg = aexpr->bytes[pc++];
 	  arg = (arg << 8) + aexpr->bytes[pc++];
 	  aentry->goto_pc = arg;
-	  emit_if_goto (&(aentry->from_offset), &(aentry->from_size));
+	  emit_if_goto (thread, &(aentry->from_offset), &(aentry->from_size));
 	  break;
 
 	case gdb_agent_op_goto:
 	  arg = aexpr->bytes[pc++];
 	  arg = (arg << 8) + aexpr->bytes[pc++];
 	  aentry->goto_pc = arg;
-	  emit_goto (&(aentry->from_offset), &(aentry->from_size));
+	  emit_goto (thread, &(aentry->from_offset), &(aentry->from_size));
 	  break;
 
 	case gdb_agent_op_const8:
-	  emit_stack_flush ();
+	  emit_stack_flush (thread);
 	  top = aexpr->bytes[pc++];
-	  emit_const (top);
+	  emit_const (thread, top);
 	  break;
 
 	case gdb_agent_op_const16:
-	  emit_stack_flush ();
+	  emit_stack_flush (thread);
 	  top = aexpr->bytes[pc++];
 	  top = (top << 8) + aexpr->bytes[pc++];
-	  emit_const (top);
+	  emit_const (thread, top);
 	  break;
 
 	case gdb_agent_op_const32:
-	  emit_stack_flush ();
+	  emit_stack_flush (thread);
 	  top = aexpr->bytes[pc++];
 	  top = (top << 8) + aexpr->bytes[pc++];
 	  top = (top << 8) + aexpr->bytes[pc++];
 	  top = (top << 8) + aexpr->bytes[pc++];
-	  emit_const (top);
+	  emit_const (thread, top);
 	  break;
 
 	case gdb_agent_op_const64:
-	  emit_stack_flush ();
+	  emit_stack_flush (thread);
 	  top = aexpr->bytes[pc++];
 	  top = (top << 8) + aexpr->bytes[pc++];
 	  top = (top << 8) + aexpr->bytes[pc++];
@@ -647,14 +652,14 @@ compile_bytecodes (struct agent_expr *aexpr)
 	  top = (top << 8) + aexpr->bytes[pc++];
 	  top = (top << 8) + aexpr->bytes[pc++];
 	  top = (top << 8) + aexpr->bytes[pc++];
-	  emit_const (top);
+	  emit_const (thread, top);
 	  break;
 
 	case gdb_agent_op_reg:
-	  emit_stack_flush ();
+	  emit_stack_flush (thread);
 	  arg = aexpr->bytes[pc++];
 	  arg = (arg << 8) + aexpr->bytes[pc++];
-	  emit_reg (arg);
+	  emit_reg (thread, arg);
 	  break;
 
 	case gdb_agent_op_end:
@@ -662,24 +667,24 @@ compile_bytecodes (struct agent_expr *aexpr)
 
 	  /* Assume there is one stack element left, and that it is
 	     cached in "top" where emit_epilogue can get to it.  */
-	  emit_stack_adjust (1);
+	  emit_stack_adjust (thread, 1);
 
 	  done = 1;
 	  break;
 
 	case gdb_agent_op_dup:
 	  /* In our design, dup is equivalent to stack flushing.  */
-	  emit_stack_flush ();
+	  emit_stack_flush (thread);
 	  break;
 
 	case gdb_agent_op_pop:
-	  emit_pop ();
+	  emit_pop (thread);
 	  break;
 
 	case gdb_agent_op_zero_ext:
 	  arg = aexpr->bytes[pc++];
 	  if (arg < (sizeof (LONGEST) * 8))
-	    emit_zero_ext (arg);
+	    emit_zero_ext (thread, arg);
 	  break;
 
 	case gdb_agent_op_swap:
@@ -696,7 +701,8 @@ compile_bytecodes (struct agent_expr *aexpr)
 	      arg = aexpr->bytes[pc++];
 	      arg = (arg << 8) + aexpr->bytes[pc++];
 	      aentry->goto_pc = arg;
-	      emit_gt_goto (&(aentry->from_offset), &(aentry->from_size));
+	      emit_gt_goto (thread, &(aentry->from_offset),
+			    &(aentry->from_size));
 	    }
 	  else if (next_op == gdb_agent_op_less_signed
 		   && !is_goto_target (aexpr, pc)
@@ -711,25 +717,24 @@ compile_bytecodes (struct agent_expr *aexpr)
 	      arg = aexpr->bytes[pc++];
 	      arg = (arg << 8) + aexpr->bytes[pc++];
 	      aentry->goto_pc = arg;
-	      emit_le_goto (&(aentry->from_offset), &(aentry->from_size));
+	      emit_le_goto (thread, &(aentry->from_offset),
+			    &(aentry->from_size));
 	    }
 	  else
-	    emit_swap ();
+	    emit_swap (thread);
 	  break;
 
 	case gdb_agent_op_getv:
-	  emit_stack_flush ();
+	  emit_stack_flush (thread);
 	  arg = aexpr->bytes[pc++];
 	  arg = (arg << 8) + aexpr->bytes[pc++];
-	  emit_int_call_1 (get_get_tsv_func_addr (),
-			   arg);
+	  emit_int_call_1 (thread, get_get_tsv_func_addr (), arg);
 	  break;
 
 	case gdb_agent_op_setv:
 	  arg = aexpr->bytes[pc++];
 	  arg = (arg << 8) + aexpr->bytes[pc++];
-	  emit_void_call_2 (get_set_tsv_func_addr (),
-			    arg);
+	  emit_void_call_2 (thread, get_set_tsv_func_addr (), arg);
 	  break;
 
 	case gdb_agent_op_tracev:
@@ -783,7 +788,7 @@ compile_bytecodes (struct agent_expr *aexpr)
 	      ax_debug ("Want to jump from %s to %s\n",
 			paddress (aentry->address),
 			paddress (aentry2->address));
-	      write_goto_address (aentry->address + aentry->from_offset,
+	      write_goto_address (thread, aentry->address + aentry->from_offset,
 				  aentry2->address, aentry->from_size);
 	      written = 1;
 	      break;

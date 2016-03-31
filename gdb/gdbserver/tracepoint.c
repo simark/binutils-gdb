@@ -1362,7 +1362,8 @@ static void collect_data_at_tracepoint (struct tracepoint_hit_ctx *ctx,
 static void collect_data_at_step (struct tracepoint_hit_ctx *ctx,
 				  CORE_ADDR stop_pc,
 				  struct tracepoint *tpoint, int current_step);
-static void compile_tracepoint_condition (struct tracepoint *tpoint,
+static void compile_tracepoint_condition (struct thread_info *,
+					  struct tracepoint *tpoint,
 					  CORE_ADDR *jump_entry);
 #endif
 static void do_action_at_tracepoint (struct tracepoint_hit_ctx *ctx,
@@ -1374,9 +1375,11 @@ static void do_action_at_tracepoint (struct tracepoint_hit_ctx *ctx,
 #ifndef IN_PROCESS_AGENT
 static struct tracepoint *fast_tracepoint_from_ipa_tpoint_address (CORE_ADDR);
 
-static void install_tracepoint (struct tracepoint *, char *own_buf);
-static void download_tracepoint (struct tracepoint *);
-static int install_fast_tracepoint (struct tracepoint *, char *errbuf);
+static void install_tracepoint (struct thread_info *, struct tracepoint *,
+				char *own_buf);
+static void download_tracepoint (struct thread_info *, struct tracepoint *);
+static int install_fast_tracepoint (struct thread_info *, struct tracepoint *,
+				    char *errbuf);
 static void clone_fast_tracepoint (struct tracepoint *to,
 				   const struct tracepoint *from);
 #endif
@@ -2472,6 +2475,7 @@ clear_installed_tracepoints (void)
 static void
 cmd_qtdp (char *own_buf)
 {
+  struct thread_info *thread = current_thread;
   int tppacket;
   /* Whether there is a trailing hyphen at the end of the QTDP packet.  */
   int trail_hyphen = 0;
@@ -2627,11 +2631,11 @@ cmd_qtdp (char *own_buf)
 	}
       else
 	{
-	  download_tracepoint (tpoint);
+	  download_tracepoint (thread, tpoint);
 
 	  if (tpoint->type == trap_tracepoint || tp == NULL)
 	    {
-	      install_tracepoint (tpoint, own_buf);
+	      install_tracepoint (thread, tpoint, own_buf);
 	      if (strcmp (own_buf, "OK") != 0)
 		remove_tracepoint (tpoint);
 	    }
@@ -3064,7 +3068,8 @@ clone_fast_tracepoint (struct tracepoint *to, const struct tracepoint *from)
    non-zero.  */
 
 static int
-install_fast_tracepoint (struct tracepoint *tpoint, char *errbuf)
+install_fast_tracepoint (struct thread_info *thread, struct tracepoint *tpoint,
+			 char *errbuf)
 {
   CORE_ADDR jentry, jump_entry;
   CORE_ADDR trampoline;
@@ -3075,7 +3080,7 @@ install_fast_tracepoint (struct tracepoint *tpoint, char *errbuf)
   unsigned char fjump[MAX_JUMP_SIZE];
   ULONGEST fjump_size;
 
-  if (tpoint->orig_size < target_get_min_fast_tracepoint_insn_len ())
+  if (tpoint->orig_size < target_get_min_fast_tracepoint_insn_len (thread))
     {
       trace_debug ("Requested a fast tracepoint on an instruction "
 		   "that is of less than the minimum length.");
@@ -3088,7 +3093,7 @@ install_fast_tracepoint (struct tracepoint *tpoint, char *errbuf)
   trampoline_size = 0;
 
   /* Install the jump pad.  */
-  err = install_fast_tracepoint_jump_pad (tpoint->obj_addr_on_target,
+  err = install_fast_tracepoint_jump_pad (thread, tpoint->obj_addr_on_target,
 					  tpoint->address,
 					  ipa_sym_addrs.addr_gdb_collect,
 					  ipa_sym_addrs.addr_collecting,
@@ -3126,7 +3131,8 @@ install_fast_tracepoint (struct tracepoint *tpoint, char *errbuf)
 /* Install tracepoint TPOINT, and write reply message in OWN_BUF.  */
 
 static void
-install_tracepoint (struct tracepoint *tpoint, char *own_buf)
+install_tracepoint (struct thread_info *thread, struct tracepoint *tpoint,
+		    char *own_buf)
 {
   tpoint->handle = NULL;
   *own_buf = '\0';
@@ -3160,7 +3166,7 @@ install_tracepoint (struct tracepoint *tpoint, char *own_buf)
 	}
 
       if (tpoint->type == fast_tracepoint)
-	install_fast_tracepoint (tpoint, own_buf);
+	install_fast_tracepoint (thread, tpoint, own_buf);
       else
 	{
 	  if (probe_marker_at (tpoint->address, own_buf) == 0)
@@ -3180,11 +3186,13 @@ install_tracepoint (struct tracepoint *tpoint, char *own_buf)
     write_ok (own_buf);
 }
 
-static void download_tracepoint_1 (struct tracepoint *tpoint);
+static void download_tracepoint_1 (struct thread_info *,
+				   struct tracepoint *tpoint);
 
 static void
 cmd_qtstart (char *packet)
 {
+  struct thread_info *thread = current_thread;
   struct tracepoint *tpoint, *prev_ftpoint, *prev_stpoint;
   CORE_ADDR tpptr = 0, prev_tpptr = 0;
 
@@ -3265,7 +3273,7 @@ cmd_qtstart (char *packet)
 		  if (use_agent_p)
 		    tracepoint_send_agent (tpoint);
 		  else
-		    download_tracepoint_1 (tpoint);
+		    download_tracepoint_1 (thread, tpoint);
 
 		  clone_fast_tracepoint (tpoint, prev_ftpoint);
 		}
@@ -3279,8 +3287,9 @@ cmd_qtstart (char *packet)
 		    installed = !tracepoint_send_agent (tpoint);
 		  else
 		    {
-		      download_tracepoint_1 (tpoint);
-		      installed = !install_fast_tracepoint (tpoint, packet);
+		      download_tracepoint_1 (thread, tpoint);
+		      installed = !install_fast_tracepoint (thread,
+							    tpoint, packet);
 		    }
 
 		  if (installed)
@@ -3296,7 +3305,7 @@ cmd_qtstart (char *packet)
 		  break;
 		}
 
-	      download_tracepoint_1 (tpoint);
+	      download_tracepoint_1 (thread, tpoint);
 	      /* Can only probe a given marker once.  */
 	      if (prev_stpoint != NULL
 		  && prev_stpoint->address == tpoint->address)
@@ -3984,14 +3993,16 @@ gdb_agent_about_to_close (int pid)
 static void
 cmd_qtminftpilen (char *packet)
 {
-  if (current_thread == NULL)
+  struct thread_info *thread = current_thread;
+
+  if (thread == NULL)
     {
       /* Indicate that the minimum length is currently unknown.  */
       strcpy (packet, "0");
       return;
     }
 
-  sprintf (packet, "%x", target_get_min_fast_tracepoint_insn_len ());
+  sprintf (packet, "%x", target_get_min_fast_tracepoint_insn_len (thread));
 }
 
 /* Respond to qTBuffer packet with a block of raw data from the trace
@@ -5879,7 +5890,8 @@ get_set_tsv_func_addr (void)
 }
 
 static void
-compile_tracepoint_condition (struct tracepoint *tpoint,
+compile_tracepoint_condition (struct thread_info *thread,
+			      struct tracepoint *tpoint,
 			      CORE_ADDR *jump_entry)
 {
   CORE_ADDR entry_point = *jump_entry;
@@ -5891,13 +5903,13 @@ compile_tracepoint_condition (struct tracepoint *tpoint,
   /* Initialize the global pointer to the code being built.  */
   current_insn_ptr = *jump_entry;
 
-  emit_prologue ();
+  emit_prologue (thread);
 
-  err = compile_bytecodes (tpoint->cond);
+  err = compile_bytecodes (thread, tpoint->cond);
 
   if (err == expr_eval_no_error)
     {
-      emit_epilogue ();
+      emit_epilogue (thread);
 
       /* Record the beginning of the compiled code.  */
       tpoint->compiled_cond = entry_point;
@@ -5983,7 +5995,7 @@ download_agent_expr (struct agent_expr *expr)
 /* Sync tracepoint with IPA, but leave maintenance of linked list to caller.  */
 
 static void
-download_tracepoint_1 (struct tracepoint *tpoint)
+download_tracepoint_1 (struct thread_info *thread, struct tracepoint *tpoint)
 {
   struct tracepoint target_tracepoint;
   CORE_ADDR tpptr = 0;
@@ -5991,7 +6003,7 @@ download_tracepoint_1 (struct tracepoint *tpoint)
   gdb_assert (tpoint->type == fast_tracepoint
 	      || tpoint->type == static_tracepoint);
 
-  if (tpoint->cond != NULL && target_emit_ops () != NULL)
+  if (tpoint->cond != NULL && target_emit_ops (thread) != NULL)
     {
       CORE_ADDR jentry, jump_entry;
 
@@ -6004,7 +6016,7 @@ download_tracepoint_1 (struct tracepoint *tpoint)
 	     decide.  */
 	  jentry = UALIGN (jentry, 8);
 
-	  compile_tracepoint_condition (tpoint, &jentry);
+	  compile_tracepoint_condition (thread, tpoint, &jentry);
 	}
 
       /* Pad to 8-byte alignment.  */
@@ -6145,7 +6157,7 @@ tracepoint_send_agent (struct tracepoint *tpoint)
 }
 
 static void
-download_tracepoint (struct tracepoint *tpoint)
+download_tracepoint (struct thread_info *thread, struct tracepoint *tpoint)
 {
   struct tracepoint *tp, *tp_prev;
 
@@ -6153,7 +6165,7 @@ download_tracepoint (struct tracepoint *tpoint)
       && tpoint->type != static_tracepoint)
     return;
 
-  download_tracepoint_1 (tpoint);
+  download_tracepoint_1 (thread, tpoint);
 
   /* Find the previous entry of TPOINT, which is fast tracepoint or
      static tracepoint.  */

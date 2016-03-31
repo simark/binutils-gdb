@@ -39,10 +39,10 @@ typedef size_t gdb_ps_size_t;
 
 #ifdef HAVE_REGSETS
 static struct regset_info *
-gregset_info (void)
+gregset_info (struct thread_info *thread)
 {
   int i = 0;
-  const struct regs_info *regs_info = (*the_low_target.regs_info) ();
+  const struct regs_info *regs_info = (*the_low_target.regs_info) (thread);
   struct regsets_info *regsets_info = regs_info->regsets_info;
 
   while (regsets_info->regsets[i].size != -1)
@@ -104,7 +104,7 @@ ps_lgetregs (gdb_ps_prochandle_t ph, lwpid_t lwpid, prgregset_t gregset)
 {
 #ifdef HAVE_REGSETS
   struct lwp_info *lwp;
-  struct thread_info *reg_thread, *saved_thread;
+  struct thread_info *reg_thread;
   struct regcache *regcache;
 
   lwp = find_lwp_pid (pid_to_ptid (lwpid));
@@ -112,12 +112,9 @@ ps_lgetregs (gdb_ps_prochandle_t ph, lwpid_t lwpid, prgregset_t gregset)
     return PS_ERR;
 
   reg_thread = get_lwp_thread (lwp);
-  saved_thread = current_thread;
-  current_thread = reg_thread;
-  regcache = get_thread_regcache (current_thread, 1);
-  gregset_info ()->fill_function (regcache, gregset);
+  regcache = get_thread_regcache (reg_thread, 1);
+  gregset_info (reg_thread)->fill_function (regcache, gregset);
 
-  current_thread = saved_thread;
   return PS_OK;
 #else
   return PS_ERR;

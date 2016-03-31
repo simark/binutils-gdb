@@ -173,9 +173,9 @@ static /*const*/ int i386_regmap[] =
    per the tdesc.  */
 
 static int
-is_64bit_tdesc (void)
+is_64bit_tdesc (struct thread_info *thread)
 {
-  struct regcache *regcache = get_thread_regcache (current_thread, 0);
+  struct regcache *regcache = get_thread_regcache (thread, 0);
 
   return register_size (regcache->tdesc, 0) == 8;
 }
@@ -190,7 +190,9 @@ ps_get_thread_area (const struct ps_prochandle *ph,
 		    lwpid_t lwpid, int idx, void **base)
 {
 #ifdef __x86_64__
-  int use_64bit = is_64bit_tdesc ();
+  struct lwp_info *lwp = find_lwp_pid (pid_to_ptid (lwpid));
+  struct thread_info *thr = get_lwp_thread (lwp);
+  int use_64bit = is_64bit_tdesc (thr);
 
   if (use_64bit)
     {
@@ -232,8 +234,11 @@ ps_get_thread_area (const struct ps_prochandle *ph,
 static int
 x86_get_thread_area (int lwpid, CORE_ADDR *addr)
 {
+  struct lwp_info *lwp = find_lwp_pid (pid_to_ptid (lwpid));
+  struct thread_info *thr = get_lwp_thread (lwp);
+
 #ifdef __x86_64__
-  int use_64bit = is_64bit_tdesc ();
+  int use_64bit = is_64bit_tdesc (thr);
 
   if (use_64bit)
     {
@@ -249,8 +254,6 @@ x86_get_thread_area (int lwpid, CORE_ADDR *addr)
 #endif
 
   {
-    struct lwp_info *lwp = find_lwp_pid (pid_to_ptid (lwpid));
-    struct thread_info *thr = get_lwp_thread (lwp);
     struct regcache *regcache = get_thread_regcache (thr, 1);
     unsigned int desc[4];
     ULONGEST gs = 0;
@@ -274,10 +277,10 @@ x86_get_thread_area (int lwpid, CORE_ADDR *addr)
 
 
 static int
-x86_cannot_store_register (int regno)
+x86_cannot_store_register (struct thread_info *thread, int regno)
 {
 #ifdef __x86_64__
-  if (is_64bit_tdesc ())
+  if (is_64bit_tdesc (thread))
     return 0;
 #endif
 
@@ -285,10 +288,10 @@ x86_cannot_store_register (int regno)
 }
 
 static int
-x86_cannot_fetch_register (int regno)
+x86_cannot_fetch_register (struct thread_info *thread, int regno)
 {
 #ifdef __x86_64__
-  if (is_64bit_tdesc ())
+  if (is_64bit_tdesc (thread))
     return 0;
 #endif
 
@@ -631,15 +634,16 @@ x86_debug_reg_state (pid_t pid)
    INF.  */
 
 static int
-x86_siginfo_fixup (siginfo_t *native, gdb_byte *inf, int direction)
+x86_siginfo_fixup (struct thread_info *thread, siginfo_t *native,
+		   gdb_byte *inf, int direction)
 {
 #ifdef __x86_64__
   unsigned int machine;
-  int tid = lwpid_of (current_thread);
+  int tid = lwpid_of (thread);
   int is_elf64 = linux_pid_exe_is_elf_64_file (tid, &machine);
 
   /* Is the inferior 32-bit?  If so, then fixup the siginfo object.  */
-  if (!is_64bit_tdesc ())
+  if (!is_64bit_tdesc (thread))
       return amd64_linux_siginfo_fixup_common (native, inf, direction,
 					       FIXUP_32);
   /* No fixup for native x32 GDB.  */
@@ -962,10 +966,10 @@ static struct regs_info i386_linux_regs_info =
   };
 
 const struct regs_info *
-x86_linux_regs_info (void)
+x86_linux_regs_info (struct thread_info *thread)
 {
 #ifdef __x86_64__
-  if (is_64bit_tdesc ())
+  if (is_64bit_tdesc (thread))
     return &amd64_linux_regs_info;
   else
 #endif
@@ -1419,7 +1423,8 @@ i386_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
 }
 
 static int
-x86_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
+x86_install_fast_tracepoint_jump_pad (struct thread_info *thread,
+				      CORE_ADDR tpoint, CORE_ADDR tpaddr,
 				      CORE_ADDR collector,
 				      CORE_ADDR lockaddr,
 				      ULONGEST orig_size,
@@ -1433,7 +1438,7 @@ x86_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
 				      char *err)
 {
 #ifdef __x86_64__
-  if (is_64bit_tdesc ())
+  if (is_64bit_tdesc (thread))
     return amd64_install_fast_tracepoint_jump_pad (tpoint, tpaddr,
 						   collector, lockaddr,
 						   orig_size, jump_entry,
@@ -1460,14 +1465,14 @@ x86_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
    architectures.  */
 
 static int
-x86_get_min_fast_tracepoint_insn_len (void)
+x86_get_min_fast_tracepoint_insn_len (struct thread_info *thread)
 {
   static int warned_about_fast_tracepoints = 0;
 
 #ifdef __x86_64__
   /*  On x86-64, 5-byte jump instructions with a 4-byte offset are always
       used for fast tracepoints.  */
-  if (is_64bit_tdesc ())
+  if (is_64bit_tdesc (thread))
     return 5;
 #endif
 
@@ -2807,10 +2812,10 @@ struct emit_ops i386_emit_ops =
 
 
 static struct emit_ops *
-x86_emit_ops (void)
+x86_emit_ops (struct thread_info *thread)
 {
 #ifdef __x86_64__
-  if (is_64bit_tdesc ())
+  if (is_64bit_tdesc (thread))
     return &amd64_emit_ops;
   else
 #endif

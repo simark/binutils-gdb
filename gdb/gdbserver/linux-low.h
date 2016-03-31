@@ -129,13 +129,13 @@ struct linux_target_ops
   /* Architecture-specific setup.  */
   void (*arch_setup) (void);
 
-  const struct regs_info *(*regs_info) (void);
-  int (*cannot_fetch_register) (int);
+  const struct regs_info *(*regs_info) (struct thread_info *thread);
+  int (*cannot_fetch_register) (struct thread_info *thread, int regno);
 
   /* Returns 0 if we can store the register, 1 if we can not
      store the register, and 2 if failure to store the register
      is acceptable.  */
-  int (*cannot_store_register) (int);
+  int (*cannot_store_register) (struct thread_info *thread, int regno);
 
   /* Hook to fetch a register in some non-standard way.  Used for
      example by backends that have read-only registers with hardcoded
@@ -181,7 +181,8 @@ struct linux_target_ops
      Returns true if any conversion was done; false otherwise.
      If DIRECTION is 1, then copy from INF to NATIVE.
      If DIRECTION is 0, copy from NATIVE to INF.  */
-  int (*siginfo_fixup) (siginfo_t *native, gdb_byte *inf, int direction);
+  int (*siginfo_fixup) (struct thread_info *thread, siginfo_t *native,
+			gdb_byte *inf, int direction);
 
   /* Hook to call when a new process is created or attached to.
      If extra per-process architecture-specific data is needed,
@@ -211,7 +212,8 @@ struct linux_target_ops
 
   /* Install a fast tracepoint jump pad.  See target.h for
      comments.  */
-  int (*install_fast_tracepoint_jump_pad) (CORE_ADDR tpoint, CORE_ADDR tpaddr,
+  int (*install_fast_tracepoint_jump_pad) (struct thread_info *thread,
+					   CORE_ADDR tpoint, CORE_ADDR tpaddr,
 					   CORE_ADDR collector,
 					   CORE_ADDR lockaddr,
 					   ULONGEST orig_size,
@@ -226,11 +228,11 @@ struct linux_target_ops
 
   /* Return the bytecode operations vector for the current inferior.
      Returns NULL if bytecode compilation is not supported.  */
-  struct emit_ops *(*emit_ops) (void);
+  struct emit_ops *(*emit_ops) (struct thread_info *thread);
 
   /* Return the minimum length of an instruction that can be safely overwritten
      for use as a fast tracepoint.  */
-  int (*get_min_fast_tracepoint_insn_len) (void);
+  int (*get_min_fast_tracepoint_insn_len) (struct thread_info *thread);
 
   /* Returns true if the low target supports range stepping.  */
   int (*supports_range_stepping) (void);

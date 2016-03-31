@@ -1490,7 +1490,8 @@ handle_qxfer_siginfo (const char *annex,
   if (annex[0] != '\0' || current_thread == NULL)
     return -1;
 
-  return (*the_target->qxfer_siginfo) (annex, readbuf, writebuf, offset, len);
+  return (*the_target->qxfer_siginfo) (current_thread, annex, readbuf, writebuf,
+				       offset, len);
 }
 
 /* Handle qXfer:spu:read and qXfer:spu:write.  */
