@@ -250,7 +250,7 @@ struct linux_target_ops
 				int *sysno, int *sysret);
 
   /* See target.h.  */
-  int (*get_ipa_tdesc_idx) (void);
+  int (*get_ipa_tdesc_idx) (struct thread_info *thread);
 };
 
 extern struct linux_target_ops the_low_target;

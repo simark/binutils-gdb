@@ -6386,12 +6386,12 @@ linux_supports_catch_syscall (void)
 }
 
 static int
-linux_get_ipa_tdesc_idx (void)
+linux_get_ipa_tdesc_idx (struct thread_info *thread)
 {
   if (the_low_target.get_ipa_tdesc_idx == NULL)
     return 0;
 
-  return (*the_low_target.get_ipa_tdesc_idx) ();
+  return (*the_low_target.get_ipa_tdesc_idx) (thread);
 }
 
 static int

@@ -2843,9 +2843,9 @@ x86_supports_hardware_single_step (void)
 }
 
 static int
-x86_get_ipa_tdesc_idx (void)
+x86_get_ipa_tdesc_idx (struct thread_info *thread)
 {
-  struct regcache *regcache = get_thread_regcache (current_thread, 0);
+  struct regcache *regcache = get_thread_regcache (thread, 0);
   const struct target_desc *tdesc = regcache->tdesc;
 
 #ifdef __x86_64__
