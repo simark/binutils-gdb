@@ -672,23 +672,18 @@ handle_extended_wait (struct lwp_info **orig_event_lwp, int wstat)
 static CORE_ADDR
 get_pc (struct lwp_info *lwp)
 {
-  struct thread_info *saved_thread;
   struct regcache *regcache;
   CORE_ADDR pc;
 
   if (the_low_target.get_pc == NULL)
     return 0;
 
-  saved_thread = current_thread;
-  current_thread = get_lwp_thread (lwp);
-
-  regcache = get_thread_regcache (current_thread, 1);
+  regcache = get_thread_regcache (get_lwp_thread (lwp), 1);
   pc = (*the_low_target.get_pc) (regcache);
 
   if (debug_threads)
     debug_printf ("pc is 0x%lx\n", (long) pc);
 
-  current_thread = saved_thread;
   return pc;
 }
 
