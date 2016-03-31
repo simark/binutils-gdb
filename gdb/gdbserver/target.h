@@ -77,7 +77,7 @@ struct target_ops
 
   /* Do additional setup after a new process is created, including
      exec-wrapper completion.  */
-  void (*post_create_inferior) (void);
+  void (*post_create_inferior) (struct thread_info *thread);
 
   /* Attach to a running process.
 
@@ -487,11 +487,11 @@ void set_target_ops (struct target_ops *);
 #define create_inferior(program, args) \
   (*the_target->create_inferior) (program, args)
 
-#define target_post_create_inferior()			 \
+#define target_post_create_inferior(thread)			 \
   do							 \
     {							 \
       if (the_target->post_create_inferior != NULL)	 \
-	(*the_target->post_create_inferior) ();		 \
+	(*the_target->post_create_inferior) (thread);	 \
     } while (0)
 
 #define myattach(pid) \

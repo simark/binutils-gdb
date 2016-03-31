@@ -282,7 +282,7 @@ start_inferior (char **argv)
 	    }
 	  while (last_status.value.sig != GDB_SIGNAL_TRAP);
 	}
-      target_post_create_inferior ();
+      target_post_create_inferior (current_thread);
       return signal_pid;
     }
 
@@ -290,7 +290,7 @@ start_inferior (char **argv)
      (assuming success).  */
   last_ptid = mywait (pid_to_ptid (signal_pid), &last_status, 0, 0);
 
-  target_post_create_inferior ();
+  target_post_create_inferior (current_thread);
 
   if (last_status.kind != TARGET_WAITKIND_EXITED
       && last_status.kind != TARGET_WAITKIND_SIGNALLED)

@@ -127,7 +127,7 @@ struct lwp_info;
 struct linux_target_ops
 {
   /* Architecture-specific setup.  */
-  void (*arch_setup) (void);
+  void (*arch_setup) (struct thread_info *thread);
 
   const struct regs_info *(*regs_info) (struct thread_info *thread);
   int (*cannot_fetch_register) (struct thread_info *thread, int regno);

@@ -426,24 +426,9 @@ static CORE_ADDR get_pc (struct lwp_info *lwp);
 /* Call the target arch_setup function on the current thread.  */
 
 static void
-linux_arch_setup (void)
+linux_arch_setup (struct thread_info *thread)
 {
-  the_low_target.arch_setup ();
-}
-
-/* Call the target arch_setup function on THREAD.  */
-
-static void
-linux_arch_setup_thread (struct thread_info *thread)
-{
-  struct thread_info *saved_thread;
-
-  saved_thread = current_thread;
-  current_thread = thread;
-
-  linux_arch_setup ();
-
-  current_thread = saved_thread;
+  the_low_target.arch_setup (thread);
 }
 
 /* Handle a GNU/Linux extended wait response.  If we see a clone,
@@ -651,7 +636,7 @@ handle_extended_wait (struct lwp_info **orig_event_lwp, int wstat)
       event_lwp = add_lwp (event_ptid);
       event_thr = get_lwp_thread (event_lwp);
       gdb_assert (current_thread == event_thr);
-      linux_arch_setup_thread (event_thr);
+      linux_arch_setup (event_thr);
 
       /* Set the event status.  */
       event_lwp->waitstatus.kind = TARGET_WAITKIND_EXECD;
@@ -967,15 +952,15 @@ linux_create_inferior (char *program, char **allargs)
 /* Implement the post_create_inferior target_ops method.  */
 
 static void
-linux_post_create_inferior (void)
+linux_post_create_inferior (struct thread_info *thread)
 {
-  struct lwp_info *lwp = get_thread_lwp (current_thread);
+  struct lwp_info *lwp = get_thread_lwp (thread);
 
-  linux_arch_setup ();
+  linux_arch_setup (thread);
 
   if (lwp->must_set_ptrace_flags)
     {
-      struct process_info *proc = current_process ();
+      struct process_info *proc = get_thread_process (thread);
       int options = linux_low_ptrace_options (proc->attached);
 
       linux_enable_event_reporting (lwpid_of (current_thread), options);
@@ -2391,7 +2376,7 @@ linux_low_filter_event (int lwpid, int wstat)
 	      /* This needs to happen after we have attached to the
 		 inferior and it is stopped for the first time, but
 		 before we access any inferior registers.  */
-	      linux_arch_setup_thread (thread);
+	      linux_arch_setup (thread);
 	    }
 	  else
 	    {

@@ -692,7 +692,7 @@ int have_ptrace_getfpxregs =
 /* Get Linux/x86 target description from running target.  */
 
 static const struct target_desc *
-x86_linux_read_description (void)
+x86_linux_read_description (struct thread_info *thread)
 {
   unsigned int machine;
   int is_elf64;
@@ -701,7 +701,7 @@ x86_linux_read_description (void)
   static uint64_t xcr0;
   struct regset_info *regset;
 
-  tid = lwpid_of (current_thread);
+  tid = lwpid_of (thread);
 
   is_elf64 = linux_pid_exe_is_elf_64_file (tid, &machine);
 
@@ -871,14 +871,14 @@ same_process_callback (struct inferior_list_entry *entry, void *data)
 static void
 x86_arch_setup_process_callback (struct inferior_list_entry *entry)
 {
+  struct thread_info *thread;
   int pid = ptid_get_pid (entry->id);
 
   /* Look up any thread of this processes.  */
-  current_thread
-    = (struct thread_info *) find_inferior (&all_threads,
-					    same_process_callback, &pid);
+  thread = (struct thread_info *) find_inferior (&all_threads,
+						 same_process_callback, &pid);
 
-  the_low_target.arch_setup ();
+  the_low_target.arch_setup (thread);
 }
 
 /* Update all the target description of all processes; a new GDB
@@ -887,16 +887,12 @@ x86_arch_setup_process_callback (struct inferior_list_entry *entry)
 static void
 x86_linux_update_xmltarget (void)
 {
-  struct thread_info *saved_thread = current_thread;
-
   /* Before changing the register cache's internal layout, flush the
      contents of the current valid caches back to the threads, and
      release the current regcache objects.  */
   regcache_release ();
 
   for_each_inferior (&all_processes, x86_arch_setup_process_callback);
-
-  current_thread = saved_thread;
 }
 
 /* Process qSupported query, "xmlRegisters=".  Update the buffer size for
@@ -980,9 +976,9 @@ x86_linux_regs_info (struct thread_info *thread)
    inferior.  */
 
 static void
-x86_arch_setup (void)
+x86_arch_setup (struct thread_info *thread)
 {
-  current_process ()->tdesc = x86_linux_read_description ();
+  get_thread_process (thread)->tdesc = x86_linux_read_description (thread);
 }
 
 /* Fill *SYSNO and *SYSRET with the syscall nr trapped and the syscall return
