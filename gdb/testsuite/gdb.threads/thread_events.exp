@@ -27,17 +27,22 @@ if ![istarget *-*-linux*] then {
     return
 }
 
-# When using gdbserver, even on Linux, we don't get notifications
-# about new threads.  This is expected, so don't test for that.
-if [is_remote target] then {
-    return
-}
-
-
 standard_testfile
 
 if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable debug] != "" } {
     return -1
+}
+
+clean_restart $binfile
+if ![runto_main] {
+  fail "Couldn't run to main."
+  return
+}
+
+# When using gdbserver, even on Linux, we don't get notifications
+# about new threads.  This is expected, so don't test for that.
+if [gdb_is_target_remote] then {
+    return
 }
 
 proc gdb_test_thread_start {messages_enabled command pattern message} {
@@ -99,9 +104,7 @@ proc test_thread_messages {enabled} {
     set enabled_string "with messages disabled"
   }
 
-  gdb_start
-  gdb_reinitialize_dir $srcdir/$subdir
-  gdb_load ${binfile}
+  clean_restart $binfile
 
   if { $enabled } {
      gdb_test "set print thread-events on"
