@@ -1093,7 +1093,7 @@ allocate_optimized_out_value (struct type *type)
 /* Accessor methods.  */
 
 struct value *
-value_next (struct value *value)
+value_next (const struct value *value)
 {
   return value->next;
 }
@@ -1115,7 +1115,7 @@ value_offset (const struct value *value)
   return value->offset;
 }
 void
-set_value_offset (struct value *value, int offset)
+set_value_offset (struct value *value, const int offset)
 {
   value->offset = offset;
 }
@@ -1125,8 +1125,9 @@ value_bitpos (const struct value *value)
 {
   return value->bitpos;
 }
+
 void
-set_value_bitpos (struct value *value, int bit)
+set_value_bitpos (struct value *value, const int bit)
 {
   value->bitpos = bit;
 }
@@ -1137,13 +1138,13 @@ value_bitsize (const struct value *value)
   return value->bitsize;
 }
 void
-set_value_bitsize (struct value *value, int bit)
+set_value_bitsize (struct value *value, const int bit)
 {
   value->bitsize = bit;
 }
 
 struct value *
-value_parent (struct value *value)
+value_parent (const struct value *value)
 {
   return value->parent;
 }
@@ -1179,7 +1180,7 @@ value_contents_all_raw (struct value *value)
 }
 
 struct type *
-value_enclosing_type (struct value *value)
+value_enclosing_type (const struct value *value)
 {
   return value->enclosing_type;
 }
@@ -1187,7 +1188,7 @@ value_enclosing_type (struct value *value)
 /* Look at value.h for description.  */
 
 struct type *
-value_actual_type (struct value *value, int resolve_simple_types,
+value_actual_type (struct value *value, const int resolve_simple_types,
 		   int *real_type_found)
 {
   struct value_print_options opts;
@@ -1281,9 +1282,9 @@ value_contents_all (struct value *value)
    SRC_BIT_OFFSET+BIT_LENGTH) ranges into *DST_RANGE, adjusted.  */
 
 static void
-ranges_copy_adjusted (VEC (range_s) **dst_range, int dst_bit_offset,
-		      VEC (range_s) *src_range, int src_bit_offset,
-		      int bit_length)
+ranges_copy_adjusted (VEC (range_s) **dst_range, const int dst_bit_offset,
+		      VEC (range_s) *src_range, const int src_bit_offset,
+		      const int bit_length)
 {
   range_s *r;
   int i;
@@ -1306,9 +1307,9 @@ ranges_copy_adjusted (VEC (range_s) **dst_range, int dst_bit_offset,
    SRC_BIT_OFFSET+BIT_LENGTH) into DST, adjusted.  */
 
 static void
-value_ranges_copy_adjusted (struct value *dst, int dst_bit_offset,
-			    const struct value *src, int src_bit_offset,
-			    int bit_length)
+value_ranges_copy_adjusted (struct value *dst, const int dst_bit_offset,
+			    const struct value *src, const int src_bit_offset,
+			    const int bit_length)
 {
   ranges_copy_adjusted (&dst->unavailable, dst_bit_offset,
 			src->unavailable, src_bit_offset,
@@ -1387,25 +1388,25 @@ value_contents_copy (struct value *dst, int dst_offset,
 }
 
 int
-value_lazy (struct value *value)
+value_lazy (const struct value *value)
 {
   return value->lazy;
 }
 
 void
-set_value_lazy (struct value *value, int val)
+set_value_lazy (struct value *value, const int val)
 {
   value->lazy = val;
 }
 
 int
-value_stack (struct value *value)
+value_stack (const struct value *value)
 {
   return value->stack;
 }
 
 void
-set_value_stack (struct value *value, int val)
+set_value_stack (struct value *value, const int val)
 {
   value->stack = val;
 }
@@ -1442,7 +1443,8 @@ value_optimized_out (struct value *value)
    the following LENGTH bytes.  */
 
 void
-mark_value_bytes_optimized_out (struct value *value, int offset, int length)
+mark_value_bytes_optimized_out (struct value *value, const int offset,
+				const int length)
 {
   mark_value_bits_optimized_out (value,
 				 offset * TARGET_CHAR_BIT,
@@ -1470,25 +1472,25 @@ value_bits_synthetic_pointer (const struct value *value,
 }
 
 int
-value_embedded_offset (struct value *value)
+value_embedded_offset (const struct value *value)
 {
   return value->embedded_offset;
 }
 
 void
-set_value_embedded_offset (struct value *value, int val)
+set_value_embedded_offset (struct value *value, const int val)
 {
   value->embedded_offset = val;
 }
 
 int
-value_pointed_to_offset (struct value *value)
+value_pointed_to_offset (const struct value *value)
 {
   return value->pointed_to_offset;
 }
 
 void
-set_value_pointed_to_offset (struct value *value, int val)
+set_value_pointed_to_offset (struct value *value, const int val)
 {
   value->pointed_to_offset = val;
 }
@@ -1535,7 +1537,7 @@ value_address (const struct value *value)
 }
 
 CORE_ADDR
-value_raw_address (struct value *value)
+value_raw_address (const struct value *value)
 {
   if (value->lval == lval_internalvar
       || value->lval == lval_internalvar_component
@@ -1545,7 +1547,7 @@ value_raw_address (struct value *value)
 }
 
 void
-set_value_address (struct value *value, CORE_ADDR addr)
+set_value_address (struct value *value, const CORE_ADDR addr)
 {
   gdb_assert (value->lval != lval_internalvar
 	      && value->lval != lval_internalvar_component
@@ -1572,7 +1574,7 @@ deprecated_value_regnum_hack (struct value *value)
 }
 
 int
-deprecated_value_modifiable (struct value *value)
+deprecated_value_modifiable (const struct value *value)
 {
   return value->modifiable;
 }
@@ -1633,7 +1635,7 @@ value_free (struct value *val)
 /* Free all values allocated since MARK was obtained by value_mark
    (except for those released).  */
 void
-value_free_to_mark (struct value *mark)
+value_free_to_mark (const struct value *mark)
 {
   struct value *val;
   struct value *next;
@@ -1725,7 +1727,7 @@ release_value_or_incref (struct value *val)
 
 /* Release all values up to mark  */
 struct value *
-value_release_to_mark (struct value *mark)
+value_release_to_mark (const struct value *mark)
 {
   struct value *val;
   struct value *next;
@@ -1796,7 +1798,7 @@ value_copy (struct value *arg)
    "volatile".  */
 
 struct value *
-make_cv_value (int cnst, int voltl, struct value *v)
+make_cv_value (const int cnst, const int voltl, struct value *v)
 {
   struct type *val_type = value_type (v);
   struct type *enclosing_type = value_enclosing_type (v);
@@ -1833,7 +1835,7 @@ value_non_lval (struct value *arg)
 /* Write contents of V at ADDR and set its lval type to be LVAL_MEMORY.  */
 
 void
-value_force_lval (struct value *v, CORE_ADDR addr)
+value_force_lval (struct value *v, const CORE_ADDR addr)
 {
   gdb_assert (VALUE_LVAL (v) == not_lval);
 
@@ -1913,7 +1915,7 @@ record_latest_value (struct value *val)
 /* Return a copy of the value in the history with sequence number NUM.  */
 
 struct value *
-access_value_history (int num)
+access_value_history (const int num)
 {
   struct value_history_chunk *chunk;
   int i;
@@ -1948,7 +1950,7 @@ access_value_history (int num)
 }
 
 static void
-show_values (char *num_exp, int from_tty)
+show_values (char *num_exp, const int from_tty)
 {
   int i;
   struct value *val;
@@ -2348,8 +2350,9 @@ get_internalvar_function (struct internalvar *var,
 }
 
 void
-set_internalvar_component (struct internalvar *var, int offset, int bitpos,
-			   int bitsize, struct value *newval)
+set_internalvar_component (struct internalvar *var, const int offset,
+			   const int bitpos, const int bitsize,
+			   struct value *newval)
 {
   gdb_byte *addr;
   struct gdbarch *arch;
@@ -2429,7 +2432,7 @@ set_internalvar (struct internalvar *var, struct value *val)
 }
 
 void
-set_internalvar_integer (struct internalvar *var, LONGEST l)
+set_internalvar_integer (struct internalvar *var, const LONGEST l)
 {
   /* Clean up old contents.  */
   clear_internalvar (var);
@@ -2489,7 +2492,7 @@ clear_internalvar (struct internalvar *var)
 }
 
 char *
-internalvar_name (struct internalvar *var)
+internalvar_name (const struct internalvar *var)
 {
   return var->name;
 }
@@ -2709,7 +2712,8 @@ value_of_xmethod (struct xmethod_worker *worker)
 /* Return the type of the result of TYPE_CODE_XMETHOD value METHOD.  */
 
 struct type *
-result_type_of_xmethod (struct value *method, int argc, struct value **argv)
+result_type_of_xmethod (struct value *method, const int argc,
+			struct value **argv)
 {
   gdb_assert (TYPE_CODE (value_type (method)) == TYPE_CODE_XMETHOD
 	      && method->lval == lval_xcallable && argc > 0);
@@ -2721,7 +2725,7 @@ result_type_of_xmethod (struct value *method, int argc, struct value **argv)
 /* Call the xmethod corresponding to the TYPE_CODE_XMETHOD value METHOD.  */
 
 struct value *
-call_xmethod (struct value *method, int argc, struct value **argv)
+call_xmethod (struct value *method, const int argc, struct value **argv)
 {
   gdb_assert (TYPE_CODE (value_type (method)) == TYPE_CODE_XMETHOD
 	      && method->lval == lval_xcallable && argc > 0);
@@ -3008,7 +3012,7 @@ unpack_pointer (struct type *type, const gdb_byte *valaddr)
    TYPE.  */
 
 struct value *
-value_static_field (struct type *type, int fieldno)
+value_static_field (struct type *type, const int fieldno)
 {
   struct value *retval;
 
@@ -3076,7 +3080,7 @@ set_value_enclosing_type (struct value *val, struct type *new_encl_type)
 
 struct value *
 value_primitive_field (struct value *arg1, int offset,
-		       int fieldno, struct type *arg_type)
+		       const int fieldno, struct type *arg_type)
 {
   struct value *v;
   struct type *type;
@@ -3190,7 +3194,7 @@ value_primitive_field (struct value *arg1, int offset,
    FIELDNO says which field.  */
 
 struct value *
-value_field (struct value *arg1, int fieldno)
+value_field (struct value *arg1, const int fieldno)
 {
   return value_primitive_field (arg1, 0, fieldno, value_type (arg1));
 }
@@ -3204,8 +3208,8 @@ value_field (struct value *arg1, int fieldno)
 
 struct value *
 value_fn_field (struct value **arg1p, struct fn_field *f,
-		int j, struct type *type,
-		int offset)
+		const int j, struct type *type,
+		const int offset)
 {
   struct value *v;
   struct type *ftype = TYPE_FN_FIELD_TYPE (f, j);
@@ -3275,7 +3279,7 @@ value_fn_field (struct value **arg1p, struct fn_field *f,
 
 static LONGEST
 unpack_bits_as_long (struct type *field_type, const gdb_byte *valaddr,
-		     int bitpos, int bitsize)
+		     const int bitpos, const int bitsize)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (get_type_arch (field_type));
   ULONGEST val;
@@ -3331,7 +3335,7 @@ unpack_bits_as_long (struct type *field_type, const gdb_byte *valaddr,
 
 int
 unpack_value_field_as_long (struct type *type, const gdb_byte *valaddr,
-			    int embedded_offset, int fieldno,
+			    const int embedded_offset, const int fieldno,
 			    const struct value *val, LONGEST *result)
 {
   int bitpos = TYPE_FIELD_BITPOS (type, fieldno);
@@ -3355,7 +3359,8 @@ unpack_value_field_as_long (struct type *type, const gdb_byte *valaddr,
    object at VALADDR.  See unpack_bits_as_long for more details.  */
 
 LONGEST
-unpack_field_as_long (struct type *type, const gdb_byte *valaddr, int fieldno)
+unpack_field_as_long (struct type *type, const gdb_byte *valaddr,
+		      const int fieldno)
 {
   int bitpos = TYPE_FIELD_BITPOS (type, fieldno);
   int bitsize = TYPE_FIELD_BITSIZE (type, fieldno);
@@ -3374,8 +3379,8 @@ unpack_field_as_long (struct type *type, const gdb_byte *valaddr, int fieldno)
 
 void
 unpack_value_bitfield (struct value *dest_val,
-		       int bitpos, int bitsize,
-		       const gdb_byte *valaddr, int embedded_offset,
+		       const int bitpos, const int bitsize,
+		       const gdb_byte *valaddr, const int embedded_offset,
 		       const struct value *val)
 {
   enum bfd_endian byte_order;
@@ -3411,9 +3416,9 @@ unpack_value_bitfield (struct value *dest_val,
    correspondingly marked unavailable/optimized out.  */
 
 struct value *
-value_field_bitfield (struct type *type, int fieldno,
+value_field_bitfield (struct type *type, const int fieldno,
 		      const gdb_byte *valaddr,
-		      int embedded_offset, const struct value *val)
+		      const int embedded_offset, const struct value *val)
 {
   int bitpos = TYPE_FIELD_BITPOS (type, fieldno);
   int bitsize = TYPE_FIELD_BITSIZE (type, fieldno);
@@ -3434,7 +3439,7 @@ value_field_bitfield (struct type *type, int fieldno,
 
 void
 modify_field (struct type *type, gdb_byte *addr,
-	      LONGEST fieldval, int bitpos, int bitsize)
+	      LONGEST fieldval, int bitpos, const int bitsize)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (get_type_arch (type));
   ULONGEST oword;
@@ -3480,7 +3485,7 @@ modify_field (struct type *type, gdb_byte *addr,
 /* Pack NUM into BUF using a target format of TYPE.  */
 
 void
-pack_long (gdb_byte *buf, struct type *type, LONGEST num)
+pack_long (gdb_byte *buf, struct type *type, const LONGEST num)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (get_type_arch (type));
   int len;
@@ -3515,7 +3520,7 @@ pack_long (gdb_byte *buf, struct type *type, LONGEST num)
 /* Pack NUM into BUF using a target format of TYPE.  */
 
 static void
-pack_unsigned_long (gdb_byte *buf, struct type *type, ULONGEST num)
+pack_unsigned_long (gdb_byte *buf, struct type *type, const ULONGEST num)
 {
   int len;
   enum bfd_endian byte_order;
@@ -3552,7 +3557,7 @@ pack_unsigned_long (gdb_byte *buf, struct type *type, ULONGEST num)
 /* Convert C numbers into newly allocated values.  */
 
 struct value *
-value_from_longest (struct type *type, LONGEST num)
+value_from_longest (struct type *type, const LONGEST num)
 {
   struct value *val = allocate_value (type);
 
@@ -3564,7 +3569,7 @@ value_from_longest (struct type *type, LONGEST num)
 /* Convert C unsigned numbers into newly allocated values.  */
 
 struct value *
-value_from_ulongest (struct type *type, ULONGEST num)
+value_from_ulongest (struct type *type, const ULONGEST num)
 {
   struct value *val = allocate_value (type);
 
@@ -3578,7 +3583,7 @@ value_from_ulongest (struct type *type, ULONGEST num)
    ADDR.  */
 
 struct value *
-value_from_pointer (struct type *type, CORE_ADDR addr)
+value_from_pointer (struct type *type, const CORE_ADDR addr)
 {
   struct value *val = allocate_value (type);
 
@@ -3598,7 +3603,7 @@ value_from_pointer (struct type *type, CORE_ADDR addr)
 struct value *
 value_from_contents_and_address_unresolved (struct type *type,
 					    const gdb_byte *valaddr,
-					    CORE_ADDR address)
+					    const CORE_ADDR address)
 {
   struct value *v;
 
@@ -3651,7 +3656,7 @@ value_from_contents (struct type *type, const gdb_byte *contents)
 }
 
 struct value *
-value_from_double (struct type *type, DOUBLEST num)
+value_from_double (struct type *type, const DOUBLEST num)
 {
   struct value *val = allocate_value (type);
   struct type *base_type = check_typedef (type);
@@ -3761,8 +3766,8 @@ coerce_ref_if_computed (const struct value *arg)
 
 struct value *
 readjust_indirect_value_type (struct value *value, struct type *enc_type,
-			      struct type *original_type,
-			      struct value *original_value)
+			      const struct type *original_type,
+			      const struct value *original_value)
 {
   /* Re-adjust type.  */
   deprecated_set_value_type (value, TYPE_TARGET_TYPE (original_type));
@@ -3859,7 +3864,7 @@ using_struct_return (struct gdbarch *gdbarch,
 /* Set the initialized field in a value struct.  */
 
 void
-set_value_initialized (struct value *val, int status)
+set_value_initialized (struct value *val, const int status)
 {
   val->initialized = status;
 }
@@ -3867,7 +3872,7 @@ set_value_initialized (struct value *val, int status)
 /* Return the initialized field in a value struct.  */
 
 int
-value_initialized (struct value *val)
+value_initialized (const struct value *val)
 {
   return val->initialized;
 }
@@ -4039,7 +4044,7 @@ value_fetch_lazy (struct value *val)
 static struct value *
 isvoid_internal_fn (struct gdbarch *gdbarch,
 		    const struct language_defn *language,
-		    void *cookie, int argc, struct value **argv)
+		    void *cookie, const int argc, struct value **argv)
 {
   int ret;
 
