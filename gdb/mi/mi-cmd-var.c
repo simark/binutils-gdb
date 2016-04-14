@@ -609,6 +609,7 @@ mi_cmd_var_assign (char *command, char **argv, int argc)
   struct varobj *var;
   char *expression, *val;
   struct cleanup *cleanup;
+  int *p;
 
   if (argc != 2)
     error (_("-var-assign: Usage: NAME EXPRESSION."));
@@ -623,9 +624,13 @@ mi_cmd_var_assign (char *command, char **argv, int argc)
 
   /* MI command '-var-assign' may write memory, so suppress memory
      changed notification if it does.  */
-  cleanup
-    = make_cleanup_restore_integer (&mi_suppress_notification.memory);
+  p = &mi_suppress_notification.memory;
+  make_cleanup_restore_integer (p);
   mi_suppress_notification.memory = 1;
+
+  p = &mi_suppress_notification.target_changed;
+  cleanup = make_cleanup_restore_integer (p);
+  mi_suppress_notification.target_changed = 1;
 
   if (!varobj_set_value (var, expression))
     error (_("-var-assign: Could not assign "

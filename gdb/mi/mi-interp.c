@@ -84,6 +84,7 @@ static void mi_breakpoint_modified (struct breakpoint *b);
 static void mi_command_param_changed (const char *param, const char *value);
 static void mi_memory_changed (struct inferior *inf, CORE_ADDR memaddr,
 			       ssize_t len, const bfd_byte *myaddr);
+static void mi_target_changed (struct target_ops *target);
 static void mi_on_sync_execution_done (void);
 
 static int report_initial_inferior (struct inferior *inf, void *closure);
@@ -158,6 +159,7 @@ mi_interpreter_init (struct interp *interp, int top_level)
       observer_attach_breakpoint_modified (mi_breakpoint_modified);
       observer_attach_command_param_changed (mi_command_param_changed);
       observer_attach_memory_changed (mi_memory_changed);
+      observer_attach_target_changed (mi_target_changed);
       observer_attach_sync_execution_done (mi_on_sync_execution_done);
 
       /* The initial inferior is created before this function is
@@ -1138,6 +1140,28 @@ mi_memory_changed (struct inferior *inferior, CORE_ADDR memaddr,
   gdb_flush (mi->event_channel);
 
   do_cleanups (old_chain);
+}
+
+/* Emit a notification that the target changed.  */
+
+static void
+mi_target_changed (struct target_ops *target)
+{
+  if (!mi_suppress_notification.target_changed)
+    {
+      struct mi_interp *mi = (struct mi_interp *) top_level_interpreter_data ();
+      struct ui_out *mi_uiout = interp_ui_out (top_level_interpreter ());
+      struct cleanup *old_chain;
+
+      old_chain = make_cleanup_restore_target_terminal ();
+      target_terminal_ours_for_output ();
+
+      fprintf_unfiltered (mi->event_channel, "target-changed");
+
+      gdb_flush (mi->event_channel);
+
+      do_cleanups (old_chain);
+    }
 }
 
 static int

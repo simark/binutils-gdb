@@ -47,6 +47,8 @@ struct mi_suppress_notification
   int traceframe;
   /* Memory changed notification suppressed?  */
   int memory;
+  /* Register or memory on target changed. */
+  int target_changed;
 };
 extern struct mi_suppress_notification mi_suppress_notification;
 
