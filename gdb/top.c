@@ -74,6 +74,10 @@
 # include "tui/tui.h"
 #endif
 
+#ifndef O_NOCTTY
+# define O_NOCTTY 0
+#endif
+
 extern void initialize_all_files (void);
 
 #define PROMPT(X) the_prompts.prompt_stack[the_prompts.top + X].prompt
@@ -312,6 +316,73 @@ delete_ui (struct ui *todel)
     ui_list = ui->next;
 
   free_ui (ui);
+}
+
+static FILE *
+open_stream (const char *name)
+{
+  int fd;
+
+  fd = open (name, O_RDWR | O_NOCTTY);
+  if (fd < 0)
+    perror_with_name  (_("opening terminal failed"));
+
+  return fdopen (fd, "w+");
+}
+
+static void
+new_ui_command (char *args, int from_tty)
+{
+  struct ui *ui;
+  struct interp *interp;
+  FILE *stream[3] = { NULL, NULL, NULL };
+  int i;
+  int res;
+  int argc;
+  char **argv;
+  const char *interpreter_name;
+  const char *tty_name;
+  struct cleanup *back_to;
+  struct cleanup *streams_chain;
+
+  argv = gdb_buildargv (args);
+  back_to = make_cleanup_freeargv (argv);
+  argc = countargv (argv);
+
+  if (argc < 2)
+    error (_("usage: new-ui <interpreter> <tty>"));
+
+  interpreter_name = argv[0];
+  tty_name = argv[1];
+
+  streams_chain = make_cleanup (null_cleanup, NULL);
+
+  /* Open specified terminal, once for each of
+     stdin/stdout/stderr.  */
+  for (i = 0; i < 3; i++)
+    {
+      stream[i] = open_stream (tty_name);
+      make_cleanup_fclose (stream[i]);
+    }
+
+  ui = new_ui (stream[0], stream[1], stream[2]);
+
+  discard_cleanups (streams_chain);
+
+  initialize_stdin_serial (ui);
+  ui->async = 1;
+
+  make_cleanup (restore_ui_cleanup, current_ui);
+  current_ui = ui;
+
+  set_top_level_interpreter (interpreter_name);
+
+  interp_pre_command_loop (top_level_interpreter ());
+
+  /* This restores the previous UI.  */
+  do_cleanups (back_to);
+
+  printf_unfiltered ("New UI allocated\n");
 }
 
 /* Handler for SIGHUP.  */
@@ -1887,6 +1958,8 @@ set_history_filename (char *args, int from_tty, struct cmd_list_element *c)
 static void
 init_main (void)
 {
+  struct cmd_list_element *c;
+
   /* Initialize the prompt to a simple "(gdb) " prompt or to whatever
      the DEFAULT_PROMPT is.  */
   set_prompt (DEFAULT_PROMPT);
@@ -2010,6 +2083,12 @@ When set, GDB uses the specified path to search for data files."),
                            set_gdb_datadir, show_gdb_datadir,
                            &setlist,
                            &showlist);
+
+  c = add_cmd ("new-ui", class_support, new_ui_command, _("\
+Create a new UI.  It takes two arguments:\n\
+The first argument is the name of the interpreter to run.\n\
+The second argument is the terminal the UI runs on.\n"), &cmdlist);
+  set_cmd_completer (c, interpreter_completer);
 }
 
 void
