@@ -56,6 +56,9 @@ struct ui
 {
   struct ui *next;
 
+  /* Convenient handle (UI number).  Unique across all UIs.  */
+  int num;
+
   /* The UI's command line buffer.  This is to used to accumulate
      input until we have a whole command line.  */
   struct buffer line_buffer;
@@ -156,6 +159,8 @@ extern void switch_thru_all_uis_next (struct switch_thru_all_uis *state);
 /* Traverse over all UIs.  */
 #define ALL_UIS(UI)				\
   for (UI = ui_list; UI; UI = UI->next)		\
+
+extern struct ui *new_ui (FILE *instream, FILE *outstream, FILE *errstream);
 
 extern void restore_ui_cleanup (void *data);
 
