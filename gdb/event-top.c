@@ -439,6 +439,7 @@ top_level_prompt (void)
 
 static struct ui main_ui_;
 
+struct ui *main_ui = &main_ui_;
 struct ui *current_ui = &main_ui_;
 struct ui *ui_list = &main_ui_;
 

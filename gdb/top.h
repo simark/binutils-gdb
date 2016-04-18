@@ -85,6 +85,7 @@ struct ui
   struct ui_file *m_gdb_stdlog;
 };
 
+extern struct ui *main_ui;
 extern struct ui *current_ui;
 extern struct ui *ui_list;
 
