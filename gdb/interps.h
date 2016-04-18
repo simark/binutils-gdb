@@ -107,6 +107,7 @@ extern int current_interp_set_logging (int start_log, struct ui_file *out,
 /* Returns opaque data associated with the top-level interpreter.  */
 extern void *top_level_interpreter_data (void);
 extern struct interp *top_level_interpreter (void);
+extern struct interp *ui_top_level_interpreter (struct ui *ui);
 
 extern struct interp *command_interp (void);
 

@@ -59,6 +59,9 @@ struct ui
   /* Convenient handle (UI number).  Unique across all UIs.  */
   int num;
 
+  /* The TTY as passed to the "new-ui" command.  */
+  const char *tty_name;
+
   /* The UI's command line buffer.  This is to used to accumulate
      input until we have a whole command line.  */
   struct buffer line_buffer;

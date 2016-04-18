@@ -54,13 +54,17 @@ struct ui_interp_info
 };
 
 static struct ui_interp_info *
-get_current_interp_info (void)
+get_ui_interp_info (struct ui *ui)
 {
-  struct ui *ui = current_ui;
-
   if (ui->interp_info == NULL)
     ui->interp_info = XCNEW (struct ui_interp_info);
   return ui->interp_info;
+}
+
+static struct ui_interp_info *
+get_current_interp_info (void)
+{
+  return get_ui_interp_info (current_ui);
 }
 
 struct interp
@@ -577,11 +581,17 @@ interpreter_completer (struct cmd_list_element *ignore,
 }
 
 struct interp *
-top_level_interpreter (void)
+ui_top_level_interpreter (struct ui *ui)
 {
-  struct ui_interp_info *ui_interp = get_current_interp_info ();
+  struct ui_interp_info *ui_interp = get_ui_interp_info (ui);
 
   return ui_interp->top_level_interpreter_ptr;
+}
+
+struct interp *
+top_level_interpreter (void)
+{
+  return ui_top_level_interpreter (current_ui);
 }
 
 void *

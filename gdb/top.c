@@ -345,6 +345,8 @@ new_ui_command (char *args, int from_tty)
   struct cleanup *back_to;
   struct cleanup *streams_chain;
 
+  dont_repeat ();
+
   argv = gdb_buildargv (args);
   back_to = make_cleanup_freeargv (argv);
   argc = countargv (argv);
@@ -371,6 +373,7 @@ new_ui_command (char *args, int from_tty)
 
   initialize_stdin_serial (ui);
   ui->async = 1;
+  ui->tty_name = xstrdup (tty_name);
 
   make_cleanup (restore_ui_cleanup, current_ui);
   current_ui = ui;
@@ -383,6 +386,56 @@ new_ui_command (char *args, int from_tty)
   do_cleanups (back_to);
 
   printf_unfiltered ("New UI allocated\n");
+}
+
+/* "info ui" command.  */
+
+static void
+info_uis_command (char *args, int from_tty)
+{
+  struct inferior *inf;
+  struct cleanup *old_chain;
+  int count = 0;
+  struct ui *ui = current_ui;
+  struct ui_out *uiout = current_uiout;
+
+  for (ui = ui_list; ui != NULL; ui = ui->next)
+    count++;
+
+  gdb_assert (count != 0);
+
+  old_chain = make_cleanup_ui_out_table_begin_end (uiout, 4, count, "UIs");
+  ui_out_table_header (uiout, 1, ui_left, "current", "");
+  ui_out_table_header (uiout, 4, ui_left, "number", "Num");
+  ui_out_table_header (uiout, 11, ui_left, "interp", "Interpreter");
+  ui_out_table_header (uiout, 17, ui_left, "tty", "TTY");
+
+  ui_out_table_body (uiout);
+  for (ui = ui_list; ui != NULL; ui = ui->next)
+    {
+      struct cleanup *chain2;
+
+      chain2 = make_cleanup_ui_out_tuple_begin_end (uiout, NULL);
+
+      if (ui == current_ui)
+	ui_out_field_string (uiout, "current", "*");
+      else
+	ui_out_field_skip (uiout, "current");
+
+      ui_out_field_int (uiout, "number", ui->num);
+
+      ui_out_field_string (uiout, "interp",
+			   interp_name (ui_top_level_interpreter (ui)));
+      if (ui->tty_name != NULL)
+	ui_out_field_string (uiout, "tty", ui->tty_name);
+      else
+	ui_out_field_skip (uiout, "tty");
+
+      ui_out_text (uiout, "\n");
+      do_cleanups (chain2);
+    }
+
+  do_cleanups (old_chain);
 }
 
 /* Handler for SIGHUP.  */
@@ -2089,6 +2142,9 @@ Create a new UI.  It takes two arguments:\n\
 The first argument is the name of the interpreter to run.\n\
 The second argument is the terminal the UI runs on.\n"), &cmdlist);
   set_cmd_completer (c, interpreter_completer);
+
+  add_info ("uis", info_uis_command,
+	    _("IDs of specified UIs (all interfaces if no argument)."));
 }
 
 void
