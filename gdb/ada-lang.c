@@ -12484,6 +12484,8 @@ print_it_exception (enum ada_exception_catchpoint_kind ex, bpstat bs)
   ui_out_field_int (uiout, "bkptno", b->number);
   ui_out_text (uiout, ", ");
 
+  select_frame (get_current_frame ());
+
   switch (ex)
     {
       case ada_catch_exception:
