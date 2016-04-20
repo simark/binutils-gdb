@@ -1271,7 +1271,7 @@ defaulted_query (const char *ctlstr, const char defchar, va_list args)
      question we're asking, and then answer the default automatically.  This
      way, important error messages don't get lost when talking to GDB
      over a pipe.  */
-  if (! input_from_terminal_p ())
+  if (!input_interactive_p ())
     {
       target_terminal_ours_for_output ();
       wrap_here ("");

@@ -1256,7 +1256,7 @@ read_command_lines (char *prompt_arg, int from_tty, int parse_commands,
 {
   struct command_line *head;
 
-  if (from_tty && input_from_terminal_p ())
+  if (from_tty && input_interactive_p ())
     {
       if (deprecated_readline_begin_hook)
 	{
@@ -1287,7 +1287,7 @@ read_command_lines (char *prompt_arg, int from_tty, int parse_commands,
       do_cleanups (old_chain);
     }
 
-  if (deprecated_readline_end_hook && from_tty && input_from_terminal_p ())
+  if (deprecated_readline_end_hook && from_tty && input_interactive_p ())
     {
       (*deprecated_readline_end_hook) ();
     }

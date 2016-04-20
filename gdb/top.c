@@ -1229,7 +1229,7 @@ gdb_safe_append_history (void)
 
    NULL is returned for end of file.
 
-   *If* the instream == stdin & stdin is a terminal, the line read is
+   *If* input is from an interactive stream (stdin), the line read is
    copied into the global 'saved_command_line' so that it can be
    repeated.
 
@@ -1244,12 +1244,13 @@ command_line_input (const char *prompt_arg, int repeat, char *annotation_suffix)
   struct ui *ui = current_ui;
   const char *prompt = prompt_arg;
   char *cmd;
+  int from_tty = ui->instream == stdin;
 
   /* The annotation suffix must be non-NULL.  */
   if (annotation_suffix == NULL)
     annotation_suffix = "";
 
-  if (annotation_level > 1 && ui->instream == stdin)
+  if (from_tty && annotation_level > 1)
     {
       char *local_prompt;
 
@@ -1295,7 +1296,7 @@ command_line_input (const char *prompt_arg, int repeat, char *annotation_suffix)
       if (source_file_name != NULL)
 	++source_line_number;
 
-      if (annotation_level > 1 && ui->instream == stdin)
+      if (from_tty && annotation_level > 1)
 	{
 	  puts_unfiltered ("\n\032\032pre-");
 	  puts_unfiltered (annotation_suffix);
@@ -1303,11 +1304,11 @@ command_line_input (const char *prompt_arg, int repeat, char *annotation_suffix)
 	}
 
       /* Don't use fancy stuff if not talking to stdin.  */
-      if (deprecated_readline_hook && input_from_terminal_p ())
+      if (deprecated_readline_hook && from_tty && input_interactive_p ())
 	{
 	  rl = (*deprecated_readline_hook) (prompt);
 	}
-      else if (command_editing_p && input_from_terminal_p ())
+      else if (command_editing_p && from_tty && input_interactive_p ())
 	{
 	  rl = gdb_readline_wrapper (prompt);
 	}
@@ -1683,7 +1684,7 @@ quit_force (char *args, int from_tty)
   TRY
     {
       if (write_history_p && history_filename
-	  && input_from_terminal_p ())
+	  && input_interactive_p ())
 	gdb_safe_append_history ();
     }
   CATCH (ex, RETURN_MASK_ALL)
@@ -1706,18 +1707,39 @@ quit_force (char *args, int from_tty)
   exit (exit_code);
 }
 
+/* The value of the "interactive-mode" setting.  */
+static enum auto_boolean interactive_mode = AUTO_BOOLEAN_AUTO;
+
+/* Implement the "show interactive-mode" option.  */
+
+static void
+show_interactive_mode (struct ui_file *file, int from_tty,
+                       struct cmd_list_element *c,
+                       const char *value)
+{
+  if (interactive_mode == AUTO_BOOLEAN_AUTO)
+    fprintf_filtered (file, "Debugger's interactive mode "
+		            "is %s (currently %s).\n",
+                      value, gdb_has_a_terminal () ? "on" : "off");
+  else
+    fprintf_filtered (file, "Debugger's interactive mode is %s.\n", value);
+}
+
 /* Returns whether GDB is running on a terminal and input is
    currently coming from that terminal.  */
 
 int
-input_from_terminal_p (void)
+input_interactive_p (void)
 {
   struct ui *ui = current_ui;
 
   if (batch_flag)
     return 0;
 
-  if (gdb_has_a_terminal () && ui->instream == stdin)
+  if (interactive_mode != AUTO_BOOLEAN_AUTO)
+    return interactive_mode == AUTO_BOOLEAN_TRUE;
+
+  if (ui->instream == stdin && ISATTY (ui->instream))
     return 1;
 
   /* If INSTREAM is unset, and we are not in a user command, we
@@ -2136,6 +2158,20 @@ When set, GDB uses the specified path to search for data files."),
                            set_gdb_datadir, show_gdb_datadir,
                            &setlist,
                            &showlist);
+
+  add_setshow_auto_boolean_cmd ("interactive-mode", class_support,
+                                &interactive_mode, _("\
+Set whether GDB's standard input is a terminal."), _("\
+Show whether GDB's standard input is a terminal."), _("\
+If on, GDB assumes that standard input is a terminal.  In practice, it\n\
+means that GDB should wait for the user to answer queries associated to\n\
+commands entered at the command prompt.  If off, GDB assumes that standard\n\
+input is not a terminal, and uses the default answer to all queries.\n\
+If auto (the default), determine which mode to use based on the standard\n\
+input settings."),
+                        NULL,
+                        show_interactive_mode,
+                        &setlist, &showlist);
 
   c = add_cmd ("new-ui", class_support, new_ui_command, _("\
 Create a new UI.  It takes two arguments:\n\

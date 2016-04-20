@@ -324,7 +324,7 @@ extern char *command_line_input (const char *, int, char *);
 
 extern void print_prompt (void);
 
-extern int input_from_terminal_p (void);
+extern int input_interactive_p (void);
 
 extern int info_verbose;
 
