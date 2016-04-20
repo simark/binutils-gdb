@@ -102,6 +102,9 @@ struct ui
      currently active.  */
   int secondary_prompt_depth;
 
+  /* The UI's stdin.  Set to stdin for the main UI.  */
+  FILE *stdin_stream;
+
   /* stdio stream that command input is being read from.  Set to stdin
      normally.  Set by source_command to the file we are sourcing.
      Set to NULL if we are executing a user-defined command or

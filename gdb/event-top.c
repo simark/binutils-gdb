@@ -509,7 +509,7 @@ stdin_event_handler (int error, gdb_client_data client_data)
 	{
 	  /* If stdin died, we may as well kill gdb.  */
 	  printf_unfiltered (_("error detected on stdin\n"));
-	  quit_command ((char *) 0, stdin == ui->instream);
+	  quit_command ((char *) 0, 0);
 	}
       else
 	{
@@ -580,7 +580,7 @@ command_handler (char *command)
   struct cleanup *stat_chain;
   char *c;
 
-  if (ui->instream == stdin)
+  if (ui->instream == ui->stdin_stream)
     reinitialize_more_filter ();
 
   stat_chain = make_command_stats_cleanup (1);
@@ -590,7 +590,7 @@ command_handler (char *command)
     ;
   if (c[0] != '#')
     {
-      execute_command (command, ui->instream == stdin);
+      execute_command (command, ui->instream == ui->stdin_stream);
 
       /* Do any commands attached to breakpoint we stopped at.  */
       bpstat_do_actions ();
@@ -658,7 +658,7 @@ handle_line_of_input (struct buffer *cmd_line_buffer,
 		      char *rl, int repeat, char *annotation_suffix)
 {
   struct ui *ui = current_ui;
-  int from_tty = ui->instream == stdin;
+  int from_tty = ui->instream == ui->stdin_stream;
   char *p1;
   char *cmd;
 
@@ -828,7 +828,7 @@ gdb_readline_no_editing_callback (gdb_client_data client_data)
     {
       /* Read from stdin if we are executing a user defined command.
          This is the right thing for prompt_for_continue, at least.  */
-      c = fgetc (ui->instream ? ui->instream : stdin);
+      c = fgetc (ui->instream != NULL ? ui->instream : ui->stdin_stream);
 
       if (c == EOF)
 	{
@@ -1076,7 +1076,7 @@ interruptible_select (int n,
 static void
 async_sigterm_handler (gdb_client_data arg)
 {
-  quit_force (NULL, stdin == current_ui->instream);
+  quit_force (NULL, 0);
 }
 
 /* See defs.h.  */

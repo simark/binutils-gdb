@@ -260,6 +260,7 @@ new_ui (FILE *instream, FILE *outstream, FILE *errstream)
   ui = XCNEW (struct ui);
 
   ui->num = ++highest_ui_num;
+  ui->stdin_stream = instream;
   ui->instream = instream;
   ui->outstream = outstream;
   ui->errstream = errstream;
@@ -769,7 +770,7 @@ dont_repeat (void)
   /* If we aren't reading from standard input, we are saving the last
      thing read from stdin in line and don't want to delete it.  Null
      lines won't repeat here in any case.  */
-  if (ui->instream == stdin)
+  if (ui->instream == ui->stdin_stream)
     *saved_command_line = 0;
 }
 
@@ -1246,7 +1247,7 @@ command_line_input (const char *prompt_arg, int repeat, char *annotation_suffix)
   struct ui *ui = current_ui;
   const char *prompt = prompt_arg;
   char *cmd;
-  int from_tty = ui->instream == stdin;
+  int from_tty = ui->instream == ui->stdin_stream;
 
   /* The annotation suffix must be non-NULL.  */
   if (annotation_suffix == NULL)
