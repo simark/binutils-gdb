@@ -690,7 +690,7 @@ handle_line_of_input (struct buffer *cmd_line_buffer,
     }
 
   /* Do history expansion if that is wished.  */
-  if (history_expansion_p && from_tty && input_interactive_p ())
+  if (history_expansion_p && from_tty && input_interactive_p (current_ui))
     {
       char *history_value;
       int expanded;
@@ -734,7 +734,7 @@ handle_line_of_input (struct buffer *cmd_line_buffer,
      and then later fetch it from the value history and remove the
      '#'.  The kill ring is probably better, but some people are in
      the habit of commenting things out.  */
-  if (*cmd != '\0' && from_tty && input_interactive_p ())
+  if (*cmd != '\0' && from_tty && input_interactive_p (current_ui))
     gdb_add_history (cmd);
 
   /* Save into global buffer if appropriate.  */

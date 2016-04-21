@@ -1271,7 +1271,8 @@ defaulted_query (const char *ctlstr, const char defchar, va_list args)
      question we're asking, and then answer the default automatically.  This
      way, important error messages don't get lost when talking to GDB
      over a pipe.  */
-  if (!input_interactive_p ())
+  if (current_ui->instream != stdin
+      || !input_interactive_p (current_ui))
     {
       target_terminal_ours_for_output ();
       wrap_here ("");

@@ -83,6 +83,8 @@ struct ui
      no editing support.  */
   int command_editing;
 
+  int input_interactive_p;
+
   /* Each UI has its own independent set of interpreters.  */
   struct ui_interp_info *interp_info;
 

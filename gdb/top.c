@@ -266,6 +266,8 @@ new_ui (FILE *instream, FILE *outstream, FILE *errstream)
 
   ui->input_fd = fileno (ui->instream);
 
+  ui->input_interactive_p = ISATTY (ui->instream);
+
   ui->m_gdb_stdin = stdio_fileopen (ui->instream);
   ui->m_gdb_stdout = stdio_fileopen (ui->outstream);
   ui->m_gdb_stderr = stderr_fileopen (ui->errstream);
@@ -1304,11 +1306,15 @@ command_line_input (const char *prompt_arg, int repeat, char *annotation_suffix)
 	}
 
       /* Don't use fancy stuff if not talking to stdin.  */
-      if (deprecated_readline_hook && from_tty && input_interactive_p ())
+      if (deprecated_readline_hook
+	  && from_tty
+	  && input_interactive_p (current_ui))
 	{
 	  rl = (*deprecated_readline_hook) (prompt);
 	}
-      else if (command_editing_p && from_tty && input_interactive_p ())
+      else if (command_editing_p
+	       && from_tty
+	       && input_interactive_p (current_ui))
 	{
 	  rl = gdb_readline_wrapper (prompt);
 	}
@@ -1683,9 +1689,25 @@ quit_force (char *args, int from_tty)
   /* Save the history information if it is appropriate to do so.  */
   TRY
     {
-      if (write_history_p && history_filename
-	  && input_interactive_p ())
-	gdb_safe_append_history ();
+      if (write_history_p && history_filename)
+	{
+	  struct ui *ui;
+	  int save = 0;
+
+	  /* History is currently shared between all UIs.  If there's
+	     any UI with a terminal, save history.  */
+	  ALL_UIS (ui)
+	    {
+	      if (input_interactive_p (ui))
+		{
+		  save = 1;
+		  break;
+		}
+	    }
+
+	  if (save)
+	    gdb_safe_append_history ();
+	}
     }
   CATCH (ex, RETURN_MASK_ALL)
     {
@@ -1725,30 +1747,18 @@ show_interactive_mode (struct ui_file *file, int from_tty,
     fprintf_filtered (file, "Debugger's interactive mode is %s.\n", value);
 }
 
-/* Returns whether GDB is running on a terminal and input is
-   currently coming from that terminal.  */
+/* Returns whether GDB is running on an interactive terminal.  */
 
 int
-input_interactive_p (void)
+input_interactive_p (struct ui *ui)
 {
-  struct ui *ui = current_ui;
-
   if (batch_flag)
     return 0;
 
   if (interactive_mode != AUTO_BOOLEAN_AUTO)
     return interactive_mode == AUTO_BOOLEAN_TRUE;
 
-  if (ui->instream == stdin && ISATTY (ui->instream))
-    return 1;
-
-  /* If INSTREAM is unset, and we are not in a user command, we
-     must be in Insight.  That's like having a terminal, for our
-     purposes.  */
-  if (ui->instream == NULL && !in_user_command)
-    return 1;
-
-  return 0;
+  return ui->input_interactive_p;
 }
 
 static void
