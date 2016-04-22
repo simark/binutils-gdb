@@ -13678,6 +13678,8 @@ dprintf_after_condition_true (struct bpstats *bs)
   struct cleanup *old_chain;
   struct bpstats tmp_bs = { NULL };
   struct bpstats *tmp_bs_p = &tmp_bs;
+  struct switch_thru_all_uis state;
+  struct counted_command_line *saved_commands;
 
   /* dprintf's never cause a stop.  This wasn't set in the
      check_status hook instead because that would make the dprintf's
@@ -13689,15 +13691,24 @@ dprintf_after_condition_true (struct bpstats *bs)
      bpstat_do_actions, if a breakpoint that causes a stop happens to
      be set at same address as this dprintf, or even if running the
      commands here throws.  */
-  tmp_bs.commands = bs->commands;
+  saved_commands = bs->commands;
   bs->commands = NULL;
-  old_chain = make_cleanup_decref_counted_command_line (&tmp_bs.commands);
+  old_chain = make_cleanup_decref_counted_command_line (&saved_commands);
 
-  bpstat_do_actions_1 (&tmp_bs_p);
+  SWITCH_THRU_ALL_UIS (state)
+    {
+      struct cleanup *refc_chain;
 
-  /* 'tmp_bs.commands' will usually be NULL by now, but
-     bpstat_do_actions_1 may return early without processing the whole
-     list.  */
+      tmp_bs.commands = saved_commands;
+      incref_counted_command_line (saved_commands);
+      refc_chain = make_cleanup_decref_counted_command_line (&saved_commands);
+
+      bpstat_do_actions_1 (&tmp_bs_p);
+
+      /* The call above took ownership.  */
+      discard_cleanups (refc_chain);
+    }
+
   do_cleanups (old_chain);
 }
 
