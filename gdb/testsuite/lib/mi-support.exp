@@ -28,6 +28,12 @@ if ![info exists mi_gdb_prompt] then {
 
 global mi_inferior_tty_name
 
+# When testing with MI running on a secondary UI this points to the
+# main UI's (CLI) spawn id, while gdb_spawn_id points to MI's spawn
+# id.  When testing with MI running as the primary UI, this is the
+# same as gdb_spawn_id.
+global gdb_main_spawn_id
+
 set MIFLAGS "-i=mi"
 
 set thread_selected_re "=thread-selected,id=\"\[0-9\]+\"\r\n"
@@ -46,7 +52,7 @@ proc mi_uncatched_gdb_exit {} {
     global GDB
     global INTERNAL_GDBFLAGS GDBFLAGS
     global verbose
-    global gdb_spawn_id
+    global gdb_spawn_id gdb_main_spawn_id
     global gdb_prompt
     global mi_gdb_prompt
     global MIFLAGS
@@ -83,6 +89,7 @@ proc mi_uncatched_gdb_exit {} {
 	remote_close host
     }
     unset gdb_spawn_id
+    unset gdb_main_spawn_id
 }
 
 # Set the PTY for the inferior process.
@@ -110,7 +117,8 @@ proc mi_set_inferior_pty {tty_name inf_spawn_id} {
 proc mi_gdb_start_separate_mi_tty { args } {
     global gdb_prompt mi_gdb_prompt
     global timeout
-    global gdb_spawn_id
+    global gdb_spawn_id gdb_main_spawn_id
+    global board board_info
 
     set separate_inferior_pty 0
 
@@ -133,8 +141,7 @@ proc mi_gdb_start_separate_mi_tty { args } {
     }
 
     # Switch to the MI channel.
-    global gdb_spawn_id
-    global board board_info
+    set gdb_main_spawn_id $gdb_spawn_id
     set gdb_spawn_id $mi_spawn_id
     set board [host_info name]
     set board_info($board,fileid) $mi_spawn_id
@@ -180,7 +187,7 @@ proc default_mi_gdb_start { args } {
     global gdb_prompt
     global mi_gdb_prompt
     global timeout
-    global gdb_spawn_id inferior_spawn_id
+    global gdb_spawn_id gdb_main_spawn_id inferior_spawn_id
     global MIFLAGS
     global SEPARATE_MI_TTY
 
@@ -274,6 +281,7 @@ proc default_mi_gdb_start { args } {
 	}
     }
     set gdb_spawn_id $res
+    set gdb_main_spawn_id $res
 
     # FIXME: mi output does not go through pagers, so these can be removed.
     # force the height to "unlimited", so no pagers get used

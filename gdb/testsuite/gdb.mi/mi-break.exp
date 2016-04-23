@@ -292,9 +292,25 @@ proc test_breakpoint_commands {} {
 
     mi_send_resuming_command "exec-continue" "breakpoint commands: continue"
 
-    set test "intermediate stop and continue"
+
+    # The breakpoint command's output is always sent to the main UI,
+    # even when testing with MI running on a secondary UI.
+    global gdb_main_spawn_id
+
+    set test "intermediate stop and continue, bp commands"
     gdb_expect {
-        -re ".*\\\$1 = 0.*\\\$10 = 9.*\\*running" {
+	-i $gdb_main_spawn_id
+	-re ".*\\\$1 = 0.*\\\$10 = 9" {
+	    pass $test
+	}
+	timeout {
+	    fail $test
+	}
+    }
+
+    set test "intermediate stop and continue, mi running"
+    gdb_expect {
+        -re "\\*running" {
 	    pass $test
 	}
         timeout {
