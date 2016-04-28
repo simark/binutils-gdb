@@ -85,8 +85,85 @@ proc mi_uncatched_gdb_exit {} {
     unset gdb_spawn_id
 }
 
+# Set the PTY for the inferior process.
+
+proc mi_set_inferior_pty {tty_name inf_spawn_id} {
+    global mi_gdb_prompt
+
+    global inferior_spawn_id
+    set inferior_spawn_id $inf_spawn_id
+
+    global mi_inferior_tty_name
+    set mi_inferior_tty_name $tty_name
+
+    send_gdb "102-inferior-tty-set $tty_name\n"
+    gdb_expect 10 {
+	-re ".*102\\\^done\r\n$mi_gdb_prompt$" {
+	    verbose "redirect inferior output to new terminal device."
+	}
+	timeout {
+	    warning "Couldn't redirect inferior output." 2
+	}
+    }
+}
+
+proc mi_gdb_start_separate_mi_tty { args } {
+    global gdb_prompt mi_gdb_prompt
+    global timeout
+    global gdb_spawn_id
+
+    set separate_inferior_pty 0
+
+    foreach arg $args {
+	if {$arg == "separate-inferior-tty"} {
+	    set separate_inferior_pty 1
+	}
+    }
+
+    # Create the new PTY for the MI UI.
+    spawn -pty
+    set mi_spawn_id $spawn_id
+    set mi_tty_name $spawn_out(slave,name)
+
+    gdb_start
+
+    gdb_test_multiple "new-ui mi $mi_tty_name\"" "new-ui" {
+	-re "New UI allocated\r\n$gdb_prompt $" {
+	}
+    }
+
+    # Switch to the MI channel.
+    global gdb_spawn_id
+    global board board_info
+    set gdb_spawn_id $mi_spawn_id
+    set board [host_info name]
+    set board_info($board,fileid) $mi_spawn_id
+
+    # Consume pending output and MI prompt.
+    gdb_expect {
+	-re "$mi_gdb_prompt$" {
+	}
+	default {
+	    perror "MI channel failed"
+	    remote_close host
+	    return -1
+	}
+    }
+
+    if {$separate_inferior_pty} {
+	spawn -pty
+	mi_set_inferior_pty $spawn_out(slave,name) $spawn_id
+    } else {
+	mi_set_inferior_pty $mi_tty_name $mi_spawn_id
+    }
+
+    mi_detect_async
+
+    return 0
+}
+
 #
-# default_mi_gdb_start [INFERIOR_PTY] -- start gdb running, default procedure
+# default_mi_gdb_start [FLAGS] -- start gdb running, default procedure
 #
 # INFERIOR_PTY should be set to separate-inferior-tty to have the inferior work 
 # with it's own PTY. If set to same-inferior-tty, the inferior shares GDB's PTY. 
@@ -105,18 +182,33 @@ proc default_mi_gdb_start { args } {
     global timeout
     global gdb_spawn_id inferior_spawn_id
     global MIFLAGS
+    global SEPARATE_MI_TTY
+
+    if {[info exists SEPARATE_MI_TTY]} {
+	set separate_mi_pty $SEPARATE_MI_TTY
+    } else {
+	set separate_mi_pty 0
+    }
+
+    set separate_inferior_pty 0
+
+    foreach arg $args {
+	if {$arg == "separate-mi-tty"} {
+	    set separate_mi_pty 1
+	} elseif {$arg == "separate-inferior-tty"} {
+	    set separate_inferior_pty 1
+	}
+    }
+
+    if {$separate_mi_pty} {
+	return [mi_gdb_start_separate_mi_tty $args]
+    }
 
     gdb_stop_suppressing_tests
     set inferior_pty no-tty
 
     # Set the default value, it may be overriden later by specific testfile.
     set use_gdb_stub [target_info exists use_gdb_stub]
-
-    if { [llength $args] == 1} {
-	set inferior_pty [lindex $args 0]
-    }
-
-    set separate_inferior_pty [string match $inferior_pty separate-inferior-tty]
 
     # Start SID.
     if { [info procs sid_start] != "" } {
@@ -207,20 +299,7 @@ proc default_mi_gdb_start { args } {
 
     # Create the new PTY for the inferior process.
     if { $separate_inferior_pty } {
-	spawn -pty
-	global mi_inferior_tty_name
-	set inferior_spawn_id $spawn_id
-	set mi_inferior_tty_name $spawn_out(slave,name)
-
-	send_gdb "102-inferior-tty-set $mi_inferior_tty_name\n"
-	gdb_expect 10 {
-	    -re ".*102\\\^done\r\n$mi_gdb_prompt$" {
-		verbose "redirect inferior output to new terminal device."
-	    }
-	    timeout {
-		warning "Couldn't redirect inferior output." 2
-	    }
-	}
+	mi_create_inferior_pty
     }
 
     if {![info exists inferior_spawn_id]} {
