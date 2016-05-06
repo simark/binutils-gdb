@@ -490,8 +490,11 @@ mi_cmd_exec_run (char *command, char **argv, int argc)
     {
       const char *run_cmd = start_p ? "start" : "run";
 
-      mi_execute_cli_command (run_cmd, mi_async_p (),
-			      mi_async_p () ? "&" : NULL);
+      struct target_ops *run_target = find_run_target ();
+      int run_target_async_p = run_target->to_can_async_p(run_target) && mi_async;
+
+      mi_execute_cli_command (run_cmd, run_target_async_p,
+			      run_target_async_p ? "&" : NULL);
     }
 }
 
