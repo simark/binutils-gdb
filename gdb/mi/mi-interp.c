@@ -212,7 +212,7 @@ mi_cmd_interpreter_exec (char *command, char **argv, int argc)
     error (_("-interpreter-exec: "
 	     "Usage: -interpreter-exec interp command"));
 
-  interp_to_use = interp_lookup (argv[0]);
+  interp_to_use = interp_lookup (current_ui, argv[0]);
   if (interp_to_use == NULL)
     error (_("-interpreter-exec: could not find interpreter \"%s\""),
 	   argv[0]);
@@ -673,7 +673,7 @@ mi_on_normal_stop_1 (struct bpstats *bs, int print_frame)
 	}
       print_stop_event (mi_uiout);
 
-      console_interp = interp_lookup (INTERP_CONSOLE);
+      console_interp = interp_lookup (current_ui, INTERP_CONSOLE);
       if (should_print_stop_to_console (console_interp, tp))
 	print_stop_event (mi->cli_uiout);
 

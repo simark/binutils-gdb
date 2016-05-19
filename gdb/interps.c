@@ -168,9 +168,9 @@ interp_add (struct ui *ui, struct interp *interp)
    events such as target stops and new thread creation, even if they
    are caused by CLI commands.  */
 int
-interp_set (struct interp *interp, int top_level)
+interp_set (struct ui *ui, struct interp *interp, int top_level)
 {
-  struct ui_interp_info *ui_interp = get_current_interp_info ();
+  struct ui_interp_info *ui_interp = get_ui_interp_info (ui);
   struct interp *old_interp = ui_interp->current_interpreter;
   int first_time = 0;
   char buffer[64];
@@ -229,7 +229,7 @@ interp_set (struct interp *interp, int top_level)
   if (interp->procs->resume_proc != NULL
       && (!interp->procs->resume_proc (interp->data)))
     {
-      if (old_interp == NULL || !interp_set (old_interp, 0))
+      if (old_interp == NULL || !interp_set (ui, old_interp, 0))
 	internal_error (__FILE__, __LINE__,
 			_("Failed to initialize new interp \"%s\" %s"),
 			interp->name, "and could not restore old interp!\n");
@@ -267,9 +267,8 @@ interp_lookup_existing (struct ui *ui, const char *name)
 }
 
 struct interp *
-interp_lookup (const char *name)
+interp_lookup (struct ui *ui, const char *name)
 {
-  struct ui *ui = current_ui;
   struct interp_factory *factory;
   struct interp *interp;
   int ix;
@@ -296,15 +295,15 @@ interp_lookup (const char *name)
 }
 
 void
-set_top_level_interpreter (const char *name)
+set_top_level_interpreter (struct ui *ui, const char *name)
 {
   /* Find it.  */
-  struct interp *interp = interp_lookup (name);
+  struct interp *interp = interp_lookup (ui, name);
 
   if (interp == NULL)
     error (_("Interpreter `%s' unrecognized"), name);
   /* Install it.  */
-  if (!interp_set (interp, 1))
+  if (!interp_set (ui, interp, 1))
     error (_("Interpreter `%s' failed to initialize."), name);
 }
 
@@ -336,10 +335,10 @@ current_interp_set_logging (int start_log, struct ui_file *out,
 
 /* Temporarily overrides the current interpreter.  */
 struct interp *
-interp_set_temp (const char *name)
+interp_set_temp (struct ui *ui, const char *name)
 {
   struct ui_interp_info *ui_interp = get_current_interp_info ();
-  struct interp *interp = interp_lookup (name);
+  struct interp *interp = interp_lookup (ui, name);
   struct interp *old_interp = ui_interp->current_interpreter;
 
   if (interp)
@@ -484,7 +483,8 @@ clear_interpreter_hooks (void)
 static void
 interpreter_exec_cmd (char *args, int from_tty)
 {
-  struct ui_interp_info *ui_interp = get_current_interp_info ();
+  struct ui *ui = current_ui;
+  struct ui_interp_info *ui_interp = get_ui_interp_info (ui);
   struct interp *old_interp, *interp_to_use;
   char **prules = NULL;
   char **trule = NULL;
@@ -508,7 +508,7 @@ interpreter_exec_cmd (char *args, int from_tty)
 
   old_interp = ui_interp->current_interpreter;
 
-  interp_to_use = interp_lookup (prules[0]);
+  interp_to_use = interp_lookup (current_ui, prules[0]);
   if (interp_to_use == NULL)
     error (_("Could not find interpreter \"%s\"."), prules[0]);
 
@@ -516,7 +516,7 @@ interpreter_exec_cmd (char *args, int from_tty)
   old_quiet = interp_set_quiet (old_interp, 1);
   use_quiet = interp_set_quiet (interp_to_use, 1);
 
-  if (!interp_set (interp_to_use, 0))
+  if (!interp_set (ui, interp_to_use, 0))
     error (_("Could not switch to interpreter \"%s\"."), prules[0]);
 
   for (i = 1; i < nrules; i++)
@@ -525,14 +525,14 @@ interpreter_exec_cmd (char *args, int from_tty)
 
       if (e.reason < 0)
 	{
-	  interp_set (old_interp, 0);
+	  interp_set (ui, old_interp, 0);
 	  interp_set_quiet (interp_to_use, use_quiet);
 	  interp_set_quiet (old_interp, old_quiet);
 	  error (_("error in command: \"%s\"."), prules[i]);
 	}
     }
 
-  interp_set (old_interp, 0);
+  interp_set (ui, old_interp, 0);
   interp_set_quiet (interp_to_use, use_quiet);
   interp_set_quiet (old_interp, old_quiet);
 

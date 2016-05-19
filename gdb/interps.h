@@ -84,13 +84,13 @@ extern struct interp *interp_new (const char *name,
 				  const struct interp_procs *procs,
 				  void *data);
 extern void interp_add (struct ui *ui, struct interp *interp);
-extern int interp_set (struct interp *interp, int top_level);
-extern struct interp *interp_lookup (const char *name);
-extern void set_top_level_interpreter (const char *name);
+extern int interp_set (struct ui *ui, struct interp *interp, int top_level);
+extern struct interp *interp_lookup (struct ui *ui, const char *name);
+extern void set_top_level_interpreter (struct ui *ui, const char *name);
 extern struct ui_out *interp_ui_out (struct interp *interp);
 extern void *interp_data (struct interp *interp);
 extern const char *interp_name (struct interp *interp);
-extern struct interp *interp_set_temp (const char *name);
+extern struct interp *interp_set_temp (struct ui *ui, const char *name);
 
 extern int current_interp_named_p (const char *name);
 

@@ -381,7 +381,7 @@ new_ui_command (char *args, int from_tty)
   make_cleanup (restore_ui_cleanup, current_ui);
   current_ui = ui;
 
-  set_top_level_interpreter (interpreter_name);
+  set_top_level_interpreter (ui, interpreter_name);
 
   interp_pre_command_loop (top_level_interpreter ());
 

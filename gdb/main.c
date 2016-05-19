@@ -963,7 +963,7 @@ captured_main (void *data)
 
   /* Install the default UI.  All the interpreters should have had a
      look at things by now.  Initialize the default interpreter.  */
-  set_top_level_interpreter (interpreter_p);
+  set_top_level_interpreter (main_ui, interpreter_p);
 
   /* FIXME: cagney/2003-02-03: The big hack (part 2 of 2) that lets
      GDB retain the old MI1 interpreter startup behavior.  Output the

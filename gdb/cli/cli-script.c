@@ -1234,10 +1234,30 @@ recurse_read_control_structure (char * (*read_next_line_func) (void),
   return ret;
 }
 
+struct restore_interp_data
+{
+  struct interp *interp;
+  struct ui *ui;
+};
+
 static void
 restore_interp (void *arg)
 {
-  interp_set_temp (interp_name ((struct interp *)arg));
+  struct restore_interp_data *data = (struct restore_interp_data *) arg;
+
+  interp_set_temp (data->ui, interp_name (data->interp));
+
+  XDELETE (data);
+}
+
+static struct cleanup *make_cleanup_restore_interp (struct ui *ui, struct interp *interp)
+{
+  struct restore_interp_data *data = XNEW (struct restore_interp_data);
+
+  data->interp = interp;
+  data->ui = ui;
+
+  return make_cleanup (restore_interp, data);
 }
 
 /* Read lines from the input stream and accumulate them in a chain of
@@ -1280,8 +1300,8 @@ read_command_lines (char *prompt_arg, int from_tty, int parse_commands,
 				 validator, closure);
   else
     {
-      struct interp *old_interp = interp_set_temp (INTERP_CONSOLE);
-      struct cleanup *old_chain = make_cleanup (restore_interp, old_interp);
+      struct interp *old_interp = interp_set_temp (current_ui, INTERP_CONSOLE);
+      struct cleanup *old_chain = make_cleanup_restore_interp (current_ui, old_interp);
 
       head = read_command_lines_1 (read_next_line, parse_commands,
 				   validator, closure);
