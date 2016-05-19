@@ -3,6 +3,10 @@
 
 *** Changes since GDB 7.11
 
+* Support for fast tracepoints on arm-linux was added in GDBserver,
+  including JIT compiling fast tracepoint's conditional expression
+  bytecode into native code.
+
 * Support for tracepoints on arm-linux was added in GDBServer.
 
 * Fortran: Support structures with fields of dynamic types and 

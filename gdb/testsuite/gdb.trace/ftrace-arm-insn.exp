@@ -101,3 +101,11 @@ do_test arm_blx_reg
 do_test arm_ldm
 do_test arm_ldm_pc
 do_test arm_stm
+
+do_test thumb_b_imm
+do_test thumb_b_imm_cond
+do_test thumb_bl_imm
+do_test thumb_blx_imm
+do_test thumb_ldm
+do_test thumb_ldm_pc
+do_test thumb_stm
