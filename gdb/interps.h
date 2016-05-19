@@ -83,7 +83,7 @@ struct interp_procs
 extern struct interp *interp_new (const char *name,
 				  const struct interp_procs *procs,
 				  void *data);
-extern void interp_add (struct interp *interp);
+extern void interp_add (struct ui *ui, struct interp *interp);
 extern int interp_set (struct interp *interp, int top_level);
 extern struct interp *interp_lookup (const char *name);
 extern void set_top_level_interpreter (const char *name);

@@ -46,7 +46,7 @@ struct ui_interp_info
   /* Each top level has its own independent set of interpreters.  */
   struct interp *interp_list;
   struct interp *current_interpreter;
-  struct interp *top_level_interpreter_ptr;
+  struct interp *top_level_interpreter;
 
   /* The interpreter that is active while `interp_exec' is active, NULL
      at all other times.  */
@@ -93,7 +93,7 @@ struct interp
 
 void _initialize_interpreter (void);
 
-static struct interp *interp_lookup_existing (const char *name);
+static struct interp *interp_lookup_existing (struct ui *ui, const char *name);
 
 /* interp_new - This allocates space for a new interpreter,
    fills the fields from the inputs, and returns a pointer to the
@@ -143,11 +143,11 @@ interp_factory_register (const char *name, interp_factory_func func)
 /* Add interpreter INTERP to the gdb interpreter list.  The
    interpreter must not have previously been added.  */
 void
-interp_add (struct interp *interp)
+interp_add (struct ui *ui, struct interp *interp)
 {
-  struct ui_interp_info *ui_interp = get_current_interp_info ();
+  struct ui_interp_info *ui_interp = get_ui_interp_info (ui);
 
-  gdb_assert (interp_lookup_existing (interp->name) == NULL);
+  gdb_assert (interp_lookup_existing (ui, interp->name) == NULL);
 
   interp->next = ui_interp->interp_list;
   ui_interp->interp_list = interp;
@@ -178,7 +178,7 @@ interp_set (struct interp *interp, int top_level)
   /* If we already have an interpreter, then trying to
      set top level interpreter is kinda pointless.  */
   gdb_assert (!top_level || !ui_interp->current_interpreter);
-  gdb_assert (!top_level || !ui_interp->top_level_interpreter_ptr);
+  gdb_assert (!top_level || !ui_interp->top_level_interpreter);
 
   if (old_interp != NULL)
     {
@@ -197,7 +197,7 @@ interp_set (struct interp *interp, int top_level)
 
   ui_interp->current_interpreter = interp;
   if (top_level)
-    ui_interp->top_level_interpreter_ptr = interp;
+    ui_interp->top_level_interpreter = interp;
 
   /* We use interpreter_p for the "set interpreter" variable, so we need
      to make sure we have a malloc'ed copy for the set command to free.  */
@@ -250,9 +250,9 @@ interp_set (struct interp *interp, int top_level)
    return NULL, otherwise return a pointer to the interpreter.  */
 
 static struct interp *
-interp_lookup_existing (const char *name)
+interp_lookup_existing (struct ui *ui, const char *name)
 {
-  struct ui_interp_info *ui_interp = get_current_interp_info ();
+  struct ui_interp_info *ui_interp = get_ui_interp_info (ui);
   struct interp *interp;
 
   for (interp = ui_interp->interp_list;
@@ -278,7 +278,7 @@ interp_lookup (const char *name)
     return NULL;
 
   /* Only create each interpreter once per top level.  */
-  interp = interp_lookup_existing (name);
+  interp = interp_lookup_existing (ui, name);
   if (interp != NULL)
     return interp;
 
@@ -288,7 +288,7 @@ interp_lookup (const char *name)
     if (strcmp (factory->name, name) == 0)
       {
 	interp = factory->func (name, ui);
-	interp_add (interp);
+	interp_add (ui, interp);
 	return interp;
       }
 
@@ -585,7 +585,7 @@ ui_top_level_interpreter (struct ui *ui)
 {
   struct ui_interp_info *ui_interp = get_ui_interp_info (ui);
 
-  return ui_interp->top_level_interpreter_ptr;
+  return ui_interp->top_level_interpreter;
 }
 
 struct interp *
