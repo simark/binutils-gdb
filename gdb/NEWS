@@ -3,6 +3,8 @@
 
 *** Changes since GDB 7.11
 
+* Support for tracepoints on arm-linux was added in GDBServer.
+
 * Fortran: Support structures with fields of dynamic types and 
   arrays of dynamic types.
 
