@@ -644,7 +644,9 @@ TARGET_OBS = @TARGET_OBS@
 # All target-dependent objects files that require 64-bit CORE_ADDR
 # (used with --enable-targets=all --enable-64-bit-bfd).
 ALL_64_TARGET_OBS = \
-	aarch64-tdep.o aarch64-linux-tdep.o aarch64-newlib-tdep.o aarch64-insn.o \
+	aarch64-tdep.o aarch64-linux-tdep.o aarch64-newlib-tdep.o \
+	aarch64-insn.o \
+	arm-insn-utils.o \
 	alphabsd-tdep.o alphafbsd-tdep.o alpha-linux-tdep.o alpha-mdebug-tdep.o \
 	alphanbsd-tdep.o alphaobsd-tdep.o alpha-tdep.o \
 	amd64fbsd-tdep.o amd64-darwin-tdep.o amd64-dicos-tdep.o \
@@ -662,8 +664,9 @@ ALL_TARGET_OBS = \
 	arm-linux.o \
 	arm-linux-tdep.o \
 	arm-get-next-pcs.o \
-	arm-symbian-tdep.o \
+	arm-insn-emit.o \
 	arm-insn-reloc.o \
+	arm-symbian-tdep.o \
 	armnbsd-tdep.o armobsd-tdep.o \
 	arm-tdep.o arm-wince-tdep.o \
 	avr-tdep.o \
@@ -993,7 +996,8 @@ common/common-exceptions.h target/target.h common/symbol.h \
 common/common-regcache.h fbsd-tdep.h nat/linux-personality.h \
 common/fileio.h nat/x86-linux.h nat/x86-linux-dregs.h nat/amd64-linux-siginfo.h\
 nat/linux-namespaces.h arch/arm.h common/gdb_sys_time.h arch/aarch64-insn.h \
-tid-parse.h ser-event.h arch/arm-insn-reloc.h
+tid-parse.h ser-event.h arch/arm-insn-emit.h arch/arm-insn-reloc.h \
+arch/arm-insn-utils.h
 
 # Header files that already have srcdir in them, or which are in objdir.
 
@@ -2313,6 +2317,10 @@ arm-linux.o: ${srcdir}/arch/arm-linux.c
 	$(COMPILE) $(srcdir)/arch/arm-linux.c
 	$(POSTCOMPILE)
 
+arm-insn-emit.o: ${srcdir}/arch/arm-insn-emit.c
+	$(COMPILE) $(srcdir)/arch/arm-insn-emit.c
+	$(POSTCOMPILE)
+
 arm-insn-reloc.o: ${srcdir}/arch/arm-insn-reloc.c
 	$(COMPILE) $(srcdir)/arch/arm-insn-reloc.c
 	$(POSTCOMPILE)
@@ -2393,6 +2401,10 @@ aarch64-linux.o: ${srcdir}/nat/aarch64-linux.c
 
 aarch64-insn.o: ${srcdir}/arch/aarch64-insn.c
 	$(COMPILE) $(srcdir)/arch/aarch64-insn.c
+	$(POSTCOMPILE)
+
+arm-insn-utils.o: ${srcdir}/arch/arm-insn-utils.c
+	$(COMPILE) $(srcdir)/arch/arm-insn-utils.c
 	$(POSTCOMPILE)
 
 #
