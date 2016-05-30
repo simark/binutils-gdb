@@ -4287,6 +4287,9 @@ defset_command (char *arg, int from_tty)
 
   spec = skip_spaces (spec);
 
+  if (strlen (spec) == 0)
+    error (_("itset spec is empty"));
+
   itset = itset_create (&spec);
   make_cleanup_itset_free (itset);
 
