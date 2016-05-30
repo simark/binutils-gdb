@@ -17,10 +17,14 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "server.h"
+#include <inttypes.h>
 #include "linux-low.h"
 #include "arch/arm.h"
 #include "arch/arm-linux.h"
 #include "arch/arm-get-next-pcs.h"
+#include "arch/arm-insn-utils.h"
+#include "arch/arm-insn-emit.h"
+#include "arch/arm-insn-reloc.h"
 #include "linux-aarch32-low.h"
 
 #include <sys/uio.h>
@@ -34,6 +38,7 @@
 #include <sys/syscall.h>
 
 #include "tracepoint.h"
+#include "ax.h"
 
 /* Defined in auto-generated files.  */
 void init_registers_arm (void);
@@ -66,6 +71,15 @@ extern const struct target_desc *tdesc_arm_with_vfpv3;
 #define PTRACE_GETHBPREGS 29
 #define PTRACE_SETHBPREGS 30
 #endif
+
+/* Target description indexes for the IPA.  */
+enum arm_linux_tdesc
+  {
+    ARM_TDESC_ARM = 0,
+    ARM_TDESC_ARM_WITH_VFPV2 = 1,
+    ARM_TDESC_ARM_WITH_VFPV3 = 2,
+    ARM_TDESC_ARM_WITH_NEON = 3,
+  };
 
 /* Information describing the hardware breakpoint capabilities.  */
 static struct
@@ -1008,6 +1022,900 @@ arm_supports_tracepoints (void)
   return 1;
 }
 
+static int
+append_inferior_memory (CORE_ADDR *to, size_t len, const unsigned char *buf)
+{
+  if (write_inferior_memory (*to, buf, len) != 0)
+    return 1;
+
+  *to += len;
+
+  return 0;
+}
+
+static int
+append_inferior_memory_32 (CORE_ADDR *to, uint32_t val)
+{
+  return append_inferior_memory (to, 4, (unsigned char *) &val);
+}
+
+static int
+append_inferior_memory_16 (CORE_ADDR *to, uint16_t val)
+{
+  return append_inferior_memory (to, 2, (unsigned char *) &val);
+}
+
+struct arm_insn_reloc_data
+{
+  union
+  {
+    uint32_t arm;
+    uint16_t thumb32[2];
+  } insns;
+
+  /* Error message to return to the client in case the relocation fails.  */
+  const char *err;
+};
+
+static int
+arm_reloc_others (uint32_t insn, const char *iname,
+		  struct arm_insn_reloc_data *data)
+{
+  data->insns.arm = insn;
+
+  return 0;
+}
+
+static int
+arm_reloc_alu_imm (uint32_t insn, struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+arm_reloc_alu_reg (uint32_t insn, struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+arm_reloc_alu_shifted_reg (uint32_t insn, struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+arm_reloc_b_bl_blx (uint32_t insn, struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+arm_reloc_block_xfer (uint32_t insn, struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+arm_reloc_bx_blx_reg (uint32_t insn, struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+arm_reloc_copro_load_store (uint32_t insn, struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+arm_reloc_extra_ld_st (uint32_t insn, struct arm_insn_reloc_data *data,
+		       int unprivileged)
+{
+  return 1;
+}
+
+static int
+arm_reloc_ldr_str_ldrb_strb (uint32_t insn, struct arm_insn_reloc_data *data,
+			     int load, int size, int usermode)
+{
+  return 1;
+}
+
+static int
+arm_reloc_preload (uint32_t insn, struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+arm_reloc_preload_reg (uint32_t insn, struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+arm_reloc_svc (uint32_t insn, struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+arm_reloc_undef (uint32_t insn, struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+arm_reloc_unpred (uint32_t insn, struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+struct arm_insn_reloc_visitor arm_insn_reloc_visitor = {
+  arm_reloc_alu_imm,
+  arm_reloc_alu_reg,
+  arm_reloc_alu_shifted_reg,
+  arm_reloc_b_bl_blx,
+  arm_reloc_block_xfer,
+  arm_reloc_bx_blx_reg,
+  arm_reloc_copro_load_store,
+  arm_reloc_extra_ld_st,
+  arm_reloc_ldr_str_ldrb_strb,
+  arm_reloc_others,
+  arm_reloc_preload,
+  arm_reloc_preload_reg,
+  arm_reloc_svc,
+  arm_reloc_undef,
+  arm_reloc_unpred,
+};
+
+static int
+copy_instruction_arm (CORE_ADDR *to, CORE_ADDR from, const char **err)
+{
+  uint32_t insn;
+  struct arm_insn_reloc_data data;
+  int ret;
+
+  if (read_inferior_memory (from, (unsigned char *) &insn, sizeof (insn)) != 0)
+    {
+      *err = "Error reading memory while relocating instruction.";
+      return 1;
+    }
+
+  /* Set a default generic error message, which can be overridden by the
+     relocation functions.  */
+  data.err = "Error relocating instruction.";
+
+  ret = arm_relocate_insn (insn, &arm_insn_reloc_visitor, &data);
+  if (ret != 0)
+    {
+      *err = data.err;
+      return 1;
+    }
+
+  append_inferior_memory_32 (to, data.insns.arm);
+
+  return 0;
+}
+
+static int
+thumb32_reloc_others (uint16_t insn1, uint16_t insn2, const char *iname,
+		      struct arm_insn_reloc_data *data)
+{
+  data->insns.thumb32[0] = insn1;
+  data->insns.thumb32[1] = insn2;
+
+  return 0;
+}
+
+static int
+thumb32_reloc_alu_imm (uint16_t insn1, uint16_t insn2,
+		       struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+thumb32_reloc_b_bl_blx (uint16_t insn1, uint16_t insn2,
+			struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+thumb32_reloc_block_xfer (uint16_t insn1, uint16_t insn2,
+			  struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+thumb32_reloc_copro_load_store (uint16_t insn1, uint16_t insn2,
+				struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+thumb32_reloc_load_literal (uint16_t insn1, uint16_t insn2,
+			    struct arm_insn_reloc_data *data, int size)
+{
+  return 1;
+}
+
+static int
+thumb32_reloc_load_reg_imm (uint16_t insn1, uint16_t insn2,
+			    struct arm_insn_reloc_data *data, int writeback,
+			    int immed)
+{
+  return 1;
+}
+
+static int
+thumb32_reloc_pc_relative_32bit (uint16_t insn1, uint16_t insn2,
+				 struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+thumb32_reloc_preload (uint16_t insn1, uint16_t insn2,
+		       struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+thumb32_reloc_undef (uint16_t insn1, uint16_t insn2,
+		     struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+static int
+thumb32_reloc_table_branch (uint16_t insn1, uint16_t insn2,
+			    struct arm_insn_reloc_data *data)
+{
+  return 1;
+}
+
+
+struct thumb_32bit_insn_reloc_visitor thumb_32bit_insns_reloc_visitor = {
+  thumb32_reloc_alu_imm,
+  thumb32_reloc_b_bl_blx,
+  thumb32_reloc_block_xfer,
+  thumb32_reloc_copro_load_store,
+  thumb32_reloc_load_literal,
+  thumb32_reloc_load_reg_imm,
+  thumb32_reloc_others,
+  thumb32_reloc_pc_relative_32bit,
+  thumb32_reloc_preload,
+  thumb32_reloc_undef,
+  thumb32_reloc_table_branch,
+};
+
+static int
+copy_instruction_thumb32 (CORE_ADDR *to, CORE_ADDR from, const char **err)
+{
+  uint16_t insn1, insn2;
+  struct arm_insn_reloc_data data;
+  int ret;
+
+  if (read_inferior_memory (from, (unsigned char *) &insn1, sizeof (insn1))
+      != 0)
+    {
+      *err = "Error reading memory while relocating instruction.";
+      return 1;
+    }
+
+  if (read_inferior_memory (from + sizeof (insn1), (unsigned char *) &insn2,
+			    sizeof (insn2)) != 0)
+    {
+      *err = "Error reading memory while relocating instruction.";
+      return 1;
+    }
+
+  /* Set a default generic error message, which can be overridden by the
+     relocation functions.  */
+  data.err = "Error relocating instruction.";
+
+  ret = thumb_32bit_relocate_insn (insn1, insn2,
+				   &thumb_32bit_insns_reloc_visitor, &data);
+  if (ret != 0)
+    {
+      *err = data.err;
+      return 1;
+    }
+
+  append_inferior_memory_16 (to, data.insns.thumb32[0]);
+  append_inferior_memory_16 (to, data.insns.thumb32[1]);
+
+  return 0;
+}
+
+static int
+arm_get_thread_area (int lwpid, CORE_ADDR *addr)
+{
+  uint32_t val;
+
+  if (ptrace (PTRACE_GET_THREAD_AREA, lwpid, NULL, &val) != 0)
+    return -1;
+
+  *addr = val;
+  return 0;
+}
+
+static int
+arm_get_min_fast_tracepoint_insn_len (void)
+{
+  return 4;
+}
+
+/* Core register numbers used in fast tracepoints code.  */
+static const int r0 = 0;
+static const int r1 = 1;
+static const int r2 = 2;
+static const int r3 = 3;
+static const int r4 = 4;
+static const int r5 = 5;
+static const int sp = 13;
+static const int lr = 14;
+
+static int
+arm_install_fast_tracepoint_jump_pad_arm (struct tracepoint *tp,
+					  CORE_ADDR collector,
+					  CORE_ADDR lockaddr,
+					  CORE_ADDR *jump_entry,
+					  CORE_ADDR *trampoline,
+					  ULONGEST *trampoline_size,
+					  unsigned char *jjump_pad_insn,
+					  ULONGEST *jjump_pad_insn_size,
+					  char *err)
+{
+  unsigned char buf[0x100];
+  CORE_ADDR buildaddr = *jump_entry;
+  const struct target_desc *tdesc = current_process ()->tdesc;
+  const uint32_t kuser_get_tls = 0xffff0fe0;
+  uint32_t *ptr = (uint32_t *) buf;
+  const char *copy_insn_err;
+
+  /* Push VFP registers if available.  */
+  if (tdesc == tdesc_arm_with_neon || tdesc == tdesc_arm_with_vfpv3)
+    {
+      /* vpush {d0-d15} */
+      ptr += arm_emit_arm_vpush (ptr, INST_AL, 0, 16);
+
+      /* vpush {d16-d31} */
+      ptr += arm_emit_arm_vpush (ptr, INST_AL, 16, 16);
+    }
+  else if (tdesc == tdesc_arm_with_vfpv2)
+    /* vpush {d0-d15} */
+    ptr += arm_emit_arm_vpush (ptr, INST_AL, 0, 16);
+
+  /* Function prologue, push common registers on the stack.
+     push { r0-r12,lr }  */
+  ptr
+    += arm_emit_arm_push_list (ptr, INST_AL,
+			       encode_register_list (0, 13, ENCODE (1, 1, 14)));
+
+  /* Push current processor state register (CPSR) on the stack.  */
+  ptr += arm_emit_arm_mrs (ptr, INST_AL, r0);
+
+  /* push r0 */
+  ptr += arm_emit_arm_push_one (ptr, INST_AL, r0);
+
+  /* Push replaced instruction address on the stack.  */
+  ptr += arm_emit_arm_mov_32 (ptr, r0, (uint32_t) tp->address);
+  /* push r0 (orig pc)  */
+  ptr += arm_emit_arm_push_one (ptr, INST_AL, r0);
+
+  /* Save current stack pointer for the REGS parameters of the gdb_collect
+     call later. */
+  ptr += arm_emit_arm_mov (ptr, INST_AL, r1, register_operand (sp));
+
+  /* Push current thread's local storage location on the stack.  */
+  ptr += arm_emit_arm_mov_32 (ptr, r0, kuser_get_tls);
+  ptr += arm_emit_arm_blx (ptr, INST_AL, register_operand (r0));
+  /* push r0 (tls)  */
+  ptr += arm_emit_arm_push_one (ptr, INST_AL, r0);
+
+  /* Push obj_addr_on_target on the stack.  */
+  ptr += arm_emit_arm_mov_32 (ptr, r0, (uint32_t) tp->obj_addr_on_target);
+  /* push r0 (tpoint:arg1)  */
+  ptr += arm_emit_arm_push_one (ptr, INST_AL, r0);
+
+  /* Move collector function address to r2.  */
+  ptr += arm_emit_arm_mov_32 (ptr, r2, (uint32_t) collector);
+
+  /* Move lock address to r4.  */
+  ptr += arm_emit_arm_mov_32 (ptr, r4, (uint32_t) lockaddr);
+
+  /*
+   * At this point, the stack looks like:
+   *           bottom
+   * +-------------------------------------------------+
+   * |  saved lr                                       |
+   * |  saved r12                                      |
+   * |  ...                                            |
+   * |  saved r0                                       |
+   * |  saved cpsr                                     |
+   * |  tp->address                                    | <- r1
+   * |  tls  (collecting_t.thread_area)                |
+   * |  tp->obj_addr_on_target  (collecting_t.tpoint)  | <- r5
+   * +-------------------------------------------------+
+   *            top
+   */
+
+  /* Save current sp value, so we can restore it after the call to
+     gdb_collect.  */
+  /* mov r5, sp  */
+  ptr += arm_emit_arm_mov (ptr, INST_AL, r5, register_operand (sp));
+
+  /* Spin lock on lockaddr (r4 contains address of lock) */
+
+  /* This is a full memory barrier.
+     1: dmb sy (memory barrier)  */
+  ptr += arm_emit_arm_dmb (ptr);
+  /* Load lock value in r3
+     2: ldrex r3, [r4]  */
+  ptr += arm_emit_arm_ldrex (ptr, INST_AL, r3, r4);
+
+  /* Is it already locked?
+     cmp r3, #0  */
+  ptr += arm_emit_arm_cmp (ptr, INST_AL, r3, immediate_operand (0));
+
+  /* If so, start over.
+     bne 3  */
+  ptr += arm_emit_arm_b (ptr, INST_NE, arm_arm_branch_adjusted_offset (16));
+
+  /* If not, write a value (our saved stack pointer in r5) to the location.
+     strex lr, r5, [r4]  */
+  ptr += arm_emit_arm_strex (ptr, INST_AL, lr, r5, r4);
+
+  /* Did the write succeed?
+     cmp lr, #0  */
+  ptr += arm_emit_arm_cmp (ptr, INST_AL, lr, immediate_operand (0));
+
+  /* If not, start over.
+     bne 2  */
+  ptr += arm_emit_arm_b (ptr, INST_NE, arm_arm_branch_adjusted_offset (-20));
+
+  /* A full memory barrier again.  */
+  ptr += arm_emit_arm_dmb (ptr);
+  /* bne 1  */
+  ptr += arm_emit_arm_b (ptr, INST_NE, arm_arm_branch_adjusted_offset (-32));
+
+  /* Round the stack to a multiple of 8 (section 5.2.1.2)
+     bic r3, r5, 7  */
+  ptr += arm_emit_arm_bic (ptr, INST_AL, r3, r5, immediate_operand (7));
+
+  /* mov sp, r3  */
+  ptr += arm_emit_arm_mov (ptr, INST_AL, sp, register_operand (r3));
+
+  /* Call collector (obj_addr_on_target, regs);
+	  r2 -^      r0 -^             r1 -^  */
+  ptr += arm_emit_arm_blx (ptr, INST_AL, register_operand (r2));
+
+  /* Restore sp to pre-call/rounding value.
+     mov sp, r5  */
+  ptr += arm_emit_arm_mov (ptr, INST_AL, sp, register_operand (r5));
+
+  /* Unlock the spin lock (by writing 0 to it).  */
+  ptr += arm_emit_arm_mov (ptr, INST_AL, r3, immediate_operand (0));
+
+  /* str r3, [r4]  */
+  ptr += arm_emit_arm_str (ptr, INST_AL, r3, r4,
+			   memory_operand (offset_memory_operand (0)));
+
+  /* Pop everything that was saved. */
+
+  /* tpoint, tls, tpaddr
+     add sp, sp, #12  */
+  ptr += arm_emit_arm_add (ptr, INST_AL, 0, sp, sp, immediate_operand (12));
+
+  /* cpsr
+     pop r0  */
+  ptr += arm_emit_arm_pop_one (ptr, INST_AL, r0);
+
+  /* msr cpsr,r0  */
+  ptr += arm_emit_arm_msr (ptr, INST_AL, r0);
+
+  /* r0-r12 and lr
+     pop { r0-r12,lr }  */
+  ptr += arm_emit_arm_pop_list (ptr, INST_AL,
+  				encode_register_list (0, 13,
+						      ENCODE (1, 1, 14)));
+
+  /* Pop VFP registers.  */
+  if (tdesc == tdesc_arm_with_neon || tdesc == tdesc_arm_with_vfpv3)
+    {
+      /* vpop {d16-d31} */
+      ptr += arm_emit_arm_vpop (ptr, INST_AL, 16, 16);
+
+      /* vpop {d0-d15} */
+      ptr += arm_emit_arm_vpop (ptr, INST_AL, 0, 16);
+    }
+  else if (tdesc == tdesc_arm_with_vfpv2)
+    /* vpop {d0-d15} */
+    ptr += arm_emit_arm_vpop (ptr, INST_AL, 0, 16);
+
+  append_inferior_memory (&buildaddr, (uint32_t) ptr - (uint32_t) buf, buf);
+
+  tp->adjusted_insn_addr = buildaddr;
+  if (copy_instruction_arm (&buildaddr, tp->address, &copy_insn_err) != 0)
+    {
+      sprintf (err, "E%s", copy_insn_err);
+      return 1;
+    }
+  tp->adjusted_insn_addr = buildaddr;
+
+  /* Possible improvements:
+   This branch can be made non-relative:
+   B <mem location>:
+   push    {r0,r1}
+   movw    r0, #<mem location>
+   movt    r0, #<mem location>
+   str     r0, [sp, #4]
+   pop     {r0,pc}  */
+  if (!arm_arm_is_reachable (buildaddr, tp->address + 4))
+    {
+      sprintf (err,
+	       "EJump back from jump pad too far from tracepoint "
+	       "(offset 0x%" PRIx32 " cannot be encoded in 24 bits).",
+	       arm_arm_branch_relative_distance (buildaddr, tp->address + 4));
+      return 1;
+    }
+  /* b <tp_addr + 4>  */
+  arm_emit_arm_b ((uint32_t *) buf, INST_AL,
+		  arm_arm_branch_relative_distance (buildaddr,
+						    tp->address + 4));
+  append_inferior_memory (&buildaddr, 4, buf);
+
+  /* write tp instr.  */
+  if (!arm_arm_is_reachable (tp->address, *jump_entry))
+    {
+      sprintf (err,
+	       "EJump pad too far from tracepoint "
+	       "(offset 0x%" PRIx32 " cannot be encoded in 24 bits).",
+	       arm_arm_branch_relative_distance (tp->address, *jump_entry));
+      return 1;
+    }
+
+  arm_emit_arm_b ((uint32_t *) jjump_pad_insn, INST_AL,
+		  arm_arm_branch_relative_distance (tp->address, *jump_entry));
+  
+  *jjump_pad_insn_size = 4;
+  *jump_entry = buildaddr;
+
+  return 0;
+}
+
+static int
+arm_install_fast_tracepoint_jump_pad_thumb2 (struct tracepoint *tp,
+					     CORE_ADDR collector,
+					     CORE_ADDR lockaddr,
+					     CORE_ADDR *jump_entry,
+					     CORE_ADDR *trampoline,
+					     ULONGEST *trampoline_size,
+					     unsigned char *jjump_pad_insn,
+					     ULONGEST *jjump_pad_insn_size,
+					     char *err)
+{
+  unsigned char buf[0x100];
+  CORE_ADDR buildaddr = *jump_entry;
+  const struct target_desc *tdesc = current_process ()->tdesc;
+  const uint32_t kuser_get_tls = 0xffff0fe0;
+  uint16_t *ptr = (uint16_t *) buf;
+  const char *copy_insn_err;
+
+  /* Push VFP registers if available.  */
+  if (tdesc == tdesc_arm_with_neon || tdesc == tdesc_arm_with_vfpv3)
+    {
+      /* vpush {d0-d15} */
+      ptr += arm_emit_thumb_vpush (ptr, 0, 16);
+      /* vpush {d16-d31} */
+      ptr += arm_emit_thumb_vpush (ptr, 16, 16);
+    }
+  else if (tdesc == tdesc_arm_with_vfpv2)
+    /* vpush {d0-d15} */
+    ptr += arm_emit_thumb_vpush (ptr, 0, 16);
+
+  /* Function prologue, push common registers on the stack.
+     push { r0-r12,lr }  */
+  ptr += arm_emit_thumb_push_list (ptr, encode_register_list (0, 13, 0), 1);
+
+  /* Push current processor state register (CPSR) on the stack.  */
+  ptr += arm_emit_thumb_mrs (ptr, r0);
+
+  /* push r0  */
+  ptr += arm_emit_thumb_push_one (ptr, ENCODE (1, 1, 0), 0);
+
+  /* Push replaced instruction address on the stack.  */
+  ptr += arm_emit_thumb_mov_32 (ptr, r0, (uint32_t) tp->address);
+
+  /* push r0 (orig pc)  */
+  ptr += arm_emit_thumb_push_one (ptr, ENCODE (1, 1, 0), 0);
+
+  /* Save current stack pointer for the REGS parameters of the gdb_collect
+     call later.
+     mov r1, sp (regs:arg2)  */
+  ptr += arm_emit_thumb_mov (ptr, r1, register_operand (sp));
+
+  /* Push current thread's local storage location on the stack.  */
+  ptr += arm_emit_thumb_mov_32 (ptr, r0, kuser_get_tls);
+  ptr += arm_emit_thumb_blx (ptr, register_operand (r0));
+  /* push r0 (tls)  */
+  ptr += arm_emit_thumb_push_one (ptr, ENCODE (1, 1, 0), 0);
+
+  /* Push obj_addr_on_target on the stack.  */
+  ptr += arm_emit_thumb_mov_32 (ptr, r0,
+				     (uint32_t) tp->obj_addr_on_target);
+  /* push r0 (tpoint:arg1)  */
+  ptr += arm_emit_thumb_push_one (ptr, ENCODE (1, 1, 0), 0);
+
+  /* Move collector function address to r2.  */
+  ptr += arm_emit_thumb_mov_32 (ptr, r2, (uint32_t) collector);
+
+  /* Move lock address to r4.  */
+  ptr += arm_emit_thumb_mov_32 (ptr, r4, (uint32_t) lockaddr);
+
+  /*
+   * At this point, the stack looks like:
+   *           bottom
+   * +-------------------------------------------------+
+   * |  saved lr                                       |
+   * |  saved r12                                      |
+   * |  ...                                            |
+   * |  saved r0                                       |
+   * |  saved cpsr                                     |
+   * |  tp->address                                    | <- r1
+   * |  tls  (collecting_t.thread_area)                |
+   * |  tp->obj_addr_on_target  (collecting_t.tpoint)  | <- r5
+   * +-------------------------------------------------+
+   *            top
+   */
+
+  /* Save current sp value, so we can restore it after the call to
+     gdb_collect.
+     mov r5, sp  */
+  ptr += arm_emit_thumb_mov (ptr, r5, register_operand (sp));
+
+  /* Spin lock on lockaddr (r4 contains address of lock) */
+
+  /* This is a full memory barrier.
+     1: dmb sy  */
+  ptr += arm_emit_thumb_dmb (ptr);
+
+  /* Load lock value in r3
+     2: ldrex   r3, [r4]  */
+  ptr += arm_emit_thumb_ldrex (ptr, r3, r4, immediate_operand (0));
+
+  /* Is it already locked?
+     cmp r3, #0  */
+  ptr += arm_emit_thumb_cmp (ptr, r3, immediate_operand (0));
+
+  /* If so, start over
+     bne.n   3	 */
+  ptr += arm_emit_thumb_b (ptr, INST_NE, arm_thumb_branch_adjusted_offset (12));
+
+  /* If not, write a value (our saved stack pointer in r5) to the location.
+     strex   r14, r5, [r4]  */
+  ptr += arm_emit_thumb_strex (ptr, lr, r5, r4, immediate_operand (0));
+
+  /* Did the write succeed?
+     cmp.w   r14, #0  */
+  ptr += arm_emit_thumb_cmpw (ptr, lr, immediate_operand (0));
+
+  /* If not, start over.
+     bne.n  2  */
+  ptr += arm_emit_thumb_b (ptr, INST_NE,
+			   arm_thumb_branch_adjusted_offset (-16));
+
+  /* A full memory barrier again.
+     3. dmb  sy  */
+  ptr += arm_emit_thumb_dmb (ptr);
+
+  /* bne.n  1  */
+  ptr += arm_emit_thumb_b (ptr, INST_NE,
+			   arm_thumb_branch_adjusted_offset (-26));
+
+  /* Round the stack to a multiple of 8 (section 5.2.1.2)
+     bic r3, r5, 7  */
+  ptr += arm_emit_thumb_bic (ptr, r3, r5, immediate_operand (7));
+
+  /* mov sp, r3  */
+  ptr += arm_emit_thumb_mov (ptr, sp, register_operand (r3));
+
+  /* Call collector (obj_addr_on_target, regs);
+		r2 -^      r0 -^     r1 -^  */
+  ptr += arm_emit_thumb_blx (ptr, register_operand (r2));
+
+  /* Restore sp to pre-call/rounding value.
+     mov sp, r5  */
+  ptr += arm_emit_thumb_mov (ptr, sp, register_operand (r5));
+
+  /* Unlock the spin lock (by writing 0 to it).
+     movw r3, #0  */
+  ptr += arm_emit_thumb_movw (ptr, r3, immediate_operand (0));
+
+  /* str r3, [r4]  */
+  ptr += arm_emit_thumb_str (ptr, r3, r4, immediate_operand (0));
+
+  /* Pop everything that was saved. */
+
+  /* tpoint, tls, tpaddr
+     add sp, sp, #12  */
+  ptr += arm_emit_thumb_add_sp (ptr, immediate_operand (12));
+
+  /* For cpsr.
+     pop r0  */
+  ptr += arm_emit_thumb_pop (ptr, ENCODE (1, 1, 0), 0);
+
+  /* msr cpsr,r0*/
+  ptr += arm_emit_thumb_msr (ptr, r0);
+
+  /* r0-r12 and lr
+     pop { r0-r12,lr }  */
+  ptr += arm_emit_thumb_popw_list (ptr, encode_register_list (0, 13, 0), 0, 1);
+
+  /* Pop VFP registers.  */
+  if (tdesc == tdesc_arm_with_neon || tdesc == tdesc_arm_with_vfpv3)
+    {
+      /* vpop {d16-d31} */
+      ptr += arm_emit_thumb_vpop (ptr, 16, 16);
+      /* vpop {d0-d15} */
+      ptr += arm_emit_thumb_vpop (ptr, 0, 16);
+    }
+  else if (tdesc == tdesc_arm_with_vfpv2)
+    {
+      /* vpop {d0-d15} */
+      ptr += arm_emit_thumb_vpop (ptr, 0, 16);
+    }
+
+  append_inferior_memory (&buildaddr, (uint32_t) ptr - (uint32_t) buf, buf);
+
+  tp->adjusted_insn_addr = buildaddr;
+  if (copy_instruction_thumb32 (&buildaddr, tp->address, &copy_insn_err) != 0)
+    {
+      sprintf (err, "E%s", copy_insn_err);
+      return 1;
+    }
+  tp->adjusted_insn_addr_end = buildaddr;
+
+  /* Possible improvements:
+     This branch can be made non-relative:
+     B <mem location>:
+     push	   {r0,r1}
+     movw	   r0, #<mem location>
+     movt	   r0, #<mem location>
+     str	   r0, [sp, #4]
+     pop	   {r0,pc}  */
+  if (!arm_thumb_is_reachable (buildaddr, tp->address + 4))
+    {
+      sprintf (err,
+	       "EJump back from jump pad too far from tracepoint "
+	       "(offset 0x%" PRIx32 " cannot be encoded in 23 bits).",
+	       arm_thumb_branch_relative_distance (buildaddr, tp->address + 4));
+      return 1;
+    }
+
+  arm_emit_thumb_bw ((uint16_t *) buf,
+		     arm_thumb_branch_relative_distance (buildaddr,
+							 tp->address + 4));
+  append_inferior_memory (&buildaddr, 4, buf);
+
+  /* write tp instr.	*/
+  if (!arm_thumb_is_reachable (tp->address, *jump_entry))
+    {
+      sprintf (err,
+	       "EJump pad too far from tracepoint "
+	       "(offset 0x%" PRIx32 " cannot be encoded in 23 bits).",
+	       arm_thumb_branch_relative_distance (tp->address, *jump_entry));
+      return 1;
+    }
+
+  arm_emit_thumb_bw ((uint16_t *) jjump_pad_insn,
+		     arm_thumb_branch_relative_distance (tp->address,
+							 *jump_entry));
+  *jjump_pad_insn_size = 4;
+  *jump_entry = buildaddr;
+
+  return 0;
+}
+
+static int
+arm_install_fast_tracepoint_jump_pad (struct tracepoint *tp,
+				      CORE_ADDR collector,
+				      CORE_ADDR lockaddr,
+				      CORE_ADDR *jump_entry,
+				      CORE_ADDR *trampoline,
+				      ULONGEST *trampoline_size,
+				      unsigned char *jjump_pad_insn,
+				      ULONGEST *jjump_pad_insn_size,
+				      char *err)
+{
+  int res = 1;
+
+  if (tp->kind == ARM_BP_KIND_ARM)
+    {
+      TRY
+	{
+	  res = arm_install_fast_tracepoint_jump_pad_arm (tp, collector,
+							  lockaddr,
+							  jump_entry,
+							  trampoline,
+							  trampoline_size,
+							  jjump_pad_insn,
+							  jjump_pad_insn_size,
+							  err);
+	}
+      CATCH (ex, RETURN_MASK_ERROR)
+	{
+	  if (ex.error == NOT_SUPPORTED_ERROR)
+	    {
+	      err = strcpy (err, ex.message);
+	      return 1;
+	    }
+	  else
+	    {
+	      throw_exception (ex);
+	    }
+	}
+      END_CATCH
+    }
+  else if (tp->kind == ARM_BP_KIND_THUMB2)
+    {
+      TRY
+	{
+	  res = arm_install_fast_tracepoint_jump_pad_thumb2
+	    (tp, collector, lockaddr, jump_entry, trampoline, trampoline_size,
+	     jjump_pad_insn, jjump_pad_insn_size, err);
+	}
+      CATCH (ex, RETURN_MASK_ERROR)
+	{
+	  if (ex.error == NOT_SUPPORTED_ERROR)
+	    {
+	      err = strcpy (err, ex.message);
+	      return 1;
+	    }
+	  else
+	    {
+	      throw_exception (ex);
+	    }
+	}
+      END_CATCH
+    }
+  else
+    {
+      strcpy (err,
+	      "ECan't put a fast tracepoint jump on a two-bytes Thumb "
+	      "instruction.");
+      return 1;
+    }
+
+  return res;
+}
+
+/* Implementation of the linux_target_ops method "get_ipa_tdesc_idx".  */
+
+static int
+arm_get_ipa_tdesc_idx (void)
+{
+  const struct target_desc *tdesc = current_process ()->tdesc;
+
+  if (tdesc == tdesc_arm)
+    return ARM_TDESC_ARM;
+  if (tdesc == tdesc_arm_with_vfpv2)
+    return ARM_TDESC_ARM_WITH_VFPV2;
+  if (tdesc == tdesc_arm_with_vfpv3)
+    return ARM_TDESC_ARM_WITH_VFPV3;
+  if (tdesc == tdesc_arm_with_neon)
+    return ARM_TDESC_ARM_WITH_NEON;
+
+  return 0;
+}
+
 struct linux_target_ops the_low_target = {
   arm_arch_setup,
   arm_regs_info,
@@ -1035,13 +1943,15 @@ struct linux_target_ops the_low_target = {
   arm_prepare_to_resume,
   NULL, /* process_qsupported */
   arm_supports_tracepoints,
-  NULL, /* get_thread_area */
-  NULL, /* install_fast_tracepoint_jump_pad */
-  NULL, /* emit_ops */
-  NULL, /* get_min_fast_tracepoint_insn_len */
+  arm_get_thread_area, /* get_thread_area */
+  arm_install_fast_tracepoint_jump_pad, /* install_fast_tracepoint_jump_pad */
+  NULL, /*emit_ops */
+  arm_get_min_fast_tracepoint_insn_len, /* get_min_fast_tracepoint_insn_len */
   NULL, /* supports_range_stepping */
   arm_breakpoint_kind_from_current_state,
-  arm_supports_hardware_single_step
+  arm_supports_hardware_single_step,
+  NULL, /* get_syscall_trapinfo */
+  arm_get_ipa_tdesc_idx,
 };
 
 void

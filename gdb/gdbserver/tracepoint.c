@@ -4624,6 +4624,13 @@ collect_data_at_step (struct tracepoint_hit_ctx *ctx,
 EXTERN_C_PUSH
 IP_AGENT_EXPORT_VAR int ipa_tdesc_idx;
 EXTERN_C_POP
+
+/* Return the current target descriptoin index.  */
+int
+get_ipa_tdesc_idx (void)
+{
+  return ipa_tdesc_idx;
+}
 #endif
 
 static struct regcache *
