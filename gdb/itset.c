@@ -4228,7 +4228,7 @@ make_itset_named_itset (struct itset *set, char *name, int internal)
   else
     named_itset->number = ++named_itset_count;
 
-  observer_notify_named_itset_created (name);
+  observer_notify_named_itset_created (name, set->spec);
 
   return named_itset;
 }

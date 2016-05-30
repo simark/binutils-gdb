@@ -84,7 +84,7 @@ static void mi_command_param_changed (const char *param, const char *value);
 static void mi_memory_changed (struct inferior *inf, CORE_ADDR memaddr,
 			       ssize_t len, const bfd_byte *myaddr);
 static void mi_on_sync_execution_done (void);
-static void mi_on_named_itset_created (const char *name);
+static void mi_on_named_itset_created (const char *name, const char *spec);
 static void mi_on_named_itset_deleted (const char *name);
 
 static int report_initial_inferior (struct inferior *inf, void *closure);
@@ -475,14 +475,14 @@ mi_inferior_removed (struct inferior *inf)
 }
 
 static void
-mi_on_named_itset_created (const char *name)
+mi_on_named_itset_created (const char *name,const char *spec)
 {
   struct mi_interp *mi = top_level_interpreter_data ();
 
   target_terminal_ours_for_output ();
   fprintf_unfiltered (mi->event_channel,
-		      "named-itset-created,name=\"%s\"",
-		      name);
+		      "named-itset-created,name=\"%s\",spec=\"%s\"",
+		      name, spec);
   gdb_flush (mi->event_channel);
 }
 
