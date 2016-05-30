@@ -84,6 +84,8 @@ static void mi_command_param_changed (const char *param, const char *value);
 static void mi_memory_changed (struct inferior *inf, CORE_ADDR memaddr,
 			       ssize_t len, const bfd_byte *myaddr);
 static void mi_on_sync_execution_done (void);
+static void mi_on_named_itset_created (const char *name);
+static void mi_on_named_itset_deleted (const char *name);
 
 static int report_initial_inferior (struct inferior *inf, void *closure);
 
@@ -158,6 +160,8 @@ mi_interpreter_init (struct interp *interp, int top_level)
       observer_attach_command_param_changed (mi_command_param_changed);
       observer_attach_memory_changed (mi_memory_changed);
       observer_attach_sync_execution_done (mi_on_sync_execution_done);
+      observer_attach_named_itset_created (mi_on_named_itset_created);
+      observer_attach_named_itset_deleted (mi_on_named_itset_deleted);
 
       /* The initial inferior is created before this function is
 	 called, so we need to report it explicitly.  Use iteration in
@@ -467,6 +471,29 @@ mi_inferior_removed (struct inferior *inf)
   fprintf_unfiltered (mi->event_channel,
 		      "thread-group-removed,id=\"i%d\"",
 		      inf->num);
+  gdb_flush (mi->event_channel);
+}
+
+static void
+mi_on_named_itset_created (const char *name)
+{
+  struct mi_interp *mi = top_level_interpreter_data ();
+
+  target_terminal_ours_for_output ();
+  fprintf_unfiltered (mi->event_channel,
+		      "named-itset-created,name=\"%s\"",
+		      name);
+  gdb_flush (mi->event_channel);
+}
+
+static void mi_on_named_itset_deleted (const char *name)
+{
+  struct mi_interp *mi = top_level_interpreter_data ();
+
+  target_terminal_ours_for_output ();
+  fprintf_unfiltered (mi->event_channel,
+		      "named-itset-deleted,name=\"%s\"",
+		      name);
   gdb_flush (mi->event_channel);
 }
 

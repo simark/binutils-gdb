@@ -30,6 +30,7 @@
 #include "gdbcmd.h"
 #include "ada-lang.h"
 #include "completer.h"
+#include "observer.h"
 
 /* FIXME */
 char itset_get_focus_object_type (struct itset *set);
@@ -4227,6 +4228,8 @@ make_itset_named_itset (struct itset *set, char *name, int internal)
   else
     named_itset->number = ++named_itset_count;
 
+  observer_notify_named_itset_created (name);
+
   return named_itset;
 }
 
@@ -4301,6 +4304,8 @@ defset_command (char *arg, int from_tty)
 static void
 free_named_itset (struct named_itset *it)
 {
+  /* The notify needs to be before the free to access the name. */
+  observer_notify_named_itset_deleted (it->set->name);
   itset_free (it->set);
   xfree (it);
 }

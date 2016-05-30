@@ -302,3 +302,10 @@ This observer is used for internal testing.  Do not use.
 See testsuite/gdb.gdb/observer.exp.
 @end deftypefun
 
+@deftypefun void named_itset_created (const char *@var{name})
+Emitted when a named itset is created.
+@end deftypefun
+
+@deftypefun void named_itset_deleted (const char *@var{name})
+Emitted when a named itset is deleted.
+@end deftypefun
