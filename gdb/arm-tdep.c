@@ -8825,6 +8825,70 @@ arm_pseudo_write (struct gdbarch *gdbarch, struct regcache *regcache,
     }
 }
 
+/* Map the pseudo register number REG to the proper register number.  */
+
+static int
+arm_pseudo_register_to_register (struct gdbarch *gdbarch, int reg)
+{
+  int double_regnum = 0;
+  int num_regs = gdbarch_num_regs (gdbarch);
+  char name_buf[4];
+
+  /* Single precision pseudo registers. s0-s31.  */
+  if (reg >= num_regs && reg < num_regs + 32)
+    {
+      xsnprintf (name_buf, sizeof (name_buf), "d%d", (reg - num_regs) / 2);
+      double_regnum = user_reg_map_name_to_regnum (gdbarch, name_buf,
+						   strlen (name_buf));
+    }
+  /* Quadruple precision pseudo regisers. q0-q15.  */
+  else if (reg >= num_regs + 32 && reg < num_regs + 32 + 16)
+    {
+      xsnprintf (name_buf, sizeof (name_buf), "d%d", (reg - num_regs - 32) * 2);
+      double_regnum = user_reg_map_name_to_regnum (gdbarch, name_buf,
+						   strlen (name_buf));
+    }
+  /* Error bad register number.  */
+  else
+    return -1;
+
+  return double_regnum;
+}
+
+/* Implementation of the ax_pseudo_register_collect gdbarch function.  */
+
+static int
+arm_ax_pseudo_register_collect (struct gdbarch *gdbarch,
+				struct agent_expr *ax, int reg)
+{
+  int rawnum = arm_pseudo_register_to_register (gdbarch, reg);
+
+  /* Error.  */
+  if (rawnum < 0)
+    return 1;
+
+  ax_reg_mask (ax, rawnum);
+
+  return 0;
+}
+
+/* Implementation of the ax_pseudo_register_push_stack gdbarch function.  */
+
+static int
+arm_ax_pseudo_register_push_stack (struct gdbarch *gdbarch,
+				   struct agent_expr *ax, int reg)
+{
+  int rawnum = arm_pseudo_register_to_register (gdbarch, reg);
+
+  /* Error.  */
+  if (rawnum < 0)
+    return 1;
+
+  ax_reg (ax, rawnum);
+
+  return 0;
+}
+
 static struct value *
 value_of_arm_user_reg (struct frame_info *frame, const void *baton)
 {
@@ -9506,6 +9570,10 @@ arm_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       set_gdbarch_num_pseudo_regs (gdbarch, num_pseudos);
       set_gdbarch_pseudo_register_read (gdbarch, arm_pseudo_read);
       set_gdbarch_pseudo_register_write (gdbarch, arm_pseudo_write);
+      set_gdbarch_ax_pseudo_register_push_stack
+	(gdbarch, arm_ax_pseudo_register_push_stack);
+      set_gdbarch_ax_pseudo_register_collect
+	(gdbarch, arm_ax_pseudo_register_collect);
     }
 
   if (tdesc_data)
