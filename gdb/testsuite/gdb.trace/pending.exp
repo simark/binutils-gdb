@@ -501,6 +501,11 @@ pending_tracepoint_with_action_resolved "trace"
 
 pending_tracepoint_installed_during_trace "trace"
 
+if {![gdb_target_supports_fast_trace]} {
+    unsupported "Target does not support fast tracepoints."
+    return -1
+}
+
 # Re-compile test case with IPA.
 set libipa [get_in_proc_agent]
 gdb_load_shlib $libipa

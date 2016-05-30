@@ -352,6 +352,11 @@ tracepoint_change_loc_1 "trace"
 tracepoint_change_loc_2 "trace"
 tracepoint_install_in_trace_disabled "trace"
 
+if {![gdb_target_supports_fast_trace]} {
+    unsupported "Target does not support fast tracepoints."
+    return -1
+}
+
 # Re-compile test case with IPA.
 set libipa [get_in_proc_agent]
 gdb_load_shlib $libipa
