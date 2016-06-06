@@ -1260,7 +1260,10 @@ print_thread_info (struct ui_out *uiout, char *requested_threads, int pid)
 
 	contents = xstrprintf ("%d.%d", inf->num, tp->num_inf);
 	str_cleanup = make_cleanup (xfree, contents);
-	ui_out_field_string (uiout, "id", contents);
+	ui_out_field_string (uiout, "per-inferior-id", contents);
+
+	ui_out_field_int (uiout, "id", tp->num);
+
 	do_cleanups (str_cleanup);
       }
 
