@@ -4228,7 +4228,7 @@ make_itset_named_itset (struct itset *set, char *name, int internal)
   else
     named_itset->number = ++named_itset_count;
 
-  observer_notify_named_itset_created (name, set->spec);
+  observer_notify_named_itset_created (named_itset->number, name, set->spec);
 
   return named_itset;
 }
@@ -4308,7 +4308,7 @@ static void
 free_named_itset (struct named_itset *it)
 {
   /* The notify needs to be before the free to access the name. */
-  observer_notify_named_itset_deleted (it->set->name);
+  observer_notify_named_itset_deleted (it->number, it->set->name);
   itset_free (it->set);
   xfree (it);
 }
