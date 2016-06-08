@@ -4452,7 +4452,7 @@ whichsets_callback (struct thread_info *thr, void *data)
 	  if (!printed)
 	    {
 	      printf_filtered (_("Thread %d.%d (%s) is in:"),
-			       inf->num, thr->num,
+			       inf->num, thr->num_inf,
 			       target_pid_to_str (thr->ptid));
 	      printf_filtered (" %s", itset_name (named_itset->set));
 	      printed = 1;
