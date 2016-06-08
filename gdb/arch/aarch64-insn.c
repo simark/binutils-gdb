@@ -17,6 +17,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "common-defs.h"
+#include "arm-insn-utils.h"
 #include "aarch64-insn.h"
 
 /* Toggle this file's internal debugging dump.  */
@@ -346,7 +347,7 @@ aarch64_emit_load_store (uint32_t *buf, uint32_t size,
 			 enum aarch64_opcodes opcode,
 			 struct aarch64_register rt,
 			 struct aarch64_register rn,
-			 struct aarch64_memory_operand operand)
+			 struct arm_memory_operand operand)
 {
   uint32_t op;
 
