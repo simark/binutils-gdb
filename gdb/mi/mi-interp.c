@@ -991,12 +991,12 @@ mi_on_resume (ptid_t ptid)
 	 individually.  */
       iterate_over_inferiors (mi_inferior_count, &count);
 
-      if (count == 1)
+      if (count == 1 && !non_stop)
 	fprintf_unfiltered (raw_stdout, "*running,thread-id=\"all\"\n");
       else
 	iterate_over_threads (mi_output_running_pid, &ptid);
     }
-  else if (thread_count () == 1)
+  else if (thread_count () == 1 && !non_stop)
     {
       /* Backwards compatibility.  If there's only one thread, output
 	 "all".  */
