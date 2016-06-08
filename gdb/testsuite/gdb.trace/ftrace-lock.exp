@@ -46,6 +46,11 @@ if ![gdb_target_supports_trace] {
     return -1
 }
 
+if {![gdb_target_supports_fast_trace]} {
+    unsupported "Target does not support fast tracepoints."
+    return -1
+}
+
 # Compile the test case with the in-process agent library.
 set libipa [get_in_proc_agent]
 set remote_libipa [gdb_load_shlib $libipa]
