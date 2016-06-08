@@ -4653,38 +4653,6 @@ displaced_write_reg (struct regcache *regs, struct displaced_step_closure *dsc,
     }
 }
 
-/* This function is used to concisely determine if an instruction INSN
-   references PC.  Register fields of interest in INSN should have the
-   corresponding fields of BITMASK set to 0b1111.  The function
-   returns return 1 if any of these fields in INSN reference the PC
-   (also 0b1111, r15), else it returns 0.  */
-
-static int
-insn_references_pc (uint32_t insn, uint32_t bitmask)
-{
-  uint32_t lowbit = 1;
-
-  while (bitmask != 0)
-    {
-      uint32_t mask;
-
-      for (; lowbit && (bitmask & lowbit) == 0; lowbit <<= 1)
-	;
-
-      if (!lowbit)
-	break;
-
-      mask = lowbit * 0xf;
-
-      if ((insn & mask) == mask)
-	return 1;
-
-      bitmask &= ~mask;
-    }
-
-  return 0;
-}
-
 /* The simplest copy function.  Many instructions have the same effect no
    matter what address they are executed at: in those cases, use this.  */
 
@@ -4773,7 +4741,7 @@ arm_copy_preload (uint32_t insn, struct arm_insn_reloc_data *data)
 {
   unsigned int rn = bits (insn, 16, 19);
 
-  if (!insn_references_pc (insn, 0x000f0000ul))
+  if (!arm_insn_references_pc (insn, 0x000f0000ul))
     return arm_copy_unmodified (insn, "preload", data);
 
   if (debug_displaced)
@@ -4870,8 +4838,7 @@ arm_copy_preload_reg (uint32_t insn, struct arm_insn_reloc_data *data)
   unsigned int rn = bits (insn, 16, 19);
   unsigned int rm = bits (insn, 0, 3);
 
-
-  if (!insn_references_pc (insn, 0x000f000ful))
+  if (!arm_insn_references_pc (insn, 0x000f000ful))
     return arm_copy_unmodified (insn, "preload reg", data);
 
   if (debug_displaced)
@@ -4932,7 +4899,7 @@ arm_copy_copro_load_store (uint32_t insn, struct arm_insn_reloc_data *data)
 {
   unsigned int rn = bits (insn, 16, 19);
 
-  if (!insn_references_pc (insn, 0x000f0000ul))
+  if (!arm_insn_references_pc (insn, 0x000f0000ul))
     return arm_copy_unmodified (insn, "copro load/store", data);
 
   if (debug_displaced)
@@ -5238,7 +5205,7 @@ arm_copy_alu_imm (uint32_t insn, struct arm_insn_reloc_data *data)
   int is_mov = (op == 0xd);
   ULONGEST rd_val, rn_val;
 
-  if (!insn_references_pc (insn, 0x000ff000ul))
+  if (!arm_insn_references_pc (insn, 0x000ff000ul))
     return arm_copy_unmodified (insn, "ALU immediate", data);
 
   if (debug_displaced)
@@ -5386,7 +5353,7 @@ arm_copy_alu_reg (uint32_t insn, struct arm_insn_reloc_data *data)
   unsigned int op = bits (insn, 21, 24);
   int is_mov = (op == 0xd);
 
-  if (!insn_references_pc (insn, 0x000ff00ful))
+  if (!arm_insn_references_pc (insn, 0x000ff00ful))
     return arm_copy_unmodified (insn, "ALU reg", data);
 
   if (debug_displaced)
@@ -5487,7 +5454,7 @@ arm_copy_alu_shifted_reg (uint32_t insn, struct arm_insn_reloc_data *data)
   int is_mov = (op == 0xd);
   unsigned int rd, rn, rm, rs;
 
-  if (!insn_references_pc (insn, 0x000fff0ful))
+  if (!arm_insn_references_pc (insn, 0x000fff0ful))
     return arm_copy_unmodified (insn, "ALU shifted reg", data);
 
   if (debug_displaced)
@@ -5581,7 +5548,7 @@ arm_copy_extra_ld_st (uint32_t insn, struct arm_insn_reloc_data *data,
   struct displaced_step_closure *dsc = data->dsc;
   struct regcache *regs = data->regs;
 
-  if (!insn_references_pc (insn, 0x000ff00ful))
+  if (!arm_insn_references_pc (insn, 0x000ff00ful))
     return arm_copy_unmodified (insn, "extra load/store", data);
 
   if (debug_displaced)
@@ -5812,7 +5779,7 @@ arm_copy_ldr_str_ldrb_strb (uint32_t insn, struct arm_insn_reloc_data *data,
   unsigned int rm = bits (insn, 0, 3);  /* Only valid if !immed.  */
   struct displaced_step_closure *dsc = data->dsc;
 
-  if (!insn_references_pc (insn, 0x000ff00ful))
+  if (!arm_insn_references_pc (insn, 0x000ff00ful))
     return arm_copy_unmodified (insn, "load/store", data);
 
   if (debug_displaced)
