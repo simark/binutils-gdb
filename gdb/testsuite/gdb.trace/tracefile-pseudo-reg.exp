@@ -12,8 +12,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if { ! [is_amd64_regs_target] } {
-    verbose "Skipping tfile AVX test (target is not x86_64)."
+if { ! [is_amd64_regs_target] && ! [istarget "arm*-*-*"] } {
+    verbose "Skipping tracefile pseudo register tests, target is not supported."
     return
 }
 
@@ -21,8 +21,14 @@ load_lib "trace-support.exp"
 
 standard_testfile
 
+set add_flags ""
+
+if { [is_amd64_regs_target] } {
+ set add_flags "-mavx"
+}
+
 if {[prepare_for_testing $testfile.exp $testfile $srcfile \
-     [list debug additional_flags=-mavx]]} {
+     [list debug additional_flags=$add_flags]]} {
     return -1
 }
 
@@ -36,12 +42,23 @@ if ![gdb_target_supports_trace] {
     return -1
 }
 
-gdb_test_multiple "print \$ymm15" "check for AVX support" {
+if { [is_amd64_regs_target] } {
+    set reg "\$ymm15"
+} elseif { [istarget "arm*-*-*"] } {
+    set reg "\$s5"
+}
+
+set reg_message "check for register $reg"
+
+gdb_test_multiple "print $reg" $reg_message {
     -re " = void.*$gdb_prompt $" {
-	verbose "Skipping tfile AVX test (target doesn't support AVX)."
+	verbose "Skipping tracefile pseudo register tests, target is not supported."
 	return
     }
     -re " = \\{.*}.*$gdb_prompt $" {
+	# All is well.
+    }
+    -re " = 0.*$gdb_prompt $" {
 	# All is well.
     }
 }
@@ -49,7 +66,7 @@ gdb_test_multiple "print \$ymm15" "check for AVX support" {
 gdb_test "trace traceme" ".*"
 
 gdb_trace_setactions "set actions for tracepoint" "" \
-	"collect \$ymm15" "^$"
+	"collect $reg" "^$"
 
 gdb_breakpoint "end"
 
@@ -70,4 +87,8 @@ gdb_test "target tfile ${tracefile}.tf" "" "change to tfile target" \
 
 gdb_test "tfind 0" "Found trace frame 0, tracepoint .*"
 
-gdb_test "print/x \$ymm15.v8_int32" " = \\{0x12340001, .*, 0x12340008}"
+if { [is_amd64_regs_target] } {
+    gdb_test "print/x \$ymm15.v8_int32" " = \\{0x12340001, .*, 0x12340008}"
+} elseif { [istarget "arm*-*-*"] } {
+    gdb_test "print \$s5" "1"
+}
