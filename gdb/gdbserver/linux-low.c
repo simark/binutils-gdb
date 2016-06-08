@@ -4234,14 +4234,7 @@ linux_resume_one_lwp_throw (struct lwp_info *lwp,
 		      " single-stepping\n",
 		      lwpid_of (thread));
 
-      if (can_hardware_single_step ())
-	step = 1;
-      else
-	{
-	  internal_error (__FILE__, __LINE__,
-			  "moving out of jump pad single-stepping"
-			  " not implemented on this target");
-	}
+      step = single_step (lwp);
     }
 
   /* If we have while-stepping actions in this thread set it stepping.
