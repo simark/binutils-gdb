@@ -3,6 +3,7 @@
 
 *** Changes since GDB 7.11
 
+<<<<<<< eb8534b779e371c7c7039dc20ba97a14a19e3c7f
 <<<<<<< fb3cfb6d0a414d0c545cde6aabd8877917208778
 * GDB now supports a negative repeat count in the 'x' command to examine
   memory backward from the given address.  For example:
@@ -18,6 +19,12 @@
        0x40057b <main(int, char**)+25>:
         callq  0x400536 <Func1(int, char const*)>
 =======
+=======
+* Support for fast tracepoints on arm-linux was added in GDBserver,
+  including JIT compiling fast tracepoint's conditional expression
+  bytecode into native code.
+
+>>>>>>> arm fast tracepoints: Relocation of Thumb 32-bits instructions
 * Support for tracepoints on arm-linux was added in GDBServer.
 >>>>>>> Support tracepoints for ARM linux in GDBServer
 
