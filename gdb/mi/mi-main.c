@@ -707,6 +707,28 @@ print_one_inferior (struct inferior *inferior, void *xdata)
   return 0;
 }
 
+struct print_one_named_itset_data
+{
+  int all;
+};
+
+static void
+print_one_named_itset (struct named_itset *itset, void *vdata)
+{
+  struct print_one_named_itset_data *data
+    = (struct print_one_named_itset_data *) vdata;
+  struct ui_out *uiout = current_uiout;
+
+  if (data->all || !named_itset_is_internal (itset))
+    {
+      struct cleanup *back_to = make_cleanup_ui_out_tuple_begin_end(uiout, NULL);
+
+      ui_out_field_fmt (uiout, "id", "u%d", named_itset_number (itset));
+      ui_out_field_string(uiout, "type", "user-defined");
+      ui_out_field_string(uiout, "name", named_itset_name (itset));
+    }
+}
+
 /* Output a field named 'cores' with a list as the value.  The
    elements of the list are obtained by splitting 'cores' on
    comma.  */
@@ -975,6 +997,8 @@ mi_cmd_list_thread_groups (char *command, char **argv, int argc)
   else
     {
       struct print_one_inferior_data data;
+      struct print_one_named_itset_data itset_data;
+      struct itset *itset;
 
       data.recurse = recurse;
       data.inferiors = ids;
@@ -986,6 +1010,9 @@ mi_cmd_list_thread_groups (char *command, char **argv, int argc)
       make_cleanup_ui_out_list_begin_end (uiout, "groups");
       update_thread_list ();
       iterate_over_inferiors (print_one_inferior, &data);
+
+      itset_data.all = 0;
+      iterate_over_named_itsets (print_one_named_itset, &itset_data);
     }
 
   do_cleanups (back_to);

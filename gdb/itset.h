@@ -32,6 +32,7 @@ struct cleanup;
    reference counted.  */
 
 struct itset;
+struct named_itset;
 
 enum itset_width
 {
@@ -168,6 +169,17 @@ struct inferior *iterate_over_itset_inferiors (struct itset *itset,
 					       enum itset_width default_width,
 					       itset_inf_callback_func *callback,
 					       void *data);
+
+/* Iterate over all defined named itsets.  */
+
+typedef void (iterate_over_named_itsets_ftype) (struct named_itset *, void *);
+void
+iterate_over_named_itsets (iterate_over_named_itsets_ftype func, void *data);
+
+extern int named_itset_is_internal (struct named_itset *itset);
+extern int named_itset_number (struct named_itset *itset);
+extern const char *named_itset_name (struct named_itset *itset);
+
 
 /* The current I/T set.  */
 

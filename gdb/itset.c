@@ -210,6 +210,35 @@ static int internal_named_itset_count;
 #define ALL_NAMED_ITSETS(E) \
   for ((E) = named_itsets; (E); (E) = (E)->next)
 
+void
+iterate_over_named_itsets (iterate_over_named_itsets_ftype func, void *data)
+{
+  struct named_itset *n;
+
+  ALL_NAMED_ITSETS (n)
+    {
+      func (n, data);
+    }
+}
+
+int
+named_itset_is_internal (struct named_itset *itset)
+{
+  return itset->number < 0;
+}
+
+int
+named_itset_number (struct named_itset *itset)
+{
+  return itset->number;
+}
+
+const char *
+named_itset_name (struct named_itset *itset)
+{
+  return itset->set->name;
+}
+
 /* Add IT at the end of the named itset chain.  */
 
 static void
