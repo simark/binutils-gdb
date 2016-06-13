@@ -710,6 +710,7 @@ print_one_inferior (struct inferior *inferior, void *xdata)
 struct print_one_named_itset_data
 {
   int all;
+  int recurse;
 };
 
 static void
@@ -1011,7 +1012,9 @@ mi_cmd_list_thread_groups (char *command, char **argv, int argc)
       update_thread_list ();
       iterate_over_inferiors (print_one_inferior, &data);
 
-      itset_data.all = 0;
+      itset_data.all = current_context->all;
+      itset_data.recurse = recurse;
+
       iterate_over_named_itsets (print_one_named_itset, &itset_data);
     }
 
