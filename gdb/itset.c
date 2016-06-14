@@ -174,7 +174,7 @@ itset_is_empty_set (struct itset *set)
   return VEC_empty (itset_elt_ptr, set->elements);
 }
 
-
+
 
 /* An element in the list of named itsets, which can be either
    debugger built-in (all, stopped, running, etc.), or user
@@ -243,6 +243,20 @@ struct itset *
 named_itset_set (struct named_itset *itset)
 {
   return itset->set;
+}
+
+struct named_itset *
+find_named_itset (int num)
+{
+  struct named_itset *e;
+
+  ALL_NAMED_ITSETS (e)
+    {
+      if (num == e->number)
+	return e;
+    }
+
+  return NULL;
 }
 
 /* Add IT at the end of the named itset chain.  */

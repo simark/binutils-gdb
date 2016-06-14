@@ -721,6 +721,18 @@ print_one_named_itset_print_one_thread (struct thread_info *thread, void *v)
 }
 
 static void
+print_named_itset_threads (struct ui_out *uiout, struct named_itset *itset)
+{
+  struct cleanup *to = make_cleanup_ui_out_list_begin_end (uiout, "threads");
+
+  iterate_over_itset_threads (named_itset_set (itset), ITSET_WIDTH_THREAD,
+			      print_one_named_itset_print_one_thread,
+			      NULL);
+
+  do_cleanups (to);
+}
+
+static void
 print_one_named_itset (struct named_itset *itset, void *vdata)
 {
   struct print_one_named_itset_data *data
@@ -737,11 +749,7 @@ print_one_named_itset (struct named_itset *itset, void *vdata)
 
       if (data->recurse)
 	{
-	  make_cleanup_ui_out_list_begin_end (uiout, "threads");
-
-	  iterate_over_itset_threads (named_itset_set (itset), ITSET_WIDTH_THREAD,
-				      print_one_named_itset_print_one_thread,
-				      NULL);
+	  print_named_itset_threads(uiout, itset);
 	}
     }
 }
@@ -935,7 +943,8 @@ mi_cmd_list_thread_groups (char *command, char **argv, int argc)
   struct cleanup *back_to;
   int available = 0;
   int recurse = 0;
-  VEC (int) *ids = 0;
+  VEC (int) *inf_ids = 0;
+  VEC (int) *ud_ids = 0;
 
   enum opt
   {
@@ -979,37 +988,58 @@ mi_cmd_list_thread_groups (char *command, char **argv, int argc)
     {
       char *end;
       int inf;
+      char first_char = *(argv[oind]);
 
-      if (*(argv[oind]) != 'i')
+      if (first_char != 'i' && first_char != 'u')
 	error (_("invalid syntax of group id '%s'"), argv[oind]);
 
-      inf = strtoul (argv[oind] + 1, &end, 0);
+      inf = strtol (argv[oind] + 1, &end, 0);
 
       if (*end != '\0')
 	error (_("invalid syntax of group id '%s'"), argv[oind]);
-      VEC_safe_push (int, ids, inf);
+
+      if (first_char == 'i')
+      	VEC_safe_push (int, inf_ids, inf);
+
+      if (first_char == 'u')
+      	VEC_safe_push (int, ud_ids, inf);
     }
-  if (VEC_length (int, ids) > 1)
-    qsort (VEC_address (int, ids),
-	   VEC_length (int, ids),
+  if (VEC_length (int, inf_ids) > 1)
+    qsort (VEC_address (int, inf_ids),
+	   VEC_length (int, inf_ids),
 	   sizeof (int), compare_positive_ints);
 
-  back_to = make_cleanup (free_vector_of_ints, &ids);
+  back_to = make_cleanup (free_vector_of_ints, &inf_ids);
 
   if (available)
     {
-      list_available_thread_groups (ids, recurse);
+      list_available_thread_groups (inf_ids, recurse);
     }
-  else if (VEC_length (int, ids) == 1)
+  else if (VEC_length (int, inf_ids) == 1 && VEC_length (int, ud_ids) == 0)
     {
       /* Local thread groups, single id.  */
-      int id = *VEC_address (int, ids);
+      int id = *VEC_address (int, inf_ids);
       struct inferior *inf = find_inferior_id (id);
 
       if (!inf)
 	error (_("Non-existent thread group id '%d'"), id);
 
       print_thread_info (uiout, NULL, inf->pid);
+    }
+  else if (VEC_length (int, inf_ids) == 0 && VEC_length (int, ud_ids) == 1)
+    {
+      int num = VEC_index (int, ud_ids, 0);
+      struct named_itset *itset = find_named_itset (num);
+      struct print_one_named_itset_data data;
+
+      data.all = 0;
+      data.recurse = recurse;
+
+      if (itset == NULL)
+	error (_("No group with id 'u%d'"), num);
+
+      print_named_itset_threads(uiout, itset);
+      //print_one_named_itset(itset, &data);
     }
   else
     {
@@ -1018,7 +1048,7 @@ mi_cmd_list_thread_groups (char *command, char **argv, int argc)
       struct itset *itset;
 
       data.recurse = recurse;
-      data.inferiors = ids;
+      data.inferiors = inf_ids;
 
       /* Local thread groups.  Either no explicit ids -- and we
 	 print everything, or several explicit ids.  In both cases,

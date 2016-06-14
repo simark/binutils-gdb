@@ -181,6 +181,8 @@ extern int named_itset_number (struct named_itset *itset);
 extern const char *named_itset_name (struct named_itset *itset);
 extern struct itset *named_itset_set (struct named_itset *itset);
 
+extern struct named_itset *find_named_itset (int num);
+
 struct thread_info *
 iterate_over_itset_threads (struct itset *itset,
 			    enum itset_width default_width,
