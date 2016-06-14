@@ -239,6 +239,12 @@ named_itset_name (struct named_itset *itset)
   return itset->set->name;
 }
 
+struct itset *
+named_itset_set (struct named_itset *itset)
+{
+  return itset->set;
+}
+
 /* Add IT at the end of the named itset chain.  */
 
 static void
@@ -3898,7 +3904,7 @@ iter_thr_callback (struct thread_info *thr, void *d)
 /* Like iterate_over_inferiors, but iterate over only those inferiors
    in ITSET.  */
 
-static struct thread_info *
+struct thread_info *
 iterate_over_itset_threads (struct itset *itset,
 			    enum itset_width default_width,
 			    int (*callback) (struct thread_info *, void *),

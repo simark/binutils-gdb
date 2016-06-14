@@ -179,7 +179,13 @@ iterate_over_named_itsets (iterate_over_named_itsets_ftype func, void *data);
 extern int named_itset_is_internal (struct named_itset *itset);
 extern int named_itset_number (struct named_itset *itset);
 extern const char *named_itset_name (struct named_itset *itset);
+extern struct itset *named_itset_set (struct named_itset *itset);
 
+struct thread_info *
+iterate_over_itset_threads (struct itset *itset,
+			    enum itset_width default_width,
+			    int (*callback) (struct thread_info *, void *),
+			    void *datum);
 
 /* The current I/T set.  */
 

@@ -540,6 +540,7 @@ extern int print_thread_events;
 
 extern void print_thread_info (struct ui_out *uiout, char *threads,
 			       int pid);
+extern void print_one_thread_info (struct ui_out *uiout, struct thread_info *tp);
 
 extern struct cleanup *make_cleanup_restore_current_thread (void);
 

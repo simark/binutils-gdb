@@ -713,6 +713,13 @@ struct print_one_named_itset_data
   int recurse;
 };
 
+static int
+print_one_named_itset_print_one_thread (struct thread_info *thread, void *v)
+{
+  print_one_thread_info(current_uiout, thread);
+  return 0;
+}
+
 static void
 print_one_named_itset (struct named_itset *itset, void *vdata)
 {
@@ -727,6 +734,15 @@ print_one_named_itset (struct named_itset *itset, void *vdata)
       ui_out_field_fmt (uiout, "id", "u%d", named_itset_number (itset));
       ui_out_field_string(uiout, "type", "user-defined");
       ui_out_field_string(uiout, "name", named_itset_name (itset));
+
+      if (data->recurse)
+	{
+	  make_cleanup_ui_out_list_begin_end (uiout, "threads");
+
+	  iterate_over_itset_threads (named_itset_set (itset), ITSET_WIDTH_THREAD,
+				      print_one_named_itset_print_one_thread,
+				      NULL);
+	}
     }
 }
 
@@ -923,7 +939,7 @@ mi_cmd_list_thread_groups (char *command, char **argv, int argc)
 
   enum opt
   {
-    AVAILABLE_OPT, RECURSE_OPT
+    AVAILABLE_OPT, RECURSE_OPT,
   };
   static const struct mi_opt opts[] =
     {
