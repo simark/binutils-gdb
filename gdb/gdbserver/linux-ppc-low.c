@@ -1252,17 +1252,14 @@ ppc_relocate_instruction (CORE_ADDR *to, CORE_ADDR oldloc)
    See target.h for details.  */
 
 static int
-ppc_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
+ppc_install_fast_tracepoint_jump_pad (struct tracepoint *tp,
 				      CORE_ADDR collector,
 				      CORE_ADDR lockaddr,
-				      ULONGEST orig_size,
 				      CORE_ADDR *jump_entry,
 				      CORE_ADDR *trampoline,
 				      ULONGEST *trampoline_size,
 				      unsigned char *jjump_pad_insn,
 				      ULONGEST *jjump_pad_insn_size,
-				      CORE_ADDR *adjusted_insn_addr,
-				      CORE_ADDR *adjusted_insn_addr_end,
 				      char *err)
 {
   uint32_t buf[256];
@@ -1271,6 +1268,8 @@ ppc_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
   CORE_ADDR buildaddr = *jump_entry;
   const CORE_ADDR entryaddr = *jump_entry;
   int rsz, min_frame, frame_size, tp_reg;
+  CORE_ADDR tpoint = tp->obj_addr_on_target;
+  CORE_ADDR tpaddr = tp->address;
 #ifdef __powerpc64__
   struct regcache *regcache = get_thread_regcache (current_thread, 0);
   int is_64 = register_size (regcache->tdesc, 0) == 8;
@@ -1407,22 +1406,22 @@ ppc_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
   write_inferior_memory (buildaddr, (unsigned char *) buf, (p - buf) * 4);
 
   /* Now, insert the original instruction to execute in the jump pad.  */
-  *adjusted_insn_addr = buildaddr + (p - buf) * 4;
-  *adjusted_insn_addr_end = *adjusted_insn_addr;
-  ppc_relocate_instruction (adjusted_insn_addr_end, tpaddr);
+  tp->adjusted_insn_addr = buildaddr + (p - buf) * 4;
+  tp->adjusted_insn_addr_end = tp->adjusted_insn_addr;
+  ppc_relocate_instruction (&tp->adjusted_insn_addr_end, tpaddr);
 
   /* Verify the relocation size.  If should be 4 for normal copy,
      8 or 12 for some conditional branch.  */
-  if ((*adjusted_insn_addr_end - *adjusted_insn_addr == 0)
-      || (*adjusted_insn_addr_end - *adjusted_insn_addr > 12))
+  if ((tp->adjusted_insn_addr_end - tp->adjusted_insn_addr == 0)
+      || (tp->adjusted_insn_addr_end - tp->adjusted_insn_addr > 12))
     {
       sprintf (err, "E.Unexpected instruction length = %d"
 		    "when relocate instruction.",
-		    (int) (*adjusted_insn_addr_end - *adjusted_insn_addr));
+		    (int) (tp->adjusted_insn_addr_end - tp->adjusted_insn_addr));
       return 1;
     }
 
-  buildaddr = *adjusted_insn_addr_end;
+  buildaddr = tp->adjusted_insn_addr_end;
   p = buf;
   /* Finally, write a jump back to the program.  */
   offset = (tpaddr + 4) - buildaddr;
