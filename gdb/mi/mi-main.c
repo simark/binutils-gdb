@@ -945,15 +945,28 @@ mi_cmd_list_thread_groups (char *command, char **argv, int argc)
   int recurse = 0;
   VEC (int) *inf_ids = 0;
   VEC (int) *ud_ids = 0;
+  int nb_groups_listed = 0;
+
+  enum thread_group_types {
+    TG_TYPE_PROCESS = 1 << 0,
+    TG_TYPE_USER = 1 << 1,
+    TG_TYPE_ALL = -1,
+  };
 
   enum opt
   {
-    AVAILABLE_OPT, RECURSE_OPT,
+    AVAILABLE_OPT,
+    RECURSE_OPT,
+    TYPE_OPT,
   };
+
+  enum thread_group_types type_filter = TG_TYPE_ALL;
+
   static const struct mi_opt opts[] =
     {
       {"-available", AVAILABLE_OPT, 0},
       {"-recurse", RECURSE_OPT, 1},
+      {"-type", TYPE_OPT, 1},
       { 0, 0, 0 }
     };
 
@@ -972,6 +985,7 @@ mi_cmd_list_thread_groups (char *command, char **argv, int argc)
 	case AVAILABLE_OPT:
 	  available = 1;
 	  break;
+
 	case RECURSE_OPT:
 	  if (strcmp (oarg, "0") == 0)
 	    ;
@@ -980,6 +994,17 @@ mi_cmd_list_thread_groups (char *command, char **argv, int argc)
 	  else
 	    error (_("only '0' and '1' are valid values "
 		     "for the '--recurse' option"));
+	  break;
+
+	case TYPE_OPT:
+
+	  if (strcmp (oarg, "process") == 0)
+	    type_filter = TG_TYPE_PROCESS;
+	  else if (strcmp (oarg, "user-defined") == 0)
+	    type_filter = TG_TYPE_USER;
+	  else
+	    error (_("Invalid argument for --type: '%s'"), oarg);
+
 	  break;
 	}
     }
@@ -1003,6 +1028,8 @@ mi_cmd_list_thread_groups (char *command, char **argv, int argc)
 
       if (first_char == 'u')
       	VEC_safe_push (int, ud_ids, inf);
+
+      nb_groups_listed++;
     }
   if (VEC_length (int, inf_ids) > 1)
     qsort (VEC_address (int, inf_ids),
@@ -1015,7 +1042,7 @@ mi_cmd_list_thread_groups (char *command, char **argv, int argc)
     {
       list_available_thread_groups (inf_ids, recurse);
     }
-  else if (VEC_length (int, inf_ids) == 1 && VEC_length (int, ud_ids) == 0)
+  else if (nb_groups_listed == 1 && VEC_length (int, inf_ids) == 1)
     {
       /* Local thread groups, single id.  */
       int id = *VEC_address (int, inf_ids);
@@ -1026,7 +1053,7 @@ mi_cmd_list_thread_groups (char *command, char **argv, int argc)
 
       print_thread_info (uiout, NULL, inf->pid);
     }
-  else if (VEC_length (int, inf_ids) == 0 && VEC_length (int, ud_ids) == 1)
+  else if (nb_groups_listed == 1 && VEC_length (int, ud_ids) == 1)
     {
       int num = VEC_index (int, ud_ids, 0);
       struct named_itset *itset = find_named_itset (num);
@@ -1039,29 +1066,36 @@ mi_cmd_list_thread_groups (char *command, char **argv, int argc)
 	error (_("No group with id 'u%d'"), num);
 
       print_named_itset_threads(uiout, itset);
-      //print_one_named_itset(itset, &data);
     }
   else
     {
-      struct print_one_inferior_data data;
-      struct print_one_named_itset_data itset_data;
-      struct itset *itset;
-
-      data.recurse = recurse;
-      data.inferiors = inf_ids;
-
       /* Local thread groups.  Either no explicit ids -- and we
 	 print everything, or several explicit ids.  In both cases,
 	 we print more than one group, and have to use 'groups'
 	 as the top-level element.  */
       make_cleanup_ui_out_list_begin_end (uiout, "groups");
       update_thread_list ();
-      iterate_over_inferiors (print_one_inferior, &data);
 
-      itset_data.all = current_context->all;
-      itset_data.recurse = recurse;
+      if (type_filter & TG_TYPE_PROCESS)
+	{
+	  struct print_one_inferior_data data;
 
-      iterate_over_named_itsets (print_one_named_itset, &itset_data);
+	  data.recurse = recurse;
+	  data.inferiors = inf_ids;
+
+	  iterate_over_inferiors (print_one_inferior, &data);
+	}
+
+
+      if (type_filter & TG_TYPE_USER)
+	{
+	  struct print_one_named_itset_data data;
+
+	  data.all = current_context->all;
+	  data.recurse = recurse;
+
+	  iterate_over_named_itsets (print_one_named_itset, &data);
+	}
     }
 
   do_cleanups (back_to);
