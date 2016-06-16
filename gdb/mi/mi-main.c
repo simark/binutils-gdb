@@ -746,6 +746,7 @@ print_one_named_itset (struct named_itset *itset, void *vdata)
       ui_out_field_fmt (uiout, "id", "u%d", named_itset_number (itset));
       ui_out_field_string(uiout, "type", "user-defined");
       ui_out_field_string(uiout, "name", named_itset_name (itset));
+      ui_out_field_string(uiout, "spec", named_itset_spec (itset));
 
       if (data->recurse)
 	{

@@ -245,6 +245,12 @@ named_itset_set (struct named_itset *itset)
   return itset->set;
 }
 
+const char *
+named_itset_spec (struct named_itset *itset)
+{
+  return itset->set->spec;
+}
+
 struct named_itset *
 find_named_itset (int num)
 {

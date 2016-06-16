@@ -180,6 +180,7 @@ extern int named_itset_is_internal (struct named_itset *itset);
 extern int named_itset_number (struct named_itset *itset);
 extern const char *named_itset_name (struct named_itset *itset);
 extern struct itset *named_itset_set (struct named_itset *itset);
+extern const char *named_itset_spec (struct named_itset *itset);
 
 extern struct named_itset *find_named_itset (int num);
 
