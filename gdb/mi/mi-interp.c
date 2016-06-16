@@ -428,7 +428,7 @@ mi_inferior_added (struct inferior *inf)
 
   target_terminal_ours ();
   fprintf_unfiltered (mi->event_channel,
-		      "thread-group-added,id=\"i%d\"",
+		      "thread-group-added,id=\"i%d\",type=\"process\"",
 		      inf->num);
   gdb_flush (mi->event_channel);
 }
@@ -481,7 +481,7 @@ mi_on_named_itset_created (int num, const char *name, const char *spec)
 
   target_terminal_ours_for_output ();
   fprintf_unfiltered (mi->event_channel,
-		      "named-itset-created,num=\"%d\",name=\"%s\",spec=\"%s\"",
+		      "thread-group-added,id=\"u%d\",type=\"user-defined\",name=\"%s\",spec=\"%s\"",
 		      num, name, spec);
   gdb_flush (mi->event_channel);
 }
@@ -492,8 +492,7 @@ static void mi_on_named_itset_deleted (int num, const char *name)
 
   target_terminal_ours_for_output ();
   fprintf_unfiltered (mi->event_channel,
-		      "named-itset-deleted,num=\"%d\",name=\"%s\"",
-		      num, name);
+		      "thread-group-removed,id=\"u%d\"", num);
   gdb_flush (mi->event_channel);
 }
 
