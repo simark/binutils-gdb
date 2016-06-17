@@ -752,6 +752,8 @@ print_one_named_itset (struct named_itset *itset, void *vdata)
 	{
 	  print_named_itset_threads(uiout, itset);
 	}
+
+      do_cleanups(back_to);
     }
 }
 
