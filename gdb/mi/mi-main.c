@@ -709,8 +709,8 @@ print_one_inferior (struct inferior *inferior, void *xdata)
 
 struct print_one_named_itset_data
 {
-  int all;
   int recurse;
+  int want_builtin;
 };
 
 static int
@@ -738,13 +738,24 @@ print_one_named_itset (struct named_itset *itset, void *vdata)
   struct print_one_named_itset_data *data
     = (struct print_one_named_itset_data *) vdata;
   struct ui_out *uiout = current_uiout;
+  int is_builtin = named_itset_is_builtin (itset);
 
-  if (data->all || !named_itset_is_internal (itset))
+  if (data->want_builtin == is_builtin)
     {
       struct cleanup *back_to = make_cleanup_ui_out_tuple_begin_end(uiout, NULL);
+      int num = named_itset_number (itset);
 
-      ui_out_field_fmt (uiout, "id", "u%d", named_itset_number (itset));
-      ui_out_field_string(uiout, "type", "user-defined");
+      if (is_builtin)
+	{
+	  ui_out_field_fmt (uiout, "id", "b%d", -num);
+	  ui_out_field_string(uiout, "type", "builtin");
+	}
+      else
+	{
+	  ui_out_field_fmt (uiout, "id", "u%d", num);
+	  ui_out_field_string(uiout, "type", "user-defined");
+	}
+
       ui_out_field_string(uiout, "name", named_itset_name (itset));
       ui_out_field_string(uiout, "spec", named_itset_spec (itset));
 
@@ -948,11 +959,13 @@ mi_cmd_list_thread_groups (char *command, char **argv, int argc)
   int recurse = 0;
   VEC (int) *inf_ids = 0;
   VEC (int) *ud_ids = 0;
+  VEC (int) *builtin_ids = 0;
   int nb_groups_listed = 0;
 
   enum thread_group_types {
     TG_TYPE_PROCESS = 1 << 0,
     TG_TYPE_USER = 1 << 1,
+    TG_TYPE_BUILTIN = 1 << 2,
     TG_TYPE_ALL = -1,
   };
 
@@ -1005,6 +1018,8 @@ mi_cmd_list_thread_groups (char *command, char **argv, int argc)
 	    type_filter = TG_TYPE_PROCESS;
 	  else if (strcmp (oarg, "user-defined") == 0)
 	    type_filter = TG_TYPE_USER;
+	  else if (strcmp (oarg, "builtin") == 0)
+	    type_filter = TG_TYPE_BUILTIN;
 	  else
 	    error (_("Invalid argument for --type: '%s'"), oarg);
 
@@ -1032,6 +1047,9 @@ mi_cmd_list_thread_groups (char *command, char **argv, int argc)
       if (first_char == 'u')
       	VEC_safe_push (int, ud_ids, inf);
 
+      if (first_char == 'b')
+	VEC_safe_push (int, builtin_ids, inf);
+
       nb_groups_listed++;
     }
   if (VEC_length (int, inf_ids) > 1)
@@ -1058,17 +1076,31 @@ mi_cmd_list_thread_groups (char *command, char **argv, int argc)
     }
   else if (nb_groups_listed == 1 && VEC_length (int, ud_ids) == 1)
     {
-      int num = VEC_index (int, ud_ids, 0);
+      int num = VEC_index(int, ud_ids, 0);
       struct named_itset *itset = find_named_itset (num);
       struct print_one_named_itset_data data;
 
-      data.all = 0;
       data.recurse = recurse;
+      data.want_builtin = 0;
 
       if (itset == NULL)
 	error (_("No group with id 'u%d'"), num);
 
-      print_named_itset_threads(uiout, itset);
+      print_named_itset_threads (uiout, itset);
+    }
+  else if (nb_groups_listed == 1 && VEC_length (int, builtin_ids) == 1)
+    {
+      int num = VEC_index(int, builtin_ids, 0);
+      struct named_itset *itset = find_named_itset (-num);
+      struct print_one_named_itset_data data;
+
+      data.recurse = recurse;
+      data.want_builtin = 1;
+
+      if (itset == NULL)
+	error (_("No group with id 'b%d'"), num);
+
+      print_named_itset_threads (uiout, itset);
     }
   else
     {
@@ -1089,13 +1121,22 @@ mi_cmd_list_thread_groups (char *command, char **argv, int argc)
 	  iterate_over_inferiors (print_one_inferior, &data);
 	}
 
-
       if (type_filter & TG_TYPE_USER)
 	{
 	  struct print_one_named_itset_data data;
 
-	  data.all = current_context->all;
 	  data.recurse = recurse;
+	  data.want_builtin = 0;
+
+	  iterate_over_named_itsets (print_one_named_itset, &data);
+	}
+
+      if (type_filter & TG_TYPE_BUILTIN)
+	{
+	  struct print_one_named_itset_data data;
+
+	  data.recurse = recurse;
+	  data.want_builtin = 1;
 
 	  iterate_over_named_itsets (print_one_named_itset, &data);
 	}

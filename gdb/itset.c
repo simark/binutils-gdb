@@ -222,7 +222,7 @@ iterate_over_named_itsets (iterate_over_named_itsets_ftype func, void *data)
 }
 
 int
-named_itset_is_internal (struct named_itset *itset)
+named_itset_is_builtin (struct named_itset *itset)
 {
   return itset->number < 0;
 }

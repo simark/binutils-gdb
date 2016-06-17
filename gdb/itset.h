@@ -176,7 +176,7 @@ typedef void (iterate_over_named_itsets_ftype) (struct named_itset *, void *);
 void
 iterate_over_named_itsets (iterate_over_named_itsets_ftype func, void *data);
 
-extern int named_itset_is_internal (struct named_itset *itset);
+extern int named_itset_is_builtin (struct named_itset *itset);
 extern int named_itset_number (struct named_itset *itset);
 extern const char *named_itset_name (struct named_itset *itset);
 extern struct itset *named_itset_set (struct named_itset *itset);
