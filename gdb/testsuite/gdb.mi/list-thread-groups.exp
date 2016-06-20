@@ -1,0 +1,87 @@
+# Copyright 1999-2015 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+load_lib mi-support.exp
+set MIFLAGS "-i=mi"
+
+gdb_exit
+if [mi_gdb_start] {
+    continue
+}
+
+standard_testfile
+
+if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+    untested "failed to compile $testfile"
+    return -1
+}
+
+# { id type other }
+proc make_list_thread_groups_regexp { elements } {
+    set regexps {}
+
+    foreach x $elements {
+	set id [lindex $x 0]
+	set type [lindex $x 1]
+	set others [lindex $x 2]
+	
+	set other_regexp {}
+	
+	foreach y $others {
+	    set key [lindex $y 0]
+	    set val [lindex $y 1]
+	    
+	    set other_regexp "$other_regexp,$key=\"$val\""
+	}
+
+	lappend regexps "{id=\"$id\",type=\"$type\"$other_regexp}"
+    }
+    
+    set regexp [join $regexps ,]
+    set regexp "groups=\\\[$regexp\\\]"
+        
+    return $regexp
+}
+
+proc test_list_thread_groups { } {
+    global hex
+    global decimal
+
+    set elements {
+	{i1 process}
+	{b1 builtin {{name all} {spec .*}}}
+	{b2 builtin {{name empty} {spec .*}}}
+	{b3 builtin {{name running} {spec .*}}}
+	{b4 builtin {{name stopped} {spec .*}}}
+	{b5 builtin {{name I} {spec .*}}}
+	{b6 builtin {{name T} {spec .*}}}
+	{b7 builtin {{name L} {spec .*}}}
+    }
+    
+    set regexp [make_list_thread_groups_regexp $elements]
+    mi_gdb_test "122-list-thread-groups" "122\\^done,$regexp" "first -list-thread-groups"
+    
+    mi_gdb_test "123-interpreter-exec console \"itset define spatule t1.1\"" "=thread-group-added,id=\"u1\",type=\"user-defined\",name=\"spatule\",spec=\"t1.1\".*" "add a user-defined thread-group"
+    
+    lappend elements {u1 user-defined {{name spatule} {spec .*}}}
+    set regexp [make_list_thread_groups_regexp $elements]
+    
+    mi_gdb_test "122-list-thread-groups" "122\\^done,$regexp" "second -list-thread-groups"
+    
+}
+
+test_list_thread_groups
+
+mi_gdb_exit

@@ -1121,22 +1121,22 @@ mi_cmd_list_thread_groups (char *command, char **argv, int argc)
 	  iterate_over_inferiors (print_one_inferior, &data);
 	}
 
-      if (type_filter & TG_TYPE_USER)
-	{
-	  struct print_one_named_itset_data data;
-
-	  data.recurse = recurse;
-	  data.want_builtin = 0;
-
-	  iterate_over_named_itsets (print_one_named_itset, &data);
-	}
-
       if (type_filter & TG_TYPE_BUILTIN)
 	{
 	  struct print_one_named_itset_data data;
 
 	  data.recurse = recurse;
 	  data.want_builtin = 1;
+
+	  iterate_over_named_itsets (print_one_named_itset, &data);
+	}
+
+      if (type_filter & TG_TYPE_USER)
+	{
+	  struct print_one_named_itset_data data;
+
+	  data.recurse = recurse;
+	  data.want_builtin = 0;
 
 	  iterate_over_named_itsets (print_one_named_itset, &data);
 	}
