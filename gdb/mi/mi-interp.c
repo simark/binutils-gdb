@@ -469,7 +469,7 @@ mi_inferior_removed (struct inferior *inf)
 
   target_terminal_ours ();
   fprintf_unfiltered (mi->event_channel,
-		      "thread-group-removed,id=\"i%d\"",
+		      "thread-group-removed,id=\"i%d\",type=\"process\"",
 		      inf->num);
   gdb_flush (mi->event_channel);
 }
@@ -492,7 +492,7 @@ static void mi_on_named_itset_deleted (int num, const char *name)
 
   target_terminal_ours_for_output ();
   fprintf_unfiltered (mi->event_channel,
-		      "thread-group-removed,id=\"u%d\"", num);
+		      "thread-group-removed,id=\"u%d\",type=\"user-defined\"", num);
   gdb_flush (mi->event_channel);
 }
 
