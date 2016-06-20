@@ -980,8 +980,7 @@ proc mi_runto_helper {func run_or_continue} {
   global hex decimal fullname_syntax
 
   set test "mi runto $func"
-  set bp [mi_make_breakpoint -type breakpoint -disp del \
-	      -func $func\(\\\(.*\\\)\)?]
+  set bp [mi_make_breakpoint -type breakpoint -disp del -func $func\(\\\(.*\\\)\)?]
   mi_gdb_test "200-break-insert -t $func" "200\\^done,$bp" \
       "breakpoint at $func"
 
@@ -2426,11 +2425,11 @@ proc mi_make_breakpoint {args} {
     parse_args {{number .*} {type .*} {disp .*} {enabled .*} {addr .*}
 	{func .*} {file .*} {fullname .*} {line .*}
 	{thread-groups \\\[.*\\\]} {times .*} {ignore 0}
-	{script ""} {original-location .*}}
+	{script ""} {original-location .*} {trigger-set .*} {suspend-set .*}}
 
     set attr_list {}
     foreach attr [list number type disp enabled addr func file \
-		      fullname line thread-groups times] {
+		      fullname line thread-groups trigger-set suspend-set times] {
 	lappend attr_list $attr [set $attr]
     }
 
