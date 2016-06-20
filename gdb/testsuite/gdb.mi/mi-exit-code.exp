@@ -35,7 +35,7 @@ proc test_list_thread_groups { } {
     # Before any run, exit-code should not be present.
     mi_gdb_test \
 	"122-list-thread-groups" \
-	"122\\^done,groups=\\\[\{id=\"i1\",type=\"process\"\}\]" \
+	"122\\^done,groups=\\\[\{id=\"i1\",type=\"process\"\}.*\]" \
 	"-list-thread-groups before run shows no exit-code"
 
     with_test_prefix "first run" {
