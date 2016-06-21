@@ -4368,12 +4368,53 @@ free_named_itset (struct named_itset *it)
   xfree (it);
 }
 
+typedef int (*named_itset_remove_ftype) (struct named_itset *, void *);
+
+static int
+named_itset_remove (named_itset_remove_ftype func, void *data)
+{
+  struct named_itset *it, **it_link;
+  int number_removed = 0;
+
+  it = named_itsets;
+  it_link = &named_itsets;
+  while (it != NULL)
+    {
+      if (!named_itset_is_builtin (it) && func (it, data))
+	{
+	  *it_link = it->next;
+	  free_named_itset (it);
+	  number_removed++;
+	}
+      else
+	{
+	  it_link = &it->next;
+	}
+
+      it = *it_link;
+    }
+
+  return number_removed;
+}
+
+static int
+compare_named_itset_name (struct named_itset *it, void *data)
+{
+  const char *name = (const char *) data;
+
+  return strcmp (named_itset_name (it), name) == 0;
+}
+
+static int
+compare_named_itset_true (struct named_itset *it, void *data)
+{
+  return 1;
+}
+
 static void
 undefset_command (char *arg, int from_tty)
 {
   char *name;
-  struct named_itset *it, **it_link;
-  int found;
 
   if (arg == NULL || *arg == '\0')
     error_no_arg (_("no args"));
@@ -4382,44 +4423,15 @@ undefset_command (char *arg, int from_tty)
 
   if (strcmp (name, "-all") == 0)
     {
-      it = named_itsets;
-      it_link = &named_itsets;
-      while (it != NULL)
-	{
-	  if (it->number > 0)
-	    {
-	      *it_link = it->next;
-	      free_named_itset (it);
-	    }
-	  else
-	    it_link = &it->next;
-	  it = *it_link;
-	}
-      return;
+      named_itset_remove (compare_named_itset_true, NULL);
     }
-
-  found = 0;
-  it = named_itsets;
-  it_link = &named_itsets;
-  while (it != NULL)
+  else
     {
-      if (strcmp (it->set->name, name) == 0)
-	{
-	  if (it->number < 0)
-	    error (_("cannot delete builtin I/T set"));
+      int found = named_itset_remove (compare_named_itset_name, name);
 
-	  *it_link = it->next;
-	  free_named_itset (it);
-	  found = 1;
-	  break;
-	}
-
-      it_link = &it->next;
-      it = *it_link;
+      if (found == 0)
+        warning (_("itset %s does not exist"), name);
     }
-
-  if (!found)
-    warning (_("itset %s does not exist"), name);
 }
 
 static void
