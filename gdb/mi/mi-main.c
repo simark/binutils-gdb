@@ -2111,7 +2111,46 @@ mi_cmd_remove_inferior (char *command, char **argv, int argc)
   delete_inferior_1 (inf, 1 /* silent */);
 }
 
-
+/* -add-user-defined-thread-group [NAME] [SPEC] */
+void
+mi_cmd_add_user_defined_thread_group (char *command, char **argv, int argc)
+{
+  char *name;
+  char *spec;
+  struct named_itset *ni;
+
+  if (argc != 2)
+    error(_("-add-user-defined-thread-group requires 2 arguments"));
+
+  name = xstrdup (argv[0]);
+  spec = argv[1];
+
+  ni = named_itset_create (name, spec);
+  ui_out_field_fmt(current_uiout, "id", "u%d", named_itset_number (ni));
+}
+
+void
+mi_cmd_remove_user_defined_thread_group (char *command, char **argv, int argc)
+{
+  int num;
+  int ret;
+  struct named_itset *named_itset;
+  int num_found;
+
+  if (argc != 1)
+    error(_("-remove-user-defined-thread-group requires 1 argument"));
+
+  ret = sscanf(argv[0], "u%d", &num);
+  if (ret < 1)
+    error(_("Invalid format of user-defined thread group id"));
+
+  num_found = named_itset_remove (compare_named_itset_number, &num);
+
+  if (num_found == 0)
+    {
+      error(_("user-defined group '%s' not found"), argv[0]);
+    }
+}
 
 /* Execute a command within a safe environment.
    Return <0 for error; >=0 for ok.

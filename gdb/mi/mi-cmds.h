@@ -34,6 +34,7 @@ typedef void (mi_cmd_argv_ftype) (char *command, char **argv, int argc);
 
 extern mi_cmd_argv_ftype mi_cmd_ada_task_info;
 extern mi_cmd_argv_ftype mi_cmd_add_inferior;
+extern mi_cmd_argv_ftype mi_cmd_add_user_defined_thread_group;
 extern mi_cmd_argv_ftype mi_cmd_break_insert;
 extern mi_cmd_argv_ftype mi_cmd_dprintf_insert;
 extern mi_cmd_argv_ftype mi_cmd_break_commands;
@@ -81,6 +82,7 @@ extern mi_cmd_argv_ftype mi_cmd_list_features;
 extern mi_cmd_argv_ftype mi_cmd_list_target_features;
 extern mi_cmd_argv_ftype mi_cmd_list_thread_groups;
 extern mi_cmd_argv_ftype mi_cmd_remove_inferior;
+extern mi_cmd_argv_ftype mi_cmd_remove_user_defined_thread_group;
 extern mi_cmd_argv_ftype mi_cmd_stack_info_depth;
 extern mi_cmd_argv_ftype mi_cmd_stack_info_frame;
 extern mi_cmd_argv_ftype mi_cmd_stack_list_args;

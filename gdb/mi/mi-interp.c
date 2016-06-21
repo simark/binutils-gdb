@@ -426,6 +426,9 @@ mi_inferior_added (struct inferior *inf)
 {
   struct mi_interp *mi = top_level_interpreter_data ();
 
+  if (mi_suppress_notification.thread_group)
+    return;
+
   target_terminal_ours ();
   fprintf_unfiltered (mi->event_channel,
 		      "thread-group-added,id=\"i%d\",type=\"process\"",
@@ -479,6 +482,9 @@ mi_on_named_itset_created (int num, const char *name, const char *spec)
 {
   struct mi_interp *mi = top_level_interpreter_data ();
 
+  if (mi_suppress_notification.thread_group)
+    return;
+
   target_terminal_ours_for_output ();
   fprintf_unfiltered (mi->event_channel,
 		      "thread-group-added,id=\"u%d\",type=\"user-defined\",name=\"%s\",spec=\"%s\"",
@@ -489,6 +495,9 @@ mi_on_named_itset_created (int num, const char *name, const char *spec)
 static void mi_on_named_itset_deleted (int num, const char *name)
 {
   struct mi_interp *mi = top_level_interpreter_data ();
+
+  if (mi_suppress_notification.thread_group)
+    return;
 
   target_terminal_ours_for_output ();
   fprintf_unfiltered (mi->event_channel,

@@ -181,6 +181,10 @@ extern int named_itset_number (struct named_itset *itset);
 extern const char *named_itset_name (struct named_itset *itset);
 extern struct itset *named_itset_set (struct named_itset *itset);
 extern const char *named_itset_spec (struct named_itset *itset);
+extern struct named_itset *named_itset_create(char *name, char *spec);
+typedef int (*named_itset_remove_ftype) (struct named_itset *, void *);
+extern int named_itset_remove (named_itset_remove_ftype func, void *data);
+extern int compare_named_itset_number (struct named_itset *it, void *data);
 
 extern struct named_itset *find_named_itset (int num);
 

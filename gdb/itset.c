@@ -287,7 +287,7 @@ add_to_named_itset_chain (struct named_itset *it)
 }
 
 static struct named_itset *
-get_named_itset (char *name)
+get_named_itset (const char *name)
 {
   struct named_itset *it;
 
@@ -4315,14 +4315,42 @@ itset_is_static (struct itset *itset)
 
 #endif
 
+struct named_itset *
+named_itset_create (char *name, char *spec)
+{
+  struct named_itset *named_itset;
+  struct itset *itset;
+  struct cleanup *old_chain;
+
+  named_itset = get_named_itset (name);
+  if (named_itset != NULL)
+    error (_("itset %s already exists"), name);
+
+  if (strlen (spec) == 0)
+    error (_("itset spec is empty"));
+
+  itset = itset_create (&spec);
+  old_chain = make_cleanup_itset_free (itset);
+
+#if 0
+  if (itset_is_static (itset) && itset_is_empty (itset, ITSET_WIDTH_ALL))
+  warning (_("static itset is empty"));
+#endif
+
+  named_itset = make_itset_named_itset (itset, name, 0);
+  itset_free (itset);
+  discard_cleanups (old_chain);
+  add_to_named_itset_chain (named_itset);
+
+  return named_itset;
+}
+
 static void
 defset_command (char *arg, int from_tty)
 {
   char *endp;
   char *name;
   char *spec;
-  struct itset *itset;
-  struct named_itset *named_itset;
   struct cleanup *old_chain;
 
   if (arg == NULL || *arg == '\0')
@@ -4336,27 +4364,11 @@ defset_command (char *arg, int from_tty)
   name = xstrndup (arg, endp - arg);
   old_chain = make_cleanup (xfree, name);
 
-  named_itset = get_named_itset (name);
-  if (named_itset != NULL)
-    error (_("itset %s already exists"), name);
-
   spec = skip_spaces (spec);
 
-  if (strlen (spec) == 0)
-    error (_("itset spec is empty"));
+  named_itset_create (name, spec);
 
-  itset = itset_create (&spec);
-  make_cleanup_itset_free (itset);
-
-#if 0
-  if (itset_is_static (itset) && itset_is_empty (itset, ITSET_WIDTH_ALL))
-    warning (_("static itset is empty"));
-#endif
-
-  named_itset = make_itset_named_itset (itset, name, 0);
-  itset_free (itset);
   discard_cleanups (old_chain);
-  add_to_named_itset_chain (named_itset);
 }
 
 static void
@@ -4368,9 +4380,7 @@ free_named_itset (struct named_itset *it)
   xfree (it);
 }
 
-typedef int (*named_itset_remove_ftype) (struct named_itset *, void *);
-
-static int
+int
 named_itset_remove (named_itset_remove_ftype func, void *data)
 {
   struct named_itset *it, **it_link;
@@ -4403,6 +4413,14 @@ compare_named_itset_name (struct named_itset *it, void *data)
   const char *name = (const char *) data;
 
   return strcmp (named_itset_name (it), name) == 0;
+}
+
+int
+compare_named_itset_number (struct named_itset *it, void *data)
+{
+  const int *pnum = (const int *) data;
+
+  return named_itset_number (it) == *pnum;
 }
 
 static int
