@@ -70,39 +70,65 @@ proc test_list_thread_groups { } {
 	{b7 builtin {{name L} {spec .*}}}
     }
 
-    set regexp [make_list_thread_groups_regexp $elements]
-    mi_gdb_test "122-list-thread-groups" "122\\^done,$regexp" "first -list-thread-groups"
+    with_test_prefix "before" {
+	set regexp [make_list_thread_groups_regexp $elements]
+	mi_gdb_test "122-list-thread-groups" \
+	    "122\\^done,$regexp" \
+	    "-list-thread-groups"
+    }
 
-    # Test event sent when using the CLI command
-    mi_gdb_test "123-interpreter-exec console \"itset define spatule t1.1\"" \
-	"=thread-group-added,id=\"u1\",type=\"user-defined\",name=\"spatule\",spec=\"t1.1\".*" \
-	"add first user-defined thread-group"
+    with_test_prefix "add first user-defined thread group" {
+	# Test event sent when using the CLI command
+	mi_gdb_test "123-interpreter-exec console \"itset define spatule t1.1\"" \
+	    "=thread-group-added,id=\"u1\",type=\"user-defined\",name=\"spatule\",spec=\"t1.1\"\r\n123\\^done" \
+	    "add thread group"
 
-    lappend elements {u1 user-defined {{name spatule} {spec t1.1}}}
-    set regexp [make_list_thread_groups_regexp $elements]
+	lappend elements {u1 user-defined {{name spatule} {spec t1.1}}}
+	set regexp [make_list_thread_groups_regexp $elements]
 
-    mi_gdb_test "124-add-user-defined-thread-group louche t1.2" \
-	"124\\^done,id=\"u2\"" \
-	"add second user-defined thread-group"
+	mi_gdb_test "124-list-thread-groups" \
+	    "124\\^done,$regexp" \
+	    "-list-thread-groups"
+    }
 
-    lappend elements {u2 user-defined {{name louche} {spec t1.2}}}
-    set regexp [make_list_thread_groups_regexp $elements]
+    with_test_prefix "add second user-defined thread group" {
+	mi_gdb_test "125-add-user-defined-thread-group louche t1.2" \
+	    "125\\^done,id=\"u2\"" \
+	    "add thread group"
 
-    mi_gdb_test "125-list-thread-groups" "125\\^done,$regexp" "second -list-thread-groups"
+	lappend elements {u2 user-defined {{name louche} {spec t1.2}}}
+	set regexp [make_list_thread_groups_regexp $elements]
 
-    mi_gdb_test "126-remove-user-defined-thread-group u1" "126\\^done" "remove first user-defined thread-group"
+	mi_gdb_test "126-list-thread-groups" \
+	    "126\\^done,$regexp" \
+	    "-list-thread-groups"
+    }
 
-    set elements [lreplace $elements end-1 end-1]
-    set regexp [make_list_thread_groups_regexp $elements]
+    with_test_prefix "remove first user-defined thread group" {
+	mi_gdb_test "127-remove-user-defined-thread-group u1" \
+	    "127\\^done" \
+	    "remove thread group"
 
-    mi_gdb_test "127-list-thread-groups" "127\\^done,$regexp" "second -list-thread-groups"
+	set elements [lreplace $elements end-1 end-1]
+	set regexp [make_list_thread_groups_regexp $elements]
 
-    mi_gdb_test "128-remove-user-defined-thread-group u2" "128\\^done" "remove second user-defined thread-group"
+	mi_gdb_test "128-list-thread-groups" \
+	    "128\\^done,$regexp" \
+	    "-list-thread-groups"
+    }
 
-    set elements [lreplace $elements end end]
-    set regexp [make_list_thread_groups_regexp $elements]
+    with_test_prefix "remove second user-defined thread group" {
+	mi_gdb_test "129-interpreter-exec console \"itset undefine louche\"" \
+	    "=thread-group-removed,id=\"u2\",type=\"user-defined\"\r\n129\\^done" \
+	    "remove thread group"
 
-    mi_gdb_test "129-list-thread-groups" "129\\^done,$regexp" "second -list-thread-groups"
+	set elements [lreplace $elements end end]
+	set regexp [make_list_thread_groups_regexp $elements]
+
+	mi_gdb_test "130-list-thread-groups" \
+	    "130\\^done,$regexp" \
+	    "-list-thread-groups"
+    }
 }
 
 test_list_thread_groups
