@@ -36,22 +36,22 @@ proc make_list_thread_groups_regexp { elements } {
 	set id [lindex $x 0]
 	set type [lindex $x 1]
 	set others [lindex $x 2]
-	
+
 	set other_regexp {}
-	
+
 	foreach y $others {
 	    set key [lindex $y 0]
 	    set val [lindex $y 1]
-	    
+
 	    set other_regexp "$other_regexp,$key=\"$val\""
 	}
 
 	lappend regexps "{id=\"$id\",type=\"$type\"$other_regexp}"
     }
-    
+
     set regexp [join $regexps ,]
     set regexp "groups=\\\[$regexp\\\]"
-        
+
     return $regexp
 }
 
@@ -69,17 +69,27 @@ proc test_list_thread_groups { } {
 	{b6 builtin {{name T} {spec .*}}}
 	{b7 builtin {{name L} {spec .*}}}
     }
-    
+
     set regexp [make_list_thread_groups_regexp $elements]
     mi_gdb_test "122-list-thread-groups" "122\\^done,$regexp" "first -list-thread-groups"
-    
-    mi_gdb_test "123-interpreter-exec console \"itset define spatule t1.1\"" "=thread-group-added,id=\"u1\",type=\"user-defined\",name=\"spatule\",spec=\"t1.1\".*" "add a user-defined thread-group"
-    
-    lappend elements {u1 user-defined {{name spatule} {spec .*}}}
+
+    # Test event sent when using the CLI command
+    mi_gdb_test "123-interpreter-exec console \"itset define spatule t1.1\"" \
+	"=thread-group-added,id=\"u1\",type=\"user-defined\",name=\"spatule\",spec=\"t1.1\".*" \
+	"add first user-defined thread-group"
+
+    lappend elements {u1 user-defined {{name spatule} {spec t1.1}}}
     set regexp [make_list_thread_groups_regexp $elements]
-    
-    mi_gdb_test "122-list-thread-groups" "122\\^done,$regexp" "second -list-thread-groups"
-    
+
+    mi_gdb_test "124-add-user-defined-thread-group louche t1.2" \
+	"124\\^done,id=\"u2\"" \
+	"add second user-defined thread-group"
+
+    lappend elements {u2 user-defined {{name louche} {spec t1.2}}}
+    set regexp [make_list_thread_groups_regexp $elements]
+
+    mi_gdb_test "125-list-thread-groups" "125\\^done,$regexp" "second -list-thread-groups"
+
 }
 
 test_list_thread_groups
