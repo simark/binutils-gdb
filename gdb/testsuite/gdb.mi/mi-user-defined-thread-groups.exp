@@ -90,6 +90,19 @@ proc test_list_thread_groups { } {
 
     mi_gdb_test "125-list-thread-groups" "125\\^done,$regexp" "second -list-thread-groups"
 
+    mi_gdb_test "126-remove-user-defined-thread-group u1" "126\\^done" "remove first user-defined thread-group"
+
+    set elements [lreplace $elements end-1 end-1]
+    set regexp [make_list_thread_groups_regexp $elements]
+
+    mi_gdb_test "127-list-thread-groups" "127\\^done,$regexp" "second -list-thread-groups"
+
+    mi_gdb_test "128-remove-user-defined-thread-group u2" "128\\^done" "remove second user-defined thread-group"
+
+    set elements [lreplace $elements end end]
+    set regexp [make_list_thread_groups_regexp $elements]
+
+    mi_gdb_test "129-list-thread-groups" "129\\^done,$regexp" "second -list-thread-groups"
 }
 
 test_list_thread_groups
