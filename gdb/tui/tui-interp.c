@@ -206,6 +206,38 @@ tui_on_command_error (void)
   display_gdb_prompt (NULL);
 }
 
+/* Observer for the user_selected_thread_frame notification.  */
+
+static void
+tui_on_user_selected_thread_frame (int thread, int frame)
+{
+  struct switch_thru_all_uis state;
+  struct thread_info *tp = NULL;
+
+  if (ptid_equal (inferior_ptid, null_ptid))
+    return;
+  else
+    tp = inferior_thread ();
+
+  /* The thread is mandatory.  */
+  if (tp == NULL)
+    return;
+
+  SWITCH_THRU_ALL_UIS (state)
+    {
+      struct interp *tui = as_tui_interp (top_level_interpreter ());
+      struct ui_out *uiout = NULL;
+
+      if (tui == NULL)
+	continue;
+
+      print_selected_thread_frame (tui_ui_out (tui), thread, frame);
+
+      current_ui->prompt_state = PROMPT_NEEDED;
+      display_gdb_prompt (NULL);
+    }
+}
+
 /* These implement the TUI interpreter.  */
 
 static void *
@@ -323,4 +355,6 @@ _initialize_tui_interp (void)
   observer_attach_no_history (tui_on_no_history);
   observer_attach_sync_execution_done (tui_on_sync_execution_done);
   observer_attach_command_error (tui_on_command_error);
+  observer_attach_user_selected_thread_frame
+    (tui_on_user_selected_thread_frame);
 }

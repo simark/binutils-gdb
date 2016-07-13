@@ -769,6 +769,7 @@ struct mi_suppress_notification mi_suppress_notification =
     0,
     0,
     0,
+    0,
   };
 
 /* Emit notification on changing a traceframe.  */
@@ -1334,6 +1335,62 @@ mi_memory_changed (struct inferior *inferior, CORE_ADDR memaddr,
     }
 }
 
+/* Emit notification about the user select frame or thread.  */
+
+static void
+mi_user_selected_thread_frame (int thread, int frame)
+{
+  struct switch_thru_all_uis state;
+  struct thread_info *tp = NULL;
+
+  if (ptid_equal (inferior_ptid, null_ptid))
+    return;
+  else
+    tp = inferior_thread ();
+
+  /* The thread is mandatory.  */
+  if (tp == NULL)
+    return;
+
+  /* Answer the command but don't send an event if we're responding to an
+     MI command.  */
+  if (mi_suppress_notification.user_selected_thread_frame)
+    {
+      print_selected_thread_frame (interp_ui_out (top_level_interpreter ()),
+				   thread, frame);
+      return;
+    }
+
+  SWITCH_THRU_ALL_UIS (state)
+  {
+    struct mi_interp *mi = as_mi_interp (top_level_interpreter ());
+    struct ui_out *mi_uiout;
+    struct obj_section *sec;
+    struct cleanup *old_chain;
+
+    if (mi == NULL)
+      continue;
+
+    mi_uiout = interp_ui_out (top_level_interpreter ());
+
+    ui_out_redirect (mi_uiout, mi->event_channel);
+
+    old_chain = make_cleanup_restore_target_terminal ();
+    target_terminal_ours_for_output ();
+
+    fprintf_unfiltered (mi->event_channel,
+			"thread-selected,id=\"%d\"",
+			tp->global_num);
+
+    if (tp->state != THREAD_RUNNING)
+      print_stack_frame (get_selected_frame (NULL), 1, SRC_AND_LOC, 1);
+
+    ui_out_redirect (mi_uiout, NULL);
+    gdb_flush (mi->event_channel);
+    do_cleanups (old_chain);
+  }
+}
+
 static int
 report_initial_inferior (struct inferior *inf, void *closure)
 {
@@ -1466,4 +1523,5 @@ _initialize_mi_interp (void)
   observer_attach_command_param_changed (mi_command_param_changed);
   observer_attach_memory_changed (mi_memory_changed);
   observer_attach_sync_execution_done (mi_on_sync_execution_done);
+  observer_attach_user_selected_thread_frame (mi_user_selected_thread_frame);
 }

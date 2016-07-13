@@ -1,0 +1,294 @@
+# Copyright 2016 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This test checks that thread, frame or inferior selection is reflected
+# between console and mi ui of both are present.
+
+load_lib mi-support.exp
+
+standard_testfile
+
+set compile_options "debug pthreads"
+if {[build_executable $testfile.exp $testfile ${srcfile} ${compile_options}] == -1} {
+    untested "failed to compile $testfile"
+    return -1
+}
+
+proc switch_to_stopped_thread {} {
+    global gdb_main_spawn_id
+
+    with_spawn_id $gdb_main_spawn_id {
+	gdb_test "thread 1.2" "Switching to thread 1\.2 .*" "Switch to stopped thread"
+    }
+}
+
+proc switch_to_test_thread {} {
+    global gdb_main_spawn_id
+
+    with_spawn_id $gdb_main_spawn_id {
+	gdb_test "thread 1.3" "Switching to thread 1\.3 .*" "Switch to test  thread"
+    }
+}
+
+proc unblock_threads {block} {
+    global gdb_prompt gdb_main_spawn_id
+
+    with_spawn_id $gdb_main_spawn_id {
+	if {$block == "0"} {
+	    set test "block threads"
+	} else {
+	    set test "unblock threads"
+	}
+
+	gdb_test_multiple "print quit = $block" $test {
+	    -re " = $block\r\n$gdb_prompt " {
+		pass $test
+	    }
+	    -re "$gdb_prompt " {
+		fail $test
+	    }
+	}
+    }
+}
+
+# Test context setup.
+
+proc test_setup {mode} {
+    global srcfile srcdir subdir testfile
+    global gdb_main_spawn_id mi_spawn_id
+    global decimal binfile
+    global bp_lineno
+
+    mi_gdb_exit
+
+    if [mi_gdb_start separate-mi-tty] {
+	return
+    }
+
+    mi_delete_breakpoints
+    mi_gdb_reinitialize_dir $srcdir/$subdir
+    mi_gdb_load ${binfile}
+
+    set bp_lineno [gdb_get_line_number "set break here"]
+
+    with_spawn_id $gdb_main_spawn_id {
+
+	if {$mode == "non-stop"} {
+	    gdb_test_no_output "set non-stop on" "set non-stop mode"
+	}
+
+	if ![runto_main] {
+	    untested "could not run to main"
+	    return -1
+	}
+
+	gdb_test "break $srcfile:$bp_lineno" \
+	    "Breakpoint $decimal .*$srcfile, line $bp_lineno\\." \
+	    "set breakpoint"
+
+	gdb_continue_to_breakpoint "barrier breakpoint"
+
+	# Add a second inferior to test inferior selection.
+	gdb_test "add-inferior" "Added inferior 2" "Add inferior 2"
+	gdb_test "inferior 2" "Switching to inferior 2.*"
+	gdb_load ${binfile}
+	gdb_test "start" "Temporary breakpoint.*Starting program.*"
+	gdb_continue_to_breakpoint "barrier breakpoint"
+	gdb_test "inferior 1" "Switching to inferior 1.*"
+
+	if {$mode == "non-stop"} {
+	    # Continue the test thread.
+	    switch_to_test_thread
+	    # Block the threads to avoid them quitting.
+	    unblock_threads "0"
+	    gdb_test "continue&" "Continuing\."
+	}
+    }
+}
+
+proc test_cli_select_thread {mode} {
+    global gdb_main_spawn_id mi_spawn_id hex bp_lineno srcfile
+
+    set cli_re ""
+    set mi_re ""
+
+    if {$mode == "all-stop"} {
+	set cli_re "Switching to thread 1.3 .*\\\]\r\n#0.*child_sub_function.*$srcfile:$bp_lineno\r\n.*set break here \\\*/"
+	set mi_re "=thread-selected,id=\"3\",frame=\{level=\"0\",addr=\"$hex\",func=\"child_sub_function\",args=\\\[\\\],file=\".*$srcfile\",line=\"$bp_lineno\"\}"
+    } elseif {$mode == "non-stop"} {
+    	set cli_re "Switching to thread 1\.3.*\\\(running\\\)"
+    	set mi_re "=thread-selected,id=\"3\""
+    }
+
+    with_spawn_id $gdb_main_spawn_id {
+    	gdb_test "thread 1.3" $cli_re "cli select thread"
+    }
+
+    with_spawn_id $mi_spawn_id {
+    	set test "mi select thread"
+    	gdb_test_multiple "" $test {
+    	    -re $mi_re {
+    		pass $test
+    	    }
+    	}
+    }
+}
+
+proc test_cli_select_frame {mode} {
+    global gdb_main_spawn_id mi_spawn_id hex srcfile
+
+    set cli_re ""
+    set mi_re ""
+
+    set caller_lineno [gdb_get_line_number "caller"]
+
+    if {$mode == "all-stop"} {
+	set cli_re "#1  $hex in child_function \\\(args=0x0\\\) at .*$srcfile:$caller_lineno\r\n$caller_lineno.*caller \\\*/"
+	set mi_re "=thread-selected,id=\"3\",frame=\{level=\"1\",addr=\"$hex\",func=\"child_function\",args=\\\[\{name=\"args\",value=\"0x0\"\}\\\],file=\".*$srcfile\",fullname=\".*$srcfile\",line=\"$caller_lineno\"\}"
+    } elseif {$mode == "non-stop"} {
+	set cli_re "Selected thread is running\."
+	set mi_re "=thread-selected,id=\"3\""
+    }
+
+    switch_to_test_thread
+
+    with_spawn_id $gdb_main_spawn_id {
+	gdb_test "frame 1" $cli_re "cli select frame"
+    }
+
+    with_spawn_id $mi_spawn_id {
+	set test "mi select frame"
+	gdb_test_multiple "" $test {
+	    -re $mi_re {
+		pass $test
+	    }
+	}
+    }
+
+}
+
+proc test_cli_select_inferior {mode} {
+    global gdb_main_spawn_id mi_spawn_id hex srcfile binfile
+
+    set cli_re ""
+    set mi_re ""
+
+    if {$mode == "all-stop"} {
+	set cli_re "Switching to inferior 2.*\r\n\\\[Switching to thread 2\.1.*\\\]\r\n#0.* from \[\\w\\d/\.-]+"
+	set mi_re "=thread-selected,id=\"4\",frame=\{level=\"0\",addr=\"$hex\",func=\".*\",args=\\\[\\\],from=\".*\"\}"
+    } elseif {$mode == "non-stop"} {
+	set cli_re "Switching to inferior 2.*\r\n\\\[Switching to thread 2\.1.*\\\]\\\(running\\\)"
+	set mi_re "=thread-selected,id=\"4\""
+    }
+
+    with_spawn_id $gdb_main_spawn_id {
+	gdb_test "inferior 2" $cli_re "cli select inferior"
+    }
+
+    with_spawn_id $mi_spawn_id {
+	set test "mi select inferior"
+	gdb_test_multiple "" $test {
+	    -re $mi_re {
+		pass $test
+	    }
+	}
+    }
+
+    #Reset inferior to inferior 1
+    with_spawn_id $gdb_main_spawn_id {
+	gdb_test "inferior 1" "Switching to inferior 1.*"
+    }
+}
+
+proc test_mi_select_thread {mode} {
+    global gdb_main_spawn_id mi_spawn_id hex srcfile bp_lineno
+
+    set cli_re ""
+    set mi_re ""
+
+    if {$mode == "all-stop"} {
+	set cli_re "Switching to thread 1.3 .*\\\]\r\n#0.*child_sub_function.*$srcfile:$bp_lineno\r\n.*set break here \\\*/\r\n"
+	set mi_re ".*\\^done,new-thread-id=\"3\""
+    } elseif {$mode == "non-stop"} {
+	# No output
+	set cli_re "Switching to thread 1\.3.*\\\(running\\\)\r\n"
+	set mi_re ".*\\^done,new-thread-id=\"3\""
+    }
+
+    with_spawn_id $mi_spawn_id {
+	mi_gdb_test "-thread-select 3" $mi_re "mi select thread"
+    }
+
+    with_spawn_id $gdb_main_spawn_id {
+	set test "cli select thread"
+	gdb_test_multiple "" $test {
+	    -re $cli_re {
+		pass $test
+	    }
+	}
+    }
+}
+
+proc test_mi_select_frame {mode} {
+    global gdb_main_spawn_id mi_spawn_id hex srcfile
+
+    set caller_lineno [gdb_get_line_number "caller"]
+
+    set cli_re ""
+    set mi_re ""
+
+    if {$mode == "all-stop"} {
+	set cli_re "#1  $hex in child_function \\\(args=0x0\\\) at .*$srcfile:$caller_lineno\r\n$caller_lineno.*caller \\\*/"
+	set mi_re ".*\\^done"
+    } elseif {$mode == "non-stop"} {
+	# No output
+	set cli_re ""
+	set mi_re ".*\\^error,msg=\"Selected thread is running\.\""
+    }
+
+    switch_to_test_thread
+
+    with_spawn_id $mi_spawn_id {
+	mi_gdb_test "-stack-select-frame 1" $mi_re "mi select frame"
+    }
+
+    with_spawn_id $gdb_main_spawn_id {
+	set test "cli select frame"
+	gdb_test_multiple "" $test {
+	    -re $cli_re {
+		pass $test
+	    }
+	}
+    }
+}
+
+foreach mode {"all-stop" "non-stop"} {
+    with_test_prefix $mode {
+	test_setup $mode
+	with_test_prefix "from cli" {
+	    test_cli_select_thread $mode
+	    test_cli_select_frame $mode
+	    test_cli_select_inferior $mode
+	}
+	with_test_prefix "from mi" {
+	    test_mi_select_thread $mode
+	    test_mi_select_frame $mode
+	}
+	if {$mode == "non-stop"} {
+	    switch_to_stopped_thread
+	    unblock_threads "0"
+	}
+    }
+}

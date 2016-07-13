@@ -51,6 +51,7 @@
 #include "safe-ctype.h"
 #include "symfile.h"
 #include "extension.h"
+#include "observer.h"
 
 /* The possible choices of "set print frame-arguments", and the value
    of this setting.  */
@@ -2303,6 +2304,7 @@ void
 select_frame_command (char *level_exp, int from_tty)
 {
   select_frame (parse_frame_specification (level_exp, NULL));
+  observer_notify_user_selected_thread_frame (0, 1);
 }
 
 /* The "frame" command.  With no argument, print the selected frame
@@ -2313,7 +2315,6 @@ static void
 frame_command (char *level_exp, int from_tty)
 {
   select_frame_command (level_exp, from_tty);
-  print_stack_frame (get_selected_frame (NULL), 1, SRC_AND_LOC, 1);
 }
 
 /* Select the frame up one or COUNT_EXP stack levels from the

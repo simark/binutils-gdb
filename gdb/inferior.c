@@ -747,10 +747,6 @@ inferior_command (char *args, int from_tty)
 
 	  switch_to_thread (tp->ptid);
 	}
-
-      printf_filtered (_("[Switching to thread %s (%s)] "),
-		       print_thread_id (inferior_thread ()),
-		       target_pid_to_str (inferior_ptid));
     }
   else
     {
@@ -762,13 +758,7 @@ inferior_command (char *args, int from_tty)
       set_current_program_space (inf->pspace);
     }
 
-  if (inf->pid != 0 && is_running (inferior_ptid))
-    ui_out_text (current_uiout, "(running)\n");
-  else if (inf->pid != 0)
-    {
-      ui_out_text (current_uiout, "\n");
-      print_stack_frame (get_selected_frame (NULL), 1, SRC_AND_LOC, 1);
-    }
+  observer_notify_user_selected_thread_frame (1, 1);
 }
 
 /* Print information about currently known inferiors.  */

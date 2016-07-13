@@ -2058,32 +2058,55 @@ do_captured_thread_select (struct ui_out *uiout, void *tidstr_v)
 
   annotate_thread_changed ();
 
-  if (ui_out_is_mi_like_p (uiout))
-    ui_out_field_int (uiout, "new-thread-id", inferior_thread ()->global_num);
-  else
-    {
-      ui_out_text (uiout, "[Switching to thread ");
-      ui_out_field_string (uiout, "new-thread-id", print_thread_id (tp));
-      ui_out_text (uiout, " (");
-      ui_out_text (uiout, target_pid_to_str (inferior_ptid));
-      ui_out_text (uiout, ")]");
-    }
-
-  /* Note that we can't reach this with an exited thread, due to the
-     thread_alive check above.  */
-  if (tp->state == THREAD_RUNNING)
-    ui_out_text (uiout, "(running)\n");
-  else
-    {
-      ui_out_text (uiout, "\n");
-      print_stack_frame (get_selected_frame (NULL), 1, SRC_AND_LOC, 1);
-    }
+  observer_notify_user_selected_thread_frame (1, 1);
 
   /* Since the current thread may have changed, see if there is any
      exited thread we can now delete.  */
   prune_threads ();
 
   return GDB_RC_OK;
+}
+
+/* Print thread and frame switch.  */
+
+void
+print_selected_thread_frame (struct ui_out *uiout, int thread, int frame)
+{
+  struct thread_info *tp = inferior_thread ();
+  gdb_assert (tp);
+
+  if (ui_out_is_mi_like_p (uiout))
+    {
+      if (thread)
+	ui_out_field_int (uiout, "new-thread-id",
+			  inferior_thread ()->global_num);
+    }
+  else
+    {
+      if (thread)
+	{
+	  ui_out_text (uiout, "[Switching to thread ");
+	  ui_out_field_string (uiout, "new-thread-id", print_thread_id (tp));
+	  ui_out_text (uiout, " (");
+	  ui_out_text (uiout, target_pid_to_str (inferior_ptid));
+	  ui_out_text (uiout, ")]");
+	}
+	  /* Note that we can't reach this with an exited thread, due to the
+	     thread_alive check above.  */
+      if (tp->state == THREAD_RUNNING)
+	{
+	  if (thread)
+	    ui_out_text (uiout, "(running)\n");
+	}
+      else
+	if (frame)
+	  {
+	    if (thread)
+	      ui_out_text (uiout, "\n");
+	    print_stack_frame (get_selected_frame (NULL), 1,
+			       SRC_AND_LOC, 1);
+	  }
+    }
 }
 
 enum gdb_rc

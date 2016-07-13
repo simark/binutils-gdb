@@ -229,6 +229,39 @@ cli_on_command_error (void)
   display_gdb_prompt (NULL);
 }
 
+/* Observer for the user_selected_thread_frame notification.  */
+
+static void
+cli_on_user_selected_thread_frame (int thread, int frame)
+{
+  struct switch_thru_all_uis state;
+  struct thread_info *tp = NULL;
+
+  if (ptid_equal (inferior_ptid, null_ptid))
+    return;
+  else
+    tp = inferior_thread ();
+
+  /* The thread is mandatory.  */
+  if (tp == NULL)
+    return;
+
+  SWITCH_THRU_ALL_UIS (state)
+    {
+      struct interp *interp = top_level_interpreter ();
+      struct cli_interp *cli = as_cli_interp (interp);
+      struct ui_out *uiout = NULL;
+
+      if (cli == NULL)
+	continue;
+
+      print_selected_thread_frame (cli->cli_uiout, thread, frame);
+
+      current_ui->prompt_state = PROMPT_NEEDED;
+      display_gdb_prompt (NULL);
+    }
+}
+
 /* pre_command_loop implementation.  */
 
 void
@@ -393,4 +426,6 @@ _initialize_cli_interp (void)
   observer_attach_no_history (cli_on_no_history);
   observer_attach_sync_execution_done (cli_on_sync_execution_done);
   observer_attach_command_error (cli_on_command_error);
+  observer_attach_user_selected_thread_frame
+    (cli_on_user_selected_thread_frame);
 }
