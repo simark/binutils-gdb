@@ -481,6 +481,7 @@ static void
 mi_inferior_appeared (struct inferior *inf)
 {
   struct switch_thru_all_uis state;
+  const char *launch_type = inf->attach_flag ? "attach" : "run";
 
   SWITCH_THRU_ALL_UIS (state)
     {
@@ -494,8 +495,9 @@ mi_inferior_appeared (struct inferior *inf)
       target_terminal_ours_for_output ();
 
       fprintf_unfiltered (mi->event_channel,
-			  "thread-group-started,id=\"i%d\",pid=\"%d\"",
-			  inf->num, inf->pid);
+			  "thread-group-started,id=\"i%d\",pid=\"%d\","
+			  "launch-type=\"%s\"",
+			  inf->num, inf->pid, launch_type);
       gdb_flush (mi->event_channel);
       do_cleanups (old_chain);
     }

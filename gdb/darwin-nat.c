@@ -1704,8 +1704,8 @@ darwin_attach (struct target_ops *ops, const char *args, int from_tty)
 
   inferior_ptid = pid_to_ptid (pid);
   inf = current_inferior ();
-  inferior_appeared (inf, pid);
   inf->attach_flag = 1;
+  inferior_appeared (inf, pid);
 
   /* Always add a main thread.  */
   add_thread_silent (inferior_ptid);

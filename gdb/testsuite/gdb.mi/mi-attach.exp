@@ -1,0 +1,46 @@
+# Copyright 2016 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+load_lib mi-support.exp
+
+standard_testfile
+
+if {![can_spawn_for_attach]} {
+    untested ${testfile}.exp
+    return
+}
+
+if  {[gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != ""} {
+     untested ${testfile}.exp
+     return -1
+}
+
+# Test an attach in MI.
+
+proc test_mi_attach {} {
+    global binfile
+
+    set exec_spawn_id [spawn_wait_for_attach $binfile]
+    set exec_pid [spawn_id_get_pid $exec_spawn_id]
+
+    mi_gdb_start
+
+    mi_gdb_test "123-target-attach $exec_pid" \
+	[multi_line "=thread-group-started,id=\"i1\",pid=\"$exec_pid\",launch-type=\"attach\"" \
+		    "=thread-created,id=\"1\",group-id=\"i1\".*" ] \
+	"attach to process"
+}
+
+test_mi_attach

@@ -203,8 +203,8 @@ inf_ptrace_attach (struct target_ops *ops, const char *args, int from_tty)
 #endif
 
   inf = current_inferior ();
-  inferior_appeared (inf, pid);
   inf->attach_flag = 1;
+  inferior_appeared (inf, pid);
   inferior_ptid = pid_to_ptid (pid);
 
   /* Always add a main thread.  If some target extends the ptrace

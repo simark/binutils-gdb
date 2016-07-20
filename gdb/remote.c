@@ -1783,6 +1783,7 @@ remote_add_inferior (int fake_pid_p, int pid, int attached,
 	 space.  */
       inf->aspace = maybe_new_address_space ();
       inf->pspace = current_program_space;
+      inf->attach_flag = attached;
     }
   else
     {
@@ -1790,10 +1791,10 @@ remote_add_inferior (int fake_pid_p, int pid, int attached,
 	 between program/address spaces.  We simply bind the inferior
 	 to the program space's address space.  */
       inf = current_inferior ();
+      inf->attach_flag = attached;
       inferior_appeared (inf, pid);
     }
 
-  inf->attach_flag = attached;
   inf->fake_pid_p = fake_pid_p;
 
   /* If no main executable is currently open then attempt to

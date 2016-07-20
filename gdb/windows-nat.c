@@ -1697,8 +1697,8 @@ do_initial_windows_stuff (struct target_ops *ops, DWORD pid, int attaching)
   init_wait_for_inferior ();
 
   inf = current_inferior ();
-  inferior_appeared (inf, pid);
   inf->attach_flag = attaching;
+  inferior_appeared (inf, pid);
 
   /* Make the new process the current inferior, so terminal handling
      can rely on it.  When attaching, we don't know about any thread

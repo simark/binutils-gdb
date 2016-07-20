@@ -672,8 +672,8 @@ procfs_attach (struct target_ops *ops, const char *args, int from_tty)
     }
   inferior_ptid = do_attach (pid_to_ptid (pid));
   inf = current_inferior ();
-  inferior_appeared (inf, pid);
   inf->attach_flag = 1;
+  inferior_appeared (inf, pid);
 
   if (!target_is_pushed (ops))
     push_target (ops);
@@ -1270,8 +1270,8 @@ procfs_create_inferior (struct target_ops *ops, char *exec_file,
   procfs_update_thread_list (ops);
 
   inf = current_inferior ();
-  inferior_appeared (inf, pid);
   inf->attach_flag = 0;
+  inferior_appeared (inf, pid);
 
   flags = _DEBUG_FLAG_KLC;	/* Kill-on-Last-Close flag.  */
   errn = devctl (ctl_fd, DCMD_PROC_SET_FLAG, &flags, sizeof (flags), 0);

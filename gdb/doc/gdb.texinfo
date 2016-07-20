@@ -26437,12 +26437,14 @@ group is added, it generally might not be associated with a running
 process.  When a thread group is removed, its id becomes invalid and
 cannot be used in any way.
 
-@item =thread-group-started,id="@var{id}",pid="@var{pid}"
+@item =thread-group-started,id="@var{id}",pid="@var{pid}",launch-type="@var{launch-type}"
 A thread group became associated with a running program,
 either because the program was just started or the thread group
 was attached to a program.  The @var{id} field contains the
 @value{GDBN} identifier of the thread group.  The @var{pid} field
-contains process identifier, specific to the operating system.
+contains process identifier, specific to the operating system.  The
+@var{launch-type} field has the value @code{run} if the program was started
+by @value{GDBN} and @code{attach} if it was attached.
 
 @item =thread-group-exited,id="@var{id}"[,exit-code="@var{code}"]
 A thread group is no longer associated with a running program,

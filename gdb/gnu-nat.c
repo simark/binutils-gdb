@@ -2200,8 +2200,8 @@ gnu_attach (struct target_ops *ops, const char *args, int from_tty)
   push_target (ops);
 
   inferior = current_inferior ();
-  inferior_appeared (inferior, pid);
   inferior->attach_flag = 1;
+  inferior_appeared (inferior, pid);
 
   inf_update_procs (inf);
 
