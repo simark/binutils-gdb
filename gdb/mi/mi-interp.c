@@ -1364,14 +1364,19 @@ mi_user_selected_thread_frame (int thread, int frame)
   SWITCH_THRU_ALL_UIS (state)
   {
     struct mi_interp *mi = as_mi_interp (top_level_interpreter ());
-    struct ui_out *mi_uiout;
+    struct ui_out *mi_uiout, *saved_uiout;
     struct obj_section *sec;
     struct cleanup *old_chain;
 
     if (mi == NULL)
       continue;
 
-    mi_uiout = interp_ui_out (top_level_interpreter ());
+    //mi_uiout = interp_ui_out (top_level_interpreter ());
+    mi_uiout = interp_original_ui_out (top_level_interpreter ());
+    gdb_assert(mi_uiout != NULL);
+
+    saved_uiout = current_uiout;
+    current_uiout_mutable = mi_uiout;
 
     ui_out_redirect (mi_uiout, mi->event_channel);
 
@@ -1386,6 +1391,9 @@ mi_user_selected_thread_frame (int thread, int frame)
       print_stack_frame (get_selected_frame (NULL), 1, SRC_AND_LOC, 1);
 
     ui_out_redirect (mi_uiout, NULL);
+
+    current_uiout_mutable = saved_uiout;
+
     gdb_flush (mi->event_channel);
     do_cleanups (old_chain);
   }

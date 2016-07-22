@@ -92,6 +92,8 @@ struct interp
 
   const struct interp_procs *procs;
   int quiet_p;
+
+  struct ui_out *original_ui_out;
 };
 
 /* The magic initialization routine for this module.  */
@@ -241,10 +243,12 @@ interp_set (struct interp *interp, int top_level)
 	  interp->data = interp->procs->init_proc (interp, top_level);
 	}
       interp->inited = 1;
+      interp->original_ui_out = interp->procs->ui_out_proc (interp);
     }
 
   /* Do this only after the interpreter is initialized.  */
-  current_uiout = interp->procs->ui_out_proc (interp);
+  current_uiout_mutable = interp->procs->ui_out_proc (interp);
+
 
   /* Clear out any installed interpreter hooks/event handlers.  */
   clear_interpreter_hooks ();
@@ -344,6 +348,12 @@ interp_ui_out (struct interp *interp)
   if (interp == NULL)
     interp = ui_interp->current_interpreter;
   return interp->procs->ui_out_proc (interp);
+}
+
+struct ui_out *
+interp_original_ui_out (struct interp *interp)
+{
+  return interp->original_ui_out;
 }
 
 int

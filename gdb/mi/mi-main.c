@@ -2123,7 +2123,7 @@ mi_execute_command (const char *cmd, int from_tty)
 
   if (command != NULL)
     {
-      ptid_t previous_ptid = inferior_ptid;
+      //ptid_t previous_ptid = inferior_ptid;
 
       command->token = token;
 
@@ -2158,7 +2158,7 @@ mi_execute_command (const char *cmd, int from_tty)
 	     internally, we don't want to emit =thread-selected, since
 	     =thread-selected is supposed to indicate user's intentions.  */
 	  && strcmp (command->command, "thread-select") != 0)
-	{
+	{/*
 	  struct mi_interp *mi
 	    = (struct mi_interp *) top_level_interpreter_data ();
 	  int report_change = 0;
@@ -2185,13 +2185,13 @@ mi_execute_command (const char *cmd, int from_tty)
 	      target_terminal_ours_for_output ();
 
 	      fprintf_unfiltered (mi->event_channel,
-				  "thread-selected,id=\"%d\"",
+				  "l,id=\"%d\"",
 				  ti->global_num);
 	      gdb_flush (mi->event_channel);
 
 	      do_cleanups (old_chain);
 	    }
-	}
+	*/}
 
       mi_parse_free (command);
     }
@@ -2374,11 +2374,11 @@ mi_load_progress (const char *section_name,
 
   if (current_interp_named_p (INTERP_MI)
       || current_interp_named_p (INTERP_MI2))
-    current_uiout = mi_out_new (2);
+    current_uiout_mutable = mi_out_new (2);
   else if (current_interp_named_p (INTERP_MI1))
-    current_uiout = mi_out_new (1);
+    current_uiout_mutable = mi_out_new (1);
   else if (current_interp_named_p (INTERP_MI3))
-    current_uiout = mi_out_new (3);
+    current_uiout_mutable = mi_out_new (3);
   else
     return;
 
@@ -2442,7 +2442,7 @@ mi_load_progress (const char *section_name,
     }
 
   xfree (uiout);
-  current_uiout = saved_uiout;
+  current_uiout_mutable = saved_uiout;
 }
 
 static void

@@ -101,6 +101,7 @@ extern struct interp *interp_lookup (struct ui *ui, const char *name);
 extern void set_top_level_interpreter (const char *name);
 
 extern struct ui_out *interp_ui_out (struct interp *interp);
+extern struct ui_out *interp_original_ui_out (struct interp *interp);
 extern void *interp_data (struct interp *interp);
 extern const char *interp_name (struct interp *interp);
 extern struct interp *interp_set_temp (const char *name);

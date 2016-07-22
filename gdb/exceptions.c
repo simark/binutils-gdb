@@ -176,7 +176,7 @@ catch_exceptions_with_msg (struct ui_out *func_uiout,
 
   /* Save and override the global ``struct ui_out'' builder.  */
   saved_uiout = current_uiout;
-  current_uiout = func_uiout;
+  current_uiout_mutable = func_uiout;
 
   TRY
     {
@@ -189,7 +189,7 @@ catch_exceptions_with_msg (struct ui_out *func_uiout,
   END_CATCH
 
   /* Restore the global builder.  */
-  current_uiout = saved_uiout;
+  current_uiout_mutable = saved_uiout;
 
   if (exception.reason < 0 && (mask & RETURN_MASK (exception.reason)) == 0)
     {
@@ -242,7 +242,7 @@ catch_errors (catch_errors_ftype *func, void *func_args, char *errstring,
   END_CATCH
 
   /* Restore the global builder.  */
-  current_uiout = saved_uiout;
+  current_uiout_mutable = saved_uiout;
 
   if (exception.reason < 0 && (mask & RETURN_MASK (exception.reason)) == 0)
     {
