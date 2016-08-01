@@ -2055,6 +2055,7 @@ do_captured_thread_select (struct ui_out *uiout, void *tidstr_v)
     error (_("Thread ID %s has terminated."), tidstr);
 
   switch_to_thread (tp->ptid);
+  command_changes_user_selected_ptid = 1;
 
   annotate_thread_changed ();
 

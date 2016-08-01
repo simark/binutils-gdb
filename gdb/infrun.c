@@ -3247,6 +3247,7 @@ init_wait_for_inferior (void)
   target_last_wait_ptid = minus_one_ptid;
 
   previous_inferior_ptid = inferior_ptid;
+  command_changes_user_selected_ptid = 1;
 
   /* Discard any skipped inlined frames.  */
   clear_inline_frame_state (minus_one_ptid);
@@ -8312,6 +8313,7 @@ normal_stop (void)
 	  annotate_thread_changed ();
 	}
       previous_inferior_ptid = inferior_ptid;
+      command_changes_user_selected_ptid = 1;
     }
 
   if (last.kind == TARGET_WAITKIND_NO_RESUMED)

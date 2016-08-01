@@ -124,6 +124,10 @@ static char *inferior_io_terminal_scratch;
 
 ptid_t inferior_ptid;
 
+/* See inferior.h.  */
+
+int command_changes_user_selected_ptid;
+
 /* Address at which inferior stopped.  */
 
 CORE_ADDR stop_pc;

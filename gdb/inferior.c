@@ -722,6 +722,8 @@ inferior_command (char *args, int from_tty)
   struct inferior *inf;
   int num;
 
+  command_changes_user_selected_ptid = 1;
+
   num = parse_and_eval_long (args);
 
   inf = find_inferior_id (num);

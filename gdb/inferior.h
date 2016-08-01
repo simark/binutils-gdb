@@ -82,6 +82,11 @@ extern const char *get_inferior_io_terminal (void);
 
 extern ptid_t inferior_ptid;
 
+/* Flag indicating that we explicitly want to change the user selected
+   thread/ptid.  */
+
+extern int command_changes_user_selected_ptid;
+
 extern void generic_mourn_inferior (void);
 
 extern CORE_ADDR unsigned_pointer_to_address (struct gdbarch *gdbarch,
