@@ -2163,18 +2163,9 @@ mi_execute_command (const char *cmd, int from_tty)
 	    = (struct mi_interp *) top_level_interpreter_data ();
 	  int report_change = 0;
 
-	  if (command->thread == -1)
-	    {
-	      report_change = (!ptid_equal (previous_ptid, null_ptid)
-			       && !ptid_equal (inferior_ptid, previous_ptid)
-			       && !ptid_equal (inferior_ptid, null_ptid));
-	    }
-	  else if (!ptid_equal (inferior_ptid, null_ptid))
-	    {
-	      struct thread_info *ti = inferior_thread ();
-
-	      report_change = (ti->global_num != command->thread);
-	    }
+	  report_change = (!ptid_equal (previous_ptid, null_ptid)
+			   && !ptid_equal (inferior_ptid, previous_ptid)
+			   && !ptid_equal (inferior_ptid, null_ptid));
 
 	  if (report_change)
 	    {
@@ -2201,6 +2192,7 @@ static void
 mi_cmd_execute (struct mi_parse *parse)
 {
   struct cleanup *cleanup;
+  struct cleanup *thread_restore_cleanup = NULL;
 
   cleanup = prepare_execute_command ();
 
@@ -2216,6 +2208,18 @@ mi_cmd_execute (struct mi_parse *parse)
   if (parse->frame != -1 && parse->thread == -1)
     error (_("Cannot specify --frame without --thread"));
 
+  if (parse->language != language_unknown)
+    {
+      make_cleanup_restore_current_language ();
+      set_language (parse->language);
+    }
+
+  if (parse->cmd->suppress_notification != NULL)
+    {
+      make_cleanup_restore_integer (parse->cmd->suppress_notification);
+      *parse->cmd->suppress_notification = 1;
+    }
+
   if (parse->thread_group != -1)
     {
       struct inferior *inf = find_inferior_id (parse->thread_group);
@@ -2223,6 +2227,8 @@ mi_cmd_execute (struct mi_parse *parse)
 
       if (!inf)
 	error (_("Invalid thread group for the --thread-group option"));
+
+      thread_restore_cleanup = make_cleanup_restore_current_thread ();
 
       set_current_inferior (inf);
       /* This behaviour means that if --thread-group option identifies
@@ -2246,6 +2252,8 @@ mi_cmd_execute (struct mi_parse *parse)
       if (is_exited (tp->ptid))
 	error (_("Thread id: %d has terminated"), parse->thread);
 
+      thread_restore_cleanup = make_cleanup_restore_current_thread ();
+
       switch_to_thread (tp->ptid);
     }
 
@@ -2262,19 +2270,7 @@ mi_cmd_execute (struct mi_parse *parse)
 	error (_("Invalid frame id: %d"), frame);
     }
 
-  if (parse->language != language_unknown)
-    {
-      make_cleanup_restore_current_language ();
-      set_language (parse->language);
-    }
-
   current_context = parse;
-
-  if (parse->cmd->suppress_notification != NULL)
-    {
-      make_cleanup_restore_integer (parse->cmd->suppress_notification);
-      *parse->cmd->suppress_notification = 1;
-    }
 
   if (parse->cmd->argv_func != NULL)
     {
@@ -2302,6 +2298,12 @@ mi_cmd_execute (struct mi_parse *parse)
       make_cleanup_ui_file_delete (stb);
       error_stream (stb);
     }
+
+  if (command_changes_user_selected_ptid && thread_restore_cleanup != NULL)
+    {
+      discard_cleanups (thread_restore_cleanup);
+    }
+
   do_cleanups (cleanup);
 }
 
