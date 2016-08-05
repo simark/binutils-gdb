@@ -47,6 +47,7 @@
 #include "linespec.h"
 #include "cli/cli-utils.h"
 #include "objfiles.h"
+#include "top.h"
 
 #include "safe-ctype.h"
 #include "symfile.h"
@@ -2302,7 +2303,11 @@ find_relative_frame (struct frame_info *frame, int *level_offset_ptr)
 void
 select_frame_command (char *level_exp, int from_tty)
 {
-  select_frame (parse_frame_specification (level_exp, NULL));
+  struct frame_info *frame;
+
+  frame = parse_frame_specification (level_exp, NULL);
+  select_frame (frame);
+  switch_main_user_selection_frame (frame);
 }
 
 /* The "frame" command.  With no argument, print the selected frame
@@ -2331,7 +2336,9 @@ up_silently_base (const char *count_exp)
   frame = find_relative_frame (get_selected_frame ("No stack."), &count);
   if (count != 0 && count_exp == NULL)
     error (_("Initial frame selected; you cannot go up."));
+
   select_frame (frame);
+  switch_main_user_selection_frame (frame);
 }
 
 static void
@@ -2371,6 +2378,7 @@ down_silently_base (const char *count_exp)
     }
 
   select_frame (frame);
+  switch_main_user_selection_frame (frame);
 }
 
 static void

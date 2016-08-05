@@ -612,6 +612,8 @@ command_handler (char *command)
 
   stat_chain = make_command_stats_cleanup (1);
 
+  apply_main_user_selection_to_core ();
+
   /* Do not execute commented lines.  */
   for (c = command; *c == ' ' || *c == '\t'; c++)
     ;

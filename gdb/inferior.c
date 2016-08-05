@@ -35,6 +35,7 @@
 #include "arch-utils.h"
 #include "target-descriptions.h"
 #include "readline/tilde.h"
+#include "top.h"
 
 void _initialize_inferiors (void);
 
@@ -243,6 +244,10 @@ exit_inferior_1 (struct inferior *inftoex, int silent)
 
   if (!inf)
     return;
+
+  /*if (main_user_selection_inferior () == inf) {
+      switch_main_user_selection_thread (NULL);
+  }*/
 
   arg.pid = inf->pid;
   arg.silent = silent;
@@ -733,34 +738,17 @@ inferior_command (char *args, int from_tty)
 		    ? inf->pspace->pspace_exec_filename
 		    : _("<noexec>")));
 
-  if (inf->pid != 0)
+  switch_main_user_selection_inferior (inf);
+  apply_main_user_selection_to_core ();
+
+  if (main_user_selection_thread () != NULL)
     {
-      if (inf->pid != ptid_get_pid (inferior_ptid))
-	{
-	  struct thread_info *tp;
-
-	  tp = any_thread_of_process (inf->pid);
-	  if (!tp)
-	    error (_("Inferior has no threads."));
-
-	  switch_to_thread (tp->ptid);
-	}
-
       printf_filtered (_("[Switching to thread %s (%s)] "),
-		       print_thread_id (inferior_thread ()),
-		       target_pid_to_str (inferior_ptid));
-    }
-  else
-    {
-      struct inferior *inf;
-
-      inf = find_inferior_id (num);
-      set_current_inferior (inf);
-      switch_to_thread (null_ptid);
-      set_current_program_space (inf->pspace);
+		       print_thread_id (main_user_selection_thread ()),
+		       target_pid_to_str (main_user_selection_thread ()->ptid));
     }
 
-  if (inf->pid != 0 && is_running (inferior_ptid))
+  if (inf->pid != 0 && is_running (main_user_selection_thread ()->ptid))
     ui_out_text (current_uiout, "(running)\n");
   else if (inf->pid != 0)
     {

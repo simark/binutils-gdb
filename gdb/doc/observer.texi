@@ -102,11 +102,11 @@ The inferior was stopped by a signal.
 We are done with a step/next/si/ni command.
 @end deftypefun
 
-@deftypefun void signal_exited (enum gdb_signal @var{siggnal})
+@deftypefun void signal_exited (struct inferior *@var{inferior}, enum gdb_signal @var{siggnal})
 The inferior was terminated by a signal.
 @end deftypefun
 
-@deftypefun void exited (int @var{exitstatus})
+@deftypefun void exited (struct inferior *@var{inferior}, int @var{exitstatus})
 The inferior program is finished.
 @end deftypefun
 

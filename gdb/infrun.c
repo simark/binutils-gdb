@@ -156,8 +156,6 @@ show_step_stop_if_no_debug (struct ui_file *file, int from_tty,
    inferior stopped in a different thread than it had been running
    in.  */
 
-static ptid_t previous_inferior_ptid;
-
 /* If set (default for legacy reasons), when following a fork, GDB
    will detach from one of the fork branches, child or parent.
    Exactly which branch is detached depends on 'set follow-fork-mode'
@@ -430,6 +428,7 @@ follow_fork_inferior (int follow_child, int detach_fork)
 {
   int has_vforked;
   ptid_t parent_ptid, child_ptid;
+  struct thread_info *new_thread_info;
 
   has_vforked = (inferior_thread ()->pending_follow.kind
 		 == TARGET_WAITKIND_VFORKED);
@@ -630,7 +629,11 @@ holding the child stopped.  Try \"set detach-on-fork\" or \
 	 informing the solib layer about this new process.  */
 
       inferior_ptid = child_ptid;
-      add_thread (inferior_ptid);
+      new_thread_info = add_thread (inferior_ptid);
+
+      /* FIXME: detach-on-fork=off, follow-fork=child.  In non-stop, the parent stays selected, in all-stop, child becomes selected. */
+      if (!non_stop)
+	switch_main_user_selection_thread (new_thread_info);
 
       /* If this is a vfork child, then the address-space is shared
 	 with the parent.  If we detached from the parent, then we can
@@ -1110,6 +1113,9 @@ follow_exec (ptid_t ptid, char *execd_pathname)
 
   mark_breakpoints_out ();
 
+  if (main_user_selection_inferior () == inf)
+    switch_main_user_selection_thread (NULL);
+
   /* The target reports the exec event to the main thread, even if
      some other thread does the exec, and even if the main thread was
      stopped or already gone.  We may still have non-leader threads of
@@ -1197,7 +1203,8 @@ follow_exec (ptid_t ptid, char *execd_pathname)
 
       set_current_inferior (inf);
       set_current_program_space (inf->pspace);
-      add_thread (ptid);
+      th = add_thread (ptid);
+
     }
   else
     {
@@ -1209,6 +1216,8 @@ follow_exec (ptid_t ptid, char *execd_pathname)
 	 restart).  */
       target_clear_description ();
     }
+
+  switch_main_user_selection_thread (th);
 
   gdb_assert (current_program_space == inf->pspace);
 
@@ -2999,7 +3008,7 @@ proceed (CORE_ADDR addr, enum gdb_signal siggnal)
     }
 
   /* We'll update this if & when we switch to a new thread.  */
-  previous_inferior_ptid = inferior_ptid;
+  //previous_inferior_ptid = inferior_ptid;
 
   regcache = get_current_regcache ();
   gdbarch = get_regcache_arch (regcache);
@@ -3245,8 +3254,6 @@ init_wait_for_inferior (void)
   clear_proceed_status (0);
 
   target_last_wait_ptid = minus_one_ptid;
-
-  previous_inferior_ptid = inferior_ptid;
 
   /* Discard any skipped inlined frames.  */
   clear_inline_frame_state (minus_one_ptid);
@@ -5099,7 +5106,7 @@ handle_inferior_event_1 (struct execution_control_state *ecs)
 	  /* Support the --return-child-result option.  */
 	  return_child_result_value = ecs->ws.value.integer;
 
-	  observer_notify_exited (ecs->ws.value.integer);
+	  observer_notify_exited (current_inferior (), ecs->ws.value.integer);
 	}
       else
 	{
@@ -5128,7 +5135,7 @@ handle_inferior_event_1 (struct execution_control_state *ecs)
 Cannot fill $_exitsignal with the correct signal number.\n"));
 	    }
 
-	  observer_notify_signal_exited (ecs->ws.value.sig);
+	  observer_notify_signal_exited (current_inferior (), ecs->ws.value.sig);
 	}
 
       gdb_flush (gdb_stdout);
@@ -8299,7 +8306,8 @@ normal_stop (void)
      after this event is handled, so we're not really switching, only
      informing of a stop.  */
   if (!non_stop
-      && !ptid_equal (previous_inferior_ptid, inferior_ptid)
+      && (main_user_selection_thread () == NULL
+	  || (!ptid_equal (main_user_selection_thread ()->ptid, inferior_ptid)))
       && target_has_execution
       && last.kind != TARGET_WAITKIND_SIGNALLED
       && last.kind != TARGET_WAITKIND_EXITED
@@ -8312,7 +8320,8 @@ normal_stop (void)
 			   target_pid_to_str (inferior_ptid));
 	  annotate_thread_changed ();
 	}
-      previous_inferior_ptid = inferior_ptid;
+
+      switch_main_user_selection_thread (inferior_thread ());
     }
 
   if (last.kind == TARGET_WAITKIND_NO_RESUMED)

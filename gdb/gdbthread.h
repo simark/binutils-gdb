@@ -469,8 +469,8 @@ extern struct thread_info *iterate_over_threads (thread_callback_func, void *);
 
 extern int thread_count (void);
 
-/* Switch from one thread to another.  Also sets the STOP_PC
-   global.  */
+/* Switch GDB's internal current thread from one thread to another.  Also sets
+   the STOP_PC global.  */
 extern void switch_to_thread (ptid_t ptid);
 
 /* Switch from one thread to another.  Does not read registers and

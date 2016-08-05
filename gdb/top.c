@@ -253,6 +253,197 @@ void (*deprecated_context_hook) (int id);
 /* The highest UI number ever assigned.  */
 static int highest_ui_num;
 
+static struct user_selection main_user_selection_;
+
+const struct user_selection *
+main_user_selection (void)
+{
+  return &main_user_selection_;
+}
+
+void
+switch_user_selection_inferior (struct user_selection *user_selection,
+				struct inferior *inf)
+{
+  if (inf == user_selection->inferior)
+    return;
+
+  /* If there is a currently user selected thread, decrement its refcount.  */
+  if (user_selection->thread != NULL)
+    user_selection->thread->refcount--;
+
+  user_selection->inferior = inf;
+
+  if (inf->pid != 0)
+    {
+      /* The inferior has execution.  */
+      struct thread_info *tp;
+
+      tp = any_thread_of_process (inf->pid);
+      if (!tp)
+	error (_("Inferior has no threads."));
+
+      user_selection->thread = tp;
+    }
+  else
+    {
+      /* The inferior does not have execution.  */
+      user_selection->thread = NULL;
+    }
+
+  /* The selected frame is now invalid. */
+  user_selection->frame = NULL;
+}
+
+void
+switch_user_selection_thread (struct user_selection *user_selection,
+			      struct thread_info *thread)
+{
+  struct inferior *inf;
+
+  if (thread == user_selection->thread)
+    return;
+
+  /* If there is a currently user selected thread, decrement its refcount.  */
+  if (user_selection->thread != NULL)
+    {
+      user_selection->thread->refcount--;
+      delete_exited_threads ();
+    }
+
+  /* Set the newly selected thread.  */
+  user_selection->thread = thread;
+
+  if (thread != NULL)
+    {
+      user_selection->thread->refcount++;
+
+      /* Set the thread's inferior as the current inferior. */
+      user_selection->inferior = thread->inf;
+      gdb_assert (user_selection->inferior != NULL);
+    }
+
+  /* The selected frame is now invalid. */
+  user_selection->frame = NULL;
+}
+
+void switch_user_selection_frame (struct user_selection *user_selection,
+				  struct frame_info *frame)
+{
+  user_selection->frame = frame;
+}
+
+static struct inferior *
+user_selection_inferior (struct user_selection *user_selection)
+{
+  return user_selection->inferior;
+}
+
+static struct thread_info *
+user_selection_thread (struct user_selection *user_selection)
+{
+  return user_selection->thread;
+}
+
+static struct frame_info *
+user_selection_frame (struct user_selection *user_selection)
+{
+  return user_selection->frame;
+}
+
+void
+switch_main_user_selection_inferior (struct inferior *inferior)
+{
+  switch_user_selection_inferior (&main_user_selection_, inferior);
+}
+
+void
+switch_main_user_selection_thread (struct thread_info *thread)
+{
+  switch_user_selection_thread (&main_user_selection_, thread);
+}
+
+void
+switch_main_user_selection_frame (struct frame_info *frame)
+{
+  switch_user_selection_frame (&main_user_selection_, frame);
+}
+
+struct inferior *
+main_user_selection_inferior (void)
+{
+  return user_selection_inferior (&main_user_selection_);
+}
+
+struct thread_info *
+main_user_selection_thread (void)
+{
+  return user_selection_thread (&main_user_selection_);
+}
+
+struct frame_info *
+main_user_selection_frame (void)
+{
+  return user_selection_frame (&main_user_selection_);
+}
+
+void
+apply_user_selection_to_core (struct user_selection *user_selection)
+{
+  set_current_inferior (user_selection_inferior (user_selection));
+  set_current_program_space (user_selection_inferior (user_selection)->pspace);
+
+  if (user_selection_thread (user_selection) != NULL)
+    switch_to_thread (user_selection_thread (user_selection)->ptid);
+  else
+    switch_to_thread (null_ptid);
+
+  if (user_selection_frame (user_selection) != NULL)
+    select_frame (user_selection_frame (user_selection));
+  else
+    select_frame (NULL);
+}
+
+void apply_main_user_selection_to_core (void)
+{
+  apply_user_selection_to_core (&main_user_selection_);
+}
+
+static void
+on_new_thread (struct thread_info *thread)
+{
+  if (thread->inf == main_user_selection_inferior ()
+      && main_user_selection_thread () == NULL)
+    {
+      switch_main_user_selection_thread (thread);
+    }
+}
+
+static void
+on_exited (struct inferior *inferior)
+{
+  if (inferior == main_user_selection_inferior ())
+    {
+      switch_main_user_selection_thread (NULL);
+    }
+}
+/*
+static void
+on_exited (struct inferior *inferior, int exit_code)
+{
+  if (inferior == user_selection_inferior ())
+    {
+      switch_user_selection_thread (NULL);
+    }
+}
+
+static void
+on_signal_exited (struct inferior *inferior, enum gdb_signal sn)
+{
+
+  on_exited (inferior, 0);
+}*/
+
 /* See top.h.  */
 
 struct ui *
@@ -2021,6 +2212,17 @@ static void
 init_main (void)
 {
   struct cmd_list_element *c;
+
+  /* initialize_inferiors should have been called before.  */
+  gdb_assert (current_inferior () != NULL);
+  main_user_selection_.inferior = current_inferior ();
+  main_user_selection_.thread = NULL;
+  main_user_selection_.frame = NULL;
+
+  observer_attach_new_thread (on_new_thread);
+  //observer_attach_exited (on_exited);
+  //observer_attach_signal_exited (on_signal_exited);
+  observer_attach_inferior_exit (on_exited);
 
   /* Initialize the prompt to a simple "(gdb) " prompt or to whatever
      the DEFAULT_PROMPT is.  */

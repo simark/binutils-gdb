@@ -39,6 +39,7 @@
 #include "observer.h"
 #include "objfiles.h"
 #include "extension.h"
+#include "top.h"
 
 extern unsigned int overload_debug;
 /* Local functions.  */
@@ -1004,6 +1005,7 @@ value_assign (struct value *toval, struct value *fromval)
   struct type *type;
   struct value *val;
   struct frame_id old_frame;
+  struct frame_id old_user_selected_frame = null_frame_id;
 
   if (!deprecated_value_modifiable (toval))
     error (_("Left operand of assignment is not a modifiable lvalue."));
@@ -1027,6 +1029,8 @@ value_assign (struct value *toval, struct value *fromval)
      modifying memory can trash the frame cache, we save the old frame
      and then restore the new frame afterwards.  */
   old_frame = get_frame_id (deprecated_safe_get_selected_frame ());
+  if (main_user_selection_frame () != NULL)
+    old_user_selected_frame = get_frame_id (main_user_selection_frame ());
 
   switch (VALUE_LVAL (toval))
     {
@@ -1226,6 +1230,14 @@ value_assign (struct value *toval, struct value *fromval)
 	if (fi != NULL)
 	  select_frame (fi);
       }
+
+      if (!frame_id_eq(old_user_selected_frame, null_frame_id))
+	{
+	  struct frame_info *fi = frame_find_by_id (old_user_selected_frame);
+
+	  if (fi != NULL)
+	    switch_main_user_selection_frame (fi);
+	}
 
       break;
     default:

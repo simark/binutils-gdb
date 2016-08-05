@@ -1148,7 +1148,7 @@ call_function_by_hand_dummy (struct value *function,
     observer_notify_inferior_call_post (call_thread_ptid, funaddr);
 
     tp = find_thread_ptid (call_thread_ptid);
-    if (tp != NULL)
+    if (tp != NULL && tp->state != THREAD_EXITED)
       {
 	/* The FSM should still be the same.  */
 	gdb_assert (tp->thread_fsm == &sm->thread_fsm);

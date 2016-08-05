@@ -44,6 +44,7 @@
 #include "cli/cli-utils.h"
 #include "thread-fsm.h"
 #include "tid-parse.h"
+#include "top.h"
 
 /* Definition of struct thread_info exported to gdbthread.h.  */
 
@@ -283,6 +284,10 @@ add_thread_silent (ptid_t ptid)
 	 new template thread in the list with an invalid ptid, switch
 	 to it, delete the original thread, reset the new thread's
 	 ptid, and switch to it.  */
+      if (main_user_selection_thread () != NULL
+	  && ptid_equal (main_user_selection_thread ()->ptid, ptid)) {
+      	switch_main_user_selection_thread (NULL);
+      }
 
       if (ptid_equal (inferior_ptid, ptid))
 	{
@@ -294,6 +299,8 @@ add_thread_silent (ptid_t ptid)
 
 	  /* Now we can delete it.  */
 	  delete_thread (ptid);
+
+	  gdb_assert (find_thread_ptid (ptid) == NULL);
 
 	  /* Now reset its ptid, and reswitch inferior_ptid to it.  */
 	  tp->ptid = ptid;
@@ -1925,7 +1932,8 @@ thread_command (char *tidstr, int from_tty)
 {
   if (!tidstr)
     {
-      if (ptid_equal (inferior_ptid, null_ptid))
+      /* No argument: inform the user about the current thread.  */
+      if (main_user_selection_thread () == NULL)
 	error (_("No thread selected"));
 
       if (target_has_stack)
@@ -1945,8 +1953,11 @@ thread_command (char *tidstr, int from_tty)
 	error (_("No stack."));
       return;
     }
-
-  gdb_thread_select (current_uiout, tidstr, NULL);
+  else
+    {
+      /* Argument given: switch the user-selected thread.  */
+      gdb_thread_select (current_uiout, tidstr, NULL);
+    }
 }
 
 /* Implementation of `thread name'.  */
@@ -2054,7 +2065,9 @@ do_captured_thread_select (struct ui_out *uiout, void *tidstr_v)
   if (!thread_alive (tp))
     error (_("Thread ID %s has terminated."), tidstr);
 
-  switch_to_thread (tp->ptid);
+  //switch_to_thread (tp->ptid);
+  switch_main_user_selection_thread (tp);
+  apply_main_user_selection_to_core ();
 
   annotate_thread_changed ();
 

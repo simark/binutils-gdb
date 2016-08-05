@@ -3340,7 +3340,6 @@ For example:
 
 @smallexample
 (@value{GDBP}) info inferiors
-(gdb) info inferior
   Id   Description   Executable
 * 1    <null>        prog1
 (@value{GDBP}) run

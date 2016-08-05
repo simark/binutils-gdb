@@ -2588,6 +2588,12 @@ kill_command (char *arg, int from_tty)
     error (_("Not confirmed."));
   target_kill ();
 
+  /* FIXME: The thread objects get deleted (in init_thread_list) even if their
+     refcount is > 0), so we need to invalidate the user selection.  It could
+     be done more elegantly if there was an observer "thread_freed", or if
+     refcounting was more solid (à la shared_ptr).  */
+  //switch_main_user_selection_thread (NULL);
+
   /* If we still have other inferiors to debug, then don't mess with
      with their threads.  */
   if (!have_inferiors ())

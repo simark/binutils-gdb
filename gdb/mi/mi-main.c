@@ -2036,6 +2036,8 @@ captured_mi_execute_command (struct ui_out *uiout, struct mi_parse *context)
       {
 	char *argv[2];
 
+	apply_main_user_selection_to_core ();
+
 	/* A CLI command was read from the input stream.  */
 	/* This "feature" will be removed as soon as we have a
 	   complete set of mi commands.  */
@@ -2209,6 +2211,8 @@ mi_cmd_execute (struct mi_parse *parse)
 {
   struct cleanup *cleanup;
 
+  struct user_selection user_selection = *main_user_selection ();
+
   cleanup = prepare_execute_command ();
 
   if (parse->all && parse->thread_group != -1)
@@ -2231,16 +2235,18 @@ mi_cmd_execute (struct mi_parse *parse)
       if (!inf)
 	error (_("Invalid thread group for the --thread-group option"));
 
-      set_current_inferior (inf);
+      switch_user_selection_inferior (&user_selection, inf);
+
+      /*set_current_inferior (inf);*/
       /* This behaviour means that if --thread-group option identifies
 	 an inferior with multiple threads, then a random one will be
 	 picked.  This is not a problem -- frontend should always
 	 provide --thread if it wishes to operate on a specific
 	 thread.  */
-      if (inf->pid != 0)
+      /*if (inf->pid != 0)
 	tp = any_live_thread_of_process (inf->pid);
       switch_to_thread (tp ? tp->ptid : null_ptid);
-      set_current_program_space (inf->pspace);
+      set_current_program_space (inf->pspace);*/
     }
 
   if (parse->thread != -1)
@@ -2253,7 +2259,8 @@ mi_cmd_execute (struct mi_parse *parse)
       if (is_exited (tp->ptid))
 	error (_("Thread id: %d has terminated"), parse->thread);
 
-      switch_to_thread (tp->ptid);
+      switch_user_selection_thread (&user_selection, tp);
+      /*switch_to_thread (tp->ptid);*/
     }
 
   if (parse->frame != -1)
@@ -2268,6 +2275,8 @@ mi_cmd_execute (struct mi_parse *parse)
       else
 	error (_("Invalid frame id: %d"), frame);
     }
+
+  apply_user_selection_to_core (&user_selection);
 
   if (parse->language != language_unknown)
     {

@@ -58,8 +58,8 @@ static void mi_remove_notify_hooks (void);
 
 static void mi_on_signal_received (enum gdb_signal siggnal);
 static void mi_on_end_stepping_range (void);
-static void mi_on_signal_exited (enum gdb_signal siggnal);
-static void mi_on_exited (int exitstatus);
+static void mi_on_signal_exited (struct inferior *inferior, enum gdb_signal siggnal);
+static void mi_on_exited (struct inferior *inferior, int exitstatus);
 static void mi_on_normal_stop (struct bpstats *bs, int print_frame);
 static void mi_on_no_history (void);
 
@@ -620,7 +620,7 @@ mi_on_end_stepping_range (void)
 /* Observer for the signal_exited notification.  */
 
 static void
-mi_on_signal_exited (enum gdb_signal siggnal)
+mi_on_signal_exited (struct inferior *inferior, enum gdb_signal siggnal)
 {
   struct switch_thru_all_uis state;
 
@@ -639,7 +639,7 @@ mi_on_signal_exited (enum gdb_signal siggnal)
 /* Observer for the exited notification.  */
 
 static void
-mi_on_exited (int exitstatus)
+mi_on_exited (struct inferior *inferior, int exitstatus)
 {
   struct switch_thru_all_uis state;
 

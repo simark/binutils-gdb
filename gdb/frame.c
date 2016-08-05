@@ -42,6 +42,7 @@
 #include "tracepoint.h"
 #include "hashtab.h"
 #include "valprint.h"
+#include "top.h"
 
 static struct frame_info *get_prev_frame_raw (struct frame_info *this_frame);
 static const char *frame_stop_reason_symbol_string (enum unwind_stop_reason reason);
@@ -1747,6 +1748,7 @@ reinit_frame_cache (void)
 
   current_frame = NULL;		/* Invalidate cache */
   select_frame (NULL);
+  switch_main_user_selection_frame (NULL);
   frame_stash_invalidate ();
   if (frame_debug)
     fprintf_unfiltered (gdb_stdlog, "{ reinit_frame_cache () }\n");

@@ -197,6 +197,32 @@ extern void ui_register_input_event_handler (struct ui *ui);
 /* Unregister the UI's input file descriptor from the event loop.  */
 extern void ui_unregister_input_event_handler (struct ui *ui);
 
+struct user_selection
+{
+  struct inferior *inferior;
+  struct thread_info *thread;
+  struct frame_info *frame;
+};
+
+static struct user_selection null_user_selection = { NULL, NULL };
+
+void switch_user_selection_inferior (struct user_selection *user_selection,
+				     struct inferior *inf);
+void switch_user_selection_thread (struct user_selection *user_selection,
+				   struct thread_info *thread);
+void switch_user_selection_frame (struct user_selection *user_selection,
+				  struct frame_info *frame);
+void apply_user_selection_to_core (struct user_selection *user_selection);
+
+const struct user_selection *main_user_selection (void);
+void switch_main_user_selection_inferior (struct inferior *inferior);
+void switch_main_user_selection_thread (struct thread_info *thread);
+void switch_main_user_selection_frame (struct frame_info *frame);
+struct inferior *main_user_selection_inferior (void);
+struct thread_info *main_user_selection_thread (void);
+struct frame_info *main_user_selection_frame (void);
+void apply_main_user_selection_to_core (void);
+
 /* From top.c.  */
 extern char *saved_command_line;
 extern int in_user_command;

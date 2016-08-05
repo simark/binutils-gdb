@@ -129,7 +129,7 @@ tui_on_end_stepping_range (void)
 /* Observer for the signal_exited notification.  */
 
 static void
-tui_on_signal_exited (enum gdb_signal siggnal)
+tui_on_signal_exited (struct inferior *inferior, enum gdb_signal siggnal)
 {
   struct switch_thru_all_uis state;
 
@@ -147,7 +147,7 @@ tui_on_signal_exited (enum gdb_signal siggnal)
 /* Observer for the exited notification.  */
 
 static void
-tui_on_exited (int exitstatus)
+tui_on_exited (struct inferior *inferior, int exitstatus)
 {
   struct switch_thru_all_uis state;
 
