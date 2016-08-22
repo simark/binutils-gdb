@@ -989,7 +989,17 @@ default_quit_handler (void)
 {
   if (check_quit_flag ())
     {
-      if (target_terminal_is_ours ())
+      struct switch_thru_all_uis state;
+      int some_ui_is_sync = 0;
+
+      SWITCH_THRU_ALL_UIS (state) {
+	if (current_ui->prompt_state == PROMPT_BLOCKED)
+	  {
+	    some_ui_is_sync = 1;
+	  }
+      };
+
+      if (!some_ui_is_sync)
 	quit ();
       else
 	target_pass_ctrlc ();
