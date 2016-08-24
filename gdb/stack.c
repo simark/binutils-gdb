@@ -2305,6 +2305,7 @@ select_frame_command (char *level_exp, int from_tty)
 {
   select_frame (parse_frame_specification (level_exp, NULL));
   observer_notify_user_selected_thread_frame (0, 1);
+  command_changes_user_selected_ptid = 1;
 }
 
 /* The "frame" command.  With no argument, print the selected frame
