@@ -159,7 +159,18 @@ supply_fast_tracepoint_registers (struct regcache *regcache,
 ULONGEST
 get_raw_reg (const unsigned char *raw_regs, int regnum)
 {
-  /* Used for JIT conditions.  */
+  if (regnum < ARM_CORE_NUM_FT_COLLECT_REGS)
+      return *(int *) (raw_regs + arm_core_ft_collect_regmap[regnum]);
+
+  if ((get_ipa_tdesc (get_ipa_tdesc_idx ()) == tdesc_arm_with_neon
+       || get_ipa_tdesc (get_ipa_tdesc_idx ()) == tdesc_arm_with_vfpv3)
+      && regnum  < ARM_VFPV3_NUM_FT_COLLECT_REGS)
+    return *(ULONGEST *) (raw_regs + arm_vfpv3_ft_collect_regmap[regnum]);
+
+  if (get_ipa_tdesc (get_ipa_tdesc_idx ()) == tdesc_arm_with_vfpv2
+      && regnum < ARM_VFPV2_NUM_FT_COLLECT_REGS)
+    return *(ULONGEST *) (raw_regs + arm_vfpv2_ft_collect_regmap[regnum]);
+
   return 0;
 }
 

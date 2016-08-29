@@ -1393,8 +1393,10 @@ static const int r2 = 2;
 static const int r3 = 3;
 static const int r4 = 4;
 static const int r5 = 5;
+static const int r12 = 12;
 static const int sp = 13;
 static const int lr = 14;
+static const int pc = 15;
 
 static int
 arm_install_fast_tracepoint_jump_pad_arm (struct tracepoint *tp,
@@ -1950,6 +1952,790 @@ arm_get_ipa_tdesc_idx (void)
   return 0;
 }
 
+/* Append variable length instructions to the inferior memory.  */
+
+static int
+append_insns (CORE_ADDR *to, size_t len, const unsigned char *buf)
+{
+  if (write_inferior_memory (*to, buf, len) != 0)
+    return 1;
+
+  *to += len;
+
+  return 0;
+}
+
+/* Append 32 bit instructions to the inferior memory.  */
+
+static void
+add_insns_32 (uint32_t *start, int len)
+{
+  CORE_ADDR buildaddr = current_insn_ptr;
+
+  if (debug_threads)
+    debug_printf ("Adding %d bytes of insn at %s\n",
+		  len * 4, paddress (buildaddr));
+
+  append_insns (&buildaddr, len * 4, (gdb_byte *) start);
+  current_insn_ptr = buildaddr;
+}
+
+/* The "emit_prologue" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_prologue (void)
+{
+  /* This function emit a prologue for the following function prototype:
+
+     enum eval_result_type f (unsigned char *regs,
+			      ULONGEST *value);
+
+     The first argument is a buffer of raw registers.  The second argument
+     is the result of evaluating the expression, which will be set to
+     whatever is on top of the stack at the end.
+
+     The stack set up by the prologue is as such:
+
+     High *------------------------------------------------------*
+	  | lr                                                   |
+	  | r4                                                   |
+	  | r0  (ULONGEST *value)                                |
+	  | r1  (unsigned char *regs)                            | <-r4
+     Low  *------------------------------------------------------*
+
+     As we are implementing a stack machine, each opcode can expand the
+     stack so we never know how far we are from the data saved by this
+     prologue.  In order to be able refer to value and regs later, we save
+     the current base of the stack in the r4 register.  This way, it is not
+     clobbered when calling C functions.
+
+     Finally, throughtout every operation, we are using register r0 and r1
+     as the top of the stack, and r2, r3, r12 as a scratch register.  */
+
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  /* push {r0, r1, r4, lr}  */
+  p += arm_emit_arm_push_list (p, INST_AL,
+			       encode_register_list (0, 2, ENCODE (1, 1, 4)
+						     | ENCODE (1, 1, 14)));
+  p += arm_emit_arm_mov (p, INST_AL, r4, register_operand (sp));
+  add_insns_32 (buf, p - buf);
+}
+
+/* The "emit_epilogue" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_epilogue (void)
+{
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  p += arm_emit_arm_add (p, INST_AL, 0, sp, r4, immediate_operand (4));
+  p += arm_emit_arm_pop_list (p, INST_AL, ENCODE (1, 1, 1)
+			      | ENCODE (1, 1, 4)
+			      | ENCODE (1, 1, 14));
+  p += arm_emit_arm_str (p, INST_AL, r0, r1,
+			 memory_operand (offset_memory_operand (0)));
+  p += arm_emit_arm_mov (p, INST_AL, r0, immediate_operand (0));
+  p += arm_emit_arm_mov (p, INST_AL, pc, register_operand (lr));
+
+  add_insns_32 (buf, p - buf);
+}
+
+/* The "emit_add" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_add (void)
+{
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  /* pop {r2,r3}  */
+  p += arm_emit_arm_pop_list (p, INST_AL, encode_register_list (2, 2, 0));
+  p += arm_emit_arm_add (p, INST_AL, 1, r0, r2, register_operand (r0));
+  p += arm_emit_arm_adc (p, INST_AL, r1, r3, register_operand (r1));
+
+  add_insns_32 (buf, p - buf);
+}
+
+/* The "emit_sub" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_sub (void)
+{
+  const struct target_desc *tdesc = current_process ()->tdesc;
+  const int r0 = find_regno (tdesc, "r0");
+  const int r1 = find_regno (tdesc, "r1");
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  /* pop {r2,r3}  */
+  p += arm_emit_arm_pop_list (p, INST_AL, encode_register_list (2, 2, 0));
+  p += arm_emit_arm_sub (p, INST_AL, 1, r0, r2, register_operand (r0));
+  p += arm_emit_arm_sbc (p, INST_AL, 0, r1, r3, register_operand (r1));
+
+  add_insns_32 (buf, p - buf);
+}
+
+/* The "emit_mul" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_mul (void)
+{
+  const struct target_desc *tdesc = current_process ()->tdesc;
+  const int r0 = find_regno (tdesc, "r0");
+  const int r1 = find_regno (tdesc, "r1");
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  /* pop {r2,r3}  */
+  p += arm_emit_arm_pop_list (p, INST_AL, encode_register_list (2, 2, 0));
+
+  /* Multiply 64-64 int as : ((ah * bl) + (bh * al)) + (al * bl).
+     ah = operand a, high bits.
+     al = operand a, low bits.
+     same for operand b.  */
+
+  p += arm_emit_arm_mul (p, INST_AL, r1, r1, register_operand (r2));
+  p += arm_emit_arm_mul (p, INST_AL, r3, r0, register_operand (r3));
+  p += arm_emit_arm_add (p, INST_AL, 0, r1, r1, register_operand (r3));
+  p += arm_emit_arm_umull (p, INST_AL, r2, r3, r0, r2);
+  p += arm_emit_arm_add (p, INST_AL, 0, r1, r1, register_operand (r3));
+  p += arm_emit_arm_mov (p, INST_AL, r0, register_operand (r2));
+
+  add_insns_32 (buf, p - buf);
+}
+
+/* The "emit_lsh" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_lsh (void)
+{
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  p += arm_emit_arm_pop_list (p, INST_AL, encode_register_list (2, 2, 0));
+  p += arm_emit_arm_sub (p, INST_AL, 0, r12, r0, immediate_operand (32));
+  p += arm_emit_arm_rsb (p, INST_AL, r1, r0, immediate_operand (32));
+  p += arm_emit_arm_lsl (p, INST_AL, r3, r3, register_operand (r0));
+  p += arm_emit_arm_orr_reg_shifted (p, INST_AL, r3, r3, r2, LSL, r12);
+  p += arm_emit_arm_orr_reg_shifted (p, INST_AL, r3, r3, r2, LSR, r1);
+  p += arm_emit_arm_lsl (p, INST_AL, r0, r2, register_operand (r0));
+  p += arm_emit_arm_mov (p, INST_AL, r1, register_operand (r3));
+
+  add_insns_32 (buf, p - buf);
+}
+
+/* The "emit_rsh_signed" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_rsh_signed (void)
+{
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  p += arm_emit_arm_pop_list (p, INST_AL, encode_register_list (2, 2, 0));
+  p += arm_emit_arm_rsb (p, INST_AL, r1, r0, immediate_operand (32));
+  p += arm_emit_arm_sub (p, INST_AL, 1, r12, r0, immediate_operand (32));
+  p += arm_emit_arm_lsr (p, INST_AL, r2, r2, register_operand (r0));
+  p += arm_emit_arm_orr_reg_shifted (p, INST_AL, r2, r2, r3, LSL, r1);
+  p += arm_emit_arm_orr_reg_shifted (p, INST_PL, r2, r2, r3, ASR, r12);
+  p += arm_emit_arm_asr (p, INST_AL, r1, r3, register_operand (r0));
+  p += arm_emit_arm_mov (p, INST_AL, r0, register_operand (r2));
+
+  add_insns_32 (buf, p - buf);
+}
+
+/* The "emit_rsh_unsigned" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_rsh_unsigned (void)
+{
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  p += arm_emit_arm_pop_list (p, INST_AL, encode_register_list (2, 2, 0));
+  p += arm_emit_arm_rsb (p, INST_AL, r1, r0, immediate_operand (32));
+  p += arm_emit_arm_sub (p, INST_AL, 1, r12, r0, immediate_operand (32));
+  p += arm_emit_arm_lsr (p, INST_AL, r2, r2, register_operand (r0));
+  p += arm_emit_arm_orr_reg_shifted (p, INST_AL, r2, r2, r3, LSL, r1);
+  p += arm_emit_arm_orr_reg_shifted (p, INST_PL, r2, r2, r3, LSR, r12);
+  p += arm_emit_arm_lsr (p, INST_AL, r1, r3, register_operand (r0));
+  p += arm_emit_arm_mov (p, INST_AL, r0, register_operand (r2));
+
+  add_insns_32 (buf, p - buf);
+}
+
+/* The "emit_ext" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_ext (int arg)
+{
+  const struct target_desc *tdesc = current_process ()->tdesc;
+  const int r0 = find_regno (tdesc, "r0");
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  if (arg <= 32)
+    {
+      p += arm_emit_arm_sbfx (p, INST_AL, r0, r0, 0, arg);
+      p += arm_emit_arm_mov (p, INST_AL, r1, register_operand (r0));
+      p += arm_emit_arm_asr (p, INST_AL, r1, r1, immediate_operand (31));
+    }
+  else
+    p += arm_emit_arm_sbfx (p, INST_AL, r1, r1, 0, 32 - arg);
+
+  add_insns_32 (buf, p - buf);
+}
+
+/* The "emit_log_not" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_log_not (void)
+{
+  const struct target_desc *tdesc = current_process ()->tdesc;
+  const int r0 = find_regno (tdesc, "r0");
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  /* Check if the top of the stack is 0 */
+  p += arm_emit_arm_cmp (p, INST_AL, r1, immediate_operand (0));
+  p += arm_emit_arm_cmp (p, INST_EQ, r0, immediate_operand (0));
+
+  /* Move 1 to the top of stack if it's 0 */
+  p += arm_emit_arm_mov (p, INST_EQ, r0, immediate_operand (1));
+  p += arm_emit_arm_mov (p, INST_EQ, r1, immediate_operand (0));
+
+  /* Move 0 to the top of stack if it's not 0 */
+  p += arm_emit_arm_mov (p, INST_NE, r0, immediate_operand (0));
+  p += arm_emit_arm_mov (p, INST_NE, r1, immediate_operand (0));
+
+  add_insns_32 (buf, p - buf);
+}
+
+/* The "emit_bit_and" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_bit_and (void)
+{
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  p += arm_emit_arm_pop_list (p, INST_AL, encode_register_list (2, 2, 0));
+  p += arm_emit_arm_and (p, INST_AL, r0, r0, register_operand (r2));
+  p += arm_emit_arm_and (p, INST_AL, r1, r1, register_operand (r3));
+
+  add_insns_32 (buf, p - buf);
+}
+
+/* The "emit_bit_or" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_bit_or (void)
+{
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  p += arm_emit_arm_pop_list (p, INST_AL, encode_register_list (2, 2, 0));
+  p += arm_emit_arm_orr (p, INST_AL, r0, r0, register_operand (r2));
+  p += arm_emit_arm_orr (p, INST_AL, r1, r1, register_operand (r3));
+
+  add_insns_32 (buf, p - buf);
+}
+
+/* The "emit_bit_xor" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_bit_xor (void)
+{
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  p += arm_emit_arm_pop_list (p, INST_AL, encode_register_list (2, 2, 0));
+  p += arm_emit_arm_eor (p, INST_AL, r0, r0, register_operand (r2));
+  p += arm_emit_arm_eor (p, INST_AL, r1, r1, register_operand (r3));
+
+  add_insns_32 (buf, p - buf);
+}
+
+/* The "emit_bit_not" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_bit_not (void)
+{
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  p += arm_emit_arm_mvn (p, INST_AL, r0, register_operand (r0));
+  p += arm_emit_arm_mvn (p, INST_AL, r1, register_operand (r1));
+
+  add_insns_32 (buf, p - buf);
+}
+
+/* The "emit_equal" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_equal (void)
+{
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  /* pop {r2,r3}  */
+  p += arm_emit_arm_pop_list (p, INST_AL, encode_register_list (2, 2, 0));
+  p += arm_emit_arm_cmp (p, INST_AL, r0, register_operand (r2));
+  p += arm_emit_arm_cmp (p, INST_EQ, r1, register_operand (r3));
+  p += arm_emit_arm_mov (p, INST_EQ, r0, immediate_operand (1));
+  p += arm_emit_arm_mov (p, INST_NE, r0, immediate_operand (0));
+  p += arm_emit_arm_mov (p, INST_AL, r1, immediate_operand (0));
+
+  add_insns_32 (buf, p - buf);
+}
+
+/* The "emit_less_signed" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_less_signed (void)
+{
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  p += arm_emit_arm_pop_list (p, INST_AL, encode_register_list (2, 2, 0));
+  p += arm_emit_arm_cmp (p, INST_AL, r2, register_operand (r0));
+  p += arm_emit_arm_sbc (p, INST_AL, 1, r1, r3, register_operand (r1));
+  p += arm_emit_arm_mov (p, INST_LT, r0, immediate_operand (1));
+  p += arm_emit_arm_mov (p, INST_GE, r0, immediate_operand (0));
+  p += arm_emit_arm_mov (p, INST_AL, r1, immediate_operand (0));
+
+  add_insns_32 (buf, p - buf);
+}
+
+/* The "emit_less_unsigned" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_less_unsigned (void)
+{
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  p += arm_emit_arm_pop_list (p, INST_AL, encode_register_list (2, 2, 0));
+  p += arm_emit_arm_cmp (p, INST_AL, r3, register_operand (r1));
+  p += arm_emit_arm_cmp (p, INST_EQ, r2, register_operand (r0));
+  p += arm_emit_arm_mov (p, INST_CC, r0, immediate_operand (1));
+  p += arm_emit_arm_mov (p, INST_CS, r0, immediate_operand (0));
+  p += arm_emit_arm_mov (p, INST_AL, r1, immediate_operand (0));
+
+  add_insns_32 (buf, p - buf);
+}
+
+/* The "emit_ref" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_ref (int size)
+{
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  switch (size)
+    {
+    case 1:
+      p += arm_emit_arm_ldrb (p, INST_AL, r0, r0, offset_memory_operand (0));
+      p += arm_emit_arm_mov (p, INST_AL, r1, immediate_operand (0));
+      break;
+    case 2:
+      p += arm_emit_arm_ldrh (p, INST_AL, r0, r0, offset_memory_operand (0));
+      p += arm_emit_arm_mov (p, INST_AL, r1, immediate_operand (0));
+      break;
+    case 4:
+      p += arm_emit_arm_ldr (p, INST_AL, r0, r0, offset_memory_operand (0));
+      p += arm_emit_arm_mov (p, INST_AL, r1, immediate_operand (0));
+      break;
+    case 8:
+      p += arm_emit_arm_ldrd (p, INST_AL, r0, r0, offset_memory_operand (0));
+      break;
+    default:
+      emit_error = 1;
+    }
+
+  add_insns_32 (buf, p - buf);
+}
+
+/* The "emit_if_goto" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_if_goto (int *offset_p, int *size_p)
+{
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  p += arm_emit_arm_cmp (p, INST_AL, r1, immediate_operand (0));
+  p += arm_emit_arm_cmp (p, INST_EQ, r0, immediate_operand (0));
+  p += arm_emit_arm_pop_list (p, INST_AL, encode_register_list (2, 2, 0));
+  p += arm_emit_arm_bl (p, INST_EQ, arm_arm_branch_adjusted_offset (8));
+
+  /* The NOP instruction will be patched with an unconditional branch.  */
+  if (offset_p)
+    *offset_p = (p - buf) * 4;
+  if (size_p)
+    *size_p = 4;
+
+  p += arm_emit_arm_nop (p, INST_AL);
+  add_insns_32 (buf, p - buf);
+}
+
+/* The "emit_goto" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_goto (int *offset_p, int *size_p)
+{
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  /* The NOP instruction will be patched with an unconditional branch.  */
+  if (offset_p)
+    *offset_p = 0;
+  if (size_p)
+    *size_p = 4;
+
+  p += arm_emit_arm_nop (p, INST_AL);
+  add_insns_32 (buf, p - buf);
+}
+
+/* The "emit_write_goto_address" emit_ops method for ARM.  */
+
+static void
+arm_ax_arm_write_goto_address (CORE_ADDR from, CORE_ADDR to, int size)
+{
+  uint32_t insn;
+  arm_emit_arm_b (&insn, INST_AL, arm_arm_branch_relative_distance (from, to));
+  append_insns (&from, 4, (const unsigned char *)&insn);
+}
+
+/* The "emit_const" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_const (LONGEST num)
+{
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  p += arm_emit_arm_movw (p, INST_AL, r0,
+			  immediate_operand (bits_64 (num, 0, 15)));
+  p += arm_emit_arm_movt (p, INST_AL, r0,
+			  immediate_operand (bits_64 (num, 16, 31)));
+  p += arm_emit_arm_movw (p, INST_AL, r1,
+			  immediate_operand (bits_64 (num, 32, 47)));
+  p += arm_emit_arm_movt (p, INST_AL, r1,
+			  immediate_operand (bits_64 (num, 48, 63)));
+
+  add_insns_32 (buf, p - buf);
+}
+
+/* The "emit_call" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_call (CORE_ADDR fn)
+{
+  const struct target_desc *tdesc = current_process ()->tdesc;
+  const int r12 = find_regno (tdesc, "r12");
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  p += arm_emit_arm_mov_32 (p, r12, fn);
+  p += arm_emit_arm_blx (p, INST_AL, register_operand (r12));
+
+  add_insns_32 (buf, p - buf);
+}
+
+/* The "emit_reg" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_reg (int reg)
+{
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  /* Set r0 to unsigned char *regs.  */
+  p += arm_emit_arm_mov (p, INST_AL, r0, register_operand (r4));
+  p += arm_emit_arm_ldr (p, INST_AL, r0, r0, offset_memory_operand (0));
+  p += arm_emit_arm_mov (p, INST_AL, r1, immediate_operand (reg));
+
+  add_insns_32 (buf, p - buf);
+
+  arm_ax_emit_arm_call (get_raw_reg_func_addr ());
+}
+
+/* The "emit_pop" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_pop (void)
+{
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  p += arm_emit_arm_pop_list (p, INST_AL, encode_register_list (0, 2, 0));
+
+  add_insns_32 (buf, p - buf);
+}
+
+/* The "emit_stack_flush" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_stack_flush (void)
+{
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  /* push {r0,r1}  */
+  p += arm_emit_arm_push_list (p, INST_AL, encode_register_list (0, 2, 0));
+  add_insns_32 (buf, p - buf);
+}
+
+/* The "emit_zero_ext" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_zero_ext (int arg)
+{
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  if (arg > 32)
+    {
+      p += arm_emit_arm_ubfx (p, INST_AL, r1, r1, 0, arg - 32);
+    }
+  else
+    {
+      p += arm_emit_arm_ubfx (p, INST_AL, r0, r0, 0, arg);
+      p += arm_emit_arm_mov (p, INST_AL, r1, immediate_operand (0));
+    }
+  add_insns_32 (buf, p - buf);
+}
+
+/* The "emit_swap" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_swap (void)
+{
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  p += arm_emit_arm_pop_list (p, INST_AL, encode_register_list (2, 2, 0));
+  p += arm_emit_arm_push_list (p, INST_AL, encode_register_list (0, 2, 0));
+  p += arm_emit_arm_mov (p, INST_AL, r0, register_operand (r2));
+  p += arm_emit_arm_mov (p, INST_AL, r1, register_operand (r3));
+
+  add_insns_32 (buf, p - buf);
+}
+
+/* The "emit_stack_adjust" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_stack_adjust (int n)
+{
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  p += arm_emit_arm_add (p, INST_AL, 0, sp, sp, immediate_operand (n * 8));
+
+  add_insns_32 (buf, p - buf);
+}
+
+/* The "emit_int_call_1" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_int_call_1 (CORE_ADDR fn, int arg1)
+{
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  p += arm_emit_arm_mov_32 (p, r0, arg1);
+
+  add_insns_32 (buf, p - buf);
+  arm_ax_emit_arm_call (fn);
+}
+
+/* The "emit_void_call_2" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_void_call_2 (CORE_ADDR fn, int arg1)
+{
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  arm_ax_emit_arm_stack_flush ();
+
+  /* Setup arguments for the function call:
+     r0: arg1
+     r2-r3 : arg2
+  */
+
+  p += arm_emit_arm_mov (p, INST_AL, r2, register_operand (r0));
+  p += arm_emit_arm_mov (p, INST_AL, r3, register_operand (r1));
+  p += arm_emit_arm_mov_32 (p, r0, arg1);
+
+  add_insns_32 (buf, p - buf);
+  arm_ax_emit_arm_call (fn);
+
+  /* Restore r0,r1.  */
+  arm_ax_emit_arm_pop ();
+}
+
+/* Helper function for arm_{EQ|NE}_goto.  */
+
+static void
+arm_ax_emit_arm_cmp_eq_goto (uint8_t cond, int *offset_p, int *size_p)
+{
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  p += arm_emit_arm_pop_list (p, INST_AL, encode_register_list (2, 2, 0));
+  p += arm_emit_arm_cmp (p, INST_AL, r0, register_operand (r2));
+  p += arm_emit_arm_cmp (p, INST_EQ, r1, register_operand (r3));
+
+  /* Branch over the next instruction.  */
+  p += arm_emit_arm_bl (p, cond, arm_arm_branch_adjusted_offset (8));
+  /* The NOP instruction will be patched with an unconditional branch.  */
+  if (offset_p)
+    *offset_p = (p - buf) * 4;
+  if (size_p)
+    *size_p = 4;
+  p += arm_emit_arm_nop (p, INST_AL);
+
+  add_insns_32 (buf, p - buf);
+}
+
+/* Helper function for arm_{LE|LT|GE|GT}_goto.  */
+
+static void
+arm_ax_emit_arm_cmp_lgte_goto (uint8_t cond, int *offset_p, int *size_p,
+			       int swap)
+{
+  uint32_t buf[16];
+  uint32_t *p = buf;
+
+  if (swap)
+    {
+      p += arm_emit_arm_pop_list (p, INST_AL, encode_register_list (2, 2, 0));
+      p += arm_emit_arm_push_list (p, INST_AL,encode_register_list (0, 2, 0));
+      p += arm_emit_arm_mov (p, INST_AL, r0, register_operand (r2));
+      p += arm_emit_arm_mov (p, INST_AL, r1, register_operand (r3));
+    }
+
+  p += arm_emit_arm_pop_list (p, INST_AL, encode_register_list (2, 2, 0));
+  p += arm_emit_arm_cmp (p, INST_AL, r2, register_operand (r0));
+  p += arm_emit_arm_sbc (p, INST_AL, 1, r2, r3, register_operand (r1));
+
+  /* Branch over the next instruction.  */
+  p += arm_emit_arm_bl (p, cond, arm_arm_branch_adjusted_offset (8));
+  /* The NOP instruction will be patched with an unconditional branch.  */
+  if (offset_p)
+    *offset_p = (p - buf) * 4;
+  if (size_p)
+    *size_p = 4;
+  p += arm_emit_arm_nop (p, INST_AL);
+
+  add_insns_32 (buf, p - buf);
+}
+
+/* The "emit_eq_goto" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_eq_goto (int *offset_p, int *size_p)
+{
+  arm_ax_emit_arm_cmp_eq_goto (INST_NE, offset_p, size_p);
+}
+
+/* The "emit_ne_goto" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_ne_goto (int *offset_p, int *size_p)
+{
+  arm_ax_emit_arm_cmp_eq_goto (INST_EQ, offset_p, size_p);
+}
+
+/* The "emit_lt_goto" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_lt_goto (int *offset_p, int *size_p)
+{
+  arm_ax_emit_arm_cmp_lgte_goto (INST_GE, offset_p, size_p, 0);
+}
+
+/* The "emit_le_goto" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_le_goto (int *offset_p, int *size_p)
+{
+  arm_ax_emit_arm_cmp_lgte_goto (INST_LT, offset_p, size_p, 1);
+}
+
+/* The "emit_gt_goto" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_gt_goto (int *offset_p, int *size_p)
+{
+  arm_ax_emit_arm_cmp_lgte_goto (INST_LE, offset_p, size_p, 1);
+}
+
+/* The "emit_ge_goto" emit_ops method for ARM.  */
+
+static void
+arm_ax_emit_arm_ge_goto (int *offset_p, int *size_p)
+{
+  arm_ax_emit_arm_cmp_lgte_goto (INST_LT, offset_p, size_p, 0);
+}
+
+/* The "emit_ops" structure for ARM.  */
+
+static struct emit_ops arm_ax_emit_arm_ops_impl =
+{
+  arm_ax_emit_arm_prologue,
+  arm_ax_emit_arm_epilogue,
+  arm_ax_emit_arm_add,
+  arm_ax_emit_arm_sub,
+  arm_ax_emit_arm_mul,
+  arm_ax_emit_arm_lsh,
+  arm_ax_emit_arm_rsh_signed,
+  arm_ax_emit_arm_rsh_unsigned,
+  arm_ax_emit_arm_ext,
+  arm_ax_emit_arm_log_not,
+  arm_ax_emit_arm_bit_and,
+  arm_ax_emit_arm_bit_or,
+  arm_ax_emit_arm_bit_xor,
+  arm_ax_emit_arm_bit_not,
+  arm_ax_emit_arm_equal,
+  arm_ax_emit_arm_less_signed,
+  arm_ax_emit_arm_less_unsigned,
+  arm_ax_emit_arm_ref,
+  arm_ax_emit_arm_if_goto,
+  arm_ax_emit_arm_goto,
+  arm_ax_arm_write_goto_address,
+  arm_ax_emit_arm_const,
+  arm_ax_emit_arm_call,
+  arm_ax_emit_arm_reg,
+  arm_ax_emit_arm_pop,
+  arm_ax_emit_arm_stack_flush,
+  arm_ax_emit_arm_zero_ext,
+  arm_ax_emit_arm_swap,
+  arm_ax_emit_arm_stack_adjust,
+  arm_ax_emit_arm_int_call_1,
+  arm_ax_emit_arm_void_call_2,
+  arm_ax_emit_arm_eq_goto,
+  arm_ax_emit_arm_ne_goto,
+  arm_ax_emit_arm_lt_goto,
+  arm_ax_emit_arm_le_goto,
+  arm_ax_emit_arm_gt_goto,
+  arm_ax_emit_arm_ge_goto,
+};
+
+/* Implementation of linux_target_ops method "emit_ops".  */
+
+static struct emit_ops *
+arm_ax_emit_arm_ops (void)
+{
+  return &arm_ax_emit_arm_ops_impl;
+}
+
 struct linux_target_ops the_low_target = {
   arm_arch_setup,
   arm_regs_info,
@@ -1979,7 +2765,7 @@ struct linux_target_ops the_low_target = {
   arm_supports_tracepoints,
   arm_get_thread_area, /* get_thread_area */
   arm_install_fast_tracepoint_jump_pad, /* install_fast_tracepoint_jump_pad */
-  NULL, /*emit_ops */
+  arm_ax_emit_arm_ops,
   arm_get_min_fast_tracepoint_insn_len, /* get_min_fast_tracepoint_insn_len */
   NULL, /* supports_range_stepping */
   arm_breakpoint_kind_from_current_state,
