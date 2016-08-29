@@ -185,7 +185,8 @@ SFILES=	$(srcdir)/gdbreplay.c $(srcdir)/inferiors.c $(srcdir)/dll.c \
 	$(srcdir)/common/btrace-common.c \
 	$(srcdir)/common/fileio.c $(srcdir)/nat/linux-namespaces.c \
 	$(srcdir)/arch/arm.c $(srcdir)/common/common-regcache.c \
-	$(srcdir)/arch/arm-linux.c $(srcdir)/arch/arm-get-next-pcs.c
+	$(srcdir)/arch/arm-linux.c $(srcdir)/arch/arm-get-next-pcs.c \
+	$(srcdir)/arch/arm-insn-emit.c
 
 DEPFILES = @GDBSERVER_DEPFILES@
 
@@ -740,6 +741,9 @@ arm-linux.o: ../arch/arm-linux.c
 arm-get-next-pcs.o: ../arch/arm-get-next-pcs.c
 	$(COMPILE) $<
 	$(POSTCOMPILE)
+arm-insn-emit.o: ../arch/arm-insn-emit.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
 
 # Native object files rules from ../nat
 
@@ -795,6 +799,10 @@ linux-namespaces.o: ../nat/linux-namespaces.c
 # Architecture specific object files rules from ../arch
 
 aarch64-insn.o: ../arch/aarch64-insn.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
+
+arm-insn-utils.o: ../arch/arm-insn-utils.c
 	$(COMPILE) $<
 	$(POSTCOMPILE)
 

@@ -23,6 +23,7 @@
 #include "linux-low.h"
 #include "nat/aarch64-linux.h"
 #include "nat/aarch64-linux-hw-point.h"
+#include "arch/arm-insn-utils.h"
 #include "arch/aarch64-insn.h"
 #include "linux-aarch32-low.h"
 #include "elf/common.h"
@@ -601,19 +602,13 @@ enum aarch64_condition_codes
   LE = 0xd,
 };
 
-enum aarch64_operand_type
-{
-  OPERAND_IMMEDIATE,
-  OPERAND_REGISTER,
-};
-
 /* Representation of an operand.  At this time, it only supports register
    and immediate types.  */
 
 struct aarch64_operand
 {
   /* Type of the operand.  */
-  enum aarch64_operand_type type;
+  enum arm_operand_type type;
 
   /* Value of the operand according to the type.  */
   union
@@ -690,39 +685,6 @@ immediate_operand (uint32_t imm)
   return operand;
 }
 
-/* Helper function to create an offset memory operand.
-
-   For example:
-   p += emit_ldr (p, x0, sp, offset_memory_operand (16));  */
-
-static struct aarch64_memory_operand
-offset_memory_operand (int32_t offset)
-{
-  return (struct aarch64_memory_operand) { MEMORY_OPERAND_OFFSET, offset };
-}
-
-/* Helper function to create a pre-index memory operand.
-
-   For example:
-   p += emit_ldr (p, x0, sp, preindex_memory_operand (16));  */
-
-static struct aarch64_memory_operand
-preindex_memory_operand (int32_t index)
-{
-  return (struct aarch64_memory_operand) { MEMORY_OPERAND_PREINDEX, index };
-}
-
-/* Helper function to create a post-index memory operand.
-
-   For example:
-   p += emit_ldr (p, x0, sp, postindex_memory_operand (16));  */
-
-static struct aarch64_memory_operand
-postindex_memory_operand (int32_t index)
-{
-  return (struct aarch64_memory_operand) { MEMORY_OPERAND_POSTINDEX, index };
-}
-
 /* System control registers.  These special registers can be written and
    read with the MRS and MSR instructions.
 
@@ -770,7 +732,7 @@ emit_load_store_pair (uint32_t *buf, enum aarch64_opcodes opcode,
 		      struct aarch64_register rt,
 		      struct aarch64_register rt2,
 		      struct aarch64_register rn,
-		      struct aarch64_memory_operand operand)
+		      struct arm_memory_operand operand)
 {
   uint32_t opc;
   uint32_t pre_index;
@@ -825,7 +787,7 @@ emit_load_store_pair (uint32_t *buf, enum aarch64_opcodes opcode,
 static int
 emit_stp (uint32_t *buf, struct aarch64_register rt,
 	  struct aarch64_register rt2, struct aarch64_register rn,
-	  struct aarch64_memory_operand operand)
+	  struct arm_memory_operand operand)
 {
   return emit_load_store_pair (buf, STP, rt, rt2, rn, operand);
 }
@@ -844,7 +806,7 @@ emit_stp (uint32_t *buf, struct aarch64_register rt,
 static int
 emit_ldp (uint32_t *buf, struct aarch64_register rt,
 	  struct aarch64_register rt2, struct aarch64_register rn,
-	  struct aarch64_memory_operand operand)
+	  struct arm_memory_operand operand)
 {
   return emit_load_store_pair (buf, LDP, rt, rt2, rn, operand);
 }
@@ -907,7 +869,7 @@ emit_stp_q_offset (uint32_t *buf, unsigned rt, unsigned rt2,
 static int
 emit_ldrh (uint32_t *buf, struct aarch64_register rt,
 	   struct aarch64_register rn,
-	   struct aarch64_memory_operand operand)
+	   struct arm_memory_operand operand)
 {
   return aarch64_emit_load_store (buf, 1, LDR, rt, rn, operand);
 }
@@ -926,7 +888,7 @@ emit_ldrh (uint32_t *buf, struct aarch64_register rt,
 static int
 emit_ldrb (uint32_t *buf, struct aarch64_register rt,
 	   struct aarch64_register rn,
-	   struct aarch64_memory_operand operand)
+	   struct arm_memory_operand operand)
 {
   return aarch64_emit_load_store (buf, 0, LDR, rt, rn, operand);
 }
@@ -947,7 +909,7 @@ emit_ldrb (uint32_t *buf, struct aarch64_register rt,
 static int
 emit_str (uint32_t *buf, struct aarch64_register rt,
 	  struct aarch64_register rn,
-	  struct aarch64_memory_operand operand)
+	  struct arm_memory_operand operand)
 {
   return aarch64_emit_load_store (buf, rt.is64 ? 3 : 2, STR, rt, rn, operand);
 }

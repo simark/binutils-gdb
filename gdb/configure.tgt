@@ -38,7 +38,8 @@ esac
 case "${targ}" in
 aarch64*-*-elf | aarch64*-*-rtems*)
 	# Target: AArch64 embedded system
-	gdb_target_obs="aarch64-tdep.o aarch64-newlib-tdep.o aarch64-insn.o"
+	gdb_target_obs="aarch64-tdep.o aarch64-newlib-tdep.o aarch64-insn.o \
+			arm-insn-utils.o"
 	;;
 
 aarch64*-*-linux*)
@@ -47,7 +48,7 @@ aarch64*-*-linux*)
 			arm.o arm-linux.o arm-get-next-pcs.o arm-tdep.o \
 			arm-linux-tdep.o \
 			glibc-tdep.o linux-tdep.o solib-svr4.o \
-			symfile-mem.o linux-record.o"
+			symfile-mem.o linux-record.o arm-insn-utils.o"
 	build_gdbserver=yes
 	;;
 
