@@ -7312,9 +7312,8 @@ thumb_copy_pop_pc_16bit (uint16_t insn1, struct arm_insn_reloc_data *data)
   return 0;
 }
 
-static void
-thumb_process_displaced_16bit_insn (uint16_t insn1,
-				    struct arm_insn_reloc_data *data)
+static int
+thumb_16bit_relocate_insn (uint16_t insn1, struct arm_insn_reloc_data *data)
 {
   unsigned short op_bit_12_15 = bits (insn1, 12, 15);
   unsigned short op_bit_10_11 = bits (insn1, 10, 11);
@@ -7403,9 +7402,7 @@ thumb_process_displaced_16bit_insn (uint16_t insn1,
       err = 1;
     }
 
-  if (err)
-    internal_error (__FILE__, __LINE__,
-		    _("thumb_process_displaced_16bit_insn: Instruction decode error"));
+  return err;
 }
 
 static int
@@ -7480,9 +7477,9 @@ decode_thumb_32bit_ld_mem_hints (uint16_t insn1, uint16_t insn2,
   return 0;
 }
 
-static void
-thumb_process_displaced_32bit_insn (uint16_t insn1, uint16_t insn2,
-				    struct arm_insn_reloc_data *data)
+static int
+thumb_32bit_relocate_insn (uint16_t insn1, uint16_t insn2,
+			   struct arm_insn_reloc_data *data)
 {
   int err = 0;
   unsigned short op = bit (insn2, 15);
@@ -7594,34 +7591,41 @@ thumb_process_displaced_32bit_insn (uint16_t insn1, uint16_t insn2,
       err = 1;
     }
 
-  if (err)
-    internal_error (__FILE__, __LINE__,
-		    _("thumb_process_displaced_32bit_insn: Instruction decode error"));
+  return err;
 
 }
 
-static void
-thumb_process_displaced_insn (CORE_ADDR from, struct arm_insn_reloc_data *data)
+static int
+arm_relocate_insn (uint32_t insn, struct arm_insn_reloc_data *data)
 {
-  enum bfd_endian byte_order_for_code
-    = gdbarch_byte_order_for_code (data->gdbarch);
-  uint16_t insn1
-    = read_memory_unsigned_integer (from, 2, byte_order_for_code);
+  int err = 1;
 
-  if (debug_displaced)
-    fprintf_unfiltered (gdb_stdlog, "displaced: process thumb insn %.4x "
-			"at %.8lx\n", insn1, (unsigned long) from);
-
-  data->dsc->is_thumb = 1;
-  data->dsc->insn_size = thumb_insn_size (insn1);
-  if (thumb_insn_size (insn1) == 4)
+  if ((insn & 0xf0000000) == 0xf0000000)
+    err = arm_decode_unconditional (insn, data);
+  else switch (((insn & 0x10) >> 4) | ((insn & 0xe000000) >> 24))
     {
-      uint16_t insn2
-	= read_memory_unsigned_integer (from + 2, 2, byte_order_for_code);
-      thumb_process_displaced_32bit_insn (insn1, insn2, data);
+    case 0x0: case 0x1: case 0x2: case 0x3:
+      err = arm_decode_dp_misc (insn, data);
+      break;
+
+    case 0x4: case 0x5: case 0x6:
+      err = arm_decode_ld_st_word_ubyte (insn, data);
+      break;
+
+    case 0x7:
+      err = arm_decode_media (insn, data);
+      break;
+
+    case 0x8: case 0x9: case 0xa: case 0xb:
+      err = arm_decode_b_bl_ldmstm (insn, data);
+      break;
+
+    case 0xc: case 0xd: case 0xe: case 0xf:
+      err = arm_decode_svc_copro (insn, data);
+      break;
     }
-  else
-    thumb_process_displaced_16bit_insn (insn1, data);
+
+  return err;
 }
 
 void
@@ -7631,7 +7635,6 @@ arm_process_displaced_insn (struct gdbarch *gdbarch, CORE_ADDR from,
 {
   int err = 0;
   enum bfd_endian byte_order_for_code = gdbarch_byte_order_for_code (gdbarch);
-  uint32_t insn;
   struct arm_insn_reloc_data reloc_data;
 
   reloc_data.dsc = dsc;
@@ -7646,40 +7649,42 @@ arm_process_displaced_insn (struct gdbarch *gdbarch, CORE_ADDR from,
   dsc->cleanup = NULL;
   dsc->wrote_to_pc = 0;
 
-  if (!displaced_in_arm_mode (regs))
-    return thumb_process_displaced_insn (from, &reloc_data);
-
-  dsc->is_thumb = 0;
-  dsc->insn_size = 4;
-  insn = read_memory_unsigned_integer (from, 4, byte_order_for_code);
-  if (debug_displaced)
-    fprintf_unfiltered (gdb_stdlog, "displaced: stepping insn %.8lx "
-			"at %.8lx\n", (unsigned long) insn,
-			(unsigned long) from);
-
-  if ((insn & 0xf0000000) == 0xf0000000)
-    err = arm_decode_unconditional (insn, &reloc_data);
-  else switch (((insn & 0x10) >> 4) | ((insn & 0xe000000) >> 24))
+  if (displaced_in_arm_mode (regs))
     {
-    case 0x0: case 0x1: case 0x2: case 0x3:
-      err = arm_decode_dp_misc (insn, &reloc_data);
-      break;
+      uint32_t insn
+	= read_memory_unsigned_integer (from, 4, byte_order_for_code);
 
-    case 0x4: case 0x5: case 0x6:
-      err = arm_decode_ld_st_word_ubyte (insn, &reloc_data);
-      break;
+      if (debug_displaced)
+        fprintf_unfiltered (gdb_stdlog, "displaced: stepping insn %.8lx "
+			    "at %.8lx\n", (unsigned long) insn,
+			    (unsigned long) from);
 
-    case 0x7:
-      err = arm_decode_media (insn, &reloc_data);
-      break;
+      dsc->is_thumb = 0;
+      dsc->insn_size = 4;
 
-    case 0x8: case 0x9: case 0xa: case 0xb:
-      err = arm_decode_b_bl_ldmstm (insn, &reloc_data);
-      break;
+      err = arm_relocate_insn (insn, &reloc_data);
+    }
+  else
+    {
+      uint16_t insn1
+	= read_memory_unsigned_integer (from, 2, byte_order_for_code);
+      unsigned int insn_size = thumb_insn_size (insn1);
 
-    case 0xc: case 0xd: case 0xe: case 0xf:
-      err = arm_decode_svc_copro (insn, &reloc_data);
-      break;
+      if (debug_displaced)
+        fprintf_unfiltered (gdb_stdlog, "displaced: process thumb insn %.4x "
+			    "at %.8lx\n", insn1, (unsigned long) from);
+
+      dsc->is_thumb = 1;
+      dsc->insn_size = insn_size;
+
+      if (insn_size == 4)
+        {
+          uint16_t insn2
+	    = read_memory_unsigned_integer (from + 2, 2, byte_order_for_code);
+	  err = thumb_32bit_relocate_insn (insn1, insn2, &reloc_data);
+        }
+      else
+        err = thumb_16bit_relocate_insn (insn1, &reloc_data);
     }
 
   if (err)
