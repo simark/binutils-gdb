@@ -257,6 +257,9 @@ struct arm_prologue_cache
      to identify this frame.  */
   CORE_ADDR prev_sp;
 
+  /* Is the target available to read from ?  */
+  int available_p;
+
   /* The frame base for this frame is just prev_sp - frame size.
      FRAMESIZE is the distance from the frame pointer to the
      initial stack pointer.  */
@@ -1846,19 +1849,29 @@ arm_make_prologue_cache (struct frame_info *this_frame)
   cache = FRAME_OBSTACK_ZALLOC (struct arm_prologue_cache);
   cache->saved_regs = trad_frame_alloc_saved_regs (this_frame);
 
-  arm_scan_prologue (this_frame, cache);
+  TRY
+    {
+      arm_scan_prologue (this_frame, cache);
+      unwound_fp = get_frame_register_unsigned (this_frame, cache->framereg);
+      if (unwound_fp == 0)
+	return cache;
 
-  unwound_fp = get_frame_register_unsigned (this_frame, cache->framereg);
-  if (unwound_fp == 0)
-    return cache;
+      cache->prev_sp = unwound_fp + cache->framesize;
 
-  cache->prev_sp = unwound_fp + cache->framesize;
+      /* Calculate actual addresses of saved registers using offsets
+	 determined by arm_scan_prologue.  */
+      for (reg = 0; reg < gdbarch_num_regs (get_frame_arch (this_frame)); reg++)
+	if (trad_frame_addr_p (cache->saved_regs, reg))
+	  cache->saved_regs[reg].addr += cache->prev_sp;
 
-  /* Calculate actual addresses of saved registers using offsets
-     determined by arm_scan_prologue.  */
-  for (reg = 0; reg < gdbarch_num_regs (get_frame_arch (this_frame)); reg++)
-    if (trad_frame_addr_p (cache->saved_regs, reg))
-      cache->saved_regs[reg].addr += cache->prev_sp;
+      cache->available_p = 1;
+    }
+  CATCH (ex, RETURN_MASK_ERROR)
+    {
+      if (ex.error != NOT_AVAILABLE_ERROR)
+	throw_exception (ex);
+    }
+  END_CATCH
 
   return cache;
 }
@@ -1875,6 +1888,9 @@ arm_prologue_unwind_stop_reason (struct frame_info *this_frame,
   if (*this_cache == NULL)
     *this_cache = arm_make_prologue_cache (this_frame);
   cache = (struct arm_prologue_cache *) *this_cache;
+
+  if (!cache->available_p)
+    return UNWIND_UNAVAILABLE;
 
   /* This is meant to halt the backtrace at "_start".  */
   pc = get_frame_pc (this_frame);
@@ -1904,16 +1920,23 @@ arm_prologue_this_id (struct frame_info *this_frame,
     *this_cache = arm_make_prologue_cache (this_frame);
   cache = (struct arm_prologue_cache *) *this_cache;
 
-  /* Use function start address as part of the frame ID.  If we cannot
-     identify the start address (due to missing symbol information),
-     fall back to just using the current PC.  */
-  pc = get_frame_pc (this_frame);
-  func = get_frame_func (this_frame);
-  if (!func)
-    func = pc;
+  if (!cache->available_p)
+    {
+      *this_id = frame_id_build_unavailable_stack (cache->prev_sp);
+    }
+  else
+    {
+      /* Use function start address as part of the frame ID.  If we cannot
+	 identify the start address (due to missing symbol information),
+	 fall back to just using the current PC.  */
+      pc = get_frame_pc (this_frame);
+      func = get_frame_func (this_frame);
+      if (!func)
+	func = pc;
 
-  id = frame_id_build (cache->prev_sp, func);
-  *this_id = id;
+      id = frame_id_build (cache->prev_sp, func);
+      *this_id = id;
+    }
 }
 
 static struct value *
@@ -2893,7 +2916,17 @@ arm_make_stub_cache (struct frame_info *this_frame)
   cache = FRAME_OBSTACK_ZALLOC (struct arm_prologue_cache);
   cache->saved_regs = trad_frame_alloc_saved_regs (this_frame);
 
-  cache->prev_sp = get_frame_register_unsigned (this_frame, ARM_SP_REGNUM);
+  TRY
+    {
+      cache->prev_sp = get_frame_register_unsigned (this_frame, ARM_SP_REGNUM);
+      cache->available_p = 1;
+    }
+  CATCH (ex, RETURN_MASK_ERROR)
+    {
+      if (ex.error != NOT_AVAILABLE_ERROR)
+	throw_exception (ex);
+    }
+  END_CATCH
 
   return cache;
 }
@@ -2911,7 +2944,10 @@ arm_stub_this_id (struct frame_info *this_frame,
     *this_cache = arm_make_stub_cache (this_frame);
   cache = (struct arm_prologue_cache *) *this_cache;
 
-  *this_id = frame_id_build (cache->prev_sp, get_frame_pc (this_frame));
+  if (!cache->available_p)
+    *this_id = frame_id_build_unavailable_stack (cache->prev_sp);
+  else
+    *this_id = frame_id_build (cache->prev_sp, get_frame_pc (this_frame));
 }
 
 static int
@@ -2964,29 +3000,38 @@ arm_m_exception_cache (struct frame_info *this_frame)
   cache = FRAME_OBSTACK_ZALLOC (struct arm_prologue_cache);
   cache->saved_regs = trad_frame_alloc_saved_regs (this_frame);
 
-  unwound_sp = get_frame_register_unsigned (this_frame,
-					    ARM_SP_REGNUM);
+  TRY
+    {
+      unwound_sp = get_frame_register_unsigned (this_frame, ARM_SP_REGNUM);
+      /* The hardware saves eight 32-bit words, comprising xPSR,
+	 ReturnAddress, LR (R14), R12, R3, R2, R1, R0.  See details in
+	 "B1.5.6 Exception entry behavior" in
+	 "ARMv7-M Architecture Reference Manual".  */
+      cache->saved_regs[0].addr = unwound_sp;
+      cache->saved_regs[1].addr = unwound_sp + 4;
+      cache->saved_regs[2].addr = unwound_sp + 8;
+      cache->saved_regs[3].addr = unwound_sp + 12;
+      cache->saved_regs[12].addr = unwound_sp + 16;
+      cache->saved_regs[14].addr = unwound_sp + 20;
+      cache->saved_regs[15].addr = unwound_sp + 24;
+      cache->saved_regs[ARM_PS_REGNUM].addr = unwound_sp + 28;
 
-  /* The hardware saves eight 32-bit words, comprising xPSR,
-     ReturnAddress, LR (R14), R12, R3, R2, R1, R0.  See details in
-     "B1.5.6 Exception entry behavior" in
-     "ARMv7-M Architecture Reference Manual".  */
-  cache->saved_regs[0].addr = unwound_sp;
-  cache->saved_regs[1].addr = unwound_sp + 4;
-  cache->saved_regs[2].addr = unwound_sp + 8;
-  cache->saved_regs[3].addr = unwound_sp + 12;
-  cache->saved_regs[12].addr = unwound_sp + 16;
-  cache->saved_regs[14].addr = unwound_sp + 20;
-  cache->saved_regs[15].addr = unwound_sp + 24;
-  cache->saved_regs[ARM_PS_REGNUM].addr = unwound_sp + 28;
+      /* If bit 9 of the saved xPSR is set, then there is a four-byte
+	 aligner between the top of the 32-byte stack frame and the
+	 previous context's stack pointer.  */
+      cache->prev_sp = unwound_sp + 32;
+      if (safe_read_memory_integer (unwound_sp + 28, 4, byte_order, &xpsr)
+	  && (xpsr & (1 << 9)) != 0)
+	cache->prev_sp += 4;
 
-  /* If bit 9 of the saved xPSR is set, then there is a four-byte
-     aligner between the top of the 32-byte stack frame and the
-     previous context's stack pointer.  */
-  cache->prev_sp = unwound_sp + 32;
-  if (safe_read_memory_integer (unwound_sp + 28, 4, byte_order, &xpsr)
-      && (xpsr & (1 << 9)) != 0)
-    cache->prev_sp += 4;
+      cache->available_p = 1;
+    }
+  CATCH (ex, RETURN_MASK_ERROR)
+    {
+      if (ex.error != NOT_AVAILABLE_ERROR)
+	throw_exception (ex);
+    }
+  END_CATCH
 
   return cache;
 }
@@ -3005,9 +3050,12 @@ arm_m_exception_this_id (struct frame_info *this_frame,
     *this_cache = arm_m_exception_cache (this_frame);
   cache = (struct arm_prologue_cache *) *this_cache;
 
-  /* Our frame ID for a stub frame is the current SP and LR.  */
-  *this_id = frame_id_build (cache->prev_sp,
-			     get_frame_pc (this_frame));
+  if (!cache->available_p)
+    *this_id = frame_id_build_unavailable_stack (cache->prev_sp);
+  else
+    /* Our frame ID for a stub frame is the current SP and LR.  */
+    *this_id = frame_id_build (cache->prev_sp,
+			       get_frame_pc (this_frame));
 }
 
 /* Implementation of function hook 'prev_register' in
