@@ -1087,9 +1087,22 @@ struct arm_insn_reloc_data
     uint16_t thumb32[2];
   } insns;
 
+  /* The original PC of the instruction.  */
+  CORE_ADDR orig_loc;
+
+  /* The PC where the modified instruction(s) will start.  */
+  CORE_ADDR new_loc;
+
   /* Error message to return to the client in case the relocation fails.  */
   const char *err;
 };
+
+static int
+arm_reloc_refs_pc_error (struct arm_insn_reloc_data *data)
+{
+  data->err = "The instruction references the PC, couldn't relocate.";
+  return 1;
+}
 
 static int
 arm_reloc_others (uint32_t insn, const char *iname,
@@ -1103,86 +1116,168 @@ arm_reloc_others (uint32_t insn, const char *iname,
 static int
 arm_reloc_alu_imm (uint32_t insn, struct arm_insn_reloc_data *data)
 {
-  return 1;
+  if (arm_insn_references_pc (insn, 0x000f0000ul))
+    return arm_reloc_refs_pc_error (data);
+
+  return arm_reloc_others (insn, "ALU immediate", data);
 }
 
 static int
 arm_reloc_alu_reg (uint32_t insn, struct arm_insn_reloc_data *data)
 {
-  return 1;
+  if (arm_insn_references_pc (insn, 0x000ff00ful))
+    return arm_reloc_refs_pc_error (data);
+
+  return arm_reloc_others (insn, "ALU reg", data);
 }
 
 static int
 arm_reloc_alu_shifted_reg (uint32_t insn, struct arm_insn_reloc_data *data)
 {
-  return 1;
+  if (arm_insn_references_pc (insn, 0x000fff0ful))
+    return arm_reloc_refs_pc_error (data);
+
+  return arm_reloc_others (insn, "ALU shifted reg", data);
 }
 
 static int
 arm_reloc_b_bl_blx (uint32_t insn, struct arm_insn_reloc_data *data)
 {
-  return 1;
+  uint32_t cond = bits (insn, 28, 31);
+  int exchange = (cond == 0xf);
+
+  if (exchange)
+    {
+      /* blx */
+      CORE_ADDR absolute_dest = BranchDest (data->orig_loc, insn);
+
+      /* Adjust the address if the H bit is set.  */
+      if (bit(insn, 24))
+	absolute_dest |= (1 << 1);
+      arm_emit_arm_blx
+	(&data->insns.arm, cond,
+	 immediate_operand (arm_arm_branch_relative_distance (data->new_loc,
+							      absolute_dest)));
+    }
+  else
+    {
+      /* b or bl */
+      CORE_ADDR absolute_dest = BranchDest (data->orig_loc, insn);
+      int link = exchange || bit (insn, 24);
+
+      if (link)
+	{
+	  arm_emit_arm_bl (&data->insns.arm, cond,
+			   arm_arm_branch_relative_distance (data->new_loc,
+							     absolute_dest));
+	}
+      else
+	{
+	  arm_emit_arm_b (&data->insns.arm, cond,
+			  arm_arm_branch_relative_distance (data->new_loc,
+							    absolute_dest));
+	}
+    }
+
+  return 0;
 }
 
 static int
 arm_reloc_block_xfer (uint32_t insn, struct arm_insn_reloc_data *data)
 {
-  return 1;
+  if (bit (insn, 20) == 1)
+    {
+      /* it's an LDM/POP-kind instruction.  If it mentions PC, the instruction
+         will result in a jump.  The destination address is absolute, so it
+         won't change the result if we execute it out of line.  */
+      return arm_reloc_others (insn, "ldm", data);
+    }
+  else
+    {
+      /* It's an STM/PUSH-kind instruction.  If it mentions PC, we will store
+         the wrong value of PC in memory.  Therefore, error out if PC is
+         mentioned.  */
+      if ((insn & (1 << 15)) != 0)
+	return arm_reloc_refs_pc_error (data);
+
+      return arm_reloc_others (insn, "stm", data);
+    }
 }
 
 static int
 arm_reloc_bx_blx_reg (uint32_t insn, struct arm_insn_reloc_data *data)
 {
-  return 1;
+  /* These instructions take an absolute address in a register, so there's
+     nothing special to do.  */
+  return arm_reloc_others(insn, "bx/blx", data);
 }
 
 static int
 arm_reloc_copro_load_store (uint32_t insn, struct arm_insn_reloc_data *data)
 {
-  return 1;
+  if (arm_insn_references_pc (insn, 0x000f0000ul))
+    return arm_reloc_refs_pc_error (data);
+
+  return arm_reloc_others (insn, "copro load/store", data);
 }
 
 static int
 arm_reloc_extra_ld_st (uint32_t insn, struct arm_insn_reloc_data *data,
 		       int unprivileged)
 {
-  return 1;
+  if (arm_insn_references_pc (insn, 0x000ff00ful))
+    return arm_reloc_refs_pc_error (data);
+
+  return arm_reloc_others (insn, "extra load/store", data);
 }
 
 static int
 arm_reloc_ldr_str_ldrb_strb (uint32_t insn, struct arm_insn_reloc_data *data,
 			     int load, int size, int usermode)
 {
-  return 1;
+  if (arm_insn_references_pc (insn, 0x000ff00ful))
+    return arm_reloc_refs_pc_error (data);
+
+  return arm_reloc_others (insn, "load/store", data);
 }
 
 static int
 arm_reloc_preload (uint32_t insn, struct arm_insn_reloc_data *data)
 {
-  return 1;
+  if (arm_insn_references_pc (insn, 0x000f0000ul))
+    return arm_reloc_refs_pc_error (data);
+
+  return arm_reloc_others (insn, "preload", data);
 }
 
 static int
 arm_reloc_preload_reg (uint32_t insn, struct arm_insn_reloc_data *data)
 {
-  return 1;
+  if (arm_insn_references_pc (insn, 0x000f000ful))
+    return arm_reloc_refs_pc_error (data);
+
+  return arm_reloc_others (insn, "preload reg", data);
 }
 
 static int
 arm_reloc_svc (uint32_t insn, struct arm_insn_reloc_data *data)
 {
-  return 1;
+  /* There is nothing PC-relative in the SVC instruction.  */
+  return arm_reloc_others(insn, "svc", data);
 }
 
 static int
 arm_reloc_undef (uint32_t insn, struct arm_insn_reloc_data *data)
 {
+
+  data->err = "The instruction is undefined, couldn't relocate.";
   return 1;
 }
 
 static int
 arm_reloc_unpred (uint32_t insn, struct arm_insn_reloc_data *data)
 {
+  data->err = "The instruction is unpredictable, couldn't relocate.";
   return 1;
 }
 
@@ -1220,6 +1315,8 @@ copy_instruction_arm (CORE_ADDR *to, CORE_ADDR from, const char **err)
   /* Set a default generic error message, which can be overridden by the
      relocation functions.  */
   data.err = "Error relocating instruction.";
+  data.orig_loc = from;
+  data.new_loc = *to;
 
   ret = arm_relocate_insn (insn, &arm_insn_reloc_visitor, &data);
   if (ret != 0)
