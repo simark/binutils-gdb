@@ -148,6 +148,13 @@ int gdb_breakpoint_here (CORE_ADDR where);
 struct breakpoint *set_breakpoint_at (CORE_ADDR where,
 				      int (*handler) (CORE_ADDR));
 
+/* Same as set_breakpoint_at but allow the kind to be specified */
+
+struct breakpoint *set_breakpoint_at_with_kind (CORE_ADDR where,
+						int (*handler)(CORE_ADDR),
+						int kind);
+
+
 /* Delete a breakpoint.  */
 
 int delete_breakpoint (struct breakpoint *bkpt);

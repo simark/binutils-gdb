@@ -764,7 +764,12 @@ proc gdb_trace_collection_test {} {
     gdb_collect_expression_test globals_test_func \
 	    "globalarr\[\(l6, l7\)\]" "7"    "a\[\(b, c\)\]"
 
-    gdb_collect_return_test
+    #This architecture has no method to collect a return address.
+    if { [is_aarch32_target] } {
+	unsupported "collect \$_ret: This architecture has no method to collect a return address"
+    } else {
+	gdb_collect_return_test
+    }
 
     gdb_collect_strings_test strings_test_func "locstr" "abcdef" "" \
 	    "local string"

@@ -870,6 +870,19 @@ set_breakpoint_at (CORE_ADDR where, int (*handler) (CORE_ADDR))
   return set_breakpoint_type_at (other_breakpoint, where, handler);
 }
 
+/* See mem-break.h  */
+
+struct breakpoint *
+set_breakpoint_at_with_kind (CORE_ADDR where,
+			     int (*handler) (CORE_ADDR),
+			     int kind)
+{
+  int err_ignored;
+
+  return set_breakpoint (other_breakpoint, raw_bkpt_type_sw,
+			 where, kind, handler,
+			 &err_ignored);
+}
 
 static int
 delete_raw_breakpoint (struct process_info *proc, struct raw_breakpoint *todel)
