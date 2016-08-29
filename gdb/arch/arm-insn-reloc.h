@@ -69,6 +69,21 @@ struct thumb_32bit_insn_reloc_visitor
 		       struct arm_insn_reloc_data *data);
 };
 
+struct thumb_16bit_insn_reloc_visitor
+{
+  int (*alu_reg) (uint16_t insn, struct arm_insn_reloc_data *data);
+  int (*b) (uint16_t insn, struct arm_insn_reloc_data *data);
+  int (*bx_blx_reg) (uint16_t insn, struct arm_insn_reloc_data *data);
+  int (*cbnz_cbz) (uint16_t insn1, struct arm_insn_reloc_data *data);
+  int (*load_literal) (uint16_t insn1, struct arm_insn_reloc_data *data);
+  int (*others) (uint16_t insn, const char *iname,
+		 struct arm_insn_reloc_data *data);
+  int (*pc_relative_16bit) (uint16_t insn, struct arm_insn_reloc_data *data,
+			    int rd, unsigned int imm);
+  int (*pop_pc_16bit) (uint16_t insn, struct arm_insn_reloc_data *data);
+  int (*svc) (uint16_t insn, struct arm_insn_reloc_data *data);
+};
+
 extern int arm_relocate_insn (uint32_t insn,
 			      struct arm_insn_reloc_visitor *visitor,
 			      struct arm_insn_reloc_data *data);
@@ -76,6 +91,11 @@ extern int arm_relocate_insn (uint32_t insn,
 extern int thumb_32bit_relocate_insn (
   uint16_t insn1, uint16_t insn2,
   struct thumb_32bit_insn_reloc_visitor *visitor,
+  struct arm_insn_reloc_data *data);
+
+extern int thumb_16bit_relocate_insn (
+  uint16_t insn1,
+  struct thumb_16bit_insn_reloc_visitor *visitor,
   struct arm_insn_reloc_data *data);
 
 #endif /* ARM_INSN_RELOC_H */
