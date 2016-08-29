@@ -348,6 +348,11 @@ foreach at_first_loc { "1" "0" } {
 break_trace_same_addr_6 "trace" "enable" "trace" "disable"
 break_trace_same_addr_6 "trace" "disable" "trace" "enable"
 
+if {![gdb_target_supports_fast_trace]} {
+    unsupported "Target does not support fast tracepoints."
+    return 1
+}
+
 set libipa [get_in_proc_agent]
 set remote_libipa [gdb_load_shlib $libipa]
 

@@ -39,17 +39,6 @@ if ![gdb_target_supports_trace] {
     return -1
 }
 
-# Compile the test case with the in-process agent library.
-set libipa [get_in_proc_agent]
-gdb_load_shlib $libipa
-
-lappend options shlib=$libipa
-
-if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile executable $options] != "" } {
-    untested "Couldn't compile test program with in-process agent library"
-    return -1
-}
-
 # This test makes sure that disabling and enabling tracepoints works
 # correctly.  TRACEPOINT_CMD is the command used to set tracepoints
 # (e.g. trace or ftrace).
@@ -125,4 +114,21 @@ proc test_tracepoint_enable_disable { tracepoint_cmd } {
 }
 
 test_tracepoint_enable_disable trace
+
+if {![gdb_target_supports_fast_trace]} {
+    unsupported "Target does not support fast tracepoints."
+    return -1
+}
+
+# Compile the test case with the in-process agent library.
+set libipa [get_in_proc_agent]
+gdb_load_shlib $libipa
+
+lappend options shlib=$libipa
+
+if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile executable $options] != "" } {
+    untested "Couldn't compile test program with in-process agent library"
+    return -1
+}
+
 test_tracepoint_enable_disable ftrace

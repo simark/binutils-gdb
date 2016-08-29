@@ -37,17 +37,25 @@ if ![gdb_target_supports_trace] {
     return -1
 }
 
-set libipa [get_in_proc_agent]
-set remote_libipa [gdb_load_shlib $libipa]
+set trace_commands { "trace" }
+set remote_libipa ""
 
-# Can't use prepare_for_testing, because that splits compiling into
-# building objects and then linking, and we'd fail with "linker input
-# file unused because linking not done" when building the object.
+if {[gdb_target_supports_fast_trace]} {
 
-if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
-	  executable [list debug $additional_flags shlib=$libipa] ] != "" } {
-    untested "failed to compile ftrace tests"
-    return -1
+    set libipa [get_in_proc_agent]
+    set remote_libipa [gdb_load_shlib $libipa]
+
+    # Can't use prepare_for_testing, because that splits compiling into
+    # building objects and then linking, and we'd fail with "linker input
+    # file unused because linking not done" when building the object.
+
+    if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
+	      executable [list debug $additional_flags shlib=$libipa] ] != "" } {
+	untested "failed to compile ftrace tests"
+	return -1
+    }
+
+    set trace_commands { "trace" "ftrace"}
 }
 
 clean_restart ${executable}
@@ -126,7 +134,7 @@ proc 18955_i386_failure { trace_command } {
     }
 }
 
-foreach trace_command { "trace" "ftrace" } {
+foreach trace_command $trace_commands {
     # This condition is always true as the PC should be set to the tracepoint
     # address when hit.
     test_tracepoints $trace_command "\$$pcreg == *set_point" 10

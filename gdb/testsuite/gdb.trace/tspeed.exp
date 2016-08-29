@@ -18,6 +18,11 @@ load_lib "trace-support.exp"
 standard_testfile
 set executable $testfile
 
+if {![gdb_target_supports_fast_trace]} {
+    unsupported "Target does not support fast tracepoints."
+    return -1
+}
+
 set ipalib [get_in_proc_agent]
 
 if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
