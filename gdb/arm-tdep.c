@@ -4526,6 +4526,13 @@ arm_adjust_breakpoint_address (struct gdbarch *gdbarch, CORE_ADDR bpaddr)
 #define ARM_NOP				0xe1a00000
 #define THUMB_NOP 0x4600
 
+struct arm_insn_reloc_data
+{
+  struct displaced_step_closure *dsc;
+  struct gdbarch *gdbarch;
+  struct regcache *regs;
+};
+
 /* Helper for register reads for displaced stepping.  In particular, this
    returns the PC as it would be seen by the instruction at its original
    location.  */
@@ -4734,24 +4741,25 @@ insn_references_pc (uint32_t insn, uint32_t bitmask)
    matter what address they are executed at: in those cases, use this.  */
 
 static int
-arm_copy_unmodified (struct gdbarch *gdbarch, uint32_t insn,
-		     const char *iname, struct displaced_step_closure *dsc)
+arm_copy_unmodified (uint32_t insn, const char *iname,
+		     struct arm_insn_reloc_data *data)
 {
   if (debug_displaced)
     fprintf_unfiltered (gdb_stdlog, "displaced: copying insn %.8lx, "
 			"opcode/class '%s' unmodified\n", (unsigned long) insn,
 			iname);
 
-  dsc->modinsn[0] = insn;
+  data->dsc->modinsn[0] = insn;
 
   return 0;
 }
 
 static int
-thumb_copy_unmodified_32bit (struct gdbarch *gdbarch, uint16_t insn1,
-			     uint16_t insn2, const char *iname,
-			     struct displaced_step_closure *dsc)
+thumb_copy_unmodified_32bit (uint16_t insn1, uint16_t insn2, const char *iname,
+			     struct arm_insn_reloc_data *data)
 {
+  struct displaced_step_closure *dsc = data->dsc;
+
   if (debug_displaced)
     fprintf_unfiltered (gdb_stdlog, "displaced: copying insn %.4x %.4x, "
 			"opcode/class '%s' unmodified\n", insn1, insn2,
@@ -4767,16 +4775,15 @@ thumb_copy_unmodified_32bit (struct gdbarch *gdbarch, uint16_t insn1,
 /* Copy 16-bit Thumb(Thumb and 16-bit Thumb-2) instruction without any
    modification.  */
 static int
-thumb_copy_unmodified_16bit (struct gdbarch *gdbarch, uint16_t insn,
-			     const char *iname,
-			     struct displaced_step_closure *dsc)
+thumb_copy_unmodified_16bit (uint16_t insn, const char *iname,
+			     struct arm_insn_reloc_data *data)
 {
   if (debug_displaced)
     fprintf_unfiltered (gdb_stdlog, "displaced: copying insn %.4x, "
 			"opcode/class '%s' unmodified\n", insn,
 			iname);
 
-  dsc->modinsn[0] = insn;
+  data->dsc->modinsn[0] = insn;
 
   return 0;
 }
@@ -4793,10 +4800,12 @@ cleanup_preload (struct gdbarch *gdbarch,
 }
 
 static void
-install_preload (struct gdbarch *gdbarch, struct regcache *regs,
-		 struct displaced_step_closure *dsc, unsigned int rn)
+install_preload (struct arm_insn_reloc_data *data, unsigned int rn)
 {
   ULONGEST rn_val;
+  struct displaced_step_closure *dsc = data->dsc;
+  struct regcache *regs = data->regs;
+
   /* Preload instructions:
 
      {pli/pld} [rn, #+/-imm]
@@ -4812,36 +4821,37 @@ install_preload (struct gdbarch *gdbarch, struct regcache *regs,
 }
 
 static int
-arm_copy_preload (struct gdbarch *gdbarch, uint32_t insn, struct regcache *regs,
-		  struct displaced_step_closure *dsc)
+arm_copy_preload (uint32_t insn, struct arm_insn_reloc_data *data)
 {
   unsigned int rn = bits (insn, 16, 19);
 
   if (!insn_references_pc (insn, 0x000f0000ul))
-    return arm_copy_unmodified (gdbarch, insn, "preload", dsc);
+    return arm_copy_unmodified (insn, "preload", data);
 
   if (debug_displaced)
     fprintf_unfiltered (gdb_stdlog, "displaced: copying preload insn %.8lx\n",
 			(unsigned long) insn);
 
-  dsc->modinsn[0] = insn & 0xfff0ffff;
+  data->dsc->modinsn[0] = insn & 0xfff0ffff;
 
-  install_preload (gdbarch, regs, dsc, rn);
+  install_preload (data, rn);
 
   return 0;
 }
 
 static int
-thumb2_copy_preload (struct gdbarch *gdbarch, uint16_t insn1, uint16_t insn2,
-		     struct regcache *regs, struct displaced_step_closure *dsc)
+thumb2_copy_preload (uint16_t insn1, uint16_t insn2,
+		     struct arm_insn_reloc_data *data)
 {
   unsigned int rn = bits (insn1, 0, 3);
   unsigned int u_bit = bit (insn1, 7);
   int imm12 = bits (insn2, 0, 11);
   ULONGEST pc_val;
+  struct displaced_step_closure *dsc = data->dsc;
+  struct regcache *regs = data->regs;
 
   if (rn != ARM_PC_REGNUM)
-    return thumb_copy_unmodified_32bit (gdbarch, insn1, insn2, "preload", dsc);
+    return thumb_copy_unmodified_32bit (insn1, insn2, "preload", data);
 
   /* PC is only allowed to use in PLI (immediate,literal) Encoding T3, and
      PLD (literal) Encoding T1.  */
@@ -4882,11 +4892,12 @@ thumb2_copy_preload (struct gdbarch *gdbarch, uint16_t insn1, uint16_t insn2,
 /* Preload instructions with register offset.  */
 
 static void
-install_preload_reg(struct gdbarch *gdbarch, struct regcache *regs,
-		    struct displaced_step_closure *dsc, unsigned int rn,
-		    unsigned int rm)
+install_preload_reg (struct arm_insn_reloc_data *data, unsigned int rn,
+		     unsigned int rm)
 {
   ULONGEST rn_val, rm_val;
+  struct displaced_step_closure *dsc = data->dsc;
+  struct regcache *regs = data->regs;
 
   /* Preload register-offset instructions:
 
@@ -4906,24 +4917,22 @@ install_preload_reg(struct gdbarch *gdbarch, struct regcache *regs,
 }
 
 static int
-arm_copy_preload_reg (struct gdbarch *gdbarch, uint32_t insn,
-		      struct regcache *regs,
-		      struct displaced_step_closure *dsc)
+arm_copy_preload_reg (uint32_t insn, struct arm_insn_reloc_data *data)
 {
   unsigned int rn = bits (insn, 16, 19);
   unsigned int rm = bits (insn, 0, 3);
 
 
   if (!insn_references_pc (insn, 0x000f000ful))
-    return arm_copy_unmodified (gdbarch, insn, "preload reg", dsc);
+    return arm_copy_unmodified (insn, "preload reg", data);
 
   if (debug_displaced)
     fprintf_unfiltered (gdb_stdlog, "displaced: copying preload insn %.8lx\n",
 			(unsigned long) insn);
 
-  dsc->modinsn[0] = (insn & 0xfff0fff0) | 0x1;
+  data->dsc->modinsn[0] = (insn & 0xfff0fff0) | 0x1;
 
-  install_preload_reg (gdbarch, regs, dsc, rn, rm);
+  install_preload_reg (data, rn, rm);
   return 0;
 }
 
@@ -4943,11 +4952,12 @@ cleanup_copro_load_store (struct gdbarch *gdbarch,
 }
 
 static void
-install_copro_load_store (struct gdbarch *gdbarch, struct regcache *regs,
-			  struct displaced_step_closure *dsc,
-			  int writeback, unsigned int rn)
+install_copro_load_store (struct arm_insn_reloc_data *data, int writeback,
+			  unsigned int rn)
 {
   ULONGEST rn_val;
+  struct displaced_step_closure *dsc = data->dsc;
+  struct regcache *regs = data->regs;
 
   /* Coprocessor load/store instructions:
 
@@ -4970,36 +4980,33 @@ install_copro_load_store (struct gdbarch *gdbarch, struct regcache *regs,
 }
 
 static int
-arm_copy_copro_load_store (struct gdbarch *gdbarch, uint32_t insn,
-			   struct regcache *regs,
-			   struct displaced_step_closure *dsc)
+arm_copy_copro_load_store (uint32_t insn, struct arm_insn_reloc_data *data)
 {
   unsigned int rn = bits (insn, 16, 19);
 
   if (!insn_references_pc (insn, 0x000f0000ul))
-    return arm_copy_unmodified (gdbarch, insn, "copro load/store", dsc);
+    return arm_copy_unmodified (insn, "copro load/store", data);
 
   if (debug_displaced)
     fprintf_unfiltered (gdb_stdlog, "displaced: copying coprocessor "
 			"load/store insn %.8lx\n", (unsigned long) insn);
 
-  dsc->modinsn[0] = insn & 0xfff0ffff;
+  data->dsc->modinsn[0] = insn & 0xfff0ffff;
 
-  install_copro_load_store (gdbarch, regs, dsc, bit (insn, 25), rn);
+  install_copro_load_store (data, bit (insn, 25), rn);
 
   return 0;
 }
 
 static int
-thumb2_copy_copro_load_store (struct gdbarch *gdbarch, uint16_t insn1,
-			      uint16_t insn2, struct regcache *regs,
-			      struct displaced_step_closure *dsc)
+thumb2_copy_copro_load_store (uint16_t insn1, uint16_t insn2,
+			      struct arm_insn_reloc_data *data)
 {
   unsigned int rn = bits (insn1, 0, 3);
+  struct displaced_step_closure *dsc = data->dsc;
 
   if (rn != ARM_PC_REGNUM)
-    return thumb_copy_unmodified_32bit (gdbarch, insn1, insn2,
-					"copro load/store", dsc);
+    return thumb_copy_unmodified_32bit (insn1, insn2, "copro load/store", data);
 
   if (debug_displaced)
     fprintf_unfiltered (gdb_stdlog, "displaced: copying coprocessor "
@@ -5011,7 +5018,7 @@ thumb2_copy_copro_load_store (struct gdbarch *gdbarch, uint16_t insn1,
 
   /* This function is called for copying instruction LDC/LDC2/VLDR, which
      doesn't support writeback, so pass 0.  */
-  install_copro_load_store (gdbarch, regs, dsc, 0, rn);
+  install_copro_load_store (data, 0, rn);
 
   return 0;
 }
@@ -5051,9 +5058,8 @@ cleanup_branch (struct gdbarch *gdbarch, struct regcache *regs,
 /* Copy B/BL/BLX instructions with immediate destinations.  */
 
 static void
-install_b_bl_blx (struct gdbarch *gdbarch, struct regcache *regs,
-		  struct displaced_step_closure *dsc,
-		  unsigned int cond, int exchange, int link, long offset)
+install_b_bl_blx (struct arm_insn_reloc_data *data, unsigned int cond,
+		  int exchange, int link, long offset)
 {
   /* Implement "BL<cond> <label>" as:
 
@@ -5062,6 +5068,7 @@ install_b_bl_blx (struct gdbarch *gdbarch, struct regcache *regs,
      Cleanup: if (condition true) { r14 <- pc; pc <- label }.
 
      B<cond> similar, but don't set r14 in cleanup.  */
+  struct displaced_step_closure *dsc = data->dsc;
 
   dsc->u.branch.cond = cond;
   dsc->u.branch.link = link;
@@ -5080,8 +5087,7 @@ install_b_bl_blx (struct gdbarch *gdbarch, struct regcache *regs,
   dsc->cleanup = &cleanup_branch;
 }
 static int
-arm_copy_b_bl_blx (struct gdbarch *gdbarch, uint32_t insn,
-		   struct regcache *regs, struct displaced_step_closure *dsc)
+arm_copy_b_bl_blx (uint32_t insn, struct arm_insn_reloc_data *data)
 {
   unsigned int cond = bits (insn, 28, 31);
   int exchange = (cond == 0xf);
@@ -5102,16 +5108,15 @@ arm_copy_b_bl_blx (struct gdbarch *gdbarch, uint32_t insn,
   if (bit (offset, 25))
     offset = offset | ~0x3ffffff;
 
-  dsc->modinsn[0] = ARM_NOP;
+  data->dsc->modinsn[0] = ARM_NOP;
 
-  install_b_bl_blx (gdbarch, regs, dsc, cond, exchange, link, offset);
+  install_b_bl_blx (data, cond, exchange, link, offset);
   return 0;
 }
 
 static int
-thumb2_copy_b_bl_blx (struct gdbarch *gdbarch, uint16_t insn1,
-		      uint16_t insn2, struct regcache *regs,
-		      struct displaced_step_closure *dsc)
+thumb2_copy_b_bl_blx (uint16_t insn1, uint16_t insn2,
+		      struct arm_insn_reloc_data *data)
 {
   int link = bit (insn2, 14);
   int exchange = link && !bit (insn2, 12);
@@ -5157,20 +5162,20 @@ thumb2_copy_b_bl_blx (struct gdbarch *gdbarch, uint16_t insn1,
 			link ? (exchange) ? "blx" : "bl" : "b",
 			insn1, insn2, offset);
 
-  dsc->modinsn[0] = THUMB_NOP;
+  data->dsc->modinsn[0] = THUMB_NOP;
 
-  install_b_bl_blx (gdbarch, regs, dsc, cond, exchange, link, offset);
+  install_b_bl_blx (data, cond, exchange, link, offset);
   return 0;
 }
 
 /* Copy B Thumb instructions.  */
 static int
-thumb_copy_b (struct gdbarch *gdbarch, uint16_t insn,
-	      struct displaced_step_closure *dsc)
+thumb_copy_b (uint16_t insn, struct arm_insn_reloc_data *data)
 {
   unsigned int cond = 0;
   int offset = 0;
   unsigned short bit_12_15 = bits (insn, 12, 15);
+  struct displaced_step_closure *dsc = data->dsc;
   CORE_ADDR from = dsc->insn_addr;
 
   if (bit_12_15 == 0xd)
@@ -5205,8 +5210,7 @@ thumb_copy_b (struct gdbarch *gdbarch, uint16_t insn,
 /* Copy BX/BLX with register-specified destinations.  */
 
 static void
-install_bx_blx_reg (struct gdbarch *gdbarch, struct regcache *regs,
-		    struct displaced_step_closure *dsc, int link,
+install_bx_blx_reg (struct arm_insn_reloc_data *data, int link,
 		    unsigned int cond, unsigned int rm)
 {
   /* Implement {BX,BLX}<cond> <reg>" as:
@@ -5216,8 +5220,9 @@ install_bx_blx_reg (struct gdbarch *gdbarch, struct regcache *regs,
      Cleanup: if (condition true) { r14 <- pc; pc <- dest; }.
 
      Don't set r14 in cleanup for BX.  */
+  struct displaced_step_closure *dsc = data->dsc;
 
-  dsc->u.branch.dest = displaced_read_reg (regs, dsc, rm);
+  dsc->u.branch.dest = displaced_read_reg (data->regs, data->dsc, rm);
 
   dsc->u.branch.cond = cond;
   dsc->u.branch.link = link;
@@ -5228,8 +5233,7 @@ install_bx_blx_reg (struct gdbarch *gdbarch, struct regcache *regs,
 }
 
 static int
-arm_copy_bx_blx_reg (struct gdbarch *gdbarch, uint32_t insn,
-		     struct regcache *regs, struct displaced_step_closure *dsc)
+arm_copy_bx_blx_reg (uint32_t insn, struct arm_insn_reloc_data *data)
 {
   unsigned int cond = bits (insn, 28, 31);
   /* BX:  x12xxx1x
@@ -5241,16 +5245,14 @@ arm_copy_bx_blx_reg (struct gdbarch *gdbarch, uint32_t insn,
     fprintf_unfiltered (gdb_stdlog, "displaced: copying insn %.8lx",
 			(unsigned long) insn);
 
-  dsc->modinsn[0] = ARM_NOP;
+  data->dsc->modinsn[0] = ARM_NOP;
 
-  install_bx_blx_reg (gdbarch, regs, dsc, link, cond, rm);
+  install_bx_blx_reg (data, link, cond, rm);
   return 0;
 }
 
 static int
-thumb_copy_bx_blx_reg (struct gdbarch *gdbarch, uint16_t insn,
-		       struct regcache *regs,
-		       struct displaced_step_closure *dsc)
+thumb_copy_bx_blx_reg (uint16_t insn, struct arm_insn_reloc_data *data)
 {
   int link = bit (insn, 7);
   unsigned int rm = bits (insn, 3, 6);
@@ -5259,9 +5261,9 @@ thumb_copy_bx_blx_reg (struct gdbarch *gdbarch, uint16_t insn,
     fprintf_unfiltered (gdb_stdlog, "displaced: copying insn %.4x",
 			(unsigned short) insn);
 
-  dsc->modinsn[0] = THUMB_NOP;
+  data->dsc->modinsn[0] = THUMB_NOP;
 
-  install_bx_blx_reg (gdbarch, regs, dsc, link, INST_AL, rm);
+  install_bx_blx_reg (data, link, INST_AL, rm);
 
   return 0;
 }
@@ -5280,8 +5282,7 @@ cleanup_alu_imm (struct gdbarch *gdbarch,
 }
 
 static int
-arm_copy_alu_imm (struct gdbarch *gdbarch, uint32_t insn, struct regcache *regs,
-		  struct displaced_step_closure *dsc)
+arm_copy_alu_imm (uint32_t insn, struct arm_insn_reloc_data *data)
 {
   unsigned int rn = bits (insn, 16, 19);
   unsigned int rd = bits (insn, 12, 15);
@@ -5290,7 +5291,7 @@ arm_copy_alu_imm (struct gdbarch *gdbarch, uint32_t insn, struct regcache *regs,
   ULONGEST rd_val, rn_val;
 
   if (!insn_references_pc (insn, 0x000ff000ul))
-    return arm_copy_unmodified (gdbarch, insn, "ALU immediate", dsc);
+    return arm_copy_unmodified (insn, "ALU immediate", data);
 
   if (debug_displaced)
     fprintf_unfiltered (gdb_stdlog, "displaced: copying immediate %s insn "
@@ -5309,32 +5310,33 @@ arm_copy_alu_imm (struct gdbarch *gdbarch, uint32_t insn, struct regcache *regs,
      Cleanup: rd <- r0; r0 <- tmp1; r1 <- tmp2
   */
 
-  dsc->tmp[0] = displaced_read_reg (regs, dsc, 0);
-  dsc->tmp[1] = displaced_read_reg (regs, dsc, 1);
-  rn_val = displaced_read_reg (regs, dsc, rn);
-  rd_val = displaced_read_reg (regs, dsc, rd);
-  displaced_write_reg (regs, dsc, 0, rd_val, CANNOT_WRITE_PC);
-  displaced_write_reg (regs, dsc, 1, rn_val, CANNOT_WRITE_PC);
-  dsc->rd = rd;
+  data->dsc->tmp[0] = displaced_read_reg (data->regs, data->dsc, 0);
+  data->dsc->tmp[1] = displaced_read_reg (data->regs, data->dsc, 1);
+  rn_val = displaced_read_reg (data->regs, data->dsc, rn);
+  rd_val = displaced_read_reg (data->regs, data->dsc, rd);
+  displaced_write_reg (data->regs, data->dsc, 0, rd_val, CANNOT_WRITE_PC);
+  displaced_write_reg (data->regs, data->dsc, 1, rn_val, CANNOT_WRITE_PC);
+  data->dsc->rd = rd;
 
   if (is_mov)
-    dsc->modinsn[0] = insn & 0xfff00fff;
+    data->dsc->modinsn[0] = insn & 0xfff00fff;
   else
-    dsc->modinsn[0] = (insn & 0xfff00fff) | 0x10000;
+    data->dsc->modinsn[0] = (insn & 0xfff00fff) | 0x10000;
 
-  dsc->cleanup = &cleanup_alu_imm;
+  data->dsc->cleanup = &cleanup_alu_imm;
 
   return 0;
 }
 
 static int
-thumb2_copy_alu_imm (struct gdbarch *gdbarch, uint16_t insn1,
-		     uint16_t insn2, struct regcache *regs,
-		     struct displaced_step_closure *dsc)
+thumb2_copy_alu_imm (uint16_t insn1, uint16_t insn2,
+		     struct arm_insn_reloc_data *data)
 {
   unsigned int op = bits (insn1, 5, 8);
   unsigned int rn, rm, rd;
   ULONGEST rd_val, rn_val;
+  struct displaced_step_closure *dsc = data->dsc;
+  struct regcache *regs = data->regs;
 
   rn = bits (insn1, 0, 3); /* Rn */
   rm = bits (insn2, 0, 3); /* Rm */
@@ -5344,7 +5346,7 @@ thumb2_copy_alu_imm (struct gdbarch *gdbarch, uint16_t insn1,
   gdb_assert (op == 0x2 && rn == 0xf);
 
   if (rm != ARM_PC_REGNUM && rd != ARM_PC_REGNUM)
-    return thumb_copy_unmodified_32bit (gdbarch, insn1, insn2, "ALU imm", dsc);
+    return thumb_copy_unmodified_32bit (insn1, insn2, "ALU imm", data);
 
   if (debug_displaced)
     fprintf_unfiltered (gdb_stdlog, "displaced: copying reg %s insn %.4x%.4x\n",
@@ -5397,11 +5399,12 @@ cleanup_alu_reg (struct gdbarch *gdbarch,
 }
 
 static void
-install_alu_reg (struct gdbarch *gdbarch, struct regcache *regs,
-		 struct displaced_step_closure *dsc,
-		 unsigned int rd, unsigned int rn, unsigned int rm)
+install_alu_reg (struct arm_insn_reloc_data *data, unsigned int rd,
+		 unsigned int rn, unsigned int rm)
 {
   ULONGEST rd_val, rn_val, rm_val;
+  struct displaced_step_closure *dsc = data->dsc;
+  struct regcache *regs = data->regs;
 
   /* Instruction is of form:
 
@@ -5430,33 +5433,30 @@ install_alu_reg (struct gdbarch *gdbarch, struct regcache *regs,
 }
 
 static int
-arm_copy_alu_reg (struct gdbarch *gdbarch, uint32_t insn, struct regcache *regs,
-		  struct displaced_step_closure *dsc)
+arm_copy_alu_reg (uint32_t insn, struct arm_insn_reloc_data *data)
 {
   unsigned int op = bits (insn, 21, 24);
   int is_mov = (op == 0xd);
 
   if (!insn_references_pc (insn, 0x000ff00ful))
-    return arm_copy_unmodified (gdbarch, insn, "ALU reg", dsc);
+    return arm_copy_unmodified (insn, "ALU reg", data);
 
   if (debug_displaced)
     fprintf_unfiltered (gdb_stdlog, "displaced: copying reg %s insn %.8lx\n",
 			is_mov ? "move" : "ALU", (unsigned long) insn);
 
   if (is_mov)
-    dsc->modinsn[0] = (insn & 0xfff00ff0) | 0x2;
+    data->dsc->modinsn[0] = (insn & 0xfff00ff0) | 0x2;
   else
-    dsc->modinsn[0] = (insn & 0xfff00ff0) | 0x10002;
+    data->dsc->modinsn[0] = (insn & 0xfff00ff0) | 0x10002;
 
-  install_alu_reg (gdbarch, regs, dsc, bits (insn, 12, 15), bits (insn, 16, 19),
+  install_alu_reg (data, bits (insn, 12, 15), bits (insn, 16, 19),
 		   bits (insn, 0, 3));
   return 0;
 }
 
 static int
-thumb_copy_alu_reg (struct gdbarch *gdbarch, uint16_t insn,
-		    struct regcache *regs,
-		    struct displaced_step_closure *dsc)
+thumb_copy_alu_reg (uint16_t insn, struct arm_insn_reloc_data *data)
 {
   unsigned rm, rd;
 
@@ -5464,15 +5464,15 @@ thumb_copy_alu_reg (struct gdbarch *gdbarch, uint16_t insn,
   rd = (bit (insn, 7) << 3) | bits (insn, 0, 2);
 
   if (rd != ARM_PC_REGNUM && rm != ARM_PC_REGNUM)
-    return thumb_copy_unmodified_16bit (gdbarch, insn, "ALU reg", dsc);
+    return thumb_copy_unmodified_16bit (insn, "ALU reg", data);
 
   if (debug_displaced)
     fprintf_unfiltered (gdb_stdlog, "displaced: copying ALU reg insn %.4x\n",
 			(unsigned short) insn);
 
-  dsc->modinsn[0] = ((insn & 0xff00) | 0x10);
+  data->dsc->modinsn[0] = ((insn & 0xff00) | 0x10);
 
-  install_alu_reg (gdbarch, regs, dsc, rd, rd, rm);
+  install_alu_reg (data, rd, rd, rm);
 
   return 0;
 }
@@ -5494,13 +5494,14 @@ cleanup_alu_shifted_reg (struct gdbarch *gdbarch,
 }
 
 static void
-install_alu_shifted_reg (struct gdbarch *gdbarch, struct regcache *regs,
-			 struct displaced_step_closure *dsc,
-			 unsigned int rd, unsigned int rn, unsigned int rm,
-			 unsigned rs)
+install_alu_shifted_reg (struct arm_insn_reloc_data *data, unsigned int rd,
+			 unsigned int rn, unsigned int rm, unsigned rs)
 {
   int i;
   ULONGEST rd_val, rn_val, rm_val, rs_val;
+  struct displaced_step_closure *dsc = data->dsc;
+  struct regcache *regs = data->regs;
+
 
   /* Instruction is of form:
 
@@ -5532,16 +5533,14 @@ install_alu_shifted_reg (struct gdbarch *gdbarch, struct regcache *regs,
 }
 
 static int
-arm_copy_alu_shifted_reg (struct gdbarch *gdbarch, uint32_t insn,
-			  struct regcache *regs,
-			  struct displaced_step_closure *dsc)
+arm_copy_alu_shifted_reg (uint32_t insn, struct arm_insn_reloc_data *data)
 {
   unsigned int op = bits (insn, 21, 24);
   int is_mov = (op == 0xd);
   unsigned int rd, rn, rm, rs;
 
   if (!insn_references_pc (insn, 0x000fff0ful))
-    return arm_copy_unmodified (gdbarch, insn, "ALU shifted reg", dsc);
+    return arm_copy_unmodified (insn, "ALU shifted reg", data);
 
   if (debug_displaced)
     fprintf_unfiltered (gdb_stdlog, "displaced: copying shifted reg %s insn "
@@ -5554,11 +5553,11 @@ arm_copy_alu_shifted_reg (struct gdbarch *gdbarch, uint32_t insn,
   rd = bits (insn, 12, 15);
 
   if (is_mov)
-    dsc->modinsn[0] = (insn & 0xfff000f0) | 0x302;
+    data->dsc->modinsn[0] = (insn & 0xfff000f0) | 0x302;
   else
-    dsc->modinsn[0] = (insn & 0xfff000f0) | 0x10302;
+    data->dsc->modinsn[0] = (insn & 0xfff000f0) | 0x10302;
 
-  install_alu_shifted_reg (gdbarch, regs, dsc, rd, rn, rm, rs);
+  install_alu_shifted_reg (data, rd, rn, rm, rs);
 
   return 0;
 }
@@ -5618,8 +5617,8 @@ cleanup_store (struct gdbarch *gdbarch, struct regcache *regs,
    transfers, which have a different encoding to byte/word transfers.  */
 
 static int
-arm_copy_extra_ld_st (struct gdbarch *gdbarch, uint32_t insn, int unprivileged,
-		      struct regcache *regs, struct displaced_step_closure *dsc)
+arm_copy_extra_ld_st (uint32_t insn, struct arm_insn_reloc_data *data,
+		      int unprivileged)
 {
   unsigned int op1 = bits (insn, 20, 24);
   unsigned int op2 = bits (insn, 5, 6);
@@ -5631,9 +5630,11 @@ arm_copy_extra_ld_st (struct gdbarch *gdbarch, uint32_t insn, int unprivileged,
   int immed = (op1 & 0x4) != 0;
   int opcode;
   ULONGEST rt_val, rt_val2 = 0, rn_val, rm_val = 0;
+  struct displaced_step_closure *dsc = data->dsc;
+  struct regcache *regs = data->regs;
 
   if (!insn_references_pc (insn, 0x000ff00ful))
-    return arm_copy_unmodified (gdbarch, insn, "extra load/store", dsc);
+    return arm_copy_unmodified (insn, "extra load/store", data);
 
   if (debug_displaced)
     fprintf_unfiltered (gdb_stdlog, "displaced: copying %sextra load/store "
@@ -5692,12 +5693,13 @@ arm_copy_extra_ld_st (struct gdbarch *gdbarch, uint32_t insn, int unprivileged,
 /* Copy byte/half word/word loads and stores.  */
 
 static void
-install_load_store (struct gdbarch *gdbarch, struct regcache *regs,
-		    struct displaced_step_closure *dsc, int load,
-		    int immed, int writeback, int size, int usermode,
-		    int rt, int rm, int rn)
+install_load_store (struct arm_insn_reloc_data *data, int load, int immed,
+		    int writeback, int size, int usermode, int rt, int rm,
+		    int rn)
 {
   ULONGEST rt_val, rn_val, rm_val = 0;
+  struct displaced_step_closure *dsc = data->dsc;
+  struct regcache *regs = data->regs;
 
   dsc->tmp[0] = displaced_read_reg (regs, dsc, 0);
   dsc->tmp[2] = displaced_read_reg (regs, dsc, 2);
@@ -5747,14 +5749,15 @@ install_load_store (struct gdbarch *gdbarch, struct regcache *regs,
 
 
 static int
-thumb2_copy_load_literal (struct gdbarch *gdbarch, uint16_t insn1,
-			  uint16_t insn2, struct regcache *regs,
-			  struct displaced_step_closure *dsc, int size)
+thumb2_copy_load_literal (uint16_t insn1, uint16_t insn2,
+			  struct arm_insn_reloc_data *data, int size)
 {
   unsigned int u_bit = bit (insn1, 7);
   unsigned int rt = bits (insn2, 12, 15);
   int imm12 = bits (insn2, 0, 11);
   ULONGEST pc_val;
+  struct displaced_step_closure *dsc = data->dsc;
+  struct regcache *regs = data->regs;
 
   if (debug_displaced)
     fprintf_unfiltered (gdb_stdlog,
@@ -5803,28 +5806,27 @@ thumb2_copy_load_literal (struct gdbarch *gdbarch, uint16_t insn1,
 }
 
 static int
-thumb2_copy_load_reg_imm (struct gdbarch *gdbarch, uint16_t insn1,
-			  uint16_t insn2, struct regcache *regs,
-			  struct displaced_step_closure *dsc,
-			  int writeback, int immed)
+thumb2_copy_load_reg_imm (uint16_t insn1, uint16_t insn2,
+			  struct arm_insn_reloc_data *data, int writeback,
+			  int immed)
 {
   unsigned int rt = bits (insn2, 12, 15);
   unsigned int rn = bits (insn1, 0, 3);
   unsigned int rm = bits (insn2, 0, 3);  /* Only valid if !immed.  */
+  struct displaced_step_closure *dsc = data->dsc;
+
   /* In LDR (register), there is also a register Rm, which is not allowed to
      be PC, so we don't have to check it.  */
 
   if (rt != ARM_PC_REGNUM && rn != ARM_PC_REGNUM)
-    return thumb_copy_unmodified_32bit (gdbarch, insn1, insn2, "load",
-					dsc);
+    return thumb_copy_unmodified_32bit (insn1, insn2, "load", data);
 
   if (debug_displaced)
     fprintf_unfiltered (gdb_stdlog,
 			"displaced: copying ldr r%d [r%d] insn %.4x%.4x\n",
 			 rt, rn, insn1, insn2);
 
-  install_load_store (gdbarch, regs, dsc, 1, immed, writeback, 4,
-		      0, rt, rm, rn);
+  install_load_store (data, 1, immed, writeback, 4, 0, rt, rm, rn);
 
   dsc->u.ldst.restore_r4 = 0;
 
@@ -5852,9 +5854,7 @@ thumb2_copy_load_reg_imm (struct gdbarch *gdbarch, uint16_t insn1,
 
 
 static int
-arm_copy_ldr_str_ldrb_strb (struct gdbarch *gdbarch, uint32_t insn,
-			    struct regcache *regs,
-			    struct displaced_step_closure *dsc,
+arm_copy_ldr_str_ldrb_strb (uint32_t insn, struct arm_insn_reloc_data *data,
 			    int load, int size, int usermode)
 {
   int immed = !bit (insn, 25);
@@ -5862,9 +5862,10 @@ arm_copy_ldr_str_ldrb_strb (struct gdbarch *gdbarch, uint32_t insn,
   unsigned int rt = bits (insn, 12, 15);
   unsigned int rn = bits (insn, 16, 19);
   unsigned int rm = bits (insn, 0, 3);  /* Only valid if !immed.  */
+  struct displaced_step_closure *dsc = data->dsc;
 
   if (!insn_references_pc (insn, 0x000ff00ful))
-    return arm_copy_unmodified (gdbarch, insn, "load/store", dsc);
+    return arm_copy_unmodified (insn, "load/store", data);
 
   if (debug_displaced)
     fprintf_unfiltered (gdb_stdlog,
@@ -5874,8 +5875,7 @@ arm_copy_ldr_str_ldrb_strb (struct gdbarch *gdbarch, uint32_t insn,
 			rt, rn,
 			(unsigned long) insn);
 
-  install_load_store (gdbarch, regs, dsc, load, immed, writeback, size,
-		      usermode, rt, rm, rn);
+  install_load_store (data, load, immed, writeback, size, usermode, rt, rm, rn);
 
   if (load || rt != ARM_PC_REGNUM)
     {
@@ -6128,9 +6128,7 @@ cleanup_block_load_pc (struct gdbarch *gdbarch,
    in user-level code (in particular exception return, ldm rn, {...pc}^).  */
 
 static int
-arm_copy_block_xfer (struct gdbarch *gdbarch, uint32_t insn,
-		     struct regcache *regs,
-		     struct displaced_step_closure *dsc)
+arm_copy_block_xfer (uint32_t insn, struct arm_insn_reloc_data *data)
 {
   int load = bit (insn, 20);
   int user = bit (insn, 22);
@@ -6138,17 +6136,19 @@ arm_copy_block_xfer (struct gdbarch *gdbarch, uint32_t insn,
   int before = bit (insn, 24);
   int writeback = bit (insn, 21);
   int rn = bits (insn, 16, 19);
+  struct displaced_step_closure *dsc = data->dsc;
+  struct regcache *regs = data->regs;
 
   /* Block transfers which don't mention PC can be run directly
      out-of-line.  */
   if (rn != ARM_PC_REGNUM && (insn & 0x8000) == 0)
-    return arm_copy_unmodified (gdbarch, insn, "ldm/stm", dsc);
+    return arm_copy_unmodified (insn, "ldm/stm", data);
 
   if (rn == ARM_PC_REGNUM)
     {
       warning (_("displaced: Unpredictable LDM or STM with "
 		 "base register r15"));
-      return arm_copy_unmodified (gdbarch, insn, "unpredictable ldm/stm", dsc);
+      return arm_copy_unmodified (insn, "unpredictable ldm/stm", data);
     }
 
   if (debug_displaced)
@@ -6242,25 +6242,26 @@ arm_copy_block_xfer (struct gdbarch *gdbarch, uint32_t insn,
 }
 
 static int
-thumb2_copy_block_xfer (struct gdbarch *gdbarch, uint16_t insn1, uint16_t insn2,
-			struct regcache *regs,
-			struct displaced_step_closure *dsc)
+thumb2_copy_block_xfer (uint16_t insn1, uint16_t insn2,
+			struct arm_insn_reloc_data *data)
 {
   int rn = bits (insn1, 0, 3);
   int load = bit (insn1, 4);
   int writeback = bit (insn1, 5);
+  struct displaced_step_closure *dsc = data->dsc;
+  struct regcache *regs = data->regs;
 
   /* Block transfers which don't mention PC can be run directly
      out-of-line.  */
   if (rn != ARM_PC_REGNUM && (insn2 & 0x8000) == 0)
-    return thumb_copy_unmodified_32bit (gdbarch, insn1, insn2, "ldm/stm", dsc);
+    return thumb_copy_unmodified_32bit (insn1, insn2, "ldm/stm", data);
 
   if (rn == ARM_PC_REGNUM)
     {
       warning (_("displaced: Unpredictable LDM or STM with "
 		 "base register r15"));
-      return thumb_copy_unmodified_32bit (gdbarch, insn1, insn2,
-					  "unpredictable ldm/stm", dsc);
+      return thumb_copy_unmodified_32bit (insn1, insn2, "unpredictable ldm/stm",
+					  data);
     }
 
   if (debug_displaced)
@@ -6413,8 +6414,7 @@ cleanup_svc (struct gdbarch *gdbarch, struct regcache *regs,
 /* Common copy routine for svc instruciton.  */
 
 static int
-install_svc (struct gdbarch *gdbarch, struct regcache *regs,
-	     struct displaced_step_closure *dsc)
+install_svc (struct arm_insn_reloc_data *data)
 {
   /* Preparation: none.
      Insn: unmodified svc.
@@ -6422,6 +6422,10 @@ install_svc (struct gdbarch *gdbarch, struct regcache *regs,
 
   /* Pretend we wrote to the PC, so cleanup doesn't set PC to the next
      instruction.  */
+  struct displaced_step_closure *dsc = data->dsc;
+  struct gdbarch *gdbarch = data->gdbarch;
+  struct regcache *regs = data->regs;
+
   dsc->wrote_to_pc = 1;
 
   /* Allow OS-specific code to override SVC handling.  */
@@ -6435,53 +6439,51 @@ install_svc (struct gdbarch *gdbarch, struct regcache *regs,
 }
 
 static int
-arm_copy_svc (struct gdbarch *gdbarch, uint32_t insn,
-	      struct regcache *regs, struct displaced_step_closure *dsc)
+arm_copy_svc (uint32_t insn, struct arm_insn_reloc_data *data)
 {
 
   if (debug_displaced)
     fprintf_unfiltered (gdb_stdlog, "displaced: copying svc insn %.8lx\n",
 			(unsigned long) insn);
 
-  dsc->modinsn[0] = insn;
+  data->dsc->modinsn[0] = insn;
 
-  return install_svc (gdbarch, regs, dsc);
+  return install_svc (data);
 }
 
 static int
-thumb_copy_svc (struct gdbarch *gdbarch, uint16_t insn,
-		struct regcache *regs, struct displaced_step_closure *dsc)
+thumb_copy_svc (uint16_t insn, struct arm_insn_reloc_data *data)
 {
 
   if (debug_displaced)
     fprintf_unfiltered (gdb_stdlog, "displaced: copying svc insn %.4x\n",
 			insn);
 
-  dsc->modinsn[0] = insn;
+  data->dsc->modinsn[0] = insn;
 
-  return install_svc (gdbarch, regs, dsc);
+  return install_svc (data);
 }
 
 /* Copy undefined instructions.  */
 
 static int
-arm_copy_undef (struct gdbarch *gdbarch, uint32_t insn,
-		struct displaced_step_closure *dsc)
+arm_copy_undef (uint32_t insn, struct arm_insn_reloc_data *data)
 {
   if (debug_displaced)
     fprintf_unfiltered (gdb_stdlog,
 			"displaced: copying undefined insn %.8lx\n",
 			(unsigned long) insn);
 
-  dsc->modinsn[0] = insn;
+  data->dsc->modinsn[0] = insn;
 
   return 0;
 }
 
 static int
-thumb_32bit_copy_undef (struct gdbarch *gdbarch, uint16_t insn1, uint16_t insn2,
-                       struct displaced_step_closure *dsc)
+thumb_32bit_copy_undef (uint16_t insn1, uint16_t insn2,
+			struct arm_insn_reloc_data *data)
 {
+  struct displaced_step_closure *dsc = data->dsc;
 
   if (debug_displaced)
     fprintf_unfiltered (gdb_stdlog, "displaced: copying undefined insn "
@@ -6498,14 +6500,13 @@ thumb_32bit_copy_undef (struct gdbarch *gdbarch, uint16_t insn1, uint16_t insn2,
 /* Copy unpredictable instructions.  */
 
 static int
-arm_copy_unpred (struct gdbarch *gdbarch, uint32_t insn,
-		 struct displaced_step_closure *dsc)
+arm_copy_unpred (uint32_t insn, struct arm_insn_reloc_data *data)
 {
   if (debug_displaced)
     fprintf_unfiltered (gdb_stdlog, "displaced: copying unpredictable insn "
 			"%.8lx\n", (unsigned long) insn);
 
-  dsc->modinsn[0] = insn;
+  data->dsc->modinsn[0] = insn;
 
   return 0;
 }
@@ -6514,96 +6515,91 @@ arm_copy_unpred (struct gdbarch *gdbarch, uint32_t insn,
    the presentation in the ARM ARM.  */
 
 static int
-arm_decode_misc_memhint_neon (struct gdbarch *gdbarch, uint32_t insn,
-			      struct regcache *regs,
-			      struct displaced_step_closure *dsc)
+arm_decode_misc_memhint_neon (uint32_t insn, struct arm_insn_reloc_data *data)
 {
   unsigned int op1 = bits (insn, 20, 26), op2 = bits (insn, 4, 7);
   unsigned int rn = bits (insn, 16, 19);
 
   if (op1 == 0x10 && (op2 & 0x2) == 0x0 && (rn & 0xe) == 0x0)
-    return arm_copy_unmodified (gdbarch, insn, "cps", dsc);
+    return arm_copy_unmodified (insn, "cps", data);
   else if (op1 == 0x10 && op2 == 0x0 && (rn & 0xe) == 0x1)
-    return arm_copy_unmodified (gdbarch, insn, "setend", dsc);
+    return arm_copy_unmodified (insn, "setend", data);
   else if ((op1 & 0x60) == 0x20)
-    return arm_copy_unmodified (gdbarch, insn, "neon dataproc", dsc);
+    return arm_copy_unmodified (insn, "neon dataproc", data);
   else if ((op1 & 0x71) == 0x40)
-    return arm_copy_unmodified (gdbarch, insn, "neon elt/struct load/store",
-				dsc);
+    return arm_copy_unmodified (insn, "neon elt/struct load/store", data);
   else if ((op1 & 0x77) == 0x41)
-    return arm_copy_unmodified (gdbarch, insn, "unallocated mem hint", dsc);
+    return arm_copy_unmodified (insn, "unallocated mem hint", data);
   else if ((op1 & 0x77) == 0x45)
-    return arm_copy_preload (gdbarch, insn, regs, dsc);  /* pli.  */
+    return arm_copy_preload (insn, data);  /* pli.  */
   else if ((op1 & 0x77) == 0x51)
     {
       if (rn != 0xf)
-	return arm_copy_preload (gdbarch, insn, regs, dsc);  /* pld/pldw.  */
+	return arm_copy_preload (insn, data);  /* pld/pldw.  */
       else
-	return arm_copy_unpred (gdbarch, insn, dsc);
+	return arm_copy_unpred (insn, data);
     }
   else if ((op1 & 0x77) == 0x55)
-    return arm_copy_preload (gdbarch, insn, regs, dsc);  /* pld/pldw.  */
+    return arm_copy_preload (insn, data);  /* pld/pldw.  */
   else if (op1 == 0x57)
     switch (op2)
       {
-      case 0x1: return arm_copy_unmodified (gdbarch, insn, "clrex", dsc);
-      case 0x4: return arm_copy_unmodified (gdbarch, insn, "dsb", dsc);
-      case 0x5: return arm_copy_unmodified (gdbarch, insn, "dmb", dsc);
-      case 0x6: return arm_copy_unmodified (gdbarch, insn, "isb", dsc);
-      default: return arm_copy_unpred (gdbarch, insn, dsc);
+      case 0x1: return arm_copy_unmodified (insn, "clrex", data);
+      case 0x4: return arm_copy_unmodified (insn, "dsb", data);
+      case 0x5: return arm_copy_unmodified (insn, "dmb", data);
+      case 0x6: return arm_copy_unmodified (insn, "isb", data);
+      default: return arm_copy_unpred (insn, data);
       }
   else if ((op1 & 0x63) == 0x43)
-    return arm_copy_unpred (gdbarch, insn, dsc);
+    return arm_copy_unpred (insn, data);
   else if ((op2 & 0x1) == 0x0)
     switch (op1 & ~0x80)
       {
       case 0x61:
-	return arm_copy_unmodified (gdbarch, insn, "unallocated mem hint", dsc);
+	return arm_copy_unmodified (insn, "unallocated mem hint", data);
       case 0x65:
-	return arm_copy_preload_reg (gdbarch, insn, regs, dsc);  /* pli reg.  */
+	return arm_copy_preload_reg (insn, data);  /* pli reg.  */
       case 0x71: case 0x75:
         /* pld/pldw reg.  */
-	return arm_copy_preload_reg (gdbarch, insn, regs, dsc);
+	return arm_copy_preload_reg (insn, data);
       case 0x63: case 0x67: case 0x73: case 0x77:
-	return arm_copy_unpred (gdbarch, insn, dsc);
+	return arm_copy_unpred (insn, data);
       default:
-	return arm_copy_undef (gdbarch, insn, dsc);
+	return arm_copy_undef (insn, data);
       }
   else
-    return arm_copy_undef (gdbarch, insn, dsc);  /* Probably unreachable.  */
+    return arm_copy_undef (insn, data);  /* Probably unreachable.  */
 }
 
 static int
-arm_decode_unconditional (struct gdbarch *gdbarch, uint32_t insn,
-			  struct regcache *regs,
-			  struct displaced_step_closure *dsc)
+arm_decode_unconditional (uint32_t insn, struct arm_insn_reloc_data *data)
 {
   if (bit (insn, 27) == 0)
-    return arm_decode_misc_memhint_neon (gdbarch, insn, regs, dsc);
+    return arm_decode_misc_memhint_neon (insn, data);
   /* Switch on bits: 0bxxxxx321xxx0xxxxxxxxxxxxxxxxxxxx.  */
   else switch (((insn & 0x7000000) >> 23) | ((insn & 0x100000) >> 20))
     {
     case 0x0: case 0x2:
-      return arm_copy_unmodified (gdbarch, insn, "srs", dsc);
+      return arm_copy_unmodified (insn, "srs", data);
 
     case 0x1: case 0x3:
-      return arm_copy_unmodified (gdbarch, insn, "rfe", dsc);
+      return arm_copy_unmodified (insn, "rfe", data);
 
     case 0x4: case 0x5: case 0x6: case 0x7:
-      return arm_copy_b_bl_blx (gdbarch, insn, regs, dsc);
+      return arm_copy_b_bl_blx (insn, data);
 
     case 0x8:
       switch ((insn & 0xe00000) >> 21)
 	{
 	case 0x1: case 0x3: case 0x4: case 0x5: case 0x6: case 0x7:
 	  /* stc/stc2.  */
-	  return arm_copy_copro_load_store (gdbarch, insn, regs, dsc);
+	  return arm_copy_copro_load_store (insn, data);
 
 	case 0x2:
-	  return arm_copy_unmodified (gdbarch, insn, "mcrr/mcrr2", dsc);
+	  return arm_copy_unmodified (insn, "mcrr/mcrr2", data);
 
 	default:
-	  return arm_copy_undef (gdbarch, insn, dsc);
+	  return arm_copy_undef (insn, data);
 	}
 
     case 0x9:
@@ -6613,55 +6609,53 @@ arm_decode_unconditional (struct gdbarch *gdbarch, uint32_t insn,
 	  {
 	  case 0x1: case 0x3:
 	    /* ldc/ldc2 imm (undefined for rn == pc).  */
-	    return rn_f ? arm_copy_undef (gdbarch, insn, dsc)
-			: arm_copy_copro_load_store (gdbarch, insn, regs, dsc);
+	    return rn_f ? arm_copy_undef (insn, data)
+			: arm_copy_copro_load_store (insn, data);
 
 	  case 0x2:
-	    return arm_copy_unmodified (gdbarch, insn, "mrrc/mrrc2", dsc);
+	    return arm_copy_unmodified (insn, "mrrc/mrrc2", data);
 
 	  case 0x4: case 0x5: case 0x6: case 0x7:
 	    /* ldc/ldc2 lit (undefined for rn != pc).  */
-	    return rn_f ? arm_copy_copro_load_store (gdbarch, insn, regs, dsc)
-			: arm_copy_undef (gdbarch, insn, dsc);
+	    return rn_f ? arm_copy_copro_load_store (insn, data)
+			: arm_copy_undef (insn, data);
 
 	  default:
-	    return arm_copy_undef (gdbarch, insn, dsc);
+	    return arm_copy_undef (insn, data);
 	  }
       }
 
     case 0xa:
-      return arm_copy_unmodified (gdbarch, insn, "stc/stc2", dsc);
+      return arm_copy_unmodified (insn, "stc/stc2", data);
 
     case 0xb:
       if (bits (insn, 16, 19) == 0xf)
         /* ldc/ldc2 lit.  */
-	return arm_copy_copro_load_store (gdbarch, insn, regs, dsc);
+	return arm_copy_copro_load_store (insn, data);
       else
-	return arm_copy_undef (gdbarch, insn, dsc);
+	return arm_copy_undef (insn, data);
 
     case 0xc:
       if (bit (insn, 4))
-	return arm_copy_unmodified (gdbarch, insn, "mcr/mcr2", dsc);
+	return arm_copy_unmodified (insn, "mcr/mcr2", data);
       else
-	return arm_copy_unmodified (gdbarch, insn, "cdp/cdp2", dsc);
+	return arm_copy_unmodified (insn, "cdp/cdp2", data);
 
     case 0xd:
       if (bit (insn, 4))
-	return arm_copy_unmodified (gdbarch, insn, "mrc/mrc2", dsc);
+	return arm_copy_unmodified (insn, "mrc/mrc2", data);
       else
-	return arm_copy_unmodified (gdbarch, insn, "cdp/cdp2", dsc);
+	return arm_copy_unmodified (insn, "cdp/cdp2", data);
 
     default:
-      return arm_copy_undef (gdbarch, insn, dsc);
+      return arm_copy_undef (insn, data);
     }
 }
 
 /* Decode miscellaneous instructions in dp/misc encoding space.  */
 
 static int
-arm_decode_miscellaneous (struct gdbarch *gdbarch, uint32_t insn,
-			  struct regcache *regs,
-			  struct displaced_step_closure *dsc)
+arm_decode_miscellaneous (uint32_t insn, struct arm_insn_reloc_data *data)
 {
   unsigned int op2 = bits (insn, 4, 6);
   unsigned int op = bits (insn, 21, 22);
@@ -6669,85 +6663,81 @@ arm_decode_miscellaneous (struct gdbarch *gdbarch, uint32_t insn,
   switch (op2)
     {
     case 0x0:
-      return arm_copy_unmodified (gdbarch, insn, "mrs/msr", dsc);
+      return arm_copy_unmodified (insn, "mrs/msr", data);
 
     case 0x1:
       if (op == 0x1)  /* bx.  */
-	return arm_copy_bx_blx_reg (gdbarch, insn, regs, dsc);
+	return arm_copy_bx_blx_reg (insn, data);
       else if (op == 0x3)
-	return arm_copy_unmodified (gdbarch, insn, "clz", dsc);
+	return arm_copy_unmodified (insn, "clz", data);
       else
-	return arm_copy_undef (gdbarch, insn, dsc);
+	return arm_copy_undef (insn, data);
 
     case 0x2:
       if (op == 0x1)
         /* Not really supported.  */
-	return arm_copy_unmodified (gdbarch, insn, "bxj", dsc);
+	return arm_copy_unmodified (insn, "bxj", data);
       else
-	return arm_copy_undef (gdbarch, insn, dsc);
+	return arm_copy_undef (insn, data);
 
     case 0x3:
       if (op == 0x1)
-	return arm_copy_bx_blx_reg (gdbarch, insn,
-				regs, dsc);  /* blx register.  */
+	return arm_copy_bx_blx_reg (insn, data);  /* blx register.  */
       else
-	return arm_copy_undef (gdbarch, insn, dsc);
+	return arm_copy_undef (insn, data);
 
     case 0x5:
-      return arm_copy_unmodified (gdbarch, insn, "saturating add/sub", dsc);
+      return arm_copy_unmodified (insn, "saturating add/sub", data);
 
     case 0x7:
       if (op == 0x1)
-	return arm_copy_unmodified (gdbarch, insn, "bkpt", dsc);
+	return arm_copy_unmodified (insn, "bkpt", data);
       else if (op == 0x3)
         /* Not really supported.  */
-	return arm_copy_unmodified (gdbarch, insn, "smc", dsc);
+	return arm_copy_unmodified (insn, "smc", data);
 
     default:
-      return arm_copy_undef (gdbarch, insn, dsc);
+      return arm_copy_undef (insn, data);
     }
 }
 
 static int
-arm_decode_dp_misc (struct gdbarch *gdbarch, uint32_t insn,
-		    struct regcache *regs,
-		    struct displaced_step_closure *dsc)
+arm_decode_dp_misc (uint32_t insn, struct arm_insn_reloc_data *data)
 {
   if (bit (insn, 25))
     switch (bits (insn, 20, 24))
       {
       case 0x10:
-	return arm_copy_unmodified (gdbarch, insn, "movw", dsc);
+	return arm_copy_unmodified (insn, "movw", data);
 
       case 0x14:
-	return arm_copy_unmodified (gdbarch, insn, "movt", dsc);
+	return arm_copy_unmodified (insn, "movt", data);
 
       case 0x12: case 0x16:
-	return arm_copy_unmodified (gdbarch, insn, "msr imm", dsc);
+	return arm_copy_unmodified (insn, "msr imm", data);
 
       default:
-	return arm_copy_alu_imm (gdbarch, insn, regs, dsc);
+	return arm_copy_alu_imm (insn, data);
       }
   else
     {
       uint32_t op1 = bits (insn, 20, 24), op2 = bits (insn, 4, 7);
 
       if ((op1 & 0x19) != 0x10 && (op2 & 0x1) == 0x0)
-	return arm_copy_alu_reg (gdbarch, insn, regs, dsc);
+	return arm_copy_alu_reg (insn, data);
       else if ((op1 & 0x19) != 0x10 && (op2 & 0x9) == 0x1)
-	return arm_copy_alu_shifted_reg (gdbarch, insn, regs, dsc);
+	return arm_copy_alu_shifted_reg (insn, data);
       else if ((op1 & 0x19) == 0x10 && (op2 & 0x8) == 0x0)
-	return arm_decode_miscellaneous (gdbarch, insn, regs, dsc);
+	return arm_decode_miscellaneous (insn, data);
       else if ((op1 & 0x19) == 0x10 && (op2 & 0x9) == 0x8)
-	return arm_copy_unmodified (gdbarch, insn, "halfword mul/mla", dsc);
+	return arm_copy_unmodified (insn, "halfword mul/mla", data);
       else if ((op1 & 0x10) == 0x00 && op2 == 0x9)
-	return arm_copy_unmodified (gdbarch, insn, "mul/mla", dsc);
+	return arm_copy_unmodified (insn, "mul/mla", data);
       else if ((op1 & 0x10) == 0x10 && op2 == 0x9)
-	return arm_copy_unmodified (gdbarch, insn, "synch", dsc);
+	return arm_copy_unmodified (insn, "synch", data);
       else if (op2 == 0xb || (op2 & 0xd) == 0xd)
 	/* 2nd arg means "unprivileged".  */
-	return arm_copy_extra_ld_st (gdbarch, insn, (op1 & 0x12) == 0x02, regs,
-				     dsc);
+	return arm_copy_extra_ld_st (insn, data, (op1 & 0x12) == 0x02);
     }
 
   /* Should be unreachable.  */
@@ -6755,92 +6745,89 @@ arm_decode_dp_misc (struct gdbarch *gdbarch, uint32_t insn,
 }
 
 static int
-arm_decode_ld_st_word_ubyte (struct gdbarch *gdbarch, uint32_t insn,
-			     struct regcache *regs,
-			     struct displaced_step_closure *dsc)
+arm_decode_ld_st_word_ubyte (uint32_t insn, struct arm_insn_reloc_data *data)
 {
   int a = bit (insn, 25), b = bit (insn, 4);
   uint32_t op1 = bits (insn, 20, 24);
 
   if ((!a && (op1 & 0x05) == 0x00 && (op1 & 0x17) != 0x02)
       || (a && (op1 & 0x05) == 0x00 && (op1 & 0x17) != 0x02 && !b))
-    return arm_copy_ldr_str_ldrb_strb (gdbarch, insn, regs, dsc, 0, 4, 0);
+    return arm_copy_ldr_str_ldrb_strb (insn, data, 0, 4, 0);
   else if ((!a && (op1 & 0x17) == 0x02)
 	    || (a && (op1 & 0x17) == 0x02 && !b))
-    return arm_copy_ldr_str_ldrb_strb (gdbarch, insn, regs, dsc, 0, 4, 1);
+    return arm_copy_ldr_str_ldrb_strb (insn, data, 0, 4, 1);
   else if ((!a && (op1 & 0x05) == 0x01 && (op1 & 0x17) != 0x03)
 	    || (a && (op1 & 0x05) == 0x01 && (op1 & 0x17) != 0x03 && !b))
-    return arm_copy_ldr_str_ldrb_strb (gdbarch, insn, regs, dsc, 1, 4, 0);
+    return arm_copy_ldr_str_ldrb_strb (insn, data, 1, 4, 0);
   else if ((!a && (op1 & 0x17) == 0x03)
 	   || (a && (op1 & 0x17) == 0x03 && !b))
-    return arm_copy_ldr_str_ldrb_strb (gdbarch, insn, regs, dsc, 1, 4, 1);
+    return arm_copy_ldr_str_ldrb_strb (insn, data, 1, 4, 1);
   else if ((!a && (op1 & 0x05) == 0x04 && (op1 & 0x17) != 0x06)
 	    || (a && (op1 & 0x05) == 0x04 && (op1 & 0x17) != 0x06 && !b))
-    return arm_copy_ldr_str_ldrb_strb (gdbarch, insn, regs, dsc, 0, 1, 0);
+    return arm_copy_ldr_str_ldrb_strb (insn, data, 0, 1, 0);
   else if ((!a && (op1 & 0x17) == 0x06)
 	   || (a && (op1 & 0x17) == 0x06 && !b))
-    return arm_copy_ldr_str_ldrb_strb (gdbarch, insn, regs, dsc, 0, 1, 1);
+    return arm_copy_ldr_str_ldrb_strb (insn, data, 0, 1, 1);
   else if ((!a && (op1 & 0x05) == 0x05 && (op1 & 0x17) != 0x07)
 	   || (a && (op1 & 0x05) == 0x05 && (op1 & 0x17) != 0x07 && !b))
-    return arm_copy_ldr_str_ldrb_strb (gdbarch, insn, regs, dsc, 1, 1, 0);
+    return arm_copy_ldr_str_ldrb_strb (insn, data, 1, 1, 0);
   else if ((!a && (op1 & 0x17) == 0x07)
 	   || (a && (op1 & 0x17) == 0x07 && !b))
-    return arm_copy_ldr_str_ldrb_strb (gdbarch, insn, regs, dsc, 1, 1, 1);
+    return arm_copy_ldr_str_ldrb_strb (insn, data, 1, 1, 1);
 
   /* Should be unreachable.  */
   return 1;
 }
 
 static int
-arm_decode_media (struct gdbarch *gdbarch, uint32_t insn,
-		  struct displaced_step_closure *dsc)
+arm_decode_media (uint32_t insn, struct arm_insn_reloc_data *data)
 {
   switch (bits (insn, 20, 24))
     {
     case 0x00: case 0x01: case 0x02: case 0x03:
-      return arm_copy_unmodified (gdbarch, insn, "parallel add/sub signed", dsc);
+      return arm_copy_unmodified (insn, "parallel add/sub signed", data);
 
     case 0x04: case 0x05: case 0x06: case 0x07:
-      return arm_copy_unmodified (gdbarch, insn, "parallel add/sub unsigned", dsc);
+      return arm_copy_unmodified (insn, "parallel add/sub unsigned", data);
 
     case 0x08: case 0x09: case 0x0a: case 0x0b:
     case 0x0c: case 0x0d: case 0x0e: case 0x0f:
-      return arm_copy_unmodified (gdbarch, insn,
-			      "decode/pack/unpack/saturate/reverse", dsc);
+      return arm_copy_unmodified (insn,
+			      "decode/pack/unpack/saturate/reverse", data);
 
     case 0x18:
       if (bits (insn, 5, 7) == 0)  /* op2.  */
 	 {
 	  if (bits (insn, 12, 15) == 0xf)
-	    return arm_copy_unmodified (gdbarch, insn, "usad8", dsc);
+	    return arm_copy_unmodified (insn, "usad8", data);
 	  else
-	    return arm_copy_unmodified (gdbarch, insn, "usada8", dsc);
+	    return arm_copy_unmodified (insn, "usada8", data);
 	}
       else
-	 return arm_copy_undef (gdbarch, insn, dsc);
+	 return arm_copy_undef (insn, data);
 
     case 0x1a: case 0x1b:
       if (bits (insn, 5, 6) == 0x2)  /* op2[1:0].  */
-	return arm_copy_unmodified (gdbarch, insn, "sbfx", dsc);
+	return arm_copy_unmodified (insn, "sbfx", data);
       else
-	return arm_copy_undef (gdbarch, insn, dsc);
+	return arm_copy_undef (insn, data);
 
     case 0x1c: case 0x1d:
       if (bits (insn, 5, 6) == 0x0)  /* op2[1:0].  */
 	 {
 	  if (bits (insn, 0, 3) == 0xf)
-	    return arm_copy_unmodified (gdbarch, insn, "bfc", dsc);
+	    return arm_copy_unmodified (insn, "bfc", data);
 	  else
-	    return arm_copy_unmodified (gdbarch, insn, "bfi", dsc);
+	    return arm_copy_unmodified (insn, "bfi", data);
 	}
       else
-	return arm_copy_undef (gdbarch, insn, dsc);
+	return arm_copy_undef (insn, data);
 
     case 0x1e: case 0x1f:
       if (bits (insn, 5, 6) == 0x2)  /* op2[1:0].  */
-	return arm_copy_unmodified (gdbarch, insn, "ubfx", dsc);
+	return arm_copy_unmodified (insn, "ubfx", data);
       else
-	return arm_copy_undef (gdbarch, insn, dsc);
+	return arm_copy_undef (insn, data);
     }
 
   /* Should be unreachable.  */
@@ -6848,41 +6835,37 @@ arm_decode_media (struct gdbarch *gdbarch, uint32_t insn,
 }
 
 static int
-arm_decode_b_bl_ldmstm (struct gdbarch *gdbarch, uint32_t insn,
-			struct regcache *regs,
-			struct displaced_step_closure *dsc)
+arm_decode_b_bl_ldmstm (uint32_t insn, struct arm_insn_reloc_data *data)
 {
   if (bit (insn, 25))
-    return arm_copy_b_bl_blx (gdbarch, insn, regs, dsc);
+    return arm_copy_b_bl_blx (insn, data);
   else
-    return arm_copy_block_xfer (gdbarch, insn, regs, dsc);
+    return arm_copy_block_xfer (insn, data);
 }
 
 static int
-arm_decode_ext_reg_ld_st (struct gdbarch *gdbarch, uint32_t insn,
-			  struct regcache *regs,
-			  struct displaced_step_closure *dsc)
+arm_decode_ext_reg_ld_st (uint32_t insn, struct arm_insn_reloc_data *data)
 {
   unsigned int opcode = bits (insn, 20, 24);
 
   switch (opcode)
     {
     case 0x04: case 0x05:  /* VFP/Neon mrrc/mcrr.  */
-      return arm_copy_unmodified (gdbarch, insn, "vfp/neon mrrc/mcrr", dsc);
+      return arm_copy_unmodified (insn, "vfp/neon mrrc/mcrr", data);
 
     case 0x08: case 0x0a: case 0x0c: case 0x0e:
     case 0x12: case 0x16:
-      return arm_copy_unmodified (gdbarch, insn, "vfp/neon vstm/vpush", dsc);
+      return arm_copy_unmodified (insn, "vfp/neon vstm/vpush", data);
 
     case 0x09: case 0x0b: case 0x0d: case 0x0f:
     case 0x13: case 0x17:
-      return arm_copy_unmodified (gdbarch, insn, "vfp/neon vldm/vpop", dsc);
+      return arm_copy_unmodified (insn, "vfp/neon vldm/vpop", data);
 
     case 0x10: case 0x14: case 0x18: case 0x1c:  /* vstr.  */
     case 0x11: case 0x15: case 0x19: case 0x1d:  /* vldr.  */
       /* Note: no writeback for these instructions.  Bit 25 will always be
 	 zero though (via caller), so the following works OK.  */
-      return arm_copy_copro_load_store (gdbarch, insn, regs, dsc);
+      return arm_copy_copro_load_store (insn, data);
     }
 
   /* Should be unreachable.  */
@@ -6892,9 +6875,8 @@ arm_decode_ext_reg_ld_st (struct gdbarch *gdbarch, uint32_t insn,
 /* Decode shifted register instructions.  */
 
 static int
-thumb2_decode_dp_shift_reg (struct gdbarch *gdbarch, uint16_t insn1,
-			    uint16_t insn2,  struct regcache *regs,
-			    struct displaced_step_closure *dsc)
+thumb2_decode_dp_shift_reg (uint16_t insn1, uint16_t insn2,
+			    struct arm_insn_reloc_data *data)
 {
   /* PC is only allowed to be used in instruction MOV.  */
 
@@ -6902,10 +6884,9 @@ thumb2_decode_dp_shift_reg (struct gdbarch *gdbarch, uint16_t insn1,
   unsigned int rn = bits (insn1, 0, 3);
 
   if (op == 0x2 && rn == 0xf) /* MOV */
-    return thumb2_copy_alu_imm (gdbarch, insn1, insn2, regs, dsc);
+    return thumb2_copy_alu_imm (insn1, insn2, data);
   else
-    return thumb_copy_unmodified_32bit (gdbarch, insn1, insn2,
-					"dp (shift reg)", dsc);
+    return thumb_copy_unmodified_32bit (insn1, insn2, "dp (shift reg)", data);
 }
 
 
@@ -6913,35 +6894,32 @@ thumb2_decode_dp_shift_reg (struct gdbarch *gdbarch, uint16_t insn1,
    arm_decode_ext_reg_ld_st.  */
 
 static int
-thumb2_decode_ext_reg_ld_st (struct gdbarch *gdbarch, uint16_t insn1,
-			     uint16_t insn2,  struct regcache *regs,
-			     struct displaced_step_closure *dsc)
+thumb2_decode_ext_reg_ld_st (uint16_t insn1, uint16_t insn2,
+			     struct arm_insn_reloc_data *data)
 {
   unsigned int opcode = bits (insn1, 4, 8);
 
   switch (opcode)
     {
     case 0x04: case 0x05:
-      return thumb_copy_unmodified_32bit (gdbarch, insn1, insn2,
-					  "vfp/neon vmov", dsc);
+      return thumb_copy_unmodified_32bit (insn1, insn2, "vfp/neon vmov", data);
 
     case 0x08: case 0x0c: /* 01x00 */
     case 0x0a: case 0x0e: /* 01x10 */
     case 0x12: case 0x16: /* 10x10 */
-      return thumb_copy_unmodified_32bit (gdbarch, insn1, insn2,
-					  "vfp/neon vstm/vpush", dsc);
+      return thumb_copy_unmodified_32bit (insn1, insn2,
+					  "vfp/neon vstm/vpush", data);
 
     case 0x09: case 0x0d: /* 01x01 */
     case 0x0b: case 0x0f: /* 01x11 */
     case 0x13: case 0x17: /* 10x11 */
-      return thumb_copy_unmodified_32bit (gdbarch, insn1, insn2,
-					  "vfp/neon vldm/vpop", dsc);
+      return thumb_copy_unmodified_32bit (insn1, insn2,
+					  "vfp/neon vldm/vpop", data);
 
     case 0x10: case 0x14: case 0x18: case 0x1c:  /* vstr.  */
-      return thumb_copy_unmodified_32bit (gdbarch, insn1, insn2,
-					  "vstr", dsc);
+      return thumb_copy_unmodified_32bit (insn1, insn2, "vstr", data);
     case 0x11: case 0x15: case 0x19: case 0x1d:  /* vldr.  */
-      return thumb2_copy_copro_load_store (gdbarch, insn1, insn2, regs, dsc);
+      return thumb2_copy_copro_load_store (insn1, insn2, data);
     }
 
   /* Should be unreachable.  */
@@ -6949,54 +6927,52 @@ thumb2_decode_ext_reg_ld_st (struct gdbarch *gdbarch, uint16_t insn1,
 }
 
 static int
-arm_decode_svc_copro (struct gdbarch *gdbarch, uint32_t insn,
-		      struct regcache *regs, struct displaced_step_closure *dsc)
+arm_decode_svc_copro (uint32_t insn, struct arm_insn_reloc_data *data)
 {
   unsigned int op1 = bits (insn, 20, 25);
   int op = bit (insn, 4);
   unsigned int coproc = bits (insn, 8, 11);
 
   if ((op1 & 0x20) == 0x00 && (op1 & 0x3a) != 0x00 && (coproc & 0xe) == 0xa)
-    return arm_decode_ext_reg_ld_st (gdbarch, insn, regs, dsc);
+    return arm_decode_ext_reg_ld_st (insn, data);
   else if ((op1 & 0x21) == 0x00 && (op1 & 0x3a) != 0x00
 	   && (coproc & 0xe) != 0xa)
     /* stc/stc2.  */
-    return arm_copy_copro_load_store (gdbarch, insn, regs, dsc);
+    return arm_copy_copro_load_store (insn, data);
   else if ((op1 & 0x21) == 0x01 && (op1 & 0x3a) != 0x00
 	   && (coproc & 0xe) != 0xa)
     /* ldc/ldc2 imm/lit.  */
-    return arm_copy_copro_load_store (gdbarch, insn, regs, dsc);
+    return arm_copy_copro_load_store (insn, data);
   else if ((op1 & 0x3e) == 0x00)
-    return arm_copy_undef (gdbarch, insn, dsc);
+    return arm_copy_undef (insn, data);
   else if ((op1 & 0x3e) == 0x04 && (coproc & 0xe) == 0xa)
-    return arm_copy_unmodified (gdbarch, insn, "neon 64bit xfer", dsc);
+    return arm_copy_unmodified (insn, "neon 64bit xfer", data);
   else if (op1 == 0x04 && (coproc & 0xe) != 0xa)
-    return arm_copy_unmodified (gdbarch, insn, "mcrr/mcrr2", dsc);
+    return arm_copy_unmodified (insn, "mcrr/mcrr2", data);
   else if (op1 == 0x05 && (coproc & 0xe) != 0xa)
-    return arm_copy_unmodified (gdbarch, insn, "mrrc/mrrc2", dsc);
+    return arm_copy_unmodified (insn, "mrrc/mrrc2", data);
   else if ((op1 & 0x30) == 0x20 && !op)
     {
       if ((coproc & 0xe) == 0xa)
-	return arm_copy_unmodified (gdbarch, insn, "vfp dataproc", dsc);
+	return arm_copy_unmodified (insn, "vfp dataproc", data);
       else
-	return arm_copy_unmodified (gdbarch, insn, "cdp/cdp2", dsc);
+	return arm_copy_unmodified (insn, "cdp/cdp2", data);
     }
   else if ((op1 & 0x30) == 0x20 && op)
-    return arm_copy_unmodified (gdbarch, insn, "neon 8/16/32 bit xfer", dsc);
+    return arm_copy_unmodified (insn, "neon 8/16/32 bit xfer", data);
   else if ((op1 & 0x31) == 0x20 && op && (coproc & 0xe) != 0xa)
-    return arm_copy_unmodified (gdbarch, insn, "mcr/mcr2", dsc);
+    return arm_copy_unmodified (insn, "mcr/mcr2", data);
   else if ((op1 & 0x31) == 0x21 && op && (coproc & 0xe) != 0xa)
-    return arm_copy_unmodified (gdbarch, insn, "mrc/mrc2", dsc);
+    return arm_copy_unmodified (insn, "mrc/mrc2", data);
   else if ((op1 & 0x30) == 0x30)
-    return arm_copy_svc (gdbarch, insn, regs, dsc);
+    return arm_copy_svc (insn, data);
   else
-    return arm_copy_undef (gdbarch, insn, dsc);  /* Possibly unreachable.  */
+    return arm_copy_undef (insn, data);  /* Possibly unreachable.  */
 }
 
 static int
-thumb2_decode_svc_copro (struct gdbarch *gdbarch, uint16_t insn1,
-			 uint16_t insn2, struct regcache *regs,
-			 struct displaced_step_closure *dsc)
+thumb2_decode_svc_copro (uint16_t insn1, uint16_t insn2,
+			 struct arm_insn_reloc_data *data)
 {
   unsigned int coproc = bits (insn2, 8, 11);
   unsigned int bit_5_8 = bits (insn1, 5, 8);
@@ -7006,37 +6982,33 @@ thumb2_decode_svc_copro (struct gdbarch *gdbarch, uint16_t insn1,
   if (bit_9 == 0)
     {
       if (bit_5_8 == 2)
-	return thumb_copy_unmodified_32bit (gdbarch, insn1, insn2,
-					    "neon 64bit xfer/mrrc/mrrc2/mcrr/mcrr2",
-					    dsc);
+	return thumb_copy_unmodified_32bit (
+	  insn1, insn2, "neon 64bit xfer/mrrc/mrrc2/mcrr/mcrr2", data);
       else if (bit_5_8 == 0) /* UNDEFINED.  */
-	return thumb_32bit_copy_undef (gdbarch, insn1, insn2, dsc);
+	return thumb_32bit_copy_undef (insn1, insn2, data);
       else
 	{
 	   /*coproc is 101x.  SIMD/VFP, ext registers load/store.  */
 	  if ((coproc & 0xe) == 0xa)
-	    return thumb2_decode_ext_reg_ld_st (gdbarch, insn1, insn2, regs,
-						dsc);
+	    return thumb2_decode_ext_reg_ld_st (insn1, insn2, data);
 	  else /* coproc is not 101x.  */
 	    {
 	      if (bit_4 == 0) /* STC/STC2.  */
-		return thumb_copy_unmodified_32bit (gdbarch, insn1, insn2,
-						    "stc/stc2", dsc);
+		return thumb_copy_unmodified_32bit (insn1, insn2, "stc/stc2",
+						    data);
 	      else /* LDC/LDC2 {literal, immeidate}.  */
-		return thumb2_copy_copro_load_store (gdbarch, insn1, insn2,
-						     regs, dsc);
+		return thumb2_copy_copro_load_store (insn1, insn2, data);
 	    }
 	}
     }
   else
-    return thumb_copy_unmodified_32bit (gdbarch, insn1, insn2, "coproc", dsc);
+    return thumb_copy_unmodified_32bit (insn1, insn2, "coproc", data);
 
   return 0;
 }
 
 static void
-install_pc_relative (struct gdbarch *gdbarch, struct regcache *regs,
-		     struct displaced_step_closure *dsc, int rd)
+install_pc_relative (struct arm_insn_reloc_data *data, int rd)
 {
   /* ADR Rd, #imm
 
@@ -7048,28 +7020,25 @@ install_pc_relative (struct gdbarch *gdbarch, struct regcache *regs,
   */
 
   /* Rd <- PC */
-  int val = displaced_read_reg (regs, dsc, ARM_PC_REGNUM);
-  displaced_write_reg (regs, dsc, rd, val, CANNOT_WRITE_PC);
+  int val = displaced_read_reg (data->regs, data->dsc, ARM_PC_REGNUM);
+  displaced_write_reg (data->regs, data->dsc, rd, val, CANNOT_WRITE_PC);
 }
 
 static int
-thumb_copy_pc_relative_16bit (struct gdbarch *gdbarch, struct regcache *regs,
-			      struct displaced_step_closure *dsc,
-			      int rd, unsigned int imm)
+thumb_copy_pc_relative_16bit (struct arm_insn_reloc_data *data, int rd,
+			      unsigned int imm)
 {
 
   /* Encoding T2: ADDS Rd, #imm */
-  dsc->modinsn[0] = (0x3000 | (rd << 8) | imm);
+  data->dsc->modinsn[0] = (0x3000 | (rd << 8) | imm);
 
-  install_pc_relative (gdbarch, regs, dsc, rd);
+  install_pc_relative (data, rd);
 
   return 0;
 }
 
 static int
-thumb_decode_pc_relative_16bit (struct gdbarch *gdbarch, uint16_t insn,
-				struct regcache *regs,
-				struct displaced_step_closure *dsc)
+thumb_decode_pc_relative_16bit (uint16_t insn, struct arm_insn_reloc_data *data)
 {
   unsigned int rd = bits (insn, 8, 10);
   unsigned int imm8 = bits (insn, 0, 7);
@@ -7079,13 +7048,12 @@ thumb_decode_pc_relative_16bit (struct gdbarch *gdbarch, uint16_t insn,
 			"displaced: copying thumb adr r%d, #%d insn %.4x\n",
 			rd, imm8, insn);
 
-  return thumb_copy_pc_relative_16bit (gdbarch, regs, dsc, rd, imm8);
+  return thumb_copy_pc_relative_16bit (data, rd, imm8);
 }
 
 static int
-thumb_copy_pc_relative_32bit (struct gdbarch *gdbarch, uint16_t insn1,
-			      uint16_t insn2, struct regcache *regs,
-			      struct displaced_step_closure *dsc)
+thumb_copy_pc_relative_32bit (uint16_t insn1, uint16_t insn2,
+			      struct arm_insn_reloc_data *data)
 {
   unsigned int rd = bits (insn2, 8, 11);
   /* Since immediate has the same encoding in ADR ADD and SUB, so we simply
@@ -7094,6 +7062,7 @@ thumb_copy_pc_relative_32bit (struct gdbarch *gdbarch, uint16_t insn1,
      set immediate into ADD.  */
   unsigned int imm_3_8 = insn2 & 0x70ff;
   unsigned int imm_i = insn1 & 0x0400; /* Clear all bits except bit 10.  */
+  struct displaced_step_closure *dsc = data->dsc;
 
   if (debug_displaced)
     fprintf_unfiltered (gdb_stdlog,
@@ -7114,19 +7083,20 @@ thumb_copy_pc_relative_32bit (struct gdbarch *gdbarch, uint16_t insn1,
     }
   dsc->numinsns = 2;
 
-  install_pc_relative (gdbarch, regs, dsc, rd);
+  install_pc_relative (data, rd);
 
   return 0;
 }
 
 static int
-thumb_copy_16bit_ldr_literal (struct gdbarch *gdbarch, uint16_t insn1,
-			      struct regcache *regs,
-			      struct displaced_step_closure *dsc)
+thumb_copy_16bit_ldr_literal (uint16_t insn1,
+			      struct arm_insn_reloc_data *data)
 {
   unsigned int rt = bits (insn1, 8, 10);
   unsigned int pc;
   int imm8 = (bits (insn1, 0, 7) << 2);
+  struct displaced_step_closure *dsc = data->dsc;
+  struct regcache *regs = data->regs;
 
   /* LDR Rd, #imm8
 
@@ -7170,15 +7140,14 @@ thumb_copy_16bit_ldr_literal (struct gdbarch *gdbarch, uint16_t insn1,
 /* Copy Thumb cbnz/cbz insruction.  */
 
 static int
-thumb_copy_cbnz_cbz (struct gdbarch *gdbarch, uint16_t insn1,
-		     struct regcache *regs,
-		     struct displaced_step_closure *dsc)
+thumb_copy_cbnz_cbz (uint16_t insn1, struct arm_insn_reloc_data *data)
 {
+  struct displaced_step_closure *dsc = data->dsc;
   int non_zero = bit (insn1, 11);
   unsigned int imm5 = (bit (insn1, 9) << 6) | (bits (insn1, 3, 7) << 1);
   CORE_ADDR from = dsc->insn_addr;
   int rn = bits (insn1, 0, 2);
-  int rn_val = displaced_read_reg (regs, dsc, rn);
+  int rn_val = displaced_read_reg (data->regs, dsc, rn);
 
   dsc->u.branch.cond = (rn_val && non_zero) || (!rn_val && !non_zero);
   /* CBNZ and CBZ do not affect the condition flags.  If condition is true,
@@ -7208,14 +7177,15 @@ thumb_copy_cbnz_cbz (struct gdbarch *gdbarch, uint16_t insn1,
 
 /* Copy Table Branch Byte/Halfword */
 static int
-thumb2_copy_table_branch (struct gdbarch *gdbarch, uint16_t insn1,
-			  uint16_t insn2, struct regcache *regs,
-			  struct displaced_step_closure *dsc)
+thumb2_copy_table_branch (uint16_t insn1, uint16_t insn2,
+			  struct arm_insn_reloc_data *data)
 {
   ULONGEST rn_val, rm_val;
   int is_tbh = bit (insn2, 4);
   CORE_ADDR halfwords = 0;
-  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+  enum bfd_endian byte_order = gdbarch_byte_order (data->gdbarch);
+  struct displaced_step_closure *dsc = data->dsc;
+  struct regcache *regs = data->regs;
 
   rn_val = displaced_read_reg (regs, dsc, bits (insn1, 0, 3));
   rm_val = displaced_read_reg (regs, dsc, bits (insn2, 0, 3));
@@ -7269,10 +7239,11 @@ cleanup_pop_pc_16bit_all (struct gdbarch *gdbarch, struct regcache *regs,
 }
 
 static int
-thumb_copy_pop_pc_16bit (struct gdbarch *gdbarch, uint16_t insn1,
-			 struct regcache *regs,
-			 struct displaced_step_closure *dsc)
+thumb_copy_pop_pc_16bit (uint16_t insn1, struct arm_insn_reloc_data *data)
 {
+  struct displaced_step_closure *dsc = data->dsc;
+  struct regcache *regs = data->regs;
+
   dsc->u.block.regmask = insn1 & 0x00ff;
 
   /* Rewrite instruction: POP {rX, rY, ...,rZ, PC}
@@ -7342,9 +7313,8 @@ thumb_copy_pop_pc_16bit (struct gdbarch *gdbarch, uint16_t insn1,
 }
 
 static void
-thumb_process_displaced_16bit_insn (struct gdbarch *gdbarch, uint16_t insn1,
-				    struct regcache *regs,
-				    struct displaced_step_closure *dsc)
+thumb_process_displaced_16bit_insn (uint16_t insn1,
+				    struct arm_insn_reloc_data *data)
 {
   unsigned short op_bit_12_15 = bits (insn1, 12, 15);
   unsigned short op_bit_10_11 = bits (insn1, 10, 11);
@@ -7355,85 +7325,79 @@ thumb_process_displaced_16bit_insn (struct gdbarch *gdbarch, uint16_t insn1,
     {
       /* Shift (imme), add, subtract, move and compare.  */
     case 0: case 1: case 2: case 3:
-      err = thumb_copy_unmodified_16bit (gdbarch, insn1,
-					 "shift/add/sub/mov/cmp",
-					 dsc);
+      err = thumb_copy_unmodified_16bit (insn1, "shift/add/sub/mov/cmp", data);
       break;
     case 4:
       switch (op_bit_10_11)
 	{
 	case 0: /* Data-processing */
-	  err = thumb_copy_unmodified_16bit (gdbarch, insn1,
-					     "data-processing",
-					     dsc);
+	  err = thumb_copy_unmodified_16bit (insn1, "data-processing", data);
 	  break;
 	case 1: /* Special data instructions and branch and exchange.  */
 	  {
 	    unsigned short op = bits (insn1, 7, 9);
 	    if (op == 6 || op == 7) /* BX or BLX */
-	      err = thumb_copy_bx_blx_reg (gdbarch, insn1, regs, dsc);
+	      err = thumb_copy_bx_blx_reg (insn1, data);
 	    else if (bits (insn1, 6, 7) != 0) /* ADD/MOV/CMP high registers.  */
-	      err = thumb_copy_alu_reg (gdbarch, insn1, regs, dsc);
+	      err = thumb_copy_alu_reg (insn1, data);
 	    else
-	      err = thumb_copy_unmodified_16bit (gdbarch, insn1, "special data",
-						 dsc);
+	      err = thumb_copy_unmodified_16bit (insn1, "special data", data);
 	  }
 	  break;
 	default: /* LDR (literal) */
-	  err = thumb_copy_16bit_ldr_literal (gdbarch, insn1, regs, dsc);
+	  err = thumb_copy_16bit_ldr_literal (insn1, data);
 	}
       break;
     case 5: case 6: case 7: case 8: case 9: /* Load/Store single data item */
-      err = thumb_copy_unmodified_16bit (gdbarch, insn1, "ldr/str", dsc);
+      err = thumb_copy_unmodified_16bit (insn1, "ldr/str", data);
       break;
     case 10:
       if (op_bit_10_11 < 2) /* Generate PC-relative address */
-	err = thumb_decode_pc_relative_16bit (gdbarch, insn1, regs, dsc);
+	err = thumb_decode_pc_relative_16bit (insn1, data);
       else /* Generate SP-relative address */
-	err = thumb_copy_unmodified_16bit (gdbarch, insn1, "sp-relative", dsc);
+	err = thumb_copy_unmodified_16bit (insn1, "sp-relative", data);
       break;
     case 11: /* Misc 16-bit instructions */
       {
 	switch (bits (insn1, 8, 11))
 	  {
 	  case 1: case 3:  case 9: case 11: /* CBNZ, CBZ */
-	    err = thumb_copy_cbnz_cbz (gdbarch, insn1, regs, dsc);
+	    err = thumb_copy_cbnz_cbz (insn1, data);
 	    break;
 	  case 12: case 13: /* POP */
 	    if (bit (insn1, 8)) /* PC is in register list.  */
-	      err = thumb_copy_pop_pc_16bit (gdbarch, insn1, regs, dsc);
+	      err = thumb_copy_pop_pc_16bit (insn1, data);
 	    else
-	      err = thumb_copy_unmodified_16bit (gdbarch, insn1, "pop", dsc);
+	      err = thumb_copy_unmodified_16bit (insn1, "pop", data);
 	    break;
 	  case 15: /* If-Then, and hints */
 	    if (bits (insn1, 0, 3))
 	      /* If-Then makes up to four following instructions conditional.
 		 IT instruction itself is not conditional, so handle it as a
 		 common unmodified instruction.  */
-	      err = thumb_copy_unmodified_16bit (gdbarch, insn1, "If-Then",
-						 dsc);
+	      err = thumb_copy_unmodified_16bit (insn1, "If-Then", data);
 	    else
-	      err = thumb_copy_unmodified_16bit (gdbarch, insn1, "hints", dsc);
+	      err = thumb_copy_unmodified_16bit (insn1, "hints", data);
 	    break;
 	  default:
-	    err = thumb_copy_unmodified_16bit (gdbarch, insn1, "misc", dsc);
+	    err = thumb_copy_unmodified_16bit (insn1, "misc", data);
 	  }
       }
       break;
     case 12:
       if (op_bit_10_11 < 2) /* Store multiple registers */
-	err = thumb_copy_unmodified_16bit (gdbarch, insn1, "stm", dsc);
+	err = thumb_copy_unmodified_16bit (insn1, "stm", data);
       else /* Load multiple registers */
-	err = thumb_copy_unmodified_16bit (gdbarch, insn1, "ldm", dsc);
+	err = thumb_copy_unmodified_16bit (insn1, "ldm", data);
       break;
     case 13: /* Conditional branch and supervisor call */
       if (bits (insn1, 9, 11) != 7) /* conditional branch */
-	err = thumb_copy_b (gdbarch, insn1, dsc);
+	err = thumb_copy_b (insn1, data);
       else
-	err = thumb_copy_svc (gdbarch, insn1, regs, dsc);
+	err = thumb_copy_svc (insn1, data);
       break;
     case 14: /* Unconditional branch */
-      err = thumb_copy_b (gdbarch, insn1, dsc);
+      err = thumb_copy_b (insn1, data);
       break;
     default:
       err = 1;
@@ -7445,10 +7409,8 @@ thumb_process_displaced_16bit_insn (struct gdbarch *gdbarch, uint16_t insn1,
 }
 
 static int
-decode_thumb_32bit_ld_mem_hints (struct gdbarch *gdbarch,
-				 uint16_t insn1, uint16_t insn2,
-				 struct regcache *regs,
-				 struct displaced_step_closure *dsc)
+decode_thumb_32bit_ld_mem_hints (uint16_t insn1, uint16_t insn2,
+				 struct arm_insn_reloc_data *data)
 {
   int rt = bits (insn2, 12, 15);
   int rn = bits (insn1, 0, 3);
@@ -7461,35 +7423,32 @@ decode_thumb_32bit_ld_mem_hints (struct gdbarch *gdbarch,
 	{
 	  if (rn == 0xf)
 	    /* PLD literal or Encoding T3 of PLI(immediate, literal).  */
-	    return thumb2_copy_preload (gdbarch, insn1, insn2, regs, dsc);
+	    return thumb2_copy_preload (insn1, insn2, data);
 	  else
-	    return thumb_copy_unmodified_32bit (gdbarch, insn1, insn2,
-						"pli/pld", dsc);
+	    return thumb_copy_unmodified_32bit (insn1, insn2, "pli/pld", data);
 	}
       else
 	{
 	  if (rn == 0xf) /* LDRB/LDRSB (literal) */
-	    return thumb2_copy_load_literal (gdbarch, insn1, insn2, regs, dsc,
-					     1);
+	    return thumb2_copy_load_literal (insn1, insn2, data, 1);
 	  else
-	    return thumb_copy_unmodified_32bit (gdbarch, insn1, insn2,
+	    return thumb_copy_unmodified_32bit (insn1, insn2,
 						"ldrb{reg, immediate}/ldrbt",
-						dsc);
+						data);
 	}
 
       break;
     case 1: /* Load halfword and memory hints.  */
       if (rt == 0xf) /* PLD{W} and Unalloc memory hint.  */
-	return thumb_copy_unmodified_32bit (gdbarch, insn1, insn2,
-					    "pld/unalloc memhint", dsc);
+	return thumb_copy_unmodified_32bit (insn1, insn2, "pld/unalloc memhint",
+					    data);
       else
 	{
 	  if (rn == 0xf)
-	    return thumb2_copy_load_literal (gdbarch, insn1, insn2, regs, dsc,
-					     2);
+	    return thumb2_copy_load_literal (insn1, insn2, data, 2);
 	  else
-	    return thumb_copy_unmodified_32bit (gdbarch, insn1, insn2,
-						"ldrh/ldrht", dsc);
+	    return thumb_copy_unmodified_32bit (insn1, insn2, "ldrh/ldrht",
+						data);
 	}
       break;
     case 2: /* Load word */
@@ -7497,37 +7456,33 @@ decode_thumb_32bit_ld_mem_hints (struct gdbarch *gdbarch,
 	int insn2_bit_8_11 = bits (insn2, 8, 11);
 
 	if (rn == 0xf)
-	  return thumb2_copy_load_literal (gdbarch, insn1, insn2, regs, dsc, 4);
+	  return thumb2_copy_load_literal (insn1, insn2, data, 4);
 	else if (op1 == 0x1) /* Encoding T3 */
-	  return thumb2_copy_load_reg_imm (gdbarch, insn1, insn2, regs, dsc,
-					   0, 1);
+	  return thumb2_copy_load_reg_imm (insn1, insn2, data, 0, 1);
 	else /* op1 == 0x0 */
 	  {
 	    if (insn2_bit_8_11 == 0xc || (insn2_bit_8_11 & 0x9) == 0x9)
 	      /* LDR (immediate) */
-	      return thumb2_copy_load_reg_imm (gdbarch, insn1, insn2, regs,
-					       dsc, bit (insn2, 8), 1);
+	      return thumb2_copy_load_reg_imm (insn1, insn2, data,
+					       bit (insn2, 8), 1);
 	    else if (insn2_bit_8_11 == 0xe) /* LDRT */
-	      return thumb_copy_unmodified_32bit (gdbarch, insn1, insn2,
-						  "ldrt", dsc);
+	      return thumb_copy_unmodified_32bit (insn1, insn2, "ldrt", data);
 	    else
 	      /* LDR (register) */
-	      return thumb2_copy_load_reg_imm (gdbarch, insn1, insn2, regs,
-					       dsc, 0, 0);
+	      return thumb2_copy_load_reg_imm (insn1, insn2, data, 0, 0);
 	  }
 	break;
       }
     default:
-      return thumb_32bit_copy_undef (gdbarch, insn1, insn2, dsc);
+      return thumb_32bit_copy_undef (insn1, insn2, data);
       break;
     }
   return 0;
 }
 
 static void
-thumb_process_displaced_32bit_insn (struct gdbarch *gdbarch, uint16_t insn1,
-				    uint16_t insn2, struct regcache *regs,
-				    struct displaced_step_closure *dsc)
+thumb_process_displaced_32bit_insn (uint16_t insn1, uint16_t insn2,
+				    struct arm_insn_reloc_data *data)
 {
   int err = 0;
   unsigned short op = bit (insn2, 15);
@@ -7545,24 +7500,24 @@ thumb_process_displaced_32bit_insn (struct gdbarch *gdbarch, uint16_t insn1,
 		/* Load/store {dual, execlusive}, table branch.  */
 		if (bits (insn1, 7, 8) == 1 && bits (insn1, 4, 5) == 1
 		    && bits (insn2, 5, 7) == 0)
-		  err = thumb2_copy_table_branch (gdbarch, insn1, insn2, regs,
-						  dsc);
+		  err = thumb2_copy_table_branch (insn1, insn2, data);
 		else
 		  /* PC is not allowed to use in load/store {dual, exclusive}
 		     instructions.  */
-		  err = thumb_copy_unmodified_32bit (gdbarch, insn1, insn2,
-						     "load/store dual/ex", dsc);
+		  err = thumb_copy_unmodified_32bit (insn1, insn2,
+						     "load/store dual/ex",
+						     data);
 	      }
 	    else /* load/store multiple */
 	      {
 		switch (bits (insn1, 7, 8))
 		  {
 		  case 0: case 3: /* SRS, RFE */
-		    err = thumb_copy_unmodified_32bit (gdbarch, insn1, insn2,
-						       "srs/rfe", dsc);
+		    err = thumb_copy_unmodified_32bit (insn1, insn2, "srs/rfe",
+						       data);
 		    break;
 		  case 1: case 2: /* LDM/STM/PUSH/POP */
-		    err = thumb2_copy_block_xfer (gdbarch, insn1, insn2, regs, dsc);
+		    err = thumb2_copy_block_xfer (insn1, insn2, data);
 		    break;
 		  }
 	      }
@@ -7570,11 +7525,10 @@ thumb_process_displaced_32bit_insn (struct gdbarch *gdbarch, uint16_t insn1,
 
 	  case 1:
 	    /* Data-processing (shift register).  */
-	    err = thumb2_decode_dp_shift_reg (gdbarch, insn1, insn2, regs,
-					      dsc);
+	    err = thumb2_decode_dp_shift_reg (insn1, insn2, data);
 	    break;
 	  default: /* Coprocessor instructions.  */
-	    err = thumb2_decode_svc_copro (gdbarch, insn1, insn2, regs, dsc);
+	    err = thumb2_decode_svc_copro (insn1, insn2, data);
 	    break;
 	  }
       break;
@@ -7585,10 +7539,9 @@ thumb_process_displaced_32bit_insn (struct gdbarch *gdbarch, uint16_t insn1,
 	  if (bit (insn2, 14)  /* BLX/BL */
 	      || bit (insn2, 12) /* Unconditional branch */
 	      || (bits (insn1, 7, 9) != 0x7)) /* Conditional branch */
-	    err = thumb2_copy_b_bl_blx (gdbarch, insn1, insn2, regs, dsc);
+	    err = thumb2_copy_b_bl_blx (insn1, insn2, data);
 	  else
-	    err = thumb_copy_unmodified_32bit (gdbarch, insn1, insn2,
-					       "misc ctrl", dsc);
+	    err = thumb_copy_unmodified_32bit (insn1, insn2, "misc ctrl", data);
 	}
       else
 	{
@@ -7597,15 +7550,12 @@ thumb_process_displaced_32bit_insn (struct gdbarch *gdbarch, uint16_t insn1,
 	      int op = bits (insn1, 4, 8);
 	      int rn = bits (insn1, 0, 3);
 	      if ((op == 0 || op == 0xa) && rn == 0xf)
-		err = thumb_copy_pc_relative_32bit (gdbarch, insn1, insn2,
-						    regs, dsc);
+		err = thumb_copy_pc_relative_32bit (insn1, insn2, data);
 	      else
-		err = thumb_copy_unmodified_32bit (gdbarch, insn1, insn2,
-						   "dp/pb", dsc);
+		err = thumb_copy_unmodified_32bit (insn1, insn2, "dp/pb", data);
 	    }
 	  else /* Data processing (modified immeidate) */
-	    err = thumb_copy_unmodified_32bit (gdbarch, insn1, insn2,
-					       "dp/mi", dsc);
+	    err = thumb_copy_unmodified_32bit (insn1, insn2, "dp/mi", data);
 	}
       break;
     case 3: /* op1 = 3 */
@@ -7613,32 +7563,30 @@ thumb_process_displaced_32bit_insn (struct gdbarch *gdbarch, uint16_t insn1,
 	{
 	case 0:
 	  if (bit (insn1, 4))
-	    err = decode_thumb_32bit_ld_mem_hints (gdbarch, insn1, insn2,
-						   regs, dsc);
+	    err = decode_thumb_32bit_ld_mem_hints (insn1, insn2, data);
 	  else /* NEON Load/Store and Store single data item */
-	    err = thumb_copy_unmodified_32bit (gdbarch, insn1, insn2,
+	    err = thumb_copy_unmodified_32bit (insn1, insn2,
 					       "neon elt/struct load/store",
-					       dsc);
+					       data);
 	  break;
 	case 1: /* op1 = 3, bits (9, 10) == 1 */
 	  switch (bits (insn1, 7, 8))
 	    {
 	    case 0: case 1: /* Data processing (register) */
-	      err = thumb_copy_unmodified_32bit (gdbarch, insn1, insn2,
-						 "dp(reg)", dsc);
+	      err = thumb_copy_unmodified_32bit (insn1, insn2, "dp(reg)", data);
 	      break;
 	    case 2: /* Multiply and absolute difference */
-	      err = thumb_copy_unmodified_32bit (gdbarch, insn1, insn2,
-						 "mul/mua/diff", dsc);
+	      err = thumb_copy_unmodified_32bit (insn1, insn2, "mul/mua/diff",
+						 data);
 	      break;
 	    case 3: /* Long multiply and divide */
-	      err = thumb_copy_unmodified_32bit (gdbarch, insn1, insn2,
-						 "lmul/lmua", dsc);
+	      err = thumb_copy_unmodified_32bit (insn1, insn2, "lmul/lmua",
+						 data);
 	      break;
 	    }
 	  break;
 	default: /* Coprocessor instructions */
-	  err = thumb2_decode_svc_copro (gdbarch, insn1, insn2, regs, dsc);
+	  err = thumb2_decode_svc_copro (insn1, insn2, data);
 	  break;
 	}
       break;
@@ -7653,11 +7601,10 @@ thumb_process_displaced_32bit_insn (struct gdbarch *gdbarch, uint16_t insn1,
 }
 
 static void
-thumb_process_displaced_insn (struct gdbarch *gdbarch, CORE_ADDR from,
-			      struct regcache *regs,
-			      struct displaced_step_closure *dsc)
+thumb_process_displaced_insn (CORE_ADDR from, struct arm_insn_reloc_data *data)
 {
-  enum bfd_endian byte_order_for_code = gdbarch_byte_order_for_code (gdbarch);
+  enum bfd_endian byte_order_for_code
+    = gdbarch_byte_order_for_code (data->gdbarch);
   uint16_t insn1
     = read_memory_unsigned_integer (from, 2, byte_order_for_code);
 
@@ -7665,16 +7612,16 @@ thumb_process_displaced_insn (struct gdbarch *gdbarch, CORE_ADDR from,
     fprintf_unfiltered (gdb_stdlog, "displaced: process thumb insn %.4x "
 			"at %.8lx\n", insn1, (unsigned long) from);
 
-  dsc->is_thumb = 1;
-  dsc->insn_size = thumb_insn_size (insn1);
+  data->dsc->is_thumb = 1;
+  data->dsc->insn_size = thumb_insn_size (insn1);
   if (thumb_insn_size (insn1) == 4)
     {
       uint16_t insn2
 	= read_memory_unsigned_integer (from + 2, 2, byte_order_for_code);
-      thumb_process_displaced_32bit_insn (gdbarch, insn1, insn2, regs, dsc);
+      thumb_process_displaced_32bit_insn (insn1, insn2, data);
     }
   else
-    thumb_process_displaced_16bit_insn (gdbarch, insn1, regs, dsc);
+    thumb_process_displaced_16bit_insn (insn1, data);
 }
 
 void
@@ -7685,6 +7632,11 @@ arm_process_displaced_insn (struct gdbarch *gdbarch, CORE_ADDR from,
   int err = 0;
   enum bfd_endian byte_order_for_code = gdbarch_byte_order_for_code (gdbarch);
   uint32_t insn;
+  struct arm_insn_reloc_data reloc_data;
+
+  reloc_data.dsc = dsc;
+  reloc_data.gdbarch = gdbarch;
+  reloc_data.regs = regs;
 
   /* Most displaced instructions use a 1-instruction scratch space, so set this
      here and override below if/when necessary.  */
@@ -7695,7 +7647,7 @@ arm_process_displaced_insn (struct gdbarch *gdbarch, CORE_ADDR from,
   dsc->wrote_to_pc = 0;
 
   if (!displaced_in_arm_mode (regs))
-    return thumb_process_displaced_insn (gdbarch, from, regs, dsc);
+    return thumb_process_displaced_insn (from, &reloc_data);
 
   dsc->is_thumb = 0;
   dsc->insn_size = 4;
@@ -7706,27 +7658,27 @@ arm_process_displaced_insn (struct gdbarch *gdbarch, CORE_ADDR from,
 			(unsigned long) from);
 
   if ((insn & 0xf0000000) == 0xf0000000)
-    err = arm_decode_unconditional (gdbarch, insn, regs, dsc);
+    err = arm_decode_unconditional (insn, &reloc_data);
   else switch (((insn & 0x10) >> 4) | ((insn & 0xe000000) >> 24))
     {
     case 0x0: case 0x1: case 0x2: case 0x3:
-      err = arm_decode_dp_misc (gdbarch, insn, regs, dsc);
+      err = arm_decode_dp_misc (insn, &reloc_data);
       break;
 
     case 0x4: case 0x5: case 0x6:
-      err = arm_decode_ld_st_word_ubyte (gdbarch, insn, regs, dsc);
+      err = arm_decode_ld_st_word_ubyte (insn, &reloc_data);
       break;
 
     case 0x7:
-      err = arm_decode_media (gdbarch, insn, dsc);
+      err = arm_decode_media (insn, &reloc_data);
       break;
 
     case 0x8: case 0x9: case 0xa: case 0xb:
-      err = arm_decode_b_bl_ldmstm (gdbarch, insn, regs, dsc);
+      err = arm_decode_b_bl_ldmstm (insn, &reloc_data);
       break;
 
     case 0xc: case 0xd: case 0xe: case 0xf:
-      err = arm_decode_svc_copro (gdbarch, insn, regs, dsc);
+      err = arm_decode_svc_copro (insn, &reloc_data);
       break;
     }
 
