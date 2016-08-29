@@ -1784,18 +1784,14 @@ static const struct aarch64_insn_visitor visitor =
    "install_fast_tracepoint_jump_pad".  */
 
 static int
-aarch64_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint,
-					  CORE_ADDR tpaddr,
+aarch64_install_fast_tracepoint_jump_pad (struct tracepoint *tp,
 					  CORE_ADDR collector,
 					  CORE_ADDR lockaddr,
-					  ULONGEST orig_size,
 					  CORE_ADDR *jump_entry,
 					  CORE_ADDR *trampoline,
 					  ULONGEST *trampoline_size,
 					  unsigned char *jjump_pad_insn,
 					  ULONGEST *jjump_pad_insn_size,
-					  CORE_ADDR *adjusted_insn_addr,
-					  CORE_ADDR *adjusted_insn_addr_end,
 					  char *err)
 {
   uint32_t buf[256];
@@ -1909,7 +1905,7 @@ aarch64_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint,
 
      */
 
-  p += emit_mov_addr (p, x3, tpaddr);
+  p += emit_mov_addr (p, x3, tp->address);
   p += emit_str (p, x3, sp, offset_memory_operand (3 * 16));
 
   /* Save CPSR (NZCV), FPSR and FPCR:
@@ -1944,7 +1940,7 @@ aarch64_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint,
 
      */
 
-  p += emit_mov_addr (p, x0, tpoint);
+  p += emit_mov_addr (p, x0, tp->obj_addr_on_target);
   p += emit_mrs (p, x1, TPIDR_EL0);
   p += emit_stp (p, x0, x1, sp, preindex_memory_operand (-16));
 
@@ -2021,7 +2017,7 @@ aarch64_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint,
 
      */
 
-  p += emit_mov_addr (p, x0, tpoint);
+  p += emit_mov_addr (p, x0, tp->obj_addr_on_target);
   p += emit_add (p, x1, sp, immediate_operand (16));
 
   p += emit_mov_addr (p, ip0, collector);
@@ -2105,10 +2101,10 @@ aarch64_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint,
   append_insns (&buildaddr, p - buf, buf);
 
   /* Now emit the relocated instruction.  */
-  *adjusted_insn_addr = buildaddr;
-  target_read_uint32 (tpaddr, &insn);
+  tp->adjusted_insn_addr = buildaddr;
+  target_read_uint32 (tp->address, &insn);
 
-  insn_data.base.insn_addr = tpaddr;
+  insn_data.base.insn_addr = tp->address;
   insn_data.new_addr = buildaddr;
   insn_data.insn_ptr = buf;
 
@@ -2120,19 +2116,19 @@ aarch64_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint,
     {
       sprintf (err,
 	       "E.Could not relocate instruction from %s to %s.",
-	       core_addr_to_string_nz (tpaddr),
+	       core_addr_to_string_nz (tp->address),
 	       core_addr_to_string_nz (buildaddr));
       return 1;
     }
   else
     append_insns (&buildaddr, insn_data.insn_ptr - buf, buf);
-  *adjusted_insn_addr_end = buildaddr;
+  tp->adjusted_insn_addr_end = buildaddr;
 
   /* Go back to the start of the buffer.  */
   p = buf;
 
   /* Emit a branch back from the jump pad.  */
-  offset = (tpaddr + orig_size - buildaddr);
+  offset = (tp->address + tp->orig_size - buildaddr);
   if (!can_encode_int32 (offset, 28))
     {
       sprintf (err,
@@ -2146,7 +2142,7 @@ aarch64_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint,
   append_insns (&buildaddr, p - buf, buf);
 
   /* Give the caller a branch instruction into the jump pad.  */
-  offset = (*jump_entry - tpaddr);
+  offset = (*jump_entry - tp->address);
   if (!can_encode_int32 (offset, 28))
     {
       sprintf (err,

@@ -1178,18 +1178,14 @@ s390_relocate_instruction (CORE_ADDR *to, CORE_ADDR oldloc, int is_64)
    "install_fast_tracepoint_jump_pad".  */
 
 static int
-s390_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint,
-				       CORE_ADDR tpaddr,
+s390_install_fast_tracepoint_jump_pad (struct tracepoint *tp,
 				       CORE_ADDR collector,
 				       CORE_ADDR lockaddr,
-				       ULONGEST orig_size,
 				       CORE_ADDR *jump_entry,
 				       CORE_ADDR *trampoline,
 				       ULONGEST *trampoline_size,
 				       unsigned char *jjump_pad_insn,
 				       ULONGEST *jjump_pad_insn_size,
-				       CORE_ADDR *adjusted_insn_addr,
-				       CORE_ADDR *adjusted_insn_addr_end,
 				       char *err)
 {
   int i;
@@ -1197,6 +1193,9 @@ s390_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint,
   int32_t offset;
   unsigned char jbuf[6] = { 0xc0, 0xf4, 0, 0, 0, 0 };	/* jg ... */
   CORE_ADDR buildaddr = *jump_entry;
+  CORE_ADDR tpaddr = tp->address;
+  CORE_ADDR tpoint = tp->obj_addr_on_target;
+  ULONGEST orig_size = tp->orig_size;
 #ifdef __s390x__
   struct regcache *regcache = get_thread_regcache (current_thread, 0);
   int is_64 = register_size (regcache->tdesc, 0) == 8;
@@ -1297,13 +1296,13 @@ s390_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint,
 
   /* Now, adjust the original instruction to execute in the jump
      pad.  */
-  *adjusted_insn_addr = buildaddr;
+  tp->adjusted_insn_addr = buildaddr;
   if (s390_relocate_instruction (&buildaddr, tpaddr, is_64))
     {
       sprintf (err, "E.Could not relocate instruction for tracepoint.");
       return 1;
     }
-  *adjusted_insn_addr_end = buildaddr;
+  tp->adjusted_insn_addr_end = buildaddr;
 
   /* Finally, write a jump back to the program.  */
 

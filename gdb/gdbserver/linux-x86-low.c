@@ -1051,17 +1051,14 @@ push_opcode (unsigned char *buf, char *op)
    tracepoint address.  */
 
 static int
-amd64_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
+amd64_install_fast_tracepoint_jump_pad (struct tracepoint *tp,
 					CORE_ADDR collector,
 					CORE_ADDR lockaddr,
-					ULONGEST orig_size,
 					CORE_ADDR *jump_entry,
 					CORE_ADDR *trampoline,
 					ULONGEST *trampoline_size,
 					unsigned char *jjump_pad_insn,
 					ULONGEST *jjump_pad_insn_size,
-					CORE_ADDR *adjusted_insn_addr,
-					CORE_ADDR *adjusted_insn_addr_end,
 					char *err)
 {
   unsigned char buf[40];
@@ -1094,7 +1091,7 @@ amd64_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
   buf[i++] = 0x9c; /* pushfq */
   buf[i++] = 0x48; /* movabs <addr>,%rdi */
   buf[i++] = 0xbf;
-  memcpy (buf + i, &tpaddr, 8);
+  memcpy (buf + i, &tp->address, 8);
   i += 8;
   buf[i++] = 0x57; /* push %rdi */
   append_insns (&buildaddr, i, buf);
@@ -1103,7 +1100,7 @@ amd64_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
   i = 0;
   i += push_opcode (&buf[i], "48 83 ec 18");	/* sub $0x18,%rsp */
   i += push_opcode (&buf[i], "48 b8");          /* mov <tpoint>,%rax */
-  memcpy (buf + i, &tpoint, 8);
+  memcpy (buf + i, &tp->obj_addr_on_target, 8);
   i += 8;
   i += push_opcode (&buf[i], "48 89 04 24");    /* mov %rax,(%rsp) */
   i += push_opcode (&buf[i],
@@ -1133,7 +1130,7 @@ amd64_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
 
   /* tpoint address may be 64-bit wide.  */
   i += push_opcode (&buf[i], "48 bf");		/* movl <addr>,%rdi */
-  memcpy (buf + i, &tpoint, 8);
+  memcpy (buf + i, &tp->obj_addr_on_target, 8);
   i += 8;
   append_insns (&buildaddr, i, buf);
 
@@ -1186,13 +1183,13 @@ amd64_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
 
   /* Now, adjust the original instruction to execute in the jump
      pad.  */
-  *adjusted_insn_addr = buildaddr;
-  relocate_instruction (&buildaddr, tpaddr);
-  *adjusted_insn_addr_end = buildaddr;
+  tp->adjusted_insn_addr = buildaddr;
+  relocate_instruction (&buildaddr, tp->address);
+  tp->adjusted_insn_addr_end = buildaddr;
 
   /* Finally, write a jump back to the program.  */
 
-  loffset = (tpaddr + orig_size) - (buildaddr + sizeof (jump_insn));
+  loffset = (tp->address + tp->orig_size) - (buildaddr + sizeof (jump_insn));
   if (loffset > INT_MAX || loffset < INT_MIN)
     {
       sprintf (err,
@@ -1210,7 +1207,7 @@ amd64_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
      is always done last (by our caller actually), so that we can
      install fast tracepoints with threads running.  This relies on
      the agent's atomic write support.  */
-  loffset = *jump_entry - (tpaddr + sizeof (jump_insn));
+  loffset = *jump_entry - (tp->address + sizeof (jump_insn));
   if (loffset > INT_MAX || loffset < INT_MIN)
     {
       sprintf (err,
@@ -1240,17 +1237,14 @@ amd64_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
    tracepoint address.  */
 
 static int
-i386_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
+i386_install_fast_tracepoint_jump_pad (struct tracepoint *tp,
 				       CORE_ADDR collector,
 				       CORE_ADDR lockaddr,
-				       ULONGEST orig_size,
 				       CORE_ADDR *jump_entry,
 				       CORE_ADDR *trampoline,
 				       ULONGEST *trampoline_size,
 				       unsigned char *jjump_pad_insn,
 				       ULONGEST *jjump_pad_insn_size,
-				       CORE_ADDR *adjusted_insn_addr,
-				       CORE_ADDR *adjusted_insn_addr_end,
 				       char *err)
 {
   unsigned char buf[0x100];
@@ -1263,7 +1257,7 @@ i386_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
   i = 0;
   buf[i++] = 0x60; /* pushad */
   buf[i++] = 0x68; /* push tpaddr aka $pc */
-  *((int *)(buf + i)) = (int) tpaddr;
+  *((int *)(buf + i)) = (int) tp->address;
   i += 4;
   buf[i++] = 0x9c; /* pushf */
   buf[i++] = 0x1e; /* push %ds */
@@ -1282,7 +1276,7 @@ i386_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
 
   /* Build the object.  */
   i += push_opcode (&buf[i], "b8");		/* mov    <tpoint>,%eax */
-  memcpy (buf + i, &tpoint, 4);
+  memcpy (buf + i, &tp->obj_addr_on_target, 4);
   i += 4;
   i += push_opcode (&buf[i], "89 04 24");	   /* mov %eax,(%esp) */
 
@@ -1317,7 +1311,7 @@ i386_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
 
   i = 0;
   i += push_opcode (&buf[i], "c7 04 24");       /* movl <addr>,(%esp) */
-  memcpy (&buf[i], (void *) &tpoint, 4);
+  memcpy (&buf[i], (void *) &tp->obj_addr_on_target, 4);
   i += 4;
   append_insns (&buildaddr, i, buf);
 
@@ -1367,12 +1361,12 @@ i386_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
 
   /* Now, adjust the original instruction to execute in the jump
      pad.  */
-  *adjusted_insn_addr = buildaddr;
-  relocate_instruction (&buildaddr, tpaddr);
-  *adjusted_insn_addr_end = buildaddr;
+  tp->adjusted_insn_addr = buildaddr;
+  relocate_instruction (&buildaddr, tp->address);
+  tp->adjusted_insn_addr_end = buildaddr;
 
   /* Write the jump back to the program.  */
-  offset = (tpaddr + orig_size) - (buildaddr + sizeof (jump_insn));
+  offset = (tp->address + tp->orig_size) - (buildaddr + sizeof (jump_insn));
   memcpy (buf, jump_insn, sizeof (jump_insn));
   memcpy (buf + 1, &offset, 4);
   append_insns (&buildaddr, sizeof (jump_insn), buf);
@@ -1381,7 +1375,7 @@ i386_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
      is always done last (by our caller actually), so that we can
      install fast tracepoints with threads running.  This relies on
      the agent's atomic write support.  */
-  if (orig_size == 4)
+  if (tp->orig_size == 4)
     {
       /* Create a trampoline.  */
       *trampoline_size = sizeof (jump_insn);
@@ -1400,7 +1394,7 @@ i386_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
       write_inferior_memory (*trampoline, buf, sizeof (jump_insn));
 
       /* Use a 16-bit relative jump instruction to jump to the trampoline.  */
-      offset = (*trampoline - (tpaddr + sizeof (small_jump_insn))) & 0xffff;
+      offset = (*trampoline - (tp->address + sizeof (small_jump_insn))) & 0xffff;
       memcpy (buf, small_jump_insn, sizeof (small_jump_insn));
       memcpy (buf + 2, &offset, 2);
       memcpy (jjump_pad_insn, buf, sizeof (small_jump_insn));
@@ -1409,7 +1403,7 @@ i386_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
   else
     {
       /* Else use a 32-bit relative jump instruction.  */
-      offset = *jump_entry - (tpaddr + sizeof (jump_insn));
+      offset = *jump_entry - (tp->address + sizeof (jump_insn));
       memcpy (buf, jump_insn, sizeof (jump_insn));
       memcpy (buf + 1, &offset, 4);
       memcpy (jjump_pad_insn, buf, sizeof (jump_insn));
@@ -1423,40 +1417,33 @@ i386_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
 }
 
 static int
-x86_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
+x86_install_fast_tracepoint_jump_pad (struct tracepoint *tp,
 				      CORE_ADDR collector,
 				      CORE_ADDR lockaddr,
-				      ULONGEST orig_size,
 				      CORE_ADDR *jump_entry,
 				      CORE_ADDR *trampoline,
 				      ULONGEST *trampoline_size,
 				      unsigned char *jjump_pad_insn,
 				      ULONGEST *jjump_pad_insn_size,
-				      CORE_ADDR *adjusted_insn_addr,
-				      CORE_ADDR *adjusted_insn_addr_end,
 				      char *err)
 {
 #ifdef __x86_64__
   if (is_64bit_tdesc ())
-    return amd64_install_fast_tracepoint_jump_pad (tpoint, tpaddr,
+    return amd64_install_fast_tracepoint_jump_pad (tp,
 						   collector, lockaddr,
-						   orig_size, jump_entry,
+						   jump_entry,
 						   trampoline, trampoline_size,
 						   jjump_pad_insn,
 						   jjump_pad_insn_size,
-						   adjusted_insn_addr,
-						   adjusted_insn_addr_end,
 						   err);
 #endif
 
-  return i386_install_fast_tracepoint_jump_pad (tpoint, tpaddr,
+  return i386_install_fast_tracepoint_jump_pad (tp,
 						collector, lockaddr,
-						orig_size, jump_entry,
+						jump_entry,
 						trampoline, trampoline_size,
 						jjump_pad_insn,
 						jjump_pad_insn_size,
-						adjusted_insn_addr,
-						adjusted_insn_addr_end,
 						err);
 }
 
