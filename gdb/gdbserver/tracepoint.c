@@ -109,9 +109,9 @@ trace_vdebug (const char *fmt, ...)
 # define gdb_trampoline_buffer_error IPA_SYM_EXPORTED_NAME (gdb_trampoline_buffer_error)
 # define collecting IPA_SYM_EXPORTED_NAME (collecting)
 # define gdb_collect_ptr IPA_SYM_EXPORTED_NAME (gdb_collect_ptr)
-# define stop_tracing IPA_SYM_EXPORTED_NAME (stop_tracing)
-# define flush_trace_buffer IPA_SYM_EXPORTED_NAME (flush_trace_buffer)
-# define about_to_request_buffer_space IPA_SYM_EXPORTED_NAME (about_to_request_buffer_space)
+# define stop_tracing_ptr IPA_SYM_EXPORTED_NAME (stop_tracing_ptr)
+# define flush_trace_buffer_ptr IPA_SYM_EXPORTED_NAME (flush_trace_buffer_ptr)
+# define about_to_request_buffer_space_ptr IPA_SYM_EXPORTED_NAME (about_to_request_buffer_space_ptr)
 # define trace_buffer_is_full IPA_SYM_EXPORTED_NAME (trace_buffer_is_full)
 # define stopping_tracepoint IPA_SYM_EXPORTED_NAME (stopping_tracepoint)
 # define expr_eval_result IPA_SYM_EXPORTED_NAME (expr_eval_result)
@@ -151,9 +151,9 @@ struct ipa_sym_addresses
   CORE_ADDR addr_gdb_trampoline_buffer_error;
   CORE_ADDR addr_collecting;
   CORE_ADDR addr_gdb_collect_ptr;
-  CORE_ADDR addr_stop_tracing;
-  CORE_ADDR addr_flush_trace_buffer;
-  CORE_ADDR addr_about_to_request_buffer_space;
+  CORE_ADDR addr_stop_tracing_ptr;
+  CORE_ADDR addr_flush_trace_buffer_ptr;
+  CORE_ADDR addr_about_to_request_buffer_space_ptr;
   CORE_ADDR addr_trace_buffer_is_full;
   CORE_ADDR addr_stopping_tracepoint;
   CORE_ADDR addr_expr_eval_result;
@@ -188,9 +188,9 @@ static struct
   IPA_SYM(gdb_trampoline_buffer_error),
   IPA_SYM(collecting),
   IPA_SYM(gdb_collect_ptr),
-  IPA_SYM(stop_tracing),
-  IPA_SYM(flush_trace_buffer),
-  IPA_SYM(about_to_request_buffer_space),
+  IPA_SYM(stop_tracing_ptr),
+  IPA_SYM(flush_trace_buffer_ptr),
+  IPA_SYM(about_to_request_buffer_space_ptr),
   IPA_SYM(trace_buffer_is_full),
   IPA_SYM(stopping_tracepoint),
   IPA_SYM(expr_eval_result),
@@ -3095,6 +3095,7 @@ cmd_qtstart (char *packet)
 {
   struct tracepoint *tpoint, *prev_ftpoint, *prev_stpoint;
   CORE_ADDR tpptr = 0, prev_tpptr = 0;
+  CORE_ADDR addr_flush_trace_buffer, addr_stop_tracing;
 
   trace_debug ("Starting the trace");
 
@@ -3291,14 +3292,29 @@ cmd_qtstart (char *packet)
 			  " in lib");
 	}
 
-      stop_tracing_bkpt = set_breakpoint_at (ipa_sym_addrs.addr_stop_tracing,
+      if (read_inferior_data_pointer (ipa_sym_addrs.addr_stop_tracing_ptr,
+				      &addr_stop_tracing))
+	{
+	  internal_error (__FILE__, __LINE__,
+			  "Error reading addr_stop_tracing_ptr variable"
+			  " in lib");
+	}
+
+      stop_tracing_bkpt = set_breakpoint_at (addr_stop_tracing,
 					     stop_tracing_handler);
       if (stop_tracing_bkpt == NULL)
 	error ("Error setting stop_tracing breakpoint");
 
-      flush_trace_buffer_bkpt
-	= set_breakpoint_at (ipa_sym_addrs.addr_flush_trace_buffer,
-			     flush_trace_buffer_handler);
+      if (read_inferior_data_pointer (ipa_sym_addrs.addr_flush_trace_buffer_ptr,
+				      &addr_flush_trace_buffer))
+	{
+	  internal_error (__FILE__, __LINE__,
+			  "Error reading addr_flsh_trace_ptr variable"
+			  " in lib");
+	}
+
+      flush_trace_buffer_bkpt = set_breakpoint_at (addr_flush_trace_buffer,
+						   flush_trace_buffer_handler);
       if (flush_trace_buffer_bkpt == NULL)
 	error ("Error setting flush_trace_buffer breakpoint");
     }
@@ -4385,6 +4401,8 @@ tracepoint_finished_step (struct thread_info *tinfo, CORE_ADDR stop_pc)
 int
 handle_tracepoint_bkpts (struct thread_info *tinfo, CORE_ADDR stop_pc)
 {
+  CORE_ADDR addr_stop_tracing, addr_flush_trace_buffer;
+
   /* Pull in fast tracepoint trace frames from the inferior in-process
      agent's buffer into our buffer.  */
 
@@ -4393,9 +4411,25 @@ handle_tracepoint_bkpts (struct thread_info *tinfo, CORE_ADDR stop_pc)
 
   upload_fast_traceframes ();
 
+  if (read_inferior_data_pointer (ipa_sym_addrs.addr_stop_tracing_ptr,
+				  &addr_stop_tracing))
+    {
+      internal_error (__FILE__, __LINE__,
+		      "Error reading addr_stop_tracing_ptr variable"
+		      " in lib");
+    }
+
+  if (read_inferior_data_pointer (ipa_sym_addrs.addr_flush_trace_buffer_ptr,
+				  &addr_flush_trace_buffer))
+    {
+      internal_error (__FILE__, __LINE__,
+		      "Error reading addr_flsh_trace_ptr variable"
+		      " in lib");
+    }
+
   /* Check if the in-process agent had decided we should stop
      tracing.  */
-  if (stop_pc == ipa_sym_addrs.addr_stop_tracing)
+  if (stop_pc == addr_stop_tracing)
     {
       int ipa_trace_buffer_is_full;
       CORE_ADDR ipa_stopping_tracepoint;
@@ -4452,7 +4486,7 @@ handle_tracepoint_bkpts (struct thread_info *tinfo, CORE_ADDR stop_pc)
       stop_tracing ();
       return 1;
     }
-  else if (stop_pc == ipa_sym_addrs.addr_flush_trace_buffer)
+  else if (stop_pc == addr_flush_trace_buffer)
     {
       trace_debug ("lib stopped at flush_trace_buffer");
       return 1;
@@ -5774,12 +5808,16 @@ gdb_collect (struct tracepoint *tpoint, unsigned char *regs)
 /* These global variables points to the corresponding functions.  This is
    necessary on powerpc64, where asking for function symbol address from gdb
    results in returning the actual code pointer, instead of the descriptor
-   pointer.  */
+   pointer.
+   These variables are also needed for ARM so that the address contains the
+   Thumb bit if the address is in thumb mode.
+ */
 
 typedef void (*gdb_collect_ptr_type) (struct tracepoint *, unsigned char *);
 typedef ULONGEST (*get_raw_reg_ptr_type) (const unsigned char *, int);
 typedef LONGEST (*get_trace_state_variable_value_ptr_type) (int);
 typedef void (*set_trace_state_variable_value_ptr_type) (int, LONGEST);
+typedef void (*tracepoint_bkpt_ptr_type) (void);
 
 EXTERN_C_PUSH
 IP_AGENT_EXPORT_VAR gdb_collect_ptr_type gdb_collect_ptr = gdb_collect;
@@ -5788,6 +5826,11 @@ IP_AGENT_EXPORT_VAR get_trace_state_variable_value_ptr_type
   get_trace_state_variable_value_ptr = get_trace_state_variable_value;
 IP_AGENT_EXPORT_VAR set_trace_state_variable_value_ptr_type
   set_trace_state_variable_value_ptr = set_trace_state_variable_value;
+IP_AGENT_EXPORT_VAR tracepoint_bkpt_ptr_type stop_tracing_ptr = stop_tracing;
+IP_AGENT_EXPORT_VAR tracepoint_bkpt_ptr_type
+  flush_trace_buffer_ptr = flush_trace_buffer;
+IP_AGENT_EXPORT_VAR tracepoint_bkpt_ptr_type
+  about_to_request_buffer_space_ptr = about_to_request_buffer_space;
 EXTERN_C_POP
 
 #endif
@@ -6238,6 +6281,7 @@ upload_fast_traceframes (void)
   struct breakpoint *about_to_request_buffer_space_bkpt;
   CORE_ADDR ipa_trace_buffer_lo;
   CORE_ADDR ipa_trace_buffer_hi;
+  CORE_ADDR addr_about_to_request_buffer_space;
 
   if (read_inferior_uinteger (ipa_sym_addrs.addr_traceframe_read_count,
 			      &ipa_traceframe_read_count_racy))
@@ -6260,9 +6304,17 @@ upload_fast_traceframes (void)
   if (ipa_traceframe_write_count_racy == ipa_traceframe_read_count_racy)
     return;
 
+  if (read_inferior_data_pointer
+      (ipa_sym_addrs.addr_about_to_request_buffer_space_ptr,
+       &addr_about_to_request_buffer_space))
+    {
+      internal_error (__FILE__, __LINE__,
+		      "Error reading  variable"
+		      "addr_about_to_request_buffer_space_ptr inn lib");
+    }
+
   about_to_request_buffer_space_bkpt
-    = set_breakpoint_at (ipa_sym_addrs.addr_about_to_request_buffer_space,
-			 NULL);
+    = set_breakpoint_at (addr_about_to_request_buffer_space, NULL);
 
   if (read_inferior_uinteger (ipa_sym_addrs.addr_trace_buffer_ctrl_curr,
 			      &ipa_trace_buffer_ctrl_curr))

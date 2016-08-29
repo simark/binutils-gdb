@@ -1,0 +1,98 @@
+# Copyright 2011-2016 Free Software Foundation, Inc.
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# The IPA flushes its internal buffer to GDBServer as it reaches 5MB
+# (hardcoded).  This test checks that this does not crash the inferiror by
+# collecting 10MB of data.
+
+load_lib "trace-support.exp"
+
+standard_testfile
+set executable $testfile
+set expfile $testfile.exp
+
+# Some targets have leading underscores on assembly symbols.
+set additional_flags [gdb_target_symbol_prefix_flags]
+
+if [prepare_for_testing $expfile $executable $srcfile \
+	[list debug $additional_flags]] {
+    untested "failed to prepare for trace tests"
+    return -1
+}
+
+if ![runto_main] {
+    fail "Can't run to main to check for trace support"
+    return -1
+}
+
+if ![gdb_target_supports_trace] {
+    unsupported "target does not support trace"
+    return -1
+}
+
+if {![gdb_target_supports_fast_trace]} {
+    unsupported "Target does not support fast tracepoints."
+    return -1
+}
+
+set libipa [get_in_proc_agent]
+set remote_libipa [gdb_load_shlib $libipa]
+
+# Can't use prepare_for_testing, because that splits compiling into
+# building objects and then linking, and we'd fail with "linker input
+# file unused because linking not done" when building the object.
+
+if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
+	  executable [list debug $additional_flags shlib=$libipa] ] != "" } {
+    untested "failed to compile ftrace tests"
+    return -1
+}
+clean_restart ${executable}
+
+if ![runto_main] {
+    fail "Can't run to main for ftrace tests"
+    return 0
+}
+
+gdb_reinitialize_dir $srcdir/$subdir
+
+if { [gdb_test "info sharedlibrary" ".*${remote_libipa}.*" "IPA loaded"] != 0 } {
+    untested "Could not find IPA lib loaded"
+    return 1
+}
+
+gdb_test "break begin" ".*" ""
+
+gdb_test "break end" ".*" ""
+
+gdb_test "ftrace set_point" "Fast tracepoint .*" \
+    "fast tracepoint at set_point"
+
+gdb_trace_setactions "collect at set_point: define actions" \
+    "" \
+    "collect table" "^$"
+
+gdb_test "continue" \
+    ".*Breakpoint \[0-9\]+, begin .*" \
+    "advance to trace begin"
+
+gdb_test_no_output "tstart" "start trace experiment"
+
+gdb_test "continue" \
+    ".*Breakpoint \[0-9\]+, end .*" \
+    "advance through tracing"
+
+gdb_test "tstatus" ".*Trace .*" "check on trace status"
+
+gdb_test "tstop" "" ""

@@ -73,7 +73,7 @@ extern int disconnected_tracing;
 
 void tracepoint_look_up_symbols (void);
 
-void stop_tracing (void);
+IP_AGENT_EXPORT_FUNC void stop_tracing (void);
 
 int handle_tracepoint_general_set (char *own_buf);
 int handle_tracepoint_query (char *own_buf);
