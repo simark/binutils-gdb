@@ -758,7 +758,7 @@ ppscm_print_children (SCM printer, enum display_hint hint,
       return;
     }
 
-  cleanups = make_cleanup (null_cleanup, NULL);
+  cleanups = make_null_cleanup ();
 
   /* If we are printing a map or an array, we want special formatting.  */
   is_map = hint == HINT_MAP;
@@ -803,7 +803,7 @@ ppscm_print_children (SCM printer, enum display_hint hint,
       SCM scm_name, v_scm;
       char *name;
       SCM item = itscm_safe_call_next_x (iter, gdbscm_memory_error_p);
-      struct cleanup *inner_cleanup = make_cleanup (null_cleanup, NULL);
+      struct cleanup *inner_cleanup = make_null_cleanup ();
 
       if (gdbscm_is_exception (item))
 	{
@@ -981,7 +981,7 @@ gdbscm_apply_val_pretty_printer (const struct extension_language_defn *extlang,
   if (!gdb_scheme_initialized)
     return EXT_LANG_RC_NOP;
 
-  cleanups = make_cleanup (null_cleanup, NULL);
+  cleanups = make_null_cleanup ();
 
   /* Instantiate the printer.  */
   if (valaddr)

@@ -64,6 +64,7 @@ extern void restore_final_cleanups (struct cleanup *);
 /* A no-op cleanup.
    This is useful when you want to establish a known reference point
    to pass to do_cleanups.  */
-extern void null_cleanup (void *);
+
+extern struct cleanup *make_null_cleanup (void);
 
 #endif /* CLEANUPS_H */

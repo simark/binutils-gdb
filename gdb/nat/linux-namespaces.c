@@ -901,7 +901,7 @@ linux_mntns_access_fs (pid_t pid)
   if (ns == NULL)
     return MNSH_FS_DIRECT;
 
-  old_chain = make_cleanup (null_cleanup, NULL);
+  old_chain = make_null_cleanup ();
 
   fd = gdb_open_cloexec (linux_ns_filename (ns, pid), O_RDONLY, 0);
   if (fd < 0)

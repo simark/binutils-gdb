@@ -913,7 +913,7 @@ make_command_stats_cleanup (int msg_type)
       && !per_command_time
       && !per_command_space
       && !per_command_symtab)
-    return make_cleanup (null_cleanup, 0);
+    return make_null_cleanup ();
 
   new_stat = XCNEW (struct cmd_stats);
 

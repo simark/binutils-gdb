@@ -1067,7 +1067,7 @@ find_and_open_source (const char *filename,
       *fullname = NULL;
     }
 
-  cleanup = make_cleanup (null_cleanup, NULL);
+  cleanup = make_null_cleanup ();
 
   if (dirname != NULL)
     {

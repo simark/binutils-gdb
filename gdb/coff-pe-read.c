@@ -352,7 +352,7 @@ read_pe_exported_syms (struct objfile *objfile)
   struct read_pe_section_data *section_data;
   struct pe_sections_info pe_sections_info;
 
-  struct cleanup *back_to = make_cleanup (null_cleanup, 0);
+  struct cleanup *back_to = make_null_cleanup ();
 
   char const *target = bfd_get_target (objfile->obfd);
 

@@ -9840,7 +9840,7 @@ create_breakpoint (struct gdbarch *gdbarch,
      Anything added to the cleanup chain beyond this point is assumed
      to be part of a breakpoint.  If the breakpoint create succeeds
      then the memory is not reclaimed.  */
-  bkpt_chain = make_cleanup (null_cleanup, 0);
+  bkpt_chain = make_null_cleanup ();
 
   /* Resolve all line numbers to PC's and verify that the addresses
      are ok for the target.  */
@@ -11766,7 +11766,7 @@ until_break_command (char *arg, int from_tty, int anywhere)
   tp = inferior_thread ();
   thread = tp->global_num;
 
-  old_chain = make_cleanup (null_cleanup, NULL);
+  old_chain = make_null_cleanup ();
 
   /* Note linespec handling above invalidates the frame chain.
      Installing a breakpoint also invalidates the frame chain (as it
@@ -12030,7 +12030,7 @@ clear_command (char *arg, int from_tty)
   struct symtabs_and_lines sals;
   struct symtab_and_line sal;
   int i;
-  struct cleanup *cleanups = make_cleanup (null_cleanup, NULL);
+  struct cleanup *cleanups = make_null_cleanup ();
 
   if (arg)
     {
@@ -14610,7 +14610,7 @@ prepare_re_set_context (struct breakpoint *b)
   input_radix = b->input_radix;
   set_language (b->language);
 
-  return make_cleanup (null_cleanup, NULL);
+  return make_null_cleanup ();
 }
 
 /* Reset a breakpoint given it's struct breakpoint * BINT.

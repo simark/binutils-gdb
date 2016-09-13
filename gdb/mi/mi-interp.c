@@ -236,7 +236,7 @@ mi_cmd_interpreter_exec (char *command, char **argv, int argc)
 
   /* Now run the code.  */
 
-  old_chain = make_cleanup (null_cleanup, 0);
+  old_chain = make_null_cleanup ();
   for (i = 1; i < argc; i++)
     {
       struct gdb_exception e = interp_exec (interp_to_use, argv[i]);

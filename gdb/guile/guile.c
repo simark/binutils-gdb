@@ -268,7 +268,7 @@ gdbscm_eval_from_control_command
   if (cmd->body_count != 1)
     error (_("Invalid \"guile\" block structure."));
 
-  cleanup = make_cleanup (null_cleanup, NULL);
+  cleanup = make_null_cleanup ();
 
   script = compute_scheme_string (cmd->body_list[0]);
   msg = gdbscm_safe_eval_string (script, 0);

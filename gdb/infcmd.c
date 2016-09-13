@@ -2931,10 +2931,8 @@ attach_command (char *args, int from_tty)
 void
 notice_new_inferior (ptid_t ptid, int leave_running, int from_tty)
 {
-  struct cleanup* old_chain;
+  struct cleanup* old_chain = make_null_cleanup ();
   enum attach_post_wait_mode mode;
-
-  old_chain = make_cleanup (null_cleanup, NULL);
 
   mode = leave_running ? ATTACH_POST_WAIT_RESUME : ATTACH_POST_WAIT_NOTHING;
 

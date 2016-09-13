@@ -85,7 +85,7 @@ set_logging_redirect (char *args, int from_tty, struct cmd_list_element *c)
       || (logging_redirect == 0 && logging_no_redirect_file != NULL))
     return;
 
-  cleanups = make_cleanup (null_cleanup, NULL);
+  cleanups = make_null_cleanup ();
 
   if (logging_redirect != 0)
     {

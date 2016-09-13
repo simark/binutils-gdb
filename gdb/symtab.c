@@ -464,7 +464,7 @@ iterate_over_symtabs (const char *name,
 {
   struct objfile *objfile;
   char *real_path = NULL;
-  struct cleanup *cleanups = make_cleanup (null_cleanup, NULL);
+  struct cleanup *cleanups = make_null_cleanup ();
 
   /* Here we are interested in canonicalizing an absolute path, not
      absolutizing a relative path.  */
@@ -1848,7 +1848,7 @@ demangle_for_lookup (const char *name, enum language lang,
 {
   char *demangled_name = NULL;
   const char *modified_name = NULL;
-  struct cleanup *cleanup = make_cleanup (null_cleanup, 0);
+  struct cleanup *cleanup = make_null_cleanup ();
 
   modified_name = name;
 
@@ -4460,7 +4460,7 @@ search_symbols (const char *regexp, enum search_domain kind,
 
   /* OLD_CHAIN .. RETVAL_CHAIN is always freed, RETVAL_CHAIN .. current
      CLEANUP_CHAIN is freed only in the case of an error.  */
-  struct cleanup *old_chain = make_cleanup (null_cleanup, NULL);
+  struct cleanup *old_chain = make_null_cleanup ();
   struct cleanup *retval_chain;
 
   gdb_assert (kind <= TYPES_DOMAIN);

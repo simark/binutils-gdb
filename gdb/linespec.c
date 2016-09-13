@@ -3004,7 +3004,7 @@ find_superclass_methods (VEC (typep) *superclasses,
 {
   int old_len = VEC_length (const_char_ptr, *result_names);
   VEC (typep) *iter_classes;
-  struct cleanup *cleanup = make_cleanup (null_cleanup, NULL);
+  struct cleanup *cleanup = make_null_cleanup ();
 
   iter_classes = superclasses;
   while (1)
@@ -3038,7 +3038,7 @@ find_method (struct linespec_state *self, VEC (symtab_ptr) *file_symtabs,
 	     VEC (bound_minimal_symbol_d) **minsyms)
 {
   struct symbol *sym;
-  struct cleanup *cleanup = make_cleanup (null_cleanup, NULL);
+  struct cleanup *cleanup = make_null_cleanup ();
   int ix;
   int last_result_len;
   VEC (typep) *superclass_vec;

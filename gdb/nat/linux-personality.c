@@ -61,7 +61,7 @@ make_disable_asr_cleanup (int personality_set, int personality_orig)
 			 (void *) (uintptr_t) personality_orig);
 #endif /* HAVE_PERSONALITY */
 
-  return make_cleanup (null_cleanup, NULL);
+  return make_null_cleanup ();
 }
 
 /* See comment on nat/linux-personality.h.  */

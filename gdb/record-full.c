@@ -1782,7 +1782,7 @@ record_full_goto_bookmark (struct target_ops *self,
 			   const gdb_byte *raw_bookmark, int from_tty)
 {
   const char *bookmark = (const char *) raw_bookmark;
-  struct cleanup *cleanup = make_cleanup (null_cleanup, NULL);
+  struct cleanup *cleanup = make_null_cleanup ();
 
   if (record_debug)
     fprintf_unfiltered (gdb_stdlog,

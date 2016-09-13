@@ -658,7 +658,7 @@ tdesc_parse_xml (const char *document, xml_fetch_another fetcher,
        return cache->tdesc;
       }
 
-  back_to = make_cleanup (null_cleanup, NULL);
+  back_to = make_null_cleanup ();
 
   memset (&data, 0, sizeof (struct tdesc_parsing_data));
   data.tdesc = allocate_target_description ();

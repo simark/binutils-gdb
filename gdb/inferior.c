@@ -853,7 +853,7 @@ add_inferior_command (char *args, int from_tty)
   int i, copies = 1;
   char *exec = NULL;
   char **argv;
-  struct cleanup *old_chain = make_cleanup (null_cleanup, NULL);
+  struct cleanup *old_chain = make_null_cleanup ();
 
   if (args)
     {
@@ -917,7 +917,7 @@ clone_inferior_command (char *args, int from_tty)
   int i, copies = 1;
   char **argv;
   struct inferior *orginf = NULL;
-  struct cleanup *old_chain = make_cleanup (null_cleanup, NULL);
+  struct cleanup *old_chain = make_null_cleanup ();
 
   if (args)
     {

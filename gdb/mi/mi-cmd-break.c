@@ -178,7 +178,7 @@ mi_cmd_break_insert_1 (int dprintf, char *command, char **argv, int argc)
   int pending = 0;
   int enabled = 1;
   int tracepoint = 0;
-  struct cleanup *back_to = make_cleanup (null_cleanup, NULL);
+  struct cleanup *back_to = make_null_cleanup ();
   enum bptype type_wanted;
   struct event_location *location;
   struct breakpoint_ops *ops;

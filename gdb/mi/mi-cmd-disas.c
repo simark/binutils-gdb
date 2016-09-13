@@ -73,7 +73,7 @@ mi_cmd_disassemble (char *command, char **argv, int argc)
   int how_many = -1;
   CORE_ADDR low = 0;
   CORE_ADDR high = 0;
-  struct cleanup *cleanups = make_cleanup (null_cleanup, NULL);
+  struct cleanup *cleanups = make_null_cleanup ();
 
   /* Options processing stuff.  */
   int oind = 0;

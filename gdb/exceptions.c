@@ -33,7 +33,7 @@ print_flush (void)
 {
   struct ui *ui = current_ui;
   struct serial *gdb_stdout_serial;
-  struct cleanup *old_chain = make_cleanup (null_cleanup, NULL);
+  struct cleanup *old_chain = make_null_cleanup ();
 
   if (deprecated_error_begin_hook)
     deprecated_error_begin_hook ();

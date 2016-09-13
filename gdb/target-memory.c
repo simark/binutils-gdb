@@ -311,7 +311,7 @@ target_write_memory_blocks (VEC(memory_write_request_s) *requests,
 			    enum flash_preserve_mode preserve_flash_p,
 			    void (*progress_cb) (ULONGEST, void *))
 {
-  struct cleanup *back_to = make_cleanup (null_cleanup, NULL);
+  struct cleanup *back_to = make_null_cleanup ();
   VEC(memory_write_request_s) *blocks = VEC_copy (memory_write_request_s,
 						  requests);
   unsigned i;

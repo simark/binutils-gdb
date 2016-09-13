@@ -237,7 +237,7 @@ record_btrace_open (const char *args, int from_tty)
 
   gdb_assert (record_btrace_thread_observer == NULL);
 
-  disable_chain = make_cleanup (null_cleanup, NULL);
+  disable_chain = make_null_cleanup ();
   ALL_NON_EXITED_THREADS (tp)
     if (args == NULL || *args == 0 || number_is_in_list (args, tp->global_num))
       {
@@ -2475,7 +2475,7 @@ record_btrace_wait (struct target_ops *ops, ptid_t ptid,
 {
   VEC (tp_t) *moving, *no_history;
   struct thread_info *tp, *eventing;
-  struct cleanup *cleanups = make_cleanup (null_cleanup, NULL);
+  struct cleanup *cleanups = make_null_cleanup ();
 
   DEBUG ("wait %s (0x%x)", target_pid_to_str (ptid), options);
 

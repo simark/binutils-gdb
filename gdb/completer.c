@@ -998,7 +998,7 @@ struct cleanup *
 make_cleanup_free_completion_tracker (completion_tracker_t *tracker_ptr)
 {
   if (*tracker_ptr == NULL)
-    return make_cleanup (null_cleanup, NULL);
+    return make_null_cleanup ();
 
   return make_cleanup (free_completion_tracker, tracker_ptr);
 }

@@ -1207,7 +1207,7 @@ expand (const char *id,
     }
   else if (def->kind == macro_function_like)
     {
-      struct cleanup *back_to = make_cleanup (null_cleanup, 0);
+      struct cleanup *back_to = make_null_cleanup ();
       int argc = 0;
       struct macro_buffer *argv = NULL;
       struct macro_buffer substituted;

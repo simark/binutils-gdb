@@ -733,7 +733,7 @@ gdbpy_decode_line (PyObject *self, PyObject *args)
   if (! PyArg_ParseTuple (args, "|s", &arg))
     return NULL;
 
-  cleanups = make_cleanup (null_cleanup, NULL);
+  cleanups = make_null_cleanup ();
 
   sals.sals = NULL;
 

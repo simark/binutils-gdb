@@ -230,7 +230,7 @@ fbsd_xfer_partial (struct target_ops *ops, enum target_object object,
     {
     case TARGET_OBJECT_AUXV:
       {
-	struct cleanup *cleanup = make_cleanup (null_cleanup, NULL);
+	struct cleanup *cleanup = make_null_cleanup ();
 	unsigned char *buf;
 	size_t buflen;
 	int mib[4];

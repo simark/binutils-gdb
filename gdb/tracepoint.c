@@ -1656,14 +1656,14 @@ encode_actions_and_make_cleanup (struct bp_location *tloc,
   LONGEST frame_offset;
   struct cleanup *back_to, *return_chain;
 
-  return_chain = make_cleanup (null_cleanup, NULL);
+  return_chain = make_null_cleanup ();
   init_collection_list (tracepoint_list);
   init_collection_list (stepping_list);
 
   make_cleanup (do_clear_collection_list, tracepoint_list);
   make_cleanup (do_clear_collection_list, stepping_list);
 
-  back_to = make_cleanup (null_cleanup, NULL);
+  back_to = make_null_cleanup ();
   gdbarch_virtual_frame_pointer (tloc->gdbarch,
 				 tloc->address, &frame_reg, &frame_offset);
 
@@ -3060,7 +3060,7 @@ trace_dump_command (char *args, int from_tty)
   printf_filtered ("Data collected at tracepoint %d, trace frame %d:\n",
 		   tracepoint_number, traceframe_number);
 
-  old_chain = make_cleanup (null_cleanup, NULL);
+  old_chain = make_null_cleanup ();
 
   /* This command only makes sense for the current frame, not the
      selected frame.  */

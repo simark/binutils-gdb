@@ -3904,7 +3904,7 @@ fetch_inferior_event (void *client_data)
 {
   struct execution_control_state ecss;
   struct execution_control_state *ecs = &ecss;
-  struct cleanup *old_chain = make_cleanup (null_cleanup, NULL);
+  struct cleanup *old_chain = make_null_cleanup ();
   struct cleanup *ts_old_chain;
   enum exec_direction_kind save_exec_dir = execution_direction;
   int cmd_done = 0;
@@ -4221,7 +4221,7 @@ adjust_pc_after_break (struct thread_info *thread,
       || (target_is_non_stop_p ()
 	  && moribund_breakpoint_here_p (aspace, breakpoint_pc)))
     {
-      struct cleanup *old_cleanups = make_cleanup (null_cleanup, NULL);
+      struct cleanup *old_cleanups = make_null_cleanup ();
 
       if (record_full_is_used ())
 	record_full_gdb_operation_disable_set ();
@@ -6018,7 +6018,7 @@ handle_signal_stop (struct execution_control_state *ecs)
 	  decr_pc = gdbarch_decr_pc_after_break (gdbarch);
 	  if (decr_pc != 0)
 	    {
-	      struct cleanup *old_cleanups = make_cleanup (null_cleanup, NULL);
+	      struct cleanup *old_cleanups = make_null_cleanup ();
 
 	      if (record_full_is_used ())
 		record_full_gdb_operation_disable_set ();
@@ -8238,7 +8238,7 @@ normal_stop (void)
 {
   struct target_waitstatus last;
   ptid_t last_ptid;
-  struct cleanup *old_chain = make_cleanup (null_cleanup, NULL);
+  struct cleanup *old_chain = make_null_cleanup ();
   ptid_t pid_ptid;
   struct switch_thru_all_uis state;
 

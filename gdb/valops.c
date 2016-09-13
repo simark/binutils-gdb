@@ -2498,7 +2498,7 @@ find_overload_match (struct value **args, int nargs,
   struct type *basetype = NULL;
   LONGEST boffset;
 
-  struct cleanup *all_cleanups = make_cleanup (null_cleanup, NULL);
+  struct cleanup *all_cleanups = make_null_cleanup ();
 
   const char *obj_type_name = NULL;
   const char *func_name = NULL;

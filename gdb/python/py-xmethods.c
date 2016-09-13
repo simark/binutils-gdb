@@ -104,7 +104,7 @@ invoke_match_method (PyObject *matcher, PyObject *py_obj_type,
   struct cleanup *cleanups;
   int enabled;
 
-  cleanups = make_cleanup (null_cleanup, NULL);
+  cleanups = make_null_cleanup ();
 
   enabled_field = PyObject_GetAttrString (matcher, enabled_field_name);
   if (enabled_field == NULL)

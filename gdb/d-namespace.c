@@ -116,7 +116,7 @@ d_lookup_symbol (const struct language_defn *langdef,
       /* A simple lookup failed.  Check if the symbol was defined in
 	 a base class.  */
 
-      cleanup = make_cleanup (null_cleanup, NULL);
+      cleanup = make_null_cleanup ();
 
       /* Find the name of the class and the name of the method,
 	 variable, etc.  */

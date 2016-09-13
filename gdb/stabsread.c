@@ -3533,7 +3533,7 @@ read_struct_type (char **pp, struct type *type, enum type_code type_code,
       return type;
     }
 
-  back_to = make_cleanup (null_cleanup, 0);
+  back_to = make_null_cleanup ();
 
   INIT_CPLUS_SPECIFIC (type);
   TYPE_CODE (type) = type_code;

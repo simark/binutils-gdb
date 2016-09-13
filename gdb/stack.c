@@ -1418,7 +1418,7 @@ frame_info (char *addr_exp, int from_tty)
   const char *pc_regname;
   int selected_frame_p;
   struct gdbarch *gdbarch;
-  struct cleanup *back_to = make_cleanup (null_cleanup, NULL);
+  struct cleanup *back_to = make_null_cleanup ();
   CORE_ADDR frame_pc;
   int frame_pc_p;
   /* Initialize it to avoid "may be used uninitialized" warning.  */
@@ -1876,7 +1876,7 @@ backtrace_command_1 (char *count_exp, int show_locals, int no_filters,
 static void
 backtrace_command (char *arg, int from_tty)
 {
-  struct cleanup *old_chain = make_cleanup (null_cleanup, NULL);
+  struct cleanup *old_chain = make_null_cleanup ();
   int fulltrace_arg = -1, arglen = 0, argc = 0, no_filters  = -1;
   int user_arg = 0;
 

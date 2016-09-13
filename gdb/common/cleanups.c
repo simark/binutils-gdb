@@ -290,7 +290,17 @@ restore_final_cleanups (struct cleanup *chain)
    In such cases, we may not be certain where the first cleanup is, unless
    we have a do-nothing one to always use as the base.  */
 
-void
+/* No-op cleanup.  */
+
+static void
 null_cleanup (void *arg)
 {
+}
+
+/* See cleanups.h.  */
+
+struct cleanup *
+make_null_cleanup (void)
+{
+  return make_cleanup (null_cleanup, NULL);
 }

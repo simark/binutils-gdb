@@ -158,7 +158,7 @@ solib_find_1 (char *in_pathname, int *fd, int is_solib)
   int found_file = -1;
   char *temp_pathname = NULL;
   const char *fskind = effective_target_file_system_kind ();
-  struct cleanup *old_chain = make_cleanup (null_cleanup, NULL);
+  struct cleanup *old_chain = make_null_cleanup ();
   char *sysroot = gdb_sysroot;
   int prefix_len, orig_prefix_len;
 
@@ -1351,7 +1351,7 @@ static void
 reload_shared_libraries_1 (int from_tty)
 {
   struct so_list *so;
-  struct cleanup *old_chain = make_cleanup (null_cleanup, NULL);
+  struct cleanup *old_chain = make_null_cleanup ();
 
   if (print_symbol_loading_p (from_tty, 0, 0))
     printf_unfiltered (_("Loading symbols for shared libraries.\n"));

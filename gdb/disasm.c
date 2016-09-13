@@ -341,8 +341,8 @@ do_mixed_source_and_assembly_deprecated
   int num_displayed = 0;
   print_source_lines_flags psl_flags = 0;
   struct cleanup *ui_out_chain;
-  struct cleanup *ui_out_tuple_chain = make_cleanup (null_cleanup, 0);
-  struct cleanup *ui_out_list_chain = make_cleanup (null_cleanup, 0);
+  struct cleanup *ui_out_tuple_chain = make_null_cleanup ();
+  struct cleanup *ui_out_list_chain = make_null_cleanup ();
 
   gdb_assert (symtab != NULL && SYMTAB_LINETABLE (symtab) != NULL);
 
@@ -471,8 +471,8 @@ do_mixed_source_and_assembly_deprecated
 	{
 	  do_cleanups (ui_out_list_chain);
 	  do_cleanups (ui_out_tuple_chain);
-	  ui_out_tuple_chain = make_cleanup (null_cleanup, 0);
-	  ui_out_list_chain = make_cleanup (null_cleanup, 0);
+	  ui_out_tuple_chain = make_null_cleanup ();
+	  ui_out_list_chain = make_null_cleanup ();
 	  ui_out_text (uiout, "\n");
 	}
       if (how_many >= 0 && num_displayed >= how_many)

@@ -411,7 +411,7 @@ whatis_exp (char *exp, int show)
   struct value_print_options opts;
   struct type_print_options flags = default_ptype_flags;
 
-  old_chain = make_cleanup (null_cleanup, NULL);
+  old_chain = make_null_cleanup ();
 
   if (exp)
     {

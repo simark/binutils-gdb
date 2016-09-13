@@ -207,7 +207,7 @@ dump_bfd_file (const char *filename, const char *mode,
 static void
 dump_memory_to_file (const char *cmd, const char *mode, const char *file_format)
 {
-  struct cleanup *old_cleanups = make_cleanup (null_cleanup, NULL);
+  struct cleanup *old_cleanups = make_null_cleanup ();
   CORE_ADDR lo;
   CORE_ADDR hi;
   ULONGEST count;
@@ -263,7 +263,7 @@ dump_memory_command (char *cmd, char *mode)
 static void
 dump_value_to_file (const char *cmd, const char *mode, const char *file_format)
 {
-  struct cleanup *old_cleanups = make_cleanup (null_cleanup, NULL);
+  struct cleanup *old_cleanups = make_null_cleanup ();
   struct value *val;
   const char *filename;
 
@@ -516,7 +516,7 @@ restore_section_callback (bfd *ibfd, asection *isec, void *args)
 static void
 restore_binary_file (const char *filename, struct callback_data *data)
 {
-  struct cleanup *cleanup = make_cleanup (null_cleanup, NULL);
+  struct cleanup *cleanup = make_null_cleanup ();
   FILE *file = fopen_with_cleanup (filename, FOPEN_RB);
   gdb_byte *buf;
   long len;

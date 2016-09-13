@@ -1718,7 +1718,7 @@ symfile_bfd_open (const char *name)
 {
   bfd *sym_bfd;
   int desc = -1;
-  struct cleanup *back_to = make_cleanup (null_cleanup, 0);
+  struct cleanup *back_to = make_null_cleanup ();
 
   if (!is_target_filename (name))
     {
@@ -1831,7 +1831,7 @@ find_sym_fns (bfd *abfd)
 static void
 load_command (char *arg, int from_tty)
 {
-  struct cleanup *cleanup = make_cleanup (null_cleanup, NULL);
+  struct cleanup *cleanup = make_null_cleanup ();
 
   dont_repeat ();
 
@@ -2063,7 +2063,7 @@ generic_load (const char *args, int from_tty)
   bfd *loadfile_bfd;
   struct timeval start_time, end_time;
   char *filename;
-  struct cleanup *old_cleanups = make_cleanup (null_cleanup, 0);
+  struct cleanup *old_cleanups = make_null_cleanup ();
   struct load_section_data cbdata;
   struct load_progress_data total_progress;
   struct ui_out *uiout = current_uiout;
@@ -2242,7 +2242,7 @@ add_symbol_file_command (char *args, int from_tty)
   struct section_addr_info *section_addrs;
   struct sect_opt *sect_opts = NULL;
   size_t num_sect_opts = 0;
-  struct cleanup *my_cleanups = make_cleanup (null_cleanup, NULL);
+  struct cleanup *my_cleanups = make_null_cleanup ();
 
   num_sect_opts = 16;
   sect_opts = XNEWVEC (struct sect_opt, num_sect_opts);
@@ -2384,7 +2384,7 @@ remove_symbol_file_command (char *args, int from_tty)
   if (args == NULL)
     error (_("remove-symbol-file: no symbol file provided"));
 
-  my_cleanups = make_cleanup (null_cleanup, NULL);
+  my_cleanups = make_null_cleanup ();
 
   argv = gdb_buildargv (args);
 

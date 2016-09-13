@@ -3000,7 +3000,7 @@ static int
 find_slot_in_mapped_hash (struct mapped_index *index, const char *name,
 			  offset_type **vec_out)
 {
-  struct cleanup *back_to = make_cleanup (null_cleanup, 0);
+  struct cleanup *back_to = make_null_cleanup ();
   offset_type hash;
   offset_type slot, step;
   int (*cmp) (const char *, const char *);
@@ -5358,7 +5358,7 @@ init_tu_and_read_dwo_dies (struct dwarf2_per_cu_data *this_cu,
   sig_type = (struct signatured_type *) this_cu;
   gdb_assert (sig_type->dwo_unit != NULL);
 
-  cleanups = make_cleanup (null_cleanup, NULL);
+  cleanups = make_null_cleanup ();
 
   if (use_existing_cu && this_cu->cu != NULL)
     {
@@ -5483,7 +5483,7 @@ init_cutu_and_read_dies (struct dwarf2_per_cu_data *this_cu,
       return;
     }
 
-  cleanups = make_cleanup (null_cleanup, NULL);
+  cleanups = make_null_cleanup ();
 
   /* This is cheap if the section is already read in.  */
   dwarf2_read_section (objfile, section);
@@ -8730,7 +8730,7 @@ dwarf2_physname (const char *name, struct die_info *die, struct dwarf2_cu *cu)
   if (!die_needs_namespace (die, cu))
     return dwarf2_compute_name (name, die, cu, 1);
 
-  back_to = make_cleanup (null_cleanup, NULL);
+  back_to = make_null_cleanup ();
 
   mangled = dwarf2_string_attr (die, DW_AT_linkage_name, cu);
   if (mangled == NULL)
@@ -9214,7 +9214,7 @@ read_file_scope (struct die_info *die, struct dwarf2_cu *cu)
 {
   struct objfile *objfile = dwarf2_per_objfile->objfile;
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
-  struct cleanup *back_to = make_cleanup (null_cleanup, 0);
+  struct cleanup *back_to = make_null_cleanup ();
   CORE_ADDR lowpc = ((CORE_ADDR) -1);
   CORE_ADDR highpc = ((CORE_ADDR) 0);
   struct attribute *attr;
@@ -10070,7 +10070,7 @@ create_dwo_unit_in_dwp_v1 (struct dwp_file *dwp_file,
    + 1 /* trailing zero */)
 
   memset (&sections, 0, sizeof (sections));
-  cleanups = make_cleanup (null_cleanup, 0);
+  cleanups = make_null_cleanup ();
 
   for (i = 0; i < MAX_NR_V1_DWO_SECTIONS; ++i)
     {
@@ -10264,7 +10264,7 @@ create_dwo_unit_in_dwp_v2 (struct dwp_file *dwp_file,
   /* Fetch the section offsets of this DWO unit.  */
 
   memset (&sections, 0, sizeof (sections));
-  cleanups = make_cleanup (null_cleanup, 0);
+  cleanups = make_null_cleanup ();
 
   for (i = 0; i < dwp_htab->nr_columns; ++i)
     {
@@ -10850,7 +10850,7 @@ open_and_init_dwp_file (void)
   struct dwp_file *dwp_file;
   char *dwp_name;
   bfd *dbfd;
-  struct cleanup *cleanups = make_cleanup (null_cleanup, 0);
+  struct cleanup *cleanups = make_null_cleanup ();
 
   /* Try to find first .dwp for the binary file before any symbolic links
      resolving.  */
@@ -13304,7 +13304,7 @@ process_structure_scope (struct die_info *die, struct dwarf2_cu *cu)
     {
       struct field_info fi;
       VEC (symbolp) *template_args = NULL;
-      struct cleanup *back_to = make_cleanup (null_cleanup, 0);
+      struct cleanup *back_to = make_null_cleanup ();
 
       memset (&fi, 0, sizeof (struct field_info));
 
@@ -13787,7 +13787,7 @@ read_array_type (struct die_info *die, struct dwarf2_cu *cu)
       return set_die_type (die, type, cu);
     }
 
-  back_to = make_cleanup (null_cleanup, NULL);
+  back_to = make_null_cleanup ();
   child_die = die->child;
   while (child_die && child_die->tag)
     {

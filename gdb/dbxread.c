@@ -2425,7 +2425,7 @@ dbx_read_symtab (struct partial_symtab *self, struct objfile *objfile)
 
       next_symbol_text_func = dbx_next_symbol_text;
 
-      back_to = make_cleanup (null_cleanup, NULL);
+      back_to = make_null_cleanup ();
 
       if (DBX_STAB_SECTION (objfile))
 	{
@@ -3347,7 +3347,7 @@ elfstab_build_psymtabs (struct objfile *objfile, asection *stabsect,
   int val;
   bfd *sym_bfd = objfile->obfd;
   char *name = bfd_get_filename (sym_bfd);
-  struct cleanup *back_to = make_cleanup (null_cleanup, NULL);
+  struct cleanup *back_to = make_null_cleanup ();
 
   /* Find the first and last text address.  dbx_symfile_read seems to
      want this.  */

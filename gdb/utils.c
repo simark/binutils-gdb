@@ -519,7 +519,7 @@ vwarning (const char *string, va_list args)
     (*deprecated_warning_hook) (string, args);
   else
     {
-      struct cleanup *old_chain = make_cleanup (null_cleanup, NULL);
+      struct cleanup *old_chain = make_null_cleanup ();
 
       if (target_supports_terminal_ours ())
 	{
@@ -679,7 +679,7 @@ internal_vproblem (struct internal_problem *problem,
   int quit_p;
   int dump_core_p;
   char *reason;
-  struct cleanup *cleanup = make_cleanup (null_cleanup, NULL);
+  struct cleanup *cleanup = make_null_cleanup ();
 
   /* Don't allow infinite error/warning recursion.  */
   {
@@ -1891,7 +1891,7 @@ prompt_for_continue (void)
   /* Used to add duration we waited for user to respond to
      prompt_for_continue_wait_time.  */
   struct timeval prompt_started, prompt_ended, prompt_delta;
-  struct cleanup *old_chain = make_cleanup (null_cleanup, NULL);
+  struct cleanup *old_chain = make_null_cleanup ();
 
   gettimeofday (&prompt_started, NULL);
 

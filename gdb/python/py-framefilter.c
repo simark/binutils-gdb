@@ -379,7 +379,7 @@ py_print_single_arg (struct ui_out *out,
 
   TRY
     {
-      struct cleanup *cleanups = make_cleanup (null_cleanup, NULL);
+      struct cleanup *cleanups = make_null_cleanup ();
 
       /*  MI has varying rules for tuples, but generally if there is only
       one element in each item in the list, do not start a tuple.  The
@@ -1076,7 +1076,7 @@ py_print_frame (PyObject *filter, int flags,
       return EXT_LANG_BT_COMPLETED;
     }
 
-  cleanup_stack = make_cleanup (null_cleanup, NULL);
+  cleanup_stack = make_null_cleanup ();
 
   /* -stack-list-locals does not require a
      wrapping frame attribute.  */
@@ -1445,8 +1445,7 @@ static PyObject *
 bootstrap_python_frame_filters (struct frame_info *frame,
 				int frame_low, int frame_high)
 {
-  struct cleanup *cleanups =
-    make_cleanup (null_cleanup, NULL);
+  struct cleanup *cleanups = make_null_cleanup ();
   PyObject *module, *sort_func, *iterable, *frame_obj, *iterator;
   PyObject *py_frame_low, *py_frame_high;
 

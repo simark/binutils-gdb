@@ -511,7 +511,7 @@ mapping_is_anonymous_p (const char *filename)
 
   if (!init_regex_p)
     {
-      struct cleanup *c = make_cleanup (null_cleanup, NULL);
+      struct cleanup *c = make_null_cleanup ();
 
       /* Let's be pessimistic and assume there will be an error while
 	 compiling the regex'es.  */

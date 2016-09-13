@@ -1427,7 +1427,7 @@ lex_number (void)
   int type_index = -1;
   int i, out;
   char *number;
-  struct cleanup *cleanup = make_cleanup (null_cleanup, NULL);
+  struct cleanup *cleanup = make_null_cleanup ();
 
   match = regexec (&number_regex, lexptr, ARRAY_SIZE (subexps), subexps, 0);
   /* Failure means the regexp is broken.  */

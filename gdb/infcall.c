@@ -1026,7 +1026,7 @@ call_function_by_hand_dummy (struct value *function,
       args_cleanup = make_cleanup (xfree, args);
     }
   else
-    args_cleanup = make_cleanup (null_cleanup, NULL);
+    args_cleanup = make_null_cleanup ();
 
   /* Create the dummy stack frame.  Pass in the call dummy address as,
      presumably, the ABI code knows where, in the call dummy, the

@@ -472,7 +472,7 @@ darwin_solib_get_all_image_info_addr_at_init (struct darwin_info *info)
   if (!interp_name)
     return;
 
-  cleanup = make_cleanup (null_cleanup, NULL);
+  cleanup = make_null_cleanup ();
 
   /* Create a bfd for the interpreter.  */
   dyld_bfd = gdb_bfd_open (interp_name, gnutarget, -1);

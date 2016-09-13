@@ -626,7 +626,7 @@ catch_syscall_completer (struct cmd_list_element *cmd,
                          const char *text, const char *word)
 {
   struct gdbarch *gdbarch = get_current_arch ();
-  struct cleanup *cleanups = make_cleanup (null_cleanup, NULL);
+  struct cleanup *cleanups = make_null_cleanup ();
   VEC (char_ptr) *group_retlist = NULL;
   VEC (char_ptr) *syscall_retlist = NULL;
   VEC (char_ptr) *retlist = NULL;

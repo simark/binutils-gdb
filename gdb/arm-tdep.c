@@ -2012,7 +2012,7 @@ arm_exidx_new_objfile (struct objfile *objfile)
   /* If we've already touched this file, do nothing.  */
   if (!objfile || objfile_data (objfile, arm_exidx_data_key) != NULL)
     return;
-  cleanups = make_cleanup (null_cleanup, NULL);
+  cleanups = make_null_cleanup ();
 
   /* Read contents of exception table and index.  */
   exidx = bfd_get_section_by_name (objfile->obfd, ELF_STRING_ARM_unwind);

@@ -388,7 +388,7 @@ new_ui_command (char *args, int from_tty)
 
   make_cleanup_restore_current_ui ();
 
-  failure_chain = make_cleanup (null_cleanup, NULL);
+  failure_chain = make_null_cleanup ();
 
   /* Open specified terminal, once for each of
      stdin/stdout/stderr.  */

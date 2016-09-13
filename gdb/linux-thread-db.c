@@ -845,8 +845,7 @@ thread_db_load_search (void)
 	      || this_dir[pdir_len] == '/'))
 	{
 	  char *subdir = NULL;
-	  struct cleanup *free_subdir_cleanup
-	    = make_cleanup (null_cleanup, NULL);
+	  struct cleanup *free_subdir_cleanup = make_null_cleanup ();
 
 	  if (this_dir[pdir_len] == '/')
 	    {

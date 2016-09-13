@@ -443,7 +443,7 @@ execute_control_command (struct command_line *cmd)
 {
   struct expression *expr;
   struct command_line *current;
-  struct cleanup *old_chain = make_cleanup (null_cleanup, 0);
+  struct cleanup *old_chain = make_null_cleanup ();
   struct value *val;
   struct value *val_mark;
   int loop;
@@ -1304,7 +1304,7 @@ read_command_lines_1 (char * (*read_next_line_func) (void), int parse_commands,
 		      void (*validator)(char *, void *), void *closure)
 {
   struct command_line *head, *tail, *next;
-  struct cleanup *old_chain = make_cleanup (null_cleanup, NULL);
+  struct cleanup *old_chain = make_null_cleanup ();
   enum command_control_type ret;
   enum misc_command_type val;
 

@@ -906,7 +906,7 @@ c_type_print_base (struct type *type, struct ui_file *stream,
       {
 	struct type_print_options local_flags = *flags;
 	struct type_print_options semi_local_flags = *flags;
-	struct cleanup *local_cleanups = make_cleanup (null_cleanup, NULL);
+	struct cleanup *local_cleanups = make_null_cleanup ();
 
 	local_flags.local_typedefs = NULL;
 	semi_local_flags.local_typedefs = NULL;
@@ -1174,7 +1174,7 @@ c_type_print_base (struct type *type, struct ui_file *stream,
 		  if (TYPE_FN_FIELD_ARTIFICIAL (f, j))
 		    continue;
 
-		  inner_cleanup = make_cleanup (null_cleanup, NULL);
+		  inner_cleanup = make_null_cleanup ();
 
 		  QUIT;
 		  if (TYPE_FN_FIELD_PROTECTED (f, j))

@@ -1244,7 +1244,7 @@ static void
 print_command_1 (const char *exp, int voidprint)
 {
   struct expression *expr;
-  struct cleanup *old_chain = make_cleanup (null_cleanup, NULL);
+  struct cleanup *old_chain = make_null_cleanup ();
   struct value *val;
   struct format_data fmt;
 

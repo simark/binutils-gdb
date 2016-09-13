@@ -292,7 +292,7 @@ collect_probes (char *objname, char *provider, char *probe_name,
 
   cleanup = make_cleanup (VEC_cleanup (bound_probe_s), &result);
 
-  cleanup_temps = make_cleanup (null_cleanup, NULL);
+  cleanup_temps = make_null_cleanup ();
   if (provider != NULL)
     compile_rx_or_error (&prov_pat, provider, _("Invalid provider regexp"));
   if (probe_name != NULL)
@@ -583,7 +583,7 @@ info_probes_for_ops (const char *arg, int from_tty,
 		     const struct probe_ops *pops)
 {
   char *provider, *probe_name = NULL, *objname = NULL;
-  struct cleanup *cleanup = make_cleanup (null_cleanup, NULL);
+  struct cleanup *cleanup = make_null_cleanup ();
   VEC (bound_probe_s) *probes;
   int i, any_found;
   int ui_out_extra_fields = 0;
@@ -732,7 +732,7 @@ static void
 enable_probes_command (char *arg, int from_tty)
 {
   char *provider, *probe_name = NULL, *objname = NULL;
-  struct cleanup *cleanup = make_cleanup (null_cleanup, NULL);
+  struct cleanup *cleanup = make_null_cleanup ();
   VEC (bound_probe_s) *probes;
   struct bound_probe *probe;
   int i;
@@ -778,7 +778,7 @@ static void
 disable_probes_command (char *arg, int from_tty)
 {
   char *provider, *probe_name = NULL, *objname = NULL;
-  struct cleanup *cleanup = make_cleanup (null_cleanup, NULL);
+  struct cleanup *cleanup = make_null_cleanup ();
   VEC (bound_probe_s) *probes;
   struct bound_probe *probe;
   int i;

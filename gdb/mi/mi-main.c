@@ -1404,7 +1404,7 @@ mi_cmd_data_read_memory (char *command, char **argv, int argc)
 {
   struct gdbarch *gdbarch = get_current_arch ();
   struct ui_out *uiout = current_uiout;
-  struct cleanup *cleanups = make_cleanup (null_cleanup, NULL);
+  struct cleanup *cleanups = make_null_cleanup ();
   CORE_ADDR addr;
   long total_bytes, nr_cols, nr_rows;
   char word_format;

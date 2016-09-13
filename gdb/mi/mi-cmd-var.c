@@ -745,7 +745,7 @@ varobj_update_one (struct varobj *var, enum print_values print_values,
     {
       char *display_hint;
       int from, to;
-      struct cleanup *cleanup = make_cleanup (null_cleanup, NULL);
+      struct cleanup *cleanup = make_null_cleanup ();
 
       if (mi_version (uiout) > 1)
 	make_cleanup_ui_out_tuple_begin_end (uiout, NULL);

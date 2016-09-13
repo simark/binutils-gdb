@@ -1257,7 +1257,7 @@ static void
 regcache_dump (struct regcache *regcache, struct ui_file *file,
 	       enum regcache_dump_what what_to_dump)
 {
-  struct cleanup *cleanups = make_cleanup (null_cleanup, NULL);
+  struct cleanup *cleanups = make_null_cleanup ();
   struct gdbarch *gdbarch = regcache->descr->gdbarch;
   int regnum;
   int footnote_nr = 0;

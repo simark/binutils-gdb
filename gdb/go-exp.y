@@ -1567,7 +1567,7 @@ go_parse (struct parser_state *par_state)
   gdb_assert (par_state != NULL);
   pstate = par_state;
 
-  back_to = make_cleanup (null_cleanup, NULL);
+  back_to = make_null_cleanup ();
 
   make_cleanup_restore_integer (&yydebug);
   make_cleanup_clear_parser_state (&pstate);

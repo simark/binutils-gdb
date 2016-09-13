@@ -635,7 +635,7 @@ macho_symfile_read_all_oso (VEC (oso_el) **oso_vector_ptr,
   int ix;
   VEC (oso_el) *vec = *oso_vector_ptr;
   oso_el *oso;
-  struct cleanup *cleanup = make_cleanup (null_cleanup, NULL);
+  struct cleanup *cleanup = make_null_cleanup ();
 
   /* Sort oso by name so that files from libraries are gathered.  */
   qsort (VEC_address (oso_el, vec), VEC_length (oso_el, vec),

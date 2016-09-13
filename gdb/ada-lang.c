@@ -2570,7 +2570,7 @@ ada_value_primitive_packed_val (struct value *obj, const gdb_byte *valaddr,
   const int is_big_endian = gdbarch_bits_big_endian (get_type_arch (type));
   gdb_byte *staging = NULL;
   int staging_len = 0;
-  struct cleanup *old_chain = make_cleanup (null_cleanup, NULL);
+  struct cleanup *old_chain = make_null_cleanup ();
 
   type = ada_check_typedef (type);
 
@@ -6558,7 +6558,7 @@ ada_make_symbol_completion_list (const char *text0, const char *word,
   const struct block *b, *surrounding_static_block = 0;
   int i;
   struct block_iterator iter;
-  struct cleanup *old_chain = make_cleanup (null_cleanup, NULL);
+  struct cleanup *old_chain = make_null_cleanup ();
 
   gdb_assert (code == TYPE_CODE_UNDEF);
 
@@ -12192,7 +12192,7 @@ ada_unhandled_exception_name_addr_from_raise (void)
     if (fi != NULL)
       fi = get_prev_frame (fi); 
 
-  old_chain = make_cleanup (null_cleanup, NULL);
+  old_chain = make_null_cleanup ();
   while (fi != NULL)
     {
       char *func_name;
@@ -12911,7 +12911,7 @@ catch_ada_exception_command_split (char *args,
 				   char **excep_string,
 				   char **cond_string)
 {
-  struct cleanup *old_chain = make_cleanup (null_cleanup, NULL);
+  struct cleanup *old_chain = make_null_cleanup ();
   char *exception_name;
   char *cond = NULL;
 

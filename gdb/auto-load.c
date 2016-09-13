@@ -959,7 +959,7 @@ source_script_file (struct auto_load_pspace_info *pspace_info,
   opened = find_and_open_script (file, 1 /*search_path*/,
 				 &stream, &full_path);
 
-  cleanups = make_cleanup (null_cleanup, NULL);
+  cleanups = make_null_cleanup ();
   if (opened)
     {
       make_cleanup_fclose (stream);
@@ -1014,9 +1014,7 @@ execute_script_contents (struct auto_load_pspace_info *pspace_info,
   const char *newline, *script_text;
   char *name;
   int is_safe, in_hash_table;
-  struct cleanup *cleanups;
-
-  cleanups = make_cleanup (null_cleanup, NULL);
+  struct cleanup *cleanups = make_null_cleanup ();
 
   /* The first line of the script is the name of the script.
      It must not contain any kind of space character.  */

@@ -431,7 +431,7 @@ set_raw_breakpoint_at (enum raw_bkpt_type type, CORE_ADDR where, int kind,
 {
   struct process_info *proc = current_process ();
   struct raw_breakpoint *bp;
-  struct cleanup *old_chain = make_cleanup (null_cleanup, NULL);
+  struct cleanup *old_chain = make_null_cleanup ();
 
   if (type == raw_bkpt_type_sw || type == raw_bkpt_type_hw)
     {

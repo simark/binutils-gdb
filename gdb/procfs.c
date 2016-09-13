@@ -4911,7 +4911,7 @@ iterate_over_mappings (procinfo *pi, find_memory_region_ftype child_func,
   int funcstat;
   int map_fd;
   int nmap;
-  struct cleanup *cleanups = make_cleanup (null_cleanup, NULL);
+  struct cleanup *cleanups = make_null_cleanup ();
 #ifdef NEW_PROC_API
   struct stat sbuf;
 #endif
@@ -5114,7 +5114,7 @@ procfs_info_proc (struct target_ops *ops, const char *args,
       error (_("Not supported on this target."));
     }
 
-  old_chain = make_cleanup (null_cleanup, 0);
+  old_chain = make_null_cleanup ();
   if (args)
     {
       argv = gdb_buildargv (args);
