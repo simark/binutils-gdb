@@ -2605,3 +2605,30 @@ proc mi_is_target_remote {} {
 
     return [gdb_is_target_remote_prompt "$mi_gdb_prompt"]
 }
+
+# Check whether the current target supports tracing.
+#
+# With some board files (like native-gdbserver), the gdb target used for running
+# isn't loaded until the test program is started.  So it's safer to run to main,
+# and then check if tracing is supported.
+
+proc mi_target_supports_trace { } {
+    global mi_gdb_prompt
+
+    set test "check whether tracing is supported"
+    gdb_test_multiple "-trace-status" $test {
+	-re "\\^done,supported=\"1\".*\r\n$mi_gdb_prompt$" {
+	    return 1
+	}
+	
+	-re "\\^done,supported=\"0\"\r\n$mi_gdb_prompt$" {
+	    return 0
+	}
+	
+	timeout {
+	    return 0
+	}
+    }
+    
+    return 0
+}

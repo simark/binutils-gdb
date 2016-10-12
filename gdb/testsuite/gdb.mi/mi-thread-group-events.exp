@@ -1,0 +1,179 @@
+# Copyright 2016 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+load_lib mi-support.exp
+load_lib trace-support.exp
+set MIFLAGS "-i=mi"
+
+standard_testfile
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+     untested ${testfile}
+     return -1
+}
+
+# Set-up another binary for the fork tests.
+
+set binfile_fork "${binfile}-fork"
+set srcfile_fork "[file rootname ${srcfile}]-fork[file extension ${srcfile}]"
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile_fork}" "${binfile_fork}" executable {debug}] != "" } {
+     untested ${testfile}
+     return -1
+}
+
+proc init_gdb { binfile } {
+    global srcdir
+    global subdir
+
+    gdb_exit
+    mi_gdb_start
+
+    mi_delete_breakpoints
+    mi_gdb_reinitialize_dir $srcdir/$subdir
+    mi_gdb_load ${binfile}
+}
+
+# Test the =thread-group-started event when doing a "run".
+
+proc test_thread_group_started_run {} {
+    global decimal
+    global binfile
+
+    init_gdb ${binfile}
+
+    # stub-like targets don't support running.
+    if [use_gdb_stub] {
+	return
+    }
+
+    if [mi_is_target_remote] {
+	set target_path [gdbserver_download_current_prog]
+
+	mi_gdb_test "set remote exec-file $target_path" ".*" "set remote exec-file"
+    }
+
+    mi_gdb_test "111-exec-run --start" ".*=thread-group-started,id=\"i1\",pid=\"${decimal}\",reason=\"run\".*" "thread-group-started event"
+}
+
+# Test the =thread-group-started event when doing an "attach".
+
+proc test_thread_group_started_attach {} {
+    global binfile
+
+    init_gdb ${binfile}
+
+    # stub-like targets don't support attaching.
+    if [use_gdb_stub] {
+	return
+    }
+
+    # We can't attach if we can't spawn a process.
+    if { ![can_spawn_for_attach] } {
+	return
+    }
+
+    set test_spawn_id [spawn_wait_for_attach ${binfile}]
+    set test_pid [spawn_id_get_pid ${test_spawn_id}]
+
+    mi_gdb_test "-target-attach ${test_pid}" ".*=thread-group-started,id=\"i1\",pid=\"${test_pid}\",reason=\"attach\".*" "attach"
+}
+
+# Test the =thread-group-started event when debugging a core file.
+
+proc test_thread_group_started_core {} {
+    global binfile
+    global decimal
+
+    set corefile [standard_output_file "corefile"]
+    set corefile_re [string_to_regexp ${corefile}]
+
+    init_gdb ${binfile}
+
+    mi_run_to_main
+
+    mi_gdb_test "gcore ${corefile}" ".*Saved corefile ${corefile_re}.*" "generate core"
+    mi_gdb_test "-target-select core ${corefile}" ".*=thread-group-started,id=\"i1\",pid=\"$decimal\",reason=\"core\".*" "load core"
+}
+
+# Test the =thread-group-started event when loading a trace file.
+
+proc test_thread_group_started_trace {} {
+    global binfile
+    global decimal
+    global testfile
+
+    set break_line [gdb_get_line_number "after tracing"]
+    set tracefile [standard_output_file "tracefile"]
+
+    init_gdb ${binfile}
+
+    # This needs to be before mi_target_supports_trace.
+    mi_run_to_main
+
+    if { ![mi_target_supports_trace] } {
+	unsupported "test_thread_group_started_trace"
+	return
+    }
+
+    # Start by generating a tracefile.
+    mi_gdb_test "-break-insert -a tracee" ".*type=\"tracepoint\".*" "insert tracepoint"
+    mi_gdb_test "888-trace-start" ".*888\\^done" "start tracing"
+    mi_continue_to_line ${break_line} "continue"
+    mi_gdb_test "999-trace-stop" ".*999\\^done.*" "stop tracing"
+    mi_gdb_test "564-trace-save ${tracefile}" "564\\^done" "save trace"
+
+    # Then load the tracefile, and confirm that we see the event.
+    mi_gdb_test "-target-select tfile ${tracefile}" ".*=thread-group-started,id=\"i1\",pid=\"$decimal\",reason=\"trace\".*" "load trace"
+}
+
+# Test the =thread-group-started event when the inferior forks.
+
+proc test_thread_group_started_fork {} {
+    global binfile_fork
+    global srcfile_fork
+    global decimal
+
+    set fork_line [gdb_get_line_number "fork line" ${srcfile_fork}]
+
+    init_gdb ${binfile_fork}
+
+    # We need detach-on-fork off in order to have a second inferior created at
+    # the fork.
+    mi_gdb_test "411-gdb-set detach-on-fork off" "411\\^done" "unset detach-on-fork"
+
+    # Get to the fork() line.
+    mi_runto "main"
+    mi_continue_to_line "${srcfile_fork}:${fork_line}" "insert breakpoint at fork line"
+
+
+    # Step over the fork()
+    mi_send_resuming_command "exec-next" "next over fork"
+
+    # Confirm that we got the right event.
+    set test "second thread group started"
+    gdb_test_multiple "" $test {
+	-re "=thread-group-started,id=\"i2\",pid=\"${decimal}\",reason=\"fork\"" {
+	    pass $test
+	}
+    }
+}
+
+test_thread_group_started_run
+test_thread_group_started_attach
+test_thread_group_started_core
+test_thread_group_started_trace
+test_thread_group_started_fork
+
