@@ -1773,11 +1773,15 @@ remote_add_inferior (int fake_pid_p, int pid, int attached,
   if (attached == -1)
     attached = remote_query_attached (pid);
 
+  inferior_appeared_reason reason = attached ?
+      INFERIOR_APPEARED_ATTACH : INFERIOR_APPEARED_RUN;
+
   if (gdbarch_has_global_solist (target_gdbarch ()))
     {
       /* If the target shares code across all inferiors, then every
 	 attach adds a new inferior.  */
-      inf = add_inferior (pid);
+      // FIXME
+      inf = add_inferior (pid, reason);
 
       /* ... and every inferior is bound to the same program space.
 	 However, each inferior may still have its own address
@@ -1791,7 +1795,8 @@ remote_add_inferior (int fake_pid_p, int pid, int attached,
 	 between program/address spaces.  We simply bind the inferior
 	 to the program space's address space.  */
       inf = current_inferior ();
-      inferior_appeared (inf, pid);
+      // FIXME
+      inferior_appeared (inf, pid, reason);
     }
 
   inf->attach_flag = attached;
@@ -6195,7 +6200,8 @@ remove_stop_reply_for_inferior (QUEUE (stop_reply_p) *q,
 /* Discard all pending stop replies of inferior INF.  */
 
 static void
-discard_pending_stop_replies (struct inferior *inf)
+discard_pending_stop_replies (struct inferior *inf,
+			      inferior_exited_reason reason)
 {
   struct queue_iter_param param;
   struct stop_reply *reply;
@@ -13540,7 +13546,7 @@ _initialize_remote (void)
   observer_attach_new_objfile (remote_new_objfile);
   /* We're no longer interested in notification events of an inferior
      when it exits.  */
-  observer_attach_inferior_exit (discard_pending_stop_replies);
+  observer_attach_inferior_exited (discard_pending_stop_replies);
 
 #if 0
   init_remote_threadtests ();

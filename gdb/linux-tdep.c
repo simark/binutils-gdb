@@ -214,6 +214,23 @@ invalidate_linux_cache_inf (struct inferior *inf)
     }
 }
 
+/* Callback for the inferior_appeared observer.  */
+
+static void
+linux_inferior_appeared (struct inferior *inf,
+			 inferior_appeared_reason reason)
+{
+  invalidate_linux_cache_inf (inf);
+}
+
+/* Callback for the inferior_appeared observer.  */
+
+static void
+linux_inferior_exited (struct inferior *inf, inferior_exited_reason reason)
+{
+  invalidate_linux_cache_inf (inf);
+}
+
 /* Handles the cleanup of the linux cache for inferior INF.  ARG is
    ignored.  Callback for the inferior_appeared and inferior_exit
    events.  */
@@ -2545,8 +2562,8 @@ _initialize_linux_tdep (void)
   linux_inferior_data
     = register_inferior_data_with_cleanup (NULL, linux_inferior_data_cleanup);
   /* Observers used to invalidate the cache when needed.  */
-  observer_attach_inferior_exit (invalidate_linux_cache_inf);
-  observer_attach_inferior_appeared (invalidate_linux_cache_inf);
+  observer_attach_inferior_exited (linux_inferior_exited);
+  observer_attach_inferior_appeared (linux_inferior_appeared);
 
   add_setshow_boolean_cmd ("use-coredump-filter", class_files,
 			   &use_coredump_filter, _("\

@@ -490,7 +490,8 @@ holding the child stopped.  Try \"set detach-on-fork\" or \
 	  struct cleanup *old_chain;
 
 	  /* Add process to GDB's tables.  */
-	  child_inf = add_inferior (ptid_get_pid (child_ptid));
+	  child_inf = add_inferior (ptid_get_pid (child_ptid),
+				    INFERIOR_APPEARED_FORK);
 
 	  parent_inf = current_inferior ();
 	  child_inf->attach_flag = parent_inf->attach_flag;
@@ -576,7 +577,8 @@ holding the child stopped.  Try \"set detach-on-fork\" or \
       /* Add the new inferior first, so that the target_detach below
 	 doesn't unpush the target.  */
 
-      child_inf = add_inferior (ptid_get_pid (child_ptid));
+      child_inf = add_inferior (ptid_get_pid (child_ptid),
+				INFERIOR_APPEARED_FORK);
 
       parent_inf = current_inferior ();
       child_inf->attach_flag = parent_inf->attach_flag;
@@ -1189,7 +1191,8 @@ follow_exec (ptid_t ptid, char *execd_pathname)
       /* Do exit processing for the original inferior before adding
 	 the new inferior so we don't have two active inferiors with
 	 the same ptid, which can confuse find_inferior_ptid.  */
-      exit_inferior_num_silent (current_inferior ()->num);
+      exit_inferior_num_silent (current_inferior ()->num,
+				INFERIOR_EXITED_EXEC_NEW);
 
       inf = add_inferior_with_spaces ();
       inf->pid = pid;
@@ -1643,7 +1646,7 @@ remove_displaced_stepping_state (int pid)
 }
 
 static void
-infrun_inferior_exit (struct inferior *inf)
+infrun_inferior_exited (struct inferior *inf, inferior_exited_reason reason)
 {
   remove_displaced_stepping_state (inf->pid);
 }
@@ -9542,7 +9545,7 @@ enabled by default on some platforms."),
   observer_attach_thread_ptid_changed (infrun_thread_ptid_changed);
   observer_attach_thread_stop_requested (infrun_thread_stop_requested);
   observer_attach_thread_exit (infrun_thread_thread_exit);
-  observer_attach_inferior_exit (infrun_inferior_exit);
+  observer_attach_inferior_exited (infrun_inferior_exited);
 
   /* Explicitly create without lookup, since that tries to create a
      value with a void typed value, and when we get here, gdbarch

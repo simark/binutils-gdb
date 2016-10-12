@@ -203,7 +203,7 @@ inf_ptrace_attach (struct target_ops *ops, const char *args, int from_tty)
 #endif
 
   inf = current_inferior ();
-  inferior_appeared (inf, pid);
+  inferior_appeared (inf, pid, INFERIOR_APPEARED_ATTACH);
   inf->attach_flag = 1;
   inferior_ptid = pid_to_ptid (pid);
 

@@ -175,7 +175,7 @@ tui_dummy_print_frame_info_listing_hook (struct symtab *s,
    that is required after the inferior INF just exited.  */
 
 static void
-tui_inferior_exit (struct inferior *inf)
+tui_inferior_exited (struct inferior *inf, inferior_exited_reason reason)
 {
   /* Leave the SingleKey mode to make sure the gdb prompt is visible.  */
   tui_set_key_mode (TUI_COMMAND_MODE);
@@ -210,7 +210,7 @@ tui_normal_stop (struct bpstats *bs, int print_frame)
 static struct observer *tui_bp_created_observer;
 static struct observer *tui_bp_deleted_observer;
 static struct observer *tui_bp_modified_observer;
-static struct observer *tui_inferior_exit_observer;
+static struct observer *tui_inferior_exited_observer;
 static struct observer *tui_before_prompt_observer;
 static struct observer *tui_normal_stop_observer;
 static struct observer *tui_register_changed_observer;
@@ -233,8 +233,8 @@ tui_install_hooks (void)
     = observer_attach_breakpoint_deleted (tui_event_delete_breakpoint);
   tui_bp_modified_observer
     = observer_attach_breakpoint_modified (tui_event_modify_breakpoint);
-  tui_inferior_exit_observer
-    = observer_attach_inferior_exit (tui_inferior_exit);
+  tui_inferior_exited_observer
+    = observer_attach_inferior_exited (tui_inferior_exited);
   tui_before_prompt_observer
     = observer_attach_before_prompt (tui_before_prompt);
   tui_normal_stop_observer
@@ -256,8 +256,8 @@ tui_remove_hooks (void)
   tui_bp_deleted_observer = NULL;
   observer_detach_breakpoint_modified (tui_bp_modified_observer);
   tui_bp_modified_observer = NULL;
-  observer_detach_inferior_exit (tui_inferior_exit_observer);
-  tui_inferior_exit_observer = NULL;
+  observer_detach_inferior_exited (tui_inferior_exited_observer);
+  tui_inferior_exited_observer = NULL;
   observer_detach_before_prompt (tui_before_prompt_observer);
   tui_before_prompt_observer = NULL;
   observer_detach_normal_stop (tui_normal_stop_observer);

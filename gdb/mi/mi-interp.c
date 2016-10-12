@@ -68,8 +68,10 @@ static void mi_thread_exit (struct thread_info *t, int silent);
 static void mi_record_changed (struct inferior*, int, const char *,
 			       const char *);
 static void mi_inferior_added (struct inferior *inf);
-static void mi_inferior_appeared (struct inferior *inf);
-static void mi_inferior_exit (struct inferior *inf);
+static void mi_inferior_appeared (struct inferior *inf,
+				  inferior_appeared_reason reason);
+static void mi_inferior_exited (struct inferior *inf,
+				inferior_exited_reason reason);
 static void mi_inferior_removed (struct inferior *inf);
 static void mi_on_resume (ptid_t ptid);
 static void mi_solib_loaded (struct so_list *solib);
@@ -477,10 +479,38 @@ mi_inferior_added (struct inferior *inf)
     }
 }
 
+static const char *
+mi_inferior_appeared_reason_str (inferior_appeared_reason reason)
+{
+  switch (reason)
+  {
+    case INFERIOR_APPEARED_ATTACH:
+      return "attach";
+
+    case INFERIOR_APPEARED_CORE:
+      return "core";
+
+    case INFERIOR_APPEARED_FORK:
+      return "fork";
+
+    case INFERIOR_APPEARED_RUN:
+      return "run";
+
+    case INFERIOR_APPEARED_TRACE:
+      return "trace";
+
+    default:
+      gdb_assert(0);
+  }
+
+  return NULL;
+}
+
 static void
-mi_inferior_appeared (struct inferior *inf)
+mi_inferior_appeared (struct inferior *inf, inferior_appeared_reason reason)
 {
   struct switch_thru_all_uis state;
+  const char *reason_str = mi_inferior_appeared_reason_str (reason);
 
   SWITCH_THRU_ALL_UIS (state)
     {
@@ -494,15 +524,42 @@ mi_inferior_appeared (struct inferior *inf)
       target_terminal_ours_for_output ();
 
       fprintf_unfiltered (mi->event_channel,
-			  "thread-group-started,id=\"i%d\",pid=\"%d\"",
-			  inf->num, inf->pid);
+			  "thread-group-started,id=\"i%d\",pid=\"%d\",reason=\"%s\"",
+			  inf->num, inf->pid, reason_str);
       gdb_flush (mi->event_channel);
       do_cleanups (old_chain);
     }
 }
 
+static const char *
+mi_inferior_exited_reason_str (inferior_exited_reason reason)
+{
+  switch (reason)
+  {
+    case INFERIOR_EXITED_CORE:
+      return "core";
+
+    case INFERIOR_EXITED_DETACH:
+      return "detach";
+
+    case INFERIOR_EXITED_EXEC_NEW:
+      return "exec-new";
+
+    case INFERIOR_EXITED_TRACE:
+      return "trace";
+
+    case INFERIOR_EXITED_UNKNOWN:
+      return "unknown";
+
+    default:
+      gdb_assert(0);
+  }
+
+  return NULL;
+}
+
 static void
-mi_inferior_exit (struct inferior *inf)
+mi_inferior_exited (struct inferior *inf, inferior_exited_reason reason)
 {
   struct switch_thru_all_uis state;
 
@@ -519,8 +576,9 @@ mi_inferior_exit (struct inferior *inf)
 
       if (inf->has_exit_code)
 	fprintf_unfiltered (mi->event_channel,
-			    "thread-group-exited,id=\"i%d\",exit-code=\"%s\"",
-			    inf->num, int_string (inf->exit_code, 8, 0, 0, 1));
+			    "thread-group-exited,id=\"i%d\",exit-code=\"%s\",reason=\"%s\"",
+			    inf->num, int_string (inf->exit_code, 8, 0, 0, 1),
+			    mi_inferior_exited_reason_str (reason));
       else
 	fprintf_unfiltered (mi->event_channel,
 			    "thread-group-exited,id=\"i%d\"", inf->num);
@@ -1507,7 +1565,7 @@ _initialize_mi_interp (void)
   observer_attach_thread_exit (mi_thread_exit);
   observer_attach_inferior_added (mi_inferior_added);
   observer_attach_inferior_appeared (mi_inferior_appeared);
-  observer_attach_inferior_exit (mi_inferior_exit);
+  observer_attach_inferior_exited (mi_inferior_exited);
   observer_attach_inferior_removed (mi_inferior_removed);
   observer_attach_record_changed (mi_record_changed);
   observer_attach_normal_stop (mi_on_normal_stop);

@@ -124,13 +124,13 @@ init_inferior_list (void)
 }
 
 struct inferior *
-add_inferior_silent (int pid)
+add_inferior ()
 {
   struct inferior *inf;
 
   inf = XNEW (struct inferior);
   memset (inf, 0, sizeof (*inf));
-  inf->pid = pid;
+  inf->pid = 0;
 
   inf->control.stop_soon = NO_STOP_QUIETLY;
 
@@ -154,19 +154,22 @@ add_inferior_silent (int pid)
 
   observer_notify_inferior_added (inf);
 
-  if (pid != 0)
-    inferior_appeared (inf, pid);
-
   return inf;
 }
 
 struct inferior *
-add_inferior (int pid)
+add_inferior (int pid, inferior_appeared_reason reason)
 {
-  struct inferior *inf = add_inferior_silent (pid);
+  struct inferior *inf;
+
+  gdb_assert (pid != 0);
+
+  inf = add_inferior ();
 
   if (print_inferior_events)
     printf_unfiltered (_("[New inferior %d]\n"), pid);
+
+  inferior_appeared (inf, pid, reason);
 
   return inf;
 }
@@ -232,7 +235,7 @@ delete_inferior (struct inferior *todel)
    exit of its threads.  */
 
 static void
-exit_inferior_1 (struct inferior *inftoex, int silent)
+exit_inferior_1 (struct inferior *inftoex, int silent, inferior_exited_reason reason)
 {
   struct inferior *inf;
   struct delete_thread_of_inferior_arg arg;
@@ -249,7 +252,7 @@ exit_inferior_1 (struct inferior *inftoex, int silent)
 
   iterate_over_threads (delete_thread_of_inferior, &arg);
 
-  observer_notify_inferior_exit (inf);
+  observer_notify_inferior_exited (inf, reason);
 
   inf->pid = 0;
   inf->fake_pid_p = 0;
@@ -268,30 +271,30 @@ exit_inferior_1 (struct inferior *inftoex, int silent)
 }
 
 void
-exit_inferior (int pid)
+exit_inferior (int pid, inferior_exited_reason reason)
 {
   struct inferior *inf = find_inferior_pid (pid);
 
-  exit_inferior_1 (inf, 0);
+  exit_inferior_1 (inf, 0, reason);
 
   if (print_inferior_events)
     printf_unfiltered (_("[Inferior %d exited]\n"), pid);
 }
 
 void
-exit_inferior_silent (int pid)
+exit_inferior_silent (int pid, inferior_exited_reason reason)
 {
   struct inferior *inf = find_inferior_pid (pid);
 
-  exit_inferior_1 (inf, 1);
+  exit_inferior_1 (inf, 1, reason);
 }
 
 void
-exit_inferior_num_silent (int num)
+exit_inferior_num_silent (int num, inferior_exited_reason reason)
 {
   struct inferior *inf = find_inferior_id (num);
 
-  exit_inferior_1 (inf, 1);
+  exit_inferior_1 (inf, 1, reason);
 }
 
 void
@@ -299,20 +302,21 @@ detach_inferior (int pid)
 {
   struct inferior *inf = find_inferior_pid (pid);
 
-  exit_inferior_1 (inf, 0);
+  exit_inferior_1 (inf, 0, INFERIOR_EXITED_DETACH);
 
   if (print_inferior_events)
     printf_unfiltered (_("[Inferior %d detached]\n"), pid);
 }
 
 void
-inferior_appeared (struct inferior *inf, int pid)
+inferior_appeared (struct inferior *inf, int pid,
+		   inferior_appeared_reason reason)
 {
   inf->pid = pid;
   inf->has_exit_code = 0;
   inf->exit_code = 0;
 
-  observer_notify_inferior_appeared (inf);
+  observer_notify_inferior_appeared (inf, reason);
 }
 
 void
@@ -323,7 +327,7 @@ discard_all_inferiors (void)
   for (inf = inferior_list; inf; inf = inf->next)
     {
       if (inf->pid != 0)
-	exit_inferior_silent (inf->pid);
+	exit_inferior_silent (inf->pid, INFERIOR_EXITED_UNKNOWN);
     }
 }
 
@@ -828,7 +832,7 @@ add_inferior_with_spaces (void)
      really does.  */
   aspace = maybe_new_address_space ();
   pspace = add_program_space (aspace);
-  inf = add_inferior (0);
+  inf = add_inferior ();
   inf->pspace = pspace;
   inf->aspace = pspace->aspace;
 
@@ -976,7 +980,7 @@ clone_inferior_command (char *args, int from_tty)
 	 really does.  */
       aspace = maybe_new_address_space ();
       pspace = add_program_space (aspace);
-      inf = add_inferior (0);
+      inf = add_inferior ();
       inf->pspace = pspace;
       inf->aspace = pspace->aspace;
       inf->gdbarch = orginf->gdbarch;
@@ -1037,7 +1041,7 @@ initialize_inferiors (void)
      can only allocate an inferior when all those modules have done
      that.  Do this after initialize_progspace, due to the
      current_program_space reference.  */
-  current_inferior_ = add_inferior (0);
+  current_inferior_ = add_inferior ();
   current_inferior_->pspace = current_program_space;
   current_inferior_->aspace = current_program_space->aspace;
   /* The architecture will be initialized shortly, by

@@ -337,6 +337,24 @@ invalidate_auxv_cache_inf (struct inferior *inf)
   auxv_inferior_data_cleanup (inf, NULL);
 }
 
+/* Callback for the inferior_appeared observer.  */
+
+static void
+auxv_inferior_appeared (struct inferior *inferior,
+			inferior_appeared_reason reason)
+{
+  invalidate_auxv_cache_inf (inferior);
+}
+
+/* Callback for the inferior_exited observer.  */
+
+static void
+auxv_inferior_exited (struct inferior *inferior,
+		      inferior_exited_reason reason)
+{
+  invalidate_auxv_cache_inf (inferior);
+}
+
 /* Invalidate current inferior's auxv cache.  */
 
 static void
@@ -582,7 +600,7 @@ This is information provided by the operating system at program startup."));
     = register_inferior_data_with_cleanup (NULL, auxv_inferior_data_cleanup);
 
   /* Observers used to invalidate the auxv cache when needed.  */
-  observer_attach_inferior_exit (invalidate_auxv_cache_inf);
-  observer_attach_inferior_appeared (invalidate_auxv_cache_inf);
+  observer_attach_inferior_exited (auxv_inferior_exited);
+  observer_attach_inferior_appeared (auxv_inferior_appeared);
   observer_attach_executable_changed (invalidate_auxv_cache);
 }

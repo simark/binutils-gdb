@@ -183,7 +183,7 @@ python_on_register_change (struct frame_info *frame, int regnum)
 }
 
 static void
-python_inferior_exit (struct inferior *inf)
+python_inferior_exited (struct inferior *inf, inferior_exited_reason reason)
 {
   struct cleanup *cleanup;
   const LONGEST *exit_code = NULL;
@@ -894,7 +894,7 @@ gdbpy_initialize_inferior (void)
   observer_attach_inferior_call_post (python_on_inferior_call_post);
   observer_attach_memory_changed (python_on_memory_change);
   observer_attach_register_changed (python_on_register_change);
-  observer_attach_inferior_exit (python_inferior_exit);
+  observer_attach_inferior_exited (python_inferior_exited);
   observer_attach_new_objfile (python_new_objfile);
 
   membuf_object_type.tp_new = PyType_GenericNew;

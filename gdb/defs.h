@@ -758,6 +758,24 @@ enum user_selected_what_flag
   };
 DEF_ENUM_FLAGS_TYPE (enum user_selected_what_flag, user_selected_what);
 
+enum inferior_appeared_reason
+{
+  INFERIOR_APPEARED_ATTACH,
+  INFERIOR_APPEARED_CORE,
+  INFERIOR_APPEARED_FORK,
+  INFERIOR_APPEARED_RUN,
+  INFERIOR_APPEARED_TRACE,
+};
+
+enum inferior_exited_reason
+{
+  INFERIOR_EXITED_CORE,
+  INFERIOR_EXITED_DETACH,
+  INFERIOR_EXITED_EXEC_NEW,
+  INFERIOR_EXITED_TRACE,
+  INFERIOR_EXITED_UNKNOWN,
+};
+
 #include "utils.h"
 
 #endif /* #ifndef DEFS_H */

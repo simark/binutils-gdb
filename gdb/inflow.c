@@ -497,7 +497,7 @@ get_inflow_inferior_data (struct inferior *inf)
    list.  */
 
 static void
-inflow_inferior_exit (struct inferior *inf)
+inflow_inferior_exit (struct inferior *inf, inferior_exited_reason reason)
 {
   struct terminal_info *info;
 
@@ -885,7 +885,7 @@ _initialize_inflow (void)
 #endif /* TIOCGPGRP */
 #endif /* sgtty */
 
-  observer_attach_inferior_exit (inflow_inferior_exit);
+  observer_attach_inferior_exited (inflow_inferior_exit);
 
   inflow_inferior_data
     = register_inferior_data_with_cleanup (NULL, inflow_inferior_data_cleanup);

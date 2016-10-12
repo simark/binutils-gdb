@@ -430,7 +430,7 @@ get_ada_inferior_data (struct inferior *inf)
    that is required after the inferior INF just exited.  */
 
 static void
-ada_inferior_exit (struct inferior *inf)
+ada_inferior_exited (struct inferior *inf, inferior_exited_reason reason)
 {
   ada_inferior_data_cleanup (inf, NULL);
   set_inferior_data (inf, ada_inferior_data, NULL);
@@ -14316,7 +14316,7 @@ DWARF attribute."),
   /* The ada-lang observers.  */
   observer_attach_new_objfile (ada_new_objfile_observer);
   observer_attach_free_objfile (ada_free_objfile_observer);
-  observer_attach_inferior_exit (ada_inferior_exit);
+  observer_attach_inferior_exited (ada_inferior_exited);
 
   /* Setup various context-specific data.  */
   ada_inferior_data

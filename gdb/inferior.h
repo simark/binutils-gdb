@@ -425,24 +425,22 @@ extern void init_inferior_list (void);
    inferior is found, and return the pointer to the new inferior.
    Caller may use this pointer to initialize the private inferior
    data.  */
-extern struct inferior *add_inferior (int pid);
-
-/* Same as add_inferior, but don't print new inferior notifications to
-   the CLI.  */
-extern struct inferior *add_inferior_silent (int pid);
+extern struct inferior *add_inferior ();
+extern struct inferior *add_inferior (int pid, inferior_appeared_reason reason);
 
 extern void delete_inferior (struct inferior *todel);
 
 /* Delete an existing inferior list entry, due to inferior detaching.  */
 extern void detach_inferior (int pid);
 
-extern void exit_inferior (int pid);
+extern void exit_inferior (int pid, inferior_exited_reason reason);
 
-extern void exit_inferior_silent (int pid);
+extern void exit_inferior_silent (int pid, inferior_exited_reason reason);
 
-extern void exit_inferior_num_silent (int num);
+extern void exit_inferior_num_silent (int num, inferior_exited_reason reason);
 
-extern void inferior_appeared (struct inferior *inf, int pid);
+extern void inferior_appeared (struct inferior *inf, int pid,
+			       inferior_appeared_reason reason);
 
 /* Get rid of all inferiors.  */
 extern void discard_all_inferiors (void);

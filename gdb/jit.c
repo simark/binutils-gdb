@@ -53,7 +53,7 @@ static const char *const jit_descriptor_name = "__jit_debug_descriptor";
 static const struct program_space_data *jit_program_space_data = NULL;
 
 static void jit_inferior_init (struct gdbarch *gdbarch);
-static void jit_inferior_exit_hook (struct inferior *inf);
+static void jit_unregister_all (struct inferior *inf);
 
 /* An unwinder is registered for every gdbarch.  This key is used to
    remember if the unwinder has been registered for a particular
@@ -239,7 +239,7 @@ jit_reader_unload_command (char *args, int from_tty)
     error (_("No JIT reader loaded."));
 
   reinit_frame_cache ();
-  jit_inferior_exit_hook (current_inferior ());
+  jit_unregister_all (current_inferior ());
   loaded_jit_reader->functions->destroy (loaded_jit_reader->functions);
 
   gdb_dlclose (loaded_jit_reader->handle);
@@ -1413,7 +1413,7 @@ jit_breakpoint_re_set (void)
    without unregistering its code, for example when it crashes.  */
 
 static void
-jit_inferior_exit_hook (struct inferior *inf)
+jit_unregister_all (struct inferior *inf)
 {
   struct objfile *objf;
   struct objfile *temp;
@@ -1426,6 +1426,12 @@ jit_inferior_exit_hook (struct inferior *inf)
       if (objf_data != NULL && objf_data->addr != 0)
 	jit_unregister_code (objf);
     }
+}
+
+static void
+jit_inferior_exited_hook (struct inferior *inf, inferior_exited_reason reason)
+{
+  jit_unregister_all (inf);
 }
 
 void
@@ -1524,7 +1530,7 @@ _initialize_jit (void)
 			     &setdebuglist, &showdebuglist);
 
   observer_attach_inferior_created (jit_inferior_created);
-  observer_attach_inferior_exit (jit_inferior_exit_hook);
+  observer_attach_inferior_exited (jit_inferior_exited_hook);
   observer_attach_breakpoint_deleted (jit_breakpoint_deleted);
 
   jit_objfile_data =

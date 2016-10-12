@@ -405,7 +405,7 @@ bpfinishpy_handle_stop (struct bpstats *bs, int print_frame)
    scope notifications.  */
 
 static void
-bpfinishpy_handle_exit (struct inferior *inf)
+bpfinishpy_handle_exit (struct inferior *inf, inferior_exited_reason reason)
 {
   struct cleanup *cleanup = ensure_python_env (target_gdbarch (),
                                                current_language);
@@ -428,7 +428,7 @@ gdbpy_initialize_finishbreakpoints (void)
     return -1;
 
   observer_attach_normal_stop (bpfinishpy_handle_stop);
-  observer_attach_inferior_exit (bpfinishpy_handle_exit);
+  observer_attach_inferior_exited (bpfinishpy_handle_exit);
 
   return 0;
 }

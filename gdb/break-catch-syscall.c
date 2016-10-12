@@ -681,7 +681,7 @@ catch_syscall_completer (struct cmd_list_element *cmd,
 }
 
 static void
-clear_syscall_counts (struct inferior *inf)
+clear_syscall_counts (struct inferior *inf, inferior_exited_reason reason)
 {
   struct catch_syscall_inferior_data *inf_data
     = get_catch_syscall_inferior_data (inf);
@@ -718,7 +718,7 @@ _initialize_break_catch_syscall (void)
 {
   initialize_syscall_catchpoint_ops ();
 
-  observer_attach_inferior_exit (clear_syscall_counts);
+  observer_attach_inferior_exited (clear_syscall_counts);
   catch_syscall_inferior_data
     = register_inferior_data_with_cleanup (NULL,
 					   catch_syscall_inferior_data_cleanup);

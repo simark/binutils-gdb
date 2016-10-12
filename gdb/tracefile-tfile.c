@@ -533,7 +533,7 @@ tfile_open (const char *arg, int from_tty)
     }
   END_CATCH
 
-  inferior_appeared (current_inferior (), TFILE_PID);
+  inferior_appeared (current_inferior (), TFILE_PID, INFERIOR_APPEARED_TRACE);
   inferior_ptid = pid_to_ptid (TFILE_PID);
   add_thread_silent (inferior_ptid);
 
@@ -601,7 +601,7 @@ tfile_close (struct target_ops *self)
 
   pid = ptid_get_pid (inferior_ptid);
   inferior_ptid = null_ptid;	/* Avoid confusion from thread stuff.  */
-  exit_inferior_silent (pid);
+  exit_inferior_silent (pid, INFERIOR_EXITED_TRACE);
 
   close (trace_fd);
   trace_fd = -1;

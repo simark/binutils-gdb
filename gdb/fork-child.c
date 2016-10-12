@@ -403,7 +403,7 @@ fork_inferior (char *exec_file_arg, char *allargs, char **env,
 
   inf = current_inferior ();
 
-  inferior_appeared (inf, pid);
+  inferior_appeared (inf, pid, INFERIOR_APPEARED_RUN);
 
   /* Needed for wait_for_inferior stuff below.  */
   inferior_ptid = pid_to_ptid (pid);

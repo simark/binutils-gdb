@@ -3296,7 +3296,7 @@ generic_mourn_inferior (void)
   if (!ptid_equal (ptid, null_ptid))
     {
       int pid = ptid_get_pid (ptid);
-      exit_inferior (pid);
+      exit_inferior (pid, INFERIOR_EXITED_UNKNOWN);
     }
 
   /* Note this wipes step-resume breakpoints, so needs to be done

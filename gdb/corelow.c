@@ -195,7 +195,7 @@ core_close (struct target_ops *self)
       inferior_ptid = null_ptid;    /* Avoid confusion from thread
 				       stuff.  */
       if (pid != 0)
-	exit_inferior_silent (pid);
+	exit_inferior_silent (pid, INFERIOR_EXITED_CORE);
 
       /* Clear out solib state while the bfd is still open.  See
          comments in clear_solib in solib.c.  */
@@ -251,7 +251,7 @@ add_to_thread_list (bfd *abfd, asection *asect, void *reg_sect_arg)
   inf = current_inferior ();
   if (inf->pid == 0)
     {
-      inferior_appeared (inf, pid);
+      inferior_appeared (inf, pid, INFERIOR_APPEARED_CORE);
       inf->fake_pid_p = fake_pid_p;
     }
 
@@ -396,7 +396,7 @@ core_open (const char *arg, int from_tty)
 
       if (thread == NULL)
 	{
-	  inferior_appeared (current_inferior (), CORELOW_PID);
+	  inferior_appeared (current_inferior (), CORELOW_PID, INFERIOR_APPEARED_CORE);
 	  inferior_ptid = pid_to_ptid (CORELOW_PID);
 	  add_thread_silent (inferior_ptid);
 	}

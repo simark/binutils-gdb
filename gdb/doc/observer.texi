@@ -238,11 +238,11 @@ The inferior @var{inf} has been added to the list of inferiors.  At
 this point, it might not be associated with any process.
 @end deftypefun
 
-@deftypefun void inferior_appeared (struct inferior *@var{inf})
+@deftypefun void inferior_appeared (struct inferior *@var{inf}, inferior_appeared_reason @var{reason})
 The inferior identified by @var{inf} has been attached to a process.
 @end deftypefun
 
-@deftypefun void inferior_exit (struct inferior *@var{inf})
+@deftypefun void inferior_exited (struct inferior *@var{inf}, inferior_exited_reason @var{reason})
 Either the inferior associated with @var{inf} has been detached from the
 process, or the process has exited.
 @end deftypefun
