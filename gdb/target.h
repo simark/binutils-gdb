@@ -612,7 +612,7 @@ struct target_ops
       TARGET_DEFAULT_RETURN (1);
     int (*to_has_exited) (struct target_ops *, int, int, int *)
       TARGET_DEFAULT_RETURN (0);
-    void (*to_mourn_inferior) (struct target_ops *)
+    void (*to_mourn_inferior) (struct target_ops *, mourn_inferior_reason reason)
       TARGET_DEFAULT_FUNC (default_mourn_inferior);
     /* Note that to_can_run is special and can be invoked on an
        unpushed target.  Targets defining this method must also define

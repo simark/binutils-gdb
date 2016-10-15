@@ -320,14 +320,14 @@ inferior_appeared (struct inferior *inf, int pid,
 }
 
 void
-discard_all_inferiors (void)
+discard_all_inferiors (inferior_exited_reason reason)
 {
   struct inferior *inf;
 
   for (inf = inferior_list; inf; inf = inf->next)
     {
       if (inf->pid != 0)
-	exit_inferior_silent (inf->pid, INFERIOR_EXITED_UNKNOWN);
+	exit_inferior_silent (inf->pid, reason);
     }
 }
 

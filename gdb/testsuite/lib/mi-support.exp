@@ -2602,8 +2602,11 @@ proc mi_skip_python_tests {} {
 
 proc mi_is_target_remote {} {
     global mi_gdb_prompt
+    global expect_out
 
-    return [gdb_is_target_remote_prompt "$mi_gdb_prompt"]
+    mi_gdb_test "maint print target-stack" ".*" "print target stack"
+
+    return [string match "*emote serial target in gdb-specific protocol*" $expect_out(2,string)]
 }
 
 # Check whether the current target supports tracing.
@@ -2614,21 +2617,14 @@ proc mi_is_target_remote {} {
 
 proc mi_target_supports_trace { } {
     global mi_gdb_prompt
+    global decimal
+    global expect_out
 
-    set test "check whether tracing is supported"
-    gdb_test_multiple "-trace-status" $test {
-	-re "\\^done,supported=\"1\".*\r\n$mi_gdb_prompt$" {
-	    return 1
-	}
-	
-	-re "\\^done,supported=\"0\"\r\n$mi_gdb_prompt$" {
-	    return 0
-	}
-	
-	timeout {
-	    return 0
-	}
+    mi_gdb_test "-trace-status" "\\^done,supported=\"($decimal)\".*" "trace status"
+
+    if { $expect_out(3,string) == "1" } {
+	return 1
+    } else {
+	return 0
     }
-    
-    return 0
 }

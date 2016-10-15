@@ -38,7 +38,7 @@ extern void inf_child_open_target (struct target_ops *target,
 
 /* To be called by the native target's to_mourn_inferior routine.  */
 
-extern void inf_child_mourn_inferior (struct target_ops *ops);
+extern void inf_child_mourn_inferior (struct target_ops *ops, mourn_inferior_reason reason);
 
 /* Unpush the target if it wasn't explicitly open with "target native"
    and there are no live inferiors left.  Note: if calling this as a

@@ -204,4 +204,9 @@ target_debug_print_signals (unsigned char *sigs)
   fputs_unfiltered (" }", gdb_stdlog);
 }
 
+static void target_debug_print_mourn_inferior_reason (mourn_inferior_reason reason)
+{
+
+}
+
 #endif /* TARGET_DEBUG_H */

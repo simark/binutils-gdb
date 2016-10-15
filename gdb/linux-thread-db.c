@@ -1150,13 +1150,13 @@ thread_db_wait (struct target_ops *ops,
 }
 
 static void
-thread_db_mourn_inferior (struct target_ops *ops)
+thread_db_mourn_inferior (struct target_ops *ops, mourn_inferior_reason reason)
 {
   struct target_ops *target_beneath = find_target_beneath (ops);
 
   delete_thread_db_info (ptid_get_pid (inferior_ptid));
 
-  target_beneath->to_mourn_inferior (target_beneath);
+  target_beneath->to_mourn_inferior (target_beneath, reason);
 
   /* Detach thread_db target ops.  */
   if (!thread_db_list)

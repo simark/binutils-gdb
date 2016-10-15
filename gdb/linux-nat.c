@@ -1253,7 +1253,7 @@ linux_nat_attach (struct target_ops *ops, const char *args, int from_tty)
 	  int exit_code = WEXITSTATUS (status);
 
 	  target_terminal_ours ();
-	  target_mourn_inferior (inferior_ptid);
+	  target_mourn_inferior (inferior_ptid, MOURN_INFERIOR_EXIT);
 	  if (exit_code == 0)
 	    error (_("Unable to attach: program exited normally."));
 	  else
@@ -1265,7 +1265,7 @@ linux_nat_attach (struct target_ops *ops, const char *args, int from_tty)
 	  enum gdb_signal signo;
 
 	  target_terminal_ours ();
-	  target_mourn_inferior (inferior_ptid);
+	  target_mourn_inferior (inferior_ptid, MOURN_INFERIOR_SIGNAL);
 
 	  signo = gdb_signal_from_host (WTERMSIG (status));
 	  error (_("Unable to attach: program terminated with signal "
@@ -3784,11 +3784,11 @@ linux_nat_kill (struct target_ops *ops)
       iterate_over_lwps (ptid, kill_wait_callback, NULL);
     }
 
-  target_mourn_inferior (inferior_ptid);
+  target_mourn_inferior (inferior_ptid, MOURN_INFERIOR_KILL);
 }
 
 static void
-linux_nat_mourn_inferior (struct target_ops *ops)
+linux_nat_mourn_inferior (struct target_ops *ops, mourn_inferior_reason reason)
 {
   int pid = ptid_get_pid (inferior_ptid);
 
@@ -3796,7 +3796,7 @@ linux_nat_mourn_inferior (struct target_ops *ops)
 
   if (! forks_exist_p ())
     /* Normal case, no other forks available.  */
-    linux_ops->to_mourn_inferior (ops);
+    linux_ops->to_mourn_inferior (ops, reason);
   else
     /* Multi-fork case.  The current inferior_ptid has exited, but
        there are other viable forks to debug.  Delete the exiting

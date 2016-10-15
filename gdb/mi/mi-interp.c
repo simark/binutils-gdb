@@ -548,8 +548,17 @@ mi_inferior_exited_reason_str (inferior_exited_reason reason)
     case INFERIOR_EXITED_TRACE:
       return "trace";
 
-    case INFERIOR_EXITED_UNKNOWN:
-      return "unknown";
+    case INFERIOR_EXITED_NORMAL:
+      return "normal";
+
+    case INFERIOR_EXITED_KILL:
+      return "kill";
+
+    case INFERIOR_EXITED_DISCONNECT:
+      return "disconnect";
+
+    //case INFERIOR_EXITED_UNKNOWN:
+    //  return "unknown";
 
     default:
       gdb_assert(0);
@@ -567,6 +576,7 @@ mi_inferior_exited (struct inferior *inf, inferior_exited_reason reason)
     {
       struct mi_interp *mi = as_mi_interp (top_level_interpreter ());
       struct cleanup *old_chain;
+      const char *reason_str;
 
       if (mi == NULL)
 	continue;
@@ -574,14 +584,18 @@ mi_inferior_exited (struct inferior *inf, inferior_exited_reason reason)
       old_chain = make_cleanup_restore_target_terminal ();
       target_terminal_ours_for_output ();
 
+      reason_str = mi_inferior_exited_reason_str (reason);
+
       if (inf->has_exit_code)
 	fprintf_unfiltered (mi->event_channel,
-			    "thread-group-exited,id=\"i%d\",exit-code=\"%s\",reason=\"%s\"",
+			    "thread-group-exited,id=\"i%d\",exit-code=\"%s\","
+			    "reason=\"%s\"",
 			    inf->num, int_string (inf->exit_code, 8, 0, 0, 1),
-			    mi_inferior_exited_reason_str (reason));
+			    reason_str);
       else
 	fprintf_unfiltered (mi->event_channel,
-			    "thread-group-exited,id=\"i%d\"", inf->num);
+			    "thread-group-exited,id=\"i%d\",reason=\"%s\"",
+			    inf->num, reason_str);
 
       gdb_flush (mi->event_channel);
       do_cleanups (old_chain);

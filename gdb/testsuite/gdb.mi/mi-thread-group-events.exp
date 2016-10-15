@@ -19,20 +19,25 @@ set MIFLAGS "-i=mi"
 
 standard_testfile
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
-     untested ${testfile}
-     return -1
+# Compile binaries for the multiple tests of this file.
+
+foreach suffix { "run" "fork" "attach" "trace" } {
+    set binfile_varname "binfile_${suffix}"
+    set srcfile_varname "srcfile_${suffix}"
+
+    set binfile_value "${binfile}-${suffix}"
+    set srcfile_value "[file rootname ${srcfile}]-${suffix}[file extension ${srcfile}]"
+
+    set $binfile_varname $binfile_value
+    set $srcfile_varname $srcfile_value
+
+    if  { [gdb_compile "${srcdir}/${subdir}/${srcfile_value}" "${binfile_value}" executable {debug}] != "" } {
+	untested ${testfile}
+	return -1
+    }
 }
 
-# Set-up another binary for the fork tests.
-
-set binfile_fork "${binfile}-fork"
-set srcfile_fork "[file rootname ${srcfile}]-fork[file extension ${srcfile}]"
-
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile_fork}" "${binfile_fork}" executable {debug}] != "" } {
-     untested ${testfile}
-     return -1
-}
+# Restart with a clean gdb, loading file BINFILE.
 
 proc init_gdb { binfile } {
     global srcdir
@@ -50,9 +55,10 @@ proc init_gdb { binfile } {
 
 proc test_thread_group_started_run {} {
     global decimal
-    global binfile
+    global binfile_run
+    global srcfile_run
 
-    init_gdb ${binfile}
+    init_gdb ${binfile_run}
 
     # stub-like targets don't support running.
     if [use_gdb_stub] {
@@ -62,69 +68,122 @@ proc test_thread_group_started_run {} {
     if [mi_is_target_remote] {
 	set target_path [gdbserver_download_current_prog]
 
-	mi_gdb_test "set remote exec-file $target_path" ".*" "set remote exec-file"
+	mi_gdb_test "set remote exec-file $target_path" ".*\\^done" "set remote exec-file"
     }
 
-    mi_gdb_test "111-exec-run --start" ".*=thread-group-started,id=\"i1\",pid=\"${decimal}\",reason=\"run\".*" "thread-group-started event"
+    mi_gdb_test \
+	"111-exec-run --start" \
+	".*=thread-group-started,id=\"i1\",pid=\"${decimal}\",reason=\"run\".*" \
+	"thread-group-started event"
+
+    mi_expect_stop "breakpoint-hit" "main" "" ".*${srcfile_run}.*" "\[0-9\]+" \
+	{ "" "disp=\"del\"" } "stop at main"
 }
 
-# Test the =thread-group-started event when doing an "attach".
+# Test the =thread-group-exited event when letting the program run to
+# completion.
 
-proc test_thread_group_started_attach {} {
-    global binfile
+proc test_thread_group_exited_normal {} {
+    global decimal
+    global binfile_run
+    global srcfile_run
 
-    init_gdb ${binfile}
+    init_gdb ${binfile_run}
 
-    # stub-like targets don't support attaching.
+    mi_runto "main"
+
     if [use_gdb_stub] {
-	return
+	set reason "disconnect"
+    } else {
+	set reason "normal"
     }
+
+    # Continue until normal end of program.
+    mi_send_resuming_command "exec-continue" "continue until end"
+
+    # Confirm that we get the right thread-group-exited event.
+    set test "thread-group-exited event"
+    gdb_test_multiple "" $test {
+	-re "=thread-group-exited,id=\"i1\",exit-code=\"0\",reason=\"$reason\"" {
+	    pass $test
+	}
+    }
+}
+
+# Test the =thread-group-started/-exit event when attaching and detaching.
+
+proc test_thread_group_events_attach_detach {} {
+    global binfile_attach
+
+    init_gdb ${binfile_attach}
 
     # We can't attach if we can't spawn a process.
     if { ![can_spawn_for_attach] } {
 	return
     }
 
-    set test_spawn_id [spawn_wait_for_attach ${binfile}]
+    set test_spawn_id [spawn_wait_for_attach ${binfile_attach}]
     set test_pid [spawn_id_get_pid ${test_spawn_id}]
 
-    mi_gdb_test "-target-attach ${test_pid}" ".*=thread-group-started,id=\"i1\",pid=\"${test_pid}\",reason=\"attach\".*" "attach"
+    mi_gdb_test \
+	"-target-attach ${test_pid}" \
+	".*=thread-group-started,id=\"i1\",pid=\"${test_pid}\",reason=\"attach\".*" \
+	"attach"
+
+    mi_gdb_test \
+	"-target-detach" \
+	".*=thread-group-exited,id=\"i1\",reason=\"detach\".*" \
+	"detach"
 }
 
-# Test the =thread-group-started event when debugging a core file.
+# Test the =thread-group-started/-exited events when debugging a core file.
 
-proc test_thread_group_started_core {} {
-    global binfile
+proc test_thread_group_events_core {} {
+    global binfile_run
     global decimal
 
     set corefile [standard_output_file "corefile"]
     set corefile_re [string_to_regexp ${corefile}]
 
-    init_gdb ${binfile}
+    init_gdb ${binfile_run}
 
-    mi_run_to_main
+    mi_runto "main"
 
-    mi_gdb_test "gcore ${corefile}" ".*Saved corefile ${corefile_re}.*" "generate core"
-    mi_gdb_test "-target-select core ${corefile}" ".*=thread-group-started,id=\"i1\",pid=\"$decimal\",reason=\"core\".*" "load core"
+    mi_gdb_test "gcore ${corefile}" \
+	".*Saved corefile ${corefile_re}.*" \
+	"generate core"
+
+    mi_gdb_test \
+	"-target-select core ${corefile}" \
+	".*=thread-group-started,id=\"i1\",pid=\"$decimal\",reason=\"core\".*" \
+	"load core"
+
+    # Giving an unexisting path to "-target-select core" causes the previous
+    # core file to get closed, so it's enough for our test.
+    mi_gdb_test \
+	"-target-select core foo" \
+	".*=thread-group-exited,id=\"i1\",reason=\"core\".*" \
+	"unload core"
 }
 
-# Test the =thread-group-started event when loading a trace file.
+# Test the =thread-group-started/-exited events when loading/unloading a trace
+# file.
 
-proc test_thread_group_started_trace {} {
-    global binfile
+proc test_thread_group_events_trace {} {
+    global binfile_trace
+    global srcfile_trace
     global decimal
-    global testfile
 
-    set break_line [gdb_get_line_number "after tracing"]
+    set break_line [gdb_get_line_number "after tracing" "${srcfile_trace}"]
     set tracefile [standard_output_file "tracefile"]
 
-    init_gdb ${binfile}
+    init_gdb ${binfile_trace}
 
     # This needs to be before mi_target_supports_trace.
-    mi_run_to_main
+    mi_runto "main"
 
     if { ![mi_target_supports_trace] } {
-	unsupported "test_thread_group_started_trace"
+	unsupported "trace tests"
 	return
     }
 
@@ -136,7 +195,17 @@ proc test_thread_group_started_trace {} {
     mi_gdb_test "564-trace-save ${tracefile}" "564\\^done" "save trace"
 
     # Then load the tracefile, and confirm that we see the event.
-    mi_gdb_test "-target-select tfile ${tracefile}" ".*=thread-group-started,id=\"i1\",pid=\"$decimal\",reason=\"trace\".*" "load trace"
+    mi_gdb_test \
+	"-target-select tfile ${tracefile}" \
+	".*=thread-group-started,id=\"i1\",pid=\"$decimal\",reason=\"trace\".*" \
+	"load trace"
+
+    # Giving an unexisting path to "-target-select core" causes the previous
+    # target (the trace file) file to get closed, so it's enough for our test.
+    mi_gdb_test \
+	"-target-select core foo" \
+	".*=thread-group-exited,id=\"i1\",reason=\"trace\".*" \
+	"unload trace"
 }
 
 # Test the =thread-group-started event when the inferior forks.
@@ -172,8 +241,9 @@ proc test_thread_group_started_fork {} {
 }
 
 test_thread_group_started_run
-test_thread_group_started_attach
-test_thread_group_started_core
-test_thread_group_started_trace
+test_thread_group_exited_normal
+test_thread_group_events_attach_detach
+test_thread_group_events_trace
 test_thread_group_started_fork
+test_thread_group_events_core
 

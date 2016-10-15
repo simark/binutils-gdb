@@ -1334,19 +1334,21 @@ debug_has_exited (struct target_ops *self, int arg1, int arg2, int *arg3)
 }
 
 static void
-delegate_mourn_inferior (struct target_ops *self)
+delegate_mourn_inferior (struct target_ops *self, mourn_inferior_reason arg1)
 {
   self = self->beneath;
-  self->to_mourn_inferior (self);
+  self->to_mourn_inferior (self, arg1);
 }
 
 static void
-debug_mourn_inferior (struct target_ops *self)
+debug_mourn_inferior (struct target_ops *self, mourn_inferior_reason arg1)
 {
   fprintf_unfiltered (gdb_stdlog, "-> %s->to_mourn_inferior (...)\n", debug_target.to_shortname);
-  debug_target.to_mourn_inferior (&debug_target);
+  debug_target.to_mourn_inferior (&debug_target, arg1);
   fprintf_unfiltered (gdb_stdlog, "<- %s->to_mourn_inferior (", debug_target.to_shortname);
   target_debug_print_struct_target_ops_p (&debug_target);
+  fputs_unfiltered (", ", gdb_stdlog);
+  target_debug_print_mourn_inferior_reason (arg1);
   fputs_unfiltered (")\n", gdb_stdlog);
 }
 

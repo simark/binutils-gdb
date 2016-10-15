@@ -119,7 +119,7 @@ static int remote_vkill (int pid, struct remote_state *rs);
 
 static void remote_kill_k (void);
 
-static void remote_mourn (struct target_ops *ops);
+static void remote_mourn (struct target_ops *ops, mourn_inferior_reason reason);
 
 static void extended_remote_restart (void);
 
@@ -3521,7 +3521,7 @@ remote_close (struct target_ops *self)
      Reset inferior_ptid to null_ptid first, as otherwise has_stack_frame
      will be unable to find the thread corresponding to (pid, 0, 0).  */
   inferior_ptid = null_ptid;
-  discard_all_inferiors ();
+  discard_all_inferiors (INFERIOR_EXITED_DISCONNECT);
 
   /* We are closing the remote target, so we should discard
      everything of this target.  */
@@ -5164,7 +5164,7 @@ remote_detach_1 (const char *args, int from_tty)
   /* If doing detach-on-fork, we don't mourn, because that will delete
      breakpoints that should be available for the followed inferior.  */
   if (!is_fork_parent)
-    target_mourn_inferior (inferior_ptid);
+    target_mourn_inferior (inferior_ptid, MOURN_INFERIOR_DETACH);
   else
     {
       inferior_ptid = null_ptid;
@@ -5253,7 +5253,7 @@ remote_disconnect (struct target_ops *target, const char *args, int from_tty)
      target_mourn_inferior won't unpush, and remote_mourn won't
      unpush if there is more than one inferior left.  */
   unpush_target (target);
-  generic_mourn_inferior ();
+  generic_mourn_inferior (MOURN_INFERIOR_DISCONNECT);
 
   if (from_tty)
     puts_filtered ("Ending remote debugging.\n");
@@ -8915,7 +8915,7 @@ remote_kill (struct target_ops *ops)
       res = remote_vkill (pid, rs);
       if (res == 0)
 	{
-	  target_mourn_inferior (inferior_ptid);
+	  target_mourn_inferior (inferior_ptid, MOURN_INFERIOR_KILL);
 	  return;
 	}
     }
@@ -8932,7 +8932,7 @@ remote_kill (struct target_ops *ops)
 	 not in extended mode, mourning the inferior also unpushes
 	 remote_ops from the target stack, which closes the remote
 	 connection.  */
-      target_mourn_inferior (inferior_ptid);
+      target_mourn_inferior (inferior_ptid, MOURN_INFERIOR_KILL);
 
       return;
     }
@@ -9000,7 +9000,7 @@ remote_kill_k (void)
 }
 
 static void
-remote_mourn (struct target_ops *target)
+remote_mourn (struct target_ops *target, mourn_inferior_reason reason)
 {
   struct remote_state *rs = get_remote_state ();
 
@@ -9010,7 +9010,7 @@ remote_mourn (struct target_ops *target)
       unpush_target (target);
 
       /* remote_close takes care of doing most of the clean up.  */
-      generic_mourn_inferior ();
+      generic_mourn_inferior (reason);
       return;
     }
 
@@ -9044,7 +9044,7 @@ remote_mourn (struct target_ops *target)
   record_currthread (rs, minus_one_ptid);
 
   /* Call common code to mark the inferior as not running.  */
-  generic_mourn_inferior ();
+  generic_mourn_inferior (reason);
 
   if (!have_inferiors ())
     {

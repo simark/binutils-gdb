@@ -5135,7 +5135,7 @@ Cannot fill $_exitsignal with the correct signal number.\n"));
 	}
 
       gdb_flush (gdb_stdout);
-      target_mourn_inferior (inferior_ptid);
+      target_mourn_inferior (inferior_ptid, ecs->ws.kind == TARGET_WAITKIND_EXITED ? MOURN_INFERIOR_EXIT : MOURN_INFERIOR_SIGNAL);
       stop_print_frame = 0;
       stop_waiting (ecs);
       return;

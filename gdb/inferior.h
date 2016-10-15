@@ -82,7 +82,7 @@ extern const char *get_inferior_io_terminal (void);
 
 extern ptid_t inferior_ptid;
 
-extern void generic_mourn_inferior (void);
+extern void generic_mourn_inferior (mourn_inferior_reason reason);
 
 extern CORE_ADDR unsigned_pointer_to_address (struct gdbarch *gdbarch,
 					      struct type *type,
@@ -443,7 +443,7 @@ extern void inferior_appeared (struct inferior *inf, int pid,
 			       inferior_appeared_reason reason);
 
 /* Get rid of all inferiors.  */
-extern void discard_all_inferiors (void);
+extern void discard_all_inferiors (inferior_exited_reason reason);
 
 /* Translate the integer inferior id (GDB's homegrown id, not the system's)
    into a "pid" (which may be overloaded with extra inferior information).  */

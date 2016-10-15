@@ -138,7 +138,7 @@ inf_ptrace_post_startup_inferior (struct target_ops *self, ptid_t pid)
 /* Clean up a rotting corpse of an inferior after it died.  */
 
 static void
-inf_ptrace_mourn_inferior (struct target_ops *ops)
+inf_ptrace_mourn_inferior (struct target_ops *ops, mourn_inferior_reason reason)
 {
   int status;
 
@@ -148,7 +148,7 @@ inf_ptrace_mourn_inferior (struct target_ops *ops)
      only report its exit status to its original parent.  */
   waitpid (ptid_get_pid (inferior_ptid), &status, 0);
 
-  inf_child_mourn_inferior (ops);
+  inf_child_mourn_inferior (ops, reason);
 }
 
 /* Attach to the process specified by ARGS.  If FROM_TTY is non-zero,
@@ -287,7 +287,7 @@ inf_ptrace_kill (struct target_ops *ops)
   ptrace (PT_KILL, pid, (PTRACE_TYPE_ARG3)0, 0);
   waitpid (pid, &status, 0);
 
-  target_mourn_inferior (inferior_ptid);
+  target_mourn_inferior (inferior_ptid, MOURN_INFERIOR_KILL);
 }
 
 /* Interrupt the inferior.  */

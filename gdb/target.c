@@ -67,7 +67,7 @@ static ptid_t default_get_ada_task_ptid (struct target_ops *self,
 static int default_follow_fork (struct target_ops *self, int follow_child,
 				int detach_fork);
 
-static void default_mourn_inferior (struct target_ops *self);
+static void default_mourn_inferior (struct target_ops *self, mourn_inferior_reason reason);
 
 static int default_search_memory (struct target_ops *ops,
 				  CORE_ADDR start_addr,
@@ -2370,17 +2370,17 @@ target_follow_exec (struct inferior *inf, char *execd_pathname)
 }
 
 static void
-default_mourn_inferior (struct target_ops *self)
+default_mourn_inferior (struct target_ops *self, mourn_inferior_reason reason)
 {
   internal_error (__FILE__, __LINE__,
 		  _("could not find a target to follow mourn inferior"));
 }
 
 void
-target_mourn_inferior (ptid_t ptid)
+target_mourn_inferior (ptid_t ptid, mourn_inferior_reason reason)
 {
   gdb_assert (ptid_equal (ptid, inferior_ptid));
-  current_target.to_mourn_inferior (&current_target);
+  current_target.to_mourn_inferior (&current_target, reason);
 
   /* We no longer need to keep handles on any of the object files.
      Make sure to release them to avoid unnecessarily locking any
@@ -3278,10 +3278,31 @@ target_announce_detach (int from_tty)
   gdb_flush (gdb_stdout);
 }
 
+static inferior_exited_reason
+mourn_reason_to_exited_reason (mourn_inferior_reason reason) {
+  switch (reason) {
+    case MOURN_INFERIOR_DETACH:
+      return INFERIOR_EXITED_DETACH;
+    case MOURN_INFERIOR_EXIT:
+      return INFERIOR_EXITED_NORMAL;
+    case MOURN_INFERIOR_KILL:
+      return INFERIOR_EXITED_KILL;
+    case MOURN_INFERIOR_SIGNAL:
+      return INFERIOR_EXITED_SIGNAL;
+    case MOURN_INFERIOR_DISCONNECT:
+      return INFERIOR_EXITED_DISCONNECT;
+    default:
+      gdb_assert (0);
+  }
+
+  // FIXME:
+  return INFERIOR_EXITED_SIGNAL;
+}
+
 /* The inferior process has died.  Long live the inferior!  */
 
 void
-generic_mourn_inferior (void)
+generic_mourn_inferior (mourn_inferior_reason reason)
 {
   ptid_t ptid;
 
@@ -3296,7 +3317,7 @@ generic_mourn_inferior (void)
   if (!ptid_equal (ptid, null_ptid))
     {
       int pid = ptid_get_pid (ptid);
-      exit_inferior (pid, INFERIOR_EXITED_UNKNOWN);
+      exit_inferior (pid, mourn_reason_to_exited_reason (reason));
     }
 
   /* Note this wipes step-resume breakpoints, so needs to be done

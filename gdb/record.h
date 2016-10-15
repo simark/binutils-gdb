@@ -22,6 +22,7 @@
 
 #include "target/waitstatus.h" /* For enum target_stop_reason.  */
 #include "common/enum-flags.h"
+#include "target.h"
 
 struct cmd_list_element;
 
@@ -78,7 +79,7 @@ extern void record_disconnect (struct target_ops *, const char *, int);
 extern void record_detach (struct target_ops *, const char *, int);
 
 /* The default "to_mourn_inferior" target method for record targets.  */
-extern void record_mourn_inferior (struct target_ops *);
+extern void record_mourn_inferior (struct target_ops *, mourn_inferior_reason reason);
 
 /* The default "to_kill" target method for record targets.  */
 extern void record_kill (struct target_ops *);

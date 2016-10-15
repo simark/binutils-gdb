@@ -297,7 +297,7 @@ start_inferior (char **argv)
       current_thread->last_status = last_status;
     }
   else
-    target_mourn_inferior (last_ptid);
+    target_mourn_inferior (last_ptid, last_status.kind == TARGET_WAITKIND_EXITED ? MOURN_INFERIOR_EXIT : MOURN_INFERIOR_SIGNAL);
 
   return signal_pid;
 }
@@ -2779,7 +2779,7 @@ resume (struct thread_resume *actions, size_t num_actions)
 
       if (last_status.kind == TARGET_WAITKIND_EXITED
           || last_status.kind == TARGET_WAITKIND_SIGNALLED)
-        target_mourn_inferior (last_ptid);
+        target_mourn_inferior (last_ptid, last_status.kind == TARGET_WAITKIND_EXITED ? MOURN_INFERIOR_EXIT : MOURN_INFERIOR_SIGNAL);
     }
 }
 
@@ -4392,7 +4392,7 @@ handle_target_event (int err, gdb_client_data client_data)
 	  || last_status.kind == TARGET_WAITKIND_SIGNALLED)
 	{
 	  mark_breakpoints_out (process);
-	  target_mourn_inferior (last_ptid);
+	  target_mourn_inferior (last_ptid, last_status.kind == TARGET_WAITKIND_EXITED ? MOURN_INFERIOR_EXIT : MOURN_INFERIOR_SIGNAL);
 	}
       else if (last_status.kind == TARGET_WAITKIND_THREAD_EXITED)
 	;

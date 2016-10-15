@@ -18,6 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
+#include "target.h"
 #include "gdbcmd.h"
 #include "completer.h"
 #include "record.h"
@@ -160,7 +161,7 @@ record_detach (struct target_ops *t, const char *args, int from_tty)
 /* See record.h.  */
 
 void
-record_mourn_inferior (struct target_ops *t)
+record_mourn_inferior (struct target_ops *t, mourn_inferior_reason reason)
 {
   gdb_assert (t->to_stratum == record_stratum);
 
@@ -170,7 +171,7 @@ record_mourn_inferior (struct target_ops *t)
      threads are discarded.  */
   record_unpush (t);
 
-  target_mourn_inferior (inferior_ptid);
+  target_mourn_inferior (inferior_ptid, reason);
 }
 
 /* See record.h.  */
