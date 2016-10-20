@@ -21,7 +21,7 @@ standard_testfile
 
 # Compile binaries for the multiple tests of this file.
 
-foreach suffix { "run" "fork" "attach" "trace" } {
+foreach suffix { "run" "fork" "attach" "trace" "exec" } {
     set binfile_varname "binfile_${suffix}"
     set srcfile_varname "srcfile_${suffix}"
 
@@ -80,7 +80,7 @@ proc test_thread_group_started_run {} {
 	{ "" "disp=\"del\"" } "stop at main"
 }
 
-# Test the =thread-group-exited event when letting the program run to
+# Test the =thread-group-exited event when letting the inferior run to
 # completion.
 
 proc test_thread_group_exited_normal {} {
@@ -92,6 +92,8 @@ proc test_thread_group_exited_normal {} {
 
     mi_runto "main"
 
+    # When using non-extended-remote, the remote simply disconnects when the
+    # program ends.
     if [use_gdb_stub] {
 	set reason "disconnect"
     } else {
@@ -108,6 +110,28 @@ proc test_thread_group_exited_normal {} {
 	    pass $test
 	}
     }
+}
+
+# Test the =thread-group-exited event when killing the inferior.
+
+proc test_thread_group_exited_kill {} {
+    global decimal
+    global binfile_run
+    global srcfile_run
+
+    init_gdb ${binfile_run}
+
+    mi_runto "main"
+    
+    # When using non-extended-remote, the remote simply disconnects when the
+    # program is killed.
+    if [use_gdb_stub] {
+	set reason "disconnect"
+    } else {
+	set reason "kill"
+    }
+    
+    mi_gdb_test "kill" ".*=thread-group-exited,id=\"i1\",reason=\"$reason\".*" "kill inferior"
 }
 
 # Test the =thread-group-started/-exit event when attaching and detaching.
@@ -240,10 +264,36 @@ proc test_thread_group_started_fork {} {
     }
 }
 
+# Test the =thread-group-exited event when the inferior execs, with
+# follow-exec-mode == new.
+
+proc test_thread_group_exited_exec_new {} {
+    global binfile_exec
+    global srcfile_exec
+    global decimal
+
+    init_gdb ${binfile_exec}
+
+    mi_gdb_test "411-gdb-set follow-exec-mode new" "411\\^done" "set follow-exec-mode new"
+
+    mi_runto "main"
+    mi_send_resuming_command "exec-continue" "continue"
+
+    # Confirm that we got the right event.
+    set test "first inferior exited"
+    gdb_test_multiple "" $test {
+	-re "=thread-group-exited,id=\"i1\",reason=\"exec-new\"" {
+	    pass $test
+	}
+    }
+}
+
 test_thread_group_started_run
 test_thread_group_exited_normal
+test_thread_group_exited_kill
 test_thread_group_events_attach_detach
 test_thread_group_events_trace
 test_thread_group_started_fork
 test_thread_group_events_core
+test_thread_group_exited_exec_new
 
