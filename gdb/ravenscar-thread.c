@@ -65,7 +65,8 @@ static void ravenscar_prepare_to_store (struct target_ops *self,
 					struct regcache *regcache);
 static void ravenscar_resume (struct target_ops *ops, ptid_t ptid, int step,
 			      enum gdb_signal siggnal);
-static void ravenscar_mourn_inferior (struct target_ops *ops);
+static void ravenscar_mourn_inferior (struct target_ops *ops,
+				      mourn_inferior_reason reason);
 static void ravenscar_update_inferior_ptid (void);
 static int has_ravenscar_runtime (void);
 static int ravenscar_runtime_initialized (void);
@@ -324,12 +325,12 @@ ravenscar_prepare_to_store (struct target_ops *self,
 }
 
 static void
-ravenscar_mourn_inferior (struct target_ops *ops)
+ravenscar_mourn_inferior (struct target_ops *ops, mourn_inferior_reason reason)
 {
   struct target_ops *beneath = find_target_beneath (ops);
 
   base_ptid = null_ptid;
-  beneath->to_mourn_inferior (beneath);
+  beneath->to_mourn_inferior (beneath, reason);
   unpush_target (&ravenscar_ops);
 }
 

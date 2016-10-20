@@ -363,11 +363,11 @@ spu_multiarch_solib_unloaded (struct so_list *so)
 }
 
 static void
-spu_mourn_inferior (struct target_ops *ops)
+spu_mourn_inferior (struct target_ops *ops, mourn_inferior_reason reason)
 {
   struct target_ops *ops_beneath = find_target_beneath (ops);
 
-  ops_beneath->to_mourn_inferior (ops_beneath);
+  ops_beneath->to_mourn_inferior (ops_beneath, reason);
   spu_multiarch_deactivate ();
 }
 
