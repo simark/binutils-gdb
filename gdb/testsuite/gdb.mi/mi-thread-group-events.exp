@@ -19,9 +19,9 @@ set MIFLAGS "-i=mi"
 
 standard_testfile
 
-# Compile binaries for the multiple tests of this file.
+# Compile binaries for the multiple subsections of this file.
 
-foreach suffix { "run" "fork" "attach" "trace" "exec" } {
+foreach suffix { "empty" "fork" "attach" "trace" } {
     set binfile_varname "binfile_${suffix}"
     set srcfile_varname "srcfile_${suffix}"
 
@@ -55,10 +55,10 @@ proc init_gdb { binfile } {
 
 proc test_thread_group_started_run {} {
     global decimal
-    global binfile_run
-    global srcfile_run
+    global binfile_empty
+    global srcfile_empty
 
-    init_gdb ${binfile_run}
+    init_gdb ${binfile_empty}
 
     # stub-like targets don't support running.
     if [use_gdb_stub] {
@@ -76,7 +76,7 @@ proc test_thread_group_started_run {} {
 	".*=thread-group-started,id=\"i1\",pid=\"${decimal}\",reason=\"run\".*" \
 	"thread-group-started event"
 
-    mi_expect_stop "breakpoint-hit" "main" "" ".*${srcfile_run}.*" "\[0-9\]+" \
+    mi_expect_stop "breakpoint-hit" "main" "" ".*${srcfile_empty}.*" "\[0-9\]+" \
 	{ "" "disp=\"del\"" } "stop at main"
 }
 
@@ -85,10 +85,10 @@ proc test_thread_group_started_run {} {
 
 proc test_thread_group_exited_normal {} {
     global decimal
-    global binfile_run
-    global srcfile_run
+    global binfile_empty
+    global srcfile_empty
 
-    init_gdb ${binfile_run}
+    init_gdb ${binfile_empty}
 
     mi_runto "main"
 
@@ -163,13 +163,13 @@ proc test_thread_group_events_attach_detach {} {
 # Test the =thread-group-started/-exited events when debugging a core file.
 
 proc test_thread_group_events_core {} {
-    global binfile_run
+    global binfile_empty
     global decimal
 
     set corefile [standard_output_file "corefile"]
     set corefile_re [string_to_regexp ${corefile}]
 
-    init_gdb ${binfile_run}
+    init_gdb ${binfile_empty}
 
     mi_runto "main"
 
