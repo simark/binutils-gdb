@@ -1284,7 +1284,7 @@ print_thread_info_1 (struct ui_out *uiout, char *requested_threads,
 	uiout->table_header (1, ui_left, "current", "");
 
 	if (!uiout->is_mi_like_p ())
-	  uiout->table_header (4, ui_left, "id-in-tg", "Id");
+	  uiout->table_header (4, ui_left, "inf-qualified-id", "Id");
 	if (show_global_ids || uiout->is_mi_like_p ())
 	  uiout->table_header (4, ui_left, "id", "GId");
 	uiout->table_header (17, ui_left, "target-id", "Target Id");
@@ -1313,8 +1313,13 @@ print_thread_info_1 (struct ui_out *uiout, char *requested_threads,
 	      uiout->field_skip ("current");
 	  }
 
-	if (!uiout->is_mi_like_p ())
-	  uiout->field_string ("id-in-tg", print_thread_id (tp));
+	if (uiout->is_mi_like_p ())
+	  {
+	    uiout->field_int ("inf-id", tp->inf->num);
+	    uiout->field_int ("id-in-inf", tp->per_inf_num);
+	  }
+	else
+	  uiout->field_string ("inf-qualified-id", print_thread_id (tp));
 
 	if (show_global_ids || uiout->is_mi_like_p ())
 	  uiout->field_int ("id", tp->global_num);

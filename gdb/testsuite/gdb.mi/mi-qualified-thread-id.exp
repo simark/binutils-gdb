@@ -1,0 +1,98 @@
+# Copyright 2017 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+load_lib mi-support.exp
+set MIFLAGS "-i=mi"
+
+standard_testfile
+
+if  { [gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+     untested "failed to compile"
+     return -1
+}
+
+# Start gdb and set up the first inferior.  Run it until the thread_started
+# function.
+
+proc start_gdb_and_first_inferior { } {
+    global binfile
+    global srcdir
+    global subdir
+    global srcfile
+
+    gdb_exit
+    mi_gdb_start
+    mi_gdb_reinitialize_dir $srcdir/$subdir
+    mi_gdb_load ${binfile}
+
+    mi_create_breakpoint "thread_started" "insert breakpoint at thread_started"
+
+    mi_run_cmd
+    mi_expect_stop "breakpoint-hit" "thread_started" ".*" "${srcfile}" ".*" {"" "disp=\"keep\""} "inferior 1 stops"
+
+}
+
+# Add and start a second inferior.  Run it until the thread_started function.
+
+proc start_second_inferior { } {
+    global srcfile
+    global binfile
+
+    mi_gdb_test "add-inferior" ".*=thread-group-added,id=\"i2\".*" "add second inferior"
+    mi_gdb_test "inferior 2" ".*" "switch to inferior 2"
+    mi_gdb_load ${binfile}
+    mi_run_cmd
+    mi_expect_stop "breakpoint-hit" "thread_started" ".*" "${srcfile}" ".*" {"" "disp=\"keep\""} "inferior 2 stops"
+}
+
+proc test_thread_info_qualified_thread_id { } {
+    start_gdb_and_first_inferior
+
+    # Test the output with a single inferior.
+    set expected [join \
+	{ "111\\^done,threads=.*" \
+	  "inf-id=\"1\",id-in-inf=\"1\",id=\"1\".*" \
+	  "inf-id=\"1\",id-in-inf=\"2\",id=\"2\".*" \
+	} ""]
+
+    mi_gdb_test \
+	"111-thread-info" \
+	 $expected \
+	"thread ids in -thread-info with 1 inferior"
+
+    if {[use_gdb_stub]} {
+	# We can't test with a second inferior if we can't have multiple
+	# inferiors.
+	return
+    }
+
+    start_second_inferior
+
+    # Test the output with two inferiors.
+    set expected [join \
+	{ "112\\^done,threads=.*" \
+	  "inf-id=\"1\",id-in-inf=\"1\",id=\"1\".*" \
+	  "inf-id=\"1\",id-in-inf=\"2\",id=\"2\".*" \
+	  "inf-id=\"2\",id-in-inf=\"1\",id=\"3\".*" \
+	  "inf-id=\"2\",id-in-inf=\"2\",id=\"4\".*" \
+	} ""]
+
+    mi_gdb_test \
+	"112-thread-info" \
+	 $expected \
+	"thread ids in -thread-info with 2 inferiors"
+}
+
+test_thread_info_qualified_thread_id

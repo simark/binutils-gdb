@@ -27099,6 +27099,12 @@ stated otherwise.
 @item id
 The global numeric id assigned to the thread by @value{GDBN}.
 
+@item inf-id
+The global numeric id of the inferior the thread belongs to.
+
+@item id-in-inf
+The per-inferior numeric id of the thread.
+
 @item target-id
 The target-specific string identifying the thread.
 
@@ -28355,16 +28361,76 @@ the command.
 
 @smallexample
 -thread-info
-^done,threads=[
-@{id="2",target-id="Thread 0xb7e14b90 (LWP 21257)",
-   frame=@{level="0",addr="0xffffe410",func="__kernel_vsyscall",
-           args=[]@},state="running"@},
-@{id="1",target-id="Thread 0xb7e156b0 (LWP 21254)",
-   frame=@{level="0",addr="0x0804891f",func="foo",
-           args=[@{name="i",value="10"@}],
-           file="/tmp/a.c",fullname="/tmp/a.c",line="158"@},
-           state="running"@}],
-current-thread-id="1"
+^done,
+  threads = [
+    @{
+      inf-id = "1",
+      id-in-inf = "1",
+      id = "1",
+      target-id = "Thread 0x7ffff7fcb740 (LWP 28300)",
+      name = "a",
+      frame = @{
+        level = "0",
+        addr = "0x000000000040062a",
+        func = "main",
+        args = [],
+        file = "a.c",
+        fullname = "/tmp/a.c",
+        line = "13"
+      @},
+      state = "stopped",
+      core = "3"
+    @},
+    @{
+      inf-id = "1",
+      id-in-inf = "2",
+      id = "2",
+      target-id = "Thread 0x7ffff77f3700 (LWP 28304)",
+      name = "a",
+      frame = @{
+        level = "0",
+        addr = "0x0000000000400605",
+        func = "thread_func",
+        args = [
+          @{
+            name = "v",
+            value = "0x0"
+          @}
+        ],
+        file = "a.c",
+        fullname = "/tmp/a.c",
+        line = "5"
+      @},
+      state = "stopped",
+      core = "1"
+    @},
+    @{
+      inf-id = "2",
+      id-in-inf = "1",
+      id = "3",
+      target-id = "Thread 0x7ffff7fcb740 (LWP 28319)",
+      name = "b",
+      state = "running",
+      core = "0"
+    @},
+    @{
+      inf-id = "2",
+      id-in-inf = "2",
+      id = "4",
+      target-id = "Thread 0x7ffff77f3700 (LWP 28320)",
+      name = "b",
+      frame = @{
+        level = "0",
+        addr = "0x00007ffff78b893d",
+        func = "nanosleep",
+        args = [],
+        from = "/lib/x86_64-linux-gnu/libc.so.6"
+      @},
+      state = "stopped",
+      core = "3"
+    @}
+  ],
+  current-thread-id = "3"
 (gdb)
 @end smallexample
 

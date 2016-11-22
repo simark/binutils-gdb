@@ -207,6 +207,13 @@ show disassembler-options
   List the shared libraries in the program.  This is
   equivalent to the CLI command "info shared".
 
+* New fields in the MI thread output tuple
+
+  When MI prints information about threads (e.g. with -thread-info and
+  -list-thread-groups --recurse 1), it now includes the "inf-id" and
+  "id-in-inf" fields.  They respectively indicate the inferior this thread
+  belongs to and its per-inferior id.
+
 *** Changes in GDB 7.12
 
 * GDB and GDBserver now build with a C++ compiler by default.
