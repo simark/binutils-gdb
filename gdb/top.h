@@ -204,7 +204,7 @@ public:
   for (UI = ui_list; UI; UI = UI->next)		\
 
 /* Create a new UI.  */
-extern struct ui *new_ui (FILE *instream, FILE *outstream, FILE *errstream);
+extern struct ui *new_ui (FILE *instream, FILE *outstream, FILE *errstream, bool force_not_a_tty);
 extern void delete_ui (struct ui *todel);
 
 /* Cleanup that deletes a UI.  */

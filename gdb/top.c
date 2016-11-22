@@ -256,7 +256,7 @@ static int highest_ui_num;
 /* See top.h.  */
 
 struct ui *
-new_ui (FILE *instream, FILE *outstream, FILE *errstream)
+new_ui (FILE *instream, FILE *outstream, FILE *errstream, bool force_not_a_tty)
 {
   struct ui *ui;
 
@@ -271,6 +271,8 @@ new_ui (FILE *instream, FILE *outstream, FILE *errstream)
   ui->input_fd = fileno (ui->instream);
 
   ui->input_interactive_p = ISATTY (ui->instream);
+  if (force_not_a_tty)
+    ui->input_interactive_p = 0;
 
   ui->m_gdb_stdin = stdio_fileopen (ui->instream);
   ui->m_gdb_stdout = stdio_fileopen (ui->outstream);
@@ -399,7 +401,7 @@ new_ui_command (char *args, int from_tty)
 	make_cleanup_fclose (stream[i]);
       }
 
-    ui = new_ui (stream[0], stream[1], stream[2]);
+    ui = new_ui (stream[0], stream[1], stream[2], !strcmp("mi", interpreter_name));
     make_cleanup (delete_ui_cleanup, ui);
 
     ui->async = 1;

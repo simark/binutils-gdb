@@ -1526,6 +1526,7 @@ record_full_xfer_partial (struct target_ops *ops, enum target_object object,
     {
       if (RECORD_FULL_IS_REPLAY)
 	{
+	  printf("ui is mi like: %d\n", ui_out_is_mi_like_p(current_uiout));
 	  /* Let user choose if he wants to write memory or not.  */
 	  if (!query (_("Because GDB is in replay mode, writing to memory "
 		        "will make the execution log unusable from this "
