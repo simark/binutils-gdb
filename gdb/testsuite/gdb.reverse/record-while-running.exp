@@ -1,0 +1,67 @@
+# Copyright 2016 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+# Test that trying to turn on recording while the target is running is correctly
+# handled.
+
+if ![supports_reverse] {
+    unsupported "reverse debugging not supported"
+    return
+}
+
+standard_testfile
+
+if { [prepare_for_testing $testfile.exp $testfile $srcfile] } {
+    fail "failed to compile"
+    return
+}
+
+if { ![runto_main] } {
+    fail "couldn't run to main"
+    return
+}
+
+# Interrupt the target and consume the stop event.
+
+proc interrupt_target { } {
+    global gdb_prompt
+
+    # Interrupt the target.
+    set test "interrupt target"
+    gdb_test_multiple "interrupt" $test {
+	-re "interrupt\r\n$gdb_prompt" {
+	    pass $test
+	}
+    }
+
+    # Consume the leftovers from the async stop caused by the interrupt.
+    gdb_test "print 123" ".*Program received signal SIGINT, Interrupt.* = 123" "consume stop event"
+}
+
+# Test that "record full" while the target is running fails gracefully.
+
+proc_with_prefix test_record_full_while_running { } {
+    gdb_test "continue &" "Continuing." "resume target"
+    gdb_test \
+	"record full" \
+	"Can't enable record while the program is running.  Use \"interrupt\" to stop it first." \
+	"switch record on while target is running"
+
+    # Interrupt the target to make sure the test ends gracefully when testing
+    # remotely.
+    interrupt_target
+}
+
+test_record_full_while_running

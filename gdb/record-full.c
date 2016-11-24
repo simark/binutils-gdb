@@ -834,6 +834,16 @@ record_full_open_1 (const char *name, int from_tty)
     error (_("Process record: the current architecture doesn't support "
 	     "record function."));
 
+  /* We can't enable record while threads are running, so make sure it's not
+     the case.  */
+  iterate_over_threads([] (struct thread_info *tp, void *) -> int {
+    if (tp->state == thread_state::THREAD_RUNNING)
+      error (_("Can't enable record while the program is running.  Use "
+	       "\"interrupt\" to stop it first."));
+
+    return 0;
+  }, NULL);
+
   push_target (&record_full_ops);
 }
 
