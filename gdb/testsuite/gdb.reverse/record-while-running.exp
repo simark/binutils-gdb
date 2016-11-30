@@ -23,14 +23,20 @@ if ![supports_reverse] {
 
 standard_testfile
 
-if { [prepare_for_testing $testfile.exp $testfile $srcfile] } {
+if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "$binfile" "$testfile" {debug}] != ""} {
     fail "failed to compile"
     return
 }
 
-if { ![runto_main] } {
-    fail "couldn't run to main"
-    return
+proc test_setup { } {
+    global binfile
+
+    clean_restart $binfile
+
+    if { ![runto_main] } {
+	fail "couldn't run to main"
+	return
+    }
 }
 
 # Interrupt the target and consume the stop event.
@@ -53,6 +59,8 @@ proc interrupt_target { } {
 # Test that "record full" while the target is running fails gracefully.
 
 proc_with_prefix test_record_full_while_running { } {
+    test_setup
+
     gdb_test "continue &" "Continuing." "resume target"
     gdb_test \
 	"record full" \
@@ -64,4 +72,41 @@ proc_with_prefix test_record_full_while_running { } {
     interrupt_target
 }
 
+# Test that "record btrace" while the target is running works.
+
+proc_with_prefix test_record_btrace_while_running { } {
+    global gdb_prompt
+
+    if [skip_btrace_tests] {
+	untested "btrace not supported"
+	return
+    }
+
+    test_setup
+
+    # We can't run this test with a synchronous remotetarget , since we can't
+    # even issue the record command while the target is running.
+    if [gdb_is_target_remote] {
+	untested "skipping because of remote target"
+	return
+    }
+
+    # Continue execution and enable btrace recording.
+    gdb_test "continue &" "Continuing." "resume target"
+    gdb_test_no_output "record btrace" "start btrace recording"
+
+    # We could put a sleep here to make sure the program has the time to record
+    # a few instructions, but just the time overhead of GDB/Dejagnu/the kernel
+    # should be way enough.
+
+    # Interrupt the target.
+    interrupt_target
+
+    # Do a few reverse-step and check if it seems to work.
+    gdb_test "reverse-step" ".*marker.*" "reverse-step #1"
+    gdb_test "reverse-step" ".*marker.*" "reverse-step #2"
+    gdb_test "reverse-step" ".*marker.*" "reverse-step #3"
+}
+
 test_record_full_while_running
+test_record_btrace_while_running

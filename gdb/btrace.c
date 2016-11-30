@@ -1474,8 +1474,28 @@ btrace_enable (struct thread_info *tp, const struct btrace_config *conf)
 
   /* Add an entry for the current PC so we start tracing from where we
      enabled it.  */
-  if (tp->btrace.target != NULL)
-    btrace_add_pc (tp);
+  TRY
+    {
+      if (tp->btrace.target != NULL)
+       btrace_add_pc (tp);
+    }
+  CATCH (error, RETURN_MASK_ERROR)
+    {
+      /* We may fail to add the initial entry, for example if TP is currently
+        running.
+
+        For BTRACE_FORMAT_PT this doesn't matter.
+
+        For BTRACE_FORMAT_BTS we won't be able to stitch the initial trace
+        chunk to this initial entry so tracing will start at the next branch
+        target instead of at the current PC.  Since TP is currently running,
+        this shouldn't make a difference.
+
+        If TP were waiting most of the time and made only a little bit of
+        progress before it was stopped, we'd lose the instructions until the
+        first branch.  */
+    }
+  END_CATCH
 }
 
 /* See btrace.h.  */

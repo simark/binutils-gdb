@@ -20,10 +20,13 @@
 int
 main ()
 {
-   int i;
+  int i;
 
-   for (i = 0; i < 30; i++)
-      sleep (1);
+  /* Make sure the program stops after some time, if it happens to be left
+     running.  */
+  alarm (10);
 
-   return 0;
+  for (;;); /* marker */
+
+  return 0;
 }
