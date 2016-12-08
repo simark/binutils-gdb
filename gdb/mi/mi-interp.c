@@ -39,6 +39,7 @@
 #include "cli-out.h"
 #include "thread-fsm.h"
 #include "cli/cli-interp.h"
+#include "user-selection.h"
 
 /* These are the interpreter setup, etc. functions for the MI
    interpreter.  */
@@ -1282,15 +1283,14 @@ mi_memory_changed (struct inferior *inferior, CORE_ADDR memaddr,
    changed.  */
 
 static void
-mi_user_selected_context_changed (user_selected_what selection)
+mi_user_selected_context_changed (user_selection *us, user_selected_what selection)
 {
-  struct thread_info *tp;
+  struct thread_info *tp = us->thread ();
+  struct frame_info *frame = us->frame ();
 
   /* Don't send an event if we're responding to an MI command.  */
   if (mi_suppress_notification.user_selected_context)
     return;
-
-  tp = find_thread_ptid (inferior_ptid);
 
   SWITCH_THRU_ALL_UIS ()
     {
@@ -1311,12 +1311,12 @@ mi_user_selected_context_changed (user_selected_what selection)
       target_terminal_ours_for_output ();
 
       if (selection & USER_SELECTED_INFERIOR)
-	print_selected_inferior (mi->cli_uiout);
+	print_selected_inferior (mi->cli_uiout, us->inferior ());
 
       if (tp != NULL
 	  && (selection & (USER_SELECTED_THREAD | USER_SELECTED_FRAME)))
 	{
-	  print_selected_thread_frame (mi->cli_uiout, selection);
+	  print_selected_thread_frame (mi->cli_uiout, us, selection);
 
 	  fprintf_unfiltered (mi->event_channel,
 			      "thread-selected,id=\"%d\"",
@@ -1324,9 +1324,8 @@ mi_user_selected_context_changed (user_selected_what selection)
 
 	  if (tp->state != THREAD_RUNNING)
 	    {
-	      if (has_stack_frames ())
-		print_stack_frame_to_uiout (mi_uiout, get_selected_frame (NULL),
-					    1, SRC_AND_LOC, 1);
+	      if (frame != nullptr)
+		print_stack_frame_to_uiout (mi_uiout, frame, 1, SRC_AND_LOC, 1);
 	    }
 	}
 

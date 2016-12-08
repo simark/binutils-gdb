@@ -29,6 +29,7 @@
 #include "observer.h"
 #include "gdbthread.h"
 #include "thread-fsm.h"
+#include "user-selection.h"
 
 cli_interp_base::cli_interp_base (const char *name)
   : interp (name)
@@ -250,15 +251,14 @@ cli_on_command_error (void)
 /* Observer for the user_selected_context_changed notification.  */
 
 static void
-cli_on_user_selected_context_changed (user_selected_what selection)
+cli_on_user_selected_context_changed (user_selection *us,
+				      user_selected_what selection)
 {
-  struct thread_info *tp;
-
   /* This event is suppressed.  */
   if (cli_suppress_notification.user_selected_context)
     return;
 
-  tp = find_thread_ptid (inferior_ptid);
+  struct thread_info *tp = us->thread ();
 
   SWITCH_THRU_ALL_UIS ()
     {
@@ -268,11 +268,11 @@ cli_on_user_selected_context_changed (user_selected_what selection)
 	continue;
 
       if (selection & USER_SELECTED_INFERIOR)
-	print_selected_inferior (cli->cli_uiout);
+	print_selected_inferior (cli->cli_uiout, us->inferior ());
 
       if (tp != NULL
 	  && ((selection & (USER_SELECTED_THREAD | USER_SELECTED_FRAME))))
-	print_selected_thread_frame (cli->cli_uiout, selection);
+	print_selected_thread_frame (cli->cli_uiout, us, selection);
     }
 }
 

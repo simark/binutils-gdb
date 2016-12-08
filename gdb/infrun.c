@@ -64,6 +64,7 @@
 #include "event-loop.h"
 #include "thread-fsm.h"
 #include "common/enum-flags.h"
+#include "user-selection.h"
 
 /* Prototypes for local functions */
 
@@ -151,12 +152,6 @@ show_step_stop_if_no_debug (struct ui_file *file, int from_tty,
 {
   fprintf_filtered (file, _("Mode of the step operation is %s.\n"), value);
 }
-
-/* proceed and normal_stop use this to notify the user when the
-   inferior stopped in a different thread than it had been running
-   in.  */
-
-static ptid_t previous_inferior_ptid;
 
 /* If set (default for legacy reasons), when following a fork, GDB
    will detach from one of the fork branches, child or parent.
@@ -778,6 +773,9 @@ follow_fork (void)
 	    if (follow_child)
 	      {
 		switch_to_thread (child);
+		struct thread_info *child_tp = find_thread_ptid (child);
+		gdb_assert (child_tp != nullptr);
+		get_main_user_selection ()->select_thread (child_tp, false);
 
 		/* ... and preserve the stepping state, in case the
 		   user was stepping over the fork call.  */
@@ -3000,7 +2998,8 @@ proceed (CORE_ADDR addr, enum gdb_signal siggnal)
     }
 
   /* We'll update this if & when we switch to a new thread.  */
-  previous_inferior_ptid = inferior_ptid;
+  // I don't think it's necessary anymore, since we'll already have the
+  //previous_inferior_ptid = inferior_ptid;
 
   regcache = get_current_regcache ();
   gdbarch = get_regcache_arch (regcache);
@@ -3252,7 +3251,7 @@ init_wait_for_inferior (void)
 
   target_last_wait_ptid = minus_one_ptid;
 
-  previous_inferior_ptid = inferior_ptid;
+  //previous_inferior_ptid = inferior_ptid;
 
   /* Discard any skipped inlined frames.  */
   clear_inline_frame_state (minus_one_ptid);
@@ -8157,7 +8156,7 @@ save_stop_context (void)
       /* Take a strong reference so that the thread can't be deleted
 	 yet.  */
       sc->thread = inferior_thread ();
-      sc->thread->refcount++;
+      sc->thread->get ();
     }
   else
     sc->thread = NULL;
@@ -8174,7 +8173,8 @@ release_stop_context_cleanup (void *arg)
   struct stop_context *sc = (struct stop_context *) arg;
 
   if (sc->thread != NULL)
-    sc->thread->refcount--;
+    sc->thread->put ();
+
   xfree (sc);
 }
 
@@ -8262,20 +8262,26 @@ normal_stop (void)
      after this event is handled, so we're not really switching, only
      informing of a stop.  */
   if (!non_stop
-      && !ptid_equal (previous_inferior_ptid, inferior_ptid)
       && target_has_execution
       && last.kind != TARGET_WAITKIND_SIGNALLED
       && last.kind != TARGET_WAITKIND_EXITED
       && last.kind != TARGET_WAITKIND_NO_RESUMED)
     {
-      SWITCH_THRU_ALL_UIS ()
+      struct thread_info *ti;
+
+      ti = find_thread_ptid (inferior_ptid);
+
+      get_main_user_selection ()->select_thread (ti, false);
+
+      // This should go in the user selection code now.
+      /*SWITCH_THRU_ALL_UIS ()
 	{
 	  target_terminal_ours_for_output ();
 	  printf_filtered (_("[Switching to %s]\n"),
 			   target_pid_to_str (inferior_ptid));
 	  annotate_thread_changed ();
 	}
-      previous_inferior_ptid = inferior_ptid;
+      previous_inferior_ptid = inferior_ptid;*/
     }
 
   if (last.kind == TARGET_WAITKIND_NO_RESUMED)
@@ -8328,6 +8334,7 @@ normal_stop (void)
 	}
 
       select_frame (get_current_frame ());
+      get_main_user_selection ()->select_frame (get_current_frame (), false);
 
       /* Set the current source location.  */
       set_current_sal_from_frame (get_current_frame ());

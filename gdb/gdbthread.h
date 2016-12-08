@@ -22,6 +22,7 @@
 #define GDBTHREAD_H
 
 struct symtab;
+class user_selection;
 
 #include "breakpoint.h"
 #include "frame.h"
@@ -253,7 +254,13 @@ struct thread_info
   /* If this is > 0, then it means there's code out there that relies
      on this thread being listed.  Don't delete it from the lists even
      if we detect it exiting.  */
-  int refcount;
+  int refcount_;
+
+  void get ()
+  { refcount_++; }
+
+  void put ()
+  { refcount_--; }
 
   /* State of GDB control of inferior thread execution.
      See `struct thread_control_state'.  */
@@ -440,8 +447,9 @@ void thread_change_ptid (ptid_t old_ptid, ptid_t new_ptid);
 
 /* Iterator function to call a user-provided callback function
    once for each known thread.  */
-typedef int (*thread_callback_func) (struct thread_info *, void *);
-extern struct thread_info *iterate_over_threads (thread_callback_func, void *);
+typedef std::function<int(struct thread_info *, void*)> thread_callback_func;
+extern struct thread_info *iterate_over_threads (thread_callback_func callback,
+						 void * data = nullptr);
 
 /* Traverse all threads.  */
 #define ALL_THREADS(T)				\
@@ -468,6 +476,9 @@ extern struct thread_info *iterate_over_threads (thread_callback_func, void *);
        (T) = (TMP))
 
 extern int thread_count (void);
+
+/* Change the user-selected thread. */
+extern bool thread_select (const char *tidstr, bool tid_is_qualified);
 
 /* Switch from one thread to another.  Also sets the STOP_PC
    global.  */
@@ -514,6 +525,8 @@ extern int is_running (ptid_t ptid);
 /* Is this thread listed, but known to have exited?  We keep it listed
    (but not visible) until it's safe to delete.  */
 extern int is_exited (ptid_t ptid);
+
+bool is_exited (struct thread_info *ti);
 
 /* In the frontend's perpective, is this thread stopped?  */
 extern int is_stopped (ptid_t ptid);
@@ -635,8 +648,10 @@ extern bool can_access_registers_ptid (ptid_t ptid);
 extern int show_thread_that_caused_stop (void);
 
 /* Print the message for a thread or/and frame selected.  */
-extern void print_selected_thread_frame (struct ui_out *uiout,
-					 user_selected_what selection);
+void print_selected_thread_frame (struct ui_out *uiout, user_selection *us,
+				  user_selected_what selection);
+
+void restore_selected_frame (struct frame_id a_frame_id, int frame_level);
 
 extern struct thread_info *thread_list;
 

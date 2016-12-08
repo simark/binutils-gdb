@@ -42,6 +42,7 @@
 #include "tracepoint.h"
 #include "hashtab.h"
 #include "valprint.h"
+#include "user-selection.h"
 
 /* The sentinel frame terminates the innermost end of the frame chain.
    If unwound, it returns the information needed to construct an
@@ -1772,6 +1773,7 @@ void
 reinit_frame_cache (void)
 {
   struct frame_info *fi;
+
 
   /* Tear down all frame caches.  */
   for (fi = sentinel_frame; fi != NULL; fi = fi->prev)

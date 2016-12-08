@@ -69,6 +69,7 @@
 #include "cli-out.h"
 #include "tracepoint.h"
 #include "inf-loop.h"
+#include "user-selection.h"
 
 #if defined(TUI)
 # include "tui/tui.h"
@@ -512,6 +513,8 @@ prepare_execute_command (void)
      help things like backtrace.  */
   if (non_stop)
     target_dcache_invalidate ();
+
+  apply_main_user_selection_to_core ();
 
   return cleanup;
 }
@@ -2182,6 +2185,7 @@ gdb_init (char *argv0)
   initialize_current_architecture ();
   init_cli_cmds();
   init_main ();			/* But that omits this file!  Do it now.  */
+  init_user_selection ();
 
   initialize_stdin_serial ();
 
