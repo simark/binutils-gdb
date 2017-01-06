@@ -54,6 +54,7 @@
 #include "extension.h"
 #include "gdbcmd.h"
 #include "observer.h"
+#include "user-selection.h"
 
 #include <ctype.h>
 #include "run-time-clock.h"
@@ -564,6 +565,11 @@ mi_cmd_thread_select (char *command, char **argv, int argc)
     error (_("-thread-select: USAGE: threadnum."));
 
   thread_select (argv[0], false);
+
+  user_selection *us = get_main_user_selection ();
+
+  print_selected_thread_frame (current_uiout, us,
+			       USER_SELECTED_THREAD | USER_SELECTED_FRAME);
 }
 
 void

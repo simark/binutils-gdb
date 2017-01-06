@@ -1284,7 +1284,7 @@ print_frame (struct frame_info *frame, int print_level,
    this function never returns NULL).  When SELECTED_FRAME_P is non-NULL
    set its target to indicate that the default selected frame was used.  */
 
-static struct frame_info *
+struct frame_info *
 parse_frame_specification (const char *frame_exp, int *selected_frame_p)
 {
   int numargs;
@@ -1397,12 +1397,16 @@ parse_frame_specification (const char *frame_exp, int *selected_frame_p)
 
   /* We couldn't identify the frame as an existing frame, but
      perhaps we can create one with a single argument.  */
+  frame_info *new_frame;
+
   if (numargs == 1)
-    return create_new_frame (addrs[0], 0);
+    new_frame = create_new_frame (addrs[0], 0);
   else if (numargs == 2)
-    return create_new_frame (addrs[0], addrs[1]);
+    new_frame = create_new_frame (addrs[0], addrs[1]);
   else
     error (_("Too many args in frame specification"));
+
+  return new_frame;
 }
 
 /* Print verbosely the selected frame or the frame at address
@@ -2303,14 +2307,21 @@ find_relative_frame (struct frame_info *frame, int *level_offset_ptr)
    See parse_frame_specification for more info on proper frame
    expressions.  */
 
-void
+static void
 select_frame_command (char *level_exp, int from_tty)
 {
-  struct frame_info *prev_frame = get_selected_frame_if_set ();
+  cli_ui_out *uiout = dynamic_cast<cli_ui_out *> (current_uiout);
+  scoped_restore_suppress_output<cli_ui_out> restore (uiout);
+  user_selection *us = get_main_user_selection ();
 
-  select_frame (parse_frame_specification (level_exp, NULL));
-  if (get_selected_frame_if_set () != prev_frame)
-    observer_notify_user_selected_context_changed (get_main_user_selection (), USER_SELECTED_FRAME);
+  uiout->suppress_output (true);
+
+  if (level_exp != nullptr)
+    {
+      struct frame_info *frame = parse_frame_specification (level_exp, NULL);
+
+      us->select_frame (frame, true);
+    }
 }
 
 /* The "frame" command.  With no argument, print the selected frame
@@ -2324,7 +2335,10 @@ frame_command (char *level_exp, int from_tty)
 
   if (level_exp == nullptr)
     {
-      print_selected_thread_frame (current_uiout, us, USER_SELECTED_FRAME);
+      if (us->thread ()->state == THREAD_STOPPED)
+	print_selected_thread_frame (current_uiout, us, USER_SELECTED_FRAME);
+      else
+	current_uiout->message (_("No stack.\n"));
     }
   else
     {
@@ -2333,11 +2347,6 @@ frame_command (char *level_exp, int from_tty)
       if (!us->select_frame (frame, true))
 	print_selected_thread_frame (current_uiout, us, USER_SELECTED_FRAME);
     }
-
-  /*if (get_selected_frame_if_set () != prev_frame)
-    observer_notify_user_selected_context_changed (USER_SELECTED_FRAME);
-  else
-    print_selected_thread_frame (current_uiout, USER_SELECTED_FRAME);*/
 }
 
 /* Select the frame up one or COUNT_EXP stack levels from the
@@ -2360,31 +2369,10 @@ up_command (char *count_exp, int from_tty)
   us->select_frame (frame, true);
 }
 
-template <class T>
-class scoped_restore_suppress_output
-{
-public:
-  scoped_restore_suppress_output (T* obj)
-  : m_obj (obj),
-    m_val (m_obj->suppress_output ())
-  {}
-
-  ~scoped_restore_suppress_output ()
-  {
-    m_obj->suppress_output (m_val);
-  }
-
-private:
-
-  T* m_obj;
-  bool m_val;
-};
-
 static void
 up_silently_command (char *count_exp, int from_tty)
 {
   cli_ui_out *uiout = dynamic_cast<cli_ui_out *> (current_uiout);
-
   scoped_restore_suppress_output<cli_ui_out> restore (uiout);
 
   uiout->suppress_output (true);
@@ -2423,7 +2411,6 @@ static void
 down_silently_command (char *count_exp, int from_tty)
 {
   cli_ui_out *uiout = dynamic_cast<cli_ui_out *> (current_uiout);
-
   scoped_restore_suppress_output<cli_ui_out> restore (uiout);
 
   uiout->suppress_output (true);

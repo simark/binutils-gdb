@@ -222,7 +222,7 @@ frame_stash_create (void)
    Returns false if a frame with the same ID was already stashed, true
    otherwise.  */
 
-static int
+int
 frame_stash_add (struct frame_info *frame)
 {
   struct frame_info **slot;

@@ -2107,6 +2107,9 @@ print_selected_thread_frame (struct ui_out *uiout,
   struct thread_info *tp = us->thread ();
   struct inferior *inf = us->inferior ();
 
+  if (tp == nullptr)
+    return;
+
   if (selection & USER_SELECTED_THREAD)
     {
       if (uiout->is_mi_like_p ())
@@ -2126,13 +2129,15 @@ print_selected_thread_frame (struct ui_out *uiout,
 	}
     }
 
-  if (tp->state == THREAD_STOPPED
-      && (selection & USER_SELECTED_FRAME))
+  if ((selection & USER_SELECTED_FRAME)
+      && tp->state == THREAD_STOPPED)
     {
       struct frame_info *frame = us->frame ();
 
       if (frame != nullptr)
 	print_stack_frame_to_uiout (uiout, frame, 1, SRC_AND_LOC, 1);
+      else
+	uiout->message (_("No selected frame.\n"));
     }
 }
 
