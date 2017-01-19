@@ -2150,7 +2150,7 @@ static const struct language_defn rust_language_defn =
   rust_extensions,
   &exp_descriptor_rust,
   rust_parse,
-  rustyyerror,
+  rust_yyerror,
   null_post_parser,
   rust_printchar,		/* Print a character constant */
   rust_printstr,		/* Function to print string constant */

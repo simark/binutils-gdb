@@ -2659,15 +2659,11 @@ printcmd.o: $(srcdir)/printcmd.c
 		$(COMPILE.post) $(srcdir)/printcmd.c
 	$(POSTCOMPILE)
 
-# ada-exp.c can appear in srcdir, for releases; or in ., for
-# development builds.
-ADA_EXP_C = `if test -f ada-exp.c; then echo ada-exp.c; else echo $(srcdir)/ada-exp.c; fi`
-
 # Some versions of flex give output that triggers
 # -Wold-style-definition.
 ada-exp.o: ada-exp.c
 	$(COMPILE.pre) $(INTERNAL_CFLAGS) $(GDB_WARN_CFLAGS_NO_DEFS) \
-		$(COMPILE.post) $(ADA_EXP_C)
+		$(COMPILE.post) $<
 	$(POSTCOMPILE)
 
 # Message files.  Based on code in gcc/Makefile.in.
@@ -2752,23 +2748,38 @@ po/$(PACKAGE).pot: force
 # decls for malloc/realloc/free which conflict with everything else.
 # Strictly speaking c-exp.c should therefore depend on
 # Makefile.in, but that was a pretty big annoyance.
+Y_TO_C = $(srcdir)/y-to-c.sh "$(SHELL)" "$(YLWRAP)" "$(YACC)" "$(YFLAGS)"
 
-%.c: %.y
-	rm -f $@ $@.tmp
-	$(SHELL) $(YLWRAP) $< y.tab.c $@ -- $(YACC) $(YFLAGS) && mv $@ $@.tmp \
-		|| (rm -f $@; false)
-	sed -e '/extern.*malloc/d' \
-	     -e '/extern.*realloc/d' \
-	     -e '/extern.*free/d' \
-	     -e '/include.*malloc.h/d' \
-	     -e 's/\([^x]\)malloc/\1xmalloc/g' \
-	     -e 's/\([^x]\)realloc/\1xrealloc/g' \
-	     -e 's/\([ \t;,(]\)free\([ \t]*[&(),]\)/\1xfree\2/g' \
-	     -e 's/\([ \t;,(]\)free$$/\1xfree/g' \
-	     -e '/^#line.*y.tab.c/d' \
-	     -e 's/YY_NULL/YY_NULLPTR/g' \
-	  < $@.tmp > $@
-	rm -f $@.tmp
+ada-exp.c: ada-exp.y
+	$(Y_TO_C) $< $@ ada
+
+c-exp.c: c-exp.y
+	$(Y_TO_C) $< $@ c
+
+cp-name-parser.c: cp-name-parser.y
+	$(Y_TO_C) $< $@ cpname
+
+d-exp.c: d-exp.y
+	$(Y_TO_C) $< $@ d
+
+f-exp.c: f-exp.y
+	$(Y_TO_C) $< $@ f
+
+go-exp.c: go-exp.y
+	$(Y_TO_C) $< $@ go
+
+m2-exp.c: m2-exp.y
+	$(Y_TO_C) $< $@ m2
+
+p-exp.c: p-exp.y
+	$(Y_TO_C) $< $@ pascal
+
+rust-exp.c: rust-exp.y
+	$(Y_TO_C) $< $@ rust
+
+f-exp.c: f-exp.y
+	$(Y_TO_C) $< $@ f
+
 %.c: %.l
 	if [ "$(FLEX)" ] && $(FLEX) --version >/dev/null 2>&1; then \
 	    $(FLEX) -o$@ $< && \

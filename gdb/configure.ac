@@ -707,7 +707,7 @@ AC_DEFUN([AC_TRY_LIBPYTHON],
   version=$1
   define([have_libpython_var],$2)
   new_CPPFLAGS=$3
-  new_LIBS=$4
+  new_LIBS=$4 -lm
   AC_MSG_CHECKING([for ${version}])
   save_CPPFLAGS=$CPPFLAGS
   save_LIBS=$LIBS
@@ -719,7 +719,7 @@ AC_DEFUN([AC_TRY_LIBPYTHON],
                  [have_libpython_var=${version}
                   found_usable_python=yes
                   PYTHON_CPPFLAGS=$new_CPPFLAGS
-                  PYTHON_LIBS=$new_LIBS])
+                  PYTHON_LIBS="$new_LIBS -lm"])
   CPPFLAGS=$save_CPPFLAGS
   LIBS=$save_LIBS
   AC_MSG_RESULT([${found_usable_python}])

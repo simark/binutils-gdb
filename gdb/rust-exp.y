@@ -75,7 +75,7 @@ typedef struct set_field set_field;
 DEF_VEC_O (set_field);
 
 
-static int rustyylex (void);
+static int rust_yylex (void);
 static void rust_push_back (char c);
 static const char *rust_copy_name (const char *, int);
 static struct stoken rust_concat3 (const char *, const char *, const char *);
@@ -1171,8 +1171,8 @@ lex_character (void)
     error (_("Unterminated character literal"));
   ++lexptr;
 
-  rustyylval.typed_val_int.val = value;
-  rustyylval.typed_val_int.type = rust_type (is_byte ? "u8" : "char");
+  rust_yylval.typed_val_int.val = value;
+  rust_yylval.typed_val_int.type = rust_type (is_byte ? "u8" : "char");
 
   return INTEGER;
 }
@@ -1277,8 +1277,8 @@ lex_string (void)
 	}
     }
 
-  rustyylval.sval.length = obstack_object_size (&work_obstack);
-  rustyylval.sval.ptr = (const char *) obstack_finish (&work_obstack);
+  rust_yylval.sval.length = obstack_object_size (&work_obstack);
+  rust_yylval.sval.ptr = (const char *) obstack_finish (&work_obstack);
   return is_byte ? BYTESTRING : STRING;
 }
 
@@ -1366,11 +1366,11 @@ lex_identifier (void)
     }
 
   if (token == NULL || (parse_completion && lexptr[0] == '\0'))
-    rustyylval.sval = make_stoken (rust_copy_name (start, length));
+    rust_yylval.sval = make_stoken (rust_copy_name (start, length));
 
   if (parse_completion && lexptr[0] == '\0')
     {
-      /* Prevent rustyylex from returning two COMPLETE tokens.  */
+      /* Prevent rust_yylex from returning two COMPLETE tokens.  */
       prev_lexptr = lexptr;
       return COMPLETE;
     }
@@ -1403,7 +1403,7 @@ lex_operator (void)
 
   if (token != NULL)
     {
-      rustyylval.opcode = token->opcode;
+      rust_yylval.opcode = token->opcode;
       return token->value;
     }
 
@@ -1538,13 +1538,13 @@ lex_number (void)
       if (implicit_i32 && value >= ((uint64_t) 1) << 31)
 	type = rust_type ("i64");
 
-      rustyylval.typed_val_int.val = value;
-      rustyylval.typed_val_int.type = type;
+      rust_yylval.typed_val_int.val = value;
+      rust_yylval.typed_val_int.type = type;
     }
   else
     {
-      rustyylval.typed_val_float.dval = strtod (number.c_str (), NULL);
-      rustyylval.typed_val_float.type = type;
+      rust_yylval.typed_val_float.dval = strtod (number.c_str (), NULL);
+      rust_yylval.typed_val_float.type = type;
     }
 
   return is_integer ? (could_be_decimal ? DECIMAL_INTEGER : INTEGER) : FLOAT;
@@ -1553,7 +1553,7 @@ lex_number (void)
 /* The lexer.  */
 
 static int
-rustyylex (void)
+rust_yylex (void)
 {
   /* Skip all leading whitespace.  */
   while (lexptr[0] == ' ' || lexptr[0] == '\t' || lexptr[0] == '\r'
@@ -1570,7 +1570,7 @@ rustyylex (void)
     {
       if (parse_completion)
 	{
-	  rustyylval.sval = make_stoken ("");
+	  rust_yylval.sval = make_stoken ("");
 	  return COMPLETE;
 	}
       return 0;
@@ -2454,7 +2454,7 @@ rust_parse (struct parser_state *state)
   rust_ast = NULL;
 
   pstate = state;
-  result = rustyyparse ();
+  result = rust_yyparse ();
 
   if (!result || (parse_completion && rust_ast != NULL))
     {
@@ -2472,7 +2472,7 @@ rust_parse (struct parser_state *state)
 /* The parser error handler.  */
 
 void
-rustyyerror (char *msg)
+rust_yyerror (char *msg)
 {
   const char *where = prev_lexptr ? prev_lexptr : lexptr;
   error (_("%s in expression, near `%s'."), (msg ? msg : "Error"), where);
@@ -2503,13 +2503,13 @@ rust_lex_test_one (const char *input, int expected)
 
   rust_lex_test_init (input);
 
-  token = rustyylex ();
+  token = rust_yylex ();
   SELF_CHECK (token == expected);
-  result = rustyylval;
+  result = rust_yylval;
 
   if (token)
     {
-      token = rustyylex ();
+      token = rust_yylex ();
       SELF_CHECK (token == 0);
     }
 
@@ -2566,7 +2566,7 @@ rust_lex_test_sequence (const char *input, int len, const int expected[])
 
   for (i = 0; i < len; ++i)
     {
-      int token = rustyylex ();
+      int token = rust_yylex ();
 
       SELF_CHECK (token == expected[i]);
     }
@@ -2612,16 +2612,16 @@ rust_lex_test_push_back (void)
 
   rust_lex_test_init (">>=");
 
-  token = rustyylex ();
+  token = rust_yylex ();
   SELF_CHECK (token == COMPOUND_ASSIGN);
-  SELF_CHECK (rustyylval.opcode == BINOP_RSH);
+  SELF_CHECK (rust_yylval.opcode == BINOP_RSH);
 
   rust_push_back ('=');
 
-  token = rustyylex ();
+  token = rust_yylex ();
   SELF_CHECK (token == '=');
 
-  token = rustyylex ();
+  token = rust_yylex ();
   SELF_CHECK (token == 0);
 }
 
