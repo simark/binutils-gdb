@@ -305,12 +305,14 @@ typedef struct gdbpy_breakpoint_object
    constructor and the breakpoint-created hook function.  */
 extern gdbpy_breakpoint_object *bppy_pending_object;
 
+struct inferior_object;
+
 struct thread_object : public PyObject {
   /* The thread we represent.  */
   struct thread_info *thread;
 
   /* The Inferior object to which this thread belongs.  */
-  PyObject *inf_obj;
+  struct inferior_object *inf_obj;
 };
 
 struct threadlist_entry {
@@ -439,8 +441,8 @@ PyObject *gdbarch_to_arch_object (struct gdbarch *gdbarch);
 thread_object *create_thread_object (struct thread_info *tp);
 thread_object *find_thread_object (ptid_t ptid)
     CPYCHECKER_RETURNS_BORROWED_REF;
-PyObject *find_inferior_object (int pid);
-PyObject *inferior_to_inferior_object (struct inferior *inferior);
+inferior_object *find_inferior_object (int pid);
+inferior_object *inferior_to_inferior_object (struct inferior *inferior);
 
 const struct block *block_object_to_block (PyObject *obj);
 struct symbol *symbol_object_to_symbol (PyObject *obj);

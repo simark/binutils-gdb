@@ -187,7 +187,7 @@ python_new_objfile (struct objfile *objfile)
    representing INFERIOR.  If the object has already been created,
    return it and increment the reference count,  otherwise, create it.
    Return NULL on failure.  */
-PyObject *
+inferior_object *
 inferior_to_inferior_object (struct inferior *inferior)
 {
   inferior_object *inf_obj;
@@ -219,7 +219,7 @@ inferior_to_inferior_object (struct inferior *inferior)
 /* Finds the Python Inferior object for the given PID.  Returns a
    reference, or NULL if PID does not match any inferior object. */
 
-PyObject *
+inferior_object *
 find_inferior_object (int pid)
 {
   struct inferior *inf = find_inferior_pid (pid);
@@ -271,7 +271,7 @@ add_thread_object (struct thread_info *tp)
       return;
     }
 
-  inf_obj = (inferior_object *) thread_obj->inf_obj;
+  inf_obj = thread_obj->inf_obj;
 
   entry = XNEW (struct threadlist_entry);
   entry->thread_obj = thread_obj;
@@ -292,7 +292,7 @@ delete_thread_object (struct thread_info *tp, int ignore)
   gdbpy_enter enter_py (python_gdbarch, python_language);
 
   gdbpy_ref<inferior_object> inf_obj
-    ((inferior_object *) find_inferior_object (ptid_get_pid (tp->ptid)));
+    (find_inferior_object (ptid_get_pid (tp->ptid)));
   if (inf_obj == NULL)
     return;
 
