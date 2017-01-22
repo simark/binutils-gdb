@@ -187,39 +187,38 @@ python_new_objfile (struct objfile *objfile)
    representing INFERIOR.  If the object has already been created,
    return it and increment the reference count,  otherwise, create it.
    Return NULL on failure.  */
-inferior_object *
+gdbpy_ref<inferior_object>
 inferior_to_inferior_object (struct inferior *inferior)
 {
   inferior_object *inf_obj;
 
   inf_obj = (inferior_object *) inferior_data (inferior, infpy_inf_data_key);
-  if (!inf_obj)
+  if (inf_obj == NULL)
     {
       if (debug_python)
 	printf_filtered ("Creating Python Inferior object inf = %d\n",
 			 inferior->num);
 
       inf_obj = PyObject_New (inferior_object, &inferior_object_type);
-      if (!inf_obj)
-	  return NULL;
+      if (inf_obj == NULL)
+	return NULL;
 
       inf_obj->inferior = inferior;
       inf_obj->threads = NULL;
       inf_obj->nthreads = 0;
 
       set_inferior_data (inferior, infpy_inf_data_key, inf_obj);
-
     }
   else
     Py_INCREF (inf_obj);
 
-  return inf_obj;
+  return gdbpy_ref<inferior_object> (inf_obj);
 }
 
 /* Finds the Python Inferior object for the given PID.  Returns a
    reference, or NULL if PID does not match any inferior object. */
 
-inferior_object *
+gdbpy_ref<inferior_object>
 find_inferior_object (int pid)
 {
   struct inferior *inf = find_inferior_pid (pid);
@@ -240,7 +239,7 @@ find_thread_object (ptid_t ptid)
   if (pid == 0)
     return NULL;
 
-  gdbpy_ref<> inf_obj (find_inferior_object (pid));
+  gdbpy_ref<inferior_object> inf_obj = find_inferior_object (pid);
   if (inf_obj == NULL)
     return NULL;
 
@@ -290,19 +289,19 @@ delete_thread_object (struct thread_info *tp, int ignore)
     return;
 
   gdbpy_enter enter_py (python_gdbarch, python_language);
-
   gdbpy_ref<inferior_object> inf_obj
     (find_inferior_object (ptid_get_pid (tp->ptid)));
   if (inf_obj == NULL)
     return;
 
   /* Find thread entry in its inferior's thread_list.  */
-  for (entry = &inf_obj->threads; *entry != NULL; entry =
-	 &(*entry)->next)
+  for (entry = &inf_obj->threads;
+       *entry != NULL;
+       entry = &(*entry)->next)
     if ((*entry)->thread_obj->thread == tp)
       break;
 
-  if (!*entry)
+  if (*entry == NULL)
     return;
 
   tmp = *entry;
@@ -384,7 +383,7 @@ static int
 build_inferior_list (struct inferior *inf, void *arg)
 {
   PyObject *list = (PyObject *) arg;
-  gdbpy_ref<> inferior (inferior_to_inferior_object (inf));
+  gdbpy_ref<inferior_object> inferior = inferior_to_inferior_object (inf);
 
   if (inferior  == NULL)
     return 0;
@@ -787,7 +786,11 @@ py_free_inferior (struct inferior *inf, void *datum)
 PyObject *
 gdbpy_selected_inferior (PyObject *self, PyObject *args)
 {
-  return inferior_to_inferior_object (current_inferior ());
+  gdbpy_ref<inferior_object> inf_obj
+    = inferior_to_inferior_object (current_inferior ());
+
+  /* Release the reference, it will now be managed by Python.  */
+  return inf_obj.release ();
 }
 
 int

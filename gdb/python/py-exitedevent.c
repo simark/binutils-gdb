@@ -42,7 +42,7 @@ create_exited_event_object (const LONGEST *exit_code, struct inferior *inf)
 	return NULL;
     }
 
-  gdbpy_ref<> inf_obj (inferior_to_inferior_object (inf));
+  gdbpy_ref<inferior_object> inf_obj = inferior_to_inferior_object (inf);
   if (inf_obj == NULL || evpy_add_attribute (exited_event.get (),
 					     "inferior",
 					     inf_obj.get ()) < 0)

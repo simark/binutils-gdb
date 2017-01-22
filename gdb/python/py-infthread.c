@@ -46,7 +46,10 @@ create_thread_object (struct thread_info *tp)
     return NULL;
 
   thread_obj->thread = tp;
-  thread_obj->inf_obj = find_inferior_object (ptid_get_pid (tp->ptid));
+
+  gdbpy_ref<inferior_object> inf_obj
+    = find_inferior_object (ptid_get_pid (tp->ptid));
+  thread_obj->inf_obj = inf_obj.release ();
 
   return thread_obj;
 }

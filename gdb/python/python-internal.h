@@ -94,6 +94,8 @@
 #include <Python.h>
 #include <frameobject.h>
 
+#include "py-ref.h"
+
 #if PY_MAJOR_VERSION >= 3
 #define IS_PY3K 1
 #endif
@@ -441,8 +443,8 @@ PyObject *gdbarch_to_arch_object (struct gdbarch *gdbarch);
 thread_object *create_thread_object (struct thread_info *tp);
 thread_object *find_thread_object (ptid_t ptid)
     CPYCHECKER_RETURNS_BORROWED_REF;
-inferior_object *find_inferior_object (int pid);
-inferior_object *inferior_to_inferior_object (struct inferior *inferior);
+gdbpy_ref<inferior_object> find_inferior_object (int pid);
+gdbpy_ref<inferior_object> inferior_to_inferior_object (struct inferior *inferior);
 
 const struct block *block_object_to_block (PyObject *obj);
 struct symbol *symbol_object_to_symbol (PyObject *obj);
