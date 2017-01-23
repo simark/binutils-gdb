@@ -195,6 +195,10 @@ inferior_to_inferior_object (struct inferior *inferior)
   inf_obj = (inferior_object *) inferior_data (inferior, infpy_inf_data_key);
   if (!inf_obj)
     {
+      if (debug_python)
+	printf_filtered ("Creating Python Inferior object inf = %d\n",
+			 inferior->num);
+
       inf_obj = PyObject_New (inferior_object, &inferior_object_type);
       if (!inf_obj)
 	  return NULL;
@@ -732,6 +736,14 @@ infpy_dealloc (PyObject *obj)
   inferior_object *inf_obj = (inferior_object *) obj;
   struct inferior *inf = inf_obj->inferior;
 
+  if (debug_python)
+    {
+      if (inf != NULL)
+	printf_filtered ("infpy_dealloc inf = %d\n", inf->num);
+      else
+	printf_filtered ("infpy_dealloc inf = <unknown>\n");
+    }
+
   if (! inf)
     return;
 
@@ -750,6 +762,9 @@ py_free_inferior (struct inferior *inf, void *datum)
     return;
 
   gdbpy_enter enter_py (python_gdbarch, python_language);
+
+  if (debug_python)
+    printf_filtered ("py_free_inferior inf = %d\n", inf->num);
 
   inf_obj->inferior = NULL;
 

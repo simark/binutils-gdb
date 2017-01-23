@@ -242,6 +242,10 @@ struct inferior;
 
 extern int gdb_python_initialized;
 
+/* True if debug output about Python features is enabled.  */
+
+extern int debug_python;
+
 extern PyObject *gdb_module;
 extern PyObject *gdb_python_module;
 extern PyTypeObject value_object_type

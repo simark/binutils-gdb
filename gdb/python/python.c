@@ -107,6 +107,10 @@ const struct extension_language_defn extension_language_python =
 
 int gdb_python_initialized;
 
+/* See python-internal.h  */
+
+int debug_python = 0;
+
 extern PyMethodDef python_GdbMethods[];
 
 #ifdef IS_PY3K
@@ -1774,6 +1778,14 @@ message == an error message without a stack will be printed."),
 			NULL, NULL,
 			&user_set_python_list,
 			&user_show_python_list);
+
+  add_setshow_boolean_cmd ("python", class_maintenance,
+			   &debug_python, _("\
+Set Python debug output."), _("\
+Show Python debug output."), _("\
+When on, debugging output for Python-related features is displayed."),
+			    NULL, NULL,
+			    &setdebuglist, &showdebuglist);
 
 #ifdef HAVE_PYTHON
   if (!do_start_initialization () && PyErr_Occurred ())
