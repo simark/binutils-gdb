@@ -184,7 +184,7 @@ ps_lsetregs (gdb_ps_prochandle_t ph, lwpid_t lwpid, const prgregset_t gregset)
   regcache = get_thread_arch_regcache (inferior_ptid, target_gdbarch ());
 
   supply_gregset (regcache, (const gdb_gregset_t *) gregset);
-  target_store_registers (regcache, -1);
+  target_store_registers (regcache, inferior_ptid, -1);
 
   do_cleanups (old_chain);
   return PS_OK;
@@ -224,7 +224,7 @@ ps_lsetfpregs (gdb_ps_prochandle_t ph, lwpid_t lwpid,
   regcache = get_thread_arch_regcache (inferior_ptid, target_gdbarch ());
 
   supply_fpregset (regcache, (const gdb_fpregset_t *) fpregset);
-  target_store_registers (regcache, -1);
+  target_store_registers (regcache, inferior_ptid, -1);
 
   do_cleanups (old_chain);
   return PS_OK;

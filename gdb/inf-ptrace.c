@@ -811,7 +811,7 @@ inf_ptrace_store_register (const struct regcache *regcache, int regnum)
 
 static void
 inf_ptrace_store_registers (struct target_ops *ops,
-			    struct regcache *regcache, int regnum)
+			    struct regcache *regcache, ptid_t ptid, int regnum)
 {
   if (regnum == -1)
     for (regnum = 0;

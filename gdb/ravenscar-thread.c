@@ -61,7 +61,8 @@ static void ravenscar_fetch_registers (struct target_ops *ops,
 				       struct regcache *regcache, ptid_t ptid,
 				       int regnum);
 static void ravenscar_store_registers (struct target_ops *ops,
-                                       struct regcache *regcache, int regnum);
+				       struct regcache *regcache, ptid_t ptid,
+				       int regnum);
 static void ravenscar_prepare_to_store (struct target_ops *self,
 					struct regcache *regcache);
 static void ravenscar_resume (struct target_ops *ops, ptid_t ptid, int step,
@@ -286,21 +287,22 @@ ravenscar_fetch_registers (struct target_ops *ops, struct regcache *regcache,
 
 static void
 ravenscar_store_registers (struct target_ops *ops,
-                           struct regcache *regcache, int regnum)
+                           struct regcache *regcache,
+			   ptid_t ptid, int regnum)
 {
   struct target_ops *beneath = find_target_beneath (ops);
 
   if (!ravenscar_runtime_initialized ()
       || ptid_equal (inferior_ptid, base_magic_null_ptid)
       || ptid_equal (inferior_ptid, ravenscar_running_thread ()))
-    beneath->to_store_registers (beneath, regcache, regnum);
+    beneath->to_store_registers (beneath, regcache, ptid, regnum);
   else
     {
       struct gdbarch *gdbarch = get_regcache_arch (regcache);
       struct ravenscar_arch_ops *arch_ops
 	= gdbarch_ravenscar_ops (gdbarch);
 
-      arch_ops->to_store_registers (regcache, regnum);
+      arch_ops->to_store_registers (regcache, ptid, regnum);
     }
 }
 
