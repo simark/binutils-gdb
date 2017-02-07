@@ -531,9 +531,10 @@ do_windows_fetch_inferior_registers (struct regcache *regcache,
 
 static void
 windows_fetch_inferior_registers (struct target_ops *ops,
-				  struct regcache *regcache, int r)
+				  struct regcache *regcache,
+				  ptid_t ptid, int r)
 {
-  windows_thread_info *th = thread_rec (ptid_get_tid (inferior_ptid), TRUE);
+  windows_thread_info *th = thread_rec (ptid_get_tid (ptid), TRUE);
 
   /* Check if current_thread exists.  Windows sometimes uses a non-existent
      thread id in its events.  */
@@ -1351,7 +1352,7 @@ windows_resume (struct target_ops *ops,
 	  /* Single step by setting t bit.  */
 	  struct regcache *regcache = get_current_regcache ();
 	  struct gdbarch *gdbarch = get_regcache_arch (regcache);
-	  windows_fetch_inferior_registers (ops, regcache,
+	  windows_fetch_inferior_registers (ops, regcache, inferior_ptid,
 					    gdbarch_ps_regnum (gdbarch));
 	  th->context.EFlags |= FLAG_TRACE_BIT;
 	}
