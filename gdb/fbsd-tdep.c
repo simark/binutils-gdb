@@ -200,7 +200,7 @@ fbsd_corefile_thread (struct thread_info *info,
 
   old_chain = save_inferior_ptid ();
   inferior_ptid = info->ptid;
-  target_fetch_registers (regcache, -1);
+  target_fetch_registers (regcache, inferior_ptid, -1);
   do_cleanups (old_chain);
 
   args->note_data = fbsd_collect_thread_registers

@@ -145,7 +145,7 @@ register_in_thread_descriptor_p (const struct ravenscar_reg_info *reg_info,
 static void
 ppc_ravenscar_generic_fetch_registers
   (const struct ravenscar_reg_info *reg_info,
-   struct regcache *regcache, int regnum)
+   struct regcache *regcache, ptid_t ptid, int regnum)
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
   const int num_regs = gdbarch_num_regs (gdbarch);
@@ -215,9 +215,10 @@ static const struct ravenscar_reg_info ppc_reg_info =
    for most PowerPC targets.  */
 
 static void
-ppc_ravenscar_powerpc_fetch_registers (struct regcache *regcache, int regnum)
+ppc_ravenscar_powerpc_fetch_registers (struct regcache *regcache, ptid_t ptid,
+				       int regnum)
 {
-  ppc_ravenscar_generic_fetch_registers (&ppc_reg_info, regcache, regnum);
+  ppc_ravenscar_generic_fetch_registers (&ppc_reg_info, regcache, ptid, regnum);
 }
 
 /* Implement the to_store_registers ravenscar_arch_ops method
@@ -258,9 +259,11 @@ static const struct ravenscar_reg_info e500_reg_info =
    for E500 targets.  */
 
 static void
-ppc_ravenscar_e500_fetch_registers (struct regcache *regcache, int regnum)
+ppc_ravenscar_e500_fetch_registers (struct regcache *regcache, ptid_t ptid,
+				    int regnum)
 {
-  ppc_ravenscar_generic_fetch_registers (&e500_reg_info, regcache, regnum);
+  ppc_ravenscar_generic_fetch_registers (&e500_reg_info, regcache, ptid,
+					 regnum);
 }
 
 /* Implement the to_store_registers ravenscar_arch_ops method

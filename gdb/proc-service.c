@@ -164,7 +164,7 @@ ps_lgetregs (gdb_ps_prochandle_t ph, lwpid_t lwpid, prgregset_t gregset)
   inferior_ptid = ptid_build (ptid_get_pid (ph->ptid), lwpid, 0);
   regcache = get_thread_arch_regcache (inferior_ptid, target_gdbarch ());
 
-  target_fetch_registers (regcache, -1);
+  target_fetch_registers (regcache, inferior_ptid, -1);
   fill_gregset (regcache, (gdb_gregset_t *) gregset, -1);
 
   do_cleanups (old_chain);
@@ -203,7 +203,7 @@ ps_lgetfpregs (gdb_ps_prochandle_t ph, lwpid_t lwpid,
   inferior_ptid = ptid_build (ptid_get_pid (ph->ptid), lwpid, 0);
   regcache = get_thread_arch_regcache (inferior_ptid, target_gdbarch ());
 
-  target_fetch_registers (regcache, -1);
+  target_fetch_registers (regcache, inferior_ptid, -1);
   fill_fpregset (regcache, (gdb_fpregset_t *) fpregset, -1);
 
   do_cleanups (old_chain);
