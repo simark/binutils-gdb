@@ -268,7 +268,9 @@ main_user_selection_on_target_resumed (ptid_t ptid)
 {
   user_selection *us = get_main_user_selection ();
 
-  us->select_frame (NULL, false);
+  /* If our selected thread has been resumed, our frame isn't valid anymore.  */
+  if (ptid_match (us->thread ()->ptid, ptid))
+    us->select_frame (NULL, false);
 }
 
 static void
