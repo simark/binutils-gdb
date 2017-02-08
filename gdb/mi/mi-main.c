@@ -2010,6 +2010,8 @@ captured_mi_execute_command (struct ui_out *uiout, struct mi_parse *context)
       {
 	char *argv[2];
 
+	apply_main_user_selection_to_core ();
+
 	/* A CLI command was read from the input stream.  */
 	/* This "feature" will be removed as soon as we have a
 	   complete set of mi commands.  */
@@ -2147,6 +2149,8 @@ mi_cmd_execute (struct mi_parse *parse)
   struct cleanup *cleanup;
 
   cleanup = prepare_execute_command ();
+
+  apply_main_user_selection_to_core ();
 
   if (parse->all && parse->thread_group != -1)
     error (_("Cannot specify --thread-group together with --all"));

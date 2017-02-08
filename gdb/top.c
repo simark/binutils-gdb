@@ -514,7 +514,7 @@ prepare_execute_command (void)
   if (non_stop)
     target_dcache_invalidate ();
 
-  apply_main_user_selection_to_core ();
+  //apply_main_user_selection_to_core ();
 
   return cleanup;
 }
