@@ -8334,7 +8334,9 @@ normal_stop (void)
 	}
 
       select_frame (get_current_frame ());
-      get_main_user_selection ()->select_frame (get_current_frame (), false);
+
+      if (!non_stop)
+	get_main_user_selection ()->select_frame (get_current_frame (), false);
 
       /* Set the current source location.  */
       set_current_sal_from_frame (get_current_frame ());
