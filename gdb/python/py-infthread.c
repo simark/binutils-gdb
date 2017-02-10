@@ -284,7 +284,7 @@ gdbpy_selected_thread (PyObject *self, PyObject *args)
 {
   PyObject *thread_obj;
 
-  thread_obj = (PyObject *) find_thread_object (inferior_ptid);
+  thread_obj = find_thread_object (inferior_ptid);
   if (thread_obj)
     {
       Py_INCREF (thread_obj);

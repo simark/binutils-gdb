@@ -30,26 +30,6 @@
 #include "py-event.h"
 #include "py-stopevent.h"
 
-struct threadlist_entry {
-  thread_object *thread_obj;
-  struct threadlist_entry *next;
-};
-
-typedef struct
-{
-  PyObject_HEAD
-
-  /* The inferior we represent.  */
-  struct inferior *inferior;
-
-  /* thread_object instances under this inferior.  This list owns a
-     reference to each object it contains.  */
-  struct threadlist_entry *threads;
-
-  /* Number of threads in the list.  */
-  int nthreads;
-} inferior_object;
-
 extern PyTypeObject inferior_object_type
     CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("inferior_object");
 
@@ -227,9 +207,9 @@ inferior_to_inferior_object (struct inferior *inferior)
 
     }
   else
-    Py_INCREF ((PyObject *)inf_obj);
+    Py_INCREF (inf_obj);
 
-  return (PyObject *) inf_obj;
+  return inf_obj;
 }
 
 /* Finds the Python Inferior object for the given PID.  Returns a
@@ -359,7 +339,7 @@ infpy_threads (PyObject *self, PyObject *args)
        i++, entry = entry->next)
     {
       Py_INCREF (entry->thread_obj);
-      PyTuple_SET_ITEM (tuple, i, (PyObject *) entry->thread_obj);
+      PyTuple_SET_ITEM (tuple, i, entry->thread_obj);
     }
 
   return tuple;

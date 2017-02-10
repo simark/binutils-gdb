@@ -301,17 +301,31 @@ typedef struct gdbpy_breakpoint_object
    constructor and the breakpoint-created hook function.  */
 extern gdbpy_breakpoint_object *bppy_pending_object;
 
-
-typedef struct
-{
-  PyObject_HEAD
-
+struct thread_object : public PyObject {
   /* The thread we represent.  */
   struct thread_info *thread;
 
   /* The Inferior object to which this thread belongs.  */
   PyObject *inf_obj;
-} thread_object;
+};
+
+struct threadlist_entry {
+  thread_object *thread_obj;
+  struct threadlist_entry *next;
+};
+
+struct inferior_object : public PyObject
+{
+  /* The inferior we represent.  */
+  struct inferior *inferior;
+
+  /* thread_object instances under this inferior.  This list owns a
+     reference to each object it contains.  */
+  struct threadlist_entry *threads;
+
+  /* Number of threads in the list.  */
+  int nthreads;
+};
 
 extern struct cmd_list_element *set_python_list;
 extern struct cmd_list_element *show_python_list;

@@ -34,7 +34,7 @@ get_event_thread (void)
   PyObject *thread = NULL;
 
   if (non_stop)
-    thread = (PyObject *) find_thread_object (inferior_ptid);
+    thread = find_thread_object (inferior_ptid);
   else
     thread = Py_None;
 
