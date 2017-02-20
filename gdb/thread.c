@@ -284,6 +284,8 @@ add_thread_silent (ptid_t ptid)
 	 new template thread in the list with an invalid ptid, switch
 	 to it, delete the original thread, reset the new thread's
 	 ptid, and switch to it.  */
+      if (tp == get_main_user_selection ()->thread ())
+	get_main_user_selection ()->select_thread(NULL, false);
 
       if (ptid_equal (inferior_ptid, ptid))
 	{
