@@ -1774,6 +1774,8 @@ reinit_frame_cache (void)
 {
   struct frame_info *fi;
 
+  get_main_user_selection()->select_frame(NULL, false);
+
 
   /* Tear down all frame caches.  */
   for (fi = sentinel_frame; fi != NULL; fi = fi->prev)
