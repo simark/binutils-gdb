@@ -88,7 +88,7 @@ clean_restart $testfile
 # gdbserver and connect to it.
 gdb_test "disconnect" ".*"
 
-gdb_test "$vgdbcmd" " in \\.?_start .*" "target remote for vgdb"
+gdb_test "$vgdbcmd" " in.*" "target remote for vgdb"
 
 gdb_test "monitor v.set gdb_output" "valgrind output will go to gdb.*"
 

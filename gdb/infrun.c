@@ -8995,8 +8995,9 @@ struct infcall_control_state
   enum stop_stack_kind stop_stack_dummy;
   int stopped_by_random_signal;
 
-  /* ID if the selected frame when the inferior function call was made.  */
+  /* ID of the selected frame when the inferior function call was made.  */
   struct frame_id selected_frame_id;
+  struct frame_id user_selected_frame_id;
 };
 
 /* Save all of the information associated with the inferior<==>gdb
@@ -9027,6 +9028,7 @@ save_infcall_control_state (void)
   inf_status->stopped_by_random_signal = stopped_by_random_signal;
 
   inf_status->selected_frame_id = get_frame_id (get_selected_frame (NULL));
+  inf_status->user_selected_frame_id = get_frame_id (get_main_user_selection ()->frame());
 
   return inf_status;
 }
@@ -9089,6 +9091,8 @@ restore_infcall_control_state (struct infcall_control_state *inf_status)
 	/* Error in restoring the selected frame.  Select the innermost
 	   frame.  */
 	select_frame (get_current_frame ());
+
+      get_main_user_selection ()->select_frame (get_selected_frame(NULL), false);
     }
 
   xfree (inf_status);
