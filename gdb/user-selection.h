@@ -2,6 +2,7 @@
 #define USER_SELECTION_H
 
 #include "observer.h"
+#include "gdbthread.h"
 
 class user_selection {
 public:
@@ -21,7 +22,7 @@ public:
   { return m_inferior; }
 
   struct thread_info *thread ()
-  { return m_thread; }
+  { return m_thread.get (); }
 
   struct frame_info *
   frame (int *level = nullptr)
@@ -52,7 +53,7 @@ public:
 private:
 
   struct inferior *m_inferior;
-  struct thread_info *m_thread;
+  thread_info_ref m_thread;
 
   struct frame_id m_frame_id;
   int m_frame_level;

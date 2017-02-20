@@ -53,12 +53,7 @@ user_selection::select_inferior (struct inferior *inf, bool notify)
   m_inferior = inf;
 
   /* Clear the thread and frame fields.  */
-  if (m_thread != nullptr)
-    {
-      m_thread->put ();
-      m_thread = nullptr;
-    }
-
+  m_thread = nullptr;
   m_frame_id = null_frame_id;
   m_frame_level = INVALID_FRAME_LEVEL;
 
@@ -66,18 +61,16 @@ user_selection::select_inferior (struct inferior *inf, bool notify)
     {
       /* This inferior is executing, so it should have threads.  Select the first
          one.  */
-      m_thread = iterate_over_threads(
+      m_thread.reset(iterate_over_threads(
 	[inf] (struct thread_info *thread, void *) -> int
 	  {
 	    return inf->pid == ptid_get_pid (thread->ptid);
 	  }
-      );
+      ));
 
       /* We expect this inferior to have at least one thread.  If we didn't
          find it, we have a problem.  */
       gdb_assert (m_thread != nullptr);
-
-      m_thread->get ();
     }
 
   if (notify)
@@ -110,15 +103,10 @@ user_selection::select_thread (struct thread_info *th, bool notify)
   m_frame_id = null_frame_id;
   m_frame_level = INVALID_FRAME_LEVEL;
 
-  if (m_thread != nullptr)
-    m_thread->put ();
-
-  m_thread = th;
+  m_thread.reset (th);
 
   if (m_thread != nullptr)
     {
-      m_thread->get ();
-
       if (m_inferior != th->inf)
 	{
 	  m_inferior = th->inf;

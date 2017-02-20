@@ -32,6 +32,7 @@ class user_selection;
 #include "common/vec.h"
 #include "target/waitstatus.h"
 #include "cli/cli-utils.h"
+#include "common/gdb_ref_ptr.h"
 
 /* Frontend view of the thread state.  Possible extensions: stepping,
    finishing, until(ling),...  */
@@ -350,6 +351,17 @@ struct thread_info
   struct thread_info *step_over_prev;
   struct thread_info *step_over_next;
 };
+
+struct thread_info_refcount_policy
+{
+  static void incref (struct thread_info *tp)
+  { tp->get (); }
+
+  static void decref (struct thread_info *tp)
+  { tp->put(); }
+};
+
+typedef gdb::ref_ptr<thread_info, thread_info_refcount_policy> thread_info_ref;
 
 /* Create an empty thread list, or empty the existing one.  */
 extern void init_thread_list (void);
