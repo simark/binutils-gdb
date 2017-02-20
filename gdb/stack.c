@@ -2335,7 +2335,8 @@ frame_command (char *level_exp, int from_tty)
 
   if (level_exp == nullptr)
     {
-      if (us->thread ()->state == THREAD_STOPPED)
+      if (us->thread () != nullptr &&
+	  us->thread ()->state == THREAD_STOPPED)
 	print_selected_thread_frame (current_uiout, us, USER_SELECTED_FRAME);
       else
 	current_uiout->message (_("No stack.\n"));
