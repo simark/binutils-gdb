@@ -275,7 +275,6 @@ exec_continue (char **argv, int argc)
       if (current_context->all || current_context->thread_group != -1)
 	{
 	  int pid = 0;
-	  struct cleanup *back_to = make_cleanup_restore_current_thread ();
 
 	  if (!current_context->all)
 	    {
@@ -285,7 +284,6 @@ exec_continue (char **argv, int argc)
 	      pid = inf->pid;
 	    }
 	  iterate_over_threads (proceed_thread_callback, &pid);
-	  do_cleanups (back_to);
 	}
       else
 	{
