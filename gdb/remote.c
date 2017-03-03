@@ -222,6 +222,8 @@ static void remote_console_output (char *msg);
 
 static int remote_supports_cond_breakpoints (struct target_ops *self);
 
+static bool remote_supports_thread_specific_breakpoints ();
+
 static int remote_can_run_breakpoint_commands (struct target_ops *self);
 
 static void remote_btrace_reset (void);
@@ -1432,6 +1434,9 @@ enum {
 
   /* Support for target-side breakpoint conditions.  */
   PACKET_ConditionalBreakpoints,
+
+  /* Support for target-side thread-specific breakpoints.  */
+  PACKET_ThreadSpecificBreakpoints,
 
   /* Support for target-side breakpoint commands.  */
   PACKET_BreakpointCommands,
@@ -4601,6 +4606,8 @@ static const struct protocol_feature remote_protocol_features[] = {
     PACKET_ConditionalTracepoints },
   { "ConditionalBreakpoints", PACKET_DISABLE, remote_supported_packet,
     PACKET_ConditionalBreakpoints },
+  { "ThreadSpecificBreakpoints", PACKET_DISABLE, remote_supported_packet,
+    PACKET_ThreadSpecificBreakpoints },
   { "BreakpointCommands", PACKET_DISABLE, remote_supported_packet,
     PACKET_BreakpointCommands },
   { "FastTracepoints", PACKET_DISABLE, remote_supported_packet,
@@ -9786,7 +9793,17 @@ remote_insert_breakpoint (struct target_ops *ops,
       *(p++) = ',';
       addr = (ULONGEST) remote_address_masked (addr);
       p += hexnumstr (p, addr);
-      xsnprintf (p, endbuf - p, ",%d", bp_tgt->kind);
+      p += xsnprintf (p, endbuf - p, ",%d", bp_tgt->kind);
+
+      if (remote_supports_thread_specific_breakpoints ())
+	{
+	  for (const ptid_t &ptid : bp_tgt->threads)
+	    {
+	      *(p++) = ';';
+	      *(p++) = 'T';
+	      p = write_ptid (p, endbuf, ptid);
+	    }
+	}
 
       if (remote_supports_cond_breakpoints (ops))
 	remote_add_target_side_condition (gdbarch, bp_tgt, p, endbuf);
@@ -12188,6 +12205,12 @@ remote_supports_cond_breakpoints (struct target_ops *self)
   return packet_support (PACKET_ConditionalBreakpoints) == PACKET_ENABLE;
 }
 
+static bool
+remote_supports_thread_specific_breakpoints ()
+{
+  return packet_support (PACKET_ThreadSpecificBreakpoints) == PACKET_ENABLE;
+}
+
 static int
 remote_supports_fast_tracepoints (void)
 {
@@ -14275,6 +14298,10 @@ Show the maximum size of the address (in bits) in a memory packet."), NULL,
   add_packet_config_cmd (&remote_protocol_packets[PACKET_ConditionalBreakpoints],
 			 "ConditionalBreakpoints",
 			 "conditional-breakpoints", 0);
+
+  add_packet_config_cmd (&remote_protocol_packets[PACKET_ThreadSpecificBreakpoints],
+			 "ThreadSpecificBreakpoints",
+			 "thread-specific-breakpoints", 0);
 
   add_packet_config_cmd (&remote_protocol_packets[PACKET_BreakpointCommands],
 			 "BreakpointCommands",

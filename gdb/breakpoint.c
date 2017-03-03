@@ -2219,6 +2219,38 @@ build_target_condition_list (struct bp_location *bl)
   return;
 }
 
+/* Using the breakpoint location BL and all other locations at the same
+   address, build the list of threads these locations applies to.  */
+
+static void
+build_target_thread_specific_list (struct bp_location *bl)
+{
+  struct bp_location **prev_loc = NULL, **cur_loc;
+
+  bl->target_info.threads.clear ();
+
+  ALL_BP_LOCATIONS_AT_ADDR (cur_loc, prev_loc, bl->address)
+    {
+      int thread_num = (*cur_loc)->owner->thread;
+
+      if (thread_num <= 0)
+	{
+	  /* There's at least one non-thread-specific breakpoint at this address.
+	     Since we'll always report a hit, don't bother send a thread list.  */
+	  bl->target_info.threads.clear ();
+	  return;
+	}
+
+      struct thread_info *tp = find_thread_global_id (thread_num);
+
+      /* Thread-specific breakpoints can only be created for existing thread,
+	 and are deleted when the corresponding thread exits.  */
+      gdb_assert (tp != NULL);
+
+      bl->target_info.threads.push_back (tp->ptid);
+    }
+}
+
 /* Parses a command described by string CMD into an agent expression
    bytecode suitable for evaluation by the bytecode interpreter.
    Return NULL if there was any error during parsing.  */
@@ -2470,6 +2502,7 @@ insert_bp_location (struct bp_location *bl,
     {
       build_target_condition_list (bl);
       build_target_command_list (bl);
+      build_target_thread_specific_list (bl);
       /* Reset the modification marker.  */
       bl->needs_update = 0;
     }

@@ -2449,6 +2449,7 @@ handle_query (char *own_buf, int packet_len, int *new_packet_len_p)
 	  || target_supports_software_single_step () )
 	{
 	  strcat (own_buf, ";ConditionalBreakpoints+");
+	  strcat (own_buf, ";ThreadSpecificBreakpoints+");
 	}
       strcat (own_buf, ";BreakpointCommands+");
 
@@ -3967,7 +3968,13 @@ process_point_options (struct gdb_breakpoint *bp, const char **packet)
       if (*dataptr == ';')
 	++dataptr;
 
-      if (*dataptr == 'X')
+      if (*dataptr == 'T')
+	{
+	  ++dataptr;
+	  ptid_t ptid = read_ptid (dataptr, &dataptr);
+	  add_breakpoint_thread (bp, ptid);
+	}
+      else if (*dataptr == 'X')
 	{
 	  /* Conditional expression.  */
 	  if (debug_threads)
@@ -4232,7 +4239,7 @@ process_serial_event (void)
 		   here.  If we already have a list of parameters, GDB
 		   is telling us to drop that list and use this one
 		   instead.  */
-		clear_breakpoint_conditions_and_commands (bp);
+		clear_breakpoint_conditions_and_commands_and_threads (bp);
 		const char *options = dataptr;
 		process_point_options (bp, &options);
 	      }

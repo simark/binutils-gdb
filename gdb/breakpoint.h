@@ -278,6 +278,10 @@ struct bp_target_info
   /* Flag that is true if the breakpoint should be left in place even
      when GDB is not connected.  */
   int persist;
+
+  /* Threads that this breakpoint applies to.  If empty, this breakpoint
+     applies to all threads.  */
+  std::vector<ptid_t> threads;
 };
 
 /* GDB maintains two types of information about each breakpoint (or

@@ -105,10 +105,10 @@ int hardware_breakpoint_inserted_here (CORE_ADDR addr);
 
 int single_step_breakpoint_inserted_here (CORE_ADDR addr);
 
-/* Clear all breakpoint conditions and commands associated with a
+/* Clear all breakpoint conditions, commands and threads associated with a
    breakpoint.  */
 
-void clear_breakpoint_conditions_and_commands (struct gdb_breakpoint *bp);
+void clear_breakpoint_conditions_and_commands_and_threads (struct gdb_breakpoint *bp);
 
 /* Set target-side condition CONDITION to the breakpoint at ADDR.
    Returns false on failure.  On success, advances CONDITION pointer
@@ -124,6 +124,10 @@ int add_breakpoint_condition (struct gdb_breakpoint *bp,
 
 int add_breakpoint_commands (struct gdb_breakpoint *bp, const char **commands,
 			     int persist);
+
+/* Add THREAD to the list the threads that apply to BP.  */
+
+void add_breakpoint_thread (struct gdb_breakpoint *bp, ptid_t thread);
 
 int any_persistent_commands (void);
 

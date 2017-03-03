@@ -178,6 +178,14 @@ struct breakpoint
   struct raw_breakpoint *raw;
 };
 
+/* A simple linked list of ptids.  */
+
+struct ptid_list
+{
+  ptid_list *next;
+  ptid_t ptid;
+};
+
 /* Breakpoint requested by GDB.  */
 
 struct gdb_breakpoint
@@ -192,6 +200,10 @@ struct gdb_breakpoint
 
   /* Point to the list of commands to run when this is hit.  */
   struct point_command_list *command_list;
+
+  /* List of threads this breakpoint applies to.  If empty/NULL, the breakpoint
+     applies to any thread.  */
+  ptid_list *threads;
 };
 
 /* Breakpoint used by GDBserver.  */
@@ -1155,7 +1167,7 @@ delete_gdb_breakpoint_1 (char z_type, CORE_ADDR addr, int kind)
 
   /* Before deleting the breakpoint, make sure to free its condition
      and command lists.  */
-  clear_breakpoint_conditions_and_commands (bp);
+  clear_breakpoint_conditions_and_commands_and_threads (bp);
   err = delete_breakpoint ((struct breakpoint *) bp);
   if (err != 0)
     return -1;
@@ -1243,11 +1255,26 @@ clear_breakpoint_commands (struct gdb_breakpoint *bp)
   bp->command_list = NULL;
 }
 
+/* See mem-break.h.  */
+
+static void
+clear_breakpoint_threads (struct gdb_breakpoint *bp)
+{
+  while (bp->threads != NULL)
+    {
+      ptid_list *this_node = bp->threads;
+
+      bp->threads = this_node->next;
+      free (this_node);
+    }
+}
+
 void
 clear_breakpoint_conditions_and_commands (struct gdb_breakpoint *bp)
 {
   clear_breakpoint_conditions (bp);
   clear_breakpoint_commands (bp);
+  clear_breakpoint_threads (bp);
 }
 
 /* Add condition CONDITION to GDBserver's breakpoint BP.  */
@@ -1296,6 +1323,37 @@ add_breakpoint_condition (struct gdb_breakpoint *bp, const char **condition)
   return 1;
 }
 
+/* See mem-break.h  */
+
+void
+add_breakpoint_thread (struct gdb_breakpoint *bp, ptid_t thread)
+{
+  ptid_list *new_node = XCNEW (ptid_list);
+
+  new_node->ptid = thread;
+
+  new_node->next = bp->threads;
+  bp->threads = new_node;
+}
+
+/* Verify if thread STOP_PTID applies to BP.  */
+
+static bool
+thread_matches (struct gdb_breakpoint *bp, ptid_t stop_ptid)
+{
+  /* An empty list means "any thread".  */
+  if (bp->threads == NULL)
+    return true;
+
+  for (ptid_list *it = bp->threads; it != NULL; it = it->next)
+    {
+      if (ptid_equal (stop_ptid, it->ptid))
+	return true;
+    }
+
+  return false;
+}
+
 /* Evaluate condition (if any) at breakpoint BP.  Return 1 if
    true and 0 otherwise.  */
 
@@ -1310,6 +1368,10 @@ gdb_condition_true_at_breakpoint_z_type (char z_type, CORE_ADDR addr)
   struct eval_agent_expr_context ctx;
 
   if (bp == NULL)
+    return 0;
+
+  /* Check this reakpoint applies to the current thread.  */
+  if (!thread_matches (bp, ptid_of (current_thread)))
     return 0;
 
   /* Check if the breakpoint is unconditional.  If it is,
