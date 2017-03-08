@@ -420,10 +420,16 @@ proc gdb_starti_cmd {args} {
     return -1
 }
 
-# Set a breakpoint at FUNCTION.  If there is an additional argument it is
-# a list of options; the supported options are allow-pending, temporary,
-# message, no-message, passfail and qualified.
-# The result is 1 for success, 0 for failure.
+# Set a breakpoint at LINESPEC.  If there is an additional argument it is
+# a list of options; the supported options are:
+#
+#   - allow-pending
+#   - message
+#   - no-message
+#   - passfail
+#   - temporary
+#
+# The result is the GDB breakpoint number (> 0) for success, 0 for failure.
 #
 # Note: The handling of message vs no-message is messed up, but it's based
 # on historical usage.  By default this function does not print passes,
@@ -431,7 +437,7 @@ proc gdb_starti_cmd {args} {
 # no-message: turns off printing of fails (and passes, but they're already off)
 # message: turns on printing of passes (and fails, but they're already on)
 
-proc gdb_breakpoint { function args } {
+proc gdb_breakpoint { linespec args } {
     global gdb_prompt
     global decimal
 
@@ -462,21 +468,29 @@ proc gdb_breakpoint { function args } {
 	set print_pass 1
     }
 
-    set test_name "setting breakpoint at $function"
+    set test_name "setting breakpoint at $linespec"
 
-    send_gdb "$break_command $function\n"
+    send_gdb "$break_command $linespec\n"
     # The first two regexps are what we get with -g, the third is without -g.
     gdb_expect 30 {
-	-re "$break_message \[0-9\]* at .*: file .*, line $decimal.\r\n$gdb_prompt $" {}
-	-re "$break_message \[0-9\]*: file .*, line $decimal.\r\n$gdb_prompt $" {}
-	-re "$break_message \[0-9\]* at .*$gdb_prompt $" {}
-	-re "$break_message \[0-9\]* \\(.*\\) pending.*$gdb_prompt $" {
-		if {$pending_response == "n"} {
-			if { $print_fail } {
-				fail $test_name
-			}
-			return 0
-		}
+	-re "$break_message ($decimal) at .*: file .*, line $decimal.\r\n$gdb_prompt $" {
+	    set breakpoint_num $expect_out(1,string)
+	}
+	-re "$break_message ($decimal): file .*, line $decimal.\r\n$gdb_prompt $" {
+	    set breakpoint_num $expect_out(1,string)
+	}
+	-re "$break_message ($decimal) at .*$gdb_prompt $" {
+	    set breakpoint_num $expect_out(1,string)
+	}
+	-re "$break_message ($decimal) \\(.*\\) pending.*$gdb_prompt $" {
+	    set breakpoint_num $expect_out(1,string)
+
+	    if {$pending_response == "n"} {
+		    if { $print_fail } {
+			    fail $test_name
+		    }
+		    return 0
+	    }
 	}
 	-re "Make breakpoint pending.*y or \\\[n\\\]. $" { 
 		send_gdb "$pending_response\n"
@@ -511,7 +525,8 @@ proc gdb_breakpoint { function args } {
     if { $print_pass } {
 	pass $test_name
     }
-    return 1
+
+    return $breakpoint_num
 }    
 
 # Set breakpoint at function and run gdb until it breaks there.
