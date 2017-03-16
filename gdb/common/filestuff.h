@@ -58,6 +58,61 @@ struct gdb_file_deleter
 
 typedef std::unique_ptr<FILE, gdb_file_deleter> gdb_file_up;
 
+/* Call close on a file descriptor on scope exit.  */
+
+struct gdb_fd_closer
+{
+  gdb_fd_closer ()
+  {}
+
+  gdb_fd_closer (int fd)
+  : m_fd (fd)
+  {}
+
+  gdb_fd_closer (gdb_fd_closer &&other)
+  {
+    this->m_fd = other.m_fd;
+    other.m_fd = -1;
+  }
+
+  gdb_fd_closer &operator= (gdb_fd_closer &&other)
+  {
+    maybe_close ();
+    this->m_fd = other.m_fd;
+    other.m_fd = -1;
+
+    return *this;
+  }
+
+  ~gdb_fd_closer ()
+  {
+    maybe_close ();
+  }
+
+  DISABLE_COPY_AND_ASSIGN (gdb_fd_closer);
+
+  void reset (int fd)
+  {
+    maybe_close ();
+    m_fd = fd;
+  }
+
+  int get () const
+  {
+    return m_fd;
+  }
+
+private:
+
+  void maybe_close ()
+  {
+    if (m_fd >= 0)
+        close (m_fd);
+  }
+
+  int m_fd = -1;
+};
+
 /* Like 'fopen', but ensures that the returned file descriptor has the
    close-on-exec flag set.  */
 

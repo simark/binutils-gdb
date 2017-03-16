@@ -1,4 +1,6 @@
 #include "defs.h"
+#include "dwarf2-index.h"
+#include "dwarf2read.h"
 #include "objfiles.h"
 #include "filestuff.h"
 #include "gdb_unlinker.h"
@@ -13,9 +15,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <algorithm>
-
-/* The suffix for an index file.  */
-#define INDEX_SUFFIX ".gdb-index"
 
 /* Ensure only legit values are used.  */
 #define DW2_GDB_INDEX_SYMBOL_STATIC_SET_VALUE(cu_index, value) \
@@ -65,47 +64,20 @@ struct mapped_symtab
   std::vector<symtab_index_entry> data;
 };
 
-
-/* A helper function that reads the .gdb_index from SECTION and fills
-   in MAP.  FILENAME is the name of the file containing the section;
-   it is used for error reporting.  DEPRECATED_OK is nonzero if it is
-   ok to use deprecated sections.
-
-   CU_LIST, CU_LIST_ELEMENTS, TYPES_LIST, and TYPES_LIST_ELEMENTS are
-   out parameters that are filled in with information about the CU and
-   TU lists in the section.
-
-   Returns 1 if all went well, 0 otherwise.  */
+/* TODO */
 
 int
-read_index_from_section (struct objfile *objfile,
-			 const char *filename,
-			 int deprecated_ok,
-			 struct dwarf2_section_info *section,
-			 struct mapped_index *map,
-			 const gdb_byte **cu_list,
-			 offset_type *cu_list_elements,
-			 const gdb_byte **types_list,
-			 offset_type *types_list_elements)
+read_index_from_buffer
+  (const char *filename,
+   int deprecated_ok, const gdb::array_view<gdb_byte> &buffer,
+   struct mapped_index *map, const gdb_byte **cu_list,
+   offset_type *cu_list_elements, const gdb_byte **types_list,
+   offset_type *types_list_elements)
 {
-  const gdb_byte *addr;
-  offset_type version;
-  offset_type *metadata;
-  int i;
+  const gdb_byte *addr = &buffer[0];
 
-  if (dwarf2_section_empty_p (section))
-    return 0;
-
-  /* Older elfutils strip versions could keep the section in the main
-     executable while splitting it for the separate debug info file.  */
-  if ((get_section_flags (section) & SEC_HAS_CONTENTS) == 0)
-    return 0;
-
-  dwarf2_read_section (objfile, section);
-
-  addr = section->buffer;
   /* Version check.  */
-  version = MAYBE_SWAP (*(offset_type *) addr);
+  offset_type version = MAYBE_SWAP (*(offset_type *) addr);
   /* Versions earlier than 3 emitted every copy of a psymbol.  This
      causes the index to behave very poorly for certain requests.  Version 3
      contained incomplete addrmap.  So, it seems better to just ignore such
@@ -157,11 +129,11 @@ to use the section anyway."),
     return 0;
 
   map->version = version;
-  map->total_size = section->size;
+  map->total_size = buffer.size ();
 
-  metadata = (offset_type *) (addr + sizeof (offset_type));
+  offset_type *metadata = (offset_type *) (addr + sizeof (offset_type));
 
-  i = 0;
+  int i = 0;
   *cu_list = addr + MAYBE_SWAP (metadata[i]);
   *cu_list_elements = ((MAYBE_SWAP (metadata[i + 1]) - MAYBE_SWAP (metadata[i]))
 		       / 8);
@@ -187,6 +159,47 @@ to use the section anyway."),
   map->constant_pool = (char *) (addr + MAYBE_SWAP (metadata[i]));
 
   return 1;
+}
+
+/* A helper function that reads the .gdb_index from SECTION and fills
+   in MAP.  FILENAME is the name of the file containing the section;
+   it is used for error reporting.  DEPRECATED_OK is nonzero if it is
+   ok to use deprecated sections.
+
+   CU_LIST, CU_LIST_ELEMENTS, TYPES_LIST, and TYPES_LIST_ELEMENTS are
+   out parameters that are filled in with information about the CU and
+   TU lists in the section.
+
+   Returns 1 if all went well, 0 otherwise.  */
+
+int
+read_index_from_section (struct objfile *objfile,
+			 const char *filename,
+			 int deprecated_ok,
+			 struct dwarf2_section_info *section,
+			 struct mapped_index *map,
+			 const gdb_byte **cu_list,
+			 offset_type *cu_list_elements,
+			 const gdb_byte **types_list,
+			 offset_type *types_list_elements)
+{
+  if (dwarf2_section_empty_p (section))
+    return 0;
+
+
+  /* Older elfutils strip versions could keep the section in the main
+     executable while splitting it for the separate debug info file.  */
+  if ((get_section_flags (section) & SEC_HAS_CONTENTS) == 0)
+    return 0;
+
+  dwarf2_read_section (objfile, section);
+
+  // const ?
+  gdb::array_view<gdb_byte> buffer ((gdb_byte *) section->buffer, section->size);
+
+  return read_index_from_buffer (filename, deprecated_ok, buffer, map,
+				 cu_list, cu_list_elements, types_list,
+				 types_list_elements);
 }
 
 /* In-memory buffer to prepare data to be written later to a file.  */
@@ -709,9 +722,9 @@ write_hash_table (mapped_symtab *symtab, data_buf &output, data_buf &cpool)
 
 /* Create an index file for OBJFILE in the directory DIR.  */
 
-static void
+void
 write_psymtabs_to_index (struct dwarf2_per_objfile *dwarf2_per_objfile,
-			 const char *dir)
+			 const char *filename)
 {
   struct objfile *objfile = dwarf2_per_objfile->objfile;
 
@@ -728,18 +741,15 @@ write_psymtabs_to_index (struct dwarf2_per_objfile *dwarf2_per_objfile,
   if (stat (objfile_name (objfile), &st) < 0)
     perror_with_name (objfile_name (objfile));
 
-  std::string filename (std::string (dir) + SLASH_STRING
-			+ lbasename (objfile_name (objfile)) + INDEX_SUFFIX);
-
-  FILE *out_file = gdb_fopen_cloexec (filename.c_str (), "wb").release ();
+  FILE *out_file = gdb_fopen_cloexec (filename, "wb").release ();
   if (!out_file)
-    error (_("Can't open `%s' for writing"), filename.c_str ());
+    error (_("Can't open `%s' for writing"), filename);
 
   /* Order matters here; we want FILE to be closed before FILENAME is
      unlinked, because on MS-Windows one cannot delete a file that is
      still open.  (Don't call anything here that might throw until
      file_closer is created.)  */
-  gdb::unlinker unlink_file (filename.c_str ());
+  gdb::unlinker unlink_file (filename);
   gdb_file_up close_out_file (out_file);
 
   mapped_symtab symtab;
@@ -885,13 +895,19 @@ save_gdb_index_command (const char *arg, int from_tty)
     if (stat (objfile_name (objfile), &st) < 0)
       continue;
 
-    struct dwarf2_per_objfile *dwarf2_per_objfile = get_dwarf2_per_objfile (objfile);
+    struct dwarf2_per_objfile *dwarf2_per_objfile
+      = get_dwarf2_per_objfile (objfile);
 
     if (dwarf2_per_objfile != NULL)
       {
 	TRY
 	  {
-	    write_psymtabs_to_index (dwarf2_per_objfile, arg);
+	    std::string filename
+	      = string_printf ("%s/%s%s",
+			       arg,
+			       lbasename (objfile_name (objfile)),
+			       INDEX_SUFFIX);
+	    write_psymtabs_to_index (dwarf2_per_objfile, filename.c_str ());
 	  }
 	CATCH (except, RETURN_MASK_ERROR)
 	  {

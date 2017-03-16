@@ -2,6 +2,7 @@
 #define DWARF2READ_H
 
 #include "filename-seen-cache.h"
+#include "common/gdb-mmap.h"
 
 /* All offsets in the index are of this type.  It must be
    architecture-independent.  */
@@ -474,6 +475,8 @@ public:
   /* Table containing all filenames.  This is an optional because the
      table is lazily constructed on first access.  */
   gdb::optional<filename_seen_cache> filenames_cache;
+
+  gdb::optional<mmap_file> index_mmap;
 };
 
 struct dwarf2_per_objfile *get_dwarf2_per_objfile (struct objfile *objfile);

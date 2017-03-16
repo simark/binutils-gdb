@@ -993,6 +993,7 @@ COMMON_SFILES = \
 	go-lang.c \
 	go-typeprint.c \
 	go-valprint.c \
+	index-cache.c \
 	inf-child.c \
 	inf-loop.c \
 	infcall.c \
@@ -1258,6 +1259,7 @@ HFILES_NO_SRCDIR = \
 	i387-tdep.h \
 	ia64-libunwind-tdep.h \
 	ia64-tdep.h \
+	index-cache.h \
 	inf-child.h \
 	inf-loop.h \
 	inf-ptrace.h \

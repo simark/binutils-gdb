@@ -82,6 +82,7 @@
 #include <unordered_map>
 #include "selftest.h"
 #include "dwarf2-index.h"
+#include "index-cache.h"
 
 /* When == 1, print basic high level tracing messages.
    When > 1, be more verbose.
@@ -2893,12 +2894,20 @@ dwarf2_read_index (struct objfile *objfile)
   struct dwarf2_per_objfile *dwarf2_per_objfile
     = get_dwarf2_per_objfile (objfile);
 
+  /* First, try to  read the index from the objfile directly.  */
   if (!read_index_from_section (objfile, objfile_name (objfile),
 				use_deprecated_index_sections,
 				&dwarf2_per_objfile->gdb_index, &local_map,
 				&cu_list, &cu_list_elements,
 				&types_list, &types_list_elements))
-    return 0;
+    {
+      /* If it wasn't found, try from the cache.  */
+      if (!global_index_cache.read (dwarf2_per_objfile, objfile_name (objfile),
+				    use_deprecated_index_sections, &local_map,
+				    &cu_list, &cu_list_elements, &types_list,
+				    &types_list_elements))
+	return 0;
+    }
 
   /* Don't use the index if it's empty.  */
   if (local_map.symbol_table_slots == 0)
@@ -4770,6 +4779,9 @@ dwarf2_build_psymtabs (struct objfile *objfile)
       psymtab_discarder psymtabs (objfile);
       dwarf2_build_psymtabs_hard (dwarf2_per_objfile);
       psymtabs.keep ();
+
+      /* (maybe) store an index in the cache.  */
+      global_index_cache.store (dwarf2_per_objfile);
     }
   CATCH (except, RETURN_MASK_ERROR)
     {
