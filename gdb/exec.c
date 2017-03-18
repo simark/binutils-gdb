@@ -896,10 +896,10 @@ exec_get_section_table (struct target_ops *ops)
 }
 
 static enum target_xfer_status
-exec_xfer_partial (struct target_ops *ops, enum target_object object,
-		   const char *annex, gdb_byte *readbuf,
-		   const gdb_byte *writebuf,
-		   ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
+exec_xfer_partial (struct target_ops *ops, ptid_t ptid,
+		   enum target_object object, const char *annex,
+		   gdb_byte *readbuf, const gdb_byte *writebuf, ULONGEST offset,
+		   ULONGEST len, ULONGEST *xfered_len)
 {
   struct target_section_table *table = target_get_section_table (ops);
 

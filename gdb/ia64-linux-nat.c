@@ -840,6 +840,7 @@ static target_xfer_partial_ftype *super_xfer_partial;
 
 static enum target_xfer_status
 ia64_linux_xfer_partial (struct target_ops *ops,
+			 ptid_t ptid,
 			 enum target_object object,
 			 const char *annex,
 			 gdb_byte *readbuf, const gdb_byte *writebuf,
@@ -875,7 +876,7 @@ ia64_linux_xfer_partial (struct target_ops *ops,
       return TARGET_XFER_OK;
     }
 
-  return super_xfer_partial (ops, object, annex, readbuf, writebuf,
+  return super_xfer_partial (ops, ptid, object, annex, readbuf, writebuf,
 			     offset, len, xfered_len);
 }
 

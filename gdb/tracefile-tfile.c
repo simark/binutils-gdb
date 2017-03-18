@@ -921,10 +921,10 @@ tfile_xfer_partial_features (struct target_ops *ops, const char *annex,
 }
 
 static enum target_xfer_status
-tfile_xfer_partial (struct target_ops *ops, enum target_object object,
-		    const char *annex, gdb_byte *readbuf,
-		    const gdb_byte *writebuf, ULONGEST offset, ULONGEST len,
-		    ULONGEST *xfered_len)
+tfile_xfer_partial (struct target_ops *ops, ptid_t ptid,
+		    enum target_object object, const char *annex,
+		    gdb_byte *readbuf, const gdb_byte *writebuf,
+		    ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
   /* We're only doing regular memory and tdesc for now.  */
   if (object == TARGET_OBJECT_AVAILABLE_FEATURES)

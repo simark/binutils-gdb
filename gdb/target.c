@@ -1118,8 +1118,8 @@ raw_memory_xfer_partial (struct target_ops *ops, gdb_byte *readbuf,
 
   do
     {
-      res = ops->to_xfer_partial (ops, TARGET_OBJECT_MEMORY, NULL,
-				  readbuf, writebuf, memaddr, len,
+      res = ops->to_xfer_partial (ops, inferior_ptid, TARGET_OBJECT_MEMORY,
+				  NULL, readbuf, writebuf, memaddr, len,
 				  xfered_len);
       if (res == TARGET_XFER_OK)
 	break;
@@ -1328,7 +1328,7 @@ make_show_memory_breakpoints_cleanup (int show)
 /* For docs see target.h, to_xfer_partial.  */
 
 enum target_xfer_status
-target_xfer_partial (struct target_ops *ops,
+target_xfer_partial (struct target_ops *ops, ptid_t ptid,
 		     enum target_object object, const char *annex,
 		     gdb_byte *readbuf, const gdb_byte *writebuf,
 		     ULONGEST offset, ULONGEST len,
@@ -1372,7 +1372,7 @@ target_xfer_partial (struct target_ops *ops,
 					xfered_len);
     }
   else
-    retval = ops->to_xfer_partial (ops, object, annex, readbuf,
+    retval = ops->to_xfer_partial (ops, ptid, object, annex, readbuf,
 				   writebuf, offset, len, xfered_len);
 
   if (targetdebug)
@@ -1616,7 +1616,9 @@ target_read_partial (struct target_ops *ops,
 		     ULONGEST offset, ULONGEST len,
 		     ULONGEST *xfered_len)
 {
-  return target_xfer_partial (ops, object, annex, buf, NULL, offset, len,
+  ptid_t ptid = inferior_ptid;
+
+  return target_xfer_partial (ops, ptid, object, annex, buf, NULL, offset, len,
 			      xfered_len);
 }
 
@@ -1626,7 +1628,9 @@ target_write_partial (struct target_ops *ops,
 		      const char *annex, const gdb_byte *buf,
 		      ULONGEST offset, LONGEST len, ULONGEST *xfered_len)
 {
-  return target_xfer_partial (ops, object, annex, NULL, buf, offset, len,
+  ptid_t ptid = inferior_ptid;
+
+  return target_xfer_partial (ops, ptid, object, annex, NULL, buf, offset, len,
 			      xfered_len);
 }
 
@@ -3616,6 +3620,7 @@ simple_verify_memory (struct target_ops *ops,
 		      const gdb_byte *data, CORE_ADDR lma, ULONGEST size)
 {
   LONGEST total_xfered = 0;
+  ptid_t ptid = inferior_ptid;
 
   while (total_xfered < size)
     {
@@ -3624,7 +3629,7 @@ simple_verify_memory (struct target_ops *ops,
       gdb_byte buf[1024];
       ULONGEST howmuch = std::min<ULONGEST> (sizeof (buf), size - total_xfered);
 
-      status = target_xfer_partial (ops, TARGET_OBJECT_MEMORY, NULL,
+      status = target_xfer_partial (ops, ptid, TARGET_OBJECT_MEMORY, NULL,
 				    buf, NULL, lma + total_xfered, howmuch,
 				    &xfered_len);
       if (status == TARGET_XFER_OK

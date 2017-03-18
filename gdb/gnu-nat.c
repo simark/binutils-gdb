@@ -2543,10 +2543,10 @@ gnu_xfer_memory (gdb_byte *readbuf, const gdb_byte *writebuf,
 /* Target to_xfer_partial implementation.  */
 
 static enum target_xfer_status
-gnu_xfer_partial (struct target_ops *ops, enum target_object object,
-		  const char *annex, gdb_byte *readbuf,
-		  const gdb_byte *writebuf, ULONGEST offset, ULONGEST len,
-		  ULONGEST *xfered_len)
+gnu_xfer_partial (struct target_ops *ops, ptid_t ptid,
+		  enum target_object object, const char *annex,
+		  gdb_byte *readbuf, const gdb_byte *writebuf, ULONGEST offset,
+		  ULONGEST len, ULONGEST *xfered_len)
 {
   switch (object)
     {

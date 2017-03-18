@@ -244,6 +244,7 @@ read_memory_object (enum target_object object, CORE_ADDR memaddr,
 		    gdb_byte *myaddr, ssize_t len)
 {
   ULONGEST xfered = 0;
+  ptid_t ptid = inferior_ptid;
 
   while (xfered < len)
     {
@@ -251,7 +252,7 @@ read_memory_object (enum target_object object, CORE_ADDR memaddr,
       ULONGEST xfered_len;
 
       status = target_xfer_partial (current_target.beneath,
-				    object, NULL,
+				    ptid, object, NULL,
 				    myaddr + xfered, NULL,
 				    memaddr + xfered, len - xfered,
 				    &xfered_len);

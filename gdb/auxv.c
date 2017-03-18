@@ -221,6 +221,7 @@ ld_so_xfer_auxv (gdb_byte *readbuf,
 
 enum target_xfer_status
 memory_xfer_auxv (struct target_ops *ops,
+		  ptid_t ptid,
 		  enum target_object object,
 		  const char *annex,
 		  gdb_byte *readbuf,
@@ -228,6 +229,8 @@ memory_xfer_auxv (struct target_ops *ops,
 		  ULONGEST offset,
 		  ULONGEST len, ULONGEST *xfered_len)
 {
+  struct inferior *inf = find_inferior_ptid (ptid);
+
   gdb_assert (object == TARGET_OBJECT_AUXV);
   gdb_assert (readbuf || writebuf);
 
@@ -238,7 +241,7 @@ memory_xfer_auxv (struct target_ops *ops,
       this function only when attaching to a process.
       */
 
-  if (current_inferior ()->attach_flag != 0)
+  if (inf->attach_flag != 0)
     {
       enum target_xfer_status ret;
 

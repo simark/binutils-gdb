@@ -3885,9 +3885,9 @@ linux_xfer_siginfo (struct target_ops *ops, enum target_object object,
 }
 
 static enum target_xfer_status
-linux_nat_xfer_partial (struct target_ops *ops, enum target_object object,
-			const char *annex, gdb_byte *readbuf,
-			const gdb_byte *writebuf,
+linux_nat_xfer_partial (struct target_ops *ops, ptid_t ptid,
+			enum target_object object, const char *annex,
+			gdb_byte *readbuf, const gdb_byte *writebuf,
 			ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
   enum target_xfer_status xfer;
@@ -3899,11 +3899,11 @@ linux_nat_xfer_partial (struct target_ops *ops, enum target_object object,
   /* The target is connected but no live inferior is selected.  Pass
      this request down to a lower stratum (e.g., the executable
      file).  */
-  if (object == TARGET_OBJECT_MEMORY && ptid_equal (inferior_ptid, null_ptid))
+  if (object == TARGET_OBJECT_MEMORY && ptid_equal (ptid, null_ptid))
     return TARGET_XFER_EOF;
 
-  xfer = linux_ops->to_xfer_partial (ops, object, annex, readbuf, writebuf,
-				     offset, len, xfered_len);
+  xfer = linux_ops->to_xfer_partial (ops, ptid, object, annex, readbuf,
+				     writebuf, offset, len, xfered_len);
 
   return xfer;
 }
@@ -4239,16 +4239,15 @@ linux_nat_xfer_osdata (struct target_ops *ops, enum target_object object,
 }
 
 static enum target_xfer_status
-linux_xfer_partial (struct target_ops *ops, enum target_object object,
-                    const char *annex, gdb_byte *readbuf,
-		    const gdb_byte *writebuf, ULONGEST offset, ULONGEST len,
-		    ULONGEST *xfered_len)
+linux_xfer_partial (struct target_ops *ops, ptid_t ptid,
+		    enum target_object object, const char *annex,
+		    gdb_byte *readbuf, const gdb_byte *writebuf,
+		    ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
   enum target_xfer_status xfer;
-  ptid_t ptid = inferior_ptid;
 
   if (object == TARGET_OBJECT_AUXV)
-    return memory_xfer_auxv (ops, object, annex, readbuf, writebuf,
+    return memory_xfer_auxv (ops, ptid, object, annex, readbuf, writebuf,
 			     offset, len, xfered_len);
 
   if (object == TARGET_OBJECT_OSDATA)
@@ -4278,7 +4277,7 @@ linux_xfer_partial (struct target_ops *ops, enum target_object object,
   if (xfer != TARGET_XFER_EOF)
     return xfer;
 
-  return super_xfer_partial (ops, object, annex, readbuf, writebuf,
+  return super_xfer_partial (ops, ptid, object, annex, readbuf, writebuf,
 			     offset, len, xfered_len);
 }
 

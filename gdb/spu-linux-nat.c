@@ -579,7 +579,7 @@ spu_store_inferior_registers (struct target_ops *ops,
 
 /* Override the to_xfer_partial routine.  */
 static enum target_xfer_status
-spu_xfer_partial (struct target_ops *ops,
+spu_xfer_partial (struct target_ops *ops, ptid_t ptid,
 		  enum target_object object, const char *annex,
 		  gdb_byte *readbuf, const gdb_byte *writebuf,
 		  ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)

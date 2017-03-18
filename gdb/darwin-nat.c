@@ -2185,12 +2185,12 @@ darwin_read_dyld_info (task_t task, CORE_ADDR addr, gdb_byte *rdaddr,
 
 
 static enum target_xfer_status
-darwin_xfer_partial (struct target_ops *ops,
+darwin_xfer_partial (struct target_ops *ops, ptid_t ptid,
 		     enum target_object object, const char *annex,
 		     gdb_byte *readbuf, const gdb_byte *writebuf,
 		     ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
-  struct inferior *inf = current_inferior ();
+  struct inferior *inf = find_inferior_ptid (ptid);
 
   inferior_debug
     (8, _("darwin_xfer_partial(%s, %s, rbuf=%s, wbuf=%s) pid=%u\n"),

@@ -705,9 +705,9 @@ get_core_siginfo (bfd *abfd, gdb_byte *readbuf, ULONGEST offset, ULONGEST len)
 }
 
 static enum target_xfer_status
-core_xfer_partial (struct target_ops *ops, enum target_object object,
-		   const char *annex, gdb_byte *readbuf,
-		   const gdb_byte *writebuf, ULONGEST offset,
+core_xfer_partial (struct target_ops *ops, ptid_t ptid,
+		   enum target_object object, const char *annex,
+		   gdb_byte *readbuf, const gdb_byte *writebuf, ULONGEST offset,
 		   ULONGEST len, ULONGEST *xfered_len)
 {
   switch (object)
@@ -902,9 +902,8 @@ core_xfer_partial (struct target_ops *ops, enum target_object object,
       return TARGET_XFER_E_IO;
 
     default:
-      return ops->beneath->to_xfer_partial (ops->beneath, object,
-					    annex, readbuf,
-					    writebuf, offset, len,
+      return ops->beneath->to_xfer_partial (ops->beneath, ptid, object, annex,
+					    readbuf, writebuf, offset, len,
 					    xfered_len);
     }
 }

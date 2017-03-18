@@ -2862,10 +2862,10 @@ windows_xfer_shared_libraries (struct target_ops *ops,
 }
 
 static enum target_xfer_status
-windows_xfer_partial (struct target_ops *ops, enum target_object object,
-		      const char *annex, gdb_byte *readbuf,
-		      const gdb_byte *writebuf, ULONGEST offset, ULONGEST len,
-		      ULONGEST *xfered_len)
+windows_xfer_partial (struct target_ops *ops, ptid_t ptid,
+		      enum target_object object, const char *annex,
+		      gdb_byte *readbuf, const gdb_byte *writebuf,
+		      ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
   switch (object)
     {
@@ -2877,7 +2877,7 @@ windows_xfer_partial (struct target_ops *ops, enum target_object object,
 					    writebuf, offset, len, xfered_len);
 
     default:
-      return ops->beneath->to_xfer_partial (ops->beneath, object, annex,
+      return ops->beneath->to_xfer_partial (ops->beneath, ptid, object, annex,
 					    readbuf, writebuf, offset, len,
 					    xfered_len);
     }

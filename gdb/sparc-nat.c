@@ -309,16 +309,16 @@ sparc_xfer_wcookie (struct target_ops *ops, enum target_object object,
 target_xfer_partial_ftype *inf_ptrace_xfer_partial;
 
 static enum target_xfer_status
-sparc_xfer_partial (struct target_ops *ops, enum target_object object,
-		    const char *annex, gdb_byte *readbuf,
-		    const gdb_byte *writebuf, ULONGEST offset, ULONGEST len,
-		    ULONGEST *xfered_len)
+sparc_xfer_partial (struct target_ops *ops, ptid_t ptid,
+		    enum target_object object, const char *annex,
+		    gdb_byte *readbuf, const gdb_byte *writebuf,
+		    ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
   if (object == TARGET_OBJECT_WCOOKIE)
     return sparc_xfer_wcookie (ops, object, annex, readbuf, writebuf, 
 			       offset, len, xfered_len);
 
-  return inf_ptrace_xfer_partial (ops, object, annex, readbuf, writebuf,
+  return inf_ptrace_xfer_partial (ops, ptid, object, annex, readbuf, writebuf,
 				  offset, len, xfered_len);
 }
 

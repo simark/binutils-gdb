@@ -254,6 +254,7 @@ DEF_VEC_P(static_tracepoint_marker_p);
 
 typedef enum target_xfer_status
   target_xfer_partial_ftype (struct target_ops *ops,
+			     ptid_t ptid,
 			     enum target_object object,
 			     const char *annex,
 			     gdb_byte *readbuf,
@@ -741,6 +742,7 @@ struct target_ops
        and only one, of readbuf or writebuf must be non-NULL.  */
 
     enum target_xfer_status (*to_xfer_partial) (struct target_ops *ops,
+						ptid_t ptid,
 						enum target_object object,
 						const char *annex,
 						gdb_byte *readbuf,

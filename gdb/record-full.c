@@ -1516,10 +1516,10 @@ record_full_store_registers (struct target_ops *ops,
    invalidate the record/replay log from this point forward.  */
 
 static enum target_xfer_status
-record_full_xfer_partial (struct target_ops *ops, enum target_object object,
-			  const char *annex, gdb_byte *readbuf,
-			  const gdb_byte *writebuf, ULONGEST offset,
-			  ULONGEST len, ULONGEST *xfered_len)
+record_full_xfer_partial (struct target_ops *ops, ptid_t ptid,
+			  enum target_object object, const char *annex,
+			  gdb_byte *readbuf, const gdb_byte *writebuf,
+			  ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
   if (!record_full_gdb_operation_disable
       && (object == TARGET_OBJECT_MEMORY
@@ -1572,9 +1572,9 @@ record_full_xfer_partial (struct target_ops *ops, enum target_object object,
 	record_full_insn_num++;
     }
 
-  return ops->beneath->to_xfer_partial (ops->beneath, object, annex,
-					readbuf, writebuf, offset,
-					len, xfered_len);
+  return ops->beneath->to_xfer_partial (ops->beneath, ptid, object, annex,
+					readbuf, writebuf, offset, len,
+					xfered_len);
 }
 
 /* This structure represents a breakpoint inserted while the record
@@ -2087,7 +2087,7 @@ record_full_core_store_registers (struct target_ops *ops,
 
 static enum target_xfer_status
 record_full_core_xfer_partial (struct target_ops *ops,
-			       enum target_object object,
+			       ptid_t ptid, enum target_object object,
 			       const char *annex, gdb_byte *readbuf,
 			       const gdb_byte *writebuf, ULONGEST offset,
 			       ULONGEST len, ULONGEST *xfered_len)
@@ -2155,10 +2155,10 @@ record_full_core_xfer_partial (struct target_ops *ops,
 		    {
 		      if (!entry)
 			return ops->beneath->to_xfer_partial (ops->beneath,
-							      object, annex,
-							      readbuf, writebuf,
-							      offset, len,
-							      xfered_len);
+							      ptid, object,
+							      annex, readbuf,
+							      writebuf, offset,
+							      len, xfered_len);
 
 		      memcpy (readbuf, entry->buf + sec_offset,
 			      (size_t) len);
@@ -2175,7 +2175,7 @@ record_full_core_xfer_partial (struct target_ops *ops,
 	error (_("You can't do that without a process to debug."));
     }
 
-  return ops->beneath->to_xfer_partial (ops->beneath, object, annex,
+  return ops->beneath->to_xfer_partial (ops->beneath, ptid, object, annex,
 					readbuf, writebuf, offset, len,
 					xfered_len);
 }

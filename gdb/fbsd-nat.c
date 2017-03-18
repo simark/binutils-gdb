@@ -207,24 +207,18 @@ fbsd_find_memory_regions (struct target_ops *self,
 #endif
 
 #ifdef KERN_PROC_AUXV
-static enum target_xfer_status (*super_xfer_partial) (struct target_ops *ops,
-						      enum target_object object,
-						      const char *annex,
-						      gdb_byte *readbuf,
-						      const gdb_byte *writebuf,
-						      ULONGEST offset,
-						      ULONGEST len,
-						      ULONGEST *xfered_len);
+
+static target_xfer_partial_ftype *super_xfer_partial;
 
 /* Implement the "to_xfer_partial target_ops" method.  */
 
 static enum target_xfer_status
-fbsd_xfer_partial (struct target_ops *ops, enum target_object object,
-		   const char *annex, gdb_byte *readbuf,
-		   const gdb_byte *writebuf,
-		   ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
+fbsd_xfer_partial (struct target_ops *ops, ptid_t ptid,
+		   enum target_object object, const char *annex,
+		   gdb_byte *readbuf, const gdb_byte *writebuf, ULONGEST offset,
+		   ULONGEST len, ULONGEST *xfered_len)
 {
-  pid_t pid = ptid_get_pid (inferior_ptid);
+  pid_t pid = ptid_get_pid (ptid);
 
   switch (object)
     {
@@ -272,8 +266,8 @@ fbsd_xfer_partial (struct target_ops *ops, enum target_object object,
 	return TARGET_XFER_E_IO;
       }
     default:
-      return super_xfer_partial (ops, object, annex, readbuf, writebuf, offset,
-				 len, xfered_len);
+      return super_xfer_partial (ops, ptid, object, annex, readbuf, writebuf,
+				 offset, len, xfered_len);
     }
 }
 #endif

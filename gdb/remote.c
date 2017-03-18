@@ -10374,10 +10374,10 @@ remote_read_qxfer (struct target_ops *ops, const char *object_name,
 }
 
 static enum target_xfer_status
-remote_xfer_partial (struct target_ops *ops, enum target_object object,
-		     const char *annex, gdb_byte *readbuf,
-		     const gdb_byte *writebuf, ULONGEST offset, ULONGEST len,
-		     ULONGEST *xfered_len)
+remote_xfer_partial (struct target_ops *ops, ptid_t ptid,
+		     enum target_object object, const char *annex,
+		     gdb_byte *readbuf, const gdb_byte *writebuf,
+		     ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
   struct remote_state *rs;
   int i;
@@ -10386,7 +10386,7 @@ remote_xfer_partial (struct target_ops *ops, enum target_object object,
   int unit_size = gdbarch_addressable_memory_unit_size (target_gdbarch ());
 
   set_remote_traceframe ();
-  set_general_thread (inferior_ptid);
+  set_general_thread (ptid);
 
   rs = get_remote_state ();
 

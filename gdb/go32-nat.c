@@ -599,10 +599,10 @@ go32_xfer_memory (gdb_byte *readbuf, const gdb_byte *writebuf,
 /* Target to_xfer_partial implementation.  */
 
 static enum target_xfer_status
-go32_xfer_partial (struct target_ops *ops, enum target_object object,
-		   const char *annex, gdb_byte *readbuf,
-		   const gdb_byte *writebuf, ULONGEST offset, ULONGEST len,
-		   ULONGEST *xfered_len)
+go32_xfer_partial (struct target_ops *ops, ptid_t ptid,
+		   enum target_object object, const char *annex,
+		   gdb_byte *readbuf, const gdb_byte *writebuf, ULONGEST offset,
+		   ULONGEST len, ULONGEST *xfered_len)
 {
   switch (object)
     {
@@ -610,7 +610,7 @@ go32_xfer_partial (struct target_ops *ops, enum target_object object,
       return go32_xfer_memory (readbuf, writebuf, offset, len, xfered_len);
 
     default:
-      return ops->beneath->to_xfer_partial (ops->beneath, object, annex,
+      return ops->beneath->to_xfer_partial (ops->beneath, ptid, object, annex,
 					    readbuf, writebuf, offset, len,
 					    xfered_len);
     }
