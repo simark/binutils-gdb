@@ -149,16 +149,25 @@ spu_fetch_registers (struct target_ops *ops,
   int spufs_fd;
   CORE_ADDR spufs_addr;
 
+  /* Since we use functions that rely on inferior_ptid, we need to set and
+     restore it.  */
+  struct cleanup *cleanup = save_inferior_ptid ();
+  inferior_ptid = regcache_get_ptid (regcache);
+
   /* This version applies only if we're currently in spu_run.  */
   if (gdbarch_bfd_arch_info (gdbarch)->arch != bfd_arch_spu)
     {
       ops_beneath->to_fetch_registers (ops_beneath, regcache, regno);
+      do_cleanups (cleanup);
       return;
     }
 
   /* We must be stopped on a spu_run system call.  */
   if (!parse_spufs_run (inferior_ptid, &spufs_fd, &spufs_addr))
-    return;
+    {
+      do_cleanups (cleanup);
+      return;
+    }
 
   /* The ID register holds the spufs file handle.  */
   if (regno == -1 || regno == SPU_ID_REGNUM)
@@ -191,6 +200,8 @@ spu_fetch_registers (struct target_ops *ops,
 	for (i = 0; i < SPU_NUM_GPRS; i++)
 	  regcache_raw_supply (regcache, i, buf + i*16);
     }
+
+  do_cleanups (cleanup);
 }
 
 /* Override the to_store_registers routine.  */
@@ -203,16 +214,25 @@ spu_store_registers (struct target_ops *ops,
   int spufs_fd;
   CORE_ADDR spufs_addr;
 
+  /* Since we use functions that rely on inferior_ptid, we need to set and
+     restore it.  */
+  struct cleanup *cleanup = save_inferior_ptid ();
+  inferior_ptid = regcache_get_ptid (regcache);
+
   /* This version applies only if we're currently in spu_run.  */
   if (gdbarch_bfd_arch_info (gdbarch)->arch != bfd_arch_spu)
     {
       ops_beneath->to_store_registers (ops_beneath, regcache, regno);
+      do_cleanups (cleanup);
       return;
     }
 
   /* We must be stopped on a spu_run system call.  */
   if (!parse_spufs_run (inferior_ptid, &spufs_fd, &spufs_addr))
-    return;
+    {
+      do_cleanups (cleanup);
+      return;
+    }
 
   /* The NPC register is found in PPC memory at SPUFS_ADDR.  */
   if (regno == -1 || regno == SPU_PC_REGNUM)
@@ -238,6 +258,8 @@ spu_store_registers (struct target_ops *ops,
       target_write (ops_beneath, TARGET_OBJECT_SPU, annex,
 		    buf, 0, sizeof buf);
     }
+
+  do_cleanups (cleanup);
 }
 
 /* Override the to_xfer_partial routine.  */
