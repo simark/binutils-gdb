@@ -343,7 +343,7 @@ target_find_description (void)
 
   /* If that failed try a target-specific hook.  */
   if (current_target_desc == NULL)
-    current_target_desc = target_read_description (&current_target);
+    current_target_desc = target_read_description (&current_target, inferior_ptid);
 
   /* If a non-NULL description was returned, then update the current
      architecture.  */

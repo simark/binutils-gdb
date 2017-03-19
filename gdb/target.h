@@ -793,7 +793,8 @@ struct target_ops
        OPS doesn't have a description, this should delegate to the
        "beneath" target.  Returns the description found, or NULL if no
        description was available.  */
-    const struct target_desc *(*to_read_description) (struct target_ops *ops)
+    const struct target_desc *(*to_read_description) (struct target_ops *ops,
+						      ptid_t ptid)
 	 TARGET_DEFAULT_RETURN (NULL);
 
     /* Build the PTID of the thread on which a given task is running,
@@ -2058,7 +2059,8 @@ extern int target_masked_watch_num_registers (CORE_ADDR addr, CORE_ADDR mask);
 #define target_can_execute_reverse \
       current_target.to_can_execute_reverse (&current_target)
 
-extern const struct target_desc *target_read_description (struct target_ops *);
+extern const struct target_desc *target_read_description (struct target_ops *,
+							  ptid_t ptid);
 
 #define target_get_ada_task_ptid(lwp, tid) \
      (*current_target.to_get_ada_task_ptid) (&current_target, lwp,tid)

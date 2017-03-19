@@ -494,7 +494,7 @@ ps_get_thread_area (struct ps_prochandle *ph,
 }
 
 static const struct target_desc *
-arm_linux_read_description (struct target_ops *ops)
+arm_linux_read_description (struct target_ops *ops, ptid_t ptid)
 {
   CORE_ADDR arm_hwcap = 0;
 
@@ -502,7 +502,7 @@ arm_linux_read_description (struct target_ops *ops)
     {
       elf_gregset_t gpregs;
       struct iovec iov;
-      int tid = ptid_get_lwp (inferior_ptid);
+      int tid = ptid_get_lwp (ptid);
 
       iov.iov_base = &gpregs;
       iov.iov_len = sizeof (gpregs);
@@ -516,7 +516,7 @@ arm_linux_read_description (struct target_ops *ops)
 
   if (target_auxv_search (ops, AT_HWCAP, &arm_hwcap) != 1)
     {
-      return ops->beneath->to_read_description (ops->beneath);
+      return ops->beneath->to_read_description (ops->beneath, ptid);
     }
 
   if (arm_hwcap & HWCAP_IWMMXT)
@@ -539,7 +539,7 @@ arm_linux_read_description (struct target_ops *ops)
 
       /* Now make sure that the kernel supports reading these
 	 registers.  Support was added in 2.6.30.  */
-      pid = ptid_get_lwp (inferior_ptid);
+      pid = ptid_get_lwp (ptid);
       errno = 0;
       buf = (char *) alloca (VFP_REGS_SIZE);
       if (ptrace (PTRACE_GETVFPREGS, pid, 0, buf) < 0
@@ -549,7 +549,7 @@ arm_linux_read_description (struct target_ops *ops)
       return result;
     }
 
-  return ops->beneath->to_read_description (ops->beneath);
+  return ops->beneath->to_read_description (ops->beneath, ptid);
 }
 
 /* Information describing the hardware breakpoint capabilities.  */

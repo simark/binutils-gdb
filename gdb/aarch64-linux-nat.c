@@ -486,13 +486,13 @@ extern struct target_desc *tdesc_arm_with_neon;
 /* Implement the "to_read_description" target_ops method.  */
 
 static const struct target_desc *
-aarch64_linux_read_description (struct target_ops *ops)
+aarch64_linux_read_description (struct target_ops *ops, ptid_t ptid)
 {
   int ret, tid;
   gdb_byte regbuf[VFP_REGS_SIZE];
   struct iovec iovec;
 
-  tid = ptid_get_lwp (inferior_ptid);
+  tid = ptid_get_lwp (ptid);
 
   iovec.iov_base = regbuf;
   iovec.iov_len = VFP_REGS_SIZE;

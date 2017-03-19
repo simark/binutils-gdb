@@ -949,7 +949,7 @@ core_thread_alive (struct target_ops *ops, ptid_t ptid)
    core_ops.  */
 
 static const struct target_desc *
-core_read_description (struct target_ops *target)
+core_read_description (struct target_ops *target, ptid_t ptid)
 {
   if (core_gdbarch && gdbarch_core_read_description_p (core_gdbarch))
     {
@@ -961,7 +961,7 @@ core_read_description (struct target_ops *target)
 	return result;
     }
 
-  return target->beneath->to_read_description (target->beneath);
+  return target->beneath->to_read_description (target->beneath, ptid);
 }
 
 static char *

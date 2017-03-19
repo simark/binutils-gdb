@@ -2195,26 +2195,28 @@ debug_flash_done (struct target_ops *self)
 }
 
 static const struct target_desc *
-delegate_read_description (struct target_ops *self)
+delegate_read_description (struct target_ops *self, ptid_t arg1)
 {
   self = self->beneath;
-  return self->to_read_description (self);
+  return self->to_read_description (self, arg1);
 }
 
 static const struct target_desc *
-tdefault_read_description (struct target_ops *self)
+tdefault_read_description (struct target_ops *self, ptid_t arg1)
 {
   return NULL;
 }
 
 static const struct target_desc *
-debug_read_description (struct target_ops *self)
+debug_read_description (struct target_ops *self, ptid_t arg1)
 {
   const struct target_desc * result;
   fprintf_unfiltered (gdb_stdlog, "-> %s->to_read_description (...)\n", debug_target.to_shortname);
-  result = debug_target.to_read_description (&debug_target);
+  result = debug_target.to_read_description (&debug_target, arg1);
   fprintf_unfiltered (gdb_stdlog, "<- %s->to_read_description (", debug_target.to_shortname);
   target_debug_print_struct_target_ops_p (&debug_target);
+  fputs_unfiltered (", ", gdb_stdlog);
+  target_debug_print_ptid_t (arg1);
   fputs_unfiltered (") = ", gdb_stdlog);
   target_debug_print_const_struct_target_desc_p (result);
   fputs_unfiltered ("\n", gdb_stdlog);

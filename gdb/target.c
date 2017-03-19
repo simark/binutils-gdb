@@ -2424,9 +2424,11 @@ target_mourn_inferior (ptid_t ptid)
    from TARGET.  If we find one, return its description.  */
 
 const struct target_desc *
-target_read_description (struct target_ops *target)
+target_read_description (struct target_ops *target, ptid_t ptid)
 {
-  return target->to_read_description (target);
+  gdb_assert (ptid_equal (ptid, inferior_ptid));
+
+  return target->to_read_description (target, ptid);
 }
 
 /* This implements a basic search of memory, reading target memory and

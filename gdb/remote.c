@@ -11151,7 +11151,7 @@ remote_read_description_p (struct target_ops *target)
 }
 
 static const struct target_desc *
-remote_read_description (struct target_ops *target)
+remote_read_description (struct target_ops *target, ptid_t ptid)
 {
   struct remote_g_packet_data *data
     = ((struct remote_g_packet_data *)
@@ -11159,8 +11159,8 @@ remote_read_description (struct target_ops *target)
 
   /* Do not try this during initial connection, when we do not know
      whether there is a running but stopped thread.  */
-  if (!target_has_execution || ptid_equal (inferior_ptid, null_ptid))
-    return target->beneath->to_read_description (target->beneath);
+  if (!target_has_execution || ptid_equal (ptid, null_ptid))
+    return target->beneath->to_read_description (target->beneath, ptid);
 
   if (!VEC_empty (remote_g_packet_guess_s, data->guesses))
     {
@@ -11179,7 +11179,7 @@ remote_read_description (struct target_ops *target)
 	 an architecture, but it's too tricky to do safely.  */
     }
 
-  return target->beneath->to_read_description (target->beneath);
+  return target->beneath->to_read_description (target->beneath, ptid);
 }
 
 /* Remote file transfer support.  This is host-initiated I/O, not

@@ -42,6 +42,7 @@
 #include "nat/x86-linux.h"
 #include "nat/x86-linux-dregs.h"
 #include "nat/linux-ptrace.h"
+#include "inf-ptrace.h"
 
 /* Per-thread arch-specific data we want to keep.  */
 
@@ -113,7 +114,7 @@ x86_linux_child_post_startup_inferior (struct target_ops *self, ptid_t ptid)
 /* Get Linux/x86 target description from running target.  */
 
 static const struct target_desc *
-x86_linux_read_description (struct target_ops *ops)
+x86_linux_read_description (struct target_ops *ops, ptid_t ptid)
 {
   int tid;
   int is_64bit = 0;
@@ -123,6 +124,7 @@ x86_linux_read_description (struct target_ops *ops)
   static uint64_t xcr0;
   uint64_t xcr0_features_bits;
 
+  tid = get_ptrace_pid (ptid);
   /* GNU/Linux LWP ID's are process ID's.  */
   tid = ptid_get_lwp (inferior_ptid);
   if (tid == 0)
