@@ -4079,15 +4079,15 @@ spu_enumerate_spu_ids (int pid, gdb_byte *buf, ULONGEST offset, ULONGEST len)
    object type, using the /proc file system.  */
 
 static enum target_xfer_status
-linux_proc_xfer_spu (struct target_ops *ops, enum target_object object,
-		     const char *annex, gdb_byte *readbuf,
-		     const gdb_byte *writebuf,
+linux_proc_xfer_spu (struct target_ops *ops, ptid_t ptid,
+		     enum target_object object, const char *annex,
+		     gdb_byte *readbuf, const gdb_byte *writebuf,
 		     ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
   char buf[128];
   int fd = 0;
   int ret = -1;
-  int pid = ptid_get_lwp (inferior_ptid);
+  int pid = ptid_get_lwp (ptid);
 
   if (!annex)
     {
@@ -4256,7 +4256,7 @@ linux_xfer_partial (struct target_ops *ops, enum target_object object,
 				  offset, len, xfered_len);
 
   if (object == TARGET_OBJECT_SPU)
-    return linux_proc_xfer_spu (ops, object, annex, readbuf, writebuf,
+    return linux_proc_xfer_spu (ops, ptid, object, annex, readbuf, writebuf,
 				offset, len, xfered_len);
 
   /* GDB calculates all the addresses in possibly larget width of the address.
