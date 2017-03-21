@@ -3976,9 +3976,9 @@ linux_child_pid_to_exec_file (struct target_ops *self, int pid)
    efficient than banging away at PTRACE_PEEKTEXT.  */
 
 static enum target_xfer_status
-linux_proc_xfer_partial (struct target_ops *ops, enum target_object object,
-			 const char *annex, gdb_byte *readbuf,
-			 const gdb_byte *writebuf,
+linux_proc_xfer_partial (struct target_ops *ops, ptid_t ptid,
+			 enum target_object object, const char *annex,
+			 gdb_byte *readbuf, const gdb_byte *writebuf,
 			 ULONGEST offset, LONGEST len, ULONGEST *xfered_len)
 {
   LONGEST ret;
@@ -3994,8 +3994,7 @@ linux_proc_xfer_partial (struct target_ops *ops, enum target_object object,
 
   /* We could keep this file open and cache it - possibly one per
      thread.  That requires some juggling, but is even faster.  */
-  xsnprintf (filename, sizeof filename, "/proc/%ld/mem",
-	     ptid_get_lwp (inferior_ptid));
+  xsnprintf (filename, sizeof filename, "/proc/%ld/mem", ptid_get_lwp (ptid));
   fd = gdb_open_cloexec (filename, ((readbuf ? O_RDONLY : O_WRONLY)
 				    | O_LARGEFILE), 0);
   if (fd == -1)
@@ -4246,6 +4245,7 @@ linux_xfer_partial (struct target_ops *ops, enum target_object object,
 		    ULONGEST *xfered_len)
 {
   enum target_xfer_status xfer;
+  ptid_t ptid = inferior_ptid;
 
   if (object == TARGET_OBJECT_AUXV)
     return memory_xfer_auxv (ops, object, annex, readbuf, writebuf,
@@ -4273,7 +4273,7 @@ linux_xfer_partial (struct target_ops *ops, enum target_object object,
 	offset &= ((ULONGEST) 1 << addr_bit) - 1;
     }
 
-  xfer = linux_proc_xfer_partial (ops, object, annex, readbuf, writebuf,
+  xfer = linux_proc_xfer_partial (ops, ptid, object, annex, readbuf, writebuf,
 				  offset, len, xfered_len);
   if (xfer != TARGET_XFER_EOF)
     return xfer;
