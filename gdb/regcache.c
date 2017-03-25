@@ -1684,7 +1684,7 @@ static void test_target_store_registers (target_ops *self, regcache *regs,
 					 int regno);
 static enum target_xfer_status
   test_target_xfer_partial (struct target_ops *ops,
-			    enum target_object object,
+			    const xfer_partial_ctx &ctx,
 			    const char *annex, gdb_byte *readbuf,
 			    const gdb_byte *writebuf,
 			    ULONGEST offset, ULONGEST len,
@@ -1734,7 +1734,7 @@ test_target_store_registers (target_ops *self, regcache *regs, int regno)
 }
 
 static enum target_xfer_status
-test_target_xfer_partial (struct target_ops *self, enum target_object object,
+test_target_xfer_partial (struct target_ops *self, const xfer_partial_ctx &ctx,
 			  const char *annex, gdb_byte *readbuf,
 			  const gdb_byte *writebuf,
 			  ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)

@@ -891,9 +891,9 @@ procfs_xfer_memory (gdb_byte *readbuf, const gdb_byte *writebuf,
 
 static enum target_xfer_status
 procfs_xfer_partial (struct target_ops *ops, enum target_object object,
-		     const char *annex, gdb_byte *readbuf,
-		     const gdb_byte *writebuf, ULONGEST offset, ULONGEST len,
-		     ULONGEST *xfered_len)
+		     const xfer_partial_ctx *ctx, const char *annex,
+		     gdb_byte *readbuf, const gdb_byte *writebuf,
+		     ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
   switch (object)
     {
@@ -932,7 +932,7 @@ procfs_xfer_partial (struct target_ops *ops, enum target_object object,
 	}
 	/* Fallthru */
     default:
-      return ops->beneath->to_xfer_partial (ops->beneath, object, annex,
+      return ops->beneath->to_xfer_partial (ops->beneath, object, ctx, annex,
 					    readbuf, writebuf, offset, len,
 					    xfered_len);
     }

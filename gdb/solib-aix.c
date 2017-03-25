@@ -279,8 +279,9 @@ solib_aix_get_library_list (struct inferior *inf, const char *warning_msg)
   if (data->library_list != NULL)
     return data->library_list;
 
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_libraries_aix ();
   gdb::unique_xmalloc_ptr<char> library_document
-    = target_read_stralloc (&current_target, TARGET_OBJECT_LIBRARIES_AIX,
+    = target_read_stralloc (&current_target, ctx,
 			    NULL);
   if (library_document == NULL && warning_msg != NULL)
     {

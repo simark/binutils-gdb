@@ -136,8 +136,8 @@ bsd_kvm_xfer_memory (CORE_ADDR addr, ULONGEST len,
 
 static enum target_xfer_status
 bsd_kvm_xfer_partial (struct target_ops *ops, enum target_object object,
-		      const char *annex, gdb_byte *readbuf,
-		      const gdb_byte *writebuf,
+                      const xfer_partial_ctx *ctx, const char *annex,
+                      gdb_byte *readbuf, const gdb_byte *writebuf,
 		      ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
   switch (object)

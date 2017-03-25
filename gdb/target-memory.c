@@ -401,9 +401,10 @@ target_write_memory_blocks (VEC(memory_write_request_s) *requests,
   for (i = 0; VEC_iterate (memory_write_request_s, regular, i, r); ++i)
     {
       LONGEST len;
+      xfer_partial_ctx ctx = xfer_partial_ctx::make_memory ();
 
       len = target_write_with_progress (current_target.beneath,
-					TARGET_OBJECT_MEMORY, NULL,
+					ctx, NULL,
 					r->data, r->begin, r->end - r->begin,
 					progress_cb, r->baton);
       if (len < (LONGEST) (r->end - r->begin))
@@ -424,9 +425,10 @@ target_write_memory_blocks (VEC(memory_write_request_s) *requests,
       for (i = 0; VEC_iterate (memory_write_request_s, flash, i, r); ++i)
 	{
 	  LONGEST len;
+	  xfer_partial_ctx ctx = xfer_partial_ctx::make_flash ();
 
 	  len = target_write_with_progress (&current_target,
-					    TARGET_OBJECT_FLASH, NULL,
+					    ctx, NULL,
 					    r->data, r->begin,
 					    r->end - r->begin,
 					    progress_cb, r->baton);

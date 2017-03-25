@@ -2576,9 +2576,9 @@ wait_again:
 
 static enum target_xfer_status
 procfs_xfer_partial (struct target_ops *ops, enum target_object object,
-		     const char *annex, gdb_byte *readbuf,
-		     const gdb_byte *writebuf, ULONGEST offset, ULONGEST len,
-		     ULONGEST *xfered_len)
+		     const xfer_partial_ctx *ctx, const char *annex,
+		     gdb_byte *readbuf, const gdb_byte *writebuf,
+		     ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
   switch (object)
     {
@@ -2586,11 +2586,11 @@ procfs_xfer_partial (struct target_ops *ops, enum target_object object,
       return procfs_xfer_memory (readbuf, writebuf, offset, len, xfered_len);
 
     case TARGET_OBJECT_AUXV:
-      return memory_xfer_auxv (ops, object, annex, readbuf, writebuf,
+      return memory_xfer_auxv (ops, object, ctx, annex, readbuf, writebuf,
 			       offset, len, xfered_len);
 
     default:
-      return ops->beneath->to_xfer_partial (ops->beneath, object, annex,
+      return ops->beneath->to_xfer_partial (ops->beneath, object, ctx, annex,
 					    readbuf, writebuf, offset, len,
 					    xfered_len);
     }
@@ -3932,7 +3932,7 @@ procfs_make_note_section (struct target_ops *self, bfd *obfd, int *note_size)
 			     &thread_args);
   note_data = thread_args.note_data;
 
-  auxv_len = target_read_alloc (&current_target, TARGET_OBJECT_AUXV,
+  auxv_len = target_read_alloc (&current_target, xfer_partial_ctx::make_auxv (),
 				NULL, &auxv);
   if (auxv_len > 0)
     {

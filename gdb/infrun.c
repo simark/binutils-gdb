@@ -8732,9 +8732,9 @@ siginfo_value_read (struct value *v)
      vice versa.  */
   validate_registers_access ();
 
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_signal_info ();
   transferred =
-    target_read (&current_target, TARGET_OBJECT_SIGNAL_INFO,
-		 NULL,
+    target_read (&current_target, ctx, NULL,
 		 value_contents_all_raw (v),
 		 value_offset (v),
 		 TYPE_LENGTH (value_type (v)));
@@ -8755,8 +8755,10 @@ siginfo_value_write (struct value *v, struct value *fromval)
      vice versa.  */
   validate_registers_access ();
 
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_signal_info ();
+
   transferred = target_write (&current_target,
-			      TARGET_OBJECT_SIGNAL_INFO,
+			      ctx,
 			      NULL,
 			      value_contents_all_raw (fromval),
 			      value_offset (v),
@@ -8834,8 +8836,9 @@ save_infcall_suspend_state (void)
       siginfo_data = (gdb_byte *) xmalloc (len);
       back_to = make_cleanup (xfree, siginfo_data);
 
-      if (target_read (&current_target, TARGET_OBJECT_SIGNAL_INFO, NULL,
-		       siginfo_data, 0, len) == len)
+      xfer_partial_ctx ctx = xfer_partial_ctx::make_signal_info ();
+
+      if (target_read (&current_target, ctx, NULL, siginfo_data, 0, len) == len)
 	discard_cleanups (back_to);
       else
 	{
@@ -8882,9 +8885,10 @@ restore_infcall_suspend_state (struct infcall_suspend_state *inf_state)
   if (inf_state->siginfo_gdbarch == gdbarch)
     {
       struct type *type = gdbarch_get_siginfo_type (gdbarch);
+      xfer_partial_ctx ctx = xfer_partial_ctx::make_signal_info ();
 
       /* Errors ignored.  */
-      target_write (&current_target, TARGET_OBJECT_SIGNAL_INFO, NULL,
+      target_write (&current_target, ctx, NULL,
 		    inf_state->siginfo_data, 0, TYPE_LENGTH (type));
     }
 

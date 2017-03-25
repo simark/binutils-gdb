@@ -227,7 +227,7 @@ memory_error (enum target_xfer_status err, CORE_ADDR memaddr)
 /* Helper function.  */
 
 static void
-read_memory_object (enum target_object object, CORE_ADDR memaddr,
+read_memory_object (const xfer_partial_ctx &ctx, CORE_ADDR memaddr,
 		    gdb_byte *myaddr, ssize_t len)
 {
   ULONGEST xfered = 0;
@@ -237,8 +237,7 @@ read_memory_object (enum target_object object, CORE_ADDR memaddr,
       enum target_xfer_status status;
       ULONGEST xfered_len;
 
-      status = target_xfer_partial (current_target.beneath,
-				    object, NULL,
+      status = target_xfer_partial (current_target.beneath, ctx, NULL,
 				    myaddr + xfered, NULL,
 				    memaddr + xfered, len - xfered,
 				    &xfered_len);
@@ -257,7 +256,9 @@ read_memory_object (enum target_object object, CORE_ADDR memaddr,
 void
 read_memory (CORE_ADDR memaddr, gdb_byte *myaddr, ssize_t len)
 {
-  read_memory_object (TARGET_OBJECT_MEMORY, memaddr, myaddr, len);
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_memory ();
+
+  read_memory_object (ctx, memaddr, myaddr, len);
 }
 
 /* Same as target_read_stack, but report an error if can't read.  */
@@ -265,7 +266,9 @@ read_memory (CORE_ADDR memaddr, gdb_byte *myaddr, ssize_t len)
 void
 read_stack (CORE_ADDR memaddr, gdb_byte *myaddr, ssize_t len)
 {
-  read_memory_object (TARGET_OBJECT_STACK_MEMORY, memaddr, myaddr, len);
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_memory ();
+
+  read_memory_object (ctx, memaddr, myaddr, len);
 }
 
 /* Same as target_read_code, but report an error if can't read.  */
@@ -273,7 +276,9 @@ read_stack (CORE_ADDR memaddr, gdb_byte *myaddr, ssize_t len)
 void
 read_code (CORE_ADDR memaddr, gdb_byte *myaddr, ssize_t len)
 {
-  read_memory_object (TARGET_OBJECT_CODE_MEMORY, memaddr, myaddr, len);
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_memory ();
+
+  read_memory_object (ctx, memaddr, myaddr, len);
 }
 
 /* Read memory at MEMADDR of length LEN and put the contents in

@@ -839,12 +839,10 @@ static target_xfer_partial_ftype *super_xfer_partial;
 /* Implement the to_xfer_partial target_ops method.  */
 
 static enum target_xfer_status
-ia64_linux_xfer_partial (struct target_ops *ops,
-			 enum target_object object,
-			 const char *annex,
+ia64_linux_xfer_partial (struct target_ops *ops, enum target_object object,
+			 const xfer_partial_ctx *ctx, const char *annex,
 			 gdb_byte *readbuf, const gdb_byte *writebuf,
-			 ULONGEST offset, ULONGEST len,
-			 ULONGEST *xfered_len)
+			 ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
   if (object == TARGET_OBJECT_UNWIND_TABLE && readbuf != NULL)
     {

@@ -1532,7 +1532,7 @@ TAGFILES_NO_SRCDIR = $(SFILES) $(HFILES_NO_SRCDIR) $(ALLDEPFILES) \
 	$(CONFIG_SRCS)
 TAGFILES_WITH_SRCDIR = $(HFILES_WITH_SRCDIR)
 
-COMMON_OBS = $(DEPFILES) $(CONFIG_OBS) $(YYOBJ) \
+COMMON_OBS =  \
 	btrace-common.o \
 	buffer.o \
 	cleanups.o \
@@ -1564,7 +1564,7 @@ COMMON_OBS = $(DEPFILES) $(CONFIG_OBS) $(YYOBJ) \
 	xml-utils.o \
 	$(patsubst %.c,%.o,$(COMMON_SFILES)) \
 	$(SUBDIR_TARGET_OBS) \
-	$(SUBDIR_GCC_COMPILE_OBS)
+	$(SUBDIR_GCC_COMPILE_OBS) $(DEPFILES) $(CONFIG_OBS) $(YYOBJ)
 
 TSOBS = inflow.o
 
@@ -1619,7 +1619,8 @@ all: gdb$(EXEEXT) $(CONFIG_ALL)
 # Rule for compiling .c files in the top-level gdb directory.
 # The order-only dependencies ensure that we create the build subdirectories.
 %.o: %.c | $(CONFIG_DEP_SUBDIR)
-	$(COMPILE) $<
+	@echo "CXX $<"
+	@$(COMPILE) $<
 	$(POSTCOMPILE)
 
 $(CONFIG_DEP_SUBDIR):
@@ -1630,15 +1631,18 @@ python/%.o: INTERNAL_CFLAGS += $(PYTHON_CFLAGS)
 
 # Rules for compiling .c files in the various source subdirectories.
 %.o: ${srcdir}/common/%.c
-	$(COMPILE) $<
+	@echo "CXX $<"
+	@$(COMPILE) $<
 	$(POSTCOMPILE)
 
 %.o: $(srcdir)/gdbtk/generic/%.c
-	$(COMPILE) $(all_gdbtk_cflags) $<
+	@echo "CXX $<"
+	@$(COMPILE) $(all_gdbtk_cflags) $<
 	$(POSTCOMPILE)
 
 %.o: ${srcdir}/nat/%.c
-	$(COMPILE) $<
+	@echo "CXX $<"
+	@$(COMPILE) $<
 	$(POSTCOMPILE)
 
 # Specify an explicit rule for gdb/common/agent.c, to avoid a clash with the

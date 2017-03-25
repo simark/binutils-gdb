@@ -257,8 +257,9 @@ solib_target_current_sos (void)
   int ix;
 
   /* Fetch the list of shared libraries.  */
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_libraries ();
   gdb::unique_xmalloc_ptr<char> library_document
-    = target_read_stralloc (&current_target, TARGET_OBJECT_LIBRARIES, NULL);
+    = target_read_stralloc (&current_target, ctx, NULL);
   if (library_document == NULL)
     return NULL;
 

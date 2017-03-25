@@ -1357,8 +1357,9 @@ mi_cmd_data_read_memory (const char *command, char **argv, int argc)
 
   /* Dispatch memory reads to the topmost target, not the flattened
      current_target.  */
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_memory ();
   nr_bytes = target_read (current_target.beneath,
-			  TARGET_OBJECT_MEMORY, NULL, mbuf.data (),
+			  ctx, NULL, mbuf.data (),
 			  addr, total_bytes);
   if (nr_bytes <= 0)
     error (_("Unable to read memory."));

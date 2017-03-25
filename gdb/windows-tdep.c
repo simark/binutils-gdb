@@ -331,7 +331,9 @@ display_one_tib (ptid_t ptid)
       return -1;
     }
 
-  if (target_read (&current_target, TARGET_OBJECT_MEMORY,
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_memory ();
+
+  if (target_read (&current_target, ctx,
 		   NULL, tib, thread_local_base, tib_size) != tib_size)
     {
       printf_filtered (_("Unable to read thread information "

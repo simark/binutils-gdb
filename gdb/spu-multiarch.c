@@ -178,8 +178,9 @@ spu_fetch_registers (struct target_ops *ops,
   if (regno == -1 || regno == SPU_PC_REGNUM)
     {
       gdb_byte buf[4];
+      xfer_partial_ctx ctx = xfer_partial_ctx::make_memory ();
 
-      if (target_read (ops_beneath, TARGET_OBJECT_MEMORY, NULL,
+      if (target_read (ops_beneath, ctx, NULL,
 		       buf, spufs_addr, sizeof buf) == sizeof buf)
 	regcache_raw_supply (regcache, SPU_PC_REGNUM, buf);
     }
@@ -190,9 +191,10 @@ spu_fetch_registers (struct target_ops *ops,
       gdb_byte buf[16 * SPU_NUM_GPRS];
       char annex[32];
       int i;
+      xfer_partial_ctx ctx = xfer_partial_ctx::make_spu ();
 
       xsnprintf (annex, sizeof annex, "%d/regs", spufs_fd);
-      if (target_read (ops_beneath, TARGET_OBJECT_SPU, annex,
+      if (target_read (ops_beneath, ctx, annex,
 		       buf, 0, sizeof buf) == sizeof buf)
 	for (i = 0; i < SPU_NUM_GPRS; i++)
 	  regcache_raw_supply (regcache, i, buf + i*16);
@@ -231,8 +233,8 @@ spu_store_registers (struct target_ops *ops,
       gdb_byte buf[4];
       regcache_raw_collect (regcache, SPU_PC_REGNUM, buf);
 
-      target_write (ops_beneath, TARGET_OBJECT_MEMORY, NULL,
-		    buf, spufs_addr, sizeof buf);
+      xfer_partial_ctx ctx = xfer_partial_ctx::make_memory ();
+      target_write (ops_beneath, ctx, NULL, buf, spufs_addr, sizeof buf);
     }
 
   /* The GPRs are found in the "regs" spufs file.  */
@@ -245,15 +247,15 @@ spu_store_registers (struct target_ops *ops,
       for (i = 0; i < SPU_NUM_GPRS; i++)
 	regcache_raw_collect (regcache, i, buf + i*16);
 
+      xfer_partial_ctx ctx = xfer_partial_ctx::make_spu ();
       xsnprintf (annex, sizeof annex, "%d/regs", spufs_fd);
-      target_write (ops_beneath, TARGET_OBJECT_SPU, annex,
-		    buf, 0, sizeof buf);
+      target_write (ops_beneath, ctx, annex, buf, 0, sizeof buf);
     }
 }
 
 /* Override the to_xfer_partial routine.  */
 static enum target_xfer_status
-spu_xfer_partial (struct target_ops *ops, enum target_object object,
+spu_xfer_partial (struct target_ops *ops, const xfer_partial_ctx &ctx,
 		  const char *annex, gdb_byte *readbuf,
 		  const gdb_byte *writebuf, ULONGEST offset, ULONGEST len,
 		  ULONGEST *xfered_len)
@@ -261,7 +263,7 @@ spu_xfer_partial (struct target_ops *ops, enum target_object object,
   struct target_ops *ops_beneath = find_target_beneath (ops);
 
   /* Use the "mem" spufs file to access SPU local store.  */
-  if (object == TARGET_OBJECT_MEMORY)
+  if (ctx.object == TARGET_OBJECT_MEMORY)
     {
       int fd = SPUADDR_SPU (offset);
       CORE_ADDR addr = SPUADDR_ADDR (offset);
@@ -272,10 +274,12 @@ spu_xfer_partial (struct target_ops *ops, enum target_object object,
 
       if (fd >= 0)
 	{
+	  xfer_partial_ctx mem_ctx = xfer_partial_ctx::make_spu ();
+
 	  xsnprintf (mem_annex, sizeof mem_annex, "%d/mem", fd);
-	  ret = ops_beneath->to_xfer_partial (ops_beneath, TARGET_OBJECT_SPU,
-					      mem_annex, readbuf, writebuf,
-					      addr, len, xfered_len);
+	  ret = ops_beneath->to_xfer_partial (ops_beneath, mem_ctx, mem_annex,
+					      readbuf, writebuf, addr, len,
+					      xfered_len);
 	  if (ret == TARGET_XFER_OK)
 	    return ret;
 
@@ -283,23 +287,26 @@ spu_xfer_partial (struct target_ops *ops, enum target_object object,
 	     local store limit.  We emulate this here.  To avoid needing
 	     an extra access to retrieve the LSLR, we only do that after
 	     trying the original address first, and getting end-of-file.  */
+
+	  xfer_partial_ctx lslr_ctx = xfer_partial_ctx::make_spu ();
+
 	  xsnprintf (lslr_annex, sizeof lslr_annex, "%d/lslr", fd);
 	  memset (buf, 0, sizeof buf);
-	  if (ops_beneath->to_xfer_partial (ops_beneath, TARGET_OBJECT_SPU,
-					    lslr_annex, buf, NULL,
-					    0, sizeof buf, xfered_len)
+	  if (ops_beneath->to_xfer_partial (ops_beneath, lslr_ctx, lslr_annex,
+					    buf, NULL, 0, sizeof buf,
+					    xfered_len)
 	      != TARGET_XFER_OK)
 	    return ret;
 
 	  lslr = strtoulst ((char *) buf, NULL, 16);
-	  return ops_beneath->to_xfer_partial (ops_beneath, TARGET_OBJECT_SPU,
-					       mem_annex, readbuf, writebuf,
-					       addr & lslr, len, xfered_len);
+	  return ops_beneath->to_xfer_partial (ops_beneath, mem_ctx, mem_annex,
+					       readbuf, writebuf, addr & lslr,
+					       len, xfered_len);
 	}
     }
 
-  return ops_beneath->to_xfer_partial (ops_beneath, object, annex,
-				       readbuf, writebuf, offset, len, xfered_len);
+  return ops_beneath->to_xfer_partial (ops_beneath, ctx, annex, readbuf,
+				       writebuf, offset, len, xfered_len);
 }
 
 /* Override the to_search_memory routine.  */

@@ -533,14 +533,7 @@ fbsd_info_proc (struct target_ops *ops, const char *args,
 }
 
 #ifdef KERN_PROC_AUXV
-static enum target_xfer_status (*super_xfer_partial) (struct target_ops *ops,
-						      enum target_object object,
-						      const char *annex,
-						      gdb_byte *readbuf,
-						      const gdb_byte *writebuf,
-						      ULONGEST offset,
-						      ULONGEST len,
-						      ULONGEST *xfered_len);
+static target_xfer_partial_ftype *super_xfer_partial;
 
 #ifdef PT_LWPINFO
 /* Return the size of siginfo for the current inferior.  */
@@ -675,8 +668,8 @@ fbsd_convert_siginfo (siginfo_t *si)
 
 static enum target_xfer_status
 fbsd_xfer_partial (struct target_ops *ops, enum target_object object,
-		   const char *annex, gdb_byte *readbuf,
-		   const gdb_byte *writebuf,
+                   const xfer_partial_ctx *ctx, const char *annex,
+                   gdb_byte *readbuf, const gdb_byte *writebuf,
 		   ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
   pid_t pid = ptid_get_pid (inferior_ptid);
@@ -757,8 +750,8 @@ fbsd_xfer_partial (struct target_ops *ops, enum target_object object,
 	return TARGET_XFER_E_IO;
       }
     default:
-      return super_xfer_partial (ops, object, annex, readbuf, writebuf, offset,
-				 len, xfered_len);
+      return super_xfer_partial (ops, object, ctx, annex, readbuf, writebuf,
+                                 offset,  len, xfered_len);
     }
 }
 #endif

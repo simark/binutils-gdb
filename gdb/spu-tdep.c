@@ -196,10 +196,11 @@ spu_pseudo_register_read_spu (struct regcache *regcache, const char *regname,
   status = regcache->raw_read (SPU_ID_REGNUM, &id);
   if (status != REG_VALID)
     return status;
+
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_spu ();
   xsnprintf (annex, sizeof annex, "%d/%s", (int) id, regname);
   memset (reg, 0, sizeof reg);
-  target_read (&current_target, TARGET_OBJECT_SPU, annex,
-	       reg, 0, sizeof reg);
+  target_read (&current_target, ctx, annex, reg, 0, sizeof reg);
 
   ul = strtoulst ((char *) reg, NULL, 16);
   store_unsigned_integer (buf, 4, byte_order, ul);
@@ -225,12 +226,15 @@ spu_pseudo_register_read (struct gdbarch *gdbarch, struct regcache *regcache,
       return status;
 
     case SPU_FPSCR_REGNUM:
-      status = regcache->raw_read (SPU_ID_REGNUM, &id);
-      if (status != REG_VALID)
+      {
+	status = regcache->raw_read (SPU_ID_REGNUM, &id);
+	if (status != REG_VALID)
+	  return status;
+	xfer_partial_ctx ctx = xfer_partial_ctx::make_spu();
+	xsnprintf (annex, sizeof annex, "%d/fpcr", (int) id);
+	target_read (&current_target, ctx, annex, buf, 0, 16);
 	return status;
-      xsnprintf (annex, sizeof annex, "%d/fpcr", (int) id);
-      target_read (&current_target, TARGET_OBJECT_SPU, annex, buf, 0, 16);
-      return status;
+      }
 
     case SPU_SRR0_REGNUM:
       return spu_pseudo_register_read_spu (regcache, "srr0", buf);
@@ -258,13 +262,13 @@ spu_pseudo_register_write_spu (struct regcache *regcache, const char *regname,
   char reg[32];
   char annex[32];
   ULONGEST id;
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_spu ();
 
   regcache_raw_read_unsigned (regcache, SPU_ID_REGNUM, &id);
   xsnprintf (annex, sizeof annex, "%d/%s", (int) id, regname);
   xsnprintf (reg, sizeof reg, "0x%s",
 	     phex_nz (extract_unsigned_integer (buf, 4, byte_order), 4));
-  target_write (&current_target, TARGET_OBJECT_SPU, annex,
-		(gdb_byte *) reg, 0, strlen (reg));
+  target_write (&current_target, ctx, annex, (gdb_byte *) reg, 0, strlen (reg));
 }
 
 static void
@@ -284,10 +288,14 @@ spu_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
       break;
 
     case SPU_FPSCR_REGNUM:
-      regcache_raw_read_unsigned (regcache, SPU_ID_REGNUM, &id);
-      xsnprintf (annex, sizeof annex, "%d/fpcr", (int) id);
-      target_write (&current_target, TARGET_OBJECT_SPU, annex, buf, 0, 16);
-      break;
+      {
+	xfer_partial_ctx ctx = xfer_partial_ctx::make_spu ();
+
+	regcache_raw_read_unsigned (regcache, SPU_ID_REGNUM, &id);
+	xsnprintf (annex, sizeof annex, "%d/fpcr", (int) id);
+	target_write (&current_target, ctx, annex, buf, 0, 16);
+	break;
+      }
 
     case SPU_SRR0_REGNUM:
       spu_pseudo_register_write_spu (regcache, "srr0", buf);
@@ -2077,8 +2085,9 @@ info_spu_event_command (const char *args, int from_tty)
 
   id = get_frame_register_unsigned (frame, SPU_ID_REGNUM);
 
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_spu ();
   xsnprintf (annex, sizeof annex, "%d/event_status", id);
-  len = target_read (&current_target, TARGET_OBJECT_SPU, annex,
+  len = target_read (&current_target, ctx, annex,
 		     buf, 0, (sizeof (buf) - 1));
   if (len <= 0)
     error (_("Could not read event_status."));
@@ -2086,7 +2095,7 @@ info_spu_event_command (const char *args, int from_tty)
   event_status = strtoulst ((char *) buf, NULL, 16);
  
   xsnprintf (annex, sizeof annex, "%d/event_mask", id);
-  len = target_read (&current_target, TARGET_OBJECT_SPU, annex,
+  len = target_read (&current_target, ctx, annex,
 		     buf, 0, (sizeof (buf) - 1));
   if (len <= 0)
     error (_("Could not read event_mask."));
@@ -2131,8 +2140,9 @@ info_spu_signal_command (const char *args, int from_tty)
 
   id = get_frame_register_unsigned (frame, SPU_ID_REGNUM);
 
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_spu ();
   xsnprintf (annex, sizeof annex, "%d/signal1", id);
-  len = target_read (&current_target, TARGET_OBJECT_SPU, annex, buf, 0, 4);
+  len = target_read (&current_target, ctx, annex, buf, 0, 4);
   if (len < 0)
     error (_("Could not read signal1."));
   else if (len == 4)
@@ -2142,7 +2152,7 @@ info_spu_signal_command (const char *args, int from_tty)
     }
     
   xsnprintf (annex, sizeof annex, "%d/signal1_type", id);
-  len = target_read (&current_target, TARGET_OBJECT_SPU, annex,
+  len = target_read (&current_target, ctx, annex,
 		     buf, 0, (sizeof (buf) - 1));
   if (len <= 0)
     error (_("Could not read signal1_type."));
@@ -2150,7 +2160,7 @@ info_spu_signal_command (const char *args, int from_tty)
   signal1_type = strtoulst ((char *) buf, NULL, 16);
 
   xsnprintf (annex, sizeof annex, "%d/signal2", id);
-  len = target_read (&current_target, TARGET_OBJECT_SPU, annex, buf, 0, 4);
+  len = target_read (&current_target, ctx, annex, buf, 0, 4);
   if (len < 0)
     error (_("Could not read signal2."));
   else if (len == 4)
@@ -2160,7 +2170,7 @@ info_spu_signal_command (const char *args, int from_tty)
     }
     
   xsnprintf (annex, sizeof annex, "%d/signal2_type", id);
-  len = target_read (&current_target, TARGET_OBJECT_SPU, annex,
+  len = target_read (&current_target, ctx, annex,
 		     buf, 0, (sizeof (buf) - 1));
   if (len <= 0)
     error (_("Could not read signal2_type."));
@@ -2248,8 +2258,9 @@ info_spu_mailbox_command (const char *args, int from_tty)
 
   ui_out_emit_tuple tuple_emitter (current_uiout, "SPUInfoMailbox");
 
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_spu ();
   xsnprintf (annex, sizeof annex, "%d/mbox_info", id);
-  len = target_read (&current_target, TARGET_OBJECT_SPU, annex,
+  len = target_read (&current_target, ctx, annex,
 		     buf, 0, sizeof buf);
   if (len < 0)
     error (_("Could not read mbox_info."));
@@ -2258,7 +2269,7 @@ info_spu_mailbox_command (const char *args, int from_tty)
 			 "mbox", "SPU Outbound Mailbox");
 
   xsnprintf (annex, sizeof annex, "%d/ibox_info", id);
-  len = target_read (&current_target, TARGET_OBJECT_SPU, annex,
+  len = target_read (&current_target, ctx, annex,
 		     buf, 0, sizeof buf);
   if (len < 0)
     error (_("Could not read ibox_info."));
@@ -2267,7 +2278,7 @@ info_spu_mailbox_command (const char *args, int from_tty)
 			 "ibox", "SPU Outbound Interrupt Mailbox");
 
   xsnprintf (annex, sizeof annex, "%d/wbox_info", id);
-  len = target_read (&current_target, TARGET_OBJECT_SPU, annex,
+  len = target_read (&current_target, ctx, annex,
 		     buf, 0, sizeof buf);
   if (len < 0)
     error (_("Could not read wbox_info."));
@@ -2479,8 +2490,9 @@ info_spu_dma_command (const char *args, int from_tty)
 
   id = get_frame_register_unsigned (frame, SPU_ID_REGNUM);
 
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_spu ();
   xsnprintf (annex, sizeof annex, "%d/dma_info", id);
-  len = target_read (&current_target, TARGET_OBJECT_SPU, annex,
+  len = target_read (&current_target, ctx, annex,
 		     buf, 0, 40 + 16 * 32);
   if (len <= 0)
     error (_("Could not read dma_info."));
@@ -2556,8 +2568,9 @@ info_spu_proxydma_command (const char *args, int from_tty)
 
   id = get_frame_register_unsigned (frame, SPU_ID_REGNUM);
 
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_spu ();
   xsnprintf (annex, sizeof annex, "%d/proxydma_info", id);
-  len = target_read (&current_target, TARGET_OBJECT_SPU, annex,
+  len = target_read (&current_target, ctx, annex,
 		     buf, 0, 24 + 8 * 32);
   if (len <= 0)
     error (_("Could not read proxydma_info."));

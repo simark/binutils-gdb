@@ -2194,8 +2194,8 @@ darwin_read_dyld_info (task_t task, CORE_ADDR addr, gdb_byte *rdaddr,
 
 
 static enum target_xfer_status
-darwin_xfer_partial (struct target_ops *ops,
-		     enum target_object object, const char *annex,
+darwin_xfer_partial (struct target_ops *ops, enum target_object object,
+		     const xfer_partial_ctx *ctx, const char *annex,
 		     gdb_byte *readbuf, const gdb_byte *writebuf,
 		     ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {

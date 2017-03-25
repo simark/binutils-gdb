@@ -1362,9 +1362,10 @@ ppu2spu_sniffer (const struct frame_unwind *self,
       if (!data.gdbarch)
 	return 0;
 
+      xfer_partial_ctx ctx = xfer_partial_ctx::make_spu ();
       xsnprintf (annex, sizeof annex, "%d/regs", data.id);
-      if (target_read (&current_target, TARGET_OBJECT_SPU, annex,
-		       data.gprs, 0, sizeof data.gprs)
+      if (target_read (&current_target, ctx, annex, data.gprs, 0,
+		       sizeof data.gprs)
 	  == sizeof data.gprs)
 	{
 	  struct ppu2spu_cache *cache

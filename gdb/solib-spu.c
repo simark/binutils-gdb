@@ -170,9 +170,9 @@ spu_current_sos (void)
   for (link_ptr = &head; *link_ptr; link_ptr = &(*link_ptr)->next)
     ;
 
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_spu ();
   /* Determine list of SPU ids.  */
-  size = target_read (&current_target, TARGET_OBJECT_SPU, NULL,
-		      buf, 0, sizeof buf);
+  size = target_read (&current_target, ctx, NULL, buf, 0, sizeof buf);
 
   /* Do not add stand-alone SPE executable context as shared library,
      but relocate main SPE executable objfile.  */
@@ -206,7 +206,7 @@ spu_current_sos (void)
 	 already created the SPE context, but not installed the object-id
 	 yet.  Skip such entries; we'll be back for them later.  */
       xsnprintf (annex, sizeof annex, "%d/object-id", fd);
-      len = target_read (&current_target, TARGET_OBJECT_SPU, annex,
+      len = target_read (&current_target, ctx, annex,
 			 (gdb_byte *) id, 0, sizeof id);
       if (len <= 0 || len >= sizeof id)
 	continue;

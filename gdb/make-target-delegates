@@ -115,7 +115,7 @@ sub parse_argtypes($) {
     foreach $iter (@typelist) {
 	if ($iter =~ m/^(enum\s+${SYMBOL}\s*)(${SYMBOL})?$/) {
 	    $onetype = $1;
-	} elsif ($iter =~ m/^(.*(enum\s+)?${SYMBOL}.*(\s|\*))${SYMBOL}+$/) {
+	} elsif ($iter =~ m/^(.*(enum\s+)?${SYMBOL}.*(\s|\*|&))${SYMBOL}+$/) {
 	    $onetype = $1;
 	} elsif ($iter eq 'void') {
 	    next;
@@ -151,7 +151,7 @@ sub write_function_header($$@) {
 
 	$val =~ s/$TARGET_DEBUG_PRINTER//;
 
-	if ($iter !~ m,\*$,) {
+	if ($iter !~ m,(\*|&)$,) {
 	    $val .= ' ';
 	}
 
@@ -232,7 +232,7 @@ sub munge_type($) {
 	$result = $1;
     } else {
 	($result = $typename) =~ s/\s+$//;
-	$result =~ s/[ ()<>:]/_/g;
+	$result =~ s/[ ()<>:&]/_/g;
 	$result =~ s/[*]/p/g;
 
 	# Identifers with double underscores are reserved to the C++

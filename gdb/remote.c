@@ -3151,8 +3151,10 @@ remote_get_threads_with_qxfer (struct target_ops *ops,
 #if defined(HAVE_LIBEXPAT)
   if (packet_support (PACKET_qXfer_threads) == PACKET_ENABLE)
     {
+      xfer_partial_ctx ctx = xfer_partial_ctx::make_threads ();
+
       gdb::unique_xmalloc_ptr<char> xml
-	= target_read_stralloc (ops, TARGET_OBJECT_THREADS, NULL);
+	= target_read_stralloc (ops, ctx, NULL);
 
       if (xml != NULL && *xml != '\0')
 	{
@@ -10424,7 +10426,7 @@ remote_read_qxfer (struct target_ops *ops, const char *object_name,
 }
 
 static enum target_xfer_status
-remote_xfer_partial (struct target_ops *ops, enum target_object object,
+remote_xfer_partial (struct target_ops *ops, const xfer_partial_ctx &ctx,
 		     const char *annex, gdb_byte *readbuf,
 		     const gdb_byte *writebuf, ULONGEST offset, ULONGEST len,
 		     ULONGEST *xfered_len)
@@ -10441,7 +10443,7 @@ remote_xfer_partial (struct target_ops *ops, enum target_object object,
   rs = get_remote_state ();
 
   /* Handle memory using the standard memory routines.  */
-  if (object == TARGET_OBJECT_MEMORY)
+  if (ctx.object == TARGET_OBJECT_MEMORY)
     {
       /* If the remote target is connected but not running, we should
 	 pass this request down to a lower stratum (e.g. the executable
@@ -10458,7 +10460,7 @@ remote_xfer_partial (struct target_ops *ops, enum target_object object,
     }
 
   /* Handle SPU memory using qxfer packets.  */
-  if (object == TARGET_OBJECT_SPU)
+  if (ctx.object == TARGET_OBJECT_SPU)
     {
       if (readbuf)
 	return remote_read_qxfer (ops, "spu", annex, readbuf, offset, len,
@@ -10471,7 +10473,7 @@ remote_xfer_partial (struct target_ops *ops, enum target_object object,
     }
 
   /* Handle extra signal info using qxfer packets.  */
-  if (object == TARGET_OBJECT_SIGNAL_INFO)
+  if (ctx.object == TARGET_OBJECT_SIGNAL_INFO)
     {
       if (readbuf)
 	return remote_read_qxfer (ops, "siginfo", annex, readbuf, offset, len,
@@ -10484,7 +10486,7 @@ remote_xfer_partial (struct target_ops *ops, enum target_object object,
 				   [PACKET_qXfer_siginfo_write]);
     }
 
-  if (object == TARGET_OBJECT_STATIC_TRACE_DATA)
+  if (ctx.object == TARGET_OBJECT_STATIC_TRACE_DATA)
     {
       if (readbuf)
 	return remote_read_qxfer (ops, "statictrace", annex,
@@ -10498,7 +10500,7 @@ remote_xfer_partial (struct target_ops *ops, enum target_object object,
   /* Only handle flash writes.  */
   if (writebuf != NULL)
     {
-      switch (object)
+      switch (ctx.object)
 	{
 	case TARGET_OBJECT_FLASH:
 	  return remote_flash_write (ops, offset, len, xfered_len,
@@ -10511,7 +10513,7 @@ remote_xfer_partial (struct target_ops *ops, enum target_object object,
 
   /* Map pre-existing objects onto letters.  DO NOT do this for new
      objects!!!  Instead specify new query packets.  */
-  switch (object)
+  switch (ctx.object)
     {
     case TARGET_OBJECT_AVR:
       query_type = 'R';
@@ -10810,8 +10812,10 @@ static std::vector<mem_region>
 remote_memory_map (struct target_ops *ops)
 {
   std::vector<mem_region> result;
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_memory_map ();
+
   gdb::unique_xmalloc_ptr<char> text
-    = target_read_stralloc (&current_target, TARGET_OBJECT_MEMORY_MAP, NULL);
+    = target_read_stralloc (&current_target, ctx, NULL);
 
   if (text)
     result = parse_memory_map (text.get ());
@@ -12927,9 +12931,9 @@ remote_set_circular_trace_buffer (struct target_ops *self, int val)
 static traceframe_info_up
 remote_traceframe_info (struct target_ops *self)
 {
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_traceframe_info ();
   gdb::unique_xmalloc_ptr<char> text
-    = target_read_stralloc (&current_target, TARGET_OBJECT_TRACEFRAME_INFO,
-			    NULL);
+    = target_read_stralloc (&current_target, ctx, NULL);
   if (text != NULL)
     return parse_traceframe_info (text.get ());
 
@@ -13159,8 +13163,10 @@ btrace_sync_conf (const struct btrace_config *conf)
 static void
 btrace_read_config (struct btrace_config *conf)
 {
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_btrace_conf ();
   gdb::unique_xmalloc_ptr<char> xml
-    = target_read_stralloc (&current_target, TARGET_OBJECT_BTRACE_CONF, "");
+    = target_read_stralloc (&current_target, ctx, "");
+
   if (xml != NULL)
     parse_xml_btrace_conf (conf, xml.get ());
 }
@@ -13359,8 +13365,9 @@ remote_read_btrace (struct target_ops *self,
 		      (unsigned int) type);
     }
 
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_btrace ();
   gdb::unique_xmalloc_ptr<char> xml
-    = target_read_stralloc (&current_target, TARGET_OBJECT_BTRACE, annex);
+    = target_read_stralloc (&current_target, ctx, annex);
   if (xml == NULL)
     return BTRACE_ERR_UNKNOWN;
 
@@ -13418,8 +13425,8 @@ remote_pid_to_exec_file (struct target_ops *self, int pid)
       xsnprintf (annex, annex_size, "%x", pid);
     }
 
-  filename = target_read_stralloc (&current_target,
-				   TARGET_OBJECT_EXEC_FILE, annex);
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_exec_file ();
+  filename = target_read_stralloc (&current_target, ctx, annex);
 
   return filename.get ();
 }

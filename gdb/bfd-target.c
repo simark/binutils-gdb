@@ -38,13 +38,13 @@ struct target_bfd_data
 
 static enum target_xfer_status
 target_bfd_xfer_partial (struct target_ops *ops,
-			 enum target_object object,
+			 const xfer_partial_ctx &ctx,
 			 const char *annex, gdb_byte *readbuf,
 			 const gdb_byte *writebuf,
 			 ULONGEST offset, ULONGEST len,
 			 ULONGEST *xfered_len)
 {
-  switch (object)
+  switch (ctx.object)
     {
     case TARGET_OBJECT_MEMORY:
       {

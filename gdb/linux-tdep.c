@@ -1417,9 +1417,10 @@ linux_spu_make_corefile_notes (bfd *obfd, char *note_data, int *note_size)
   gdb_byte *spu_ids;
   LONGEST i, j, size;
 
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_spu ();
+
   /* Determine list of SPU ids.  */
-  size = target_read_alloc (&current_target, TARGET_OBJECT_SPU,
-			    NULL, &spu_ids);
+  size = target_read_alloc (&current_target, ctx, NULL, &spu_ids);
 
   /* Generate corefile notes for each SPU file.  */
   for (i = 0; i < size; i += 4)
@@ -1433,8 +1434,7 @@ linux_spu_make_corefile_notes (bfd *obfd, char *note_data, int *note_size)
 	  LONGEST spu_len;
 
 	  xsnprintf (annex, sizeof annex, "%d/%s", fd, spu_files[j]);
-	  spu_len = target_read_alloc (&current_target, TARGET_OBJECT_SPU,
-				       annex, &spu_data);
+	  spu_len = target_read_alloc (&current_target, ctx, annex, &spu_data);
 	  if (spu_len > 0)
 	    {
 	      xsnprintf (note_name, sizeof note_name, "SPU/%s", annex);
@@ -1660,8 +1660,9 @@ linux_get_siginfo_data (thread_info *thread, struct gdbarch *gdbarch)
   siginfo_type = gdbarch_get_siginfo_type (gdbarch);
 
   gdb::byte_vector buf (TYPE_LENGTH (siginfo_type));
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_signal_info ();
 
-  bytes_read = target_read (&current_target, TARGET_OBJECT_SIGNAL_INFO, NULL,
+  bytes_read = target_read (&current_target, ctx, NULL,
 			    buf.data (), 0, TYPE_LENGTH (siginfo_type));
   if (bytes_read != TYPE_LENGTH (siginfo_type))
     buf.clear ();
@@ -1971,8 +1972,8 @@ linux_make_corefile_notes (struct gdbarch *gdbarch, bfd *obfd, int *note_size)
     return NULL;
 
   /* Auxillary vector.  */
-  auxv_len = target_read_alloc (&current_target, TARGET_OBJECT_AUXV,
-				NULL, &auxv);
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_auxv ();
+  auxv_len = target_read_alloc (&current_target, ctx, NULL, &auxv);
   if (auxv_len > 0)
     {
       note_data = elfcore_write_note (obfd, note_data, note_size,

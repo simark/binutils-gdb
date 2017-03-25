@@ -656,12 +656,12 @@ add_to_spuid_list (bfd *abfd, asection *asect, void *list_p)
 }
 
 static enum target_xfer_status
-core_xfer_partial (struct target_ops *ops, enum target_object object,
+core_xfer_partial (struct target_ops *ops, const xfer_partial_ctx &ctx,
 		   const char *annex, gdb_byte *readbuf,
 		   const gdb_byte *writebuf, ULONGEST offset,
 		   ULONGEST len, ULONGEST *xfered_len)
 {
-  switch (object)
+  switch (ctx.object)
     {
     case TARGET_OBJECT_MEMORY:
       return section_table_xfer_memory_partial (readbuf, writebuf,
@@ -861,10 +861,8 @@ core_xfer_partial (struct target_ops *ops, enum target_object object,
       return TARGET_XFER_E_IO;
 
     default:
-      return ops->beneath->to_xfer_partial (ops->beneath, object,
-					    annex, readbuf,
-					    writebuf, offset, len,
-					    xfered_len);
+      return ops->beneath->to_xfer_partial (ops->beneath, ctx, annex, readbuf,
+					    writebuf, offset, len, xfered_len);
     }
 }
 

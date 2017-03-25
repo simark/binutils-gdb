@@ -1285,7 +1285,7 @@ record_btrace_will_replay (struct target_ops *self, ptid_t ptid, int dir)
 /* The to_xfer_partial method of target record-btrace.  */
 
 static enum target_xfer_status
-record_btrace_xfer_partial (struct target_ops *ops, enum target_object object,
+record_btrace_xfer_partial (struct target_ops *ops, const xfer_partial_ctx &ctx,
 			    const char *annex, gdb_byte *readbuf,
 			    const gdb_byte *writebuf, ULONGEST offset,
 			    ULONGEST len, ULONGEST *xfered_len)
@@ -1295,7 +1295,7 @@ record_btrace_xfer_partial (struct target_ops *ops, enum target_object object,
       && !record_btrace_generating_corefile
       && record_btrace_is_replaying (ops, inferior_ptid))
     {
-      switch (object)
+      switch (ctx.object)
 	{
 	case TARGET_OBJECT_MEMORY:
 	  {
@@ -1331,8 +1331,8 @@ record_btrace_xfer_partial (struct target_ops *ops, enum target_object object,
 
   /* Forward the request.  */
   ops = ops->beneath;
-  return ops->to_xfer_partial (ops, object, annex, readbuf, writebuf,
-			       offset, len, xfered_len);
+  return ops->to_xfer_partial (ops, ctx, annex, readbuf, writebuf, offset, len,
+			       xfered_len);
 }
 
 /* The to_insert_breakpoint method of target record-btrace.  */

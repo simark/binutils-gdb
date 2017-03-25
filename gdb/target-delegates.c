@@ -2099,20 +2099,20 @@ debug_get_thread_local_address (struct target_ops *self, ptid_t arg1, CORE_ADDR 
 }
 
 static enum target_xfer_status
-delegate_xfer_partial (struct target_ops *self, enum target_object arg1, const char *arg2, gdb_byte *arg3, const gdb_byte *arg4, ULONGEST arg5, ULONGEST arg6, ULONGEST *arg7)
+delegate_xfer_partial (struct target_ops *self, const xfer_partial_ctx &arg1, const char *arg2, gdb_byte *arg3, const gdb_byte *arg4, ULONGEST arg5, ULONGEST arg6, ULONGEST *arg7)
 {
   self = self->beneath;
   return self->to_xfer_partial (self, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
 }
 
 static enum target_xfer_status
-tdefault_xfer_partial (struct target_ops *self, enum target_object arg1, const char *arg2, gdb_byte *arg3, const gdb_byte *arg4, ULONGEST arg5, ULONGEST arg6, ULONGEST *arg7)
+tdefault_xfer_partial (struct target_ops *self, const xfer_partial_ctx &arg1, const char *arg2, gdb_byte *arg3, const gdb_byte *arg4, ULONGEST arg5, ULONGEST arg6, ULONGEST *arg7)
 {
   return TARGET_XFER_E_IO;
 }
 
 static enum target_xfer_status
-debug_xfer_partial (struct target_ops *self, enum target_object arg1, const char *arg2, gdb_byte *arg3, const gdb_byte *arg4, ULONGEST arg5, ULONGEST arg6, ULONGEST *arg7)
+debug_xfer_partial (struct target_ops *self, const xfer_partial_ctx &arg1, const char *arg2, gdb_byte *arg3, const gdb_byte *arg4, ULONGEST arg5, ULONGEST arg6, ULONGEST *arg7)
 {
   enum target_xfer_status result;
   fprintf_unfiltered (gdb_stdlog, "-> %s->to_xfer_partial (...)\n", debug_target.to_shortname);
@@ -2120,7 +2120,7 @@ debug_xfer_partial (struct target_ops *self, enum target_object arg1, const char
   fprintf_unfiltered (gdb_stdlog, "<- %s->to_xfer_partial (", debug_target.to_shortname);
   target_debug_print_struct_target_ops_p (&debug_target);
   fputs_unfiltered (", ", gdb_stdlog);
-  target_debug_print_enum_target_object (arg1);
+  target_debug_print_const_xfer_partial_ctx (arg1);
   fputs_unfiltered (", ", gdb_stdlog);
   target_debug_print_const_char_p (arg2);
   fputs_unfiltered (", ", gdb_stdlog);

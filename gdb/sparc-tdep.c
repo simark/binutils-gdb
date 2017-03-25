@@ -191,9 +191,9 @@ sparc_fetch_wcookie (struct gdbarch *gdbarch)
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   struct target_ops *ops = &current_target;
   gdb_byte buf[8];
-  int len;
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_wcookie ();
 
-  len = target_read (ops, TARGET_OBJECT_WCOOKIE, NULL, buf, 0, 8);
+  int len = target_read (ops, ctx, NULL, buf, 0, 8);
   if (len == -1)
     return 0;
 

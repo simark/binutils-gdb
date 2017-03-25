@@ -363,8 +363,8 @@ rs6000_store_inferior_registers (struct target_ops *ops,
 
 static enum target_xfer_status
 rs6000_xfer_partial (struct target_ops *ops, enum target_object object,
-		     const char *annex, gdb_byte *readbuf,
-		     const gdb_byte *writebuf,
+		     const xfer_partial_ctx *ctx, const char *annex,
+		     gdb_byte *readbuf, const gdb_byte *writebuf,
 		     ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
   pid_t pid = ptid_get_pid (inferior_ptid);
@@ -373,7 +373,7 @@ rs6000_xfer_partial (struct target_ops *ops, enum target_object object,
   switch (object)
     {
     case TARGET_OBJECT_LIBRARIES_AIX:
-      return rs6000_xfer_shared_libraries (ops, object, annex,
+      return rs6000_xfer_shared_libraries (ops, object, ctx, annex,
 					   readbuf, writebuf,
 					   offset, len, xfered_len);
     case TARGET_OBJECT_MEMORY:
@@ -621,10 +621,11 @@ rs6000_ptrace_ldinfo (ptid_t ptid)
    TARGET_OBJECT_LIBRARIES_AIX objects.  */
 
 static enum target_xfer_status
-rs6000_xfer_shared_libraries
-  (struct target_ops *ops, enum target_object object,
-   const char *annex, gdb_byte *readbuf, const gdb_byte *writebuf,
-   ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
+rs6000_xfer_shared_libraries (struct target_ops *ops, enum target_object object,
+			      const xfer_partial_ctx *ctx, const char *annex,
+			      gdb_byte *readbuf, const gdb_byte *writebuf,
+			      ULONGEST offset, ULONGEST len,
+			      ULONGEST *xfered_len)
 {
   gdb_byte *ldi_buf;
   ULONGEST result;
