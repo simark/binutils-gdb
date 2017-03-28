@@ -638,17 +638,21 @@ proc runto_main { } {
     return [runto main no-message]
 }
 
-### Continue, and expect to hit a breakpoint.
-### Report a pass or fail, depending on whether it seems to have
-### worked.  Use NAME as part of the test name; each call to
-### continue_to_breakpoint should use a NAME which is unique within
-### that test file.
-proc gdb_continue_to_breakpoint {name {location_pattern .*}} {
+# Continue, and expect to hit a breakpoint.  Report a pass or fail, depending on
+# whether it seems to have worked.
+#
+# Use NAME as part of the test name.
+#
+# LOCATION_PATTERN is matched against the location (function name/address/
+# filename/line number) part of the breakpoint hit message.
+#
+# BREAKPOINT_NUM is the GDB number of the breakpoint we expect to hit.
+proc gdb_continue_to_breakpoint {name {location_pattern .*} {breakpoint_num "\[0-9\]+"}} {
     global gdb_prompt
     set full_name "continue to breakpoint: $name"
 
     gdb_test_multiple "continue" $full_name {
-	-re "(?:Breakpoint|Temporary breakpoint) .* (at|in) $location_pattern\r\n$gdb_prompt $" {
+	-re "(?:Breakpoint|Temporary breakpoint) ($breakpoint_num), .* (at|in) $location_pattern\r\n$gdb_prompt $" {
 	    pass $full_name
 	}
     }
