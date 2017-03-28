@@ -1769,7 +1769,14 @@ gen_sizeof (struct expression *exp, union exp_element **pc,
   value->kind = axs_rvalue;
   value->type = size_type;
 }
-
+
+/* Emit a thread_id operator.  */
+
+static void
+gen_thread_id (struct agent_expr *ax)
+{
+  ax_simple (ax, aop_thread_id);
+}
 
 /* Generating bytecode from GDB expressions: general recursive thingy  */
 
@@ -2231,6 +2238,12 @@ gen_expr (struct expression *exp, union exp_element **pc,
     case OP_TYPEOF:
     case OP_DECLTYPE:
       error (_("Attempt to use a type name as an expression."));
+
+    case OP_THREAD_ID:
+      gen_thread_id (ax);
+      value->kind = axs_rvalue;
+      value->type = int_type;
+      break;
 
     default:
       error (_("Unsupported operator %s (%d) in expression."),

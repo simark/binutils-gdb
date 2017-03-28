@@ -515,6 +515,9 @@ stack.  If the purpose of the expression was to compute an lvalue or a
 range of memory, then the next-to-top of the stack is the lvalue's
 address, and the top of the stack is the lvalue's size, in bytes.
 
+@item @code{thread_id} (0x35): @result{} @var{tid}
+Push the id the current thread to the top of the stack.
+
 @end table
 
 

@@ -1260,6 +1260,9 @@ struct target_ops
     void (*to_done_generating_core) (struct target_ops *)
       TARGET_DEFAULT_IGNORE ();
 
+    bool (*to_supports_thread_id_operator) (struct target_ops *)
+      TARGET_DEFAULT_RETURN (false);
+
     int to_magic;
     /* Need sub-structure for target machine related rather than comm related?
      */
@@ -1435,6 +1438,12 @@ int target_supports_disable_randomization (void);
 
 #define target_can_run_breakpoint_commands() \
   (*current_target.to_can_run_breakpoint_commands) (&current_target)
+
+/* Returns true if this target supports the thread_id agent expression bytecode
+   operator.  */
+
+#define target_supports_thread_id_operator() \
+  (*current_target.to_supports_thread_id_operator) (&current_target)
 
 extern int target_read_string (CORE_ADDR, char **, int, int *);
 

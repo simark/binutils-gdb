@@ -95,3 +95,4 @@ DEFOP (pick, 1, 0, 0, 1, 0x32)
 DEFOP (rot, 0, 0, 3, 3, 0x33)
 /* Both the argument and consumed numbers are dynamic for this one.  */
 DEFOP (printf, 0, 0, 0, 0, 0x34)
+DEFOP (thread_id, 0, 0, 0, 1, 0x35)

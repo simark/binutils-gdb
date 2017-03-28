@@ -2282,6 +2282,77 @@ parse_cond_to_aexpr (CORE_ADDR scope, struct expression *cond)
   return aexpr;
 }
 
+/* Build an expression comparing the THREAD_ID operator (current thread id at
+   the moment the expression is evaluated) with the thread id of THREAD.  */
+
+static expression_up
+make_thread_id_exp (const thread_info *thread, struct gdbarch *gdbarch,
+		    const struct language_defn *lang)
+{
+  /* We need 6 elements to build this expression:
+
+       - BINOP_EQUAL (1)
+         - OP_LONG <type> <thread id> OP_LONG (4)
+         - OP_THREAD_ID (1)  */
+  const int nelts = 6;
+  size_t sz = sizeof (expression) + nelts * sizeof (exp_element);
+  expression_up exp (XCNEWVAR (expression, sz));
+  ptid_t ptid = thread->ptid;
+  int tid;
+
+  if (ptid_lwp_p (ptid))
+    tid = ptid_get_lwp (ptid);
+  else if (ptid_tid_p (ptid))
+    tid = ptid_get_tid (ptid);
+  else
+    tid = ptid_get_pid (ptid);
+
+  exp->language_defn = lang;
+  exp->gdbarch = gdbarch;
+  exp->nelts = nelts;
+
+  exp->elts[0].opcode = BINOP_EQUAL;
+
+  exp->elts[1].opcode = OP_LONG;
+  exp->elts[2].type = builtin_type (exp->gdbarch)->builtin_int;
+  exp->elts[3].longconst = tid;
+  exp->elts[4].opcode = OP_LONG;
+
+  exp->elts[5].opcode = OP_THREAD_ID;
+
+  return exp;
+}
+
+/* Build an expression that is a logical AND of EXP1 and EXP2.  */
+
+static expression_up
+expression_and (expression *exp1, expression *exp2)
+{
+  gdb_assert (exp1 != NULL);
+  gdb_assert (exp2 != NULL);
+
+  /* The expressions must be compatible.  */
+  gdb_assert (exp1->gdbarch == exp2->gdbarch);
+  gdb_assert (exp1->language_defn == exp2->language_defn);
+
+  /* We'll need enough elements to fit both expressions, plus one for the
+     BINOP_LOGICAL_AND.  */
+  const int nelts = exp1->nelts + exp2->nelts + 1;
+  size_t sz = sizeof (expression) + nelts * sizeof (exp_element);
+  expression_up exp (XCNEWVAR (expression, sz));
+
+  exp->language_defn = exp1->language_defn;
+  exp->gdbarch = exp1->gdbarch;
+  exp->nelts = nelts;
+
+  exp->elts[0].opcode = BINOP_LOGICAL_AND;
+  memcpy (&exp->elts[1], exp1->elts, sizeof (exp_element) * exp1->nelts);
+  memcpy (&exp->elts[exp1->nelts + 1], exp2->elts,
+	  sizeof (exp_element) * exp2->nelts);
+
+  return exp;
+}
+
 /* Based on location BL, create a list of breakpoint conditions to be
    passed on to the target.  If we have duplicated locations with different
    conditions, we will add such conditions to the list.  The idea is that the
@@ -2322,9 +2393,43 @@ build_target_condition_list (struct bp_location *bl)
 	      /* Re-parse the conditions since something changed.  In that
 		 case we already freed the condition bytecodes (see
 		 force_breakpoint_reinsertion).  We just
-		 need to parse the condition to bytecodes again.  */
-	      loc->cond_bytecode = parse_cond_to_aexpr (bl->address,
-							loc->cond.get ());
+		 need to parse the condition to bytecodes again.
+
+		 If the breakpoint is thread-specific, build an conditional
+		 expression allowing the target itself to verify if it's the
+		 right thread that hit the breakpoint.  If the breakpoint
+		 already has a condition, the two expressions are merged with a
+		 logical and.  */
+
+	      /* The temporary thread-checking expression we'll build.  */
+	      expression_up thread_exp;
+	      /* The original breakpoint condition expression.  */
+	      expression *exp = loc->cond.get ();
+	      int thread_num = loc->owner->thread;
+
+	      if (thread_num != -1 && target_supports_thread_id_operator ())
+		{
+		  thread_info *thread = find_thread_global_id (thread_num);
+
+		  /* Thread-specific breakpoints can only be created for
+		     existing threads, and are deleted when the corresponding
+		     thread exits.  */
+		  gdb_assert (thread != NULL);
+
+		  const language_defn *lang
+		    = exp != NULL ? exp->language_defn : NULL;
+		  gdbarch *gdbarch
+		    = exp != NULL ? exp->gdbarch : target_gdbarch ();
+
+		  thread_exp = make_thread_id_exp (thread, gdbarch, lang);
+
+		  if (exp != NULL)
+		    thread_exp = expression_and (exp, thread_exp.get ());
+
+		  exp = thread_exp.get ();
+		}
+
+	      loc->cond_bytecode = parse_cond_to_aexpr (bl->address, exp);
 	    }
 
 	  /* If we have a NULL bytecode expression, it means something
@@ -2365,7 +2470,7 @@ build_target_condition_list (struct bp_location *bl)
   ALL_BP_LOCATIONS_AT_ADDR (loc2p, locp, bl->address)
     {
       loc = (*loc2p);
-      if (loc->cond
+      if (loc->cond_bytecode.get () != NULL
 	  && is_breakpoint (loc->owner)
 	  && loc->pspace->num == bl->pspace->num
 	  && loc->owner->enable_state == bp_enabled

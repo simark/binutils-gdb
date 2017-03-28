@@ -1526,6 +1526,9 @@ enum {
   /* Support TARGET_WAITKIND_NO_RESUMED.  */
   PACKET_no_resumed,
 
+  /* Support for the thread_id agent expression bytecode operator.  */
+  PACKET_AXThreadId,
+
   PACKET_MAX
 };
 
@@ -4698,6 +4701,8 @@ static const struct protocol_feature remote_protocol_features[] = {
   { "vContSupported", PACKET_DISABLE, remote_supported_packet, PACKET_vContSupported },
   { "QThreadEvents", PACKET_DISABLE, remote_supported_packet, PACKET_QThreadEvents },
   { "no-resumed", PACKET_DISABLE, remote_supported_packet, PACKET_no_resumed },
+  { "AXThreadId", PACKET_DISABLE, remote_supported_packet,
+    PACKET_AXThreadId },
 };
 
 static char *remote_support_xml;
@@ -12201,6 +12206,12 @@ remote_can_run_breakpoint_commands (struct target_ops *self)
   return packet_support (PACKET_BreakpointCommands) == PACKET_ENABLE;
 }
 
+static bool
+remote_supports_thread_id_operator (struct target_ops *self)
+{
+  return packet_support (PACKET_AXThreadId) == PACKET_ENABLE;
+}
+
 static void
 remote_trace_init (struct target_ops *self)
 {
@@ -13653,6 +13664,8 @@ Specify the serial device it is connected to\n\
   remote_ops.to_insert_exec_catchpoint = remote_insert_exec_catchpoint;
   remote_ops.to_remove_exec_catchpoint = remote_remove_exec_catchpoint;
   remote_ops.to_execution_direction = remote_execution_direction;
+  remote_ops.to_supports_thread_id_operator
+    = remote_supports_thread_id_operator;
 }
 
 /* Set up the extended remote vector by making a copy of the standard
@@ -14333,6 +14346,10 @@ Show the maximum size of the address (in bits) in a memory packet."), NULL,
 
   add_packet_config_cmd (&remote_protocol_packets[PACKET_no_resumed],
 			 "N stop reply", "no-resumed-stop-reply", 0);
+
+  add_packet_config_cmd (&remote_protocol_packets[PACKET_AXThreadId],
+			 "AXThreadId",
+			 "ax-thread-id", 0);
 
   /* Assert that we've registered "set remote foo-packet" commands
      for all packet configs.  */

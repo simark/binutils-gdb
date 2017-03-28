@@ -21,6 +21,7 @@
 #include "format.h"
 #include "tracepoint.h"
 #include "rsp-low.h"
+#include "inferiors.h"
 
 static void ax_vdebug (const char *, ...) ATTRIBUTE_PRINTF (1, 2);
 
@@ -1335,6 +1336,17 @@ gdb_eval_agent_expr (struct eval_agent_expr_context *ctx,
 	  /* If ever GDB generates any of these, we don't have the
 	     option of ignoring.  */
 	  return expr_eval_unhandled_opcode;
+
+	case gdb_agent_op_thread_id:
+	  stack[sp++] = top;
+
+#ifdef IN_PROCESS_AGENT
+	  /* The thread_id opcode is not supported in the IPA yet.  */
+	  top = 0;
+#else
+	  top = current_ptid.lwp ();
+#endif
+	  break;
 
 	default:
 	  ax_debug ("Agent expression op 0x%x not recognized", op);

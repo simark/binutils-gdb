@@ -206,4 +206,10 @@ target_debug_print_signals (unsigned char *sigs)
   fputs_unfiltered (" }", gdb_stdlog);
 }
 
+static void
+target_debug_print_bool (bool value)
+{
+  fprintf_unfiltered (gdb_stdlog, "%s", value ? "true" : "false");
+}
+
 #endif /* TARGET_DEBUG_H */

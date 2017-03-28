@@ -320,3 +320,7 @@ OP (OP_TYPEID)
 /* This is used for the Rust [expr; N] form of array construction.  It
    takes two expression arguments.  */
 OP (OP_RUST_ARRAY)
+
+/* A special operator that yields the value of the current target thread id
+   (not the GDB thread number).  */
+OP (OP_THREAD_ID)

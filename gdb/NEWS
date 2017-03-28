@@ -3,6 +3,12 @@
 
 *** Changes since GDB 8.0
 
+* New Agent Expression bytecode "thread_id".
+
+  When executing this bytecode, the target will place the id of the current
+  thread at the top of the stack.  Targets which support this bytecode should
+  include AXThreadId+ in their reply to qSupported.
+
 *** Changes in GDB 8.0
 
 * GDB now supports access to the PKU register on GNU/Linux. The register is

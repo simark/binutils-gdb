@@ -2349,6 +2349,7 @@ handle_query (char *own_buf, int packet_len, int *new_packet_len_p)
 	  || target_supports_software_single_step () )
 	{
 	  strcat (own_buf, ";ConditionalBreakpoints+");
+	  strcat (own_buf, ";AXThreadId+");
 	}
       strcat (own_buf, ";BreakpointCommands+");
 

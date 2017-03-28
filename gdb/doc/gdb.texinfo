@@ -37233,6 +37233,11 @@ These are the currently defined stub features and their properties:
 @tab @samp{-}
 @tab No
 
+@item @samp{AXThreadId}
+@tab No
+@tab @samp{-}
+@tab No
+
 @end multitable
 
 These are the currently defined stub features, in more detail:
@@ -37454,6 +37459,9 @@ The remote stub understands the @samp{QThreadEvents} packet.
 
 @item no-resumed
 The remote stub reports the @samp{N} stop reply.
+
+@item AXThreadId
+The remote stub supports the thread_id agent expression bytecode.
 
 @end table
 
