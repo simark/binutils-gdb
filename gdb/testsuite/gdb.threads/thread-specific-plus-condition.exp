@@ -1,0 +1,325 @@
+# Copyright 2004-2017 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file was written by Daniel Jacobowitz <drow@mvista.com>.
+
+standard_testfile
+
+# Start the test program with the given number of threads.  Pause it at the
+# point where we know all the threads are started.
+#
+# Return 1 on success, 0 on error.
+
+proc setup { conditional_breakpoints_packet thread_specific_breakpoints_packet } {
+    global srcdir subdir srcfile binfile
+
+    if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable "debug"] != "" } {
+	fail "failed to compile"
+	return 0
+    }
+
+    clean_restart ${binfile}
+
+    runto_main
+
+    gdb_test_no_output "set remote conditional-breakpoints-packet $conditional_breakpoints_packet"
+    gdb_test_no_output "set remote thread-specific-breakpoints-packet $thread_specific_breakpoints_packet"
+
+    gdb_breakpoint [gdb_get_line_number "thread started tag"]
+    gdb_continue_to_breakpoint "thread started"
+
+    # Look up breakpoint lines used many times in the tests.
+    global thread_2_bp_line main_bp_line
+
+    set thread_2_bp_line [gdb_get_line_number "thread_2_func loop tag"]
+    set main_bp_line [gdb_get_line_number "main done tag"]
+
+    return 1
+}
+
+# To keep the proc names short, the following notation is used.
+#
+# test_X: test a single breakpoint
+# test_X_Y: test two breakpoints at the same location
+#
+# X and Y can contain:
+#
+# U: unconditional breakpoint
+# C: conditional breakpoint that will evaluate to true
+# c: conditional breakpoint that will evaluate to false
+# T: thread-specific breakpoint for the right thread
+# t: thread-specific breakpoint for the wrong thread
+
+# Thread-specific breakpoint, wrong thread.
+
+proc test_t { conditional_breakpoints_packet thread_specific_breakpoints_packet } {
+    global thread_2_bp_line main_bp_line
+
+
+    if { ![setup $conditional_breakpoints_packet $thread_specific_breakpoints_packet] } {
+	continue
+    }
+
+    # Breakpoint under test.
+    gdb_breakpoint "$thread_2_bp_line thread 1"
+
+    # Catch-all breakpoint.
+    set expected_breakpoint_hit [gdb_breakpoint $main_bp_line]
+
+    gdb_continue_to_breakpoint "continue to breakpoint" .* $expected_breakpoint_hit
+}
+
+# Thread-specific breakpoint, right thread.
+
+proc test_T { conditional_breakpoints_packet thread_specific_breakpoints_packet } {
+    global thread_2_bp_line main_bp_line
+
+    if { ![setup $conditional_breakpoints_packet $thread_specific_breakpoints_packet] } {
+	continue
+    }
+
+    # Breakpoint under test.
+    set expected_breakpoint_hit [gdb_breakpoint "$thread_2_bp_line thread 2"]
+
+    # Catch-all breakpoint.
+    gdb_breakpoint $main_bp_line
+
+    gdb_continue_to_breakpoint "continue to breakpoint" .* $expected_breakpoint_hit
+}
+
+# Thread-specific breakpoint, wrong thread, true condition.
+
+proc test_tC { conditional_breakpoints_packet thread_specific_breakpoints_packet } {
+    global thread_2_bp_line main_bp_line
+
+    if { ![setup $conditional_breakpoints_packet $thread_specific_breakpoints_packet] } {
+	continue
+    }
+
+    # Breakpoint under test.
+    gdb_breakpoint "$thread_2_bp_line thread 1 if i == 10"
+
+    # Catch-all breakpoint.
+    set expected_breakpoint_hit [gdb_breakpoint $main_bp_line]
+
+    gdb_continue_to_breakpoint "continue to breakpoint" .* $expected_breakpoint_hit
+}
+
+# Breakpoint with condition false, right thread.
+
+proc test_Tc { conditional_breakpoints_packet thread_specific_breakpoints_packet } {
+    global thread_2_bp_line main_bp_line
+
+    if { ![setup $conditional_breakpoints_packet $thread_specific_breakpoints_packet] } {
+	continue
+    }
+
+    # Breakpoint under test.
+    gdb_breakpoint "$thread_2_bp_line thread 2 if i == 99999"
+
+    # Catch-all breakpoint.
+    set expected_breakpoint_hit [gdb_breakpoint $main_bp_line]
+
+    gdb_continue_to_breakpoint "continue to breakpoint" .* $expected_breakpoint_hit
+}
+
+# Breakpoint with condition true, right thread.
+
+proc test_TC { conditional_breakpoints_packet thread_specific_breakpoints_packet } {
+    global thread_2_bp_line main_bp_line
+
+    if { ![setup $conditional_breakpoints_packet $thread_specific_breakpoints_packet] } {
+	continue
+    }
+
+    # Breakpoint under test.
+    set expected_breakpoint_hit [gdb_breakpoint "$thread_2_bp_line thread 2 if i == 10"]
+
+    # Catch-all breakpoint.
+    gdb_breakpoint $main_bp_line
+
+    gdb_continue_to_breakpoint "continue to breakpoint" .* $expected_breakpoint_hit
+}
+
+# Breakpoint 1: wrong thread
+# Breakpoint 2: unconditional
+
+proc test_t_U { conditional_breakpoints_packet thread_specific_breakpoints_packet } {
+    global thread_2_bp_line main_bp_line
+
+    foreach_with_prefix run { 0 1 } {
+	if { ![setup $conditional_breakpoints_packet $thread_specific_breakpoints_packet] } {
+	    continue
+	}
+
+	# Breakpoints under test.
+	if { $run == 0 } {
+	    gdb_breakpoint "$thread_2_bp_line thread 1"
+	    set expected_breakpoint_hit [gdb_breakpoint $thread_2_bp_line]
+	} else {
+	    set expected_breakpoint_hit [gdb_breakpoint $thread_2_bp_line]
+	    gdb_breakpoint "$thread_2_bp_line thread 1"
+	}
+
+	# Catch-all breakpoint.
+	gdb_breakpoint $main_bp_line
+
+	gdb_continue_to_breakpoint "continue to breakpoint" .* $expected_breakpoint_hit
+    }
+}
+
+# Breakpoint 1: wrong thread
+# Breakpoint 2: right thread
+
+proc test_t_T { conditional_breakpoints_packet thread_specific_breakpoints_packet } {
+    global thread_2_bp_line main_bp_line
+
+    foreach_with_prefix run { 0 1 } {
+	if { ![setup $conditional_breakpoints_packet $thread_specific_breakpoints_packet] } {
+	    continue
+	}
+
+	# Breakpoints under test.
+	if { $run == 0 } {
+	    set expected_breakpoint_hit [gdb_breakpoint "$thread_2_bp_line thread 2"]
+	    gdb_breakpoint "$thread_2_bp_line thread 1"
+	} else {
+	    gdb_breakpoint "$thread_2_bp_line thread 1"
+	    set expected_breakpoint_hit [gdb_breakpoint "$thread_2_bp_line thread 2"]
+	}
+
+	# Catch-all breakpoint.
+	gdb_breakpoint $main_bp_line
+
+	gdb_continue_to_breakpoint "continue to breakpoint" .* $expected_breakpoint_hit
+    }
+}
+
+# Breakpoint 1: right thread
+# Breakpoint 2: right thread
+
+proc test_T_T { conditional_breakpoints_packet thread_specific_breakpoints_packet } {
+    global thread_2_bp_line main_bp_line
+
+    if { ![setup $conditional_breakpoints_packet $thread_specific_breakpoints_packet] } {
+	continue
+    }
+
+    # Event though both breakpoints are hit, GDB's current implementation only
+    # reports the first one.
+    set expected_breakpoint_hit [gdb_breakpoint "$thread_2_bp_line thread 2"]
+    gdb_breakpoint "$thread_2_bp_line thread 2"
+
+    # Catch-all breakpoint.
+    gdb_breakpoint $main_bp_line
+
+    gdb_continue_to_breakpoint "continue to breakpoint" .* $expected_breakpoint_hit
+}
+
+# Breakpoint 1: wrong thread
+# Breakpoint 2: wrong thread
+
+proc test_t_t { conditional_breakpoints_packet thread_specific_breakpoints_packet } {
+    global thread_2_bp_line main_bp_line
+
+    if { ![setup $conditional_breakpoints_packet $thread_specific_breakpoints_packet] } {
+	continue
+    }
+
+    gdb_breakpoint "$thread_2_bp_line thread 1"
+    gdb_breakpoint "$thread_2_bp_line thread 1"
+
+    # Catch-all breakpoint.
+    set expected_breakpoint_hit [gdb_breakpoint $main_bp_line]
+
+    gdb_continue_to_breakpoint "continue to breakpoint" .* $expected_breakpoint_hit
+}
+
+# Breakpoint 1: wrong thread
+# Breakpoint 2: false condition
+
+proc test_t_c { conditional_breakpoints_packet thread_specific_breakpoints_packet } {
+    global thread_2_bp_line main_bp_line
+
+    foreach_with_prefix run { 0 1 } {
+	if { ![setup $conditional_breakpoints_packet $thread_specific_breakpoints_packet] } {
+	    continue
+	}
+
+	# Breakpoints under test.
+	if { $run == 0 } {
+	    gdb_breakpoint "$thread_2_bp_line thread 1"
+	    gdb_breakpoint "$thread_2_bp_line if i == 9999"
+	} else {
+	    gdb_breakpoint "$thread_2_bp_line if i == 9999"
+	    gdb_breakpoint "$thread_2_bp_line thread 1"
+	}
+
+	# Catch-all breakpoint.
+	set expected_breakpoint_hit [gdb_breakpoint "$main_bp_line"]
+
+	gdb_continue_to_breakpoint "continue to breakpoint" .* $expected_breakpoint_hit
+    }
+}
+
+# Breakpoint 1: right thread, false condition
+# Breakpoint 2: wrong thread, true condition
+
+proc test_Tc_tC { conditional_breakpoints_packet thread_specific_breakpoints_packet } {
+    global thread_2_bp_line main_bp_line
+
+    foreach_with_prefix run { 0 1 } {
+	if { ![setup $conditional_breakpoints_packet $thread_specific_breakpoints_packet] } {
+	    continue
+	}
+
+	# Breakpoints under test.
+	if { $run == 0 } {
+	    gdb_breakpoint "$thread_2_bp_line thread 1 if i == 10"
+	    gdb_breakpoint "$thread_2_bp_line thread 2 if i == 9999"
+	} else {
+	    gdb_breakpoint "$thread_2_bp_line thread 2 if i == 9999"
+	    gdb_breakpoint "$thread_2_bp_line thread 1 if i == 10"
+	}
+
+	# Catch-all breakpoint.
+	set expected_breakpoint_hit [gdb_breakpoint "$main_bp_line"]
+
+	gdb_continue_to_breakpoint "continue to breakpoint" .* $expected_breakpoint_hit
+    }
+}
+
+set procs {
+    test_t
+    test_T
+    test_tC
+    test_Tc
+    test_TC
+    test_t_U
+    test_t_T
+    test_T_T
+    test_t_t
+    test_t_c
+    test_Tc_tC
+}
+
+foreach_with_prefix conditional_breakpoints_packet { auto off } {
+    foreach_with_prefix thread_specific_breakpoints_packet { auto off } {
+	foreach_with_prefix procname $procs {
+	    # Call the test procedure.
+	    $procname $conditional_breakpoints_packet $thread_specific_breakpoints_packet
+	}
+    }
+}
