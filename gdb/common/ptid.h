@@ -20,6 +20,15 @@
 #ifndef PTID_H
 #define PTID_H
 
+class ptid_t;
+
+/* The null or zero ptid, often used to indicate no process.  */
+extern ptid_t null_ptid;
+
+/* The (-1,0,0) ptid, often used to indicate either an error condition
+   or a "don't care" condition, i.e, "run all threads."  */
+extern ptid_t minus_one_ptid;
+
 /* The ptid struct is a collection of the various "ids" necessary for
    identifying the inferior process/thread being debugged.  This
    consists of the process id (pid), lightweight process id (lwp) and
@@ -32,26 +41,84 @@
    thread_stratum target that might want to sit on top.
 */
 
-struct ptid
+class ptid_t
 {
+public:
+  static ptid_t build (int pid, long lwp = 0, long tid = 0)
+  {
+    ptid_t ptid;
+
+    ptid.m_pid = pid;
+    ptid.m_lwp = lwp;
+    ptid.m_tid = tid;
+
+    return ptid;
+  }
+
+  bool is_pid () const
+  {
+    if (is_any () || is_null())
+      return false;
+
+    return m_lwp == 0 && m_tid == 0;
+  }
+
+  bool is_null () const
+  {
+    return *this == null_ptid;
+  }
+
+  bool is_any () const
+  {
+    return *this == minus_one_ptid;
+  }
+
+  int pid () const
+  { return m_pid; }
+
+  bool lwp_p () const
+  { return m_lwp != 0; }
+
+  long lwp () const
+  { return m_lwp; }
+
+  bool tid_p () const
+  { return m_tid != 0; }
+
+  long tid () const
+  { return m_tid; }
+
+  bool operator== (const ptid_t &other) const
+  {
+    return (m_pid == other.m_pid
+	    && m_lwp == other.m_lwp
+	    && m_tid == other.m_tid);
+  }
+
+  bool matches (const ptid_t &filter) const
+  {
+    /* If filter represents any ptid, it's always a match.  */
+    if (filter.is_any ())
+      return true;
+
+    /* If filter is only a pid, any ptid with that pid matches.  */
+    if (filter.is_pid () && m_pid == filter.pid ())
+      return true;
+
+    /* Otherwise, this ptid only matches if it's exactly equal to filter.  */
+    return *this == filter;
+  }
+
+private:
   /* Process id.  */
-  int pid;
+  int m_pid;
 
   /* Lightweight process id.  */
-  long lwp;
+  long m_lwp;
 
   /* Thread id.  */
-  long tid;
+  long m_tid;
 };
-
-typedef struct ptid ptid_t;
-
-/* The null or zero ptid, often used to indicate no process. */
-extern ptid_t null_ptid;
-
-/* The (-1,0,0) ptid, often used to indicate either an error condition
-   or a "don't care" condition, i.e, "run all threads."  */
-extern ptid_t minus_one_ptid;
 
 /* Make a ptid given the necessary PID, LWP, and TID components.  */
 ptid_t ptid_build (int pid, long lwp, long tid);
@@ -61,27 +128,27 @@ ptid_t ptid_build (int pid, long lwp, long tid);
 ptid_t pid_to_ptid (int pid);
 
 /* Fetch the pid (process id) component from a ptid.  */
-int ptid_get_pid (ptid_t ptid);
+int ptid_get_pid (const ptid_t &ptid);
 
 /* Fetch the lwp (lightweight process) component from a ptid.  */
-long ptid_get_lwp (ptid_t ptid);
+long ptid_get_lwp (const ptid_t &ptid);
 
 /* Fetch the tid (thread id) component from a ptid.  */
-long ptid_get_tid (ptid_t ptid);
+long ptid_get_tid (const ptid_t &ptid);
 
 /* Compare two ptids to see if they are equal.  */
-int ptid_equal (ptid_t ptid1, ptid_t ptid2);
+int ptid_equal (const ptid_t &ptid1, const ptid_t &ptid2);
 
 /* Returns true if PTID represents a whole process, including all its
    lwps/threads.  Such ptids have the form of (pid,0,0), with pid !=
    -1.  */
-int ptid_is_pid (ptid_t ptid);
+int ptid_is_pid (const ptid_t &ptid);
 
 /* Return true if PTID's lwp member is non-zero.  */
-int ptid_lwp_p (ptid_t ptid);
+int ptid_lwp_p (const ptid_t &ptid);
 
 /* Return true if PTID's tid member is non-zero.  */
-int ptid_tid_p (ptid_t ptid);
+int ptid_tid_p (const ptid_t &ptid);
 
 /* Returns true if PTID matches filter FILTER.  FILTER can be the wild
    card MINUS_ONE_PTID (all ptid match it); can be a ptid representing
@@ -91,6 +158,6 @@ int ptid_tid_p (ptid_t ptid);
    case, only that thread will match true.  PTID must represent a
    specific LWP or THREAD, it can never be a wild card.  */
 
-extern int ptid_match (ptid_t ptid, ptid_t filter);
+extern int ptid_match (const ptid_t &ptid, const ptid_t &filter);
 
 #endif

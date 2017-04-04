@@ -2654,7 +2654,9 @@ handle_v_cont (char *own_buf)
   char *p, *q;
   int n = 0, i = 0;
   struct thread_resume *resume_info;
-  struct thread_resume default_action = {{0}};
+  struct thread_resume default_action = {
+    .thread = null_ptid,
+  };
 
   /* Count the number of semicolons in the packet.  There should be one
      for every action.  */
