@@ -22,8 +22,8 @@
 
 /* See ptid.h for these.  */
 
-ptid_t null_ptid = ptid_t::build (0, 0, 0);
-ptid_t minus_one_ptid = ptid_t::build (-1, 0, 0);
+ptid_t null_ptid = ptid_t (0, 0, 0);
+ptid_t minus_one_ptid = ptid_t (-1, 0, 0);
 
 
 /* See ptid.h.  */
@@ -31,7 +31,7 @@ ptid_t minus_one_ptid = ptid_t::build (-1, 0, 0);
 ptid_t
 ptid_build (int pid, long lwp, long tid)
 {
-  return ptid_t::build (pid, lwp, tid);
+  return ptid_t (pid, lwp, tid);
 }
 
 /* See ptid.h.  */
@@ -39,7 +39,7 @@ ptid_build (int pid, long lwp, long tid)
 ptid_t
 pid_to_ptid (int pid)
 {
-  return ptid_t::build (pid);
+  return ptid_t (pid);
 }
 
 /* See ptid.h.  */

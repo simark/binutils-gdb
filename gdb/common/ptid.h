@@ -20,6 +20,8 @@
 #ifndef PTID_H
 #define PTID_H
 
+#include <type_traits>
+
 class ptid_t;
 
 /* The null or zero ptid, often used to indicate no process.  */
@@ -44,69 +46,65 @@ extern ptid_t minus_one_ptid;
 class ptid_t
 {
 public:
-  static ptid_t build (int pid, long lwp = 0, long tid = 0)
+  /* Must have a trivial defaulted default constructor so that the
+     type remains POD.  */
+  ptid_t () noexcept = default;
+
+  constexpr ptid_t (int pid, long lwp = 0, long tid = 0)
+    : m_pid (pid), m_lwp (lwp), m_tid (tid)
+  {}
+
+  constexpr bool is_pid () const
   {
-    ptid_t ptid;
-
-    ptid.m_pid = pid;
-    ptid.m_lwp = lwp;
-    ptid.m_tid = tid;
-
-    return ptid;
+    return (!is_any ()
+	    && !is_null()
+	    && m_lwp == 0
+	    && m_tid == 0);
   }
 
-  bool is_pid () const
-  {
-    if (is_any () || is_null())
-      return false;
-
-    return m_lwp == 0 && m_tid == 0;
-  }
-
-  bool is_null () const
+  constexpr bool is_null () const
   {
     return *this == null_ptid;
   }
 
-  bool is_any () const
+  constexpr bool is_any () const
   {
     return *this == minus_one_ptid;
   }
 
-  int pid () const
+  constexpr int pid () const
   { return m_pid; }
 
-  bool lwp_p () const
+  constexpr bool lwp_p () const
   { return m_lwp != 0; }
 
-  long lwp () const
+  constexpr long lwp () const
   { return m_lwp; }
 
-  bool tid_p () const
+  constexpr bool tid_p () const
   { return m_tid != 0; }
 
-  long tid () const
+  constexpr long tid () const
   { return m_tid; }
 
-  bool operator== (const ptid_t &other) const
+  constexpr bool operator== (const ptid_t &other) const
   {
     return (m_pid == other.m_pid
 	    && m_lwp == other.m_lwp
 	    && m_tid == other.m_tid);
   }
 
-  bool matches (const ptid_t &filter) const
+  constexpr bool matches (const ptid_t &filter) const
   {
-    /* If filter represents any ptid, it's always a match.  */
-    if (filter.is_any ())
-      return true;
+    return (/* If filter represents any ptid, it's always a match.  */
+	    filter.is_any ()
+	    /* If filter is only a pid, any ptid with that pid
+	       matches.  */
+	    || (filter.is_pid () && m_pid == filter.pid ())
 
-    /* If filter is only a pid, any ptid with that pid matches.  */
-    if (filter.is_pid () && m_pid == filter.pid ())
-      return true;
-
-    /* Otherwise, this ptid only matches if it's exactly equal to filter.  */
-    return *this == filter;
+	    /* Otherwise, this ptid only matches if it's exactly equal
+	       to filter.  */
+	    || *this == filter);
   }
 
 private:
@@ -119,6 +117,10 @@ private:
   /* Thread id.  */
   long m_tid;
 };
+
+static_assert (std::is_pod<ptid_t>::value, "");
+
+static_assert (ptid_t(1).pid () == 1, "");
 
 /* Make a ptid given the necessary PID, LWP, and TID components.  */
 ptid_t ptid_build (int pid, long lwp, long tid);
