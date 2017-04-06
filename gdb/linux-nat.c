@@ -293,7 +293,6 @@ async_file_mark (void)
 static int kill_lwp (int lwpid, int signo);
 
 static int stop_callback (struct lwp_info *lp, void *data);
-static int resume_stopped_resumed_lwps (struct lwp_info *lp, void *data);
 
 static void block_child_signals (sigset_t *prev_mask);
 static void restore_child_signals_mask (sigset_t *prev_mask);
@@ -827,7 +826,7 @@ linux_nat_pass_signals (struct target_ops *self,
 /* Prototypes for local functions.  */
 static int stop_wait_callback (struct lwp_info *lp, void *data);
 static char *linux_child_pid_to_exec_file (struct target_ops *self, int pid);
-static int resume_stopped_resumed_lwps (struct lwp_info *lp, void *data);
+static int resume_stopped_resumed_lwps (struct lwp_info *lp, ptid_t wait_ptid);
 static int check_ptrace_stopped_lwp_gone (struct lwp_info *lp);
 
 
@@ -2383,8 +2382,9 @@ linux_stop_and_wait_all_lwps (void)
 void
 linux_unstop_all_lwps (void)
 {
-  iterate_over_lwps (minus_one_ptid,
-		     resume_stopped_resumed_lwps, &minus_one_ptid);
+  iterate_over_lwps (minus_one_ptid, [] (struct lwp_info *lwp, void *) -> int {
+    return resume_stopped_resumed_lwps (lwp, minus_one_ptid);
+  }, nullptr);
 }
 
 /* Return non-zero if LWP PID has a pending SIGINT.  */
@@ -3378,8 +3378,9 @@ linux_nat_wait_1 (struct target_ops *ops,
 
       /* Now that we've pulled all events out of the kernel, resume
 	 LWPs that don't have an interesting event to report.  */
-      iterate_over_lwps (minus_one_ptid,
-			 resume_stopped_resumed_lwps, &minus_one_ptid);
+      iterate_over_lwps (minus_one_ptid, [] (struct lwp_info *lwp, void *) -> int {
+        return resume_stopped_resumed_lwps (lwp, minus_one_ptid);
+      }, nullptr);
 
       /* ... and find an LWP with a status to report to the core, if
 	 any.  */
@@ -3530,10 +3531,8 @@ linux_nat_wait_1 (struct target_ops *ops,
    to report, but are resumed from the core's perspective.  */
 
 static int
-resume_stopped_resumed_lwps (struct lwp_info *lp, void *data)
+resume_stopped_resumed_lwps (struct lwp_info *lp, ptid_t wait_ptid)
 {
-  ptid_t *wait_ptid_p = (ptid_t *) data;
-
   if (!lp->stopped)
     {
       if (debug_linux_nat)
@@ -3567,7 +3566,7 @@ resume_stopped_resumed_lwps (struct lwp_info *lp, void *data)
 
 	  /* Don't bother if there's a breakpoint at PC that we'd hit
 	     immediately, and we're not waiting for this LWP.  */
-	  if (!ptid_match (lp->ptid, *wait_ptid_p))
+	  if (!ptid_match (lp->ptid, wait_ptid))
 	    {
 	      if (breakpoint_inserted_here_p (get_regcache_aspace (regcache), pc))
 		leave_stopped = 1;
@@ -3628,7 +3627,11 @@ linux_nat_wait (struct target_ops *ops,
      meanwhile the event became uninteresting.  Don't bother resuming
      LWPs we're not going to wait for if they'd stop immediately.  */
   if (target_is_non_stop_p ())
-    iterate_over_lwps (minus_one_ptid, resume_stopped_resumed_lwps, &ptid);
+    {
+      iterate_over_lwps (minus_one_ptid, [] (struct lwp_info *lwp, void *) -> int {
+	return resume_stopped_resumed_lwps (lwp, null_ptid);
+      }, nullptr);
+    }
 
   event_ptid = linux_nat_wait_1 (ops, ptid, ourstatus, target_options);
 

@@ -20,17 +20,6 @@
 #ifndef PTID_H
 #define PTID_H
 
-#include <type_traits>
-
-class ptid_t;
-
-/* The null or zero ptid, often used to indicate no process.  */
-extern ptid_t null_ptid;
-
-/* The (-1,0,0) ptid, often used to indicate either an error condition
-   or a "don't care" condition, i.e, "run all threads."  */
-extern ptid_t minus_one_ptid;
-
 /* The ptid struct is a collection of the various "ids" necessary for
    identifying the inferior process/thread being debugged.  This
    consists of the process id (pid), lightweight process id (lwp) and
@@ -42,6 +31,11 @@ extern ptid_t minus_one_ptid;
    prefer using the ptid.lwp field, leaving the ptid.tid field for any
    thread_stratum target that might want to sit on top.
 */
+
+/* Work around the fact that we want to refer to null_ptid and minus_one_ptid
+   in the definition of class ptid_t.  */
+#define NULL_PTID ptid_t (0, 0, 0)
+#define MINUS_ONE_PTID ptid_t (-1, 0, 0)
 
 class ptid_t
 {
@@ -57,19 +51,19 @@ public:
   constexpr bool is_pid () const
   {
     return (!is_any ()
-	    && !is_null()
+	    && !is_null ()
 	    && m_lwp == 0
 	    && m_tid == 0);
   }
 
   constexpr bool is_null () const
   {
-    return *this == null_ptid;
+    return *this == NULL_PTID;
   }
 
   constexpr bool is_any () const
   {
-    return *this == minus_one_ptid;
+    return *this == MINUS_ONE_PTID;
   }
 
   constexpr int pid () const
@@ -92,6 +86,11 @@ public:
     return (m_pid == other.m_pid
 	    && m_lwp == other.m_lwp
 	    && m_tid == other.m_tid);
+  }
+
+  constexpr bool operator!= (const ptid_t &other) const
+  {
+    return !(*this == other);
   }
 
   constexpr bool matches (const ptid_t &filter) const
@@ -118,9 +117,16 @@ private:
   long m_tid;
 };
 
-static_assert (std::is_pod<ptid_t>::value, "");
+/* The null or zero ptid, often used to indicate no process.  */
+constexpr ptid_t null_ptid = NULL_PTID;
 
-static_assert (ptid_t(1).pid () == 1, "");
+/* The (-1,0,0) ptid, often used to indicate either an error condition
+   or a "don't care" condition, i.e, "run all threads."  */
+constexpr ptid_t minus_one_ptid = MINUS_ONE_PTID;
+
+/* We don't want anybody using these macros, they are temporary.  */
+#undef NULL_PTID
+#undef MINUS_ONE_PTID
 
 /* Make a ptid given the necessary PID, LWP, and TID components.  */
 ptid_t ptid_build (int pid, long lwp, long tid);
