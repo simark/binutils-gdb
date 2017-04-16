@@ -34,36 +34,36 @@ struct process_info_private;
 struct process_info
 {
   /* This process' pid.  */
-  int pid;
+  int pid = 0;
 
   /* Nonzero if this child process was attached rather than
      spawned.  */
-  int attached;
+  int attached = 0;
 
   /* True if GDB asked us to detach from this process, but we remained
      attached anyway.  */
-  int gdb_detached;
+  int gdb_detached = 0;
 
   /* The symbol cache.  */
-  struct sym_cache *symbol_cache;
+  struct sym_cache *symbol_cache = NULL;
 
   /* The list of memory breakpoints.  */
-  struct breakpoint *breakpoints;
+  struct breakpoint *breakpoints = NULL;
 
   /* The list of raw memory breakpoints.  */
-  struct raw_breakpoint *raw_breakpoints;
+  struct raw_breakpoint *raw_breakpoints = NULL;
 
   /* The list of installed fast tracepoints.  */
-  struct fast_tracepoint_jump *fast_tracepoint_jumps;
+  struct fast_tracepoint_jump *fast_tracepoint_jumps = NULL;
 
   /* The list of syscalls to report, or just a single element, ANY_SYSCALL,
      for unfiltered syscall reporting.  */
-  VEC (int) *syscalls_to_catch;
+  std::vector<int> syscalls_to_catch;
 
-  const struct target_desc *tdesc;
+  const struct target_desc *tdesc = NULL;
 
   /* Private target data.  */
-  struct process_info_private *priv;
+  struct process_info_private *priv = NULL;
 };
 
 /* Get the pid of PROC.  */

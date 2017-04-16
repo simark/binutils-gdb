@@ -194,7 +194,7 @@ clear_inferiors (void)
 struct process_info *
 add_process (int pid, int attached)
 {
-  struct process_info *process = XCNEW (struct process_info);
+  process_info *process = new process_info;
 
   process->pid = pid;
   process->attached = attached;
@@ -215,8 +215,7 @@ remove_process (struct process_info *process)
   free_all_breakpoints (process);
   gdb_assert (find_thread_process (process) == NULL);
   all_processes.remove (process);
-  VEC_free (int, process->syscalls_to_catch);
-  free (process);
+  delete process;
 }
 
 process_info *
