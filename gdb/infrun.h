@@ -243,4 +243,11 @@ extern void all_uis_check_sync_execution_done (void);
    started or re-started).  */
 extern void all_uis_on_sync_execution_starting (void);
 
+/* Base class for displaced stepping closures (the arch-specific data).  */
+
+struct displaced_step_closure
+{
+  virtual ~displaced_step_closure () = 0;
+};
+
 #endif /* INFRUN_H */
