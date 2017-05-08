@@ -2981,21 +2981,24 @@ remote_threadlist_iterator (rmt_thread_action stepfunction, void *context,
 
 /* A thread found on the remote target.  */
 
-typedef struct thread_item
+struct thread_item
 {
+  thread_item (ptid_t ptid_)
+  : ptid (ptid_)
+  {}
+
   /* The thread's PTID.  */
   ptid_t ptid;
 
   /* The thread's extra info.  May be NULL.  */
-  char *extra;
+  std::string extra;
 
   /* The thread's name.  May be NULL.  */
-  char *name;
+  std::string name;
 
   /* The core the thread was running on.  -1 if not known.  */
-  int core;
-} thread_item_t;
-DEF_VEC_O(thread_item_t);
+  int core = -1;
+};
 
 /* Context passed around to the various methods listing remote
    threads.  As new threads are found, they're added to the ITEMS
@@ -3004,27 +3007,24 @@ DEF_VEC_O(thread_item_t);
 struct threads_listing_context
 {
   /* The threads found on the remote target.  */
-  VEC (thread_item_t) *items;
+  std::vector<thread_item> items;
 };
 
-/* Discard the contents of the constructed thread listing context.  */
+/* A functor that matches thread_items with the given ptid.  */
 
-static void
-clear_threads_listing_context (void *p)
+struct thread_item_ptid_matcher
 {
-  struct threads_listing_context *context
-    = (struct threads_listing_context *) p;
-  int i;
-  struct thread_item *item;
+  thread_item_ptid_matcher (ptid_t ptid)
+  : m_ptid (ptid)
+  {}
 
-  for (i = 0; VEC_iterate (thread_item_t, context->items, i, item); ++i)
-    {
-      xfree (item->extra);
-      xfree (item->name);
-    }
+  bool operator() (const thread_item &item)
+  { return item.ptid == m_ptid; }
 
-  VEC_free (thread_item_t, context->items);
-}
+private:
+
+  ptid_t m_ptid;
+};
 
 /* Remove the thread specified as the related_pid field of WS
    from the CONTEXT list.  */
@@ -3033,18 +3033,15 @@ static void
 threads_listing_context_remove (struct target_waitstatus *ws,
 				struct threads_listing_context *context)
 {
-  struct thread_item *item;
   int i;
   ptid_t child_ptid = ws->value.related_pid;
+  thread_item_ptid_matcher matcher (child_ptid);
+  std::vector<thread_item> &v = context->items;
 
-  for (i = 0; VEC_iterate (thread_item_t, context->items, i, item); ++i)
-    {
-      if (ptid_equal (item->ptid, child_ptid))
-	{
-	  VEC_ordered_remove (thread_item_t, context->items, i);
-	  break;
-	}
-    }
+  auto pos = std::remove_if (v.begin (), v.end (), matcher);
+
+  if (pos != v.end ())
+    v.erase (pos);
 }
 
 static int
@@ -3052,15 +3049,9 @@ remote_newthread_step (threadref *ref, void *data)
 {
   struct threads_listing_context *context
     = (struct threads_listing_context *) data;
-  struct thread_item item;
-  int pid = ptid_get_pid (inferior_ptid);
+  ptid_t ptid = ptid_build (inferior_ptid.pid (), threadref_to_int (ref), 0);
 
-  item.ptid = ptid_build (pid, threadref_to_int (ref), 0);
-  item.core = -1;
-  item.name = NULL;
-  item.extra = NULL;
-
-  VEC_safe_push (thread_item_t, context->items, &item);
+  context->items.emplace_back (ptid);
 
   return 1;			/* continue iterator */
 }
@@ -3112,26 +3103,21 @@ start_thread (struct gdb_xml_parser *parser,
 {
   struct threads_listing_context *data
     = (struct threads_listing_context *) user_data;
-
-  struct thread_item item;
-  char *id;
   struct gdb_xml_value *attr;
 
-  id = (char *) xml_find_attribute (attributes, "id")->value;
-  item.ptid = read_ptid (id, NULL);
+  char *id = (char *) xml_find_attribute (attributes, "id")->value;
+  ptid_t ptid = read_ptid (id, NULL);
+
+  data->items.emplace_back (ptid);
+  thread_item &item = data->items.back ();
 
   attr = xml_find_attribute (attributes, "core");
   if (attr != NULL)
     item.core = *(ULONGEST *) attr->value;
-  else
-    item.core = -1;
 
   attr = xml_find_attribute (attributes, "name");
-  item.name = attr != NULL ? xstrdup ((const char *) attr->value) : NULL;
-
-  item.extra = 0;
-
-  VEC_safe_push (thread_item_t, data->items, &item);
+  if (attr != NULL)
+    item.name = (const char *) attr->value;
 }
 
 static void
@@ -3142,8 +3128,8 @@ end_thread (struct gdb_xml_parser *parser,
   struct threads_listing_context *data
     = (struct threads_listing_context *) user_data;
 
-  if (body_text && *body_text)
-    VEC_last (thread_item_t, data->items)->extra = xstrdup (body_text);
+  if (body_text != NULL && *body_text != '\0')
+    data->items.back ().extra = body_text;
 }
 
 const struct gdb_xml_attribute thread_attributes[] = {
@@ -3219,14 +3205,8 @@ remote_get_threads_with_qthreadinfo (struct target_ops *ops,
 	    {
 	      do
 		{
-		  struct thread_item item;
-
-		  item.ptid = read_ptid (bufp, &bufp);
-		  item.core = -1;
-		  item.name = NULL;
-		  item.extra = NULL;
-
-		  VEC_safe_push (thread_item_t, context->items, &item);
+		  ptid_t ptid = read_ptid (bufp, &bufp);
+		  context->items.emplace_back (ptid);
 		}
 	      while (*bufp++ == ',');	/* comma-separated list */
 	      putpkt ("qsThreadInfo");
@@ -3252,11 +3232,7 @@ static void
 remote_update_thread_list (struct target_ops *ops)
 {
   struct threads_listing_context context;
-  struct cleanup *old_chain;
   int got_list = 0;
-
-  context.items = NULL;
-  old_chain = make_cleanup (clear_threads_listing_context, &context);
 
   /* We have a few different mechanisms to fetch the thread list.  Try
      them all, starting with the most preferred one first, falling
@@ -3266,12 +3242,11 @@ remote_update_thread_list (struct target_ops *ops)
       || remote_get_threads_with_ql (ops, &context))
     {
       int i;
-      struct thread_item *item;
       struct thread_info *tp, *tmp;
 
       got_list = 1;
 
-      if (VEC_empty (thread_item_t, context.items)
+      if (context.items.empty ()
 	  && remote_thread_always_alive (ops, inferior_ptid))
 	{
 	  /* Some targets don't really support threads, but still
@@ -3279,7 +3254,6 @@ remote_update_thread_list (struct target_ops *ops)
 	     listing packets, instead of replying "packet not
 	     supported".  Exit early so we don't delete the main
 	     thread.  */
-	  do_cleanups (old_chain);
 	  return;
 	}
 
@@ -3288,15 +3262,11 @@ remote_update_thread_list (struct target_ops *ops)
 	 target.  */
       ALL_THREADS_SAFE (tp, tmp)
 	{
-	  for (i = 0;
-	       VEC_iterate (thread_item_t, context.items, i, item);
-	       ++i)
-	    {
-	      if (ptid_equal (item->ptid, tp->ptid))
-		break;
-	    }
+	  thread_item_ptid_matcher matcher (tp->ptid);
+	  auto it = std::find_if (context.items.begin (), context.items.end (),
+				  matcher);
 
-	  if (i == VEC_length (thread_item_t, context.items))
+	  if (it == context.items.end ())
 	    {
 	      /* Not found.  */
 	      delete_thread (tp->ptid);
@@ -3309,11 +3279,9 @@ remote_update_thread_list (struct target_ops *ops)
       remove_new_fork_children (&context);
 
       /* And now add threads we don't know about yet to our list.  */
-      for (i = 0;
-	   VEC_iterate (thread_item_t, context.items, i, item);
-	   ++i)
+      for (thread_item &item : context.items)
 	{
-	  if (!ptid_equal (item->ptid, null_ptid))
+	  if (item.ptid != null_ptid)
 	    {
 	      struct private_thread_info *info;
 	      /* In non-stop mode, we assume new found threads are
@@ -3322,14 +3290,14 @@ remote_update_thread_list (struct target_ops *ops)
 		 stopped.  */
 	      int executing = target_is_non_stop_p () ? 1 : 0;
 
-	      remote_notice_new_inferior (item->ptid, executing);
+	      remote_notice_new_inferior (item.ptid, executing);
 
-	      info = get_private_info_ptid (item->ptid);
-	      info->core = item->core;
-	      info->extra = item->extra;
-	      item->extra = NULL;
-	      info->name = item->name;
-	      item->name = NULL;
+	      info = get_private_info_ptid (item.ptid);
+	      info->core = item.core;
+	      info->extra = xstrdup (item.extra.c_str ());
+	      item.extra.clear ();
+	      info->name = xstrdup (item.name.c_str ());
+	      item.name.clear ();
 	    }
 	}
     }
@@ -3342,8 +3310,6 @@ remote_update_thread_list (struct target_ops *ops)
 	 no-op.  See remote_thread_alive.  */
       prune_threads ();
     }
-
-  do_cleanups (old_chain);
 }
 
 /*
