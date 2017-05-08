@@ -152,7 +152,7 @@ void
 lwp_set_arch_private_info (struct lwp_info *lwp,
 			   struct arch_lwp_info *info)
 {
-  lwp->arch_private = info;
+  lwp->arch_private.reset (info);
 }
 
 /* See nat/linux-nat.h.  */
@@ -160,7 +160,7 @@ lwp_set_arch_private_info (struct lwp_info *lwp,
 struct arch_lwp_info *
 lwp_arch_private_info (struct lwp_info *lwp)
 {
-  return lwp->arch_private;
+  return lwp->arch_private.get ()	;
 }
 
 /* See nat/linux-nat.h.  */
@@ -414,7 +414,6 @@ delete_lwp (struct lwp_info *lwp)
     debug_printf ("deleting %ld\n", lwpid_of (thr));
 
   remove_thread (thr);
-  free (lwp->arch_private);
   delete lwp;
 }
 
@@ -7600,6 +7599,8 @@ linux_get_pc_64bit (struct regcache *regcache)
     debug_printf ("stop pc is 0x%" PRIx64 "\n", pc);
   return pc;
 }
+
+arch_lwp_info::~arch_lwp_info () = default;
 
 
 static struct target_ops linux_target_ops = {

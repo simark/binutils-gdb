@@ -378,7 +378,7 @@ struct lwp_info
 #endif
 
   /* Arch-specific additions.  */
-  struct arch_lwp_info *arch_private = NULL;
+  std::unique_ptr<arch_lwp_info> arch_private;
 };
 
 int linux_pid_exe_is_elf_64_file (int pid, unsigned int *machine);

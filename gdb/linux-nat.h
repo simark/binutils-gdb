@@ -21,8 +21,6 @@
 #include "target.h"
 #include <signal.h>
 
-struct arch_lwp_info;
-
 /* Structure describing an LWP.  This is public only for the purposes
    of ALL_LWPS; target-specific code should generally not access it
    directly.  */
@@ -103,7 +101,7 @@ struct lwp_info
   int core = -1;
 
   /* Arch-specific additions.  */
-  arch_lwp_info *arch_private = NULL;
+  std::unique_ptr<arch_lwp_info> arch_private;
 
   /* Previous and next pointers in doubly-linked list of known LWPs,
      sorted by reverse creation order.  */

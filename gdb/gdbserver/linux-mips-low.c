@@ -188,10 +188,10 @@ struct arch_process_info
 
 /* Per-thread arch-specific data we want to keep.  */
 
-struct arch_lwp_info
+struct mips_lwp_info : public arch_lwp_info
 {
   /* Non-zero if our copy differs from what's recorded in the thread.  */
-  int watch_registers_changed;
+  int watch_registers_changed = 0;
 };
 
 /* From mips-linux-nat.c.  */
@@ -298,6 +298,7 @@ update_watch_registers_callback (struct inferior_list_entry *entry,
 {
   struct thread_info *thread = (struct thread_info *) entry;
   struct lwp_info *lwp = get_thread_lwp (thread);
+  mips_lwp_info *mips_lwp = (mips_lwp_info *) lwp_arch_private_info (lwp);
   int pid = *(int *) pid_p;
 
   /* Only update the threads of this process.  */
@@ -305,7 +306,7 @@ update_watch_registers_callback (struct inferior_list_entry *entry,
     {
       /* The actual update is done later just before resuming the lwp,
 	 we just mark that the registers need updating.  */
-      lwp->arch_private->watch_registers_changed = 1;
+      mips_lwp->watch_registers_changed = 1;
 
       /* If the lwp isn't stopped, force it to momentarily pause, so
 	 we can update its watch registers.  */
@@ -334,11 +335,11 @@ mips_linux_new_process (void)
 static void
 mips_linux_new_thread (struct lwp_info *lwp)
 {
-  struct arch_lwp_info *info = XCNEW (struct arch_lwp_info);
+  mips_lwp_info *info = new mips_lwp_info;
 
   info->watch_registers_changed = 1;
 
-  lwp->arch_private = info;
+  lwp_set_arch_private_info (lwp, info);
 }
 
 /* Create a new mips_watchpoint and add it to the list.  */
@@ -413,8 +414,9 @@ mips_linux_prepare_to_resume (struct lwp_info *lwp)
   ptid_t ptid = ptid_of (get_lwp_thread (lwp));
   struct process_info *proc = find_process_pid (ptid_get_pid (ptid));
   struct arch_process_info *priv = proc->priv->arch_private;
+  mips_lwp_info *mips_lwp = (mips_lwp_info *) lwp_arch_private_info (lwp);
 
-  if (lwp->arch_private->watch_registers_changed)
+  if (mips_lwp->watch_registers_changed)
     {
       /* Only update the watch registers if we have set or unset a
 	 watchpoint already.  */
@@ -428,7 +430,7 @@ mips_linux_prepare_to_resume (struct lwp_info *lwp)
 	    perror_with_name ("Couldn't write watch register");
 	}
 
-      lwp->arch_private->watch_registers_changed = 0;
+      mips_lwp->watch_registers_changed = 0;
     }
 }
 

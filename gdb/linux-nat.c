@@ -322,13 +322,15 @@ ptid_of_lwp (struct lwp_info *lwp)
   return lwp->ptid;
 }
 
+arch_lwp_info::~arch_lwp_info () = default;
+
 /* See nat/linux-nat.h.  */
 
 void
 lwp_set_arch_private_info (struct lwp_info *lwp,
 			   struct arch_lwp_info *info)
 {
-  lwp->arch_private = info;
+  lwp->arch_private.reset (info);
 }
 
 /* See nat/linux-nat.h.  */
@@ -336,7 +338,7 @@ lwp_set_arch_private_info (struct lwp_info *lwp,
 struct arch_lwp_info *
 lwp_arch_private_info (struct lwp_info *lwp)
 {
-  return lwp->arch_private;
+  return lwp->arch_private.get ();
 }
 
 /* See nat/linux-nat.h.  */
@@ -837,7 +839,6 @@ static int check_ptrace_stopped_lwp_gone (struct lwp_info *lp);
 static void
 lwp_free (struct lwp_info *lp)
 {
-  xfree (lp->arch_private);
   delete lp;
 }
 

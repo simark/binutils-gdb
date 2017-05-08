@@ -33,7 +33,7 @@
 void
 aarch64_linux_prepare_to_resume (struct lwp_info *lwp)
 {
-  struct arch_lwp_info *info = lwp_arch_private_info (lwp);
+    aarch64_lwp_info *info = (aarch64_lwp_info *) lwp_arch_private_info (lwp);
 
   /* NULL means this is the main thread still going through the shell,
      or, no watchpoint has been set yet.  In that case, there's
@@ -73,7 +73,7 @@ aarch64_linux_prepare_to_resume (struct lwp_info *lwp)
 void
 aarch64_linux_new_thread (struct lwp_info *lwp)
 {
-  struct arch_lwp_info *info = XNEW (struct arch_lwp_info);
+  aarch64_lwp_info *info = new aarch64_lwp_info;
 
   /* Mark that all the hardware breakpoint/watchpoint register pairs
      for this thread need to be initialized (with data from

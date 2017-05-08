@@ -728,11 +728,11 @@ struct arm_linux_process_info
 };
 
 /* Per-thread arch-specific data we want to keep.  */
-struct arch_lwp_info
+struct arm_lwp_info : public arch_lwp_info
 {
   /* Non-zero if our copy differs from what's recorded in the thread.  */
-  char bpts_changed[MAX_BPTS];
-  char wpts_changed[MAX_WPTS];
+  char bpts_changed[MAX_BPTS] = {0};
+  char wpts_changed[MAX_WPTS] = {0};
 };
 
 static struct arm_linux_process_info *arm_linux_process_list = NULL;
@@ -930,14 +930,16 @@ update_registers_callback (struct lwp_info *lwp, void *arg)
   struct update_registers_data *data = (struct update_registers_data *) arg;
 
   if (lwp->arch_private == NULL)
-    lwp->arch_private = XCNEW (struct arch_lwp_info);
+    lwp->arch_private.reset (new arm_lwp_info);
+
+  struct arm_lwp_info *info = (arm_lwp_info *) lwp->arch_private.get ();
 
   /* The actual update is done later just before resuming the lwp,
      we just mark that the registers need updating.  */
   if (data->watch)
-    lwp->arch_private->wpts_changed[data->index] = 1;
+    info->wpts_changed[data->index] = 1;
   else
-    lwp->arch_private->bpts_changed[data->index] = 1;
+    info->bpts_changed[data->index] = 1;
 
   /* If the lwp isn't stopped, force it to momentarily pause, so
      we can update its breakpoint registers.  */
@@ -1188,7 +1190,7 @@ static void
 arm_linux_new_thread (struct lwp_info *lp)
 {
   int i;
-  struct arch_lwp_info *info = XCNEW (struct arch_lwp_info);
+  struct arm_lwp_info *info = new arm_lwp_info;
 
   /* Mark that all the hardware breakpoint/watchpoint register pairs
      for this thread need to be initialized.  */
@@ -1199,7 +1201,7 @@ arm_linux_new_thread (struct lwp_info *lp)
       info->wpts_changed[i] = 1;
     }
 
-  lp->arch_private = info;
+  lp->arch_private.reset (info);
 }
 
 /* Called when resuming a thread.
@@ -1210,7 +1212,8 @@ arm_linux_prepare_to_resume (struct lwp_info *lwp)
 {
   int pid, i;
   struct arm_linux_hw_breakpoint *bpts, *wpts;
-  struct arch_lwp_info *arm_lwp_info = lwp->arch_private;
+  struct arm_lwp_info *arm_lwp_info
+    = (struct arm_lwp_info *) lwp->arch_private.get ();
 
   pid = ptid_get_lwp (lwp->ptid);
   bpts = arm_linux_get_debug_reg_state (ptid_get_pid (lwp->ptid))->bpts;

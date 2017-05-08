@@ -23,11 +23,11 @@
 
 /* Per-thread arch-specific data we want to keep.  */
 
-struct arch_lwp_info
+struct x86_lwp_info : public arch_lwp_info
 {
   /* Non-zero if our copy differs from what's recorded in the
      thread.  */
-  int debug_registers_changed;
+  int debug_registers_changed = 0;
 };
 
 /* See nat/x86-linux.h.  */
@@ -36,9 +36,11 @@ void
 lwp_set_debug_registers_changed (struct lwp_info *lwp, int value)
 {
   if (lwp_arch_private_info (lwp) == NULL)
-    lwp_set_arch_private_info (lwp, XCNEW (struct arch_lwp_info));
+    lwp_set_arch_private_info (lwp, new x86_lwp_info ());
 
-  lwp_arch_private_info (lwp)->debug_registers_changed = value;
+  x86_lwp_info *info = (x86_lwp_info *) lwp_arch_private_info (lwp);
+
+  info->debug_registers_changed = value;
 }
 
 /* See nat/x86-linux.h.  */
@@ -46,7 +48,7 @@ lwp_set_debug_registers_changed (struct lwp_info *lwp, int value)
 int
 lwp_debug_registers_changed (struct lwp_info *lwp)
 {
-  struct arch_lwp_info *info = lwp_arch_private_info (lwp);
+  x86_lwp_info *info = (x86_lwp_info *) lwp_arch_private_info (lwp);
 
   /* NULL means either that this is the main thread still going
      through the shell, or that no watchpoint has been set yet.

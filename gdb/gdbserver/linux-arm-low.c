@@ -110,13 +110,14 @@ struct arch_process_info
 };
 
 /* Per-thread arch-specific data we want to keep.  */
-struct arch_lwp_info
+struct arm_lwp_info : public arch_lwp_info
 {
   /* Non-zero if our copy differs from what's recorded in the thread.  */
-  char bpts_changed[MAX_BPTS];
-  char wpts_changed[MAX_WPTS];
+  char bpts_changed[MAX_BPTS] = {0};
+  char wpts_changed[MAX_WPTS] = {0};
+
   /* Cached stopped data address.  */
-  CORE_ADDR stopped_data_address;
+  CORE_ADDR stopped_data_address = 0;
 };
 
 /* These are in <asm/elf.h> in current kernels.  */
@@ -471,6 +472,7 @@ update_registers_callback (struct inferior_list_entry *entry, void *arg)
 {
   struct thread_info *thread = (struct thread_info *) entry;
   struct lwp_info *lwp = get_thread_lwp (thread);
+  arm_lwp_info *arm_lwp = (arm_lwp_info *) lwp_arch_private_info (lwp);
   struct update_registers_data *data = (struct update_registers_data *) arg;
 
   /* Only update the threads of the current process.  */
@@ -479,9 +481,9 @@ update_registers_callback (struct inferior_list_entry *entry, void *arg)
       /* The actual update is done later just before resuming the lwp,
          we just mark that the registers need updating.  */
       if (data->watch)
-	lwp->arch_private->wpts_changed[data->i] = 1;
+	arm_lwp->wpts_changed[data->i] = 1;
       else
-	lwp->arch_private->bpts_changed[data->i] = 1;
+	arm_lwp->bpts_changed[data->i] = 1;
 
       /* If the lwp isn't stopped, force it to momentarily pause, so
          we can update its breakpoint registers.  */
@@ -594,6 +596,7 @@ static int
 arm_stopped_by_watchpoint (void)
 {
   struct lwp_info *lwp = get_thread_lwp (current_thread);
+  arm_lwp_info *arm_lwp = (arm_lwp_info *) lwp_arch_private_info (lwp);
   siginfo_t siginfo;
 
   /* We must be able to set hardware watchpoints.  */
@@ -617,8 +620,7 @@ arm_stopped_by_watchpoint (void)
     return 0;
 
   /* Cache stopped data address for use by arm_stopped_data_address.  */
-  lwp->arch_private->stopped_data_address
-    = (CORE_ADDR) (uintptr_t) siginfo.si_addr;
+  arm_lwp->stopped_data_address = (CORE_ADDR) (uintptr_t) siginfo.si_addr;
 
   return 1;
 }
@@ -629,7 +631,8 @@ static CORE_ADDR
 arm_stopped_data_address (void)
 {
   struct lwp_info *lwp = get_thread_lwp (current_thread);
-  return lwp->arch_private->stopped_data_address;
+  arm_lwp_info *arm_lwp = (arm_lwp_info *) lwp_arch_private_info (lwp);
+  return arm_lwp->stopped_data_address;
 }
 
 /* Called when a new process is created.  */
@@ -644,7 +647,7 @@ arm_new_process (void)
 static void
 arm_new_thread (struct lwp_info *lwp)
 {
-  struct arch_lwp_info *info = XCNEW (struct arch_lwp_info);
+  arm_lwp_info *info = new arm_lwp_info;
   int i;
 
   for (i = 0; i < MAX_BPTS; i++)
@@ -652,7 +655,7 @@ arm_new_thread (struct lwp_info *lwp)
   for (i = 0; i < MAX_WPTS; i++)
     info->wpts_changed[i] = 1;
 
-  lwp->arch_private = info;
+  lwp_set_arch_private_info (lwp, info);
 }
 
 static void
@@ -661,7 +664,6 @@ arm_new_fork (struct process_info *parent, struct process_info *child)
   struct arch_process_info *parent_proc_info;
   struct arch_process_info *child_proc_info;
   struct lwp_info *child_lwp;
-  struct arch_lwp_info *child_lwp_info;
   int i;
 
   /* These are allocated by linux_add_process.  */
@@ -692,7 +694,8 @@ arm_new_fork (struct process_info *parent, struct process_info *child)
   /* Mark all the hardware breakpoints and watchpoints as changed to
      make sure that the registers will be updated.  */
   child_lwp = find_lwp_pid (ptid_of (child));
-  child_lwp_info = child_lwp->arch_private;
+  arm_lwp_info *child_lwp_info
+    = (arm_lwp_info *) lwp_arch_private_info (child_lwp);
   for (i = 0; i < MAX_BPTS; i++)
     child_lwp_info->bpts_changed[i] = 1;
   for (i = 0; i < MAX_WPTS; i++)
@@ -708,7 +711,7 @@ arm_prepare_to_resume (struct lwp_info *lwp)
   int pid = lwpid_of (thread);
   struct process_info *proc = find_process_pid (pid_of (thread));
   struct arch_process_info *proc_info = proc->priv->arch_private;
-  struct arch_lwp_info *lwp_info = lwp->arch_private;
+  arm_lwp_info *lwp_info = (arm_lwp_info *) lwp_arch_private_info (lwp);
   int i;
 
   for (i = 0; i < arm_linux_get_hw_breakpoint_count (); i++)

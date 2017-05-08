@@ -154,13 +154,13 @@ struct aarch64_debug_reg_state
 
 /* Per-thread arch-specific data we want to keep.  */
 
-struct arch_lwp_info
+struct aarch64_lwp_info : public arch_lwp_info
 {
   /* When bit N is 1, it indicates the Nth hardware breakpoint or
      watchpoint register pair needs to be updated when the thread is
      resumed; see aarch64_linux_prepare_to_resume.  */
-  dr_changed_t dr_changed_bp;
-  dr_changed_t dr_changed_wp;
+  dr_changed_t dr_changed_bp = 0;
+  dr_changed_t dr_changed_wp = 0;
 };
 
 extern int aarch64_num_bp_regs;

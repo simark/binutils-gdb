@@ -23,7 +23,12 @@
 #include "target/waitstatus.h"
 
 struct lwp_info;
-struct arch_lwp_info;
+
+/* Base class for arch-specific lwp data.  */
+struct arch_lwp_info
+{
+  virtual ~arch_lwp_info () = 0;
+};
 
 /* This is the kernel's hard limit.  Not to be confused with SIGRTMIN.  */
 #ifndef __SIGRTMIN

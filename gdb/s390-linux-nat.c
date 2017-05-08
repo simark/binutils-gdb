@@ -44,10 +44,10 @@
 
 /* Per-thread arch-specific data.  */
 
-struct arch_lwp_info
+struct s390_lwp_info : public arch_lwp_info
 {
   /* Non-zero if the thread's PER info must be re-written.  */
-  int per_info_changed;
+  int per_info_changed = 0;
 };
 
 static int have_regset_last_break = 0;
@@ -665,7 +665,7 @@ s390_prepare_to_resume (struct lwp_info *lp)
   CORE_ADDR watch_lo_addr = (CORE_ADDR)-1, watch_hi_addr = 0;
   unsigned ix;
   s390_watch_area *area;
-  struct arch_lwp_info *lp_priv = lwp_arch_private_info (lp);
+  s390_lwp_info *lp_priv = (s390_lwp_info *) lwp_arch_private_info (lp);
   struct s390_debug_reg_state *state = s390_get_debug_reg_state (pid);
   int step = lwp_is_stepping (lp);
 
@@ -763,9 +763,10 @@ static void
 s390_mark_per_info_changed (struct lwp_info *lp)
 {
   if (lwp_arch_private_info (lp) == NULL)
-    lwp_set_arch_private_info (lp, XCNEW (struct arch_lwp_info));
+    lwp_set_arch_private_info (lp, new s390_lwp_info);
 
-  lwp_arch_private_info (lp)->per_info_changed = 1;
+  s390_lwp_info *lp_private = (s390_lwp_info *) lwp_arch_private_info (lp);
+  lp_private->per_info_changed = 1;
 }
 
 /* When attaching to a new thread, mark its PER info as changed.  */
