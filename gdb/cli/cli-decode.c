@@ -296,6 +296,7 @@ add_alias_cmd (const char *name, const char *oldname, enum command_class theclas
 
   if (old == 0)
     {
+
       struct cmd_list_element *prehook, *prehookee, *posthook, *posthookee;
       struct cmd_list_element *aliases = delete_cmd (name, list,
 						     &prehook, &prehookee,
