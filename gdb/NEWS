@@ -72,7 +72,6 @@
 
 FreeBSD/mips			mips*-*-freebsd
 
-
 * New targets
 
 Synopsys ARC			arc*-*-elf32
@@ -82,18 +81,6 @@ FreeBSD/mips			mips*-*-freebsd
 
 flash-erase
   Erases all the flash memory regions reported by the target.
-
-* New MI commands
-
--target-flash-erase
-  Erases all the flash memory regions reported by the target.  This is
-  equivalent to the CLI command flash-erase.
-
--file-list-shared-libraries
-  List the shared libraries in the program.  This is
-  equivalent to the CLI command "info shared".
-
-* New commands
 
 set disassembler-options
 show disassembler-options
@@ -105,6 +92,16 @@ show disassembler-options
 
 maint print arc arc-instruction address
   Print internal disassembler information about instruction at a given address.
+
+* New MI commands
+
+-target-flash-erase
+  Erases all the flash memory regions reported by the target.  This is
+  equivalent to the CLI command flash-erase.
+
+-file-list-shared-libraries
+  List the shared libraries in the program.  This is
+  equivalent to the CLI command "info shared".
 
 * Removed targets and native configurations
 
