@@ -295,6 +295,7 @@ bfd_mach_o_arm_canonicalize_one_reloc (bfd *abfd,
           return FALSE;
         }
     }
+  return FALSE;
 }
 
 static reloc_howto_type *
