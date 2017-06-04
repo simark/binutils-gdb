@@ -353,8 +353,6 @@ alpha_linux_gdb_signal_to_target (struct gdbarch *gdbarch,
 static void
 alpha_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep;
-
   linux_init_abi (info, gdbarch);
 
   /* Hook into the DWARF CFI frame unwinder.  */
@@ -363,7 +361,7 @@ alpha_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* Hook into the MDEBUG frame unwinder.  */
   alpha_mdebug_init_abi (info, gdbarch);
 
-  tdep = gdbarch_tdep (gdbarch);
+  alpha_gdbarch *tdep = new alpha_gdbarch;
   tdep->dynamic_sigtramp_offset = alpha_linux_sigtramp_offset;
   tdep->sigcontext_addr = alpha_linux_sigcontext_addr;
   tdep->pc_in_sigtramp = alpha_linux_pc_in_sigtramp;

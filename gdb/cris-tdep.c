@@ -312,7 +312,7 @@ cris_sigtramp_frame_unwind_cache (struct frame_info *this_frame,
 				  void **this_cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  cris_gdbarch *tdep = (cris_gdbarch *) gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   struct cris_unwind_cache *info;
   CORE_ADDR addr;
@@ -449,7 +449,7 @@ static int
 crisv32_single_step_through_delay (struct gdbarch *gdbarch,
 				   struct frame_info *this_frame)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  cris_gdbarch *tdep = (cris_gdbarch *) gdbarch_tdep (gdbarch);
   ULONGEST erp;
   int ret = 0;
 
@@ -700,7 +700,7 @@ cris_frame_unwind_cache (struct frame_info *this_frame,
 			 void **this_prologue_cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  cris_gdbarch *tdep = (cris_gdbarch *) gdbarch_tdep (gdbarch);
   struct cris_unwind_cache *info;
 
   if ((*this_prologue_cache))
@@ -1351,7 +1351,7 @@ crisv32_scan_prologue (CORE_ADDR pc, struct frame_info *this_frame,
 static CORE_ADDR
 cris_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  cris_gdbarch *tdep = (cris_gdbarch *) gdbarch_tdep (gdbarch);
   CORE_ADDR func_addr, func_end;
   struct symtab_and_line sal;
   CORE_ADDR pc_after_prologue;
@@ -1404,7 +1404,7 @@ cris_breakpoint_kind_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr)
 static const gdb_byte *
 cris_sw_breakpoint_from_kind (struct gdbarch *gdbarch, int kind, int *size)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  cris_gdbarch *tdep = (cris_gdbarch *) gdbarch_tdep (gdbarch);
   static unsigned char break8_insn[] = {0x38, 0xe9};
   static unsigned char break15_insn[] = {0x3f, 0xe9};
 
@@ -1423,7 +1423,7 @@ static int
 cris_spec_reg_applicable (struct gdbarch *gdbarch,
 			  struct cris_spec_reg spec_reg)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  cris_gdbarch *tdep = (cris_gdbarch *) gdbarch_tdep (gdbarch);
   unsigned int version = tdep->cris_version;
   
   switch (spec_reg.applicable_version)
@@ -3801,7 +3801,7 @@ static void
 cris_supply_gregset (struct regcache *regcache, cris_elf_gregset_t *gregsetp)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  cris_gdbarch *tdep = (cris_gdbarch *) gdbarch_tdep (gdbarch);
   int i;
   cris_elf_greg_t *regp = *gregsetp;
 
@@ -3913,7 +3913,7 @@ Makes GDB use the NRP register instead of the ERP register in certain cases."),
 static void
 cris_dump_tdep (struct gdbarch *gdbarch, struct ui_file *file)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  cris_gdbarch *tdep = (cris_gdbarch *) gdbarch_tdep (gdbarch);
   if (tdep != NULL)
     {
       fprintf_unfiltered (file, "cris_dump_tdep: tdep->cris_version = %i\n",
@@ -3970,7 +3970,6 @@ static struct gdbarch *
 cris_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
   struct gdbarch *gdbarch;
-  struct gdbarch_tdep *tdep;
   unsigned int cris_version;
 
   if (usr_cmd_cris_version_valid)
@@ -3996,17 +3995,16 @@ cris_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
        arches != NULL;
        arches = gdbarch_list_lookup_by_info (arches->next, &info))
     {
-      if ((gdbarch_tdep (arches->gdbarch)->cris_version 
-	   == usr_cmd_cris_version)
-	  && (gdbarch_tdep (arches->gdbarch)->cris_mode 
-	   == usr_cmd_cris_mode)
-	  && (gdbarch_tdep (arches->gdbarch)->cris_dwarf2_cfi 
-	      == usr_cmd_cris_dwarf2_cfi))
+      cris_gdbarch *tdep = (cris_gdbarch *) gdbarch_tdep (arches->gdbarch);
+
+      if (tdep->cris_version == usr_cmd_cris_version
+	  && tdep->cris_mode == usr_cmd_cris_mode
+	  && tdep->cris_dwarf2_cfi == usr_cmd_cris_dwarf2_cfi)
         return arches->gdbarch;
     }
 
   /* No matching architecture was found.  Create a new one.  */
-  tdep = XCNEW (struct gdbarch_tdep);
+  cris_gdbarch *tdep = new cris_gdbarch;
   info.byte_order = BFD_ENDIAN_LITTLE;
   gdbarch = gdbarch_alloc (&info, tdep);
 

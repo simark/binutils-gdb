@@ -227,7 +227,7 @@ struct ia64_infcall_ops
   void (*set_function_addr) (struct regcache *regcache, CORE_ADDR func_addr);
 };
 
-struct gdbarch_tdep
+struct ia64_gdbarch : public gdbarch_tdep
 {
   CORE_ADDR (*sigcontext_register_address) (struct gdbarch *, CORE_ADDR, int);
   int (*pc_in_sigtramp) (CORE_ADDR);

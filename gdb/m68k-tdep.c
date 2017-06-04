@@ -67,7 +67,7 @@ typedef BP_MANIPULATION (m68k_break_insn) m68k_breakpoint;
 static struct type *
 m68k_ps_type (struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  m68k_gdbarch *tdep = (m68k_gdbarch *) gdbarch_tdep (gdbarch);
 
   if (!tdep->m68k_ps_type)
     {
@@ -96,7 +96,7 @@ m68k_ps_type (struct gdbarch *gdbarch)
 static struct type *
 m68881_ext_type (struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  m68k_gdbarch *tdep = (m68k_gdbarch *) gdbarch_tdep (gdbarch);
 
   if (!tdep->m68881_ext_type)
     tdep->m68881_ext_type
@@ -117,7 +117,7 @@ m68881_ext_type (struct gdbarch *gdbarch)
 static struct type *
 m68k_register_type (struct gdbarch *gdbarch, int regnum)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  m68k_gdbarch *tdep = (m68k_gdbarch *) gdbarch_tdep (gdbarch);
 
   if (tdep->fpregs_present)
     {
@@ -168,12 +168,14 @@ static const char *m68k_register_names[] = {
 static const char *
 m68k_register_name (struct gdbarch *gdbarch, int regnum)
 {
+  m68k_gdbarch *tdep = (m68k_gdbarch *) gdbarch_tdep (gdbarch);
+
   if (regnum < 0 || regnum >= ARRAY_SIZE (m68k_register_names))
     internal_error (__FILE__, __LINE__,
 		    _("m68k_register_name: illegal register number %d"),
 		    regnum);
   else if (regnum >= M68K_FP0_REGNUM && regnum <= M68K_FPI_REGNUM
-	   && gdbarch_tdep (gdbarch)->fpregs_present == 0)
+	   && tdep->fpregs_present == 0)
     return "";
   else
     return m68k_register_names[regnum];
@@ -186,7 +188,9 @@ static int
 m68k_convert_register_p (struct gdbarch *gdbarch,
 			 int regnum, struct type *type)
 {
-  if (!gdbarch_tdep (gdbarch)->fpregs_present)
+  m68k_gdbarch *tdep = (m68k_gdbarch *) gdbarch_tdep (gdbarch);
+
+  if (!tdep->fpregs_present)
     return 0;
   return (regnum >= M68K_FP0_REGNUM && regnum <= M68K_FP0_REGNUM + 7
 	  /* We only support floating-point values.  */
@@ -262,7 +266,7 @@ m68k_value_to_register (struct frame_info *frame, int regnum,
    returning a structure the caller should pass a pointer to a buffer
    for the return value in %a0.  This convention is implemented in the
    function m68k_svr4_return_value, and by appropriately setting the
-   struct_value_regnum member of `struct gdbarch_tdep'.
+   struct_value_regnum member of `struct m68k_gdbarch'.
 
    GNU/Linux returns values in the same way as SVR4 does, but uses %a1
    for passing the structure return value buffer.
@@ -271,7 +275,7 @@ m68k_value_to_register (struct frame_info *frame, int regnum,
    %d0/%d1 instead of in memory by using -freg-struct-return.  This is
    the default on NetBSD a.out, OpenBSD and GNU/Linux and several
    embedded systems.  This convention is implemented by setting the
-   struct_return member of `struct gdbarch_tdep' to reg_struct_return.  */
+   struct_return member of `struct m68k_gdbarch' to reg_struct_return.  */
 
 /* Read a function return value of TYPE from REGCACHE, and copy that
    into VALBUF.  */
@@ -305,7 +309,7 @@ m68k_svr4_extract_return_value (struct type *type, struct regcache *regcache,
 {
   gdb_byte buf[M68K_MAX_REGISTER_SIZE];
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  m68k_gdbarch *tdep = (m68k_gdbarch *) gdbarch_tdep (gdbarch);
 
   if (tdep->float_return && TYPE_CODE (type) == TYPE_CODE_FLT)
     {
@@ -345,7 +349,7 @@ m68k_svr4_store_return_value (struct type *type, struct regcache *regcache,
 			      const gdb_byte *valbuf)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  m68k_gdbarch *tdep = (m68k_gdbarch *) gdbarch_tdep (gdbarch);
 
   if (tdep->float_return && TYPE_CODE (type) == TYPE_CODE_FLT)
     {
@@ -370,7 +374,7 @@ m68k_svr4_store_return_value (struct type *type, struct regcache *regcache,
 static int
 m68k_reg_struct_return_p (struct gdbarch *gdbarch, struct type *type)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  m68k_gdbarch *tdep = (m68k_gdbarch *) gdbarch_tdep (gdbarch);
   enum type_code code = TYPE_CODE (type);
   int len = TYPE_LENGTH (type);
 
@@ -495,7 +499,7 @@ m68k_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		      struct value **args, CORE_ADDR sp, int struct_return,
 		      CORE_ADDR struct_addr)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  m68k_gdbarch *tdep = (m68k_gdbarch *) gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   gdb_byte buf[4];
   int i;
@@ -550,13 +554,15 @@ m68k_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 static int
 m68k_dwarf_reg_to_regnum (struct gdbarch *gdbarch, int num)
 {
+  m68k_gdbarch *tdep = (m68k_gdbarch *) gdbarch_tdep (gdbarch);
+
   if (num < 8)
     /* d0..7 */
     return (num - 0) + M68K_D0_REGNUM;
   else if (num < 16)
     /* a0..7 */
     return (num - 8) + M68K_A0_REGNUM;
-  else if (num < 24 && gdbarch_tdep (gdbarch)->fpregs_present)
+  else if (num < 24 && tdep->fpregs_present)
     /* fp0..7 */
     return (num - 16) + M68K_FP0_REGNUM;
   else if (num == 25)
@@ -718,6 +724,7 @@ m68k_analyze_register_saves (struct gdbarch *gdbarch, CORE_ADDR pc,
 			     struct m68k_frame_cache *cache)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+  m68k_gdbarch *tdep = (m68k_gdbarch *) gdbarch_tdep (gdbarch);
 
   if (cache->locals >= 0)
     {
@@ -729,8 +736,7 @@ m68k_analyze_register_saves (struct gdbarch *gdbarch, CORE_ADDR pc,
       while (pc < current_pc)
 	{
 	  op = read_memory_unsigned_integer (pc, 2, byte_order);
-	  if (op == P_FMOVEMX_SP
-	      && gdbarch_tdep (gdbarch)->fpregs_present)
+	  if (op == P_FMOVEMX_SP && tdep->fpregs_present)
 	    {
 	      /* fmovem.x REGS,-(%sp) */
 	      op = read_memory_unsigned_integer (pc + 2, 2, byte_order);
@@ -1008,7 +1014,7 @@ m68k_get_longjmp_target (struct frame_info *frame, CORE_ADDR *pc)
   gdb_byte *buf;
   CORE_ADDR sp, jb_addr;
   struct gdbarch *gdbarch = get_frame_arch (frame);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  m68k_gdbarch *tdep = (m68k_gdbarch *) gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
 
   if (tdep->jb_pc < 0)
@@ -1054,7 +1060,7 @@ m68k_return_in_first_hidden_param_p (struct gdbarch *gdbarch,
 void
 m68k_svr4_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  m68k_gdbarch *tdep = (m68k_gdbarch *) gdbarch_tdep (gdbarch);
 
   /* SVR4 uses a different calling convention.  */
   set_gdbarch_return_value (gdbarch, m68k_svr4_return_value);
@@ -1071,7 +1077,6 @@ m68k_svr4_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 static struct gdbarch *
 m68k_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
-  struct gdbarch_tdep *tdep = NULL;
   struct gdbarch *gdbarch;
   struct gdbarch_list *best_arch;
   struct tdesc_arch_data *tdesc_data = NULL;
@@ -1159,10 +1164,12 @@ m68k_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
        best_arch != NULL;
        best_arch = gdbarch_list_lookup_by_info (best_arch->next, &info))
     {
-      if (flavour != gdbarch_tdep (best_arch->gdbarch)->flavour)
+      m68k_gdbarch *tdep = (m68k_gdbarch *) gdbarch_tdep (best_arch->gdbarch);
+
+      if (flavour != tdep->flavour)
 	continue;
 
-      if (has_fp != gdbarch_tdep (best_arch->gdbarch)->fpregs_present)
+      if (has_fp != tdep->fpregs_present)
 	continue;
 
       break;
@@ -1175,7 +1182,7 @@ m68k_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       return best_arch->gdbarch;
     }
 
-  tdep = XCNEW (struct gdbarch_tdep);
+  m68k_gdbarch *tdep = new m68k_gdbarch;
   gdbarch = gdbarch_alloc (&info, tdep);
   tdep->fpregs_present = has_fp;
   tdep->flavour = flavour;
@@ -1274,7 +1281,7 @@ m68k_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 static void
 m68k_dump_tdep (struct gdbarch *gdbarch, struct ui_file *file)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  m68k_gdbarch *tdep = (m68k_gdbarch *) gdbarch_tdep (gdbarch);
 
   if (tdep == NULL)
     return;

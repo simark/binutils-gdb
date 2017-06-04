@@ -194,7 +194,7 @@ amd64fbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
 					void *cb_data,
 					const struct regcache *regcache)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch *tdep = (i386_gdbarch *) gdbarch_tdep (gdbarch);
 
   cb (".reg", tdep->sizeof_gregset, &i386_gregset, NULL, cb_data);
   cb (".reg2", tdep->sizeof_fpregset, &amd64_fpregset, NULL, cb_data);
@@ -205,7 +205,7 @@ amd64fbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
 static void
 amd64fbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch *tdep = (i386_gdbarch *) gdbarch_tdep (gdbarch);
 
   /* Generic FreeBSD support. */
   fbsd_init_abi (info, gdbarch);

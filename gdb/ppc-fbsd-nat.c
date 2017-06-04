@@ -92,7 +92,7 @@ fill_fpregset (const struct regcache *regcache,
 static int
 getfpregs_supplies (struct gdbarch *gdbarch, int regno)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
 
   /* FIXME: jimb/2004-05-05: Some PPC variants don't have floating
 	 point registers.  Traditionally, GDB's register set has still
@@ -179,7 +179,7 @@ static int
 ppcfbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
   int i, regnum;
 
   /* The stack pointer shouldn't be zero.  */

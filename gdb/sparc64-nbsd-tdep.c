@@ -247,7 +247,7 @@ static const struct regset sparc64nbsd_fpregset =
 static void
 sparc64nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  sparc_gdbarch *tdep = (sparc_gdbarch *) gdbarch_tdep (gdbarch);
 
   tdep->gregset = &sparc64nbsd_gregset;
   tdep->sizeof_gregset = 160;

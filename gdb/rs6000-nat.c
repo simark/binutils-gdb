@@ -84,7 +84,7 @@ static target_xfer_partial_ftype rs6000_xfer_shared_libraries;
 static int
 regmap (struct gdbarch *gdbarch, int regno, int *isfloat)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
 
   *isfloat = 0;
   if (tdep->ppc_gp0_regnum <= regno
@@ -287,7 +287,7 @@ rs6000_fetch_inferior_registers (struct target_ops *ops,
 
   else
     {
-      struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+      ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
 
       /* Read 32 general purpose registers.  */
       for (regno = tdep->ppc_gp0_regnum;
@@ -330,7 +330,7 @@ rs6000_store_inferior_registers (struct target_ops *ops,
 
   else
     {
-      struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+      ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
 
       /* Write general purpose registers first.  */
       for (regno = tdep->ppc_gp0_regnum;

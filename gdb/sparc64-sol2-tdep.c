@@ -204,7 +204,7 @@ static const struct frame_unwind sparc64_sol2_sigtramp_frame_unwind =
 void
 sparc64_sol2_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  sparc_gdbarch *tdep = (sparc_gdbarch *) gdbarch_tdep (gdbarch);
 
   tdep->gregset = &sparc64_sol2_gregset;
   tdep->sizeof_gregset = 304;

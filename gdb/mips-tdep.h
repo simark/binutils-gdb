@@ -83,7 +83,7 @@ enum mips_fpu_type
 };
 
 /* MIPS specific per-architecture information.  */
-struct gdbarch_tdep
+struct mips_gdbarch : public gdbarch_tdep
 {
   /* from the elf header */
   int elf_flags;

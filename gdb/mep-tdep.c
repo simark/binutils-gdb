@@ -116,7 +116,7 @@
      options are present on the current processor.  */
 
 
-struct gdbarch_tdep
+struct mep_gdbarch : public gdbarch_tdep
 {
   /* A CGEN cpu descriptor for this BFD architecture and machine.
 
@@ -259,7 +259,8 @@ me_module_register_set (CONFIG_ATTR me_module,
        mask contains any of the me_module's coprocessor ISAs,
        specifically excluding the generic coprocessor register sets.  */
 
-  CGEN_CPU_DESC desc = gdbarch_tdep (target_gdbarch ())->cpu_desc;
+  mep_gdbarch *tdep = (mep_gdbarch *) gdbarch_tdep (target_gdbarch ());
+  CGEN_CPU_DESC desc = tdep->cpu_desc;
   const CGEN_HW_ENTRY *hw;
 
   if (me_module == CONFIG_NONE)
@@ -852,7 +853,11 @@ current_me_module (void)
       return (CONFIG_ATTR) regval;
     }
   else
-    return gdbarch_tdep (target_gdbarch ())->me_module;
+    {
+      mep_gdbarch *tdep = (mep_gdbarch *) gdbarch_tdep (target_gdbarch ());
+
+      return tdep->me_module;
+    }
 }
 
 
@@ -927,7 +932,7 @@ current_ccr_names (void)
 static const char *
 mep_register_name (struct gdbarch *gdbarch, int regnr)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);  
+  mep_gdbarch *tdep = (mep_gdbarch *) gdbarch_tdep (gdbarch);
 
   /* General-purpose registers.  */
   static const char *gpr_names[] = {
@@ -2370,7 +2375,6 @@ static struct gdbarch *
 mep_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
   struct gdbarch *gdbarch;
-  struct gdbarch_tdep *tdep;
 
   /* Which me_module are we building a gdbarch object for?  */
   CONFIG_ATTR me_module;
@@ -2428,10 +2432,14 @@ mep_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   for (arches = gdbarch_list_lookup_by_info (arches, &info); 
        arches != NULL;
        arches = gdbarch_list_lookup_by_info (arches->next, &info))
-    if (gdbarch_tdep (arches->gdbarch)->me_module == me_module)
-      return arches->gdbarch;
+    {
+      mep_gdbarch *tdep = (mep_gdbarch *) gdbarch_tdep (arches->gdbarch);
 
-  tdep = XCNEW (struct gdbarch_tdep);
+      if (tdep->me_module == me_module)
+	return arches->gdbarch;
+    }
+
+  mep_gdbarch *tdep = new mep_gdbarch;
   gdbarch = gdbarch_alloc (&info, tdep);
 
   /* Get a CGEN CPU descriptor for this architecture.  */

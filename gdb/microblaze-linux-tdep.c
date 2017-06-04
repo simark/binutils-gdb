@@ -71,7 +71,7 @@ microblaze_linux_sigtramp_cache (struct frame_info *next_frame,
   CORE_ADDR gpregs;
   int regnum;
   struct gdbarch *gdbarch = get_frame_arch (next_frame);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  microblaze_gdbarch *tdep = (microblaze_gdbarch *) gdbarch_tdep (gdbarch);
 
   base = frame_unwind_register_unsigned (next_frame, MICROBLAZE_SP_REGNUM);
   if (bias > 0 && get_frame_address_in_block (next_frame) != func)
@@ -119,7 +119,7 @@ static void
 microblaze_linux_init_abi (struct gdbarch_info info,
 			   struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  microblaze_gdbarch *tdep = (microblaze_gdbarch *) gdbarch_tdep (gdbarch);
 
   linux_init_abi (info, gdbarch);
 

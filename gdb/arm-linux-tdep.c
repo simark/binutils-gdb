@@ -713,7 +713,7 @@ arm_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
 					void *cb_data,
 					const struct regcache *regcache)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (gdbarch);
 
   cb (".reg", ARM_LINUX_SIZEOF_GREGSET, &arm_linux_gregset, NULL, cb_data);
 
@@ -1722,7 +1722,7 @@ arm_linux_init_abi (struct gdbarch_info info,
 								    NULL };
   static const char *const stap_register_indirection_suffixes[] = { "]",
 								    NULL };
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (gdbarch);
 
   linux_init_abi (info, gdbarch);
 

@@ -67,7 +67,7 @@ struct frv_unwind_cache		/* was struct frame_extra_info */
    of structures, each of which gives all the necessary info for one
    register.  Don't stick parallel arrays in here --- that's so
    Fortran.  */
-struct gdbarch_tdep
+struct frv_gdbarch : public gdbarch_tdep
 {
   /* Which ABI is in use?  */
   enum frv_abi frv_abi;
@@ -92,7 +92,9 @@ struct gdbarch_tdep
 enum frv_abi
 frv_abi (struct gdbarch *gdbarch)
 {
-  return gdbarch_tdep (gdbarch)->frv_abi;
+  frv_gdbarch *tdep = (frv_gdbarch *) gdbarch_tdep (gdbarch);
+
+  return tdep->frv_abi;
 }
 
 /* Fetch the interpreter and executable loadmap addresses (for shared
@@ -128,13 +130,12 @@ frv_fdpic_loadmap_addresses (struct gdbarch *gdbarch, CORE_ADDR *interp_addr,
 
 /* Allocate a new variant structure, and set up default values for all
    the fields.  */
-static struct gdbarch_tdep *
+static struct frv_gdbarch *
 new_variant (void)
 {
-  struct gdbarch_tdep *var;
-  int r;
 
-  var = XCNEW (struct gdbarch_tdep);
+  int r;
+  frv_gdbarch *var = new frv_gdbarch;
 
   var->frv_abi = FRV_ABI_EABI;
   var->num_gprs = 64;
@@ -219,7 +220,7 @@ new_variant (void)
 /* Indicate that the variant VAR has NUM_GPRS general-purpose
    registers, and fill in the names array appropriately.  */
 static void
-set_variant_num_gprs (struct gdbarch_tdep *var, int num_gprs)
+set_variant_num_gprs (frv_gdbarch *var, int num_gprs)
 {
   int r;
 
@@ -238,7 +239,7 @@ set_variant_num_gprs (struct gdbarch_tdep *var, int num_gprs)
 /* Indicate that the variant VAR has NUM_FPRS floating-point
    registers, and fill in the names array appropriately.  */
 static void
-set_variant_num_fprs (struct gdbarch_tdep *var, int num_fprs)
+set_variant_num_fprs (frv_gdbarch *var, int num_fprs)
 {
   int r;
 
@@ -254,7 +255,7 @@ set_variant_num_fprs (struct gdbarch_tdep *var, int num_fprs)
 }
 
 static void
-set_variant_abi_fdpic (struct gdbarch_tdep *var)
+set_variant_abi_fdpic (frv_gdbarch *var)
 {
   var->frv_abi = FRV_ABI_FDPIC;
   var->register_names[fdpic_loadmap_exec_regnum] = xstrdup ("loadmap_exec");
@@ -263,7 +264,7 @@ set_variant_abi_fdpic (struct gdbarch_tdep *var)
 }
 
 static void
-set_variant_scratch_registers (struct gdbarch_tdep *var)
+set_variant_scratch_registers (frv_gdbarch *var)
 {
   var->register_names[scr0_regnum] = xstrdup ("scr0");
   var->register_names[scr1_regnum] = xstrdup ("scr1");
@@ -274,12 +275,14 @@ set_variant_scratch_registers (struct gdbarch_tdep *var)
 static const char *
 frv_register_name (struct gdbarch *gdbarch, int reg)
 {
+  frv_gdbarch *tdep = (frv_gdbarch *) gdbarch_tdep (gdbarch);
+
   if (reg < 0)
     return "?toosmall?";
   if (reg >= frv_num_regs + frv_num_pseudo_regs)
     return "?toolarge?";
 
-  return gdbarch_tdep (gdbarch)->register_names[reg];
+  return tdep->register_names[reg];
 }
 
 
@@ -1460,7 +1463,6 @@ static struct gdbarch *
 frv_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
   struct gdbarch *gdbarch;
-  struct gdbarch_tdep *var;
   int elf_flags = 0;
 
   /* Check to see if we've already built an appropriate architecture
@@ -1470,7 +1472,7 @@ frv_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     return arches->gdbarch;
 
   /* Select the right tdep structure for this variant.  */
-  var = new_variant ();
+  frv_gdbarch *var = new_variant ();
   switch (info.bfd_arch_info->mach)
     {
     case bfd_mach_frv:

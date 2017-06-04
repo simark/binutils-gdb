@@ -55,7 +55,7 @@ struct sparc_fpregmap
 
 /* SPARC architecture-specific information.  */
 
-struct gdbarch_tdep
+struct sparc_gdbarch : public gdbarch_tdep
 {
   /* Register numbers for the PN and nPC registers.  The definitions
      for (64-bit) UltraSPARC differ from the (32-bit) SPARC

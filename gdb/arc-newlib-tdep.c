@@ -32,7 +32,7 @@ arc_newlib_init_osabi (struct gdbarch_info info, struct gdbarch *gdbarch)
   if (arc_debug)
     debug_printf ("arc-newlib: Initialization.\n");
 
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  arc_gdbarch *tdep = (arc_gdbarch *) gdbarch_tdep (gdbarch);
 
   /* Offset of original PC in longjmp jump buffer (in registers).  Value of PC
      offset can be found in newlib/libc/machine/arc/setjmp.S.  */

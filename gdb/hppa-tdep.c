@@ -260,6 +260,7 @@ internalize_unwinds (struct objfile *objfile, struct unwind_table_entry *table,
   if (size > 0)
     {
       struct gdbarch *gdbarch = get_objfile_arch (objfile);
+      hppa_gdbarch *tdep = (hppa_gdbarch *) gdbarch_tdep (gdbarch);
       unsigned long tmp;
       unsigned i;
       char *buf = (char *) alloca (size);
@@ -271,7 +272,7 @@ internalize_unwinds (struct objfile *objfile, struct unwind_table_entry *table,
 	 Note that when loading a shared library (text_offset != 0) the
 	 unwinds are already relative to the text_offset that will be
 	 passed in.  */
-      if (gdbarch_tdep (gdbarch)->is_elf && text_offset == 0)
+      if (tdep->is_elf && text_offset == 0)
 	{
           low_text_segment_address = -1;
 
@@ -281,9 +282,9 @@ internalize_unwinds (struct objfile *objfile, struct unwind_table_entry *table,
 
 	  text_offset = low_text_segment_address;
 	}
-      else if (gdbarch_tdep (gdbarch)->solib_get_text_base)
+      else if (tdep->solib_get_text_base)
         {
-	  text_offset = gdbarch_tdep (gdbarch)->solib_get_text_base (objfile);
+	  text_offset = tdep->solib_get_text_base (objfile);
 	}
 
       bfd_get_section_contents (objfile->obfd, section, buf, 0, size);
@@ -734,7 +735,7 @@ hppa32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   /* Global pointer (r19) of the function we are trying to call.  */
   CORE_ADDR gp;
 
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  hppa_gdbarch *tdep = (hppa_gdbarch *) gdbarch_tdep (gdbarch);
 
   for (write_pass = 0; write_pass < 2; write_pass++)
     {
@@ -976,7 +977,7 @@ hppa64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 			int nargs, struct value **args, CORE_ADDR sp,
 			int struct_return, CORE_ADDR struct_addr)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  hppa_gdbarch *tdep = (hppa_gdbarch *) gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   int i, offset = 0;
   CORE_ADDR gp;
@@ -2263,9 +2264,7 @@ hppa_frame_cache (struct frame_info *this_frame, void **this_cache)
   }
 
   {
-    struct gdbarch_tdep *tdep;
-
-    tdep = gdbarch_tdep (gdbarch);
+    hppa_gdbarch *tdep = (hppa_gdbarch *) gdbarch_tdep (gdbarch);
 
     if (tdep->unwind_adjust_stub)
       tdep->unwind_adjust_stub (this_frame, cache->base, cache->saved_regs);
@@ -2494,7 +2493,7 @@ hppa_stub_unwind_sniffer (const struct frame_unwind *self,
 {
   CORE_ADDR pc = get_frame_address_in_block (this_frame);
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  hppa_gdbarch *tdep = (hppa_gdbarch *) gdbarch_tdep (gdbarch);
 
   if (pc == 0
       || (tdep->in_solib_call_trampoline != NULL
@@ -3046,7 +3045,6 @@ hppa_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
 static struct gdbarch *
 hppa_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
-  struct gdbarch_tdep *tdep;
   struct gdbarch *gdbarch;
 
   /* find a candidate among the list of pre-declared architectures.  */
@@ -3055,7 +3053,7 @@ hppa_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     return (arches->gdbarch);
 
   /* If none found, then allocate and initialize one.  */
-  tdep = XCNEW (struct gdbarch_tdep);
+  hppa_gdbarch *tdep = new hppa_gdbarch;
   gdbarch = gdbarch_alloc (&info, tdep);
 
   /* Determine from the bfd_arch_info structure if we are dealing with
@@ -3180,7 +3178,7 @@ hppa_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 static void
 hppa_dump_tdep (struct gdbarch *gdbarch, struct ui_file *file)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  hppa_gdbarch *tdep = (hppa_gdbarch *) gdbarch_tdep (gdbarch);
 
   fprintf_unfiltered (file, "bytes_per_address = %d\n", 
                       tdep->bytes_per_address);

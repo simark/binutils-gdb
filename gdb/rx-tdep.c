@@ -64,7 +64,7 @@ enum rx_frame_type {
 };
 
 /* Architecture specific data.  */
-struct gdbarch_tdep
+struct rx_gdbarch : public gdbarch_tdep
 {
   /* The ELF header flags specify the multilib used.  */
   int elf_flags;
@@ -155,7 +155,7 @@ rx_register_name (struct gdbarch *gdbarch, int regnr)
 static struct type *
 rx_psw_type (struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  rx_gdbarch *tdep = (rx_gdbarch *) gdbarch_tdep (gdbarch);
 
   if (tdep->rx_psw_type == NULL)
     {
@@ -180,7 +180,7 @@ rx_psw_type (struct gdbarch *gdbarch)
 static struct type *
 rx_fpsw_type (struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  rx_gdbarch *tdep = (rx_gdbarch *) gdbarch_tdep (gdbarch);
 
   if (tdep->rx_fpsw_type == NULL)
     {
@@ -214,7 +214,7 @@ rx_fpsw_type (struct gdbarch *gdbarch)
 static struct type *
 rx_register_type (struct gdbarch *gdbarch, int reg_nr)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  rx_gdbarch *tdep = (rx_gdbarch *) gdbarch_tdep (gdbarch);
 
   if (reg_nr == RX_PC_REGNUM)
     return builtin_type (gdbarch)->builtin_func_ptr;
@@ -1071,7 +1071,6 @@ static struct gdbarch *
 rx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
   struct gdbarch *gdbarch;
-  struct gdbarch_tdep *tdep;
   int elf_flags;
 
   /* Extract the elf_flags if available.  */
@@ -1088,7 +1087,9 @@ rx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
        arches != NULL;
        arches = gdbarch_list_lookup_by_info (arches->next, &info))
     {
-      if (gdbarch_tdep (arches->gdbarch)->elf_flags != elf_flags)
+      rx_gdbarch *tdep = (rx_gdbarch *) gdbarch_tdep (arches->gdbarch);
+
+      if (tdep->elf_flags != elf_flags)
 	continue;
 
       return arches->gdbarch;
@@ -1096,7 +1097,7 @@ rx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* None found, create a new architecture from the information
      provided.  */
-  tdep = XCNEW (struct gdbarch_tdep);
+  rx_gdbarch *tdep = new rx_gdbarch;
   gdbarch = gdbarch_alloc (&info, tdep);
   tdep->elf_flags = elf_flags;
 

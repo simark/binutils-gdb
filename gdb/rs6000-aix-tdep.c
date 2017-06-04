@@ -154,7 +154,9 @@ rs6000_aix_iterate_over_regset_sections (struct gdbarch *gdbarch,
 					 void *cb_data,
 					 const struct regcache *regcache)
 {
-  if (gdbarch_tdep (gdbarch)->wordsize == 4)
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
+
+  if (tdep->wordsize == 4)
     cb (".reg", 592, &rs6000_aix32_regset, NULL, cb_data);
   else
     cb (".reg", 576, &rs6000_aix64_regset, NULL, cb_data);
@@ -183,7 +185,7 @@ rs6000_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 			int nargs, struct value **args, CORE_ADDR sp,
 			int struct_return, CORE_ADDR struct_addr)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   int ii;
   int len = 0;
@@ -191,7 +193,7 @@ rs6000_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   int argbytes;			/* current argument byte */
   gdb_byte tmp_buffer[50];
   int f_argno = 0;		/* current floating point argno */
-  int wordsize = gdbarch_tdep (gdbarch)->wordsize;
+  int wordsize = tdep->wordsize;
   CORE_ADDR func_addr = find_function_addr (function, NULL);
 
   struct value *arg = 0;
@@ -416,7 +418,7 @@ rs6000_return_value (struct gdbarch *gdbarch, struct value *function,
 		     struct type *valtype, struct regcache *regcache,
 		     gdb_byte *readbuf, const gdb_byte *writebuf)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
 
   /* The calling convention this function implements assumes the
@@ -556,7 +558,7 @@ rs6000_convert_from_func_ptr_addr (struct gdbarch *gdbarch,
 				   CORE_ADDR addr,
 				   struct target_ops *targ)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   struct obj_section *s;
 
@@ -601,7 +603,7 @@ branch_dest (struct regcache *regcache, int opcode, int instr,
 	     CORE_ADDR pc, CORE_ADDR safety)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   CORE_ADDR dest;
   int immediate;
@@ -869,7 +871,7 @@ static struct ld_info
 rs6000_aix_extract_ld_info (struct gdbarch *gdbarch,
 			    const gdb_byte *ldi_buf)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   struct type *ptr_type = builtin_type (gdbarch)->builtin_data_ptr;
   const struct ld_info_desc desc
@@ -1035,7 +1037,7 @@ rs6000_aix_core_xfer_shared_libraries_aix (struct gdbarch *gdbarch,
 static void
 rs6000_aix_init_osabi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
 
   /* RS6000/AIX does not support PT_STEP.  Has to be simulated.  */
   set_gdbarch_software_single_step (gdbarch, rs6000_software_single_step);

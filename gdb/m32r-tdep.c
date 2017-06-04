@@ -898,7 +898,6 @@ static struct gdbarch *
 m32r_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
   struct gdbarch *gdbarch;
-  struct gdbarch_tdep *tdep;
 
   /* If there is already a candidate, use it.  */
   arches = gdbarch_list_lookup_by_info (arches, &info);
@@ -906,7 +905,7 @@ m32r_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     return arches->gdbarch;
 
   /* Allocate space for the new architecture.  */
-  tdep = XCNEW (struct gdbarch_tdep);
+  m32r_gdbarch *tdep = new m32r_gdbarch;
   gdbarch = gdbarch_alloc (&info, tdep);
 
   set_gdbarch_wchar_bit (gdbarch, 16);

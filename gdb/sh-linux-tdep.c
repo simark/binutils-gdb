@@ -198,7 +198,7 @@ sh_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
      32-bit SH only, at present.  */
   if (info.bfd_arch_info->mach != bfd_mach_sh5)
     {
-      struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+      sh_gdbarch *tdep = (sh_gdbarch *) gdbarch_tdep (gdbarch);
 
       /* Remember regset characteristics.  The sizes should match
 	 elf_gregset_t and elf_fpregset_t from Linux.  */

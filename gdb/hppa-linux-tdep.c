@@ -477,7 +477,7 @@ hppa_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
 					 void *cb_data,
 					 const struct regcache *regcache)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  hppa_gdbarch *tdep = (hppa_gdbarch *) gdbarch_tdep (gdbarch);
 
   cb (".reg", 80 * tdep->bytes_per_address, &hppa_linux_regset,
       NULL, cb_data);
@@ -487,7 +487,7 @@ hppa_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
 static void
 hppa_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  hppa_gdbarch *tdep = (hppa_gdbarch *) gdbarch_tdep (gdbarch);
 
   linux_init_abi (info, gdbarch);
 

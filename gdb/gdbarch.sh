@@ -1280,6 +1280,11 @@ struct syscalls_info;
 struct thread_info;
 struct ui_out;
 
+struct gdbarch_tdep
+{
+  virtual ~gdbarch_tdep () = 0;
+};
+
 #include "regcache.h"
 
 /* The architecture associated with the inferior through the
@@ -2511,6 +2516,10 @@ target_gdbarch (void)
 {
   return current_inferior ()->gdbarch;
 }
+
+/* Definition of gdbarch_tdep's destructor.  */
+
+gdbarch_tdep::~gdbarch_tdep () = default;
 
 void
 _initialize_gdbarch (void)

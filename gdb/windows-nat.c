@@ -467,7 +467,7 @@ do_windows_fetch_inferior_registers (struct regcache *regcache,
 {
   char *context_offset = ((char *) &th->context) + mappings[r];
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch *tdep = (i386_gdbarch *) gdbarch_tdep (gdbarch);
   long l;
 
   if (th->reload_context)

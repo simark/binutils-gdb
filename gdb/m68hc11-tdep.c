@@ -123,7 +123,7 @@ enum insn_return_kind {
 #define M68HC12_HARD_PC_REGNUM  (SOFT_D32_REGNUM+1)
 
 struct insn_sequence;
-struct gdbarch_tdep
+struct m68hc11_gdbarch : public gdbarch_tdep
   {
     /* Stack pointer correction value.  For 68hc11, the stack pointer points
        to the next push location.  An offset of 1 must be applied to obtain
@@ -142,8 +142,9 @@ struct gdbarch_tdep
     int elf_flags;
   };
 
-#define STACK_CORRECTION(gdbarch) (gdbarch_tdep (gdbarch)->stack_correction)
-#define USE_PAGE_REGISTER(gdbarch) (gdbarch_tdep (gdbarch)->use_page_register)
+#define GDBARCH_TDEP(gdbarch) ((m68hc11_gdbarch *) gdbarch_tdep (gdbarch))
+#define STACK_CORRECTION(gdbarch) (GDBARCH_TDEP (gdbarch)->stack_correction)
+#define USE_PAGE_REGISTER(gdbarch) (GDBARCH_TDEP (gdbarch)->use_page_register)
 
 struct m68hc11_unwind_cache
 {
@@ -612,6 +613,7 @@ m68hc11_scan_prologue (struct gdbarch *gdbarch, CORE_ADDR pc,
   int saved_reg;
   int done = 0;
   struct insn_sequence *seq_table;
+  m68hc11_gdbarch *tdep = (m68hc11_gdbarch *) gdbarch_tdep (gdbarch);
 
   info->size = 0;
   info->sp_offset = 0;
@@ -627,7 +629,7 @@ m68hc11_scan_prologue (struct gdbarch *gdbarch, CORE_ADDR pc,
       return pc;
     }
 
-  seq_table = gdbarch_tdep (gdbarch)->prologue;
+  seq_table = tdep->prologue;
   
   /* The 68hc11 stack is as follows:
 
@@ -1025,7 +1027,9 @@ m68hc11_print_register (struct gdbarch *gdbarch, struct ui_file *file,
     }
   else
     {
-      if (regno == HARD_PC_REGNUM && gdbarch_tdep (gdbarch)->use_page_register)
+      m68hc11_gdbarch *tdep = (m68hc11_gdbarch *) gdbarch_tdep (gdbarch);
+
+      if (regno == HARD_PC_REGNUM && tdep->use_page_register)
         {
           ULONGEST page;
 
@@ -1106,6 +1110,7 @@ m68hc11_print_registers_info (struct gdbarch *gdbarch, struct ui_file *file,
   else
     {
       int i, nr;
+      m68hc11_gdbarch *tdep = (m68hc11_gdbarch *) gdbarch_tdep (gdbarch);
 
       fprintf_filtered (file, "PC=");
       m68hc11_print_register (gdbarch, file, frame, HARD_PC_REGNUM);
@@ -1128,7 +1133,7 @@ m68hc11_print_registers_info (struct gdbarch *gdbarch, struct ui_file *file,
       fprintf_filtered (file, " Y=");
       m68hc11_print_register (gdbarch, file, frame, HARD_Y_REGNUM);
   
-      if (gdbarch_tdep (gdbarch)->use_page_register)
+      if (tdep->use_page_register)
         {
           fprintf_filtered (file, "\nPage=");
           m68hc11_print_register (gdbarch, file, frame, HARD_PAGE_REGNUM);
@@ -1410,7 +1415,6 @@ m68hc11_gdbarch_init (struct gdbarch_info info,
                       struct gdbarch_list *arches)
 {
   struct gdbarch *gdbarch;
-  struct gdbarch_tdep *tdep;
   int elf_flags;
 
   soft_reg_initialized = 0;
@@ -1427,14 +1431,17 @@ m68hc11_gdbarch_init (struct gdbarch_info info,
        arches != NULL;
        arches = gdbarch_list_lookup_by_info (arches->next, &info))
     {
-      if (gdbarch_tdep (arches->gdbarch)->elf_flags != elf_flags)
+      m68hc11_gdbarch *tdep
+	= (m68hc11_gdbarch *) gdbarch_tdep (arches->gdbarch);
+
+      if (tdep->elf_flags != elf_flags)
 	continue;
 
       return arches->gdbarch;
     }
 
   /* Need a new architecture.  Fill in a target specific vector.  */
-  tdep = XCNEW (struct gdbarch_tdep);
+  m68hc11_gdbarch *tdep = new m68hc11_gdbarch;
   gdbarch = gdbarch_alloc (&info, tdep);
   tdep->elf_flags = elf_flags;
 

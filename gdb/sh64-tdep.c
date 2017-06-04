@@ -55,7 +55,7 @@ enum sh_abi
     SH_ABI_64
   };
 
-struct gdbarch_tdep
+struct sh64_gdbarch : public gdbarch_tdep
   {
     enum sh_abi sh_abi;
     /* ISA-specific data types.  */
@@ -65,7 +65,7 @@ struct gdbarch_tdep
 struct type *
 sh64_littlebyte_bigword_type (struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  sh64_gdbarch *tdep = (sh64_gdbarch *) gdbarch_tdep (gdbarch);
 
   if (tdep->sh_littlebyte_bigword_type == NULL)
     tdep->sh_littlebyte_bigword_type
@@ -2259,6 +2259,7 @@ sh64_frame_prev_register (struct frame_info *this_frame,
   struct sh64_frame_cache *cache = sh64_frame_cache (this_frame, this_cache);
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+  sh64_gdbarch *tdep = (sh64_gdbarch *) gdbarch_tdep (gdbarch);
 
   gdb_assert (regnum >= 0);
 
@@ -2273,7 +2274,7 @@ sh64_frame_prev_register (struct frame_info *this_frame,
 
   if (regnum < SIM_SH64_NR_REGS && cache->saved_regs[regnum] != -1)
     {
-      if (gdbarch_tdep (gdbarch)->sh_abi == SH_ABI_32
+      if (tdep->sh_abi == SH_ABI_32
           && (regnum == MEDIA_FP_REGNUM || regnum == PR_REGNUM))
         {
 	  CORE_ADDR val;
@@ -2353,7 +2354,6 @@ struct gdbarch *
 sh64_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
   struct gdbarch *gdbarch;
-  struct gdbarch_tdep *tdep;
 
   /* If there is already a candidate, use it.  */
   arches = gdbarch_list_lookup_by_info (arches, &info);
@@ -2362,7 +2362,7 @@ sh64_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* None found, create a new architecture from the information
      provided.  */
-  tdep = XCNEW (struct gdbarch_tdep);
+  sh64_gdbarch *tdep = new sh64_gdbarch;
   gdbarch = gdbarch_alloc (&info, tdep);
 
   /* Determine the ABI */

@@ -653,7 +653,6 @@ microblaze_register_g_packet_guesses (struct gdbarch *gdbarch)
 static struct gdbarch *
 microblaze_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
-  struct gdbarch_tdep *tdep;
   struct gdbarch *gdbarch;
   struct tdesc_arch_data *tdesc_data = NULL;
   const struct target_desc *tdesc = info.target_desc;
@@ -703,7 +702,7 @@ microblaze_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     }
 
   /* Allocate space for the new architecture.  */
-  tdep = XCNEW (struct gdbarch_tdep);
+  microblaze_gdbarch *tdep = new microblaze_gdbarch;
   gdbarch = gdbarch_alloc (&info, tdep);
 
   set_gdbarch_long_double_bit (gdbarch, 128);

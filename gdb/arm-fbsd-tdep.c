@@ -173,7 +173,7 @@ arm_fbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
 				       void *cb_data,
 				       const struct regcache *regcache)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (gdbarch);
 
   cb (".reg", ARM_FBSD_SIZEOF_GREGSET, &arm_fbsd_gregset, NULL, cb_data);
 
@@ -225,7 +225,7 @@ arm_fbsd_core_read_description (struct gdbarch *gdbarch,
 static void
 arm_fbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (gdbarch);
 
   /* Generic FreeBSD support.  */
   fbsd_init_abi (info, gdbarch);

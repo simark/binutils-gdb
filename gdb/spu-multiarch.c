@@ -56,7 +56,6 @@ static int
 parse_spufs_run (ptid_t ptid, int *fd, CORE_ADDR *addr)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
-  struct gdbarch_tdep *tdep;
   struct regcache *regcache;
   gdb_byte buf[4];
   ULONGEST regval;
@@ -72,7 +71,7 @@ parse_spufs_run (ptid_t ptid, int *fd, CORE_ADDR *addr)
 
   /* Get PPU-side registers.  */
   regcache = get_thread_arch_regcache (ptid, target_gdbarch ());
-  tdep = gdbarch_tdep (target_gdbarch ());
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (target_gdbarch ());
 
   /* Fetch instruction preceding current NIP.  */
   {

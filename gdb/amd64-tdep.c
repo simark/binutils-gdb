@@ -244,7 +244,7 @@ static const int amd64_dwarf_regmap_len =
 static int
 amd64_dwarf_reg_to_regnum (struct gdbarch *gdbarch, int reg)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch *tdep = (i386_gdbarch *) gdbarch_tdep (gdbarch);
   int ymm0_regnum = tdep->ymm0_regnum;
   int regnum = -1;
 
@@ -328,7 +328,7 @@ static const char *amd64_dword_names[] =
 static const char *
 amd64_pseudo_register_name (struct gdbarch *gdbarch, int regnum)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch *tdep = (i386_gdbarch *) gdbarch_tdep (gdbarch);
   if (i386_byte_regnum_p (gdbarch, regnum))
     return amd64_byte_names[regnum - tdep->al_regnum];
   else if (i386_zmm_regnum_p (gdbarch, regnum))
@@ -351,7 +351,7 @@ amd64_pseudo_register_read_value (struct gdbarch *gdbarch,
 				  int regnum)
 {
   gdb_byte *raw_buf = (gdb_byte *) alloca (register_size (gdbarch, regnum));
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch *tdep = (i386_gdbarch *) gdbarch_tdep (gdbarch);
   enum register_status status;
   struct value *result_value;
   gdb_byte *buf;
@@ -412,7 +412,7 @@ amd64_pseudo_register_write (struct gdbarch *gdbarch,
 			     int regnum, const gdb_byte *buf)
 {
   gdb_byte *raw_buf = (gdb_byte *) alloca (register_size (gdbarch, regnum));
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch *tdep = (i386_gdbarch *) gdbarch_tdep (gdbarch);
 
   if (i386_byte_regnum_p (gdbarch, regnum))
     {
@@ -460,7 +460,7 @@ static int
 amd64_ax_pseudo_register_collect (struct gdbarch *gdbarch,
 				  struct agent_expr *ax, int regnum)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch *tdep = (i386_gdbarch *) gdbarch_tdep (gdbarch);
 
   if (i386_byte_regnum_p (gdbarch, regnum))
     {
@@ -2641,7 +2641,7 @@ static struct amd64_frame_cache *
 amd64_sigtramp_frame_cache (struct frame_info *this_frame, void **this_cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch *tdep = (i386_gdbarch *) gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   struct amd64_frame_cache *cache;
   CORE_ADDR addr;
@@ -2724,7 +2724,8 @@ amd64_sigtramp_frame_sniffer (const struct frame_unwind *self,
 			      struct frame_info *this_frame,
 			      void **this_cache)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (get_frame_arch (this_frame));
+  i386_gdbarch *tdep
+    = (i386_gdbarch *) gdbarch_tdep (get_frame_arch (this_frame));
 
   /* We shouldn't even bother if we don't have a sigcontext_addr
      handler.  */
@@ -2923,7 +2924,7 @@ amd64_supply_fpregset (const struct regset *regset, struct regcache *regcache,
 		       int regnum, const void *fpregs, size_t len)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  const struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  const i386_gdbarch *tdep = (i386_gdbarch *) gdbarch_tdep (gdbarch);
 
   gdb_assert (len >= tdep->sizeof_fpregset);
   amd64_supply_fxsave (regcache, regnum, fpregs);
@@ -2940,7 +2941,7 @@ amd64_collect_fpregset (const struct regset *regset,
 			int regnum, void *fpregs, size_t len)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  const struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  const i386_gdbarch *tdep = (i386_gdbarch *) gdbarch_tdep (gdbarch);
 
   gdb_assert (len >= tdep->sizeof_fpregset);
   amd64_collect_fxsave (regcache, regnum, fpregs);
@@ -2964,7 +2965,8 @@ amd64_get_longjmp_target (struct frame_info *frame, CORE_ADDR *pc)
   gdb_byte buf[8];
   CORE_ADDR jb_addr;
   struct gdbarch *gdbarch = get_frame_arch (frame);
-  int jb_pc_offset = gdbarch_tdep (gdbarch)->jb_pc_offset;
+  i386_gdbarch *tdep = (i386_gdbarch *) gdbarch_tdep (gdbarch);
+  int jb_pc_offset = tdep->jb_pc_offset;
   int len = TYPE_LENGTH (builtin_type (gdbarch)->builtin_func_ptr);
 
   /* If JB_PC_OFFSET is -1, we have no way to find out where the
@@ -2997,7 +2999,7 @@ void
 amd64_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch,
 		const target_desc *default_tdesc)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch *tdep = (i386_gdbarch *) gdbarch_tdep (gdbarch);
   const struct target_desc *tdesc = info.target_desc;
   static const char *const stap_integer_prefixes[] = { "$", NULL };
   static const char *const stap_register_prefixes[] = { "%", NULL };
@@ -3171,7 +3173,7 @@ amd64_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch,
 static struct type *
 amd64_x32_pseudo_register_type (struct gdbarch *gdbarch, int regnum)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch *tdep = (i386_gdbarch *) gdbarch_tdep (gdbarch);
 
   switch (regnum - tdep->eax_regnum)
     {
@@ -3189,7 +3191,7 @@ void
 amd64_x32_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch,
 		    const target_desc *default_tdesc)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch *tdep = (i386_gdbarch *) gdbarch_tdep (gdbarch);
 
   amd64_init_abi (info, gdbarch, default_tdesc);
 
@@ -3265,7 +3267,7 @@ amd64_supply_fxsave (struct regcache *regcache, int regnum,
 		     const void *fxsave)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch *tdep = (i386_gdbarch *) gdbarch_tdep (gdbarch);
 
   i387_supply_fxsave (regcache, regnum, fxsave);
 
@@ -3288,7 +3290,7 @@ amd64_supply_xsave (struct regcache *regcache, int regnum,
 		    const void *xsave)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch *tdep = (i386_gdbarch *) gdbarch_tdep (gdbarch);
 
   i387_supply_xsave (regcache, regnum, xsave);
 
@@ -3316,7 +3318,7 @@ amd64_collect_fxsave (const struct regcache *regcache, int regnum,
 		      void *fxsave)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch *tdep = (i386_gdbarch *) gdbarch_tdep (gdbarch);
   gdb_byte *regs = (gdb_byte *) fxsave;
 
   i387_collect_fxsave (regcache, regnum, fxsave);
@@ -3337,7 +3339,7 @@ amd64_collect_xsave (const struct regcache *regcache, int regnum,
 		     void *xsave, int gcore)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch *tdep = (i386_gdbarch *) gdbarch_tdep (gdbarch);
   gdb_byte *regs = (gdb_byte *) xsave;
 
   i387_collect_xsave (regcache, regnum, xsave, gcore);

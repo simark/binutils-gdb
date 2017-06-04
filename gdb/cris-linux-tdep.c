@@ -32,7 +32,7 @@
 static void
 cris_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  cris_gdbarch *tdep = (cris_gdbarch *) gdbarch_tdep (gdbarch);
 
   linux_init_abi (info, gdbarch);
 

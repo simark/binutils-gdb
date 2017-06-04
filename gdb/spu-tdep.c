@@ -58,7 +58,7 @@ static int spu_auto_flush_cache_p = 1;
 
 
 /* The tdep structure.  */
-struct gdbarch_tdep
+struct spu_gdbarch : public gdbarch_tdep
 {
   /* The spufs ID identifying our address space.  */
   int id;
@@ -72,7 +72,7 @@ struct gdbarch_tdep
 static struct type *
 spu_builtin_type_vec128 (struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  spu_gdbarch *tdep = (spu_gdbarch *) gdbarch_tdep (gdbarch);
 
   if (!tdep->spu_builtin_type_vec128)
     {
@@ -411,7 +411,7 @@ spu_dwarf_reg_to_regnum (struct gdbarch *gdbarch, int reg)
 static int
 spu_gdbarch_id (struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  spu_gdbarch *tdep = (spu_gdbarch *) gdbarch_tdep (gdbarch);
   int id = tdep->id;
 
   /* The objfile architecture of a standalone SPU executable does not
@@ -992,7 +992,7 @@ spu_frame_unwind_cache (struct frame_info *this_frame,
 			void **this_prologue_cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  spu_gdbarch *tdep = (spu_gdbarch *) gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   struct spu_unwind_cache *info;
   struct spu_prologue_data data;
@@ -1161,7 +1161,7 @@ static const struct frame_base spu_frame_base = {
 static CORE_ADDR
 spu_unwind_pc (struct gdbarch *gdbarch, struct frame_info *next_frame)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  spu_gdbarch *tdep = (spu_gdbarch *) gdbarch_tdep (gdbarch);
   CORE_ADDR pc = frame_unwind_register_unsigned (next_frame, SPU_PC_REGNUM);
   /* Mask off interrupt enable bit.  */
   return SPUADDR (tdep->id, pc & -4);
@@ -1170,7 +1170,7 @@ spu_unwind_pc (struct gdbarch *gdbarch, struct frame_info *next_frame)
 static CORE_ADDR
 spu_unwind_sp (struct gdbarch *gdbarch, struct frame_info *next_frame)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  spu_gdbarch *tdep = (spu_gdbarch *) gdbarch_tdep (gdbarch);
   CORE_ADDR sp = frame_unwind_register_unsigned (next_frame, SPU_SP_REGNUM);
   return SPUADDR (tdep->id, sp);
 }
@@ -1178,7 +1178,7 @@ spu_unwind_sp (struct gdbarch *gdbarch, struct frame_info *next_frame)
 static CORE_ADDR
 spu_read_pc (struct regcache *regcache)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (regcache->arch ());
+  spu_gdbarch *tdep = (spu_gdbarch *) gdbarch_tdep (regcache->arch ());
   ULONGEST pc;
   regcache_cooked_read_unsigned (regcache, SPU_PC_REGNUM, &pc);
   /* Mask off interrupt enable bit.  */
@@ -1497,7 +1497,7 @@ spu_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 static struct frame_id
 spu_dummy_id (struct gdbarch *gdbarch, struct frame_info *this_frame)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  spu_gdbarch *tdep = (spu_gdbarch *) gdbarch_tdep (gdbarch);
   CORE_ADDR pc = get_frame_register_unsigned (this_frame, SPU_PC_REGNUM);
   CORE_ADDR sp = get_frame_register_unsigned (this_frame, SPU_SP_REGNUM);
   return frame_id_build (SPUADDR (tdep->id, sp), SPUADDR (tdep->id, pc & -4));
@@ -1670,7 +1670,7 @@ static int
 spu_get_longjmp_target (struct frame_info *frame, CORE_ADDR *pc)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  spu_gdbarch *tdep = (spu_gdbarch *) gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   gdb_byte buf[4];
   CORE_ADDR jb_addr;
@@ -1993,7 +1993,7 @@ static struct objfile *
 spu_objfile_from_frame (struct frame_info *frame)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  spu_gdbarch *tdep = (spu_gdbarch *) gdbarch_tdep (gdbarch);
   struct objfile *obj;
 
   if (gdbarch_bfd_arch_info (gdbarch)->arch != bfd_arch_spu)
@@ -2641,7 +2641,6 @@ static struct gdbarch *
 spu_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
   struct gdbarch *gdbarch;
-  struct gdbarch_tdep *tdep;
   int id = -1;
 
   /* Which spufs ID was requested as address space?  */
@@ -2661,13 +2660,14 @@ spu_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
        arches != NULL;
        arches = gdbarch_list_lookup_by_info (arches->next, &info))
     {
-      tdep = gdbarch_tdep (arches->gdbarch);
+      spu_gdbarch *tdep = (spu_gdbarch *) gdbarch_tdep (arches->gdbarch);
+
       if (tdep && tdep->id == id)
 	return arches->gdbarch;
     }
 
   /* None found, so create a new architecture.  */
-  tdep = XCNEW (struct gdbarch_tdep);
+  spu_gdbarch *tdep = new spu_gdbarch;
   tdep->id = id;
   gdbarch = gdbarch_alloc (&info, tdep);
 

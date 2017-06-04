@@ -66,6 +66,11 @@ struct syscalls_info;
 struct thread_info;
 struct ui_out;
 
+struct gdbarch_tdep
+{
+  virtual ~gdbarch_tdep () = 0;
+};
+
 #include "regcache.h"
 
 /* The architecture associated with the inferior through the

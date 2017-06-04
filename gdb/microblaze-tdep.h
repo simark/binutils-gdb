@@ -22,7 +22,7 @@
 
 
 /* Microblaze architecture-specific information.  */
-struct gdbarch_tdep
+struct microblaze_gdbarch : public gdbarch_tdep
 {
 };
 

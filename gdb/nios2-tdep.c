@@ -2116,7 +2116,7 @@ static CORE_ADDR
 nios2_get_next_pc (struct regcache *regcache, CORE_ADDR pc)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  nios2_gdbarch *tdep = (nios2_gdbarch *) gdbarch_tdep (gdbarch);
   unsigned long mach = gdbarch_bfd_arch_info (gdbarch)->mach;
   unsigned int insn;
   const struct nios2_opcode *op = nios2_fetch_insn (gdbarch, pc, &insn);
@@ -2221,7 +2221,7 @@ static int
 nios2_get_longjmp_target (struct frame_info *frame, CORE_ADDR *pc)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  nios2_gdbarch *tdep = (nios2_gdbarch *) gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   CORE_ADDR jb_addr = get_frame_register_unsigned (frame, NIOS2_R4_REGNUM);
   gdb_byte buf[4];
@@ -2239,7 +2239,6 @@ static struct gdbarch *
 nios2_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
   struct gdbarch *gdbarch;
-  struct gdbarch_tdep *tdep;
   int i;
   struct tdesc_arch_data *tdesc_data = NULL;
   const struct target_desc *tdesc = info.target_desc;
@@ -2280,7 +2279,7 @@ nios2_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* None found, create a new architecture from the information
      provided.  */
-  tdep = XCNEW (struct gdbarch_tdep);
+  nios2_gdbarch *tdep = new nios2_gdbarch;
   gdbarch = gdbarch_alloc (&info, tdep);
 
   /* longjmp support not enabled by default.  */

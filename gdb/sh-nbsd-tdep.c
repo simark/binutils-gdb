@@ -61,9 +61,9 @@ static void
 shnbsd_init_abi (struct gdbarch_info info,
                   struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  sh_gdbarch *tdep = (sh_gdbarch *) gdbarch_tdep (gdbarch);
 
-  tdep->core_gregmap = (struct sh_corefile_regmap *)regmap;
+  tdep->core_gregmap = (struct sh_corefile_regmap *) regmap;
   tdep->sizeof_gregset = 84;
 
   set_solib_svr4_fetch_link_map_offsets

@@ -52,7 +52,7 @@ struct regset;
 #define DISPLACED_MODIFIED_INSNS 1
 
 /* Target-dependent structure in gdbarch.  */
-struct gdbarch_tdep
+struct aarch64_gdbarch : public gdbarch_tdep
 {
   /* Lowest address at which instructions will appear.  */
   CORE_ADDR lowest_pc;

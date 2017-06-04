@@ -55,7 +55,7 @@ enum struct_return
 };
 
 /* i386 architecture specific information.  */
-struct gdbarch_tdep
+struct i386_gdbarch : public gdbarch_tdep
 {
   /* General-purpose registers.  */
   int *gregset_reg_offset;

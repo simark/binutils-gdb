@@ -5447,6 +5447,10 @@ target_gdbarch (void)
   return current_inferior ()->gdbarch;
 }
 
+/* Definition of gdbarch_tdep's destructor.  */
+
+gdbarch_tdep::~gdbarch_tdep () = default;
+
 void
 _initialize_gdbarch (void)
 {

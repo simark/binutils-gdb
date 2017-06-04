@@ -205,7 +205,7 @@ void
 i387_print_float_info (struct gdbarch *gdbarch, struct ui_file *file,
 		       struct frame_info *frame, const char *args)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (get_frame_arch (frame));
+  i386_gdbarch *tdep = (i386_gdbarch *) gdbarch_tdep (get_frame_arch (frame));
   ULONGEST fctrl;
   int fctrl_p;
   ULONGEST fstat;
@@ -439,7 +439,7 @@ void
 i387_supply_fsave (struct regcache *regcache, int regnum, const void *fsave)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch *tdep = (i386_gdbarch *) gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   const gdb_byte *regs = (const gdb_byte *) fsave;
   int i;
@@ -493,7 +493,7 @@ i387_supply_fsave (struct regcache *regcache, int regnum, const void *fsave)
 void
 i387_collect_fsave (const struct regcache *regcache, int regnum, void *fsave)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (regcache->arch ());
+  i386_gdbarch *tdep = (i386_gdbarch *) gdbarch_tdep  (regcache->arch ());
   gdb_byte *regs = (gdb_byte *) fsave;
   int i;
 
@@ -586,7 +586,8 @@ static int i387_tag (const gdb_byte *raw);
 void
 i387_supply_fxsave (struct regcache *regcache, int regnum, const void *fxsave)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (regcache->arch ());
+  i386_gdbarch *tdep
+    = (i386_gdbarch *) gdbarch_tdep  (regcache->arch ());
   const gdb_byte *regs = (const gdb_byte *) fxsave;
   int i;
 
@@ -669,7 +670,7 @@ i387_supply_fxsave (struct regcache *regcache, int regnum, const void *fxsave)
 void
 i387_collect_fxsave (const struct regcache *regcache, int regnum, void *fxsave)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (regcache->arch ());
+  i386_gdbarch *tdep = (i386_gdbarch *) gdbarch_tdep  (regcache->arch ());
   gdb_byte *regs = (gdb_byte *) fxsave;
   int i;
 
@@ -900,7 +901,7 @@ i387_supply_xsave (struct regcache *regcache, int regnum,
 		   const void *xsave)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch *tdep = (i386_gdbarch *) gdbarch_tdep (gdbarch);
   const gdb_byte *regs = (const gdb_byte *) xsave;
   int i;
   ULONGEST clear_bv;
@@ -1308,7 +1309,7 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
 		    void *xsave, int gcore)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch *tdep = (i386_gdbarch *) gdbarch_tdep (gdbarch);
   gdb_byte *regs = (gdb_byte *) xsave;
   int i;
   enum
@@ -1835,7 +1836,7 @@ i387_tag (const gdb_byte *raw)
 void
 i387_return_value (struct gdbarch *gdbarch, struct regcache *regcache)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch *tdep = (i386_gdbarch *) gdbarch_tdep (gdbarch);
   ULONGEST fstat;
 
   /* Set the top of the floating-point register stack to 7.  The
@@ -1858,7 +1859,7 @@ i387_return_value (struct gdbarch *gdbarch, struct regcache *regcache)
 void
 i387_reset_bnd_regs (struct gdbarch *gdbarch, struct regcache *regcache)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch *tdep = (i386_gdbarch *) gdbarch_tdep (gdbarch);
 
   if (I387_BND0R_REGNUM (tdep) > 0)
     {

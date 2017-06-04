@@ -82,7 +82,7 @@ enum hppa_regnum
 #define HPPA_INSN_SIZE 4
 
 /* Target-dependent structure in gdbarch.  */
-struct gdbarch_tdep
+struct hppa_gdbarch : public gdbarch_tdep
 {
   /* The number of bytes in an address.  For now, this field is designed
      to allow us to differentiate hppa32 from hppa64 targets.  */

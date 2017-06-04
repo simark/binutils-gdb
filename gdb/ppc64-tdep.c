@@ -387,7 +387,7 @@ ppc64_standard_linkage1_target (struct frame_info *frame,
 				CORE_ADDR pc, unsigned int *insn)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
 
   /* The address of the PLT entry this linkage function references.  */
   CORE_ADDR plt
@@ -404,7 +404,7 @@ ppc64_standard_linkage2_target (struct frame_info *frame,
 				CORE_ADDR pc, unsigned int *insn)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
 
   /* The address of the PLT entry this linkage function references.  */
   CORE_ADDR plt
@@ -421,7 +421,7 @@ ppc64_standard_linkage3_target (struct frame_info *frame,
 				CORE_ADDR pc, unsigned int *insn)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
 
   /* The address of the PLT entry this linkage function references.  */
   CORE_ADDR plt
@@ -437,7 +437,7 @@ ppc64_standard_linkage4_target (struct frame_info *frame,
 				CORE_ADDR pc, unsigned int *insn)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
 
   CORE_ADDR plt
     = ((CORE_ADDR) get_frame_register_unsigned (frame, tdep->ppc_gp0_regnum + 2)

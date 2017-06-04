@@ -208,7 +208,7 @@ nios2_linux_syscall_next_pc (struct frame_info *frame,
 static void
 nios2_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  nios2_gdbarch *tdep = (nios2_gdbarch *) gdbarch_tdep (gdbarch);
 
   linux_init_abi (info, gdbarch);
 

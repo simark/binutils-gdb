@@ -202,7 +202,7 @@ enum powerpc_vector_abi
   POWERPC_VEC_LAST
 };
 
-struct gdbarch_tdep
+struct ppc_gdbarch : public gdbarch_tdep
   {
     int wordsize;		/* Size in bytes of fixed-point word.  */
     int soft_float;		/* Avoid FP registers for arguments?  */

@@ -24,7 +24,7 @@
 #define CRIS_TDEP_H
 
 /* CRIS architecture specific information.  */
-struct gdbarch_tdep
+struct cris_gdbarch : public gdbarch_tdep
 {
   unsigned int cris_version;
   const char *cris_mode;

@@ -188,7 +188,7 @@ struct avr_unwind_cache
   struct trad_frame_saved_reg *saved_regs;
 };
 
-struct gdbarch_tdep
+struct avr_gdbarch : public gdbarch_tdep
 {
   /* Number of bytes stored to the stack by call instructions.
      2 bytes for avr1-5 and avrxmega1-5, 3 bytes for avr6 and avrxmega6-7.  */
@@ -228,10 +228,12 @@ avr_register_name (struct gdbarch *gdbarch, int regnum)
 static struct type *
 avr_register_type (struct gdbarch *gdbarch, int reg_nr)
 {
+  avr_gdbarch *tdep = (avr_gdbarch *) gdbarch_tdep (gdbarch);
+
   if (reg_nr == AVR_PC_REGNUM)
     return builtin_type (gdbarch)->builtin_uint32;
   if (reg_nr == AVR_PSEUDO_PC_REGNUM)
-    return gdbarch_tdep (gdbarch)->pc_type;
+    return tdep->pc_type;
   if (reg_nr == AVR_SP_REGNUM)
     return builtin_type (gdbarch)->builtin_data_ptr;
   return builtin_type (gdbarch)->builtin_uint8;
@@ -519,6 +521,7 @@ static CORE_ADDR
 avr_scan_prologue (struct gdbarch *gdbarch, CORE_ADDR pc_beg, CORE_ADDR pc_end,
 		   struct avr_unwind_cache *info)
 {
+  avr_gdbarch *tdep = (avr_gdbarch *) gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   int i;
   unsigned short insn;
@@ -747,7 +750,7 @@ avr_scan_prologue (struct gdbarch *gdbarch, CORE_ADDR pc_beg, CORE_ADDR pc_end,
       insn = extract_unsigned_integer (&prologue[vpc], 2, byte_order);
       if (insn == 0xd000)	/* rcall .+0 */
         {
-          info->size += gdbarch_tdep (gdbarch)->call_length;
+          info->size += tdep->call_length;
           vpc += 2;
         }
       else if (insn == 0x920f || insn == 0x921f)  /* push r0 or push r1 */
@@ -980,7 +983,6 @@ avr_frame_unwind_cache (struct frame_info *this_frame,
   ULONGEST this_base;
   struct avr_unwind_cache *info;
   struct gdbarch *gdbarch;
-  struct gdbarch_tdep *tdep;
   int i;
 
   if (*this_prologue_cache)
@@ -1044,7 +1046,7 @@ avr_frame_unwind_cache (struct frame_info *this_frame,
 
   /* The previous frame's SP needed to be computed.  Save the computed
      value.  */
-  tdep = gdbarch_tdep (gdbarch);
+  avr_gdbarch *tdep = (avr_gdbarch *) gdbarch_tdep (gdbarch);
   trad_frame_set_value (info->saved_regs, AVR_SP_REGNUM,
                         info->prev_sp - 1 + tdep->call_length);
 
@@ -1126,7 +1128,7 @@ avr_frame_prev_register (struct frame_info *this_frame,
 	  int i;
 	  gdb_byte buf[3];
 	  struct gdbarch *gdbarch = get_frame_arch (this_frame);
-	  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+	  avr_gdbarch *tdep = (avr_gdbarch *) gdbarch_tdep (gdbarch);
 
 	  read_memory (info->saved_regs[AVR_PC_REGNUM].addr,
                        buf, tdep->call_length);
@@ -1266,7 +1268,8 @@ avr_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 {
   int i;
   gdb_byte buf[3];
-  int call_length = gdbarch_tdep (gdbarch)->call_length;
+  avr_gdbarch *tdep = (avr_gdbarch *) gdbarch_tdep (gdbarch);
+  int call_length = tdep->call_length;
   CORE_ADDR return_pc = avr_convert_iaddr_to_raw (bp_addr);
   int regnum = AVR_ARGN_REGNUM;
   struct stack_item *si = NULL;
@@ -1416,7 +1419,6 @@ static struct gdbarch *
 avr_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
   struct gdbarch *gdbarch;
-  struct gdbarch_tdep *tdep;
   struct gdbarch_list *best_arch;
   int call_length;
 
@@ -1448,12 +1450,14 @@ avr_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
        best_arch != NULL;
        best_arch = gdbarch_list_lookup_by_info (best_arch->next, &info))
     {
-      if (gdbarch_tdep (best_arch->gdbarch)->call_length == call_length)
+      avr_gdbarch *tdep = (avr_gdbarch *) gdbarch_tdep (best_arch->gdbarch);
+
+      if (tdep->call_length == call_length)
 	return best_arch->gdbarch;
     }
 
   /* None found, create a new architecture from the information provided.  */
-  tdep = XCNEW (struct gdbarch_tdep);
+  avr_gdbarch *tdep = new avr_gdbarch;
   gdbarch = gdbarch_alloc (&info, tdep);
   
   tdep->call_length = call_length;

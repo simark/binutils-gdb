@@ -253,7 +253,7 @@ sparc32_linux_collect_core_fpregset (const struct regset *regset,
 static void
 sparc_linux_write_pc (struct regcache *regcache, CORE_ADDR pc)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (regcache->arch ());
+  sparc_gdbarch *tdep = (sparc_gdbarch *) gdbarch_tdep (regcache->arch ());
   ULONGEST psr;
 
   regcache_cooked_write_unsigned (regcache, tdep->pc_regnum, pc);
@@ -420,7 +420,7 @@ static const struct regset sparc32_linux_fpregset =
 static void
 sparc32_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  sparc_gdbarch *tdep = (sparc_gdbarch *) gdbarch_tdep (gdbarch);
 
   linux_init_abi (info, gdbarch);
 

@@ -248,7 +248,7 @@ static void
 alphanbsd_init_abi (struct gdbarch_info info,
                     struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  alpha_gdbarch *tdep = (alpha_gdbarch *) gdbarch_tdep (gdbarch);
 
   /* Hook into the DWARF CFI frame unwinder.  */
   alpha_dwarf2_init_abi (info, gdbarch);

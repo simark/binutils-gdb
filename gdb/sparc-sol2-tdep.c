@@ -256,7 +256,7 @@ sparc_sol2_static_transform_name (const char *name)
 void
 sparc32_sol2_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  sparc_gdbarch *tdep = (sparc_gdbarch *) gdbarch_tdep (gdbarch);
 
   tdep->gregset = &sparc32_sol2_gregset;
   tdep->sizeof_gregset = 152;

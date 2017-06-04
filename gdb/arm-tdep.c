@@ -285,7 +285,9 @@ int arm_apcs_32 = 1;
 int
 arm_psr_thumb_bit (struct gdbarch *gdbarch)
 {
-  if (gdbarch_tdep (gdbarch)->is_m)
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (gdbarch);
+
+  if (tdep->is_m)
     return XPSR_T;
   else
     return CPSR_T;
@@ -402,6 +404,7 @@ arm_pc_is_thumb (struct gdbarch *gdbarch, CORE_ADDR memaddr)
   arm_displaced_step_closure *dsc
     = ((arm_displaced_step_closure * )
 	get_displaced_step_closure_by_addr (memaddr));
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (gdbarch);
 
   /* If checking the mode of displaced instruction in copy area, the mode
      should be determined by instruction on the original address.  */
@@ -426,7 +429,7 @@ arm_pc_is_thumb (struct gdbarch *gdbarch, CORE_ADDR memaddr)
     return 1;
 
   /* ARM v6-M and v7-M are always in Thumb mode.  */
-  if (gdbarch_tdep (gdbarch)->is_m)
+  if (tdep->is_m)
     return 1;
 
   /* If there are mapping symbols, consult them.  */
@@ -517,10 +520,11 @@ arm_m_addr_is_magic (CORE_ADDR addr)
 static CORE_ADDR
 arm_addr_bits_remove (struct gdbarch *gdbarch, CORE_ADDR val)
 {
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (gdbarch);
+
   /* On M-profile devices, do not strip the low bit from EXC_RETURN
      (the magic exception return address).  */
-  if (gdbarch_tdep (gdbarch)->is_m
-      && arm_m_addr_is_magic (val))
+  if (tdep->is_m && arm_m_addr_is_magic (val))
     return val;
 
   if (arm_apcs_32)
@@ -1479,6 +1483,7 @@ arm_analyze_prologue (struct gdbarch *gdbarch,
 		      CORE_ADDR prologue_start, CORE_ADDR prologue_end,
 		      struct arm_prologue_cache *cache)
 {
+  arm_gdbarch * const tdep = (arm_gdbarch *) gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order_for_code = gdbarch_byte_order_for_code (gdbarch);
   int regno;
   CORE_ADDR offset, current_pc;
@@ -1597,7 +1602,7 @@ arm_analyze_prologue (struct gdbarch *gdbarch,
 	}
       else if ((insn & 0xffff7fff) == 0xed6d0103	/* stfe f?,
 							   [sp, -#c]! */
-	       && gdbarch_tdep (gdbarch)->have_fpa_registers)
+	       && tdep->have_fpa_registers)
 	{
 	  if (stack.store_would_trash (regs[ARM_SP_REGNUM]))
 	    break;
@@ -1608,7 +1613,7 @@ arm_analyze_prologue (struct gdbarch *gdbarch,
 	}
       else if ((insn & 0xffbf0fff) == 0xec2d0200	/* sfmfd f0, 4,
 							   [sp!] */
-	       && gdbarch_tdep (gdbarch)->have_fpa_registers)
+	       && tdep->have_fpa_registers)
 	{
 	  int n_saved_fp_regs;
 	  unsigned int fp_start_reg, fp_bound_reg;
@@ -1854,6 +1859,8 @@ arm_prologue_unwind_stop_reason (struct frame_info *this_frame,
 {
   struct arm_prologue_cache *cache;
   CORE_ADDR pc;
+  arm_gdbarch *tdep
+    = (arm_gdbarch *) gdbarch_tdep (get_frame_arch (this_frame));
 
   if (*this_cache == NULL)
     *this_cache = arm_make_prologue_cache (this_frame);
@@ -1861,7 +1868,7 @@ arm_prologue_unwind_stop_reason (struct frame_info *this_frame,
 
   /* This is meant to halt the backtrace at "_start".  */
   pc = get_frame_pc (this_frame);
-  if (pc <= gdbarch_tdep (get_frame_arch (this_frame))->lowest_pc)
+  if (pc <= tdep->lowest_pc)
     return UNWIND_OUTERMOST;
 
   /* If we've hit a wall, stop.  */
@@ -3669,7 +3676,7 @@ arm_vfp_call_candidate (struct type *t, enum arm_vfp_cprc_base_type *base_type,
 static int
 arm_vfp_abi_for_function (struct gdbarch *gdbarch, struct type *func_type)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (gdbarch);
   /* Variadic functions always use the base ABI.  Assume that functions
      without debug info are not variadic.  */
   if (func_type && TYPE_VARARGS (check_typedef (func_type)))
@@ -3677,7 +3684,7 @@ arm_vfp_abi_for_function (struct gdbarch *gdbarch, struct type *func_type)
   /* The VFP ABI is only supported as a variant of AAPCS.  */
   if (tdep->arm_abi != ARM_ABI_AAPCS)
     return 0;
-  return gdbarch_tdep (gdbarch)->fp_model == ARM_FLOAT_VFP;
+  return tdep->fp_model == ARM_FLOAT_VFP;
 }
 
 /* We currently only support passing parameters in integer registers, which
@@ -3699,6 +3706,7 @@ arm_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   int use_vfp_abi;
   struct type *ftype;
   unsigned vfp_regs_free = (1 << 16) - 1;
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (gdbarch);
 
   /* Determine the type of this function and whether the VFP ABI
      applies.  */
@@ -3755,7 +3763,7 @@ arm_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
       /* Round alignment up to a whole number of words.  */
       align = (align + INT_REGISTER_SIZE - 1) & ~(INT_REGISTER_SIZE - 1);
       /* Different ABIs have different maximum alignments.  */
-      if (gdbarch_tdep (gdbarch)->arm_abi == ARM_ABI_APCS)
+      if (tdep->arm_abi == ARM_ABI_APCS)
 	{
 	  /* The APCS ABI only requires word alignment.  */
 	  align = INT_REGISTER_SIZE;
@@ -3972,7 +3980,7 @@ arm_print_float_info (struct gdbarch *gdbarch, struct ui_file *file,
 static struct type *
 arm_ext_type (struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (gdbarch);
 
   if (!tdep->arm_ext_type)
     tdep->arm_ext_type
@@ -3985,7 +3993,7 @@ arm_ext_type (struct gdbarch *gdbarch)
 static struct type *
 arm_neon_double_type (struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (gdbarch);
 
   if (tdep->neon_double_type == NULL)
     {
@@ -4024,7 +4032,7 @@ arm_neon_double_type (struct gdbarch *gdbarch)
 static struct type *
 arm_neon_quad_type (struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (gdbarch);
 
   if (tdep->neon_quad_type == NULL)
     {
@@ -4060,12 +4068,13 @@ static struct type *
 arm_register_type (struct gdbarch *gdbarch, int regnum)
 {
   int num_regs = gdbarch_num_regs (gdbarch);
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (gdbarch);
 
-  if (gdbarch_tdep (gdbarch)->have_vfp_pseudos
+  if (tdep->have_vfp_pseudos
       && regnum >= num_regs && regnum < num_regs + 32)
     return builtin_type (gdbarch)->builtin_float;
 
-  if (gdbarch_tdep (gdbarch)->have_neon_pseudos
+  if (tdep->have_neon_pseudos
       && regnum >= num_regs + 32 && regnum < num_regs + 32 + 16)
     return arm_neon_quad_type (gdbarch);
 
@@ -4078,7 +4087,7 @@ arm_register_type (struct gdbarch *gdbarch, int regnum)
 
       if (regnum >= ARM_D0_REGNUM && regnum < ARM_D0_REGNUM + 32
 	  && TYPE_CODE (t) == TYPE_CODE_FLT
-	  && gdbarch_tdep (gdbarch)->have_neon)
+	  && tdep->have_neon)
 	return arm_neon_double_type (gdbarch);
       else
 	return t;
@@ -4086,7 +4095,7 @@ arm_register_type (struct gdbarch *gdbarch, int regnum)
 
   if (regnum >= ARM_F0_REGNUM && regnum < ARM_F0_REGNUM + NUM_FREGS)
     {
-      if (!gdbarch_tdep (gdbarch)->have_fpa_registers)
+      if (!tdep->have_fpa_registers)
 	return builtin_type (gdbarch)->builtin_void;
 
       return arm_ext_type (gdbarch);
@@ -4240,9 +4249,10 @@ arm_adjust_breakpoint_address (struct gdbarch *gdbarch, CORE_ADDR bpaddr)
   int buf_len;
   enum bfd_endian order = gdbarch_byte_order_for_code (gdbarch);
   int i, any, last_it, last_it_count;
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (gdbarch);
 
   /* If we are using BKPT breakpoints, none of this is necessary.  */
-  if (gdbarch_tdep (gdbarch)->thumb2_breakpoint == NULL)
+  if (tdep->thumb2_breakpoint == NULL)
     return bpaddr;
 
   /* ARM mode does not have this problem.  */
@@ -7616,7 +7626,7 @@ void
 arm_displaced_init_closure (struct gdbarch *gdbarch, CORE_ADDR from,
 			    CORE_ADDR to, arm_displaced_step_closure *dsc)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (gdbarch);
   unsigned int i, len, offset;
   enum bfd_endian byte_order_for_code = gdbarch_byte_order_for_code (gdbarch);
   int size = dsc->is_thumb? 2 : 4;
@@ -7782,7 +7792,7 @@ static const gdb_byte arm_default_thumb_be_breakpoint[] = THUMB_BE_BREAKPOINT;
 static int
 arm_breakpoint_kind_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order_for_code = gdbarch_byte_order_for_code (gdbarch);
 
   if (arm_pc_is_thumb (gdbarch, *pcptr))
@@ -7817,7 +7827,7 @@ arm_breakpoint_kind_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr)
 static const gdb_byte *
 arm_sw_breakpoint_from_kind (struct gdbarch *gdbarch, int kind, int *size)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (gdbarch);
 
   switch (kind)
     {
@@ -7888,11 +7898,12 @@ arm_extract_return_value (struct type *type, struct regcache *regs,
 			  gdb_byte *valbuf)
 {
   struct gdbarch *gdbarch = regs->arch ();
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
 
   if (TYPE_CODE_FLT == TYPE_CODE (type))
     {
-      switch (gdbarch_tdep (gdbarch)->fp_model)
+      switch (tdep->fp_model)
 	{
 	case ARM_FLOAT_FPA:
 	  {
@@ -7981,6 +7992,7 @@ static int
 arm_return_in_memory (struct gdbarch *gdbarch, struct type *type)
 {
   enum type_code code;
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (gdbarch);
 
   type = check_typedef (type);
 
@@ -7998,7 +8010,7 @@ arm_return_in_memory (struct gdbarch *gdbarch, struct type *type)
       return (TYPE_LENGTH (type) > 16);
     }
 
-  if (gdbarch_tdep (gdbarch)->arm_abi != ARM_ABI_APCS)
+  if (tdep->arm_abi != ARM_ABI_APCS)
     {
       /* The AAPCS says all aggregates not larger than a word are returned
 	 in a register.  */
@@ -8097,13 +8109,14 @@ arm_store_return_value (struct type *type, struct regcache *regs,
 			const gdb_byte *valbuf)
 {
   struct gdbarch *gdbarch = regs->arch ();
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
 
   if (TYPE_CODE (type) == TYPE_CODE_FLT)
     {
       gdb_byte buf[FP_REGISTER_SIZE];
 
-      switch (gdbarch_tdep (gdbarch)->fp_model)
+      switch (tdep->fp_model)
 	{
 	case ARM_FLOAT_FPA:
 
@@ -8190,7 +8203,7 @@ arm_return_value (struct gdbarch *gdbarch, struct value *function,
 		  struct type *valtype, struct regcache *regcache,
 		  gdb_byte *readbuf, const gdb_byte *writebuf)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (gdbarch);
   struct type *func_type = function ? value_type (function) : NULL;
   enum arm_vfp_cprc_base_type vfp_base_type;
   int vfp_base_count;
@@ -8260,7 +8273,7 @@ static int
 arm_get_longjmp_target (struct frame_info *frame, CORE_ADDR *pc)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   CORE_ADDR jb_addr;
   gdb_byte buf[INT_REGISTER_SIZE];
@@ -8410,7 +8423,7 @@ static void
 show_fp_model (struct ui_file *file, int from_tty,
 	       struct cmd_list_element *c, const char *value)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (target_gdbarch ());
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (target_gdbarch ());
 
   if (arm_fp_model == ARM_FLOAT_AUTO
       && gdbarch_bfd_arch_info (target_gdbarch ())->arch == bfd_arch_arm)
@@ -8447,7 +8460,7 @@ static void
 arm_show_abi (struct ui_file *file, int from_tty,
 	     struct cmd_list_element *c, const char *value)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (target_gdbarch ());
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (target_gdbarch ());
 
   if (arm_abi_global == ARM_ABI_AUTO
       && gdbarch_bfd_arch_info (target_gdbarch ())->arch == bfd_arch_arm)
@@ -8519,8 +8532,9 @@ static const char *
 arm_register_name (struct gdbarch *gdbarch, int i)
 {
   const int num_regs = gdbarch_num_regs (gdbarch);
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (gdbarch);
 
-  if (gdbarch_tdep (gdbarch)->have_vfp_pseudos
+  if (tdep->have_vfp_pseudos
       && i >= num_regs && i < num_regs + 32)
     {
       static const char *const vfp_pseudo_names[] = {
@@ -8533,7 +8547,7 @@ arm_register_name (struct gdbarch *gdbarch, int i)
       return vfp_pseudo_names[i - num_regs];
     }
 
-  if (gdbarch_tdep (gdbarch)->have_neon_pseudos
+  if (tdep->have_neon_pseudos
       && i >= num_regs + 32 && i < num_regs + 32 + 16)
     {
       static const char *const neon_pseudo_names[] = {
@@ -8718,11 +8732,12 @@ arm_pseudo_read (struct gdbarch *gdbarch, struct regcache *regcache,
   char name_buf[4];
   gdb_byte reg_buf[8];
   int offset, double_regnum;
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (gdbarch);
 
   gdb_assert (regnum >= num_regs);
   regnum -= num_regs;
 
-  if (gdbarch_tdep (gdbarch)->have_neon_pseudos && regnum >= 32 && regnum < 48)
+  if (tdep->have_neon_pseudos && regnum >= 32 && regnum < 48)
     /* Quad-precision register.  */
     return arm_neon_quad_read (gdbarch, regcache, regnum - 32, buf);
   else
@@ -8786,11 +8801,12 @@ arm_pseudo_write (struct gdbarch *gdbarch, struct regcache *regcache,
   char name_buf[4];
   gdb_byte reg_buf[8];
   int offset, double_regnum;
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (gdbarch);
 
   gdb_assert (regnum >= num_regs);
   regnum -= num_regs;
 
-  if (gdbarch_tdep (gdbarch)->have_neon_pseudos && regnum >= 32 && regnum < 48)
+  if (tdep->have_neon_pseudos && regnum >= 32 && regnum < 48)
     /* Quad-precision register.  */
     arm_neon_quad_write (gdbarch, regcache, regnum - 32, buf);
   else
@@ -8868,7 +8884,9 @@ arm_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
 static void
 arm_register_g_packet_guesses (struct gdbarch *gdbarch)
 {
-  if (gdbarch_tdep (gdbarch)->is_m)
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (gdbarch);
+
+  if (tdep->is_m)
     {
       /* If we know from the executable this is an M-profile target,
 	 cater for remote targets whose register set layout is the
@@ -8904,8 +8922,9 @@ arm_register_g_packet_guesses (struct gdbarch *gdbarch)
 static int
 arm_code_of_frame_writable (struct gdbarch *gdbarch, struct frame_info *frame)
 {
-  if (gdbarch_tdep (gdbarch)->is_m
-      && get_frame_type (frame) == SIGTRAMP_FRAME)
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (gdbarch);
+
+  if (tdep->is_m && get_frame_type (frame) == SIGTRAMP_FRAME)
     {
       /* M-profile exception frames return to some magic PCs, where
 	 isn't writable at all.  */
@@ -8926,7 +8945,6 @@ arm_code_of_frame_writable (struct gdbarch *gdbarch, struct frame_info *frame)
 static struct gdbarch *
 arm_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
-  struct gdbarch_tdep *tdep;
   struct gdbarch *gdbarch;
   struct gdbarch_list *best_arch;
   enum arm_abi_kind arm_abi = arm_abi_global;
@@ -9269,12 +9287,12 @@ arm_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
        best_arch != NULL;
        best_arch = gdbarch_list_lookup_by_info (best_arch->next, &info))
     {
-      if (arm_abi != ARM_ABI_AUTO
-	  && arm_abi != gdbarch_tdep (best_arch->gdbarch)->arm_abi)
+      arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (best_arch->gdbarch);
+
+      if (arm_abi != ARM_ABI_AUTO && arm_abi != tdep->arm_abi)
 	continue;
 
-      if (fp_model != ARM_FLOAT_AUTO
-	  && fp_model != gdbarch_tdep (best_arch->gdbarch)->fp_model)
+      if (fp_model != ARM_FLOAT_AUTO && fp_model != tdep->fp_model)
 	continue;
 
       /* There are various other properties in tdep that we do not
@@ -9283,7 +9301,7 @@ arm_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 	 automatically disqualified.  */
 
       /* Do check is_m, though, since it might come from the binary.  */
-      if (is_m != gdbarch_tdep (best_arch->gdbarch)->is_m)
+      if (is_m != tdep->is_m)
 	continue;
 
       /* Found a match.  */
@@ -9297,7 +9315,7 @@ arm_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       return best_arch->gdbarch;
     }
 
-  tdep = XCNEW (struct gdbarch_tdep);
+  arm_gdbarch *tdep = new arm_gdbarch;
   gdbarch = gdbarch_alloc (&info, tdep);
 
   /* Record additional information about the architecture we are defining.
@@ -9408,7 +9426,7 @@ arm_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* This "info float" is FPA-specific.  Use the generic version if we
      do not have FPA.  */
-  if (gdbarch_tdep (gdbarch)->have_fpa_registers)
+  if (tdep->have_fpa_registers)
     set_gdbarch_print_float_info (gdbarch, arm_print_float_info);
 
   /* Internal <-> external register number maps.  */
@@ -9526,7 +9544,7 @@ arm_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 static void
 arm_dump_tdep (struct gdbarch *gdbarch, struct ui_file *file)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (gdbarch);
 
   if (tdep == NULL)
     return;
@@ -11582,7 +11600,7 @@ static int
 arm_record_coproc_data_proc (insn_decode_record *arm_insn_r)
 {
   uint32_t op, op1_sbit, op1_ebit, coproc;
-  struct gdbarch_tdep *tdep = gdbarch_tdep (arm_insn_r->gdbarch);
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (arm_insn_r->gdbarch);
   struct regcache *reg_cache = arm_insn_r->regcache;
 
   arm_insn_r->opcode = bits (arm_insn_r->arm_insn, 24, 27);
@@ -12015,7 +12033,7 @@ thumb_record_misc (insn_decode_record *thumb_insn_r)
 static int
 thumb_record_ldm_stm_swi (insn_decode_record *thumb_insn_r)                
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (thumb_insn_r->gdbarch);
+  arm_gdbarch *tdep = (arm_gdbarch *) gdbarch_tdep (thumb_insn_r->gdbarch);
   struct regcache *reg_cache = thumb_insn_r->regcache;
 
   uint32_t ret = 0; /* function return value: -1:record failure ;  0:success  */

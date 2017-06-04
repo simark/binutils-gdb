@@ -1055,7 +1055,7 @@ aix_thread_wait (struct target_ops *ops,
 static void
 supply_gprs64 (struct regcache *regcache, uint64_t *vals)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (regcache->arch ());
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (regcache->arch ());
   int regno;
 
   for (regno = 0; regno < ppc_num_gprs; regno++)
@@ -1077,7 +1077,7 @@ static void
 supply_fprs (struct regcache *regcache, double *vals)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
   int regno;
 
   /* This function should never be called on architectures without
@@ -1095,7 +1095,7 @@ supply_fprs (struct regcache *regcache, double *vals)
 static int
 special_register_p (struct gdbarch *gdbarch, int regno)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
 
   return regno == gdbarch_pc_regnum (gdbarch)
       || regno == tdep->ppc_ps_regnum
@@ -1118,7 +1118,7 @@ supply_sprs64 (struct regcache *regcache,
 	       uint32_t fpscr)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
 
   regcache_raw_supply (regcache, gdbarch_pc_regnum (gdbarch),
 		       (char *) &iar);
@@ -1142,7 +1142,7 @@ supply_sprs32 (struct regcache *regcache,
 	       uint32_t fpscr)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
 
   regcache_raw_supply (regcache, gdbarch_pc_regnum (gdbarch),
 		       (char *) &iar);
@@ -1167,7 +1167,7 @@ static void
 fetch_regs_user_thread (struct regcache *regcache, pthdb_pthread_t pdtid)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
   int status, i;
   pthdb_context_t ctx;
 
@@ -1222,7 +1222,7 @@ fetch_regs_kernel_thread (struct regcache *regcache, int regno,
 			  pthdb_tid_t tid)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
   uint64_t gprs64[ppc_num_gprs];
   uint32_t gprs32[ppc_num_gprs];
   double fprs[ppc_num_fprs];
@@ -1283,7 +1283,7 @@ fetch_regs_kernel_thread (struct regcache *regcache, int regno,
 	}
       else
 	{
-	  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+	  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
 
 	  if (!ptrace32 (PTT_READ_SPRS, tid, (uintptr_t) &sprs32, 0, NULL))
 	    memset (&sprs32, 0, sizeof (sprs32));
@@ -1328,7 +1328,7 @@ aix_thread_fetch_registers (struct target_ops *ops,
 static void
 fill_gprs64 (const struct regcache *regcache, uint64_t *vals)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (regcache->arch ());
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (regcache->arch ());
   int regno;
 
   for (regno = 0; regno < ppc_num_gprs; regno++)
@@ -1341,7 +1341,7 @@ fill_gprs64 (const struct regcache *regcache, uint64_t *vals)
 static void 
 fill_gprs32 (const struct regcache *regcache, uint32_t *vals)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (regcache->arch ());
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (regcache->arch ());
   int regno;
 
   for (regno = 0; regno < ppc_num_gprs; regno++)
@@ -1356,7 +1356,7 @@ static void
 fill_fprs (const struct regcache *regcache, double *vals)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
   int regno;
 
   /* This function should never be called on architectures without
@@ -1381,7 +1381,7 @@ fill_sprs64 (const struct regcache *regcache,
 	     uint32_t *fpscr)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
 
   /* Verify that the size of the size of the IAR buffer is the
      same as the raw size of the PC (in the register cache).  If
@@ -1417,7 +1417,7 @@ fill_sprs32 (const struct regcache *regcache,
 	     uint32_t *fpscr)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
 
   /* Verify that the size of the size of the IAR buffer is the
      same as the raw size of the PC (in the register cache).  If
@@ -1455,7 +1455,7 @@ static void
 store_regs_user_thread (const struct regcache *regcache, pthdb_pthread_t pdtid)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
   int status, i;
   pthdb_context_t ctx;
   uint32_t int32;
@@ -1552,7 +1552,7 @@ store_regs_kernel_thread (const struct regcache *regcache, int regno,
 			  pthdb_tid_t tid)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
   uint64_t gprs64[ppc_num_gprs];
   uint32_t gprs32[ppc_num_gprs];
   double fprs[ppc_num_fprs];

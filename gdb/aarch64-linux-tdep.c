@@ -1010,7 +1010,7 @@ aarch64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 								    NULL };
   static const char *const stap_register_indirection_suffixes[] = { "]",
 								    NULL };
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  aarch64_gdbarch *tdep = (aarch64_gdbarch *) gdbarch_tdep (gdbarch);
 
   tdep->lowest_pc = 0x8000;
 

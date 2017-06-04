@@ -878,7 +878,7 @@ arc_get_longjmp_target (struct frame_info *frame, CORE_ADDR *pc)
     debug_printf ("arc: get_longjmp_target\n");
 
   struct gdbarch *gdbarch = get_frame_arch (frame);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  arc_gdbarch *tdep = (arc_gdbarch *) gdbarch_tdep (gdbarch);
   int pc_offset = tdep->jb_pc * ARC_REGISTER_SIZE;
   gdb_byte buf[ARC_REGISTER_SIZE];
   CORE_ADDR jb_addr = get_frame_register_unsigned (frame, ARC_FIRST_ARG_REGNUM);
@@ -1973,7 +1973,7 @@ arc_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* Allocate the ARC-private target-dependent information structure, and the
      GDB target-independent information structure.  */
-  struct gdbarch_tdep *tdep = XCNEW (struct gdbarch_tdep);
+  arc_gdbarch *tdep = new arc_gdbarch;
   tdep->jb_pc = -1; /* No longjmp support by default.  */
   struct gdbarch *gdbarch = gdbarch_alloc (&info, tdep);
 
@@ -2128,7 +2128,7 @@ arc_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 static void
 arc_dump_tdep (struct gdbarch *gdbarch, struct ui_file *file)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  arc_gdbarch *tdep = (arc_gdbarch *) gdbarch_tdep (gdbarch);
 
   fprintf_unfiltered (file, "arc_dump_tdep: jb_pc = %i\n", tdep->jb_pc);
 }

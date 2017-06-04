@@ -41,7 +41,7 @@ extern const gdb_byte tic6x_bkpt_illegal_opcode_be[];
 extern const gdb_byte tic6x_bkpt_illegal_opcode_le[];
 
 /* Target-dependent structure in gdbarch.  */
-struct gdbarch_tdep
+struct tic6x_gdbarch : public gdbarch_tdep
 {
   /* Return the expected next PC if FRAME is stopped at a syscall
      instruction.  */

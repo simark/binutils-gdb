@@ -207,7 +207,7 @@ i386_cygwin_auto_wide_charset (void)
 static void
 i386_cygwin_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch *tdep = (i386_gdbarch *) gdbarch_tdep (gdbarch);
 
   windows_init_abi (info, gdbarch);
 

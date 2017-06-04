@@ -103,7 +103,7 @@ i386_sol2_static_transform_name (const char *name)
 static void
 i386_sol2_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch *tdep = (i386_gdbarch *) gdbarch_tdep (gdbarch);
 
   /* Solaris is SVR4-based.  */
   i386_svr4_init_abi (info, gdbarch);

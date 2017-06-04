@@ -314,7 +314,7 @@ ppc_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
 {
   unsigned int insnbuf[POWERPC32_PLT_STUB_LEN];
   struct gdbarch *gdbarch = get_frame_arch (frame);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   CORE_ADDR target = 0;
   int scan_limit, i;
@@ -522,7 +522,7 @@ ppc_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
 					void *cb_data,
 					const struct regcache *regcache)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
   int have_altivec = tdep->ppc_vr0_regnum != -1;
   int have_vsx = tdep->ppc_vsr0_upper_regnum != -1;
 
@@ -552,7 +552,7 @@ ppc_linux_sigtramp_cache (struct frame_info *this_frame,
   CORE_ADDR fpregs;
   int i;
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
 
   base = get_frame_register_unsigned (this_frame,
@@ -723,7 +723,7 @@ ppc_linux_get_syscall_number (struct gdbarch *gdbarch,
                               ptid_t ptid)
 {
   struct regcache *regcache = get_thread_regcache (ptid);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   struct cleanup *cleanbuf;
   /* The content of a register */
@@ -799,7 +799,7 @@ static int
 ppc_linux_syscall_record (struct regcache *regcache)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
   ULONGEST scnum;
   enum gdb_syscall syscall_gdb;
   int ret;
@@ -889,7 +889,7 @@ ppc_linux_record_signal (struct gdbarch *gdbarch, struct regcache *regcache,
   const int SIGNAL_FRAMESIZE = 128;
   const int sizeof_rt_sigframe = 1440 * 2 + 8 * 2 + 4 * 6 + 8 + 8 + 128 + 512;
   ULONGEST sp;
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
   int i;
 
   for (i = 3; i <= 12; i++)
@@ -1317,7 +1317,7 @@ ppu2spu_sniffer (const struct frame_unwind *self,
 		 struct frame_info *this_frame, void **this_prologue_cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   struct ppu2spu_data data;
   struct frame_info *fi;
@@ -1647,7 +1647,7 @@ static void
 ppc_linux_init_abi (struct gdbarch_info info,
                     struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch *tdep = (ppc_gdbarch *) gdbarch_tdep (gdbarch);
   struct tdesc_arch_data *tdesc_data = info.tdesc_data;
   static const char *const stap_integer_prefixes[] = { "i", NULL };
   static const char *const stap_register_indirection_prefixes[] = { "(",

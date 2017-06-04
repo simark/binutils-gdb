@@ -139,7 +139,7 @@ enum mt_gdb_regnums
 };
 
 /* The tdep structure.  */
-struct gdbarch_tdep
+struct mt_gdbarch : public gdbarch_tdep
 {
   /* ISA-specific types.  */
   struct type *copro_type;
@@ -259,7 +259,7 @@ mt_copro_register_type (struct gdbarch *arch, int regnum)
 static struct type *
 mt_register_type (struct gdbarch *arch, int regnum)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (arch);
+  mt_gdbarch *tdep = (mt_gdbarch *) gdbarch_tdep (arch);
 
   if (regnum >= 0 && regnum < MT_NUM_REGS + MT_NUM_PSEUDO_REGS)
     {
@@ -1142,7 +1142,6 @@ static struct gdbarch *
 mt_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
   struct gdbarch *gdbarch;
-  struct gdbarch_tdep *tdep;
 
   /* Find a candidate among the list of pre-declared architectures.  */
   arches = gdbarch_list_lookup_by_info (arches, &info);
@@ -1151,7 +1150,7 @@ mt_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* None found, create a new architecture from the information
      provided.  */
-  tdep = XCNEW (struct gdbarch_tdep);
+  mt_gdbarch *tdep = new mt_gdbarch;
   gdbarch = gdbarch_alloc (&info, tdep);
 
   set_gdbarch_float_format (gdbarch, floatformats_ieee_single);
