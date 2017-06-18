@@ -210,7 +210,6 @@ static void remote_check_symbols (void);
 void _initialize_remote (void);
 
 struct stop_reply;
-static void stop_reply_xfree (struct stop_reply *);
 static void remote_parse_stop_reply (char *, struct stop_reply *);
 static void push_stop_reply (struct stop_reply *);
 static void discard_pending_stop_replies_in_queue (struct remote_state *);
@@ -6285,9 +6284,9 @@ typedef struct cached_reg
 
 DEF_VEC_O(cached_reg_t);
 
-typedef struct stop_reply
+struct stop_reply : public notif_event
 {
-  struct notif_event base;
+  ~stop_reply () override;
 
   /* The identifier of the thread about this event  */
   ptid_t ptid;
@@ -6310,7 +6309,9 @@ typedef struct stop_reply
   CORE_ADDR watch_data_address;
 
   int core;
-} *stop_reply_p;
+};
+
+typedef stop_reply *stop_reply_p;
 
 DECLARE_QUEUE_P (stop_reply_p);
 DEFINE_QUEUE_P (stop_reply_p);
@@ -6324,9 +6325,9 @@ DEFINE_QUEUE_P (stop_reply_p);
 static QUEUE (stop_reply_p) *stop_reply_queue;
 
 static void
-stop_reply_xfree (struct stop_reply *r)
+stop_reply_delete (struct stop_reply *r)
 {
-  notif_event_xfree ((struct notif_event *) r);
+  delete r;
 }
 
 /* Return the length of the stop reply queue.  */
@@ -6372,30 +6373,23 @@ remote_notif_stop_can_get_pending_events (struct notif_client *self)
   return 0;
 }
 
-static void
-stop_reply_dtr (struct notif_event *event)
+stop_reply::~stop_reply ()
 {
-  struct stop_reply *r = (struct stop_reply *) event;
   cached_reg_t *reg;
   int ix;
 
   for (ix = 0;
-       VEC_iterate (cached_reg_t, r->regcache, ix, reg);
+       VEC_iterate (cached_reg_t, this->regcache, ix, reg);
        ix++)
     xfree (reg->data);
 
-  VEC_free (cached_reg_t, r->regcache);
+  VEC_free (cached_reg_t, this->regcache);
 }
 
 static struct notif_event *
 remote_notif_stop_alloc_reply (void)
 {
-  /* We cast to a pointer to the "base class".  */
-  struct notif_event *r = (struct notif_event *) XNEW (struct stop_reply);
-
-  r->dtr = stop_reply_dtr;
-
-  return r;
+  return new stop_reply ();
 }
 
 /* A client of notification Stop.  */
@@ -6581,7 +6575,7 @@ remove_stop_reply_for_inferior (QUEUE (stop_reply_p) *q,
 
   if (ptid_get_pid (event->ptid) == inf->pid)
     {
-      stop_reply_xfree (event);
+      delete event;
       QUEUE_remove_elem (stop_reply_p, q, iter);
     }
 
@@ -6608,7 +6602,7 @@ discard_pending_stop_replies (struct inferior *inf)
   /* Discard the in-flight notification.  */
   if (reply != NULL && ptid_get_pid (reply->ptid) == inf->pid)
     {
-      stop_reply_xfree (reply);
+      delete reply;
       rns->pending_event[notif_client_stop.id] = NULL;
     }
 
@@ -6634,7 +6628,7 @@ remove_stop_reply_of_remote_state (QUEUE (stop_reply_p) *q,
 
   if (event->rs == rs)
     {
-      stop_reply_xfree (event);
+      delete event;
       QUEUE_remove_elem (stop_reply_p, q, iter);
     }
 
@@ -7209,7 +7203,7 @@ process_stop_reply (struct stop_reply *stop_reply,
       remote_thr->vcont_resumed = 0;
     }
 
-  stop_reply_xfree (stop_reply);
+  delete stop_reply;
   return ptid;
 }
 
@@ -13939,7 +13933,7 @@ _initialize_remote (void)
   init_remote_threadtests ();
 #endif
 
-  stop_reply_queue = QUEUE_alloc (stop_reply_p, stop_reply_xfree);
+  stop_reply_queue = QUEUE_alloc (stop_reply_p, stop_reply_delete);
   /* set/show remote ...  */
 
   add_prefix_cmd ("remote", class_maintenance, set_remote_cmd, _("\

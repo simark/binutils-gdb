@@ -26,9 +26,7 @@
 
 struct notif_event
 {
-  /* Destructor.  Release everything from SELF, but not SELF
-     itself.  */
-  void (*dtr) (struct notif_event *self);
+  virtual ~notif_event () = 0;
 };
 
 /* ID of the notif_client.  */
@@ -101,8 +99,6 @@ struct remote_notif_state
 void remote_notif_ack (struct notif_client *nc, char *buf);
 struct notif_event *remote_notif_parse (struct notif_client *nc,
 					char *buf);
-
-void notif_event_xfree (struct notif_event *event);
 
 void handle_notification (struct remote_notif_state *notif_state,
 			  char *buf);
