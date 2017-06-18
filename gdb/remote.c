@@ -72,6 +72,7 @@
 #include "btrace.h"
 #include "record-btrace.h"
 #include <algorithm>
+#include "common/byte-vector.h"
 
 /* Temp hacks for tracepoint encoding migration.  */
 static char *target_buf;
@@ -6276,17 +6277,15 @@ remote_console_output (char *msg)
   gdb_flush (gdb_stdtarg);
 }
 
-typedef struct cached_reg
+struct cached_reg_t
 {
   int num;
-  gdb_byte *data;
-} cached_reg_t;
-
-DEF_VEC_O(cached_reg_t);
+  gdb::byte_vector data;
+};
 
 struct stop_reply : public notif_event
 {
-  ~stop_reply () override;
+  ~stop_reply () override = default;
 
   /* The identifier of the thread about this event  */
   ptid_t ptid;
@@ -6302,7 +6301,7 @@ struct stop_reply : public notif_event
      efficient for those targets that provide critical registers as
      part of their normal status mechanism (as another roundtrip to
      fetch them is avoided).  */
-  VEC(cached_reg_t) *regcache;
+  std::vector<cached_reg_t> regcache;
 
   enum target_stop_reason stop_reason;
 
@@ -6371,19 +6370,6 @@ remote_notif_stop_can_get_pending_events (struct notif_client *self)
      remote_wait_ns.  */
   mark_async_event_handler (remote_async_inferior_event_token);
   return 0;
-}
-
-stop_reply::~stop_reply ()
-{
-  cached_reg_t *reg;
-  int ix;
-
-  for (ix = 0;
-       VEC_iterate (cached_reg_t, this->regcache, ix, reg);
-       ix++)
-    xfree (reg->data);
-
-  VEC_free (cached_reg_t, this->regcache);
 }
 
 static struct notif_event *
@@ -6777,7 +6763,7 @@ remote_parse_stop_reply (char *buf, struct stop_reply *event)
   event->ws.kind = TARGET_WAITKIND_IGNORE;
   event->ws.value.integer = 0;
   event->stop_reason = TARGET_STOPPED_BY_NO_REASON;
-  event->regcache = NULL;
+  event->regcache.clear ();
   event->core = -1;
 
   switch (buf[0])
@@ -6957,17 +6943,16 @@ Packet: '%s'\n"),
 			   hex_string (pnum), p, buf);
 
 		  cached_reg.num = reg->regnum;
-		  cached_reg.data = (gdb_byte *)
-		    xmalloc (register_size (gdbarch, reg->regnum));
+		  cached_reg.data.resize (register_size (gdbarch, reg->regnum));
 
 		  p = p1 + 1;
-		  fieldsize = hex2bin (p, cached_reg.data,
+		  fieldsize = hex2bin (p, cached_reg.data.data (),
 				       register_size (gdbarch, reg->regnum));
 		  p += 2 * fieldsize;
 		  if (fieldsize < register_size (gdbarch, reg->regnum))
 		    warning (_("Remote reply is too short: %s"), buf);
 
-		  VEC_safe_push (cached_reg_t, event->regcache, &cached_reg);
+		  event->regcache.push_back (cached_reg);
 		}
 	      else
 		{
@@ -7177,22 +7162,17 @@ process_stop_reply (struct stop_reply *stop_reply,
       struct private_thread_info *remote_thr;
 
       /* Expedited registers.  */
-      if (stop_reply->regcache)
+      if (!stop_reply->regcache.empty ())
 	{
 	  struct regcache *regcache
 	    = get_thread_arch_regcache (ptid, target_gdbarch ());
 	  cached_reg_t *reg;
 	  int ix;
 
-	  for (ix = 0;
-	       VEC_iterate (cached_reg_t, stop_reply->regcache, ix, reg);
-	       ix++)
-	  {
-	    regcache_raw_supply (regcache, reg->num, reg->data);
-	    xfree (reg->data);
-	  }
+	  for (cached_reg_t &reg : stop_reply->regcache)
+	    regcache_raw_supply (regcache, reg.num, reg.data.data ());
 
-	  VEC_free (cached_reg_t, stop_reply->regcache);
+	  stop_reply->regcache.clear ();
 	}
 
       remote_notice_new_inferior (ptid, 0);
