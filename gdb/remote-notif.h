@@ -39,35 +39,42 @@ enum REMOTE_NOTIF_ID
 
 /* A client to a sort of async remote notification.  */
 
-typedef struct notif_client
+struct notif_client
 {
+  notif_client (REMOTE_NOTIF_ID id_, const char *name_, const char *ack_command_)
+  : id (id_), name (name_), ack_command (ack_command_)
+  {}
+
+  virtual ~notif_client () = 0;
+
+
+  /* Parse BUF to get the expected event and update EVENT.  This
+     function may throw exception if contents in BUF is not the
+     expected event.  */
+  virtual void parse (char *buf, struct notif_event *event) = 0;
+
+  /* Send field <ack_command> to remote, and do some checking.  If
+     something wrong, throw an exception.  */
+  virtual void ack (char *buf, struct notif_event *event) = 0;
+
+  /* Check this notification client can get pending events in
+     'remote_notif_process'.  */
+  virtual int can_get_pending_events () = 0;
+
+  /* Allocate an event.  */
+  virtual notif_event *alloc_event () = 0;
+
+  /* Id of this notif_client.  */
+  const enum REMOTE_NOTIF_ID id;
+
   /* The name of notification packet.  */
   const char *name;
 
   /* The packet to acknowledge a previous reply.  */
   const char *ack_command;
+};
 
-  /* Parse BUF to get the expected event and update EVENT.  This
-     function may throw exception if contents in BUF is not the
-     expected event.  */
-  void (*parse) (struct notif_client *self, char *buf,
-		 struct notif_event *event);
-
-  /* Send field <ack_command> to remote, and do some checking.  If
-     something wrong, throw an exception.  */
-  void (*ack) (struct notif_client *self, char *buf,
-	       struct notif_event *event);
-
-  /* Check this notification client can get pending events in
-     'remote_notif_process'.  */
-  int (*can_get_pending_events) (struct notif_client *self);
-
-  /* Allocate an event.  */
-  struct notif_event *(*alloc_event) (void);
-
-  /* Id of this notif_client.  */
-  const enum REMOTE_NOTIF_ID id;
-} *notif_client_p;
+typedef notif_client *notif_client_p;
 
 DECLARE_QUEUE_P (notif_client_p);
 
@@ -108,7 +115,18 @@ void remote_notif_process (struct remote_notif_state *state,
 struct remote_notif_state *remote_notif_state_allocate (void);
 void remote_notif_state_xfree (struct remote_notif_state *state);
 
-extern struct notif_client notif_client_stop;
+struct notif_client_stop_reply : public notif_client
+{
+  notif_client_stop_reply ();
+  ~notif_client_stop_reply () override = default;
+
+  void parse (char *buf, notif_event *event) override;
+  void ack (char *buf, struct notif_event *event) override;
+  int can_get_pending_events () override;
+  notif_event *alloc_event () override;
+};
+
+extern notif_client_stop_reply notif_client_stop;
 
 extern int notif_debug;
 

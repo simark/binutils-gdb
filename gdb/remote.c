@@ -6337,21 +6337,21 @@ stop_reply_queue_length (void)
   return QUEUE_length (stop_reply_p, stop_reply_queue);
 }
 
-static void
-remote_notif_stop_parse (struct notif_client *self, char *buf,
-			 struct notif_event *event)
+notif_client_stop_reply notif_client_stop;
+
+void
+notif_client_stop_reply::parse (char *buf, notif_event *event)
 {
   remote_parse_stop_reply (buf, (struct stop_reply *) event);
 }
 
-static void
-remote_notif_stop_ack (struct notif_client *self, char *buf,
-		       struct notif_event *event)
+void
+notif_client_stop_reply::ack (char *buf, notif_event *event)
 {
   struct stop_reply *stop_reply = (struct stop_reply *) event;
 
   /* acknowledge */
-  putpkt (self->ack_command);
+  putpkt (this->ack_command);
 
   if (stop_reply->ws.kind == TARGET_WAITKIND_IGNORE)
       /* We got an unknown stop reply.  */
@@ -6360,8 +6360,8 @@ remote_notif_stop_ack (struct notif_client *self, char *buf,
   push_stop_reply (stop_reply);
 }
 
-static int
-remote_notif_stop_can_get_pending_events (struct notif_client *self)
+int
+notif_client_stop_reply::can_get_pending_events ()
 {
   /* We can't get pending events in remote_notif_process for
      notification stop, and we have to do this in remote_wait_ns
@@ -6372,24 +6372,17 @@ remote_notif_stop_can_get_pending_events (struct notif_client *self)
   return 0;
 }
 
-static struct notif_event *
-remote_notif_stop_alloc_reply (void)
+notif_event *
+notif_client_stop_reply::alloc_event ()
 {
   return new stop_reply ();
 }
 
 /* A client of notification Stop.  */
 
-struct notif_client notif_client_stop =
-{
-  "Stop",
-  "vStopped",
-  remote_notif_stop_parse,
-  remote_notif_stop_ack,
-  remote_notif_stop_can_get_pending_events,
-  remote_notif_stop_alloc_reply,
-  REMOTE_NOTIF_STOP,
-};
+notif_client_stop_reply::notif_client_stop_reply ()
+: notif_client (REMOTE_NOTIF_STOP, "Stop", "vStopped")
+{}
 
 /* A parameter to pass data in and out.  */
 
@@ -7116,7 +7109,7 @@ remote_notif_get_pending_events (struct notif_client *nc)
 			    nc->name);
 
       /* acknowledge */
-      nc->ack (nc, rs->buf, rs->notif_state->pending_event[nc->id]);
+      nc->ack (rs->buf, rs->notif_state->pending_event[nc->id]);
       rs->notif_state->pending_event[nc->id] = NULL;
 
       while (1)

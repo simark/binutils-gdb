@@ -45,6 +45,8 @@ int notif_debug = 0;
 
 notif_event::~notif_event () = default;
 
+notif_client::~notif_client () = default;
+
 /* Supported clients of notifications.  */
 
 static struct notif_client *notifs[] =
@@ -66,8 +68,8 @@ remote_notif_ack (struct notif_client *nc, char *buf)
     fprintf_unfiltered (gdb_stdlog, "notif: ack '%s'\n",
 			nc->ack_command);
 
-  nc->parse (nc, buf, event.get ());
-  nc->ack (nc, buf, event.release ());
+  nc->parse (buf, event.get ());
+  nc->ack (buf, event.release ());
 }
 
 /* Parse the BUF for the expected notification NC.  */
@@ -80,7 +82,7 @@ remote_notif_parse (struct notif_client *nc, char *buf)
   if (notif_debug)
     fprintf_unfiltered (gdb_stdlog, "notif: parse '%s'\n", nc->name);
 
-  nc->parse (nc, buf, event.get ());
+  nc->parse (buf, event.get ());
 
   return event.release ();
 }
@@ -101,7 +103,7 @@ remote_notif_process (struct remote_notif_state *state,
 
       gdb_assert (nc != except);
 
-      if (nc->can_get_pending_events (nc))
+      if (nc->can_get_pending_events ())
 	remote_notif_get_pending_events (nc);
     }
 }
