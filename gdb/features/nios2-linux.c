@@ -9,7 +9,7 @@ struct target_desc *tdesc_nios2_linux;
 static void
 initialize_tdesc_nios2_linux (void)
 {
-  struct target_desc *result = allocate_target_description ();
+  struct target_desc *result = allocate_target_description ("nios2-linux.xml");
   struct tdesc_feature *feature;
 
   set_tdesc_architecture (result, bfd_scan_arch ("nios2"));

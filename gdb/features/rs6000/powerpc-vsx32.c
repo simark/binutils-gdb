@@ -9,7 +9,7 @@ struct target_desc *tdesc_powerpc_vsx32;
 static void
 initialize_tdesc_powerpc_vsx32 (void)
 {
-  struct target_desc *result = allocate_target_description ();
+  struct target_desc *result = allocate_target_description ("powerpc-vsx32.xml");
   struct tdesc_feature *feature;
   struct tdesc_type *field_type;
   struct tdesc_type *type;

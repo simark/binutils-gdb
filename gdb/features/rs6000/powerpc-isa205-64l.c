@@ -9,7 +9,7 @@ struct target_desc *tdesc_powerpc_isa205_64l;
 static void
 initialize_tdesc_powerpc_isa205_64l (void)
 {
-  struct target_desc *result = allocate_target_description ();
+  struct target_desc *result = allocate_target_description ("powerpc-isa205-64l.xml");
   struct tdesc_feature *feature;
 
   set_tdesc_architecture (result, bfd_scan_arch ("powerpc:common64"));

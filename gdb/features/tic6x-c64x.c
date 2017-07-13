@@ -9,7 +9,7 @@ struct target_desc *tdesc_tic6x_c64x;
 static void
 initialize_tdesc_tic6x_c64x (void)
 {
-  struct target_desc *result = allocate_target_description ();
+  struct target_desc *result = allocate_target_description ("tic6x-c64x.xml");
   struct tdesc_feature *feature;
 
   set_tdesc_architecture (result, bfd_scan_arch ("tic6x"));

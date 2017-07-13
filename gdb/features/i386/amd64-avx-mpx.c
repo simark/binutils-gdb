@@ -9,7 +9,7 @@ struct target_desc *tdesc_amd64_avx_mpx;
 static void
 initialize_tdesc_amd64_avx_mpx (void)
 {
-  struct target_desc *result = allocate_target_description ();
+  struct target_desc *result = allocate_target_description ("amd64-avx-mpx.xml");
   struct tdesc_feature *feature;
   struct tdesc_type *field_type;
   struct tdesc_type *type;

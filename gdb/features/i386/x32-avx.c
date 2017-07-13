@@ -9,7 +9,7 @@ struct target_desc *tdesc_x32_avx;
 static void
 initialize_tdesc_x32_avx (void)
 {
-  struct target_desc *result = allocate_target_description ();
+  struct target_desc *result = allocate_target_description ("x32-avx.xml");
   struct tdesc_feature *feature;
   struct tdesc_type *field_type;
   struct tdesc_type *type;

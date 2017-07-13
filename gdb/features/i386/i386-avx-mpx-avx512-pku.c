@@ -9,7 +9,7 @@ struct target_desc *tdesc_i386_avx_mpx_avx512_pku;
 static void
 initialize_tdesc_i386_avx_mpx_avx512_pku (void)
 {
-  struct target_desc *result = allocate_target_description ();
+  struct target_desc *result = allocate_target_description ("i386-avx-mpx-avx512-pku.xml");
   struct tdesc_feature *feature;
   struct tdesc_type *field_type;
   struct tdesc_type *type;

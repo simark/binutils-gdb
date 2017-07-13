@@ -9,7 +9,7 @@ struct target_desc *tdesc_powerpc_isa205_vsx64l;
 static void
 initialize_tdesc_powerpc_isa205_vsx64l (void)
 {
-  struct target_desc *result = allocate_target_description ();
+  struct target_desc *result = allocate_target_description ("powerpc-isa205-vsx64l.xml");
   struct tdesc_feature *feature;
   struct tdesc_type *field_type;
   struct tdesc_type *type;

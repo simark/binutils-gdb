@@ -9,7 +9,7 @@ struct target_desc *tdesc_arm_with_vfpv2;
 static void
 initialize_tdesc_arm_with_vfpv2 (void)
 {
-  struct target_desc *result = allocate_target_description ();
+  struct target_desc *result = allocate_target_description ("arm-with-vfpv2.xml");
   struct tdesc_feature *feature;
 
   set_tdesc_architecture (result, bfd_scan_arch ("arm"));

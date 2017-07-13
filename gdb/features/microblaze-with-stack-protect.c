@@ -9,7 +9,7 @@ struct target_desc *tdesc_microblaze_with_stack_protect;
 static void
 initialize_tdesc_microblaze_with_stack_protect (void)
 {
-  struct target_desc *result = allocate_target_description ();
+  struct target_desc *result = allocate_target_description ("microblaze-with-stack-protect.xml");
   struct tdesc_feature *feature;
 
   feature = tdesc_create_feature (result, "org.gnu.gdb.microblaze.core");

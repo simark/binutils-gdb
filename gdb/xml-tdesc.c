@@ -622,8 +622,8 @@ static const struct gdb_xml_element tdesc_elements[] = {
 /* Parse DOCUMENT into a target description and return it.  */
 
 static struct target_desc *
-tdesc_parse_xml (const char *document, xml_fetch_another fetcher,
-		 void *fetcher_baton)
+tdesc_parse_xml (const char *filename, const char *document,
+		 xml_fetch_another fetcher, void *fetcher_baton)
 {
   struct tdesc_parsing_data data;
 
@@ -645,7 +645,7 @@ tdesc_parse_xml (const char *document, xml_fetch_another fetcher,
     return it->second;
 
   memset (&data, 0, sizeof (struct tdesc_parsing_data));
-  data.tdesc = allocate_target_description ();
+  data.tdesc = allocate_target_description (filename);
   struct cleanup *result_cleanup
     = make_cleanup_free_target_description (data.tdesc);
 
@@ -686,7 +686,7 @@ file_read_description_xml (const char *filename)
 
   back_to = make_cleanup (xfree, tdesc_str);
 
-  tdesc = tdesc_parse_xml (tdesc_str, xml_fetch_content_from_file,
+  tdesc = tdesc_parse_xml (filename, tdesc_str, xml_fetch_content_from_file,
 			   (void *) ldirname (filename).c_str ());
   do_cleanups (back_to);
 
@@ -728,7 +728,7 @@ target_read_description_xml (struct target_ops *ops)
     return NULL;
 
   back_to = make_cleanup (xfree, tdesc_str);
-  tdesc = tdesc_parse_xml (tdesc_str,
+  tdesc = tdesc_parse_xml ("target.xml", tdesc_str,
 			   fetch_available_features_from_target,
 			   ops);
   do_cleanups (back_to);

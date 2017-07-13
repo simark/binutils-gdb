@@ -9,7 +9,7 @@ struct target_desc *tdesc_arc_v2;
 static void
 initialize_tdesc_arc_v2 (void)
 {
-  struct target_desc *result = allocate_target_description ();
+  struct target_desc *result = allocate_target_description ("arc-v2.xml");
   struct tdesc_feature *feature;
   struct tdesc_type *field_type;
   struct tdesc_type *type;

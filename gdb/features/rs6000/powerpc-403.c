@@ -9,7 +9,7 @@ struct target_desc *tdesc_powerpc_403;
 static void
 initialize_tdesc_powerpc_403 (void)
 {
-  struct target_desc *result = allocate_target_description ();
+  struct target_desc *result = allocate_target_description ("powerpc-403.xml");
   struct tdesc_feature *feature;
 
   feature = tdesc_create_feature (result, "org.gnu.gdb.power.core");

@@ -267,6 +267,9 @@ DEF_VEC_P(arch_p);
 
 struct target_desc
 {
+  /* Name of this target description.  */
+  const char *name;
+
   /* The architecture reported by the target, if any.  */
   const struct bfd_arch_info *arch;
 
@@ -1549,9 +1552,11 @@ tdesc_create_feature (struct target_desc *tdesc, const char *name)
 }
 
 struct target_desc *
-allocate_target_description (void)
+allocate_target_description (const char *name)
 {
-  return XCNEW (struct target_desc);
+  target_desc *desc = XCNEW (struct target_desc);
+  desc->name = strdup (name);
+  return desc;
 }
 
 static void
@@ -1756,7 +1761,7 @@ maint_print_c_tdesc_cmd (char *args, int from_tty)
   printf_unfiltered ("initialize_tdesc_%s (void)\n", function);
   printf_unfiltered ("{\n");
   printf_unfiltered
-    ("  struct target_desc *result = allocate_target_description ();\n");
+    ("  struct target_desc *result = allocate_target_description (\"%s\");\n", filename);
   printf_unfiltered ("  struct tdesc_feature *feature;\n");
 
   /* Now we do some "filtering" in order to know which variables to

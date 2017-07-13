@@ -9,7 +9,7 @@ struct target_desc *tdesc_arm_with_neon;
 static void
 initialize_tdesc_arm_with_neon (void)
 {
-  struct target_desc *result = allocate_target_description ();
+  struct target_desc *result = allocate_target_description ("arm-with-neon.xml");
   struct tdesc_feature *feature;
 
   set_tdesc_architecture (result, bfd_scan_arch ("arm"));

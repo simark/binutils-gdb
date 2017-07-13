@@ -9,7 +9,7 @@ struct target_desc *tdesc_powerpc_7400;
 static void
 initialize_tdesc_powerpc_7400 (void)
 {
-  struct target_desc *result = allocate_target_description ();
+  struct target_desc *result = allocate_target_description ("powerpc-7400.xml");
   struct tdesc_feature *feature;
   struct tdesc_type *field_type;
   struct tdesc_type *type;

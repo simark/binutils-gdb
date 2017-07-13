@@ -9,7 +9,7 @@ struct target_desc *tdesc_s390_vx_linux64;
 static void
 initialize_tdesc_s390_vx_linux64 (void)
 {
-  struct target_desc *result = allocate_target_description ();
+  struct target_desc *result = allocate_target_description ("s390-vx-linux64.xml");
   struct tdesc_feature *feature;
   struct tdesc_type *field_type;
   struct tdesc_type *type;

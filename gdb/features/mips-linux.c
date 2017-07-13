@@ -9,7 +9,7 @@ struct target_desc *tdesc_mips_linux;
 static void
 initialize_tdesc_mips_linux (void)
 {
-  struct target_desc *result = allocate_target_description ();
+  struct target_desc *result = allocate_target_description ("mips-linux.xml");
   struct tdesc_feature *feature;
 
   set_tdesc_architecture (result, bfd_scan_arch ("mips"));

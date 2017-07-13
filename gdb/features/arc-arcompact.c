@@ -9,7 +9,7 @@ struct target_desc *tdesc_arc_arcompact;
 static void
 initialize_tdesc_arc_arcompact (void)
 {
-  struct target_desc *result = allocate_target_description ();
+  struct target_desc *result = allocate_target_description ("arc-arcompact.xml");
   struct tdesc_feature *feature;
   struct tdesc_type *field_type;
   struct tdesc_type *type;
