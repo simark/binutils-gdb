@@ -415,7 +415,7 @@ delete_lwp (struct lwp_info *lwp)
 
   remove_thread (thr);
   free (lwp->arch_private);
-  free (lwp);
+  delete lwp;
 }
 
 /* Add a process to the common process list, and set its private
@@ -535,9 +535,9 @@ handle_extended_wait (struct lwp_info **orig_event_lwp, int wstat)
 	  gdb_assert (child_proc != NULL);
 	  child_lwp = add_lwp (ptid);
 	  gdb_assert (child_lwp != NULL);
-	  child_lwp->stopped = 1;
-	  child_lwp->must_set_ptrace_flags = 1;
-	  child_lwp->status_pending_p = 0;
+	  child_lwp->stopped = true;
+	  child_lwp->must_set_ptrace_flags = true;
+	  child_lwp->status_pending_p = false;
 	  child_thr = get_lwp_thread (child_lwp);
 	  child_thr->last_resume_kind = resume_stop;
 	  child_thr->last_status.kind = TARGET_WAITKIND_STOPPED;
@@ -589,7 +589,7 @@ handle_extended_wait (struct lwp_info **orig_event_lwp, int wstat)
 	  /* The status_pending field contains bits denoting the
 	     extended event, so when the pending event is handled,
 	     the handler will look at lwp->waitstatus.  */
-	  event_lwp->status_pending_p = 1;
+	  event_lwp->status_pending_p = true;
 	  event_lwp->status_pending = wstat;
 
 	  /* Link the threads until the parent event is passed on to
@@ -630,7 +630,7 @@ handle_extended_wait (struct lwp_info **orig_event_lwp, int wstat)
 	 or leave it stopped.  linux_resume_one_lwp is a nop if it
 	 thinks the thread is currently running, so set this first
 	 before calling linux_resume_one_lwp.  */
-      new_lwp->stopped = 1;
+      new_lwp->stopped = true;
 
       /* If we're suspending all threads, leave this one suspended
 	 too.  If the fork/clone parent is stepping over a breakpoint,
@@ -645,14 +645,14 @@ handle_extended_wait (struct lwp_info **orig_event_lwp, int wstat)
 	 If we do get another signal, be sure not to lose it.  */
       if (WSTOPSIG (status) != SIGSTOP)
 	{
-	  new_lwp->stop_expected = 1;
-	  new_lwp->status_pending_p = 1;
+	  new_lwp->stop_expected = true;
+	  new_lwp->status_pending_p = true;
 	  new_lwp->status_pending = status;
 	}
       else if (report_thread_events)
 	{
 	  new_lwp->waitstatus.kind = TARGET_WAITKIND_THREAD_CREATED;
-	  new_lwp->status_pending_p = 1;
+	  new_lwp->status_pending_p = true;
 	  new_lwp->status_pending = status;
 	}
 
@@ -712,8 +712,8 @@ handle_extended_wait (struct lwp_info **orig_event_lwp, int wstat)
 	= xstrdup (linux_proc_pid_to_exec_file (lwpid_of (event_thr)));
 
       /* Mark the exec status as pending.  */
-      event_lwp->stopped = 1;
-      event_lwp->status_pending_p = 1;
+      event_lwp->stopped = true;
+      event_lwp->status_pending_p = true;
       event_lwp->status_pending = wstat;
       event_thr->last_resume_kind = resume_continue;
       event_thr->last_status.kind = TARGET_WAITKIND_IGNORE;
@@ -935,11 +935,7 @@ save_stop_reason (struct lwp_info *lwp)
 static struct lwp_info *
 add_lwp (ptid_t ptid)
 {
-  struct lwp_info *lwp;
-
-  lwp = XCNEW (struct lwp_info);
-
-  lwp->waitstatus.kind = TARGET_WAITKIND_IGNORE;
+  lwp_info *lwp = new lwp_info;
 
   if (the_low_target.new_thread != NULL)
     the_low_target.new_thread (lwp);
@@ -1007,7 +1003,7 @@ linux_create_inferior (const char *program,
 
   ptid = ptid_build (pid, pid, 0);
   new_lwp = add_lwp (ptid);
-  new_lwp->must_set_ptrace_flags = 1;
+  new_lwp->must_set_ptrace_flags = true;
 
   post_fork_inferior (pid, program);
 
@@ -1029,7 +1025,7 @@ linux_post_create_inferior (void)
       int options = linux_low_ptrace_options (proc->attached);
 
       linux_enable_event_reporting (lwpid_of (current_thread), options);
-      lwp->must_set_ptrace_flags = 0;
+      lwp->must_set_ptrace_flags = false;
     }
 }
 
@@ -1050,7 +1046,7 @@ linux_attach_lwp (ptid_t ptid)
 
   /* We need to wait for SIGSTOP before being able to make the next
      ptrace call on this LWP.  */
-  new_lwp->must_set_ptrace_flags = 1;
+  new_lwp->must_set_ptrace_flags = true;
 
   if (linux_proc_pid_is_stopped (lwpid))
     {
@@ -1113,7 +1109,7 @@ linux_attach_lwp (ptid_t ptid)
      because we are guaranteed that the add_lwp call above added us to the
      end of the list, and so the new thread has not yet reached
      wait_for_sigstop (but will).  */
-  new_lwp->stop_expected = 1;
+  new_lwp->stop_expected = true;
 
   return 0;
 }
@@ -1220,7 +1216,7 @@ linux_attach (unsigned long pid)
 
       if (!WIFSTOPPED (wstat) || WSTOPSIG (wstat) != SIGSTOP)
 	{
-	  lwp->status_pending_p = 1;
+	  lwp->status_pending_p = true;
 	  lwp->status_pending = wstat;
 	}
 
@@ -1514,7 +1510,7 @@ linux_detach_one_lwp (struct lwp_info *lwp)
 		      target_pid_to_str (ptid_of (thread)));
 
       kill_lwp (lwpid_of (thread), SIGCONT);
-      lwp->stop_expected = 0;
+      lwp->stop_expected = false;
     }
 
   /* Pass on any pending signal for this thread.  */
@@ -1774,7 +1770,7 @@ thread_still_has_status_pending_p (struct thread_info *thread)
 	{
 	  if (debug_threads)
 	    debug_printf ("discarding pending breakpoint status\n");
-	  lp->status_pending_p = 0;
+	  lp->status_pending_p = false;
 	  return 0;
 	}
     }
@@ -2460,7 +2456,7 @@ linux_low_filter_event (int lwpid, int wstat)
 
       child_ptid = ptid_build (lwpid, lwpid, 0);
       child = add_lwp (child_ptid);
-      child->stopped = 1;
+      child->stopped = true;
       current_thread = child->thread;
     }
 
@@ -2478,7 +2474,7 @@ linux_low_filter_event (int lwpid, int wstat)
 
   thread = get_lwp_thread (child);
 
-  child->stopped = 1;
+  child->stopped = true;
 
   child->last_status = wstat;
 
@@ -2535,7 +2531,7 @@ linux_low_filter_event (int lwpid, int wstat)
 	      /* The process is started, but GDBserver will do
 		 architecture-specific setup after the program stops at
 		 the first instruction.  */
-	      child->status_pending_p = 1;
+	      child->status_pending_p = true;
 	      child->status_pending = wstat;
 	      return child;
 	    }
@@ -2548,7 +2544,7 @@ linux_low_filter_event (int lwpid, int wstat)
       int options = linux_low_ptrace_options (proc->attached);
 
       linux_enable_event_reporting (lwpid, options);
-      child->must_set_ptrace_flags = 0;
+      child->must_set_ptrace_flags = false;
     }
 
   /* Always update syscall_state, even if it will be filtered later.  */
@@ -2594,7 +2590,7 @@ linux_low_filter_event (int lwpid, int wstat)
     {
       if (debug_threads)
 	debug_printf ("Expected stop.\n");
-      child->stop_expected = 0;
+      child->stop_expected = false;
 
       if (thread->last_resume_kind == resume_stop)
 	{
@@ -2627,7 +2623,7 @@ linux_low_filter_event (int lwpid, int wstat)
 	}
     }
 
-  child->status_pending_p = 1;
+  child->status_pending_p = true;
   child->status_pending = wstat;
   return child;
 }
@@ -2724,7 +2720,7 @@ linux_wait_for_event_filtered (ptid_t wait_ptid, ptid_t filter_ptid,
 	{
 	  enqueue_one_deferred_signal (requested_child,
 				       &requested_child->status_pending);
-	  requested_child->status_pending_p = 0;
+	  requested_child->status_pending_p = false;
 	  requested_child->status_pending = 0;
 	  linux_resume_one_lwp (requested_child, 0, 0, NULL);
 	}
@@ -2750,7 +2746,7 @@ linux_wait_for_event_filtered (ptid_t wait_ptid, ptid_t filter_ptid,
 	debug_printf ("Got an event from pending child %ld (%04x)\n",
 		      lwpid_of (event_thread), event_child->status_pending);
       *wstatp = event_child->status_pending;
-      event_child->status_pending_p = 0;
+      event_child->status_pending_p = false;
       event_child->status_pending = 0;
       current_thread = event_thread;
       return lwpid_of (event_thread);
@@ -2825,7 +2821,7 @@ linux_wait_for_event_filtered (ptid_t wait_ptid, ptid_t filter_ptid,
 	{
 	  event_child = get_thread_lwp (event_thread);
 	  *wstatp = event_child->status_pending;
-	  event_child->status_pending_p = 0;
+	  event_child->status_pending_p = false;
 	  event_child->status_pending = 0;
 	  break;
 	}
@@ -3853,7 +3849,7 @@ linux_wait_1 (ptid_t ptid,
 	 starvation.  */
       if (ptid_equal (ptid, minus_one_ptid))
 	{
-	  event_child->status_pending_p = 1;
+	  event_child->status_pending_p = true;
 	  event_child->status_pending = w;
 
 	  select_event_lwp (&event_child);
@@ -3861,7 +3857,7 @@ linux_wait_1 (ptid_t ptid,
 	  /* current_thread and event_child must stay in sync.  */
 	  current_thread = get_lwp_thread (event_child);
 
-	  event_child->status_pending_p = 0;
+	  event_child->status_pending_p = false;
 	  w = event_child->status_pending;
 	}
 
@@ -4058,7 +4054,7 @@ send_sigstop (struct lwp_info *lwp)
   if (debug_threads)
     debug_printf ("Sending sigstop to lwp %d\n", pid);
 
-  lwp->stop_expected = 1;
+  lwp->stop_expected = true;
   kill_lwp (pid, SIGSTOP);
 }
 
@@ -4101,7 +4097,7 @@ static void
 mark_lwp_dead (struct lwp_info *lwp, int wstat)
 {
   /* Store the exit status for later.  */
-  lwp->status_pending_p = 1;
+  lwp->status_pending_p = true;
   lwp->status_pending = wstat;
 
   /* Store in waitstatus as well, as there's nothing else to process
@@ -4118,10 +4114,10 @@ mark_lwp_dead (struct lwp_info *lwp, int wstat)
     }
 
   /* Prevent trying to stop it.  */
-  lwp->stopped = 1;
+  lwp->stopped = true;
 
   /* No further stops are expected from a dead lwp.  */
-  lwp->stop_expected = 0;
+  lwp->stop_expected = false;
 }
 
 /* Return true if LWP has exited already, and has a pending exit event
@@ -4238,7 +4234,7 @@ move_out_of_jump_pad_callback (struct inferior_list_entry *entry)
 
       if (wstat)
 	{
-	  lwp->status_pending_p = 0;
+	  lwp->status_pending_p = false;
 	  enqueue_one_deferred_signal (lwp, wstat);
 
 	  if (debug_threads)
@@ -4401,7 +4397,7 @@ linux_resume_one_lwp_throw (struct lwp_info *lwp,
      Code in this function that requires register access should be
      guarded by proc->tdesc == NULL or something else.  */
 
-  if (lwp->stopped == 0)
+  if (!lwp->stopped)
     return;
 
   gdb_assert (lwp->waitstatus.kind == TARGET_WAITKIND_IGNORE);
@@ -4587,7 +4583,7 @@ linux_resume_one_lwp_throw (struct lwp_info *lwp,
      later try to stop the LWP and hang forever waiting for a stop
      status.  Note that we must not throw after this is cleared,
      otherwise handle_zombie_lwp_error would get confused.  */
-  lwp->stopped = 0;
+  lwp->stopped = false;
   lwp->stop_reason = TARGET_STOPPED_BY_NO_REASON;
 }
 
@@ -4618,7 +4614,7 @@ check_ptrace_stopped_lwp_gone (struct lwp_info *lp)
   if (linux_proc_pid_is_trace_stopped_nowarn (lwpid_of (thread)) == 0)
     {
       lp->stop_reason = TARGET_STOPPED_BY_NO_REASON;
-      lp->status_pending_p = 0;
+      lp->status_pending_p = false;
       return 1;
     }
   return 0;
@@ -4751,7 +4747,7 @@ linux_set_resume_request (struct inferior_list_entry *entry, void *arg)
 	      && !lwp->status_pending_p
 	      && dequeue_one_deferred_signal (lwp, &lwp->status_pending))
 	    {
-	      lwp->status_pending_p = 1;
+	      lwp->status_pending_p = true;
 
 	      if (debug_threads)
 		debug_printf ("Dequeueing deferred signal %d for LWP %ld, "
@@ -6479,7 +6475,7 @@ reset_lwp_ptrace_options_callback (struct inferior_list_entry *entry,
   if (!lwp->stopped)
     {
       /* Stop the lwp so we can modify its ptrace options.  */
-      lwp->must_set_ptrace_flags = 1;
+      lwp->must_set_ptrace_flags = true;
       linux_stop_lwp (lwp);
     }
   else
@@ -6489,7 +6485,7 @@ reset_lwp_ptrace_options_callback (struct inferior_list_entry *entry,
       int options = linux_low_ptrace_options (proc->attached);
 
       linux_enable_event_reporting (lwpid_of (thread), options);
-      lwp->must_set_ptrace_flags = 0;
+      lwp->must_set_ptrace_flags = false;
     }
 
   return 0;

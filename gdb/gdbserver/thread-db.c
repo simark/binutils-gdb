@@ -198,7 +198,7 @@ find_one_thread (ptid_t ptid)
   if (ti.ti_tid == 0)
     return 0;
 
-  lwp->thread_known = 1;
+  lwp->thread_known = true;
   lwp->th = th;
 
   return 1;
@@ -229,7 +229,7 @@ attach_thread (const td_thrhandle_t *th_p, td_thrinfo_t *ti_p)
 
   lwp = find_lwp_pid (ptid);
   gdb_assert (lwp != NULL);
-  lwp->thread_known = 1;
+  lwp->thread_known = true;
   lwp->th = *th_p;
 
   return 1;
