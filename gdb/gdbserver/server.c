@@ -631,6 +631,75 @@ handle_general_set (char *own_buf)
       return;
     }
 
+  if (startswith (own_buf, "QEnvironmentReset"))
+    {
+      our_environ.clear_user_set_env ();
+
+      write_ok (own_buf);
+      return;
+    }
+
+  if (startswith (own_buf, "QEnvironmentHexEncoded:"))
+    {
+      const char *p = own_buf + sizeof ("QEnvironmentHexEncoded:") - 1;
+      /* The final form of the environment variable.  FINAL_VAR will
+	 hold the 'VAR=VALUE' format.  */
+      std::string final_var;
+      std::string var_name, var_value;
+
+      if (remote_debug)
+	debug_printf (_("[QEnvironmentHexEncoded received '%s']\n"), p);
+
+      hex2str (p, final_var);
+
+      if (remote_debug)
+	{
+	  debug_printf (_("[Environment variable to be set: '%s']\n"),
+			final_var.c_str ());
+	  debug_flush ();
+	}
+
+      size_t pos = final_var.find ('=');
+      if (pos == std::string::npos)
+	{
+	  warning (_("Unknown environment variable '%s' from remote side."),
+		   final_var.c_str ());
+	  write_enn (own_buf);
+	  return;
+	}
+
+      var_name = final_var.substr (0, pos);
+      var_value = final_var.substr (pos + 1, std::string::npos);
+
+      our_environ.set (var_name.c_str (), var_value.c_str ());
+
+      write_ok (own_buf);
+      return;
+    }
+
+  if (startswith (own_buf, "QEnvironmentUnset:"))
+    {
+      const char *p = own_buf + sizeof ("QEnvironmentUnset:") - 1;
+      std::string varname;
+
+      if (remote_debug)
+	debug_printf (_("[QEnvironmentUnset received '%s']\n"), p);
+
+      hex2str (p, varname);
+
+      if (remote_debug)
+	{
+	  debug_printf (_("[Environment variable to be unset: '%s']\n"),
+			varname.c_str ());
+	  debug_flush ();
+	}
+
+      our_environ.unset (varname.c_str ());
+
+      write_ok (own_buf);
+      return;
+    }
+
   if (strcmp (own_buf, "QStartNoAckMode") == 0)
     {
       if (remote_debug)
@@ -2228,7 +2297,9 @@ handle_query (char *own_buf, int packet_len, int *new_packet_len_p)
 	}
 
       sprintf (own_buf,
-	       "PacketSize=%x;QPassSignals+;QProgramSignals+;QStartupWithShell+",
+	       "PacketSize=%x;QPassSignals+;QProgramSignals+;"
+	       "QStartupWithShell+;QEnvironmentHexEncoded+;"
+	       "QEnvironmentReset+;QEnvironmentUnset+",
 	       PBUFSIZ - 1);
 
       if (target_supports_catch_syscall ())

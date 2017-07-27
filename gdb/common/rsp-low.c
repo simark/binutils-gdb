@@ -133,6 +133,28 @@ hex2bin (const char *hex, gdb_byte *bin, int count)
 /* See rsp-low.h.  */
 
 int
+hex2str (const std::string &hex, std::string &str)
+{
+  const char *hex_str = hex.c_str ();
+  int i;
+
+  for (i = 0; i < hex.size (); ++i)
+    {
+      if (hex_str[0] == '\0' || hex_str[1] == '\0')
+	{
+	  /* Hex string is short, or of uneven length.
+	     Return the count that has been converted so far.  */
+	  return i;
+	}
+      str += fromhex (hex_str[0]) * 16 + fromhex (hex_str[1]);
+      hex_str += 2;
+    }
+  return i;
+}
+
+/* See rsp-low.h.  */
+
+int
 bin2hex (const gdb_byte *bin, char *hex, int count)
 {
   int i;
@@ -143,6 +165,21 @@ bin2hex (const gdb_byte *bin, char *hex, int count)
       *hex++ = tohex (*bin++ & 0xf);
     }
   *hex = 0;
+  return i;
+}
+
+/* See rsp-low.h.  */
+
+int
+str2hex (const std::string &str, std::string &hex)
+{
+  int i;
+
+  for (i = 0; i < str.size (); ++i)
+    {
+      hex += tohex ((str[i] >> 4) & 0xf);
+      hex += tohex (str[i] & 0xf);
+    }
   return i;
 }
 

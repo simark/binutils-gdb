@@ -41,12 +41,16 @@ public:
 
   /* Move constructor.  */
   gdb_environ (gdb_environ &&e)
-    : m_environ_vector (std::move (e.m_environ_vector))
+    : m_environ_vector (std::move (e.m_environ_vector)),
+      m_user_set_env_list (std::move (e.m_user_set_env_list)),
+      m_user_unset_env_list (std::move (e.m_user_unset_env_list))
   {
     /* Make sure that the moved-from vector is left at a valid
        state (only one NULL element).  */
     e.m_environ_vector.clear ();
     e.m_environ_vector.push_back (NULL);
+    e.m_user_set_env_list.clear ();
+    e.m_user_unset_env_list.clear ();
   }
 
   /* Move assignment.  */
@@ -68,14 +72,31 @@ public:
   void set (const char *var, const char *value);
 
   /* Unset VAR in environment.  */
-  void unset (const char *var);
+  void unset (const char *var, bool update_unset_list = true);
+
+  /* Iterate through M_USER_UNSET_ENV_LIST and unset all variables.  */
+  void clear_user_set_env ();
 
   /* Return the environment vector represented as a 'char **'.  */
   char **envp () const;
 
+  /* Return the user-set environment vector.  */
+  const std::vector<const char *> &user_set_envp () const;
+
+  /* Return the user-set environment vector.  */
+  const std::vector<const char *> &user_unset_envp () const;
+
 private:
   /* A vector containing the environment variables.  */
   std::vector<char *> m_environ_vector;
+
+  /* The vector containing the environment variables set by the
+     user.  */
+  std::vector<const char *> m_user_set_env_list;
+
+  /* The vector containing the environment variables unset by the
+     user.  */
+  std::vector<const char *> m_user_unset_env_list;
 };
 
 #endif /* defined (ENVIRON_H) */

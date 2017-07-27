@@ -72,6 +72,7 @@
 #include "btrace.h"
 #include "record-btrace.h"
 #include <algorithm>
+#include "environ.h"
 
 /* Temp hacks for tracepoint encoding migration.  */
 static char *target_buf;
@@ -1429,6 +1430,9 @@ enum {
   PACKET_QCatchSyscalls,
   PACKET_QProgramSignals,
   PACKET_QStartupWithShell,
+  PACKET_QEnvironmentHexEncoded,
+  PACKET_QEnvironmentReset,
+  PACKET_QEnvironmentUnset,
   PACKET_qCRC,
   PACKET_qSearch_memory,
   PACKET_vAttach,
@@ -4636,6 +4640,12 @@ static const struct protocol_feature remote_protocol_features[] = {
     PACKET_QProgramSignals },
   { "QStartupWithShell", PACKET_DISABLE, remote_supported_packet,
     PACKET_QStartupWithShell },
+  { "QEnvironmentHexEncoded", PACKET_DISABLE, remote_supported_packet,
+    PACKET_QEnvironmentHexEncoded },
+  { "QEnvironmentReset", PACKET_DISABLE, remote_supported_packet,
+    PACKET_QEnvironmentReset },
+  { "QEnvironmentUnset", PACKET_DISABLE, remote_supported_packet,
+    PACKET_QEnvironmentUnset },
   { "QStartNoAckMode", PACKET_DISABLE, remote_supported_packet,
     PACKET_QStartNoAckMode },
   { "multiprocess", PACKET_DISABLE, remote_supported_packet,
@@ -9583,6 +9593,63 @@ extended_remote_run (const std::string &args)
     }
 }
 
+/* Helper function to send set/unset environment packets.  ACTION is
+   either "set" or "unset".  PACKET is either "QEnvironmentHexEncoded"
+   or "QEnvironmentUnsetVariable".  VEC is the corresponding
+   std::vector (from gdb_environ) that contains the variables to be
+   sent.  */
+
+static void
+send_environment_packets (struct remote_state *rs,
+			  const char *action,
+			  const char *packet,
+			  const std::vector<const char *> &vec)
+{
+  for (const char *fullvar : vec)
+    {
+      std::string encoded_fullvar;
+
+      /* Convert the environment variable to an hex string, which
+	 is the best format to be transmitted over the wire.  */
+      str2hex (fullvar, encoded_fullvar);
+
+      xsnprintf (rs->buf, get_remote_packet_size (),
+		 "%s:%s", packet, encoded_fullvar.c_str ());
+
+      putpkt (rs->buf);
+      getpkt (&rs->buf, &rs->buf_size, 0);
+      if (strcmp (rs->buf, "OK") != 0)
+	warning (_("Unable to %s environment variable '%s' on remote."),
+		 action, fullvar);
+    }
+}
+
+/* Helper function to handle the QEnvironment* packets.  */
+
+static void
+extended_remote_environment_support (struct remote_state *rs)
+{
+  if (packet_support (PACKET_QEnvironmentReset) != PACKET_DISABLE)
+    {
+      static const char qenvreset[] = "QEnvironmentReset";
+
+      putpkt (qenvreset);
+      getpkt (&rs->buf, &rs->buf_size, 0);
+      if (strcmp (rs->buf, "OK") != 0)
+	warning (_("Unable to reset environment on remote."));
+    }
+
+  gdb_environ *e = &current_inferior ()->environment;
+
+  if (packet_support (PACKET_QEnvironmentHexEncoded) != PACKET_DISABLE)
+    send_environment_packets (rs, "set", "QEnvironmentHexEncoded",
+			      e->user_set_envp ());
+
+  if (packet_support (PACKET_QEnvironmentUnset) != PACKET_DISABLE)
+    send_environment_packets (rs, "unset", "QEnvironmentUnset",
+			      e->user_unset_envp ());
+}
+
 /* In the extended protocol we want to be able to do things like
    "run" and have them basically work as expected.  So we need
    a special create_inferior function.  We support changing the
@@ -9622,6 +9689,8 @@ extended_remote_create_inferior (struct target_ops *ops,
 Remote replied unexpectedly while setting startup-with-shell: %s"),
 	       rs->buf);
     }
+
+  extended_remote_environment_support (rs);
 
   /* Now restart the remote server.  */
   run_worked = extended_remote_run (args) != -1;
@@ -14115,6 +14184,19 @@ Show the maximum size of the address (in bits) in a memory packet."), NULL,
 
   add_packet_config_cmd (&remote_protocol_packets[PACKET_QStartupWithShell],
 			 "QStartupWithShell", "startup-with-shell", 0);
+
+  add_packet_config_cmd (&remote_protocol_packets
+			 [PACKET_QEnvironmentHexEncoded],
+			 "QEnvironmentHexEncoded", "environment-hex-encoded",
+			 0);
+
+  add_packet_config_cmd (&remote_protocol_packets[PACKET_QEnvironmentReset],
+			 "QEnvironmentReset", "environment-reset",
+			 0);
+
+  add_packet_config_cmd (&remote_protocol_packets[PACKET_QEnvironmentUnset],
+			 "QEnvironmentUnset", "environment-unset",
+			 0);
 
   add_packet_config_cmd (&remote_protocol_packets[PACKET_qSymbol],
 			 "qSymbol", "symbol-lookup", 0);
