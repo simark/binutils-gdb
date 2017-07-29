@@ -18,6 +18,7 @@
 #define ENVIRON_H 1
 
 #include <vector>
+#include <set>
 
 /* Class that represents the environment variables as seen by the
    inferior.  */
@@ -43,14 +44,14 @@ public:
   gdb_environ (gdb_environ &&e)
     : m_environ_vector (std::move (e.m_environ_vector)),
       m_user_set_env_list (std::move (e.m_user_set_env_list)),
-      m_user_unset_env_list (std::move (e.m_user_unset_env_list))
+      m_user_unset_env (std::move (e.m_user_unset_env))
   {
     /* Make sure that the moved-from vector is left at a valid
        state (only one NULL element).  */
     e.m_environ_vector.clear ();
     e.m_environ_vector.push_back (NULL);
     e.m_user_set_env_list.clear ();
-    e.m_user_unset_env_list.clear ();
+    e.m_user_unset_env.clear ();
   }
 
   /* Move assignment.  */
@@ -83,8 +84,8 @@ public:
   /* Return the user-set environment vector.  */
   const std::vector<const char *> &user_set_envp () const;
 
-  /* Return the user-set environment vector.  */
-  const std::vector<const char *> &user_unset_envp () const;
+  /* Return the user-unset environment variables.  */
+  const std::set<std::string> &user_unset_env () const;
 
 private:
   /* A vector containing the environment variables.  */
@@ -94,9 +95,8 @@ private:
      user.  */
   std::vector<const char *> m_user_set_env_list;
 
-  /* The vector containing the environment variables unset by the
-     user.  */
-  std::vector<const char *> m_user_unset_env_list;
+  /* The environment variables explicitly unset by the user.  */
+  std::set<std::string> m_user_unset_env;
 };
 
 #endif /* defined (ENVIRON_H) */

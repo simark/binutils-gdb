@@ -25,6 +25,13 @@
 namespace selftests {
 namespace gdb_environ_tests {
 
+template <typename T>
+static bool
+set_contains (const std::set<T> &set, T key)
+{
+  return set.find (key) != set.end ();
+}
+
 static void
 run_tests ()
 {
@@ -39,7 +46,7 @@ run_tests ()
      element in it.  */
   SELF_CHECK (env.envp ()[0] == NULL);
   SELF_CHECK (env.user_set_envp ().size () == 0);
-  SELF_CHECK (env.user_unset_envp ().size () == 0);
+  SELF_CHECK (env.user_unset_env ().size () == 0);
 
   /* Make sure that there is no other element.  */
   SELF_CHECK (env.get ("PWD") == NULL);
@@ -48,22 +55,22 @@ run_tests ()
   env.set ("PWD", "test");
   SELF_CHECK (strcmp (env.get ("PWD"), "test") == 0);
   SELF_CHECK (strcmp (env.user_set_envp ()[0], "PWD=test") == 0);
-  SELF_CHECK (env.user_unset_envp ().size () == 0);
+  SELF_CHECK (env.user_unset_env ().size () == 0);
   /* The second element must be NULL.  */
   SELF_CHECK (env.envp ()[1] == NULL);
   SELF_CHECK (env.user_set_envp ().size () == 1);
   env.unset ("PWD");
   SELF_CHECK (env.envp ()[0] == NULL);
   SELF_CHECK (env.user_set_envp ().size () == 0);
-  SELF_CHECK (env.user_unset_envp ().size () == 1);
-  SELF_CHECK (strcmp (env.user_unset_envp ()[0], "PWD") == 0);
+  SELF_CHECK (env.user_unset_env ().size () == 1);
+  SELF_CHECK (set_contains (env.user_unset_env (), std::string ("PWD")));
 
   /* Initialize the environment vector using the host's environ.  */
   env = gdb_environ::from_host_environ ();
 
   /* The user-set and user-unset lists must be empty.  */
   SELF_CHECK (env.user_set_envp ().size () == 0);
-  SELF_CHECK (env.user_unset_envp ().size () == 0);
+  SELF_CHECK (env.user_unset_env ().size () == 0);
 
   /* Our test environment variable should be present at the
      vector.  */
@@ -77,8 +84,9 @@ run_tests ()
      host's environment, but doesn't exist in our vector.  */
   env.unset ("GDB_SELFTEST_ENVIRON");
   SELF_CHECK (env.get ("GDB_SELFTEST_ENVIRON") == NULL);
-  SELF_CHECK (env.user_unset_envp ().size () == 1);
-  SELF_CHECK (strcmp (env.user_unset_envp ()[0], "GDB_SELFTEST_ENVIRON") == 0);
+  SELF_CHECK (env.user_unset_env ().size () == 1);
+  SELF_CHECK (set_contains (env.user_unset_env (),
+			    std::string ("GDB_SELFTEST_ENVIRON")));
 
   /* Re-set the test variable.  */
   env.set ("GDB_SELFTEST_ENVIRON", "1");
@@ -90,7 +98,7 @@ run_tests ()
   env.clear ();
   SELF_CHECK (env.envp ()[0] == NULL);
   SELF_CHECK (env.user_set_envp ().size () == 0);
-  SELF_CHECK (env.user_unset_envp ().size () == 0);
+  SELF_CHECK (env.user_unset_env ().size () == 0);
   SELF_CHECK (env.get ("GDB_SELFTEST_ENVIRON") == NULL);
 
   /* Reinitialize our environ vector using the host environ.  We
@@ -110,15 +118,18 @@ run_tests ()
   env.unset ("GDB_SELFTEST_ENVIRON");
   SELF_CHECK (env.get ("GDB_SELFTEST_ENVIRON") == NULL);
   SELF_CHECK (env.user_set_envp ().size () == 0);
-  SELF_CHECK (env.user_unset_envp ().size () == 1);
-  SELF_CHECK (strcmp (env.user_unset_envp ()[0], "GDB_SELFTEST_ENVIRON") == 0);
+  SELF_CHECK (env.user_unset_env ().size () == 1);
+
+  SELF_CHECK (set_contains (env.user_unset_env (),
+			    std::string ("GDB_SELFTEST_ENVIRON")));
   env.set ("GDB_SELFTEST_ENVIRON", "1");
   SELF_CHECK (env.user_set_envp ().size () == 1);
-  SELF_CHECK (env.user_unset_envp ().size () == 0);
+  SELF_CHECK (env.user_unset_env ().size () == 0);
   env.unset ("GDB_SELFTEST_ENVIRON");
   SELF_CHECK (env.user_set_envp ().size () == 0);
-  SELF_CHECK (env.user_unset_envp ().size () == 1);
-  SELF_CHECK (strcmp (env.user_unset_envp ()[0], "GDB_SELFTEST_ENVIRON") == 0);
+  SELF_CHECK (env.user_unset_env ().size () == 1);
+  SELF_CHECK (set_contains (env.user_unset_env (),
+  			    std::string ("GDB_SELFTEST_ENVIRON")));
 
   /* Get rid of our test variable.  */
   unsetenv ("GDB_SELFTEST_ENVIRON");

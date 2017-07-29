@@ -9595,32 +9595,25 @@ extended_remote_run (const std::string &args)
 
 /* Helper function to send set/unset environment packets.  ACTION is
    either "set" or "unset".  PACKET is either "QEnvironmentHexEncoded"
-   or "QEnvironmentUnsetVariable".  VEC is the corresponding
-   std::vector (from gdb_environ) that contains the variables to be
-   sent.  */
+   or "QEnvironmentUnsetVariable".  VALUE is the variable to be sent.  */
 
 static void
-send_environment_packets (struct remote_state *rs,
-			  const char *action,
-			  const char *packet,
-			  const std::vector<const char *> &vec)
+send_one_environment_packet (struct remote_state *rs,
+			     const char *action,
+			     const char *packet,
+			     const char *value)
 {
-  for (const char *fullvar : vec)
-    {
-      /* Convert the environment variable to an hex string, which
-	 is the best format to be transmitted over the wire.  */
-      std::string encoded_fullvar
-	= bin2hex ((const gdb_byte *) fullvar, strlen (fullvar));
+  /* Convert the environment variable to an hex string.  */
+  std::string encoded_value = bin2hex ((const gdb_byte *) value, strlen (value));
 
-      xsnprintf (rs->buf, get_remote_packet_size (),
-		 "%s:%s", packet, encoded_fullvar.c_str ());
+  xsnprintf (rs->buf, get_remote_packet_size (),
+	     "%s:%s", packet, encoded_value.c_str ());
 
-      putpkt (rs->buf);
-      getpkt (&rs->buf, &rs->buf_size, 0);
-      if (strcmp (rs->buf, "OK") != 0)
-	warning (_("Unable to %s environment variable '%s' on remote."),
-		 action, fullvar);
-    }
+  putpkt (rs->buf);
+  getpkt (&rs->buf, &rs->buf_size, 0);
+  if (strcmp (rs->buf, "OK") != 0)
+    warning (_("Unable to %s environment variable '%s' on remote."),
+	     action, value);
 }
 
 /* Helper function to handle the QEnvironment* packets.  */
@@ -9641,12 +9634,17 @@ extended_remote_environment_support (struct remote_state *rs)
   gdb_environ *e = &current_inferior ()->environment;
 
   if (packet_support (PACKET_QEnvironmentHexEncoded) != PACKET_DISABLE)
-    send_environment_packets (rs, "set", "QEnvironmentHexEncoded",
-			      e->user_set_envp ());
+    {
+      for (const char *var : e->user_set_envp ())
+	send_one_environment_packet (rs, "set", "QEnvironmentHexEncoded", var);
+    }
 
   if (packet_support (PACKET_QEnvironmentUnset) != PACKET_DISABLE)
-    send_environment_packets (rs, "unset", "QEnvironmentUnset",
-			      e->user_unset_envp ());
+    {
+      for (const std::string &var : e->user_unset_env ())
+	send_one_environment_packet (rs, "unset", "QEnvironmentUnset",
+				     var.c_str ());
+    }
 }
 
 /* In the extended protocol we want to be able to do things like
