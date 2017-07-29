@@ -137,18 +137,15 @@ gdb_environ::unset (const char *var, bool update_unset_list)
   for (it_env = m_environ_vector.begin ();
        it_env != m_environ_vector.end () - 1;
        ++it_env)
-    if (match_var_in_string (*it_env, var, len))
-      break;
-
-  if (it_env == m_environ_vector.end () - 1)
     {
-      /* No element has been found.  */
-      return;
+      if (match_var_in_string (*it_env, var, len))
+	{
+	  m_user_set_env.erase (*it_env);
+	  xfree (*it_env);
+	  m_environ_vector.erase (it_env);
+	  break;
+	}
     }
-
-  m_user_set_env.erase (*it_env);
-  xfree (*it_env);
-  m_environ_vector.erase (it_env);
 
   if (update_unset_list)
     m_user_unset_env.insert (std::string (var));
