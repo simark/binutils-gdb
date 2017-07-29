@@ -22,6 +22,9 @@
 typedef void self_test_foreach_arch_function (struct gdbarch *);
 
 extern void
-  register_self_test_foreach_arch (self_test_foreach_arch_function *function);
+  register_self_test_foreach_arch (const std::string &name,
+				   self_test_foreach_arch_function *function);
+
+extern void run_self_tests_with_arch (const char *filter);
 
 #endif /* SELFTEST_ARCH_H */

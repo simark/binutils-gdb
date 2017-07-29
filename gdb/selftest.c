@@ -18,34 +18,44 @@
 
 #include "defs.h"
 #include "selftest.h"
+#include "selftest-arch.h"
 #include <vector>
 
 /* All the tests that have been registered.  */
 
-static std::vector<self_test_function *> tests;
+static std::vector<std::pair<std::string, self_test_function *>> tests;
 
 /* See selftest.h.  */
 
 void
-register_self_test (self_test_function *function)
+register_self_test (const std::string &name, self_test_function *function)
 {
-  tests.push_back (function);
+  tests.push_back (std::make_pair (name, function));
 }
 
 /* See selftest.h.  */
 
 void
-run_self_tests (void)
+run_self_tests (const char *filter)
 {
   int failed = 0;
+  int ran = 0;
 
-  for (int i = 0; i < tests.size (); ++i)
+  printf_filtered (_("Running self-tests.\n"));
+
+  for (auto test : tests)
     {
       QUIT;
 
+      if (filter != NULL && strlen (filter) > 0
+	  && test.first.find (filter) == std::string::npos)
+	continue;
+
+      ran++;
+
       TRY
 	{
-	  tests[i] ();
+	  test.second ();
 	}
       CATCH (ex, RETURN_MASK_ERROR)
 	{
@@ -59,6 +69,8 @@ run_self_tests (void)
       reinit_frame_cache ();
     }
 
-  printf_filtered (_("Ran %lu unit tests, %d failed\n"),
-		   (long) tests.size (), failed);
+  printf_filtered (_("Ran %d unit tests, %d failed\n"),
+		   ran, failed);
+
+  run_self_tests_with_arch (filter);
 }

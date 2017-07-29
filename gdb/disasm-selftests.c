@@ -214,7 +214,9 @@ void
 _initialize_disasm_selftests (void)
 {
 #if GDB_SELF_TEST
-  register_self_test_foreach_arch (selftests::print_one_insn_test);
-  register_self_test_foreach_arch (selftests::memory_error_test);
+  register_self_test_foreach_arch ("print_one_insn",
+				   selftests::print_one_insn_test);
+  register_self_test_foreach_arch ("memory_error",
+				   selftests::memory_error_test);
 #endif
 }

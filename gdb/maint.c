@@ -959,7 +959,7 @@ show_per_command_cmd (char *args, int from_tty)
 static void
 maintenance_selftest (char *args, int from_tty)
 {
-  run_self_tests ();
+  run_self_tests (args);
 }
 
 

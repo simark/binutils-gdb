@@ -9719,7 +9719,7 @@ vfp - VFP co-processor."),
 			   &setdebuglist, &showdebuglist);
 
 #if GDB_SELF_TEST
-  register_self_test (selftests::arm_record_test);
+  register_self_test ("ARM record", selftests::arm_record_test);
 #endif
 
 }

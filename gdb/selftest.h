@@ -26,12 +26,16 @@ typedef void self_test_function (void);
 
 /* Register a new self-test.  */
 
-extern void register_self_test (self_test_function *function);
+extern void register_self_test (const std::string &name,
+				self_test_function *function);
 
-/* Run all the self tests.  This print a message describing the number
-   of test and the number of failures.  */
+/* Run self tests.  This print a message describing the number
+   of test and the number of failures.
 
-extern void run_self_tests (void);
+   If FILTER is not NULL and not empty, only tests with names containing FILTER
+   will be ran.  */
+
+extern void run_self_tests (const char *filter);
 
 /* Check that VALUE is true, and, if not, throw an exception.  */
 

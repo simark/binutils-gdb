@@ -23,27 +23,38 @@
 #include "selftest-arch.h"
 #include "arch-utils.h"
 
-static std::vector<self_test_foreach_arch_function *> gdbarch_tests;
+static std::vector<std::pair<std::string, self_test_foreach_arch_function *>>
+  gdbarch_tests;
 
 void
-register_self_test_foreach_arch (self_test_foreach_arch_function *function)
+register_self_test_foreach_arch (const std::string &name,
+				 self_test_foreach_arch_function *function)
 {
-  gdbarch_tests.push_back (function);
+  gdbarch_tests.push_back (std::make_pair (name, function));
 }
 
-namespace selftests {
-
-static void
-tests_with_arch ()
+void
+run_self_tests_with_arch (const char *filter)
 {
   int failed = 0;
+  int ran = 0;
 
-  for (const auto &f : gdbarch_tests)
+  for (const auto &test : gdbarch_tests)
     {
+      QUIT;
+
+      if (filter != NULL && strlen (filter) > 0
+	  && test.first.find (filter) == std::string::npos)
+	continue;
+
+      ran++;
+
       const char **arches = gdbarch_printable_names ();
 
       for (int i = 0; arches[i] != NULL; i++)
 	{
+	  QUIT;
+
 	  if (strcmp ("fr300", arches[i]) == 0)
 	    {
 	      /* PR 20946 */
@@ -72,7 +83,7 @@ tests_with_arch ()
 
 	      struct gdbarch *gdbarch = gdbarch_find_by_info (info);
 	      SELF_CHECK (gdbarch != NULL);
-	      f (gdbarch);
+	      test.second (gdbarch);
 	    }
 	  CATCH (ex, RETURN_MASK_ERROR)
 	    {
@@ -88,19 +99,8 @@ tests_with_arch ()
 	}
     }
 
-  SELF_CHECK (failed == 0);
+  printf_filtered (_("Ran %d arch unit tests, %d failed\n"),
+		   ran, failed);
 }
 
-} // namespace selftests
-#endif /* GDB_SELF_TEST */
-
-/* Suppress warning from -Wmissing-prototypes.  */
-extern initialize_file_ftype _initialize_selftests_foreach_arch;
-
-void
-_initialize_selftests_foreach_arch ()
-{
-#if GDB_SELF_TEST
-  register_self_test (selftests::tests_with_arch);
 #endif
-}
