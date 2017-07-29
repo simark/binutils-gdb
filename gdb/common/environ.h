@@ -43,14 +43,14 @@ public:
   /* Move constructor.  */
   gdb_environ (gdb_environ &&e)
     : m_environ_vector (std::move (e.m_environ_vector)),
-      m_user_set_env_list (std::move (e.m_user_set_env_list)),
+      m_user_set_env (std::move (e.m_user_set_env)),
       m_user_unset_env (std::move (e.m_user_unset_env))
   {
     /* Make sure that the moved-from vector is left at a valid
        state (only one NULL element).  */
     e.m_environ_vector.clear ();
     e.m_environ_vector.push_back (NULL);
-    e.m_user_set_env_list.clear ();
+    e.m_user_set_env.clear ();
     e.m_user_unset_env.clear ();
   }
 
@@ -81,8 +81,8 @@ public:
   /* Return the environment vector represented as a 'char **'.  */
   char **envp () const;
 
-  /* Return the user-set environment vector.  */
-  const std::vector<const char *> &user_set_envp () const;
+  /* Return the user-set environment variables.  */
+  const std::set<const char *> &user_set_env () const;
 
   /* Return the user-unset environment variables.  */
   const std::set<std::string> &user_unset_env () const;
@@ -91,9 +91,9 @@ private:
   /* A vector containing the environment variables.  */
   std::vector<char *> m_environ_vector;
 
-  /* The vector containing the environment variables set by the
-     user.  */
-  std::vector<const char *> m_user_set_env_list;
+  /* The enviromment variables explicitly set by the user.  The strings are
+     owned by M_ENVIRON_VECTOR.  */
+  std::set<const char *> m_user_set_env;
 
   /* The environment variables explicitly unset by the user.  */
   std::set<std::string> m_user_unset_env;

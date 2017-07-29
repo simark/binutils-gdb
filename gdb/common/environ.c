@@ -30,11 +30,11 @@ gdb_environ::operator= (gdb_environ &&e)
     return *this;
 
   m_environ_vector = std::move (e.m_environ_vector);
-  m_user_set_env_list = std::move (e.m_user_set_env_list);
+  m_user_set_env = std::move (e.m_user_set_env);
   m_user_unset_env = std::move (e.m_user_unset_env);
   e.m_environ_vector.clear ();
   e.m_environ_vector.push_back (NULL);
-  e.m_user_set_env_list.clear ();
+  e.m_user_set_env.clear ();
   e.m_user_unset_env.clear ();
   return *this;
 }
@@ -67,7 +67,7 @@ gdb_environ::clear ()
   for (char *v : m_environ_vector)
     xfree (v);
   m_environ_vector.clear ();
-  m_user_set_env_list.clear ();
+  m_user_set_env.clear ();
   m_user_unset_env.clear ();
   /* Always add the NULL element.  */
   m_environ_vector.push_back (NULL);
@@ -116,7 +116,7 @@ gdb_environ::set (const char *var, const char *value)
   /* Mark this environment variable as having been set by the user.
      This will be useful when we deal with setting environment
      variables on the remote target.  */
-  m_user_set_env_list.push_back (fullvar);
+  m_user_set_env.insert (fullvar);
 
   /* If this environment variable is marked as unset by the user, then
      remove it from the list, because now the user wants to set
@@ -146,21 +146,9 @@ gdb_environ::unset (const char *var, bool update_unset_list)
       return;
     }
 
-  std::vector<const char *>::iterator it_user_set_env;
-  char *found_var = *it_env;
-
-  it_user_set_env = std::remove (m_user_set_env_list.begin (),
-				 m_user_set_env_list.end (),
-				 found_var);
-  if (it_user_set_env != m_user_set_env_list.end ())
-    {
-      /* We found (and removed) the element from the user_set_env
-	 vector.  */
-      m_user_set_env_list.erase (it_user_set_env, m_user_set_env_list.end ());
-    }
-
+  m_user_set_env.erase (*it_env);
+  xfree (*it_env);
   m_environ_vector.erase (it_env);
-  xfree (found_var);
 
   if (update_unset_list)
     m_user_unset_env.insert (std::string (var));
@@ -171,7 +159,7 @@ gdb_environ::unset (const char *var, bool update_unset_list)
 void
 gdb_environ::clear_user_set_env ()
 {
-  std::vector<const char *> copy = m_user_set_env_list;
+  std::set<const char *> copy = m_user_set_env;
 
   for (const char *var : copy)
     {
@@ -192,10 +180,10 @@ gdb_environ::envp () const
 
 /* See common/environ.h.  */
 
-const std::vector<const char *> &
-gdb_environ::user_set_envp () const
+const std::set<const char *> &
+gdb_environ::user_set_env () const
 {
-  return m_user_set_env_list;
+  return m_user_set_env;
 }
 
 const std::set<std::string> &

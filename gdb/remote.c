@@ -9635,7 +9635,7 @@ extended_remote_environment_support (struct remote_state *rs)
 
   if (packet_support (PACKET_QEnvironmentHexEncoded) != PACKET_DISABLE)
     {
-      for (const char *var : e->user_set_envp ())
+      for (const char *var : e->user_set_env ())
 	send_one_environment_packet (rs, "set", "QEnvironmentHexEncoded", var);
     }
 
