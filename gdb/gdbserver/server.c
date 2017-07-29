@@ -650,7 +650,7 @@ handle_general_set (char *own_buf)
       if (remote_debug)
 	debug_printf (_("[QEnvironmentHexEncoded received '%s']\n"), p);
 
-      hex2str (p, final_var);
+      final_var = hex2str (p);
 
       if (remote_debug)
 	{
@@ -685,7 +685,7 @@ handle_general_set (char *own_buf)
       if (remote_debug)
 	debug_printf (_("[QEnvironmentUnset received '%s']\n"), p);
 
-      hex2str (p, varname);
+      varname = hex2str (p);
 
       if (remote_debug)
 	{

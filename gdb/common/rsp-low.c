@@ -132,24 +132,15 @@ hex2bin (const char *hex, gdb_byte *bin, int count)
 
 /* See rsp-low.h.  */
 
-int
-hex2str (const std::string &hex, std::string &str)
+std::string
+hex2str (const char *hex_str)
 {
-  const char *hex_str = hex.c_str ();
-  int i;
+  std::string str;
 
-  for (i = 0; i < hex.size (); ++i)
-    {
-      if (hex_str[0] == '\0' || hex_str[1] == '\0')
-	{
-	  /* Hex string is short, or of uneven length.
-	     Return the count that has been converted so far.  */
-	  return i;
-	}
-      str += fromhex (hex_str[0]) * 16 + fromhex (hex_str[1]);
-      hex_str += 2;
-    }
-  return i;
+  for (; hex_str[0] != '\0' && hex_str[1] != '\0'; hex_str += 2)
+    str += fromhex (hex_str[0]) * 16 + fromhex (hex_str[1]);
+
+  return str;
 }
 
 /* See rsp-low.h.  */
@@ -170,17 +161,22 @@ bin2hex (const gdb_byte *bin, char *hex, int count)
 
 /* See rsp-low.h.  */
 
-int
-str2hex (const std::string &str, std::string &hex)
+std::string
+bin2hex (const gdb_byte *bin, int count)
 {
-  int i;
+  std::string hex;
 
-  for (i = 0; i < str.size (); ++i)
+  hex.reserve (count * 2);
+
+  for (int i = 0; i < count; i++)
     {
-      hex += tohex ((str[i] >> 4) & 0xf);
-      hex += tohex (str[i] & 0xf);
+      gdb_byte b = bin[i];
+
+      hex += tohex ((b >> 4) & 0xf);
+      hex += tohex (b & 0xf);
     }
-  return i;
+
+  return hex;
 }
 
 /* Return whether byte B needs escaping when sent as part of binary data.  */

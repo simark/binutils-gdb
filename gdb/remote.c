@@ -9607,11 +9607,10 @@ send_environment_packets (struct remote_state *rs,
 {
   for (const char *fullvar : vec)
     {
-      std::string encoded_fullvar;
-
       /* Convert the environment variable to an hex string, which
 	 is the best format to be transmitted over the wire.  */
-      str2hex (fullvar, encoded_fullvar);
+      std::string encoded_fullvar
+	= bin2hex ((const gdb_byte *) fullvar, strlen (fullvar));
 
       xsnprintf (rs->buf, get_remote_packet_size (),
 		 "%s:%s", packet, encoded_fullvar.c_str ());
