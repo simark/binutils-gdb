@@ -249,40 +249,33 @@ remove_trailing_whitespace (const char *start, const char *s)
 
 /* See documentation in cli-utils.h.  */
 
-char *
+std::string
 extract_arg_const (const char **arg)
 {
-  const char *result;
+  std::string result;
 
-  if (!*arg)
-    return NULL;
+  if (*arg == NULL)
+    return result;
 
   /* Find the start of the argument.  */
   *arg = skip_spaces_const (*arg);
-  if (!**arg)
-    return NULL;
-  result = *arg;
+  if (**arg == '\0')
+    return result;
+
+  const char *start = *arg;
 
   /* Find the end of the argument.  */
   *arg = skip_to_space_const (*arg + 1);
 
-  if (result == *arg)
-    return NULL;
-
-  return savestring (result, *arg - result);
+  return std::string (start, *arg - start);
 }
 
 /* See documentation in cli-utils.h.  */
 
-char *
+std::string
 extract_arg (char **arg)
 {
-  const char *arg_const = *arg;
-  char *result;
-
-  result = extract_arg_const (&arg_const);
-  *arg += arg_const - *arg;
-  return result;
+  return extract_arg_const ((const char **) arg);
 }
 
 /* See documentation in cli-utils.h.  */
