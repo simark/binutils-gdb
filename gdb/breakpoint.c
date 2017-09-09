@@ -82,6 +82,7 @@
 #include <algorithm>
 #include "progspace-and-thread.h"
 #include "common/array-view.h"
+#include "common/gdb_optional.h"
 
 /* Enums for exception-handling support.  */
 enum exception_event_kind
@@ -10538,7 +10539,6 @@ works_in_software_mode_watchpoint (const struct breakpoint *b)
 static enum print_stop_action
 print_it_watchpoint (bpstat bs)
 {
-  struct cleanup *old_chain;
   struct breakpoint *b;
   enum print_stop_action result;
   struct watchpoint *w;
@@ -10549,13 +10549,12 @@ print_it_watchpoint (bpstat bs)
   b = bs->breakpoint_at;
   w = (struct watchpoint *) b;
 
-  old_chain = make_cleanup (null_cleanup, NULL);
-
   annotate_watchpoint (b->number);
   maybe_print_thread_hit_breakpoint (uiout);
 
   string_file stb;
 
+  gdb::optional<ui_out_emit_tuple> tuple_emitter;
   switch (b->type)
     {
     case bp_watchpoint:
@@ -10564,7 +10563,7 @@ print_it_watchpoint (bpstat bs)
 	uiout->field_string
 	  ("reason", async_reason_lookup (EXEC_ASYNC_WATCHPOINT_TRIGGER));
       mention (b);
-      make_cleanup_ui_out_tuple_begin_end (uiout, "value");
+      tuple_emitter.emplace (uiout, "value");
       uiout->text ("\nOld value = ");
       watchpoint_value_print (bs->old_val, &stb);
       uiout->field_stream ("old", stb);
@@ -10581,7 +10580,7 @@ print_it_watchpoint (bpstat bs)
 	uiout->field_string
 	  ("reason", async_reason_lookup (EXEC_ASYNC_READ_WATCHPOINT_TRIGGER));
       mention (b);
-      make_cleanup_ui_out_tuple_begin_end (uiout, "value");
+      tuple_emitter.emplace (uiout, "value");
       uiout->text ("\nValue = ");
       watchpoint_value_print (w->val, &stb);
       uiout->field_stream ("value", stb);
@@ -10597,7 +10596,7 @@ print_it_watchpoint (bpstat bs)
 	      ("reason",
 	       async_reason_lookup (EXEC_ASYNC_ACCESS_WATCHPOINT_TRIGGER));
 	  mention (b);
-	  make_cleanup_ui_out_tuple_begin_end (uiout, "value");
+	  tuple_emitter.emplace (uiout, "value");
 	  uiout->text ("\nOld value = ");
 	  watchpoint_value_print (bs->old_val, &stb);
 	  uiout->field_stream ("old", stb);
@@ -10610,7 +10609,7 @@ print_it_watchpoint (bpstat bs)
 	    uiout->field_string
 	      ("reason",
 	       async_reason_lookup (EXEC_ASYNC_ACCESS_WATCHPOINT_TRIGGER));
-	  make_cleanup_ui_out_tuple_begin_end (uiout, "value");
+	  tuple_emitter.emplace (uiout, "value");
 	  uiout->text ("\nValue = ");
 	}
       watchpoint_value_print (w->val, &stb);
@@ -10622,7 +10621,6 @@ print_it_watchpoint (bpstat bs)
       result = PRINT_UNKNOWN;
     }
 
-  do_cleanups (old_chain);
   return result;
 }
 

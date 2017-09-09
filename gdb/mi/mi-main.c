@@ -2873,36 +2873,32 @@ mi_cmd_trace_frame_collected (const char *command, char **argv, int argc)
 
     for (i = 0; VEC_iterate (mem_range_s, available_memory, i, r); i++)
       {
-	struct cleanup *cleanup_child;
-	gdb_byte *data;
 	struct gdbarch *gdbarch = target_gdbarch ();
 
-	cleanup_child = make_cleanup_ui_out_tuple_begin_end (uiout, NULL);
+	ui_out_emit_tuple tuple_emitter (uiout, NULL);
 
 	uiout->field_core_addr ("address", gdbarch, r->start);
 	uiout->field_int ("length", r->length);
 
-	data = (gdb_byte *) xmalloc (r->length);
-	make_cleanup (xfree, data);
+	gdb::byte_vector data (r->length);
 
 	if (memory_contents)
 	  {
-	    if (target_read_memory (r->start, data, r->length) == 0)
+	    if (target_read_memory (r->start, data.data (), r->length) == 0)
 	      {
 		int m;
-		char *data_str, *p;
+		char *p;
 
-		data_str = (char *) xmalloc (r->length * 2 + 1);
-		make_cleanup (xfree, data_str);
+		gdb::unique_xmalloc_ptr<char> data_str
+		  ((char *) xmalloc (r->length * 2 + 1));
 
-		for (m = 0, p = data_str; m < r->length; ++m, p += 2)
+		for (m = 0, p = data_str.get (); m < r->length; ++m, p += 2)
 		  sprintf (p, "%02x", data[m]);
-		uiout->field_string ("contents", data_str);
+		uiout->field_string ("contents", data_str.get ());
 	      }
 	    else
 	      uiout->field_skip ("contents");
 	  }
-	do_cleanups (cleanup_child);
       }
 
     do_cleanups (list_cleanup);
