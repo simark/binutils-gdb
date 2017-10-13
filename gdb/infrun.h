@@ -19,6 +19,7 @@
 #define INFRUN_H 1
 
 #include "symtab.h"
+#include "common/byte-vector.h"
 
 struct target_waitstatus;
 struct frame_info;
@@ -248,6 +249,17 @@ extern void all_uis_on_sync_execution_starting (void);
 struct displaced_step_closure
 {
   virtual ~displaced_step_closure () = 0;
+};
+
+/* A simple displaced step closure that contains only a byte buffer.  */
+
+struct buf_displaced_step_closure : displaced_step_closure
+{
+  buf_displaced_step_closure (int buf_size)
+  : buf (buf_size)
+  {}
+
+  gdb::byte_vector buf;
 };
 
 #endif /* INFRUN_H */

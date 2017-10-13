@@ -1023,8 +1023,9 @@ ppc_displaced_step_copy_insn (struct gdbarch *gdbarch,
 			      struct regcache *regs)
 {
   size_t len = gdbarch_max_insn_length (gdbarch);
-  gdb_byte *buf = (gdb_byte *) xmalloc (len);
-  struct cleanup *old_chain = make_cleanup (xfree, buf);
+  std::unique_ptr<buf_displaced_step_closure> closure
+    (new buf_displaced_step_closure (len));
+  gdb_byte *buf = closure->buf.data ();
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   int insn;
 
@@ -1042,7 +1043,7 @@ ppc_displaced_step_copy_insn (struct gdbarch *gdbarch,
 			      "atomic sequence at %s\n",
 			      paddress (gdbarch, from));
 	}
-      do_cleanups (old_chain);
+
       return NULL;
     }
 
@@ -1055,8 +1056,7 @@ ppc_displaced_step_copy_insn (struct gdbarch *gdbarch,
       displaced_step_dump_bytes (gdb_stdlog, buf, len);
     }
 
-  discard_cleanups (old_chain);
-  return (struct displaced_step_closure *) buf;
+  return closure.release ();
 }
 
 /* Fix up the state of registers and memory after having single-stepped

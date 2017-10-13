@@ -1869,8 +1869,9 @@ s390_displaced_step_copy_insn (struct gdbarch *gdbarch,
 			       struct regcache *regs)
 {
   size_t len = gdbarch_max_insn_length (gdbarch);
-  gdb_byte *buf = (gdb_byte *) xmalloc (len);
-  struct cleanup *old_chain = make_cleanup (xfree, buf);
+  std::unique_ptr<buf_displaced_step_closure> closure
+    (new buf_displaced_step_closure (len));
+  gdb_byte *buf = closure->buf.data ();
 
   read_memory (from, buf, len);
 
@@ -1880,7 +1881,8 @@ s390_displaced_step_copy_insn (struct gdbarch *gdbarch,
     {
       LONGEST offset;
 
-      offset = extract_signed_integer (buf + 2, 4, BFD_ENDIAN_BIG);
+      offset = extract_signed_integer (buf + 2, 4,
+				       BFD_ENDIAN_BIG);
       offset = (from - to + offset * 2) / 2;
 
       /* If the instruction is too far from the jump pad, punt.  This
@@ -1898,7 +1900,7 @@ s390_displaced_step_copy_insn (struct gdbarch *gdbarch,
 				  "RIL instruction: offset %s out of range\n",
 				  plongest (offset));
 	    }
-	  do_cleanups (old_chain);
+
 	  return NULL;
 	}
 
@@ -1914,8 +1916,7 @@ s390_displaced_step_copy_insn (struct gdbarch *gdbarch,
       displaced_step_dump_bytes (gdb_stdlog, buf, len);
     }
 
-  discard_cleanups (old_chain);
-  return (struct displaced_step_closure *) buf;
+  return closure.release ();
 }
 
 /* Fix up the state of registers and memory after having single-stepped

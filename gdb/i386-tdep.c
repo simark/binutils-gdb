@@ -803,7 +803,8 @@ i386_displaced_step_copy_insn (struct gdbarch *gdbarch,
 			       struct regcache *regs)
 {
   size_t len = gdbarch_max_insn_length (gdbarch);
-  gdb_byte *buf = (gdb_byte *) xmalloc (len);
+  buf_displaced_step_closure *closure = new buf_displaced_step_closure (len);
+  gdb_byte *buf = closure->buf.data ();
 
   read_memory (from, buf, len);
 
@@ -828,7 +829,7 @@ i386_displaced_step_copy_insn (struct gdbarch *gdbarch,
       displaced_step_dump_bytes (gdb_stdlog, buf, len);
     }
 
-  return (struct displaced_step_closure *) buf;
+  return closure;
 }
 
 /* Fix up the state of registers and memory after having single-stepped
