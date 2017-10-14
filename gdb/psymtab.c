@@ -86,6 +86,12 @@ require_partial_symbols (struct objfile *objfile, int verbose)
 	      gdb_flush (gdb_stdout);
 	    }
 	  (*objfile->sf->sym_read_psymbols) (objfile);
+
+	  /* Partial symbols list are not expected to changed after this
+	     point.  */
+	  objfile->global_psymbols.shrink_to_fit ();
+	  objfile->static_psymbols.shrink_to_fit ();
+
 	  if (verbose)
 	    {
 	      if (!objfile_has_symbols (objfile))
