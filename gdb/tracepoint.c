@@ -2706,9 +2706,6 @@ trace_dump_actions (struct command_line *action,
 	     STEPPING_ACTIONS should be equal.  */
 	  if (stepping_frame == stepping_actions)
 	    {
-	      char *cmd = NULL;
-	      struct cleanup *old_chain
-		= make_cleanup (free_current_contents, &cmd);
 	      int trace_string = 0;
 
 	      if (*action_exp == '/')
@@ -2733,31 +2730,24 @@ trace_dump_actions (struct command_line *action,
 		    info_args_command (NULL, from_tty);
 		  else
 		    {		/* variable */
+		      std::string cmd;
+
 		      if (next_comma != NULL)
 			{
 			  size_t len = next_comma - action_exp;
 
-			  cmd = (char *) xrealloc (cmd, len + 1);
-			  memcpy (cmd, action_exp, len);
-			  cmd[len] = 0;
+			  cmd.assign (action_exp, len);
 			}
 		      else
-			{
-			  size_t len = strlen (action_exp);
+			cmd.assign (action_exp);
 
-			  cmd = (char *) xrealloc (cmd, len + 1);
-			  memcpy (cmd, action_exp, len + 1);
-			}
-
-		      printf_filtered ("%s = ", cmd);
-		      output_command_const (cmd, from_tty);
+		      printf_filtered ("%s = ", cmd.c_str ());
+		      output_command_const (cmd.c_str (), from_tty);
 		      printf_filtered ("\n");
 		    }
 		  action_exp = next_comma;
 		}
 	      while (action_exp && *action_exp == ',');
-
-	      do_cleanups (old_chain);
 	    }
 	}
     }
