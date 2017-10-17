@@ -49,6 +49,7 @@
 #include "format.h"
 #include "source.h"
 #include "common/byte-vector.h"
+#include <algorithm>
 
 #ifdef TUI
 #include "tui/tui.h"		/* For tui_active et al.   */
@@ -2428,12 +2429,7 @@ static void
 ui_printf (const char *arg, struct ui_file *stream)
 {
   const char *s = arg;
-  struct value **val_args;
-  int allocated_args = 20;
-  struct cleanup *old_cleanups;
-
-  val_args = XNEWVEC (struct value *, allocated_args);
-  old_cleanups = make_cleanup (free_current_contents, &val_args);
+  std::vector<value *> val_args;
 
   if (s == 0)
     error_no_arg (_("format-control string and values to print"));
@@ -2459,14 +2455,15 @@ ui_printf (const char *arg, struct ui_file *stream)
   s = skip_spaces (s);
 
   {
-    int nargs = 0;
-    int nargs_wanted;
     int i;
 
-    nargs_wanted = 0;
-    for (const format_piece &piece : fpieces)
-      if (piece.argclass != literal_piece)
-	++nargs_wanted;
+    int nargs_wanted = std::count_if (fpieces.begin (), fpieces.end (),
+				      [] (const format_piece &piece)
+      {
+	return piece.argclass != literal_piece;
+      });
+
+    val_args.reserve (nargs_wanted);
 
     /* Now, parse all arguments and evaluate them.
        Store the VALUEs in VAL_ARGS.  */
@@ -2475,20 +2472,15 @@ ui_printf (const char *arg, struct ui_file *stream)
       {
 	const char *s1;
 
-	if (nargs == allocated_args)
-	  val_args = (struct value **) xrealloc ((char *) val_args,
-						 (allocated_args *= 2)
-						 * sizeof (struct value *));
 	s1 = s;
-	val_args[nargs] = parse_to_comma_and_eval (&s1);
+	val_args.push_back (parse_to_comma_and_eval (&s1));
 
-	nargs++;
 	s = s1;
 	if (*s == ',')
 	  s++;
       }
 
-    if (nargs != nargs_wanted)
+    if (val_args.size () != nargs_wanted)
       error (_("Wrong number of arguments for specified format-string"));
 
     /* Now actually print them.  */
@@ -2591,7 +2583,6 @@ ui_printf (const char *arg, struct ui_file *stream)
 	  ++i;
       }
   }
-  do_cleanups (old_cleanups);
 }
 
 /* Implement the "printf" command.  */
