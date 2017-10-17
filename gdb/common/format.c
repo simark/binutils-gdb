@@ -20,17 +20,14 @@
 #include "common-defs.h"
 #include "format.h"
 
-struct format_piece *
+std::vector<format_piece>
 parse_format_string (const char **arg)
 {
   const char *s;
   char *f, *string;
   const char *prev_start;
   const char *percent_loc;
-  char *sub_start, *current_substring;
-  struct format_piece *pieces;
-  int next_frag;
-  int max_pieces;
+  std::vector<format_piece> pieces;
   enum argclass this_argclass;
 
   s = *arg;
@@ -97,16 +94,6 @@ parse_format_string (const char **arg)
      done with it; it's up to callers to complain about syntax.  */
   *arg = s;
 
-  /* Need extra space for the '\0's.  Doubling the size is sufficient.  */
-
-  current_substring = (char *) xmalloc (strlen (string) * 2 + 1000);
-
-  max_pieces = strlen (string) + 2;
-
-  pieces = XNEWVEC (struct format_piece, max_pieces);
-
-  next_frag = 0;
-
   /* Now scan the string for %-specs and see what kinds of args they want.
      argclass classifies the %-specs so we can give printf-type functions
      something of the right size.  */
@@ -129,15 +116,8 @@ parse_format_string (const char **arg)
 	    continue;
 	  }
 
-	sub_start = current_substring;
-
-	strncpy (current_substring, prev_start, f - 1 - prev_start);
-	current_substring += f - 1 - prev_start;
-	*current_substring++ = '\0';
-
-	pieces[next_frag].string = sub_start;
-	pieces[next_frag].argclass = literal_piece;
-	next_frag++;
+	pieces.emplace_back (std::string (prev_start, f - 1 - prev_start),
+			     literal_piece);
 
 	percent_loc = f - 1;
 
@@ -309,7 +289,7 @@ parse_format_string (const char **arg)
 
 	f++;
 
-	sub_start = current_substring;
+	std::string piece_string;
 
 	if (lcount > 1 && USE_PRINTF_I64)
 	  {
@@ -317,11 +297,9 @@ parse_format_string (const char **arg)
 	       Convert %lld to %I64d.  */
 	    int length_before_ll = f - percent_loc - 1 - lcount;
 
-	    strncpy (current_substring, percent_loc, length_before_ll);
-	    strcpy (current_substring + length_before_ll, "I64");
-	    current_substring[length_before_ll + 3] =
-	      percent_loc[length_before_ll + lcount];
-	    current_substring += length_before_ll + 4;
+	    piece_string.assign (percent_loc, length_before_ll);
+	    piece_string += "I64";
+	    piece_string += percent_loc[length_before_ll + lcount];
 	  }
 	else if (this_argclass == wide_string_arg
 		 || this_argclass == wide_char_arg)
@@ -329,71 +307,20 @@ parse_format_string (const char **arg)
 	    /* Convert %ls or %lc to %s.  */
 	    int length_before_ls = f - percent_loc - 2;
 
-	    strncpy (current_substring, percent_loc, length_before_ls);
-	    strcpy (current_substring + length_before_ls, "s");
-	    current_substring += length_before_ls + 2;
+	    piece_string.assign (percent_loc, length_before_ls);
+	    piece_string += 's';
 	  }
 	else
-	  {
-	    strncpy (current_substring, percent_loc, f - percent_loc);
-	    current_substring += f - percent_loc;
-	  }
-
-	*current_substring++ = '\0';
+	  piece_string.assign (percent_loc, f - percent_loc);
 
 	prev_start = f;
 
-	pieces[next_frag].string = sub_start;
-	pieces[next_frag].argclass = this_argclass;
-	next_frag++;
+	pieces.emplace_back (std::move (piece_string), this_argclass);
       }
 
   /* Record the remainder of the string.  */
 
-  sub_start = current_substring;
-
-  strncpy (current_substring, prev_start, f - prev_start);
-  current_substring += f - prev_start;
-  *current_substring++ = '\0';
-
-  pieces[next_frag].string = sub_start;
-  pieces[next_frag].argclass = literal_piece;
-  next_frag++;
-
-  /* Record an end-of-array marker.  */
-
-  pieces[next_frag].string = NULL;
-  pieces[next_frag].argclass = literal_piece;
+  pieces.emplace_back (std::string (prev_start, f - prev_start), literal_piece);
 
   return pieces;
 }
-
-void
-free_format_pieces (struct format_piece *pieces)
-{
-  if (!pieces)
-    return;
-
-  /* We happen to know that all the string pieces are in the block
-     pointed to by the first string piece.  */
-  if (pieces[0].string)
-    xfree (pieces[0].string);
-
-  xfree (pieces);
-}
-
-void
-free_format_pieces_cleanup (void *ptr)
-{
-  struct format_piece **location = (struct format_piece **) ptr;
-
-  if (location == NULL)
-    return;
-
-  if (*location != NULL)
-    {
-      free_format_pieces (*location);
-      *location = NULL;
-    }
-}
-

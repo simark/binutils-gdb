@@ -48,22 +48,17 @@ enum argclass
 
 struct format_piece
 {
-  char *string;
+  format_piece (std::string &&string_, enum argclass argclass_)
+  : string (std::move (string_)), argclass (argclass_)
+  {}
+
+  std::string string;
   enum argclass argclass;
 };
 
-/* Return an array of printf fragments found at the given string, and
+/* Return a vector of printf fragments found at the given string, and
    rewrite ARG with a pointer to the end of the format string.  */
 
-extern struct format_piece *parse_format_string (const char **arg);
-
-/* Given a pointer to an array of format pieces, free any memory that
-   would have been allocated by parse_format_string.  */
-
-extern void free_format_pieces (struct format_piece *frags);
-
-/* Freeing, cast as a cleanup.  */
-
-extern void free_format_pieces_cleanup (void *);
+extern std::vector<format_piece> parse_format_string (const char **arg);
 
 #endif /* COMMON_FORMAT_H */

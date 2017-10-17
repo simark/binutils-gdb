@@ -816,30 +816,29 @@ ax_printf (CORE_ADDR fn, CORE_ADDR chan, const char *format,
 	   int nargs, ULONGEST *args)
 {
   const char *f = format;
-  struct format_piece *fpieces;
-  int i, fp;
-  char *current_substring;
+  int i;
   int nargs_wanted;
 
   ax_debug ("Printf of \"%s\" with %d args", format, nargs);
 
-  fpieces = parse_format_string (&f);
+  std::vector<format_piece> fpieces = parse_format_string (&f);
 
   nargs_wanted = 0;
-  for (fp = 0; fpieces[fp].string != NULL; fp++)
-    if (fpieces[fp].argclass != literal_piece)
+  for (const format_piece &piece : fpieces)
+    if (piece.argclass != literal_piece)
       ++nargs_wanted;
 
   if (nargs != nargs_wanted)
     error (_("Wrong number of arguments for specified format-string"));
 
   i = 0;
-  for (fp = 0; fpieces[fp].string != NULL; fp++)
+  for (const format_piece &piece : fpieces)
     {
-      current_substring = fpieces[fp].string;
+      const char *fmt = piece.string.c_str ();
+
       ax_debug ("current substring is '%s', class is %d",
-		current_substring, fpieces[fp].argclass);
-      switch (fpieces[fp].argclass)
+		fmt, piece.argclass);
+      switch (piece.argclass)
 	{
 	case string_arg:
 	  {
@@ -865,7 +864,7 @@ ax_printf (CORE_ADDR fn, CORE_ADDR chan, const char *format,
 		read_inferior_memory (tem, str, j);
 	      str[j] = 0;
 
-              printf (current_substring, (char *) str);
+              printf (fmt, (char *) str);
 	    }
 	    break;
 
@@ -874,7 +873,7 @@ ax_printf (CORE_ADDR fn, CORE_ADDR chan, const char *format,
 	    {
 	      long long val = args[i];
 
-              printf (current_substring, val);
+              printf (fmt, val);
 	      break;
 	    }
 #else
@@ -884,7 +883,7 @@ ax_printf (CORE_ADDR fn, CORE_ADDR chan, const char *format,
 	  {
 	    int val = args[i];
 
-	    printf (current_substring, val);
+	    printf (fmt, val);
 	    break;
 	  }
 
@@ -892,7 +891,7 @@ ax_printf (CORE_ADDR fn, CORE_ADDR chan, const char *format,
 	  {
 	    long val = args[i];
 
-	    printf (current_substring, val);
+	    printf (fmt, val);
 	    break;
 	  }
 
@@ -905,20 +904,19 @@ ax_printf (CORE_ADDR fn, CORE_ADDR chan, const char *format,
 	     have modified GCC to include -Wformat-security by
 	     default, which will warn here if there is no
 	     argument.  */
-	  printf (current_substring, 0);
+	  printf (fmt, 0);
 	  break;
 
 	default:
 	  error (_("Format directive in '%s' not supported in agent printf"),
-		 current_substring);
+		 fmt);
 	}
 
       /* Maybe advance to the next argument.  */
-      if (fpieces[fp].argclass != literal_piece)
+      if (piece.argclass != literal_piece)
 	++i;
     }
 
-  free_format_pieces (fpieces);
   fflush (stdout);
 }
 

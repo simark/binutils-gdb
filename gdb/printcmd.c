@@ -2427,7 +2427,6 @@ printf_pointer (struct ui_file *stream, const char *format,
 static void
 ui_printf (const char *arg, struct ui_file *stream)
 {
-  struct format_piece *fpieces;
   const char *s = arg;
   struct value **val_args;
   int allocated_args = 20;
@@ -2445,9 +2444,7 @@ ui_printf (const char *arg, struct ui_file *stream)
   if (*s++ != '"')
     error (_("Bad format string, missing '\"'."));
 
-  fpieces = parse_format_string (&s);
-
-  make_cleanup (free_format_pieces_cleanup, &fpieces);
+  std::vector<format_piece> fpieces = parse_format_string (&s);
 
   if (*s++ != '"')
     error (_("Bad format string, non-terminated '\"'."));
@@ -2464,12 +2461,11 @@ ui_printf (const char *arg, struct ui_file *stream)
   {
     int nargs = 0;
     int nargs_wanted;
-    int i, fr;
-    char *current_substring;
+    int i;
 
     nargs_wanted = 0;
-    for (fr = 0; fpieces[fr].string != NULL; fr++)
-      if (fpieces[fr].argclass != literal_piece)
+    for (const format_piece &piece : fpieces)
+      if (piece.argclass != literal_piece)
 	++nargs_wanted;
 
     /* Now, parse all arguments and evaluate them.
@@ -2497,16 +2493,17 @@ ui_printf (const char *arg, struct ui_file *stream)
 
     /* Now actually print them.  */
     i = 0;
-    for (fr = 0; fpieces[fr].string != NULL; fr++)
+    for (const format_piece &piece : fpieces)
       {
-	current_substring = fpieces[fr].string;
-	switch (fpieces[fr].argclass)
+	const char *fmt = piece.string.c_str ();
+
+	switch (piece.argclass)
 	  {
 	  case string_arg:
-	    printf_c_string (stream, current_substring, val_args[i]);
+	    printf_c_string (stream, fmt, val_args[i]);
 	    break;
 	  case wide_string_arg:
-	    printf_wide_c_string (stream, current_substring, val_args[i]);
+	    printf_wide_c_string (stream, fmt, val_args[i]);
 	    break;
 	  case wide_char_arg:
 	    {
@@ -2533,7 +2530,7 @@ ui_printf (const char *arg, struct ui_file *stream)
 					 &output, translit_char);
 	      obstack_grow_str0 (&output, "");
 
-	      fprintf_filtered (stream, current_substring,
+	      fprintf_filtered (stream, fmt,
                                 obstack_base (&output));
 	    }
 	    break;
@@ -2542,7 +2539,7 @@ ui_printf (const char *arg, struct ui_file *stream)
 	    {
 	      long long val = value_as_long (val_args[i]);
 
-              fprintf_filtered (stream, current_substring, val);
+              fprintf_filtered (stream, fmt, val);
 	      break;
 	    }
 #else
@@ -2552,14 +2549,14 @@ ui_printf (const char *arg, struct ui_file *stream)
 	    {
 	      int val = value_as_long (val_args[i]);
 
-              fprintf_filtered (stream, current_substring, val);
+              fprintf_filtered (stream, fmt, val);
 	      break;
 	    }
 	  case long_arg:
 	    {
 	      long val = value_as_long (val_args[i]);
 
-              fprintf_filtered (stream, current_substring, val);
+              fprintf_filtered (stream, fmt, val);
 	      break;
 	    }
 	  /* Handles floating-point values.  */
@@ -2568,11 +2565,11 @@ ui_printf (const char *arg, struct ui_file *stream)
 	  case dec32float_arg:
 	  case dec64float_arg:
 	  case dec128float_arg:
-	    printf_floating (stream, current_substring, val_args[i],
-			     fpieces[fr].argclass);
+	    printf_floating (stream, fmt, val_args[i],
+			     piece.argclass);
 	    break;
 	  case ptr_arg:
-	    printf_pointer (stream, current_substring, val_args[i]);
+	    printf_pointer (stream, fmt, val_args[i]);
 	    break;
 	  case literal_piece:
 	    /* Print a portion of the format string that has no
@@ -2583,14 +2580,14 @@ ui_printf (const char *arg, struct ui_file *stream)
 	       have modified GCC to include -Wformat-security by
 	       default, which will warn here if there is no
 	       argument.  */
-	    fprintf_filtered (stream, current_substring, 0);
+	    fprintf_filtered (stream, fmt, 0);
 	    break;
 	  default:
 	    internal_error (__FILE__, __LINE__,
 			    _("failed internal consistency check"));
 	  }
 	/* Maybe advance to the next argument.  */
-	if (fpieces[fr].argclass != literal_piece)
+	if (piece.argclass != literal_piece)
 	  ++i;
       }
   }
