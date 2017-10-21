@@ -35,19 +35,20 @@ struct linespec_result;
    `gen_ui_out_table_header'.  */
 
 struct info_probe_column
-  {
-    /* The internal name of the field.  This string cannot be capitalized nor
-       localized, e.g., "extra_field".  */
+{
+  info_probe_column (const char *field_name_, const char *print_name_)
+  : field_name (field_name_), print_name (print_name_)
+  {}
 
-    const char *field_name;
+  /* The internal name of the field.  This string cannot be capitalized nor
+     localized, e.g., "extra_field".  */
 
-    /* The field name to be printed in the `info probes' command.  This
-       string can be capitalized and localized, e.g., _("Extra Field").  */
-    const char *print_name;
-  };
+  const char *field_name;
 
-typedef struct info_probe_column info_probe_column_s;
-DEF_VEC_O (info_probe_column_s);
+  /* The field name to be printed in the `info probes' command.  This
+     string can be capitalized and localized, e.g., _("Extra Field").  */
+  const char *print_name;
+};
 
 /* Operations associated with a probe.  */
 
@@ -128,7 +129,7 @@ struct probe_ops
        with whatever extra fields it needs.  If the backend doesn't need
        to print extra fields, it can set this method to NULL.  */
 
-    void (*gen_info_probes_table_header) (VEC (info_probe_column_s) **heads);
+    std::vector<info_probe_column> (*gen_info_probes_table_header) ();
 
     /* Function that will fill VALUES with the values of the extra fields
        to be printed for PROBE.  If the backend implements the

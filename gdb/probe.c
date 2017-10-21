@@ -336,14 +336,6 @@ static void
 gen_ui_out_table_header_info (const std::vector<bound_probe> &probes,
 			      const struct probe_ops *p)
 {
-  /* `headings' refers to the names of the columns when printing `info
-     probes'.  */
-  VEC (info_probe_column_s) *headings = NULL;
-  struct cleanup *c;
-  info_probe_column_s *column;
-  size_t headings_size;
-  int ix;
-
   gdb_assert (p != NULL);
 
   if (p->gen_info_probes_table_header == NULL
@@ -353,16 +345,14 @@ gen_ui_out_table_header_info (const std::vector<bound_probe> &probes,
   gdb_assert (p->gen_info_probes_table_header != NULL
 	      && p->gen_info_probes_table_values != NULL);
 
-  c = make_cleanup (VEC_cleanup (info_probe_column_s), &headings);
-  p->gen_info_probes_table_header (&headings);
+  /* `headings' refers to the names of the columns when printing `info
+     probes'.  */
+  std::vector<info_probe_column> headings
+    = p->gen_info_probes_table_header ();
 
-  headings_size = VEC_length (info_probe_column_s, headings);
-
-  for (ix = 0;
-       VEC_iterate (info_probe_column_s, headings, ix, column);
-       ++ix)
+  for (const info_probe_column &column : headings)
     {
-      size_t size_max = strlen (column->print_name);
+      size_t size_max = strlen (column.print_name);
 
       for (const bound_probe &probe : probes)
 	{
@@ -374,7 +364,7 @@ gen_ui_out_table_header_info (const std::vector<bound_probe> &probes,
 	  std::vector<const char *> probe_fields
 	    = p->gen_info_probes_table_values (probe.probe);
 
-	  gdb_assert (probe_fields.size () == headings_size);
+	  gdb_assert (probe_fields.size () == headings.size ());
 
 	  for (const char *val : probe_fields)
 	    {
@@ -389,10 +379,8 @@ gen_ui_out_table_header_info (const std::vector<bound_probe> &probes,
 	}
 
       current_uiout->table_header (size_max, ui_left,
-				   column->field_name, column->print_name);
+				   column.field_name, column.print_name);
     }
-
-  do_cleanups (c);
 }
 
 /* Helper function to print not-applicable strings for all the extra
@@ -401,23 +389,14 @@ gen_ui_out_table_header_info (const std::vector<bound_probe> &probes,
 static void
 print_ui_out_not_applicables (const struct probe_ops *pops)
 {
-  struct cleanup *c;
-  VEC (info_probe_column_s) *headings = NULL;
-  info_probe_column_s *column;
-  int ix;
-
   if (pops->gen_info_probes_table_header == NULL)
     return;
 
-  c = make_cleanup (VEC_cleanup (info_probe_column_s), &headings);
-  pops->gen_info_probes_table_header (&headings);
+  std::vector<info_probe_column> headings
+    = pops->gen_info_probes_table_header ();
 
-  for (ix = 0;
-       VEC_iterate (info_probe_column_s, headings, ix, column);
-       ++ix)
-    current_uiout->field_string (column->field_name, _("n/a"));
-
-  do_cleanups (c);
+  for (const info_probe_column &column : headings)
+    current_uiout->field_string (column.field_name, _("n/a"));
 }
 
 /* Helper function to print extra information about a probe and an objfile
@@ -426,14 +405,6 @@ print_ui_out_not_applicables (const struct probe_ops *pops)
 static void
 print_ui_out_info (struct probe *probe)
 {
-  int ix;
-  int j = 0;
-  /* `values' refers to the actual values of each new field in the output
-     of `info probe'.  `headings' refers to the names of each new field.  */
-  VEC (info_probe_column_s) *headings = NULL;
-  info_probe_column_s *column;
-  struct cleanup *c;
-
   gdb_assert (probe != NULL);
   gdb_assert (probe->pops != NULL);
 
@@ -444,28 +415,25 @@ print_ui_out_info (struct probe *probe)
   gdb_assert (probe->pops->gen_info_probes_table_header != NULL
 	      && probe->pops->gen_info_probes_table_values != NULL);
 
-  c = make_cleanup (VEC_cleanup (info_probe_column_s), &headings);
-
-  probe->pops->gen_info_probes_table_header (&headings);
+  /* `values' refers to the actual values of each new field in the output
+     of `info probe'.  `headings' refers to the names of each new field.  */
+  std::vector<info_probe_column> headings
+    = probe->pops->gen_info_probes_table_header ();
   std::vector<const char *> values
     = probe->pops->gen_info_probes_table_values (probe);
 
-  gdb_assert (VEC_length (info_probe_column_s, headings)
-	      == values.size ());
+  gdb_assert (headings.size () == values.size ());
 
-  for (ix = 0;
-       VEC_iterate (info_probe_column_s, headings, ix, column);
-       ++ix)
+  for (int ix = 0; ix < headings.size (); ix++)
     {
-      const char *val = values[j++];
+      const info_probe_column &column = headings[ix];
+      const char *val = values[ix];
 
       if (val == NULL)
-	current_uiout->field_skip (column->field_name);
+	current_uiout->field_skip (column.field_name);
       else
-	current_uiout->field_string (column->field_name, val);
+	current_uiout->field_string (column.field_name, val);
     }
-
-  do_cleanups (c);
 }
 
 /* Helper function that returns the number of extra fields which POPS will
@@ -474,21 +442,10 @@ print_ui_out_info (struct probe *probe)
 static int
 get_number_extra_fields (const struct probe_ops *pops)
 {
-  VEC (info_probe_column_s) *headings = NULL;
-  struct cleanup *c;
-  int n;
-
   if (pops->gen_info_probes_table_header == NULL)
     return 0;
 
-  c = make_cleanup (VEC_cleanup (info_probe_column_s), &headings);
-  pops->gen_info_probes_table_header (&headings);
-
-  n = VEC_length (info_probe_column_s, headings);
-
-  do_cleanups (c);
-
-  return n;
+  return pops->gen_info_probes_table_header ().size ();
 }
 
 /* Helper function that returns 1 if there is a probe in PROBES

@@ -778,15 +778,14 @@ dtrace_type_name (struct probe *probe_generic)
 
 /* Implementation of the gen_info_probes_table_header method.  */
 
-static void
-dtrace_gen_info_probes_table_header (VEC (info_probe_column_s) **heads)
+static std::vector<info_probe_column>
+dtrace_gen_info_probes_table_header ()
 {
-  info_probe_column_s dtrace_probe_column;
+  std::vector<info_probe_column> ret;
 
-  dtrace_probe_column.field_name = "enabled";
-  dtrace_probe_column.print_name = _("Enabled");
+  ret.emplace_back ("enabled", _("Enabled"));
 
-  VEC_safe_push (info_probe_column_s, *heads, &dtrace_probe_column);
+  return ret;
 }
 
 /* Implementation of the gen_info_probes_table_values method.  */

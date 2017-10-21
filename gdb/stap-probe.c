@@ -1655,15 +1655,14 @@ stap_probe_is_linespec (const char **linespecp)
   return probe_is_linespec_by_keyword (linespecp, keywords);
 }
 
-static void
-stap_gen_info_probes_table_header (VEC (info_probe_column_s) **heads)
+static std::vector<info_probe_column>
+stap_gen_info_probes_table_header ()
 {
-  info_probe_column_s stap_probe_column;
+  std::vector<info_probe_column> ret;
 
-  stap_probe_column.field_name = "semaphore";
-  stap_probe_column.print_name = _("Semaphore");
+  ret.emplace_back ("semaphore", _("Semaphore"));
 
-  VEC_safe_push (info_probe_column_s, *heads, &stap_probe_column);
+  return ret;
 }
 
 static std::vector<const char *>
