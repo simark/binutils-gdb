@@ -366,24 +366,17 @@ gen_ui_out_table_header_info (const std::vector<bound_probe> &probes,
 
       for (const bound_probe &probe : probes)
 	{
-	  /* `probe_fields' refers to the values of each new field that this
-	     probe will display.  */
-	  VEC (const_char_ptr) *probe_fields = NULL;
-	  struct cleanup *c2;
-	  const char *val;
-	  int kx;
-
 	  if (probe.probe->pops != p)
 	    continue;
 
-	  c2 = make_cleanup (VEC_cleanup (const_char_ptr), &probe_fields);
-	  p->gen_info_probes_table_values (probe.probe, &probe_fields);
+	  /* `probe_fields' refers to the values of each new field that this
+	     probe will display.  */
+	  std::vector<const char *> probe_fields
+	    = p->gen_info_probes_table_values (probe.probe);
 
-	  gdb_assert (VEC_length (const_char_ptr, probe_fields)
-		      == headings_size);
+	  gdb_assert (probe_fields.size () == headings_size);
 
-	  for (kx = 0; VEC_iterate (const_char_ptr, probe_fields, kx, val);
-	       ++kx)
+	  for (const char *val : probe_fields)
 	    {
 	      /* It is valid to have a NULL value here, which means that the
 		 backend does not have something to write and this particular
@@ -393,7 +386,6 @@ gen_ui_out_table_header_info (const std::vector<bound_probe> &probes,
 
 	      size_max = std::max (strlen (val), size_max);
 	    }
-	  do_cleanups (c2);
 	}
 
       current_uiout->table_header (size_max, ui_left,
@@ -438,7 +430,6 @@ print_ui_out_info (struct probe *probe)
   int j = 0;
   /* `values' refers to the actual values of each new field in the output
      of `info probe'.  `headings' refers to the names of each new field.  */
-  VEC (const_char_ptr) *values = NULL;
   VEC (info_probe_column_s) *headings = NULL;
   info_probe_column_s *column;
   struct cleanup *c;
@@ -454,19 +445,19 @@ print_ui_out_info (struct probe *probe)
 	      && probe->pops->gen_info_probes_table_values != NULL);
 
   c = make_cleanup (VEC_cleanup (info_probe_column_s), &headings);
-  make_cleanup (VEC_cleanup (const_char_ptr), &values);
 
   probe->pops->gen_info_probes_table_header (&headings);
-  probe->pops->gen_info_probes_table_values (probe, &values);
+  std::vector<const char *> values
+    = probe->pops->gen_info_probes_table_values (probe);
 
   gdb_assert (VEC_length (info_probe_column_s, headings)
-	      == VEC_length (const_char_ptr, values));
+	      == values.size ());
 
   for (ix = 0;
        VEC_iterate (info_probe_column_s, headings, ix, column);
        ++ix)
     {
-      const char *val = VEC_index (const_char_ptr, values, j++);
+      const char *val = values[j++];
 
       if (val == NULL)
 	current_uiout->field_skip (column->field_name);

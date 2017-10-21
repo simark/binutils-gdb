@@ -1666,11 +1666,11 @@ stap_gen_info_probes_table_header (VEC (info_probe_column_s) **heads)
   VEC_safe_push (info_probe_column_s, *heads, &stap_probe_column);
 }
 
-static void
-stap_gen_info_probes_table_values (struct probe *probe_generic,
-				   VEC (const_char_ptr) **ret)
+static std::vector<const char *>
+stap_gen_info_probes_table_values (struct probe *probe_generic)
 {
   struct stap_probe *probe = (struct stap_probe *) probe_generic;
+  std::vector<const char *> ret;
   struct gdbarch *gdbarch;
   const char *val = NULL;
 
@@ -1681,7 +1681,9 @@ stap_gen_info_probes_table_values (struct probe *probe_generic,
   if (probe->sem_addr != 0)
     val = print_core_address (gdbarch, probe->sem_addr);
 
-  VEC_safe_push (const_char_ptr, *ret, val);
+  ret.push_back (val);
+
+  return ret;
 }
 
 /* SystemTap probe_ops.  */

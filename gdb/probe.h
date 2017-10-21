@@ -140,8 +140,8 @@ struct probe_ops
        when printing the information, you can push a NULL value in that
        position in the vector.  */
 
-    void (*gen_info_probes_table_values) (struct probe *probe,
-					  VEC (const_char_ptr) **values);
+    std::vector<const char *> (*gen_info_probes_table_values)
+      (struct probe *probe);
 
     /* Enable a probe.  The semantics of "enabling" a probe depend on
        the specific backend and the field can be NULL in case enabling

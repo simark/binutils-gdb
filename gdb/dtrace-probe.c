@@ -791,11 +791,11 @@ dtrace_gen_info_probes_table_header (VEC (info_probe_column_s) **heads)
 
 /* Implementation of the gen_info_probes_table_values method.  */
 
-static void
-dtrace_gen_info_probes_table_values (struct probe *probe_generic,
-				     VEC (const_char_ptr) **ret)
+static std::vector<const char *>
+dtrace_gen_info_probes_table_values (struct probe *probe_generic)
 {
   struct dtrace_probe *probe = (struct dtrace_probe *) probe_generic;
+  std::vector<const char *> ret;
   const char *val = NULL;
 
   gdb_assert (probe_generic->pops == &dtrace_probe_ops);
@@ -809,7 +809,9 @@ dtrace_gen_info_probes_table_values (struct probe *probe_generic,
   else
     val = "no";
 
-  VEC_safe_push (const_char_ptr, *ret, val);
+  ret.push_back (val);
+
+  return ret;
 }
 
 /* Implementation of the enable_probe method.  */
