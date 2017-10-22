@@ -1426,12 +1426,9 @@ canonical_to_fullform (const struct linespec_canonical_name *canonical)
 static void
 filter_results (struct linespec_state *self,
 		std::vector<symtab_and_line> *result,
-		VEC (const_char_ptr) *filters)
+		const std::vector<const char *> &filters)
 {
-  int i;
-  const char *name;
-
-  for (i = 0; VEC_iterate (const_char_ptr, filters, i, name); ++i)
+  for (const char *name : filters)
     {
       linespec_sals lsal;
 
@@ -1526,7 +1523,7 @@ decode_line_2 (struct linespec_state *self,
   const char *prompt;
   int i;
   struct cleanup *old_chain;
-  VEC (const_char_ptr) *filters = NULL;
+  std::vector<const char *> filters;
   struct decode_line_2_item *items;
   int items_count;
 
@@ -1534,12 +1531,10 @@ decode_line_2 (struct linespec_state *self,
   gdb_assert (self->canonical != NULL);
   gdb_assert (!result->empty ());
 
-  old_chain = make_cleanup (VEC_cleanup (const_char_ptr), &filters);
-
   /* Prepare ITEMS array.  */
   items_count = result->size ();
   items = XNEWVEC (struct decode_line_2_item, items_count);
-  make_cleanup (xfree, items);
+  old_chain = make_cleanup (xfree, items);
   for (i = 0; i < items_count; ++i)
     {
       const struct linespec_canonical_name *canonical;
@@ -1636,7 +1631,7 @@ decode_line_2 (struct linespec_state *self,
 
 	  if (!item->selected)
 	    {
-	      VEC_safe_push (const_char_ptr, filters, item->fullform);
+	      filters.push_back (item->fullform);
 	      item->selected = 1;
 	    }
 	  else
@@ -3274,7 +3269,6 @@ decode_line_full (const struct event_location *location, int flags,
 		  const char *filter)
 {
   struct cleanup *cleanups;
-  VEC (const_char_ptr) *filters = NULL;
   linespec_parser parser;
   struct linespec_state *state;
 
@@ -3326,8 +3320,8 @@ decode_line_full (const struct event_location *location, int flags,
     {
       if (filter != NULL)
 	{
-	  make_cleanup (VEC_cleanup (const_char_ptr), &filters);
-	  VEC_safe_push (const_char_ptr, filters, filter);
+	  std::vector<const char *> filters;
+	  filters.push_back (filter);
 	  filter_results (state, &result, filters);
 	}
       else
