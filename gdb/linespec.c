@@ -284,54 +284,63 @@ LS_TOKEN_KEYWORD (linespec_token &tok)
 
 /* An instance of the linespec parser.  */
 
-struct ls_parser
+struct linespec_parser
 {
+  linespec_parser
+    (int flags, const struct language_defn *language,
+     struct program_space *search_pspace,
+     struct symtab *default_symtab, int default_line,
+     struct linespec_result *canonical);
+
+  ~linespec_parser ();
+
+  DISABLE_COPY_AND_ASSIGN (linespec_parser);
+
   /* Lexer internal data  */
   struct
   {
     /* Save head of input stream.  */
-    const char *saved_arg;
+    const char *saved_arg = NULL;
 
     /* Head of the input stream.  */
-    const char *stream;
+    const char *stream = NULL;
 
     /* The current token.  */
-    linespec_token current;
+    linespec_token current {};
   } lexer;
 
   /* Is the entire linespec quote-enclosed?  */
-  int is_quote_enclosed;
+  int is_quote_enclosed = 0;
 
   /* The state of the parse.  */
-  struct linespec_state state;
+  struct linespec_state state {};
 
   /* The result of the parse.  */
-  struct linespec result;
+  struct linespec result {};
 
   /* What the parser believes the current word point should complete
      to.  */
-  linespec_complete_what complete_what;
+  linespec_complete_what complete_what = linespec_complete_what::NOTHING;
 
   /* The completion word point.  The parser advances this as it skips
      tokens.  At some point the input string will end or parsing will
      fail, and then we attempt completion at the captured completion
      word point, interpreting the string at completion_word as
      COMPLETE_WHAT.  */
-  const char *completion_word;
+  const char *completion_word = NULL;
 
   /* If the current token was a quoted string, then this is the
      quoting character (either " or ').  */
-  int completion_quote_char;
+  int completion_quote_char = 0;
 
   /* If the current token was a quoted string, then this points at the
      end of the quoted string.  */
-  const char *completion_quote_end;
+  const char *completion_quote_end = NULL;
 
   /* If parsing for completion, then this points at the completion
      tracker.  Otherwise, this is NULL.  */
-  struct completion_tracker *completion_tracker;
+  struct completion_tracker *completion_tracker = NULL;
 };
-typedef struct ls_parser linespec_parser;
 
 static linespec_state *
 PARSER_STATE (linespec_parser *parser)
@@ -2760,19 +2769,15 @@ linespec_state_constructor (struct linespec_state *self,
 
 /* Initialize a new linespec parser.  */
 
-static void
-linespec_parser_new (linespec_parser *parser,
-		     int flags, const struct language_defn *language,
-		     struct program_space *search_pspace,
-		     struct symtab *default_symtab,
-		     int default_line,
-		     struct linespec_result *canonical)
+linespec_parser::linespec_parser
+  (int flags, const struct language_defn *language,
+   struct program_space *search_pspace,
+   struct symtab *default_symtab, int default_line,
+   struct linespec_result *canonical)
 {
-  memset (parser, 0, sizeof (linespec_parser));
-  parser->lexer.current.type = LSTOKEN_CONSUMED;
-  memset (PARSER_RESULT (parser), 0, sizeof (struct linespec));
-  PARSER_EXPLICIT (parser)->line_offset.sign = LINE_OFFSET_UNKNOWN;
-  linespec_state_constructor (PARSER_STATE (parser), flags, language,
+  this->lexer.current.type = LSTOKEN_CONSUMED;
+  PARSER_EXPLICIT (this)->line_offset.sign = LINE_OFFSET_UNKNOWN;
+  linespec_state_constructor (PARSER_STATE (this), flags, language,
 			      search_pspace,
 			      default_symtab, default_line, canonical);
 }
@@ -2787,10 +2792,9 @@ linespec_state_destructor (struct linespec_state *self)
 
 /* Delete a linespec parser.  */
 
-static void
-linespec_parser_delete (void *arg)
+linespec_parser::~linespec_parser ()
 {
-  linespec_parser *parser = (linespec_parser *) arg;
+  linespec_parser *parser = this;
 
   xfree (PARSER_EXPLICIT (parser)->source_filename);
   xfree (PARSER_EXPLICIT (parser)->label_name);
@@ -2819,16 +2823,13 @@ linespec_parser_delete (void *arg)
 void
 linespec_lex_to_end (const char **stringp)
 {
-  linespec_parser parser;
-  struct cleanup *cleanup;
   linespec_token token;
   const char *orig;
 
   if (stringp == NULL || *stringp == NULL)
     return;
 
-  linespec_parser_new (&parser, 0, current_language, NULL, NULL, 0, NULL);
-  cleanup = make_cleanup (linespec_parser_delete, &parser);
+  linespec_parser parser (0, current_language, NULL, NULL, 0, NULL);
   parser.lexer.saved_arg = *stringp;
   PARSER_STREAM (&parser) = orig = *stringp;
 
@@ -2844,7 +2845,6 @@ linespec_lex_to_end (const char **stringp)
   while (token.type != LSTOKEN_EOI && token.type != LSTOKEN_KEYWORD);
 
   *stringp += PARSER_STREAM (&parser) - orig;
-  do_cleanups (cleanup);
 }
 
 /* See linespec.h.  */
@@ -2962,12 +2962,7 @@ linespec_complete_label (completion_tracker &tracker,
 			 const char *function_name,
 			 const char *label_name)
 {
-  linespec_parser parser;
-  struct cleanup *cleanup;
-
-  linespec_parser_new (&parser, 0, language, NULL, NULL, 0, NULL);
-  cleanup = make_cleanup (linespec_parser_delete, &parser);
-
+  linespec_parser parser (0, language, NULL, NULL, 0, NULL);
   line_offset unknown_offset = { 0, LINE_OFFSET_UNKNOWN };
 
   TRY
@@ -2980,14 +2975,11 @@ linespec_complete_label (completion_tracker &tracker,
     }
   CATCH (ex, RETURN_MASK_ERROR)
     {
-      do_cleanups (cleanup);
       return;
     }
   END_CATCH
 
   complete_label (tracker, &parser, label_name);
-
-  do_cleanups (cleanup);
 }
 
 /* See description in linespec.h.  */
@@ -2995,12 +2987,9 @@ linespec_complete_label (completion_tracker &tracker,
 void
 linespec_complete (completion_tracker &tracker, const char *text)
 {
-  linespec_parser parser;
-  struct cleanup *cleanup;
   const char *orig = text;
 
-  linespec_parser_new (&parser, 0, current_language, NULL, NULL, 0, NULL);
-  cleanup = make_cleanup (linespec_parser_delete, &parser);
+  linespec_parser parser (0, current_language, NULL, NULL, 0, NULL);
   parser.lexer.saved_arg = text;
   PARSER_STREAM (&parser) = text;
 
@@ -3181,8 +3170,6 @@ linespec_complete (completion_tracker &tracker, const char *text)
 				       NULL);
 	}
     }
-
-  do_cleanups (cleanup);
 }
 
 /* A helper function for decode_line_full and decode_line_1 to
@@ -3268,8 +3255,7 @@ decode_line_full (const struct event_location *location, int flags,
 		  const char *select_mode,
 		  const char *filter)
 {
-  struct cleanup *cleanups;
-  linespec_parser parser;
+  struct cleanup *cleanups = make_cleanup (null_cleanup, NULL);
   struct linespec_state *state;
 
   gdb_assert (canonical != NULL);
@@ -3281,10 +3267,9 @@ decode_line_full (const struct event_location *location, int flags,
 	      || select_mode == multiple_symbols_cancel);
   gdb_assert ((flags & DECODE_LINE_LIST_MODE) == 0);
 
-  linespec_parser_new (&parser, flags, current_language,
-		       search_pspace, default_symtab,
-		       default_line, canonical);
-  cleanups = make_cleanup (linespec_parser_delete, &parser);
+  linespec_parser parser (flags, current_language,
+			  search_pspace, default_symtab,
+			  default_line, canonical);
 
   scoped_restore_current_program_space restore_pspace;
 
