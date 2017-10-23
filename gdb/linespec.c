@@ -270,8 +270,17 @@ struct ls_token
 };
 typedef struct ls_token linespec_token;
 
-#define LS_TOKEN_STOKEN(TOK) (TOK).data.string
-#define LS_TOKEN_KEYWORD(TOK) (TOK).data.keyword
+static stoken &
+LS_TOKEN_STOKEN (linespec_token &tok)
+{
+  return tok.data.string;
+}
+
+static const char *&
+LS_TOKEN_KEYWORD (linespec_token &tok)
+{
+  return tok.data.keyword;
+}
 
 /* An instance of the linespec parser.  */
 
@@ -285,7 +294,6 @@ struct ls_parser
 
     /* Head of the input stream.  */
     const char *stream;
-#define PARSER_STREAM(P) ((P)->lexer.stream)
 
     /* The current token.  */
     linespec_token current;
@@ -296,11 +304,9 @@ struct ls_parser
 
   /* The state of the parse.  */
   struct linespec_state state;
-#define PARSER_STATE(PPTR) (&(PPTR)->state)
 
   /* The result of the parse.  */
   struct linespec result;
-#define PARSER_RESULT(PPTR) (&(PPTR)->result)
 
   /* What the parser believes the current word point should complete
      to.  */
@@ -327,9 +333,32 @@ struct ls_parser
 };
 typedef struct ls_parser linespec_parser;
 
+static linespec_state *
+PARSER_STATE (linespec_parser *parser)
+{
+  return &parser->state;
+}
+
+static linespec *
+PARSER_RESULT (linespec_parser *parser)
+{
+  return &parser->result;
+}
+
+static const char *&
+PARSER_STREAM (linespec_parser *parser)
+{
+  return parser->lexer.stream;
+}
+
 /* A convenience macro for accessing the explicit location result of
    the parser.  */
-#define PARSER_EXPLICIT(PPTR) (&PARSER_RESULT ((PPTR))->explicit_loc)
+
+static explicit_location *
+PARSER_EXPLICIT (linespec_parser *parser)
+{
+  return &PARSER_RESULT (parser)->explicit_loc;
+}
 
 /* Prototypes for local functions.  */
 
@@ -3318,20 +3347,13 @@ decode_line_1 (const struct event_location *location, int flags,
 	       struct symtab *default_symtab,
 	       int default_line)
 {
-  linespec_parser parser;
-  struct cleanup *cleanups;
-
-  linespec_parser_new (&parser, flags, current_language,
-		       search_pspace, default_symtab,
-		       default_line, NULL);
-  cleanups = make_cleanup (linespec_parser_delete, &parser);
-
+  linespec_parser parser (flags, current_language, search_pspace,
+			  default_symtab, default_line, NULL);
   scoped_restore_current_program_space restore_pspace;
 
   std::vector<symtab_and_line> result = event_location_to_sals (&parser,
 								location);
 
-  do_cleanups (cleanups);
   return result;
 }
 
