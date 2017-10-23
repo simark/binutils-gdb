@@ -102,27 +102,52 @@ DEF_VEC_O (bound_minimal_symbol_d);
 
 struct linespec
 {
+  linespec ()
+  {}
+
+  ~linespec ()
+  {
+    xfree (explicit_loc.source_filename);
+    xfree (explicit_loc.label_name);
+    xfree (explicit_loc.function_name);
+
+    if (file_symtabs != NULL)
+      VEC_free (symtab_ptr, file_symtabs);
+
+    if (function_symbols != NULL)
+      VEC_free (symbolp, function_symbols);
+
+    if (minimal_symbols != NULL)
+      VEC_free (bound_minimal_symbol_d, minimal_symbols);
+
+    if (labels.label_symbols != NULL)
+      VEC_free (symbolp, labels.label_symbols);
+
+    if (labels.function_symbols != NULL)
+      VEC_free (symbolp, labels.function_symbols);
+  }
+
   /* An explicit location describing the SaLs.  */
-  struct explicit_location explicit_loc;
+  struct explicit_location explicit_loc {};
 
   /* The list of symtabs to search to which to limit the search.  May not
      be NULL.  If explicit.SOURCE_FILENAME is NULL (no user-specified
      filename), FILE_SYMTABS should contain one single NULL member.  This
      will cause the code to use the default symtab.  */
-  VEC (symtab_ptr) *file_symtabs;
+  VEC (symtab_ptr) *file_symtabs = NULL;
 
   /* A list of matching function symbols and minimal symbols.  Both lists
      may be NULL if no matching symbols were found.  */
-  VEC (symbolp) *function_symbols;
-  VEC (bound_minimal_symbol_d) *minimal_symbols;
+  VEC (symbolp) *function_symbols = NULL;
+  VEC (bound_minimal_symbol_d) *minimal_symbols = NULL;
 
   /* A structure of matching label symbols and the corresponding
      function symbol in which the label was found.  Both may be NULL
      or both must be non-NULL.  */
   struct
   {
-    VEC (symbolp) *label_symbols;
-    VEC (symbolp) *function_symbols;
+    VEC (symbolp) *label_symbols = NULL;
+    VEC (symbolp) *function_symbols = NULL;
   } labels;
 };
 typedef struct linespec *linespec_p;
@@ -304,8 +329,6 @@ struct linespec_parser
      struct symtab *default_symtab, int default_line,
      struct linespec_result *canonical);
 
-  ~linespec_parser ();
-
   DISABLE_COPY_AND_ASSIGN (linespec_parser);
 
   /* Lexer internal data  */
@@ -328,7 +351,7 @@ struct linespec_parser
   struct linespec_state state;
 
   /* The result of the parse.  */
-  struct linespec result {};
+  struct linespec result;
 
   /* What the parser believes the current word point should complete
      to.  */
@@ -2795,32 +2818,6 @@ linespec_parser::linespec_parser
 	 canonical)
 {
   PARSER_EXPLICIT (this)->line_offset.sign = LINE_OFFSET_UNKNOWN;
-}
-
-/* Delete a linespec parser.  */
-
-linespec_parser::~linespec_parser ()
-{
-  linespec_parser *parser = this;
-
-  xfree (PARSER_EXPLICIT (parser)->source_filename);
-  xfree (PARSER_EXPLICIT (parser)->label_name);
-  xfree (PARSER_EXPLICIT (parser)->function_name);
-
-  if (PARSER_RESULT (parser)->file_symtabs != NULL)
-    VEC_free (symtab_ptr, PARSER_RESULT (parser)->file_symtabs);
-
-  if (PARSER_RESULT (parser)->function_symbols != NULL)
-    VEC_free (symbolp, PARSER_RESULT (parser)->function_symbols);
-
-  if (PARSER_RESULT (parser)->minimal_symbols != NULL)
-    VEC_free (bound_minimal_symbol_d, PARSER_RESULT (parser)->minimal_symbols);
-
-  if (PARSER_RESULT (parser)->labels.label_symbols != NULL)
-    VEC_free (symbolp, PARSER_RESULT (parser)->labels.label_symbols);
-
-  if (PARSER_RESULT (parser)->labels.function_symbols != NULL)
-    VEC_free (symbolp, PARSER_RESULT (parser)->labels.function_symbols);
 }
 
 /* See description in linespec.h.  */
