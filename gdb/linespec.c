@@ -262,8 +262,12 @@ const char * const linespec_keywords[] = { "if", "thread", "task", NULL };
 
 /* A token of the linespec lexer  */
 
-struct ls_token
+struct linespec_token
 {
+  linespec_token ()
+  : type (LSTOKEN_CONSUMED)
+  {}
+
   /* The type of the token  */
   linespec_token_type type;
 
@@ -277,7 +281,6 @@ struct ls_token
     const char *keyword;
   } data;
 };
-typedef struct ls_token linespec_token;
 
 static stoken &
 LS_TOKEN_STOKEN (linespec_token &tok)
@@ -315,7 +318,7 @@ struct linespec_parser
     const char *stream = NULL;
 
     /* The current token.  */
-    linespec_token current {};
+    linespec_token current;
   } lexer;
 
   /* Is the entire linespec quote-enclosed?  */
@@ -2791,7 +2794,6 @@ linespec_parser::linespec_parser
 : state (flags, language, search_pspace, default_symtab, default_line,
 	 canonical)
 {
-  this->lexer.current.type = LSTOKEN_CONSUMED;
   PARSER_EXPLICIT (this)->line_offset.sign = LINE_OFFSET_UNKNOWN;
 }
 
