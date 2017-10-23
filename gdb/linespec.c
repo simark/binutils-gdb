@@ -148,6 +148,15 @@ struct linespec_canonical_name
 
 struct linespec_state
 {
+  linespec_state (int flags, const struct language_defn *language_,
+		  struct program_space *search_pspace_,
+		  struct symtab *default_symtab_, int default_line_,
+		  struct linespec_result *canonical_);
+
+  ~linespec_state ();
+
+  DISABLE_COPY_AND_ASSIGN (linespec_state);
+
   /* The language in use during linespec processing.  */
   const struct language_defn *language;
 
@@ -313,7 +322,7 @@ struct linespec_parser
   int is_quote_enclosed = 0;
 
   /* The state of the parse.  */
-  struct linespec_state state {};
+  struct linespec_state state;
 
   /* The result of the parse.  */
   struct linespec result {};
@@ -2745,26 +2754,31 @@ parse_linespec (linespec_parser *parser, const char *arg)
 
 /* A constructor for linespec_state.  */
 
-static void
-linespec_state_constructor (struct linespec_state *self,
-			    int flags, const struct language_defn *language,
-			    struct program_space *search_pspace,
-			    struct symtab *default_symtab,
-			    int default_line,
-			    struct linespec_result *canonical)
+linespec_state::linespec_state (int flags,
+				const struct language_defn *language_,
+				struct program_space *search_pspace_,
+				struct symtab *default_symtab_,
+				int default_line_,
+				struct linespec_result *canonical_)
+: language (language_), program_space (current_program_space),
+  search_pspace (search_pspace_), default_symtab (default_symtab_),
+  default_line (default_line_),
+  funfirstline ((flags & DECODE_LINE_FUNFIRSTLINE) ? 1 : 0),
+  list_mode ((flags & DECODE_LINE_LIST_MODE) ? 1 : 0),
+  canonical (canonical_),
+  canonical_names (NULL),
+  is_linespec (0)
+
 {
-  memset (self, 0, sizeof (*self));
-  self->language = language;
-  self->funfirstline = (flags & DECODE_LINE_FUNFIRSTLINE) ? 1 : 0;
-  self->list_mode = (flags & DECODE_LINE_LIST_MODE) ? 1 : 0;
-  self->search_pspace = search_pspace;
-  self->default_symtab = default_symtab;
-  self->default_line = default_line;
-  self->canonical = canonical;
-  self->program_space = current_program_space;
-  self->addr_set = htab_create_alloc (10, hash_address_entry, eq_address_entry,
+  this->addr_set = htab_create_alloc (10, hash_address_entry, eq_address_entry,
 				      xfree, xcalloc, xfree);
-  self->is_linespec = 0;
+}
+
+/* A destructor for linespec_state.  */
+
+linespec_state::~linespec_state ()
+{
+  htab_delete (this->addr_set);
 }
 
 /* Initialize a new linespec parser.  */
@@ -2774,20 +2788,11 @@ linespec_parser::linespec_parser
    struct program_space *search_pspace,
    struct symtab *default_symtab, int default_line,
    struct linespec_result *canonical)
+: state (flags, language, search_pspace, default_symtab, default_line,
+	 canonical)
 {
   this->lexer.current.type = LSTOKEN_CONSUMED;
   PARSER_EXPLICIT (this)->line_offset.sign = LINE_OFFSET_UNKNOWN;
-  linespec_state_constructor (PARSER_STATE (this), flags, language,
-			      search_pspace,
-			      default_symtab, default_line, canonical);
-}
-
-/* A destructor for linespec_state.  */
-
-static void
-linespec_state_destructor (struct linespec_state *self)
-{
-  htab_delete (self->addr_set);
 }
 
 /* Delete a linespec parser.  */
@@ -2814,8 +2819,6 @@ linespec_parser::~linespec_parser ()
 
   if (PARSER_RESULT (parser)->labels.function_symbols != NULL)
     VEC_free (symbolp, PARSER_RESULT (parser)->labels.function_symbols);
-
-  linespec_state_destructor (PARSER_STATE (parser));
 }
 
 /* See description in linespec.h.  */
