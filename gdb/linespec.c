@@ -173,7 +173,8 @@ struct linespec_canonical_name
 
 struct linespec_state
 {
-  linespec_state (int flags, const struct language_defn *language_,
+  linespec_state (decode_line_flags flags,
+		  const struct language_defn *language_,
 		  struct program_space *search_pspace_,
 		  struct symtab *default_symtab_, int default_line_,
 		  struct linespec_result *canonical_);
@@ -324,7 +325,7 @@ LS_TOKEN_KEYWORD (linespec_token &tok)
 struct linespec_parser
 {
   linespec_parser
-    (int flags, const struct language_defn *language,
+    (decode_line_flags flags, const struct language_defn *language,
      struct program_space *search_pspace,
      struct symtab *default_symtab, int default_line,
      struct linespec_result *canonical);
@@ -2780,7 +2781,7 @@ parse_linespec (linespec_parser *parser, const char *arg)
 
 /* A constructor for linespec_state.  */
 
-linespec_state::linespec_state (int flags,
+linespec_state::linespec_state (decode_line_flags flags,
 				const struct language_defn *language_,
 				struct program_space *search_pspace_,
 				struct symtab *default_symtab_,
@@ -2810,7 +2811,7 @@ linespec_state::~linespec_state ()
 /* Initialize a new linespec parser.  */
 
 linespec_parser::linespec_parser
-  (int flags, const struct language_defn *language,
+  (decode_line_flags flags, const struct language_defn *language,
    struct program_space *search_pspace,
    struct symtab *default_symtab, int default_line,
    struct linespec_result *canonical)
@@ -3250,7 +3251,8 @@ event_location_to_sals (linespec_parser *parser,
 /* See linespec.h.  */
 
 void
-decode_line_full (const struct event_location *location, int flags,
+decode_line_full (const struct event_location *location,
+		  decode_line_flags flags,
 		  struct program_space *search_pspace,
 		  struct symtab *default_symtab,
 		  int default_line, struct linespec_result *canonical,
@@ -3323,7 +3325,8 @@ decode_line_full (const struct event_location *location, int flags,
 /* See linespec.h.  */
 
 std::vector<symtab_and_line>
-decode_line_1 (const struct event_location *location, int flags,
+decode_line_1 (const struct event_location *location,
+	       decode_line_flags flags,
 	       struct program_space *search_pspace,
 	       struct symtab *default_symtab,
 	       int default_line)
@@ -3341,7 +3344,7 @@ decode_line_1 (const struct event_location *location, int flags,
 /* See linespec.h.  */
 
 std::vector<symtab_and_line>
-decode_line_with_current_source (const char *string, int flags)
+decode_line_with_current_source (const char *string, decode_line_flags flags)
 {
   if (string == 0)
     error (_("Empty line specification."));
@@ -3364,7 +3367,7 @@ decode_line_with_current_source (const char *string, int flags)
 /* See linespec.h.  */
 
 std::vector<symtab_and_line>
-decode_line_with_last_displayed (const char *string, int flags)
+decode_line_with_last_displayed (const char *string, decode_line_flags flags)
 {
   if (string == 0)
     error (_("Empty line specification."));

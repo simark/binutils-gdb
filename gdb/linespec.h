@@ -24,17 +24,19 @@ struct symtab;
 
 /* Flags to pass to decode_line_1 and decode_line_full.  */
 
-enum decode_line_flags
-  {
-    /* Set this flag if you want the resulting SALs to describe the
-       first line of indicated functions.  */
-    DECODE_LINE_FUNFIRSTLINE = 1,
+enum decode_line_flag
+{
+  /* Set this flag if you want the resulting SALs to describe the
+     first line of indicated functions.  */
+  DECODE_LINE_FUNFIRSTLINE = 1,
 
-    /* Set this flag if you want "list mode".  In this mode, a
-       FILE:LINE linespec will always return a result, and such
-       linespecs will not be expanded to all matches.  */
-    DECODE_LINE_LIST_MODE = 2
-  };
+  /* Set this flag if you want "list mode".  In this mode, a
+     FILE:LINE linespec will always return a result, and such
+     linespecs will not be expanded to all matches.  */
+  DECODE_LINE_LIST_MODE = 2
+};
+
+DEF_ENUM_FLAGS_TYPE (enum decode_line_flag, decode_line_flags);
 
 /* decode_line_full returns a vector of these.  */
 
@@ -82,9 +84,10 @@ struct linespec_result
 /* Decode a linespec using the provided default symtab and line.  */
 
 extern std::vector<symtab_and_line>
-	decode_line_1 (const struct event_location *location, int flags,
-		       struct program_space *search_pspace,
-		       struct symtab *default_symtab, int default_line);
+  decode_line_1 (const struct event_location *location,
+		 decode_line_flags flags,
+		 struct program_space *search_pspace,
+		 struct symtab *default_symtab, int default_line);
 
 /* Parse LOCATION and return results.  This is the "full"
    interface to this module, which handles multiple results
@@ -125,7 +128,8 @@ extern std::vector<symtab_and_line>
    strcmp sense) to FILTER will be returned; all others will be
    filtered out.  */
 
-extern void decode_line_full (const struct event_location *location, int flags,
+extern void decode_line_full (const struct event_location *location,
+			      decode_line_flags flags,
 			      struct program_space *search_pspace,
 			      struct symtab *default_symtab, int default_line,
 			      struct linespec_result *canonical,
@@ -137,13 +141,13 @@ extern void decode_line_full (const struct event_location *location, int flags,
    This is for commands like "list" and "breakpoint".  */
 
 extern std::vector<symtab_and_line> decode_line_with_current_source
-    (const char *, int);
+    (const char *, decode_line_flags);
 
 /* Given a string, return the line specified by it, using the last displayed
    codepoint's values as defaults, or nothing if they aren't valid.  */
 
 extern std::vector<symtab_and_line> decode_line_with_last_displayed
-    (const char *, int);
+    (const char *, decode_line_flags);
 
 /* Does P represent one of the keywords?  If so, return
    the keyword.  If not, return NULL.  */
