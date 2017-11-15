@@ -81,6 +81,11 @@ enum stap_arg_bitness
 
 struct stap_probe_arg
 {
+  stap_probe_arg (stap_arg_bitness bitness_, type *atype_,
+		  expression_up &&aexpr_)
+  : bitness (bitness_), atype (atype_), aexpr (std::move (aexpr_))
+  {}
+
   /* The bitness of this argument.  */
   enum stap_arg_bitness bitness;
 
@@ -88,7 +93,7 @@ struct stap_probe_arg
   struct type *atype;
 
   /* The argument converted to an internal GDB expression.  */
-  struct expression *aexpr;
+  expression_up aexpr;
 };
 
 /* Class that implements the static probe methods for "stap" probes.  */
@@ -128,14 +133,6 @@ public:
       m_sem_addr (sem_addr),
       m_have_parsed_args (false), m_unparsed_args_text (args_text)
   {}
-
-  /* Destructor for stap_probe.  */
-  ~stap_probe ()
-  {
-    if (m_have_parsed_args)
-      for (struct stap_probe_arg arg : m_parsed_args)
-	xfree (arg.aexpr);
-  }
 
   /* See probe.h.  */
   CORE_ADDR get_relocated_address (struct objfile *objfile) override;
@@ -1140,7 +1137,7 @@ stap_parse_argument_1 (struct stap_parse_info *p, int has_lhs,
    unknown tokens.  It will return 1 if the argument has been parsed
    successfully, or zero otherwise.  */
 
-static struct expression *
+static expression_up
 stap_parse_argument (const char **arg, struct type *atype,
 		     struct gdbarch *gdbarch)
 {
@@ -1176,7 +1173,7 @@ stap_parse_argument (const char **arg, struct type *atype,
   *arg = p.arg;
 
   /* We can safely return EXPOUT here.  */
-  return p.pstate.expout;
+  return expression_up (p.pstate.expout);
 }
 
 /* Implementation of 'parse_probe_arguments' method.  */
@@ -1195,12 +1192,8 @@ stap_probe::parse_arguments (struct gdbarch *gdbarch)
 
   while (*cur != '\0')
     {
-      struct stap_probe_arg arg;
-      enum stap_arg_bitness b;
+      stap_arg_bitness bitness;
       int got_minus = 0;
-      struct expression *expr;
-
-      memset (&arg, 0, sizeof (arg));
 
       /* We expect to find something like:
 
@@ -1223,23 +1216,23 @@ stap_probe::parse_arguments (struct gdbarch *gdbarch)
 	  switch (*cur)
 	    {
 	    case '1':
-	      b = (got_minus ? STAP_ARG_BITNESS_8BIT_SIGNED
-		   : STAP_ARG_BITNESS_8BIT_UNSIGNED);
+	      bitness = (got_minus ? STAP_ARG_BITNESS_8BIT_SIGNED
+		         : STAP_ARG_BITNESS_8BIT_UNSIGNED);
 	      break;
 
 	    case '2':
-	      b = (got_minus ? STAP_ARG_BITNESS_16BIT_SIGNED
-		   : STAP_ARG_BITNESS_16BIT_UNSIGNED);
+	      bitness = (got_minus ? STAP_ARG_BITNESS_16BIT_SIGNED
+			 : STAP_ARG_BITNESS_16BIT_UNSIGNED);
 	      break;
 
 	    case '4':
-	      b = (got_minus ? STAP_ARG_BITNESS_32BIT_SIGNED
-		   : STAP_ARG_BITNESS_32BIT_UNSIGNED);
+	      bitness = (got_minus ? STAP_ARG_BITNESS_32BIT_SIGNED
+			 : STAP_ARG_BITNESS_32BIT_UNSIGNED);
 	      break;
 
 	    case '8':
-	      b = (got_minus ? STAP_ARG_BITNESS_64BIT_SIGNED
-		   : STAP_ARG_BITNESS_64BIT_UNSIGNED);
+	      bitness = (got_minus ? STAP_ARG_BITNESS_64BIT_SIGNED
+		         : STAP_ARG_BITNESS_64BIT_UNSIGNED);
 	      break;
 
 	    default:
@@ -1252,34 +1245,30 @@ stap_probe::parse_arguments (struct gdbarch *gdbarch)
 	      }
 	    }
 
-	  arg.bitness = b;
-
 	  /* Discard the number and the `@' sign.  */
 	  cur += 2;
 	}
       else
-	arg.bitness = STAP_ARG_BITNESS_UNDEFINED;
+	bitness = STAP_ARG_BITNESS_UNDEFINED;
 
-      arg.atype = stap_get_expected_argument_type (gdbarch, arg.bitness,
-						   this->get_name ());
+      struct type *atype = stap_get_expected_argument_type (gdbarch, bitness,
+							    this->get_name ());
 
-      expr = stap_parse_argument (&cur, arg.atype, gdbarch);
+      expression_up expr = stap_parse_argument (&cur, atype, gdbarch);
 
       if (stap_expression_debug)
-	dump_raw_expression (expr, gdb_stdlog,
+	dump_raw_expression (expr.get (), gdb_stdlog,
 			     "before conversion to prefix form");
 
-      prefixify_expression (expr);
+      prefixify_expression (expr.get ());
 
       if (stap_expression_debug)
-	dump_prefix_expression (expr, gdb_stdlog);
+	dump_prefix_expression (expr.get (), gdb_stdlog);
 
-      arg.aexpr = expr;
+      m_parsed_args.emplace_back (bitness, atype, std::move (expr));
 
       /* Start it over again.  */
       cur = skip_spaces (cur);
-
-      m_parsed_args.push_back (arg);
     }
 }
 
@@ -1386,7 +1375,8 @@ stap_probe::evaluate_argument (unsigned n, struct frame_info *frame)
   struct gdbarch *gdbarch = get_frame_arch (frame);
 
   arg = this->get_arg_by_number (n, gdbarch);
-  return evaluate_subexp_standard (arg->atype, arg->aexpr, &pos, EVAL_NORMAL);
+  return evaluate_subexp_standard (arg->atype, arg->aexpr.get (), &pos,
+				   EVAL_NORMAL);
 }
 
 /* Compile the probe's argument N (indexed from 0) to agent expression.
@@ -1402,7 +1392,7 @@ stap_probe::compile_to_ax (struct agent_expr *expr, struct axs_value *value,
   arg = this->get_arg_by_number (n, expr->gdbarch);
 
   pc = arg->aexpr->elts;
-  gen_expr (arg->aexpr, &pc, expr, value);
+  gen_expr (arg->aexpr.get (), &pc, expr, value);
 
   require_rvalue (expr, value);
   value->type = arg->atype;
