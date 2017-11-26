@@ -37,6 +37,21 @@ extern int parser_debug;
 
 struct parser_state
 {
+  /* Constructor.  INITIAL_SIZE is the initial size of the expout
+     array.  LANG is the language used to parse the expression.  And
+     GDBARCH is the gdbarch to use during parsing.  */
+
+  parser_state (size_t initial_size, const struct language_defn *lang,
+		struct gdbarch *gdbarch);
+  ~parser_state ();
+
+  DISABLE_COPY_AND_ASSIGN (parser_state);
+
+  /* Resize the allocated expression to the correct size, and return
+     it as an expression_up -- passing ownership to the caller.  */
+  expression_up release ();
+
+
   /* The expression related to this parser state.  */
 
   struct expression *expout;
@@ -155,23 +170,6 @@ struct type_stack
   /* Allocated size of stack.  */
   int size;
 };
-
-/* Helper function to initialize the expout, expout_size, expout_ptr
-   trio inside PS before it is used to store expression elements created
-   during the parsing of an expression.  INITIAL_SIZE is the initial size of
-   the expout array.  LANG is the language used to parse the expression.
-   And GDBARCH is the gdbarch to use during parsing.  */
-
-extern void initialize_expout (struct parser_state *ps,
-			       size_t initial_size,
-			       const struct language_defn *lang,
-			       struct gdbarch *gdbarch);
-
-/* Helper function that reallocates the EXPOUT inside PS in order to
-   eliminate any unused space.  It is generally used when the expression
-   has just been parsed and created.  */
-
-extern void reallocate_expout (struct parser_state *ps);
 
 /* Reverse an expression from suffix form (in which it is constructed)
    to prefix form (in which we can conveniently print or execute it).

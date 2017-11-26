@@ -28,6 +28,23 @@
 
 struct stap_parse_info
 {
+  /* Constructor.  Arguments are passed to the parser_state
+     constructor.  */
+  stap_parse_info (size_t initial_size, const struct language_defn *lang,
+		   struct gdbarch *gdbarch)
+    : arg (nullptr),
+      pstate (initial_size, lang, gdbarch),
+      saved_arg (nullptr),
+      arg_type (nullptr),
+      gdbarch (gdbarch),
+      inside_paren_p (0)
+  {
+  }
+
+  ~stap_parse_info () = default;
+
+  DISABLE_COPY_AND_ASSIGN (stap_parse_info);
+
   /* The probe's argument in a string format.  */
   const char *arg;
 
