@@ -1006,13 +1006,35 @@ struct rank
     short subrank;
   };
 
-/* * Struct used for ranking a function for overload resolution.  */
+/* * Dummy badness value for nonexistent parameter positions.  */
+extern const struct rank TOO_FEW_PARAMS_BADNESS;
+
+/* Struct used for ranking a function for overload resolution.  It describes
+   how well (or badly) a particular overload fits the function/method call
+   we want to make.  */
 
 struct badness_vector
-  {
-    int length;
-    struct rank *rank;
-  };
+{
+  /* Create a badness_vector.  LENGTH_MATCHES_ should be true if the
+     overload has the right number of arguments for the call we want to make.
+     NARGS is the number of arguments of the overload.  Elements of the
+     ARG_RANKS field are initialized to LENGTH_MISMATCH_BADNESS, which */
+
+  badness_vector (bool length_matches_, int nargs)
+  : length_matches (length_matches_),
+    arg_ranks (nargs, TOO_FEW_PARAMS_BADNESS)
+  {}
+
+  /*  True if the overload has the right number of arguments.  */
+
+  bool length_matches;
+
+  /* For each argument, how well it fits the corresponding parameter passed to
+     the function/method call.  */
+  std::vector<rank> arg_ranks;
+};
+
+typedef std::unique_ptr<badness_vector> badness_vector_up;
 
 /* * GNAT Ada-specific information for various Ada types.  */
 
@@ -1856,13 +1878,6 @@ extern int is_unique_ancestor (struct type *, struct value *);
 
 /* Overload resolution */
 
-#define LENGTH_MATCH(bv) ((bv)->rank[0])
-
-/* * Badness if parameter list length doesn't match arg list length.  */
-extern const struct rank LENGTH_MISMATCH_BADNESS;
-
-/* * Dummy badness value for nonexistent parameter positions.  */
-extern const struct rank TOO_FEW_PARAMS_BADNESS;
 /* * Badness if no conversion among types.  */
 extern const struct rank INCOMPATIBLE_TYPE_BADNESS;
 
@@ -1914,12 +1929,12 @@ extern const struct rank NS_POINTER_CONVERSION_BADNESS;
 extern const struct rank NS_INTEGER_POINTER_CONVERSION_BADNESS;
 
 extern struct rank sum_ranks (struct rank a, struct rank b);
-extern int compare_ranks (struct rank a, struct rank b);
+extern int compare_ranks (const struct rank &a, const struct rank &b);
 
 extern int compare_badness (struct badness_vector *, struct badness_vector *);
 
-extern struct badness_vector *rank_function (struct type **, int,
-					     struct value **, int);
+extern badness_vector_up rank_function (struct type **, int,
+					struct value **, int);
 
 extern struct rank rank_one_type (struct type *, struct type *,
 				  struct value *);

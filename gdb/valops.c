@@ -57,19 +57,19 @@ static struct value *search_struct_method (const char *, struct value **,
 static int find_oload_champ_namespace (struct value **, int,
 				       const char *, const char *,
 				       struct symbol ***,
-				       struct badness_vector **,
+				       badness_vector_up *,
 				       const int no_adl);
 
 static
 int find_oload_champ_namespace_loop (struct value **, int,
 				     const char *, const char *,
 				     int, struct symbol ***,
-				     struct badness_vector **, int *,
+				     badness_vector_up *, int *,
 				     const int no_adl);
 
 static int find_oload_champ (struct value **, int, int,
 			     struct fn_field *, VEC (xmethod_worker_ptr) *,
-			     struct symbol **, struct badness_vector **);
+			     struct symbol **, badness_vector_up *);
 
 static int oload_method_static_p (struct fn_field *, int);
 
@@ -2477,11 +2477,13 @@ find_overload_match (struct value **args, int nargs,
   int src_method_oload_champ = -1;
   int ext_method_oload_champ = -1;
 
-  /* The measure for the current best match.  */
+  /* Results of overload-finding functions.  */
+  badness_vector_up func_badness;
+  badness_vector_up ext_method_badness;
+  badness_vector_up src_method_badness;
+
+  /* The measure for the current best match, points to one of the above.  */
   struct badness_vector *method_badness = NULL;
-  struct badness_vector *func_badness = NULL;
-  struct badness_vector *ext_method_badness = NULL;
-  struct badness_vector *src_method_badness = NULL;
 
   struct value *temp = obj;
   /* For methods, the list of overloaded methods.  */
@@ -2552,10 +2554,8 @@ find_overload_match (struct value **args, int nargs,
 						     NULL, &src_method_badness);
 
 	  src_method_match_quality = classify_oload_match
-	    (src_method_badness, nargs,
+	    (src_method_badness.get (), nargs,
 	     oload_method_static_p (fns_ptr, src_method_oload_champ));
-
-	  make_cleanup (xfree, src_method_badness);
 	}
 
       if (VEC_length (xmethod_worker_ptr, xm_worker_vec) > 0)
@@ -2563,15 +2563,16 @@ find_overload_match (struct value **args, int nargs,
 	  ext_method_oload_champ = find_oload_champ (args, nargs,
 						     0, NULL, xm_worker_vec,
 						     NULL, &ext_method_badness);
-	  ext_method_match_quality = classify_oload_match (ext_method_badness,
-							   nargs, 0);
-	  make_cleanup (xfree, ext_method_badness);
+	  ext_method_match_quality
+	    = classify_oload_match (ext_method_badness.get (), nargs, 0);
+
 	  make_cleanup (free_xmethod_worker_vec, xm_worker_vec);
 	}
 
       if (src_method_oload_champ >= 0 && ext_method_oload_champ >= 0)
 	{
-	  switch (compare_badness (ext_method_badness, src_method_badness))
+	  switch (compare_badness (ext_method_badness.get (),
+				   src_method_badness.get ()))
 	    {
 	      case 0: /* Src method and xmethod are equally good.  */
 		/* If src method and xmethod are equally good, then
@@ -2586,7 +2587,7 @@ find_overload_match (struct value **args, int nargs,
 		if (ext_method_match_quality != STANDARD)
 		  {
 		    method_oload_champ = src_method_oload_champ;
-		    method_badness = src_method_badness;
+		    method_badness = src_method_badness.get ();
 		    ext_method_oload_champ = -1;
 		    method_match_quality = src_method_match_quality;
 		    break;
@@ -2594,13 +2595,13 @@ find_overload_match (struct value **args, int nargs,
 		/* FALLTHROUGH */
 	      case 2: /* Ext method is champion.  */
 		method_oload_champ = ext_method_oload_champ;
-		method_badness = ext_method_badness;
+		method_badness = ext_method_badness.get ();
 		src_method_oload_champ = -1;
 		method_match_quality = ext_method_match_quality;
 		break;
 	      case 3: /* Src method is champion.  */
 		method_oload_champ = src_method_oload_champ;
-		method_badness = src_method_badness;
+		method_badness = src_method_badness.get ();
 		ext_method_oload_champ = -1;
 		method_match_quality = src_method_match_quality;
 		break;
@@ -2613,13 +2614,13 @@ find_overload_match (struct value **args, int nargs,
       else if (src_method_oload_champ >= 0)
 	{
 	  method_oload_champ = src_method_oload_champ;
-	  method_badness = src_method_badness;
+	  method_badness = src_method_badness.get ();
 	  method_match_quality = src_method_match_quality;
 	}
       else if (ext_method_oload_champ >= 0)
 	{
 	  method_oload_champ = ext_method_oload_champ;
-	  method_badness = ext_method_badness;
+	  method_badness = ext_method_badness.get ();
 	  method_match_quality = ext_method_match_quality;
 	}
     }
@@ -2686,10 +2687,9 @@ find_overload_match (struct value **args, int nargs,
                                                      no_adl);
 
       if (func_oload_champ >= 0)
-	func_match_quality = classify_oload_match (func_badness, nargs, 0);
+	func_match_quality = classify_oload_match (func_badness.get (), nargs, 0);
 
       make_cleanup (xfree, oload_syms);
-      make_cleanup (xfree, func_badness);
     }
 
   /* Did we find a match ?  */
@@ -2703,7 +2703,7 @@ find_overload_match (struct value **args, int nargs,
      quality.  */
   if (method_oload_champ >= 0 && func_oload_champ >= 0)
     {
-      switch (compare_badness (func_badness, method_badness))
+      switch (compare_badness (func_badness.get (), method_badness))
         {
 	  case 0: /* Top two contenders are equally good.  */
 	    /* FIXME: GDB does not support the general ambiguous case.
@@ -2832,7 +2832,7 @@ find_oload_champ_namespace (struct value **args, int nargs,
 			    const char *func_name,
 			    const char *qualified_name,
 			    struct symbol ***oload_syms,
-			    struct badness_vector **oload_champ_bv,
+			    badness_vector_up *oload_champ_bv,
 			    const int no_adl)
 {
   int oload_champ;
@@ -2862,7 +2862,7 @@ find_oload_champ_namespace_loop (struct value **args, int nargs,
 				 const char *qualified_name,
 				 int namespace_len,
 				 struct symbol ***oload_syms,
-				 struct badness_vector **oload_champ_bv,
+				 badness_vector_up *oload_champ_bv,
 				 int *oload_champ,
 				 const int no_adl)
 {
@@ -2872,7 +2872,7 @@ find_oload_champ_namespace_loop (struct value **args, int nargs,
   struct cleanup *old_cleanups;
   int new_oload_champ;
   struct symbol **new_oload_syms;
-  struct badness_vector *new_oload_champ_bv;
+  badness_vector_up new_oload_champ_bv;
   char *new_namespace;
 
   if (next_namespace_len != 0)
@@ -2913,7 +2913,6 @@ find_oload_champ_namespace_loop (struct value **args, int nargs,
      function symbol to start off with.)  */
 
   old_cleanups = make_cleanup (xfree, *oload_syms);
-  make_cleanup (xfree, *oload_champ_bv);
   new_namespace = (char *) alloca (namespace_len + 1);
   strncpy (new_namespace, qualified_name, namespace_len);
   new_namespace[namespace_len] = '\0';
@@ -2950,18 +2949,17 @@ find_oload_champ_namespace_loop (struct value **args, int nargs,
      it's a bad match.  */
 
   if (new_oload_champ != -1
-      && classify_oload_match (new_oload_champ_bv, nargs, 0) == STANDARD)
+      && classify_oload_match (new_oload_champ_bv.get (), nargs, 0) == STANDARD)
     {
       *oload_syms = new_oload_syms;
       *oload_champ = new_oload_champ;
-      *oload_champ_bv = new_oload_champ_bv;
+      *oload_champ_bv = std::move (new_oload_champ_bv);
       do_cleanups (old_cleanups);
       return 1;
     }
   else if (searched_deeper)
     {
       xfree (new_oload_syms);
-      xfree (new_oload_champ_bv);
       discard_cleanups (old_cleanups);
       return 0;
     }
@@ -2969,7 +2967,7 @@ find_oload_champ_namespace_loop (struct value **args, int nargs,
     {
       *oload_syms = new_oload_syms;
       *oload_champ = new_oload_champ;
-      *oload_champ_bv = new_oload_champ_bv;
+      *oload_champ_bv = std::move (new_oload_champ_bv);
       do_cleanups (old_cleanups);
       return 0;
     }
@@ -2994,12 +2992,10 @@ find_oload_champ (struct value **args, int nargs,
 		  int num_fns, struct fn_field *fns_ptr,
 		  VEC (xmethod_worker_ptr) *xm_worker_vec,
 		  struct symbol **oload_syms,
-		  struct badness_vector **oload_champ_bv)
+		  badness_vector_up *oload_champ_bv)
 {
   int ix;
   int fn_count;
-  /* A measure of how good an overloaded instance is.  */
-  struct badness_vector *bv;
   /* Index of best overloaded function.  */
   int oload_champ = -1;
   /* Current ambiguity state for overload resolution.  */
@@ -3020,7 +3016,6 @@ find_oload_champ (struct value **args, int nargs,
   /* Consider each candidate in turn.  */
   for (ix = 0; ix < fn_count; ix++)
     {
-      int jj;
       int static_offset = 0;
       int nparms;
       struct type **parm_types;
@@ -3042,7 +3037,7 @@ find_oload_champ (struct value **args, int nargs,
 	    nparms = TYPE_NFIELDS (SYMBOL_TYPE (oload_syms[ix]));
 
 	  parm_types = XNEWVEC (struct type *, nparms);
-	  for (jj = 0; jj < nparms; jj++)
+	  for (int jj = 0; jj < nparms; jj++)
 	    parm_types[jj] = (fns_ptr != NULL
 			      ? (TYPE_FN_FIELD_ARGS (fns_ptr, ix)[jj].type)
 			      : TYPE_FIELD_TYPE (SYMBOL_TYPE (oload_syms[ix]),
@@ -3051,18 +3046,41 @@ find_oload_champ (struct value **args, int nargs,
 
       /* Compare parameter types to supplied argument types.  Skip
          THIS for static methods.  */
-      bv = rank_function (parm_types, nparms, 
-			  args + static_offset,
-			  nargs - static_offset);
+      badness_vector_up bv = rank_function (parm_types, nparms,
+					    args + static_offset,
+					    nargs - static_offset);
 
-      if (!*oload_champ_bv)
+      if (overload_debug)
 	{
-	  *oload_champ_bv = bv;
+	  if (fns_ptr != NULL)
+	    fprintf_filtered (gdb_stderr,
+			      "Overloaded method instance %s, length matches: %s, # of parms %d\n",
+			      bv->length_matches ? "yes": "no", fns_ptr[ix].physname, nparms);
+	  else if (xm_worker_vec != NULL)
+	    fprintf_filtered (gdb_stderr,
+			      "Xmethod worker, # of parms %d\n",
+			      nparms);
+	  else
+	    fprintf_filtered (gdb_stderr,
+			      "Overloaded function instance %s, length matches: %s # of parms %d\n",
+			      SYMBOL_DEMANGLED_NAME (oload_syms[ix]),
+			      bv->length_matches ? "yes": "no",
+			      nparms);
+
+	  for (int jj = 0; jj < nargs - static_offset; jj++)
+	    fprintf_filtered (gdb_stderr,
+			      "...Badness @ %d : %d\n",
+			      jj, bv->arg_ranks[jj].rank);
+	}
+
+      if (*oload_champ_bv == NULL)
+	{
+	  *oload_champ_bv = std::move (bv);
 	  oload_champ = 0;
 	}
       else /* See whether current candidate is better or worse than
 	      previous best.  */
-	switch (compare_badness (bv, *oload_champ_bv))
+	switch (compare_badness (bv.get (), oload_champ_bv->get ()))
 	  {
 	  case 0:		/* Top two contenders are equally good.  */
 	    oload_ambiguous = 1;
@@ -3071,7 +3089,7 @@ find_oload_champ (struct value **args, int nargs,
 	    oload_ambiguous = 2;
 	    break;
 	  case 2:		/* New champion, record details.  */
-	    *oload_champ_bv = bv;
+	    *oload_champ_bv = std::move (bv);
 	    oload_ambiguous = 0;
 	    oload_champ = ix;
 	    break;
@@ -3080,30 +3098,11 @@ find_oload_champ (struct value **args, int nargs,
 	    break;
 	  }
       xfree (parm_types);
+
       if (overload_debug)
-	{
-	  if (fns_ptr != NULL)
-	    fprintf_filtered (gdb_stderr,
-			      "Overloaded method instance %s, # of parms %d\n",
-			      fns_ptr[ix].physname, nparms);
-	  else if (xm_worker_vec != NULL)
-	    fprintf_filtered (gdb_stderr,
-			      "Xmethod worker, # of parms %d\n",
-			      nparms);
-	  else
-	    fprintf_filtered (gdb_stderr,
-			      "Overloaded function instance "
-			      "%s # of parms %d\n",
-			      SYMBOL_DEMANGLED_NAME (oload_syms[ix]), 
-			      nparms);
-	  for (jj = 0; jj < nargs - static_offset; jj++)
-	    fprintf_filtered (gdb_stderr,
-			      "...Badness @ %d : %d\n", 
-			      jj, bv->rank[jj].rank);
-	  fprintf_filtered (gdb_stderr, "Overload resolution "
-			    "champion is %d, ambiguous? %d\n", 
-			    oload_champ, oload_ambiguous);
-	}
+	fprintf_filtered (gdb_stderr, "Overload resolution "
+			  "champion is %d, ambiguous? %d\n",
+			  oload_champ, oload_ambiguous);
     }
 
   return oload_champ;
@@ -3128,19 +3127,18 @@ classify_oload_match (struct badness_vector *oload_champ_bv,
 		      int nargs,
 		      int static_offset)
 {
-  int ix;
   enum oload_classification worst = STANDARD;
 
-  for (ix = 1; ix <= nargs - static_offset; ix++)
+  for (int ix = 0; ix < nargs - static_offset; ix++)
     {
       /* If this conversion is as bad as INCOMPATIBLE_TYPE_BADNESS
          or worse return INCOMPATIBLE.  */
-      if (compare_ranks (oload_champ_bv->rank[ix],
+      if (compare_ranks (oload_champ_bv->arg_ranks[ix],
                          INCOMPATIBLE_TYPE_BADNESS) <= 0)
 	return INCOMPATIBLE;	/* Truly mismatched types.  */
       /* Otherwise If this conversion is as bad as
          NS_POINTER_CONVERSION_BADNESS or worse return NON_STANDARD.  */
-      else if (compare_ranks (oload_champ_bv->rank[ix],
+      else if (compare_ranks (oload_champ_bv->arg_ranks[ix],
                               NS_POINTER_CONVERSION_BADNESS) <= 0)
 	worst = NON_STANDARD;	/* Non-standard type conversions
 				   needed.  */

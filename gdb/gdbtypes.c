@@ -3179,7 +3179,7 @@ sum_ranks (struct rank a, struct rank b)
   -1 if b is better than a.  */
 
 int
-compare_ranks (struct rank a, struct rank b)
+compare_ranks (const struct rank &a, const struct rank &b)
 {
   if (a.rank == b.rank)
     {
@@ -3209,19 +3209,30 @@ compare_ranks (struct rank a, struct rank b)
 int
 compare_badness (struct badness_vector *a, struct badness_vector *b)
 {
-  int i;
-  int tmp;
-  short found_pos = 0;		/* any positives in c? */
-  short found_neg = 0;		/* any negatives in c? */
+  bool found_pos = false;  /* any positives (reasons why B should win) ?  */
+  bool found_neg = false;  /* any negatives (reasons why A should win) ? */
 
   /* differing lengths => incomparable */
-  if (a->length != b->length)
+  if (a->arg_ranks.size () != b->arg_ranks.size ())
     return 1;
 
-  /* Subtract b from a */
-  for (i = 0; i < a->length; i++)
+  /* Check if the number of arguments in each overload matches the passed number
+     of parameters.  If they both match or both don't match, it's a draw.  */
+  if (a->length_matches && !b->length_matches)
     {
-      tmp = compare_ranks (b->rank[i], a->rank[i]);
+      /* That's a point for A.  */
+      found_neg = true;
+    }
+  else if (b->length_matches && !a->length_matches)
+    {
+      /* That's a point for B.  */
+      found_pos = true;
+    }
+
+  /* Subtract b from a */
+  for (int i = 0; i < a->arg_ranks.size (); i++)
+    {
+      int tmp = compare_ranks (b->arg_ranks[i], a->arg_ranks[i]);
       if (tmp > 0)
 	found_pos = 1;
       else if (tmp < 0)
@@ -3250,36 +3261,30 @@ compare_badness (struct badness_vector *a, struct badness_vector *b)
    Return a pointer to a badness vector.  This has NARGS + 1
    entries.  */
 
-struct badness_vector *
+badness_vector_up
 rank_function (struct type **parms, int nparms, 
 	       struct value **args, int nargs)
 {
-  int i;
-  struct badness_vector *bv = XNEW (struct badness_vector);
-  int min_len = nparms < nargs ? nparms : nargs;
-
-  bv->length = nargs + 1;	/* add 1 for the length-match rank.  */
-  bv->rank = XNEWVEC (struct rank, nargs + 1);
-
   /* First compare the lengths of the supplied lists.
      If there is a mismatch, set it to a high value.  */
+
+  int min_len = std::min (nparms, nargs);
 
   /* pai/1997-06-03 FIXME: when we have debug info about default
      arguments and ellipsis parameter lists, we should consider those
      and rank the length-match more finely.  */
 
-  LENGTH_MATCH (bv) = (nargs != nparms)
-		      ? LENGTH_MISMATCH_BADNESS
-		      : EXACT_MATCH_BADNESS;
+  bool length_matches = nargs == nparms;
 
-  /* Now rank all the parameters of the candidate function.  */
-  for (i = 1; i <= min_len; i++)
-    bv->rank[i] = rank_one_type (parms[i - 1], value_type (args[i - 1]),
-				 args[i - 1]);
+  badness_vector_up bv (new badness_vector (length_matches, nargs));
 
-  /* If more arguments than parameters, add dummy entries.  */
-  for (i = min_len + 1; i <= nargs; i++)
-    bv->rank[i] = TOO_FEW_PARAMS_BADNESS;
+  /* Now rank all the arguments of the candidate function.  If there are more
+     arguments to this function than parameters to the function calls, the
+     corresponding entries in bv->arg_ranks will be left at their initial value
+     of TOO_FEW_PARAMS_BADNESS.  */
+
+  for (int i = 0; i < min_len; i++)
+    bv->arg_ranks[i] = rank_one_type (parms[i], value_type (args[i]), args[i]);
 
   return bv;
 }
