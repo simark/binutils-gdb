@@ -959,6 +959,7 @@ COMMON_SFILES = \
 	dummy-frame.c \
 	dwarf2-frame.c \
 	dwarf2-frame-tailcall.c \
+	dwarf2-index.c \
 	dwarf2expr.c \
 	dwarf2loc.c \
 	dwarf2read.c \
