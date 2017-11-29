@@ -336,6 +336,27 @@ struct dwarf2_per_objfile
 
   DISABLE_COPY_AND_ASSIGN (dwarf2_per_objfile);
 
+  /* Return the CU/TU given its index.
+
+     This is intended for loops like:
+
+     for (i = 0; i < (dwarf2_per_objfile->n_comp_units
+		      + dwarf2_per_objfile->n_type_units); ++i)
+       {
+         struct dwarf2_per_cu_data *per_cu = dwarf2_per_objfile->get_cutu (i);
+
+         ...;
+       }
+  */
+
+  dwarf2_per_cu_data *get_cutu (int index);
+
+  /* Return the CU given its index.
+     This differs from get_cutu in that it's for when you know INDEX
+     refers to a CU.  */
+
+  dwarf2_per_cu_data *get_cu (int index);
+
   /* Free all cached compilation units.  */
   void free_cached_comp_units ();
 private:
