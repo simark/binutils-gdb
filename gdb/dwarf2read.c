@@ -546,7 +546,7 @@ DEF_VEC_O (delayed_method_info);
 struct dwarf2_cu
 {
   /* The objfile containing this compilation unit.  */
-  struct objfile *objfile;
+  struct dwarf2_per_objfile *dwarf2_per_objfile;
 
   /* The header of the compilation unit.  */
   struct comp_unit_head header;
@@ -744,7 +744,7 @@ struct dwarf2_per_cu_data
   /* The corresponding objfile.
      Normally we can get the objfile from dwarf2_per_objfile.
      However we can enter this file with just a "per_cu" handle.  */
-  struct objfile *objfile;
+  struct dwarf2_per_objfile *dwarf2_per_objfile;
 
   /* When dwarf2_per_objfile->using_index is true, the 'quick' field
      is active.  Otherwise, the 'psymtab' field is active.  */
@@ -3079,7 +3079,7 @@ create_cus_from_index_list (struct objfile *objfile,
 			  struct dwarf2_per_cu_data);
       the_cu->sect_off = sect_off;
       the_cu->length = length;
-      the_cu->objfile = objfile;
+      the_cu->dwarf2_per_objfile = dwarf2_per_objfile;
       the_cu->section = section;
       the_cu->v.quick = OBSTACK_ZALLOC (&objfile->objfile_obstack,
 					struct dwarf2_per_cu_quick_data);
@@ -3156,7 +3156,7 @@ create_signatured_type_table_from_index (struct objfile *objfile,
       sig_type->per_cu.is_debug_types = 1;
       sig_type->per_cu.section = section;
       sig_type->per_cu.sect_off = sect_off;
-      sig_type->per_cu.objfile = objfile;
+      sig_type->per_cu.dwarf2_per_objfile = dwarf2_per_objfile;
       sig_type->per_cu.v.quick
 	= OBSTACK_ZALLOC (&objfile->objfile_obstack,
 			  struct dwarf2_per_cu_quick_data);
@@ -5800,7 +5800,7 @@ create_debug_type_hash_table (struct dwo_file *dwo_file,
 				     struct signatured_type);
 	  sig_type->signature = header.signature;
 	  sig_type->type_offset_in_tu = header.type_cu_offset_in_tu;
-	  sig_type->per_cu.objfile = objfile;
+	  sig_type->per_cu.dwarf2_per_objfile = dwarf2_per_objfile;
 	  sig_type->per_cu.is_debug_types = 1;
 	  sig_type->per_cu.section = section;
 	  sig_type->per_cu.sect_off = sect_off;
@@ -5985,7 +5985,7 @@ fill_in_sig_entry_from_dwo_entry (struct objfile *objfile,
   sig_entry->per_cu.sect_off = dwo_entry->sect_off;
   sig_entry->per_cu.length = dwo_entry->length;
   sig_entry->per_cu.reading_dwo_directly = 1;
-  sig_entry->per_cu.objfile = objfile;
+  sig_entry->per_cu.dwarf2_per_objfile = dwarf2_per_objfile;
   sig_entry->type_offset_in_tu = dwo_entry->type_offset_in_tu;
   sig_entry->dwo_unit = dwo_entry;
 }
@@ -6411,7 +6411,7 @@ lookup_dwo_unit (struct dwarf2_per_cu_data *this_cu,
       if (! attr)
 	error (_("Dwarf Error: missing dwo_id for dwo_name %s"
 		 " [in module %s]"),
-	       dwo_name, objfile_name (this_cu->objfile));
+	       dwo_name, objfile_name (this_cu->dwarf2_per_objfile->objfile));
       signature = DW_UNSND (attr);
       dwo_unit = lookup_dwo_comp_unit (this_cu, dwo_name, comp_dir,
 				       signature);
@@ -6908,7 +6908,7 @@ create_type_unit_group (struct dwarf2_cu *cu, sect_offset line_offset_struct)
   tu_group = OBSTACK_ZALLOC (&objfile->objfile_obstack,
 			     struct type_unit_group);
   per_cu = &tu_group->per_cu;
-  per_cu->objfile = objfile;
+  per_cu->dwarf2_per_objfile = cu->dwarf2_per_objfile;
 
   if (dwarf2_per_objfile->using_index)
     {
@@ -7008,7 +7008,7 @@ get_type_unit_group (struct dwarf2_cu *cu, const struct attribute *stmt_list)
 static struct partial_symtab *
 create_partial_symtab (struct dwarf2_per_cu_data *per_cu, const char *name)
 {
-  struct objfile *objfile = per_cu->objfile;
+  struct objfile *objfile = per_cu->dwarf2_per_objfile->objfile;
   struct partial_symtab *pst;
 
   pst = start_psymtab_common (objfile, name, 0,
@@ -7050,7 +7050,7 @@ process_psymtab_comp_unit_reader (const struct die_reader_specs *reader,
 				  void *data)
 {
   struct dwarf2_cu *cu = reader->cu;
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
   struct dwarf2_per_cu_data *per_cu = cu->per_cu;
   CORE_ADDR baseaddr;
@@ -7690,7 +7690,7 @@ read_comp_units_from_section (struct objfile *objfile,
       this_cu->sect_off = sect_off;
       this_cu->length = cu_header.length + cu_header.initial_length_size;
       this_cu->is_dwz = is_dwz;
-      this_cu->objfile = objfile;
+      this_cu->dwarf2_per_objfile = dwarf2_per_objfile;
       this_cu->section = section;
 
       if (*n_comp_units == *n_allocated)
@@ -7821,12 +7821,12 @@ scan_partial_symbols (struct partial_die_info *first_die, CORE_ADDR *lowpc,
 		  {
 		    error (_("Dwarf Error: DW_TAG_imported_unit is not"
 			     " supported in type units [in module %s]"),
-			   objfile_name (cu->objfile));
+			   objfile_name (cu->dwarf2_per_objfile->objfile));
 		  }
 
-		per_cu = dwarf2_find_containing_comp_unit (pdi->d.sect_off,
-							   pdi->is_dwz,
-							   cu->objfile);
+		per_cu = dwarf2_find_containing_comp_unit
+			   (pdi->d.sect_off, pdi->is_dwz,
+			    cu->dwarf2_per_objfile->objfile);
 
 		/* Go read the partial unit, if needed.  */
 		if (per_cu->v.psymtab == NULL)
@@ -7988,7 +7988,7 @@ partial_die_full_name (struct partial_die_info *pdi,
 static void
 add_partial_symbol (struct partial_die_info *pdi, struct dwarf2_cu *cu)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
   CORE_ADDR addr = 0;
   const char *actual_name = NULL;
@@ -8230,7 +8230,7 @@ add_partial_subprogram (struct partial_die_info *pdi,
             *highpc = pdi->highpc;
 	  if (set_addrmap)
 	    {
-	      struct objfile *objfile = cu->objfile;
+	      struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
 	      struct gdbarch *gdbarch = get_objfile_arch (objfile);
 	      CORE_ADDR baseaddr;
 	      CORE_ADDR highpc;
@@ -8316,7 +8316,7 @@ static struct abbrev_info *
 peek_die_abbrev (const gdb_byte *info_ptr, unsigned int *bytes_read,
 		 struct dwarf2_cu *cu)
 {
-  bfd *abfd = cu->objfile->obfd;
+  bfd *abfd = cu->dwarf2_per_objfile->objfile->obfd;
   unsigned int abbrev_number;
   struct abbrev_info *abbrev;
 
@@ -8995,7 +8995,7 @@ fixup_go_packaging (struct dwarf2_cu *cu)
 			       (symbol_symtab (sym) != NULL
 				? symtab_to_filename_for_display
 				    (symbol_symtab (sym))
-				: objfile_name (cu->objfile)),
+				: objfile_name (cu->dwarf2_per_objfile->objfile)),
 			       this_package_name, package_name);
 		  xfree (this_package_name);
 		}
@@ -9005,7 +9005,7 @@ fixup_go_packaging (struct dwarf2_cu *cu)
 
   if (package_name != NULL)
     {
-      struct objfile *objfile = cu->objfile;
+      struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
       const char *saved_package_name
 	= (const char *) obstack_copy0 (&objfile->per_bfd->storage_obstack,
 					package_name,
@@ -9182,7 +9182,7 @@ process_full_comp_unit (struct dwarf2_per_cu_data *per_cu,
 			enum language pretend_language)
 {
   struct dwarf2_cu *cu = per_cu->cu;
-  struct objfile *objfile = per_cu->objfile;
+  struct objfile *objfile = per_cu->dwarf2_per_objfile->objfile;
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
   CORE_ADDR lowpc, highpc;
   struct compunit_symtab *cust;
@@ -9286,7 +9286,7 @@ process_full_type_unit (struct dwarf2_per_cu_data *per_cu,
 			enum language pretend_language)
 {
   struct dwarf2_cu *cu = per_cu->cu;
-  struct objfile *objfile = per_cu->objfile;
+  struct objfile *objfile = per_cu->dwarf2_per_objfile->objfile;
   struct compunit_symtab *cust;
   struct cleanup *delayed_list_cleanup;
   struct signatured_type *sig_type;
@@ -9364,7 +9364,7 @@ process_imported_unit_die (struct die_info *die, struct dwarf2_cu *cu)
     {
       error (_("Dwarf Error: DW_TAG_imported_unit is not"
 	       " supported in type units [in module %s]"),
-	     objfile_name (cu->objfile));
+	     objfile_name (cu->dwarf2_per_objfile->objfile));
     }
 
   attr = dwarf2_attr (die, DW_AT_import, cu);
@@ -9373,7 +9373,7 @@ process_imported_unit_die (struct die_info *die, struct dwarf2_cu *cu)
       sect_offset sect_off = dwarf2_get_ref_die_offset (attr);
       bool is_dwz = (attr->form == DW_FORM_GNU_ref_alt || cu->per_cu->is_dwz);
       dwarf2_per_cu_data *per_cu
-	= dwarf2_find_containing_comp_unit (sect_off, is_dwz, cu->objfile);
+	= dwarf2_find_containing_comp_unit (sect_off, is_dwz, cu->dwarf2_per_objfile->objfile);
 
       /* If necessary, add it to the queue and load its DIEs.  */
       if (maybe_queue_comp_unit (cu, per_cu, cu->language))
@@ -9630,7 +9630,7 @@ dwarf2_compute_name (const char *name,
 		     struct die_info *die, struct dwarf2_cu *cu,
 		     int physname)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
 
   if (name == NULL)
     name = dwarf2_name (die, cu);
@@ -9879,7 +9879,7 @@ dwarf2_full_name (const char *name, struct die_info *die, struct dwarf2_cu *cu)
 static const char *
 dwarf2_physname (const char *name, struct die_info *die, struct dwarf2_cu *cu)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   const char *retval, *mangled = NULL, *canon = NULL;
   int need_copy = 1;
 
@@ -10053,7 +10053,7 @@ using_directives (enum language language)
 static void
 read_import_statement (struct die_info *die, struct dwarf2_cu *cu)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   struct attribute *import_attr;
   struct die_info *imported_die, *child_die;
   struct dwarf2_cu *imported_cu;
@@ -10762,7 +10762,7 @@ create_cus_hash_table (struct dwo_file &dwo_file, dwarf2_section_info &section,
       memset (&create_dwo_cu_data.dwo_unit, 0,
 	      sizeof (create_dwo_cu_data.dwo_unit));
       memset (&per_cu, 0, sizeof (per_cu));
-      per_cu.objfile = objfile;
+      per_cu.dwarf2_per_objfile = dwarf2_per_objfile;
       per_cu.is_debug_types = 0;
       per_cu.sect_off = sect_offset (info_ptr - section.buffer);
       per_cu.section = &section;
@@ -12467,7 +12467,7 @@ inherit_abstract_dies (struct die_info *die, struct dwarf2_cu *cu)
 static void
 read_func_scope (struct die_info *die, struct dwarf2_cu *cu)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
   struct context_stack *newobj;
   CORE_ADDR lowpc;
@@ -12658,7 +12658,7 @@ read_func_scope (struct die_info *die, struct dwarf2_cu *cu)
 static void
 read_lexical_block_scope (struct die_info *die, struct dwarf2_cu *cu)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
   struct context_stack *newobj;
   CORE_ADDR lowpc, highpc;
@@ -12729,7 +12729,7 @@ read_lexical_block_scope (struct die_info *die, struct dwarf2_cu *cu)
 static void
 read_call_site_scope (struct die_info *die, struct dwarf2_cu *cu)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
   CORE_ADDR pc, baseaddr;
   struct attribute *attr;
@@ -12883,7 +12883,7 @@ read_call_site_scope (struct die_info *die, struct dwarf2_cu *cu)
       struct die_info *target_die;
 
       target_die = follow_die_ref (die, attr, &target_cu);
-      gdb_assert (target_cu->objfile == objfile);
+      gdb_assert (target_cu->dwarf2_per_objfile->objfile == objfile);
       if (die_is_declaration (target_die, target_cu))
 	{
 	  const char *target_physname;
@@ -13085,7 +13085,7 @@ read_variable (struct die_info *die, struct dwarf2_cu *cu)
 
       if (containing_type != NULL)
 	{
-	  struct objfile *objfile = cu->objfile;
+	  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
 
 	  storage = OBSTACK_ZALLOC (&objfile->objfile_obstack,
 				    struct rust_vtable_symbol);
@@ -13110,7 +13110,7 @@ static bool
 dwarf2_rnglists_process (unsigned offset, struct dwarf2_cu *cu,
 			 Callback &&callback)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   bfd *obfd = objfile->obfd;
   /* Base address selection entry.  */
   CORE_ADDR base;
@@ -13276,7 +13276,7 @@ static int
 dwarf2_ranges_process (unsigned offset, struct dwarf2_cu *cu,
 		       Callback &&callback)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   struct comp_unit_head *cu_header = &cu->header;
   bfd *obfd = objfile->obfd;
   unsigned int addr_size = cu_header->addr_size;
@@ -13383,7 +13383,7 @@ dwarf2_ranges_read (unsigned offset, CORE_ADDR *low_return,
 		    CORE_ADDR *high_return, struct dwarf2_cu *cu,
 		    struct partial_symtab *ranges_pst)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
   const CORE_ADDR baseaddr = ANOFFSET (objfile->section_offsets,
 				       SECT_OFF_TEXT (objfile));
@@ -13624,7 +13624,7 @@ static void
 dwarf2_record_block_ranges (struct die_info *die, struct block *block,
                             CORE_ADDR baseaddr, struct dwarf2_cu *cu)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
   struct attribute *attr;
   struct attribute *attr_high;
@@ -13808,7 +13808,7 @@ static void
 dwarf2_add_field (struct field_info *fip, struct die_info *die,
 		  struct dwarf2_cu *cu)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
   struct nextfield *new_field;
   struct attribute *attr;
@@ -14207,7 +14207,7 @@ static void
 dwarf2_add_member_fn (struct field_info *fip, struct die_info *die,
 		      struct type *type, struct dwarf2_cu *cu)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   struct attribute *attr;
   struct fnfieldlist *flp;
   int i;
@@ -14519,7 +14519,7 @@ quirk_gcc_member_function_pointer (struct type *type, struct objfile *objfile)
 static struct type *
 read_structure_type (struct die_info *die, struct dwarf2_cu *cu)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   struct type *type;
   struct attribute *attr;
   const char *name;
@@ -14642,7 +14642,7 @@ read_structure_type (struct die_info *die, struct dwarf2_cu *cu)
 static void
 process_structure_scope (struct die_info *die, struct dwarf2_cu *cu)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   struct die_info *child_die;
   struct type *type;
 
@@ -14942,7 +14942,7 @@ update_enumeration_type_from_children (struct die_info *die,
 static struct type *
 read_enumeration_type (struct die_info *die, struct dwarf2_cu *cu)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   struct type *type;
   struct attribute *attr;
   const char *name;
@@ -15114,7 +15114,7 @@ process_enumeration_scope (struct die_info *die, struct dwarf2_cu *cu)
 static struct type *
 read_array_type (struct die_info *die, struct dwarf2_cu *cu)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   struct die_info *child_die;
   struct type *type;
   struct type *element_type, *range_type, *index_type;
@@ -15387,7 +15387,7 @@ read_common_block (struct die_info *die, struct dwarf2_cu *cu)
 
   if (die->child != NULL)
     {
-      struct objfile *objfile = cu->objfile;
+      struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
       struct die_info *child_die;
       size_t n_entries = 0, size;
       struct common_block *common_block;
@@ -15432,7 +15432,7 @@ read_common_block (struct die_info *die, struct dwarf2_cu *cu)
 			       "DW_AT_data_member_location "
 			       "- DIE at 0x%x [in module %s]"),
 			     to_underlying (child_die->sect_off),
-			     objfile_name (cu->objfile));
+			     objfile_name (cu->dwarf2_per_objfile->objfile));
 
 		  if (attr_form_is_section_offset (member_loc))
 		    dwarf2_complex_location_expr_complaint ();
@@ -15459,7 +15459,7 @@ read_common_block (struct die_info *die, struct dwarf2_cu *cu)
 static struct type *
 read_namespace_type (struct die_info *die, struct dwarf2_cu *cu)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   const char *previous_prefix, *name;
   int is_anonymous;
   struct type *type;
@@ -15499,7 +15499,7 @@ read_namespace_type (struct die_info *die, struct dwarf2_cu *cu)
 static void
 read_namespace (struct die_info *die, struct dwarf2_cu *cu)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   int is_anonymous;
 
   /* Add a symbol associated to this if we haven't seen the namespace
@@ -15544,7 +15544,7 @@ read_namespace (struct die_info *die, struct dwarf2_cu *cu)
 static struct type *
 read_module_type (struct die_info *die, struct dwarf2_cu *cu)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   const char *module_name;
   struct type *type;
 
@@ -15618,7 +15618,7 @@ namespace_name (struct die_info *die, int *is_anonymous, struct dwarf2_cu *cu)
 static struct type *
 read_tag_pointer_type (struct die_info *die, struct dwarf2_cu *cu)
 {
-  struct gdbarch *gdbarch = get_objfile_arch (cu->objfile);
+  struct gdbarch *gdbarch = get_objfile_arch (cu->dwarf2_per_objfile->objfile);
   struct comp_unit_head *cu_header = &cu->header;
   struct type *type;
   struct attribute *attr_byte_size;
@@ -15699,7 +15699,7 @@ read_tag_ptr_to_member_type (struct die_info *die, struct dwarf2_cu *cu)
     type = lookup_methodptr_type (to_type);
   else if (TYPE_CODE (check_typedef (to_type)) == TYPE_CODE_FUNC)
     {
-      struct type *new_type = alloc_type (cu->objfile);
+      struct type *new_type = alloc_type (cu->dwarf2_per_objfile->objfile);
 
       smash_to_method_type (new_type, domain, TYPE_TARGET_TYPE (to_type),
 			    TYPE_FIELDS (to_type), TYPE_NFIELDS (to_type),
@@ -15862,7 +15862,7 @@ read_tag_atomic_type (struct die_info *die, struct dwarf2_cu *cu)
 static struct type *
 read_tag_string_type (struct die_info *die, struct dwarf2_cu *cu)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
   struct type *type, *range_type, *index_type, *char_type;
   struct attribute *attr;
@@ -15940,7 +15940,7 @@ prototyped_function_p (struct die_info *die, struct dwarf2_cu *cu)
 static struct type *
 read_subroutine_type (struct die_info *die, struct dwarf2_cu *cu)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   struct type *type;		/* Type that this function returns.  */
   struct type *ftype;		/* Function that returns above type.  */
   struct attribute *attr;
@@ -16077,7 +16077,7 @@ read_subroutine_type (struct die_info *die, struct dwarf2_cu *cu)
 static struct type *
 read_typedef (struct die_info *die, struct dwarf2_cu *cu)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   const char *name = NULL;
   struct type *this_type, *target_type;
 
@@ -16128,7 +16128,7 @@ dwarf2_init_float_type (struct objfile *objfile, int bits, const char *name,
 static struct type *
 read_base_type (struct die_info *die, struct dwarf2_cu *cu)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   struct type *type;
   struct attribute *attr;
   int encoding = 0, bits = 0;
@@ -16240,7 +16240,7 @@ attr_to_dynamic_prop (const struct attribute *attr, struct die_info *die,
 		      struct dwarf2_cu *cu, struct dynamic_prop *prop)
 {
   struct dwarf2_property_baton *baton;
-  struct obstack *obstack = &cu->objfile->objfile_obstack;
+  struct obstack *obstack = &cu->dwarf2_per_objfile->objfile->objfile_obstack;
 
   if (attr == NULL || prop == NULL)
     return 0;
@@ -16401,7 +16401,7 @@ read_subrange_type (struct die_info *die, struct dwarf2_cu *cu)
   else if (!low_default_is_valid)
     complaint (&symfile_complaints, _("Missing DW_AT_lower_bound "
 				      "- DIE at 0x%x [in module %s]"),
-	       to_underlying (die->sect_off), objfile_name (cu->objfile));
+	       to_underlying (die->sect_off), objfile_name (cu->dwarf2_per_objfile->objfile));
 
   attr = dwarf2_attr (die, DW_AT_upper_bound, cu);
   if (!attr_to_dynamic_prop (attr, die, cu, &high))
@@ -16431,7 +16431,7 @@ read_subrange_type (struct die_info *die, struct dwarf2_cu *cu)
      high bound or count are not yet handled by this code.  */
   if (TYPE_CODE (base_type) == TYPE_CODE_VOID)
     {
-      struct objfile *objfile = cu->objfile;
+      struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
       struct gdbarch *gdbarch = get_objfile_arch (objfile);
       int addr_size = gdbarch_addr_bit (gdbarch) /8;
       struct type *int_type = objfile_type (objfile)->builtin_int;
@@ -16503,7 +16503,7 @@ read_unspecified_type (struct die_info *die, struct dwarf2_cu *cu)
 
   /* For now, we only support the C meaning of an unspecified type: void.  */
 
-  type = init_type (cu->objfile, TYPE_CODE_VOID, 0, NULL);
+  type = init_type (cu->dwarf2_per_objfile->objfile, TYPE_CODE_VOID, 0, NULL);
   TYPE_NAME (type) = dwarf2_name (die, cu);
 
   return set_die_type (die, type, cu);
@@ -16945,7 +16945,7 @@ load_partial_dies (const struct die_reader_specs *reader,
 		   const gdb_byte *info_ptr, int building_psymtab)
 {
   struct dwarf2_cu *cu = reader->cu;
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   struct partial_die_info *part_die;
   struct partial_die_info *parent_die, *last_die, *first_die = NULL;
   struct abbrev_info *abbrev;
@@ -17222,7 +17222,7 @@ read_partial_die (const struct die_reader_specs *reader,
 		  const gdb_byte *info_ptr)
 {
   struct dwarf2_cu *cu = reader->cu;
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   const gdb_byte *buffer = reader->buffer;
   unsigned int i;
   struct attribute attr;
@@ -17459,7 +17459,7 @@ find_partial_die_in_comp_unit (sect_offset sect_off, struct dwarf2_cu *cu)
 static struct partial_die_info *
 find_partial_die (sect_offset sect_off, int offset_in_dwz, struct dwarf2_cu *cu)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   struct dwarf2_per_cu_data *per_cu = NULL;
   struct partial_die_info *pd = NULL;
 
@@ -17562,7 +17562,7 @@ guess_partial_die_structure_name (struct partial_die_info *struct_pdi,
 	    {
 	      struct_pdi->name
 		= ((const char *)
-		   obstack_copy0 (&cu->objfile->per_bfd->storage_obstack,
+		   obstack_copy0 (&cu->dwarf2_per_objfile->objfile->per_bfd->storage_obstack,
 				  actual_class_name,
 				  strlen (actual_class_name)));
 	      xfree (actual_class_name);
@@ -17650,7 +17650,7 @@ fixup_partial_die (struct partial_die_info *part_die,
 
 	  part_die->name
 	    = ((const char *)
-	       obstack_copy0 (&cu->objfile->per_bfd->storage_obstack,
+	       obstack_copy0 (&cu->dwarf2_per_objfile->objfile->per_bfd->storage_obstack,
 			      base, strlen (base)));
 	  xfree (demangled);
 	}
@@ -17667,7 +17667,7 @@ read_attribute_value (const struct die_reader_specs *reader,
 		      LONGEST implicit_const, const gdb_byte *info_ptr)
 {
   struct dwarf2_cu *cu = reader->cu;
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
   bfd *abfd = reader->abfd;
   struct comp_unit_head *cu_header = &cu->header;
@@ -18363,7 +18363,7 @@ static CORE_ADDR
 read_addr_index_from_leb128 (struct dwarf2_cu *cu, const gdb_byte *info_ptr,
 			     unsigned int *bytes_read)
 {
-  bfd *abfd = cu->objfile->obfd;
+  bfd *abfd = cu->dwarf2_per_objfile->objfile->obfd;
   unsigned int addr_index = read_unsigned_leb128 (abfd, info_ptr, bytes_read);
 
   return read_addr_index (cu, addr_index);
@@ -18404,7 +18404,7 @@ CORE_ADDR
 dwarf2_read_addr_index (struct dwarf2_per_cu_data *per_cu,
 			unsigned int addr_index)
 {
-  struct objfile *objfile = per_cu->objfile;
+  struct objfile *objfile = per_cu->dwarf2_per_objfile->objfile;
   struct dwarf2_cu *cu = per_cu->cu;
   ULONGEST addr_base;
   int addr_size;
@@ -18637,7 +18637,7 @@ dwarf2_string_attr (struct die_info *die, unsigned int name, struct dwarf2_cu *c
 	           _("string type expected for attribute %s for "
 		     "DIE at 0x%x in module %s"),
 		   dwarf_attr_name (name), to_underlying (die->sect_off),
-		   objfile_name (cu->objfile));
+		   objfile_name (cu->dwarf2_per_objfile->objfile));
     }
 
   return str;
@@ -19523,7 +19523,7 @@ lnp_state_machine::check_line_address (struct dwarf2_cu *cu,
       /* This line table is for a function which has been
 	 GCd by the linker.  Ignore it.  PR gdb/12528 */
 
-      struct objfile *objfile = cu->objfile;
+      struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
       long line_offset = line_ptr - get_debug_line_section (cu)->buffer;
 
       complaint (&symfile_complaints,
@@ -19549,7 +19549,7 @@ dwarf_decode_lines_1 (struct line_header *lh, struct dwarf2_cu *cu,
   unsigned int bytes_read, extended_len;
   unsigned char op_code, extended_op;
   CORE_ADDR baseaddr;
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   bfd *abfd = objfile->obfd;
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
   /* True if we're recording line info (as opposed to building partial
@@ -19780,7 +19780,7 @@ dwarf_decode_lines (struct line_header *lh, const char *comp_dir,
 		    struct dwarf2_cu *cu, struct partial_symtab *pst,
 		    CORE_ADDR lowpc, int decode_mapping)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   const int decode_for_pst_p = (pst != NULL);
 
   if (decode_mapping)
@@ -19880,7 +19880,7 @@ dwarf2_start_symtab (struct dwarf2_cu *cu,
 		     const char *name, const char *comp_dir, CORE_ADDR low_pc)
 {
   struct compunit_symtab *cust
-    = start_symtab (cu->objfile, name, comp_dir, low_pc, cu->language);
+    = start_symtab (cu->dwarf2_per_objfile->objfile, name, comp_dir, low_pc, cu->language);
 
   record_debugformat ("DWARF 2");
   record_producer (cu->producer);
@@ -19897,7 +19897,7 @@ static void
 var_decode_location (struct attribute *attr, struct symbol *sym,
 		     struct dwarf2_cu *cu)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   struct comp_unit_head *cu_header = &cu->header;
 
   /* NOTE drow/2003-01-30: There used to be a comment and some special
@@ -19970,7 +19970,7 @@ static struct symbol *
 new_symbol_full (struct die_info *die, struct type *type, struct dwarf2_cu *cu,
 		 struct symbol *space)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
   struct symbol *sym = NULL;
   const char *name;
@@ -20368,7 +20368,7 @@ static gdb_byte *
 dwarf2_const_value_data (const struct attribute *attr, struct obstack *obstack,
 			 struct dwarf2_cu *cu, LONGEST *value, int bits)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   enum bfd_endian byte_order = bfd_big_endian (objfile->obfd) ?
 				BFD_ENDIAN_BIG : BFD_ENDIAN_LITTLE;
   LONGEST l = DW_UNSND (attr);
@@ -20403,7 +20403,7 @@ dwarf2_const_value_attr (const struct attribute *attr, struct type *type,
 			 LONGEST *value, const gdb_byte **bytes,
 			 struct dwarf2_locexpr_baton **baton)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   struct comp_unit_head *cu_header = &cu->header;
   struct dwarf_block *blk;
   enum bfd_endian byte_order = (bfd_big_endian (objfile->obfd) ?
@@ -20505,7 +20505,7 @@ static void
 dwarf2_const_value (const struct attribute *attr, struct symbol *sym,
 		    struct dwarf2_cu *cu)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   LONGEST value;
   const gdb_byte *bytes;
   struct dwarf2_locexpr_baton *baton;
@@ -20543,7 +20543,7 @@ die_type (struct die_info *die, struct dwarf2_cu *cu)
   if (!type_attr)
     {
       /* A missing DW_AT_type represents a void type.  */
-      return objfile_type (cu->objfile)->builtin_void;
+      return objfile_type (cu->dwarf2_per_objfile->objfile)->builtin_void;
     }
 
   return lookup_die_type (die, type_attr, cu);
@@ -20610,7 +20610,7 @@ die_containing_type (struct die_info *die, struct dwarf2_cu *cu)
   type_attr = dwarf2_attr (die, DW_AT_containing_type, cu);
   if (!type_attr)
     error (_("Dwarf Error: Problem turning containing type into gdb type "
-	     "[in module %s]"), objfile_name (cu->objfile));
+	     "[in module %s]"), objfile_name (cu->dwarf2_per_objfile->objfile));
 
   return lookup_die_type (die, type_attr, cu);
 }
@@ -20643,7 +20643,7 @@ static struct type *
 lookup_die_type (struct die_info *die, const struct attribute *attr,
 		 struct dwarf2_cu *cu)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   struct type *this_type;
 
   gdb_assert (attr->name == DW_AT_type
@@ -20657,7 +20657,7 @@ lookup_die_type (struct die_info *die, const struct attribute *attr,
       struct dwarf2_per_cu_data *per_cu;
       sect_offset sect_off = dwarf2_get_ref_die_offset (attr);
 
-      per_cu = dwarf2_find_containing_comp_unit (sect_off, 1, cu->objfile);
+      per_cu = dwarf2_find_containing_comp_unit (sect_off, 1, cu->dwarf2_per_objfile->objfile);
       this_type = get_die_type_at_offset (sect_off, per_cu);
     }
   else if (attr_form_is_ref (attr))
@@ -20867,7 +20867,7 @@ guess_full_die_structure_name (struct die_info *die, struct dwarf2_cu *cu)
 			  && actual_name[actual_name_len
 					 - die_name_len - 1] == ':')
 			name = (char *) obstack_copy0 (
-			  &cu->objfile->per_bfd->storage_obstack,
+			  &cu->dwarf2_per_objfile->objfile->per_bfd->storage_obstack,
 			  actual_name, actual_name_len - die_name_len - 2);
 		    }
 		}
@@ -20909,7 +20909,7 @@ anonymous_struct_prefix (struct die_info *die, struct dwarf2_cu *cu)
   if (base == NULL || base == DW_STRING (attr) || base[-1] != ':')
     return "";
 
-  return (char *) obstack_copy0 (&cu->objfile->per_bfd->storage_obstack,
+  return (char *) obstack_copy0 (&cu->dwarf2_per_objfile->objfile->per_bfd->storage_obstack,
 				 DW_STRING (attr),
 				 &base[-1] - DW_STRING (attr));
 }
@@ -21239,7 +21239,7 @@ dwarf2_name (struct die_info *die, struct dwarf2_cu *cu)
 	      /* FIXME: we already did this for the partial symbol... */
 	      DW_STRING (attr)
 		= ((const char *)
-		   obstack_copy0 (&cu->objfile->per_bfd->storage_obstack,
+		   obstack_copy0 (&cu->dwarf2_per_objfile->objfile->per_bfd->storage_obstack,
 				  demangled, strlen (demangled)));
 	      DW_STRING_IS_CANONICAL (attr) = 1;
 	      xfree (demangled);
@@ -21263,7 +21263,7 @@ dwarf2_name (struct die_info *die, struct dwarf2_cu *cu)
     {
       DW_STRING (attr)
 	= dwarf2_canonicalize_name (DW_STRING (attr), cu,
-				    &cu->objfile->per_bfd->storage_obstack);
+				    &cu->dwarf2_per_objfile->objfile->per_bfd->storage_obstack);
       DW_STRING_IS_CANONICAL (attr) = 1;
     }
   return DW_STRING (attr);
@@ -21597,7 +21597,7 @@ follow_die_ref_or_sig (struct die_info *src_die, const struct attribute *attr,
     {
       dump_die_for_error (src_die);
       error (_("Dwarf Error: Expected reference attribute [in module %s]"),
-	     objfile_name ((*ref_cu)->objfile));
+	     objfile_name ((*ref_cu)->dwarf2_per_objfile->objfile));
     }
 
   return die;
@@ -21633,7 +21633,7 @@ follow_die_offset (sect_offset sect_off, int offset_in_dwz,
       struct dwarf2_per_cu_data *per_cu;
 
       per_cu = dwarf2_find_containing_comp_unit (sect_off, offset_in_dwz,
-						 cu->objfile);
+						 cu->dwarf2_per_objfile->objfile);
 
       /* If necessary, add it to the queue and load its DIEs.  */
       if (maybe_queue_comp_unit (cu, per_cu, cu->language))
@@ -21675,14 +21675,14 @@ follow_die_ref (struct die_info *src_die, const struct attribute *attr,
     error (_("Dwarf Error: Cannot find DIE at 0x%x referenced from DIE "
 	   "at 0x%x [in module %s]"),
 	   to_underlying (sect_off), to_underlying (src_die->sect_off),
-	   objfile_name (cu->objfile));
+	   objfile_name (cu->dwarf2_per_objfile->objfile));
 
   return die;
 }
 
 /* Return DWARF block referenced by DW_AT_location of DIE at SECT_OFF at PER_CU.
    Returned value is intended for DW_OP_call*.  Returned
-   dwarf2_locexpr_baton->data has lifetime of PER_CU->OBJFILE.  */
+   dwarf2_locexpr_baton->data has lifetime of per_cu->dwarf2_per_objfile->objfile.  */
 
 struct dwarf2_locexpr_baton
 dwarf2_fetch_die_loc_sect_off (sect_offset sect_off,
@@ -21695,7 +21695,7 @@ dwarf2_fetch_die_loc_sect_off (sect_offset sect_off,
   struct attribute *attr;
   struct dwarf2_locexpr_baton retval;
 
-  dw2_setup (per_cu->objfile);
+  dw2_setup (per_cu->dwarf2_per_objfile->objfile);
 
   if (per_cu->cu == NULL)
     load_cu (per_cu);
@@ -21705,13 +21705,13 @@ dwarf2_fetch_die_loc_sect_off (sect_offset sect_off,
       /* We shouldn't get here for a dummy CU, but don't crash on the user.
 	 Instead just throw an error, not much else we can do.  */
       error (_("Dwarf Error: Dummy CU at 0x%x referenced in module %s"),
-	     to_underlying (sect_off), objfile_name (per_cu->objfile));
+	     to_underlying (sect_off), objfile_name (per_cu->dwarf2_per_objfile->objfile));
     }
 
   die = follow_die_offset (sect_off, per_cu->is_dwz, &cu);
   if (!die)
     error (_("Dwarf Error: Cannot find DIE at 0x%x referenced in module %s"),
-	   to_underlying (sect_off), objfile_name (per_cu->objfile));
+	   to_underlying (sect_off), objfile_name (per_cu->dwarf2_per_objfile->objfile));
 
   attr = dwarf2_attr (die, DW_AT_location, cu);
   if (!attr)
@@ -21739,7 +21739,7 @@ dwarf2_fetch_die_loc_sect_off (sect_offset sect_off,
       if (!attr_form_is_block (attr))
 	error (_("Dwarf Error: DIE at 0x%x referenced in module %s "
 		 "is neither DW_FORM_block* nor DW_FORM_exprloc"),
-	       to_underlying (sect_off), objfile_name (per_cu->objfile));
+	       to_underlying (sect_off), objfile_name (per_cu->dwarf2_per_objfile->objfile));
 
       retval.data = DW_BLOCK (attr)->data;
       retval.size = DW_BLOCK (attr)->size;
@@ -21803,7 +21803,7 @@ dwarf2_fetch_constant_bytes (sect_offset sect_off,
   LONGEST value;
   enum bfd_endian byte_order;
 
-  dw2_setup (per_cu->objfile);
+  dw2_setup (per_cu->dwarf2_per_objfile->objfile);
 
   if (per_cu->cu == NULL)
     load_cu (per_cu);
@@ -21813,20 +21813,20 @@ dwarf2_fetch_constant_bytes (sect_offset sect_off,
       /* We shouldn't get here for a dummy CU, but don't crash on the user.
 	 Instead just throw an error, not much else we can do.  */
       error (_("Dwarf Error: Dummy CU at 0x%x referenced in module %s"),
-	     to_underlying (sect_off), objfile_name (per_cu->objfile));
+	     to_underlying (sect_off), objfile_name (per_cu->dwarf2_per_objfile->objfile));
     }
 
   die = follow_die_offset (sect_off, per_cu->is_dwz, &cu);
   if (!die)
     error (_("Dwarf Error: Cannot find DIE at 0x%x referenced in module %s"),
-	   to_underlying (sect_off), objfile_name (per_cu->objfile));
+	   to_underlying (sect_off), objfile_name (per_cu->dwarf2_per_objfile->objfile));
 
 
   attr = dwarf2_attr (die, DW_AT_const_value, cu);
   if (attr == NULL)
     return NULL;
 
-  byte_order = (bfd_big_endian (per_cu->objfile->obfd)
+  byte_order = (bfd_big_endian (per_cu->dwarf2_per_objfile->objfile->obfd)
 		? BFD_ENDIAN_BIG : BFD_ENDIAN_LITTLE);
 
   switch (attr->form)
@@ -21928,7 +21928,7 @@ dwarf2_fetch_die_type_sect_off (sect_offset sect_off,
   struct dwarf2_cu *cu;
   struct die_info *die;
 
-  dw2_setup (per_cu->objfile);
+  dw2_setup (per_cu->dwarf2_per_objfile->objfile);
 
   if (per_cu->cu == NULL)
     load_cu (per_cu);
@@ -21950,7 +21950,7 @@ struct type *
 dwarf2_get_die_type (cu_offset die_offset,
 		     struct dwarf2_per_cu_data *per_cu)
 {
-  dw2_setup (per_cu->objfile);
+  dw2_setup (per_cu->dwarf2_per_objfile->objfile);
 
   sect_offset die_offset_sect = per_cu->sect_off + to_underlying (die_offset);
   return get_die_type_at_offset (die_offset_sect, per_cu);
@@ -22027,7 +22027,7 @@ follow_die_sig (struct die_info *src_die, const struct attribute *attr,
       error (_("Dwarf Error: Cannot find signatured DIE %s referenced"
                " from DIE at 0x%x [in module %s]"),
              hex_string (signature), to_underlying (src_die->sect_off),
-	     objfile_name ((*ref_cu)->objfile));
+	     objfile_name ((*ref_cu)->dwarf2_per_objfile->objfile));
     }
 
   die = follow_die_sig_1 (src_die, sig_type, ref_cu);
@@ -22037,7 +22037,7 @@ follow_die_sig (struct die_info *src_die, const struct attribute *attr,
       error (_("Dwarf Error: Problem reading signatured DIE %s referenced"
 	       " from DIE at 0x%x [in module %s]"),
 	     hex_string (signature), to_underlying (src_die->sect_off),
-	     objfile_name ((*ref_cu)->objfile));
+	     objfile_name ((*ref_cu)->dwarf2_per_objfile->objfile));
     }
 
   return die;
@@ -22235,7 +22235,7 @@ read_signatured_type (struct signatured_type *sig_type)
 static CORE_ADDR
 decode_locdesc (struct dwarf_block *blk, struct dwarf2_cu *cu)
 {
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   size_t i;
   size_t size = blk->size;
   const gdb_byte *data = blk->data;
@@ -23595,7 +23595,7 @@ dwarf2_symbol_mark_computed (const struct attribute *attr, struct symbol *sym,
 struct objfile *
 dwarf2_per_cu_objfile (struct dwarf2_per_cu_data *per_cu)
 {
-  struct objfile *objfile = per_cu->objfile;
+  struct objfile *objfile = per_cu->dwarf2_per_objfile->objfile;
 
   /* Return the master objfile, so that we can report and look up the
      correct file containing this variable.  */
@@ -23677,7 +23677,7 @@ dwarf2_per_cu_ref_addr_size (struct dwarf2_per_cu_data *per_cu)
 CORE_ADDR
 dwarf2_per_cu_text_offset (struct dwarf2_per_cu_data *per_cu)
 {
-  struct objfile *objfile = per_cu->objfile;
+  struct objfile *objfile = per_cu->dwarf2_per_objfile->objfile;
 
   return ANOFFSET (objfile->section_offsets, SECT_OFF_TEXT (objfile));
 }
@@ -23750,7 +23750,7 @@ init_one_comp_unit (struct dwarf2_cu *cu, struct dwarf2_per_cu_data *per_cu)
   memset (cu, 0, sizeof (*cu));
   per_cu->cu = cu;
   cu->per_cu = per_cu;
-  cu->objfile = per_cu->objfile;
+  cu->dwarf2_per_objfile = per_cu->dwarf2_per_objfile;
   obstack_init (&cu->comp_unit_obstack);
 }
 
@@ -23970,7 +23970,7 @@ static struct type *
 set_die_type (struct die_info *die, struct type *type, struct dwarf2_cu *cu)
 {
   struct dwarf2_per_cu_offset_and_type **slot, ofs;
-  struct objfile *objfile = cu->objfile;
+  struct objfile *objfile = cu->dwarf2_per_objfile->objfile;
   struct attribute *attr;
   struct dynamic_prop prop;
 
