@@ -261,7 +261,7 @@ extern struct type *follow_types (struct type *);
 
 extern type_instance_flags follow_type_instance_flags ();
 
-extern void null_post_parser (struct expression **, int);
+extern void null_post_parser (expression_up *, int);
 
 extern bool parse_float (const char *p, int len,
 			 const struct type *type, gdb_byte *data);
