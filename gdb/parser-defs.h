@@ -43,7 +43,6 @@ struct parser_state
 
   parser_state (size_t initial_size, const struct language_defn *lang,
 		struct gdbarch *gdbarch);
-  ~parser_state ();
 
   DISABLE_COPY_AND_ASSIGN (parser_state);
 
@@ -51,14 +50,13 @@ struct parser_state
      it as an expression_up -- passing ownership to the caller.  */
   expression_up release ();
 
-
-  /* The expression related to this parser state.  */
-
-  struct expression *expout;
-
   /* The size of the expression above.  */
 
   size_t expout_size;
+
+  /* The expression related to this parser state.  */
+
+  expression_up expout;
 
   /* The number of elements already in the expression.  This is used
      to know where to put new elements.  */

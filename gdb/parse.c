@@ -156,20 +156,13 @@ parser_state::parser_state (size_t initial_size,
 			    const struct language_defn *lang,
 			    struct gdbarch *gdbarch)
   : expout_size (initial_size),
+    expout (XNEWVAR (expression,
+		     (sizeof (expression)
+		      + EXP_ELEM_TO_BYTES (expout_size)))),
     expout_ptr (0)
 {
-  expout
-    = (struct expression *) xmalloc (sizeof (struct expression)
-				     + EXP_ELEM_TO_BYTES (expout_size));
   expout->language_defn = lang;
   expout->gdbarch = gdbarch;
-}
-
-/* See definition in parser-defs.h.  */
-
-parser_state::~parser_state ()
-{
-  xfree (expout);
 }
 
 expression_up
@@ -180,15 +173,11 @@ parser_state::release ()
      excess elements.  */
 
   expout->nelts = expout_ptr;
-  expout = (struct expression *)
-     xrealloc (expout,
-	       sizeof (struct expression)
-	       + EXP_ELEM_TO_BYTES (expout_ptr));
+  expout.reset (XRESIZEVAR (expression, expout.release (),
+			    (sizeof (expression)
+			     + EXP_ELEM_TO_BYTES (expout_ptr))));
 
-  expression_up result (expout);
-  /* Ensure that we don't free it in the destructor.  */
-  expout = nullptr;
-  return result;
+  return std::move (expout);
 }
 
 /* This page contains the functions for adding data to the struct expression
@@ -205,9 +194,9 @@ write_exp_elt (struct parser_state *ps, const union exp_element *expelt)
   if (ps->expout_ptr >= ps->expout_size)
     {
       ps->expout_size *= 2;
-      ps->expout = (struct expression *)
-	xrealloc (ps->expout, sizeof (struct expression)
-		  + EXP_ELEM_TO_BYTES (ps->expout_size));
+      ps->expout.reset (XRESIZEVAR (expression, ps->expout.release (),
+				    (sizeof (expression)
+				     + EXP_ELEM_TO_BYTES (ps->expout_size))));
     }
   ps->expout->elts[ps->expout_ptr++] = *expelt;
 }
@@ -1875,10 +1864,11 @@ increase_expout_size (struct parser_state *ps, size_t lenelt)
   if ((ps->expout_ptr + lenelt) >= ps->expout_size)
     {
       ps->expout_size = std::max (ps->expout_size * 2,
-			     ps->expout_ptr + lenelt + 10);
-      ps->expout = (struct expression *)
-	xrealloc (ps->expout, (sizeof (struct expression)
-			       + EXP_ELEM_TO_BYTES (ps->expout_size)));
+				  ps->expout_ptr + lenelt + 10);
+      ps->expout.reset (XRESIZEVAR (expression,
+				    ps->expout.release (),
+				    (sizeof (struct expression)
+				     + EXP_ELEM_TO_BYTES (ps->expout_size))));
     }
 }
 
