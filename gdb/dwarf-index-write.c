@@ -584,7 +584,7 @@ write_one_signatured_type (void **slot, void *d)
   struct signatured_type_index_data *info
     = (struct signatured_type_index_data *) d;
   struct signatured_type *entry = (struct signatured_type *) *slot;
-  struct partial_symtab *psymtab = entry->per_cu.v.psymtab;
+  struct partial_symtab *psymtab = entry->v.psymtab;
 
   write_psymbols (info->symtab,
 		  info->psyms_seen,
@@ -600,7 +600,7 @@ write_one_signatured_type (void **slot, void *d)
 		  1);
 
   info->types_list.append_uint (8, BFD_ENDIAN_LITTLE,
-				to_underlying (entry->per_cu.sect_off));
+				to_underlying (entry->sect_off));
   info->types_list.append_uint (8, BFD_ENDIAN_LITTLE,
 				to_underlying (entry->type_offset_in_tu));
   info->types_list.append_uint (8, BFD_ENDIAN_LITTLE, entry->signature);
@@ -1199,7 +1199,7 @@ private:
   write_one_signatured_type (struct signatured_type *entry,
 			     struct signatured_type_index_data *info)
   {
-    struct partial_symtab *psymtab = entry->per_cu.v.psymtab;
+    struct partial_symtab *psymtab = entry->v.psymtab;
 
     write_psymbols (info->psyms_seen,
 		    (info->objfile->global_psymbols.data ()
@@ -1213,7 +1213,7 @@ private:
 		    unit_kind::tu);
 
     info->types_list.append_uint (dwarf5_offset_size (), m_dwarf5_byte_order,
-				  to_underlying (entry->per_cu.sect_off));
+				  to_underlying (entry->sect_off));
 
     ++info->cu_index;
   }
@@ -1262,9 +1262,7 @@ check_dwarf64_offsets (struct dwarf2_per_objfile *dwarf2_per_objfile)
     }
   for (const signatured_type *sigtype : dwarf2_per_objfile->all_type_units)
     {
-      const dwarf2_per_cu_data &per_cu = sigtype->per_cu;
-
-      if (to_underlying (per_cu.sect_off) >= (static_cast<uint64_t> (1) << 32))
+      if (to_underlying (sigtype->sect_off) >= (static_cast<uint64_t> (1) << 32))
 	return true;
     }
   return false;
