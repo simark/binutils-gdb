@@ -1,3 +1,7 @@
+2017-12-16  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* gdb.mi/mi-stack.exp: Fix indentation.
+
 2017-12-18  Joel Brobecker  <brobecker@adacore.com>
 
 	* gdb.dwarf2/ada-valprint-error.c: New file.
