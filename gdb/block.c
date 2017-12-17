@@ -224,15 +224,15 @@ struct call_site *
 call_site_for_pc (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   struct compunit_symtab *cust;
-  void **slot = NULL;
 
   /* -1 as tail call PC can be already after the compilation unit range.  */
   cust = find_pc_compunit_symtab (pc - 1);
 
-  if (cust != NULL && COMPUNIT_CALL_SITE_HTAB (cust) != NULL)
-    slot = htab_find_slot (COMPUNIT_CALL_SITE_HTAB (cust), &pc, NO_INSERT);
+  std::unordered_map<CORE_ADDR, call_site *>::iterator it;
+  if (cust != NULL)
+    it = cust->call_site_htab.find (pc);
 
-  if (slot == NULL)
+  if (cust == NULL || it == cust->call_site_htab.end ())
     {
       struct bound_minimal_symbol msym = lookup_minimal_symbol_by_pc (pc);
 
@@ -246,7 +246,7 @@ call_site_for_pc (struct gdbarch *gdbarch, CORE_ADDR pc)
 		    : MSYMBOL_PRINT_NAME (msym.minsym)));
     }
 
-  return (struct call_site *) *slot;
+  return it->second;
 }
 
 /* Return the blockvector immediately containing the innermost lexical block

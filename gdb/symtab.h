@@ -23,6 +23,7 @@
 #include <array>
 #include <vector>
 #include <string>
+#include <unordered_map>
 #include "gdb_vecs.h"
 #include "gdbtypes.h"
 #include "common/enum-flags.h"
@@ -1419,7 +1420,7 @@ struct compunit_symtab
   unsigned int epilogue_unwind_valid : 1;
 
   /* struct call_site entries for this compilation unit or NULL.  */
-  htab_t call_site_htab;
+  std::unordered_map<CORE_ADDR, call_site *> call_site_htab;
 
   /* The macro table for this symtab.  Like the blockvector, this
      is shared between different symtabs in a given compilation unit.

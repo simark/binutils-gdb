@@ -721,7 +721,7 @@ struct dwarf2_cu
   VEC (delayed_method_info) *method_list = NULL;
 
   /* To be copied to symtab->call_site_htab.  */
-  htab_t call_site_htab = NULL;
+  std::unordered_map<CORE_ADDR, call_site *> call_site_htab;
 
   /* Non-NULL if this CU came from a DWO file.
      There is an invariant here that is important to remember:
@@ -10450,7 +10450,7 @@ process_full_comp_unit (struct dwarf2_per_cu_data *per_cu,
       if (gcc_4_minor >= 5)
 	cust->epilogue_unwind_valid = 1;
 
-      cust->call_site_htab = cu->call_site_htab;
+      cust->call_site_htab = std::move (cu->call_site_htab);
     }
 
   if (dwarf2_per_objfile->using_index)
@@ -13921,8 +13921,6 @@ read_call_site_scope (struct die_info *die, struct dwarf2_cu *cu)
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
   CORE_ADDR pc, baseaddr;
   struct attribute *attr;
-  struct call_site *call_site, call_site_local;
-  void **slot;
   int nparams;
   struct die_info *child_die;
 
@@ -13946,13 +13944,7 @@ read_call_site_scope (struct die_info *die, struct dwarf2_cu *cu)
   pc = attr_value_as_address (attr) + baseaddr;
   pc = gdbarch_adjust_dwarf2_addr (gdbarch, pc);
 
-  if (cu->call_site_htab == NULL)
-    cu->call_site_htab = htab_create_alloc_ex (16, core_addr_hash, core_addr_eq,
-					       NULL, &objfile->objfile_obstack,
-					       hashtab_obstack_allocate, NULL);
-  call_site_local.pc = pc;
-  slot = htab_find_slot (cu->call_site_htab, &call_site_local, INSERT);
-  if (*slot != NULL)
+  if (cu->call_site_htab.find (pc) != cu->call_site_htab.end ())
     {
       complaint (&symfile_complaints,
 		 _("Duplicate PC %s for DW_TAG_call_site "
@@ -13982,12 +13974,12 @@ read_call_site_scope (struct die_info *die, struct dwarf2_cu *cu)
       nparams++;
     }
 
-  call_site
+  struct call_site *call_site
     = ((struct call_site *)
        obstack_alloc (&objfile->objfile_obstack,
 		      sizeof (*call_site)
 		      + (sizeof (*call_site->parameter) * (nparams - 1))));
-  *slot = call_site;
+  cu->call_site_htab[pc] = call_site;
   memset (call_site, 0, sizeof (*call_site) - sizeof (*call_site->parameter));
   call_site->pc = pc;
 
@@ -24985,7 +24977,7 @@ free_heap_comp_unit (void *data)
 
   obstack_free (&cu->comp_unit_obstack, NULL);
 
-  xfree (cu);
+  delete cu;
 }
 
 /* This cleanup function is passed the address of a dwarf2_cu on the stack
