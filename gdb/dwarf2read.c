@@ -639,23 +639,25 @@ DEF_VEC_O (delayed_method_info);
 /* Internal state when decoding a particular compilation unit.  */
 struct dwarf2_cu
 {
+  dwarf2_cu (dwarf2_per_cu_data *per_cu);
+
   /* The objfile containing this compilation unit.  */
-  struct objfile *objfile;
+  struct objfile *objfile = NULL;
 
   /* The header of the compilation unit.  */
-  struct comp_unit_head header;
+  struct comp_unit_head header {};
 
   /* Base address of this compilation unit.  */
-  CORE_ADDR base_address;
+  CORE_ADDR base_address = 0;
 
-  /* Non-zero if base_address has been set.  */
-  int base_known;
+  /* True zero if base_address has been set.  */
+  bool base_known = 0;
 
   /* The language we are debugging.  */
-  enum language language;
-  const struct language_defn *language_defn;
+  enum language language = language_unknown;
+  const struct language_defn *language_defn = NULL;
 
-  const char *producer;
+  const char *producer = NULL;
 
   /* The generic symbol table building routines have separate lists for
      file scope symbols and all all other scopes (local scopes).  So
@@ -666,60 +668,60 @@ struct dwarf2_cu
      first local scope, and all other local scopes as nested local
      scopes, and worked fine.  Check to see if we really need to
      distinguish these in buildsym.c.  */
-  struct pending **list_in_scope;
+  struct pending **list_in_scope = NULL;
 
   /* The abbrev table for this CU.
      Normally this points to the abbrev table in the objfile.
      But if DWO_UNIT is non-NULL this is the abbrev table in the DWO file.  */
-  struct abbrev_table *abbrev_table;
+  struct abbrev_table *abbrev_table = NULL;
 
   /* Hash table holding all the loaded partial DIEs
      with partial_die->offset.SECT_OFF as hash.  */
-  htab_t partial_dies;
+  htab_t partial_dies = NULL;
 
   /* Storage for things with the same lifetime as this read-in compilation
      unit, including partial DIEs.  */
-  struct obstack comp_unit_obstack;
+  struct obstack comp_unit_obstack {};
 
   /* When multiple dwarf2_cu structures are living in memory, this field
      chains them all together, so that they can be released efficiently.
      We will probably also want a generation counter so that most-recently-used
      compilation units are cached...  */
-  struct dwarf2_per_cu_data *read_in_chain;
+  struct dwarf2_per_cu_data *read_in_chain = NULL;
 
   /* Backlink to our per_cu entry.  */
-  struct dwarf2_per_cu_data *per_cu;
+  struct dwarf2_per_cu_data *per_cu = NULL;
 
   /* How many compilation units ago was this CU last referenced?  */
-  int last_used;
+  int last_used = 0;
 
   /* A hash table of DIE cu_offset for following references with
      die_info->offset.sect_off as hash.  */
-  htab_t die_hash;
+  htab_t die_hash = NULL;
 
   /* Full DIEs if read in.  */
-  struct die_info *dies;
+  struct die_info *dies = NULL;
 
   /* A set of pointers to dwarf2_per_cu_data objects for compilation
      units referenced by this one.  Only set during full symbol processing;
      partial symbol tables do not have dependencies.  */
-  htab_t dependencies;
+  htab_t dependencies = NULL;
 
   /* Header data from the line table, during full symbol processing.  */
-  struct line_header *line_header;
+  struct line_header *line_header = NULL;
   /* Non-NULL if LINE_HEADER is owned by this DWARF_CU.  Otherwise,
      it's owned by dwarf2_per_objfile::line_header_hash.  If non-NULL,
      this is the DW_TAG_compile_unit die for this CU.  We'll hold on
      to the line header as long as this DIE is being processed.  See
      process_die_scope.  */
-  die_info *line_header_die_owner;
+  die_info *line_header_die_owner = NULL;
 
   /* A list of methods which need to have physnames computed
      after all type information has been read.  */
-  VEC (delayed_method_info) *method_list;
+  VEC (delayed_method_info) *method_list = NULL;
 
   /* To be copied to symtab->call_site_htab.  */
-  htab_t call_site_htab;
+  htab_t call_site_htab = NULL;
 
   /* Non-NULL if this CU came from a DWO file.
      There is an invariant here that is important to remember:
@@ -730,12 +732,12 @@ struct dwarf2_cu
      is moot), or there is and either we're not going to read it (in which
      case this is NULL) or there is and we are reading it (in which case this
      is non-NULL).  */
-  struct dwo_unit *dwo_unit;
+  struct dwo_unit *dwo_unit = NULL;
 
   /* The DW_AT_addr_base attribute if present, zero otherwise
      (zero is a valid value though).
      Note this value comes from the Fission stub CU/TU's DIE.  */
-  ULONGEST addr_base;
+  ULONGEST addr_base = 0;
 
   /* The DW_AT_ranges_base attribute if present, zero otherwise
      (zero is a valid value though).
@@ -747,7 +749,7 @@ struct dwarf2_cu
      DW_AT_ranges appeared in the DW_TAG_compile_unit of DWO DIEs: then
      DW_AT_ranges_base *would* have to be applied, and we'd have to care
      whether the DW_AT_ranges attribute came from the skeleton or DWO.  */
-  ULONGEST ranges_base;
+  ULONGEST ranges_base = 0;
 
   /* Mark used when releasing cached dies.  */
   unsigned int mark : 1;
@@ -2116,9 +2118,6 @@ static int partial_die_eq (const void *item_lhs, const void *item_rhs);
 
 static struct dwarf2_per_cu_data *dwarf2_find_containing_comp_unit
   (sect_offset sect_off, unsigned int offset_in_dwz, struct objfile *objfile);
-
-static void init_one_comp_unit (struct dwarf2_cu *cu,
-				struct dwarf2_per_cu_data *per_cu);
 
 static void prepare_one_comp_unit (struct dwarf2_cu *cu,
 				   struct die_info *comp_unit_die,
@@ -7654,8 +7653,7 @@ init_tu_and_read_dwo_dies (struct dwarf2_per_cu_data *this_cu,
     {
       /* If !use_existing_cu, this_cu->cu must be NULL.  */
       gdb_assert (this_cu->cu == NULL);
-      cu = XNEW (struct dwarf2_cu);
-      init_one_comp_unit (cu, this_cu);
+      cu = new dwarf2_cu (this_cu);
       /* If an error occurs while loading, release our storage.  */
       free_cu_cleanup = make_cleanup (free_heap_comp_unit, cu);
     }
@@ -7791,8 +7789,7 @@ init_cutu_and_read_dies (struct dwarf2_per_cu_data *this_cu,
     {
       /* If !use_existing_cu, this_cu->cu must be NULL.  */
       gdb_assert (this_cu->cu == NULL);
-      cu = XNEW (struct dwarf2_cu);
-      init_one_comp_unit (cu, this_cu);
+      cu = new dwarf2_cu (this_cu);
       /* If an error occurs while loading, release our storage.  */
       free_cu_cleanup = make_cleanup (free_heap_comp_unit, cu);
     }
@@ -7971,7 +7968,6 @@ init_cutu_and_read_dies_no_follow (struct dwarf2_per_cu_data *this_cu,
   struct dwarf2_section_info *section = this_cu->section;
   bfd *abfd = get_section_bfd_owner (section);
   struct dwarf2_section_info *abbrev_section;
-  struct dwarf2_cu cu;
   const gdb_byte *begin_info_ptr, *info_ptr;
   struct die_reader_specs reader;
   struct cleanup *cleanups;
@@ -7992,7 +7988,7 @@ init_cutu_and_read_dies_no_follow (struct dwarf2_per_cu_data *this_cu,
   /* This is cheap if the section is already read in.  */
   dwarf2_read_section (objfile, section);
 
-  init_one_comp_unit (&cu, this_cu);
+  dwarf2_cu cu (this_cu);
 
   cleanups = make_cleanup (free_stack_comp_unit, &cu);
 
@@ -24936,14 +24932,19 @@ dwarf2_find_containing_comp_unit (sect_offset sect_off,
 
 /* Initialize dwarf2_cu CU, owned by PER_CU.  */
 
-static void
-init_one_comp_unit (struct dwarf2_cu *cu, struct dwarf2_per_cu_data *per_cu)
+dwarf2_cu::dwarf2_cu (dwarf2_per_cu_data *per_cu)
+: mark (0),
+  has_loclist (0),
+  checked_producer (0),
+  producer_is_gxx_lt_4_6 (0),
+  producer_is_gcc_lt_4_3 (0),
+  producer_is_icc_lt_14 (0),
+  processing_has_namespace_info (0)
 {
-  memset (cu, 0, sizeof (*cu));
-  per_cu->cu = cu;
-  cu->per_cu = per_cu;
-  cu->objfile = per_cu->objfile;
-  obstack_init (&cu->comp_unit_obstack);
+  per_cu->cu = this;
+  this->per_cu = per_cu;
+  this->objfile = per_cu->objfile;
+  obstack_init (&this->comp_unit_obstack);
 }
 
 /* Initialize basic fields of dwarf_cu CU according to DIE COMP_UNIT_DIE.  */
