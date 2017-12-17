@@ -1134,6 +1134,11 @@ struct call_site
   : pc (pc_)
   {}
 
+  DISABLE_COPY_AND_ASSIGN (call_site);
+
+  call_site (call_site &&other) = default;
+  call_site &operator= (call_site &&other) = default;
+
   /* * Address of the first instruction after this call.  */
 
   CORE_ADDR pc = 0;

@@ -842,6 +842,25 @@ objfile_relocate1 (struct objfile *objfile,
 	      relocate_one_symbol (sym, objfile, delta);
 	    }
 	}
+
+      std::unordered_map<CORE_ADDR, call_site> new_call_sites;
+      CORE_ADDR offset = ANOFFSET (delta, SECT_OFF_TEXT (objfile));
+      for (auto &it : cust->call_site_htab)
+	{
+	  gdb_assert (it.first == it.second.pc);
+
+	  CORE_ADDR new_pc = it.first + offset;
+	  it.second.pc = new_pc;
+
+	  if (it.second.target.loc_kind == FIELD_LOC_KIND_PHYSADDR)
+	    it.second.target.loc.physaddr += offset;
+
+	  new_call_sites.emplace (std::piecewise_construct,
+				  std::forward_as_tuple (new_pc),
+				  std::forward_as_tuple (std::move (it.second)));
+	  //new_call_sites[new_pc] = std::move (it.second);
+	}
+      cust->call_site_htab = std::move (new_call_sites);
     }
   }
 

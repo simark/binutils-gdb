@@ -13973,8 +13973,10 @@ read_call_site_scope (struct die_info *die, struct dwarf2_cu *cu)
       nparams++;
     }
 
-  auto insert_pair
-    = cu->call_site_htab.emplace (std::make_pair (pc, call_site (pc)));
+  auto insert_pair =
+      cu->call_site_htab.emplace (std::piecewise_construct,
+				  std::forward_as_tuple (pc),
+				  std::forward_as_tuple (pc));
   gdb_assert (insert_pair.second);
   struct call_site *call_site = &insert_pair.first->second;
 
