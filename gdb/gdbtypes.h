@@ -1111,51 +1111,51 @@ struct call_site_parameter
 {
   ENUM_BITFIELD (call_site_parameter_kind) kind : 2;
 
-  union call_site_parameter_u u;
+  union call_site_parameter_u u {};
 
   /* * DW_TAG_formal_parameter's DW_AT_call_value.  It is never NULL.  */
 
-  const gdb_byte *value;
-  size_t value_size;
+  const gdb_byte *value = NULL;
+  size_t value_size = 0;
 
   /* * DW_TAG_formal_parameter's DW_AT_call_data_value.
      It may be NULL if not provided by DWARF.  */
 
-  const gdb_byte *data_value;
-  size_t data_value_size;
+  const gdb_byte *data_value = NULL;
+  size_t data_value_size = 0;
 };
 
 /* * A place where a function gets called from, represented by
    DW_TAG_call_site.  It can be looked up from symtab->call_site_htab.  */
 
 struct call_site
-  {
-    /* * Address of the first instruction after this call.  */
+{
+  call_site (CORE_ADDR pc_)
+  : pc (pc_)
+  {}
 
-    CORE_ADDR pc;
+  /* * Address of the first instruction after this call.  */
 
-    /* * List successor with head in FUNC_TYPE.TAIL_CALL_LIST.  */
+  CORE_ADDR pc = 0;
 
-    struct call_site *tail_call_next;
+  /* * List successor with head in FUNC_TYPE.TAIL_CALL_LIST.  */
 
-    /* * Describe DW_AT_call_target.  Missing attribute uses
-       FIELD_LOC_KIND_DWARF_BLOCK with FIELD_DWARF_BLOCK == NULL.  */
+  struct call_site *tail_call_next = NULL;
 
-    struct call_site_target target;
+  /* * Describe DW_AT_call_target.  Missing attribute uses
+     FIELD_LOC_KIND_DWARF_BLOCK with FIELD_DWARF_BLOCK == NULL.  */
 
-    /* * Size of the PARAMETER array.  */
+  struct call_site_target target;
 
-    unsigned parameter_count;
+  /* * CU of the function where the call is located.  It gets used
+     for DWARF blocks execution in the parameter array below.  */
 
-    /* * CU of the function where the call is located.  It gets used
-       for DWARF blocks execution in the parameter array below.  */
+  struct dwarf2_per_cu_data *per_cu = NULL;
 
-    struct dwarf2_per_cu_data *per_cu;
+  /* * Describe DW_TAG_call_site's DW_TAG_formal_parameter.  */
 
-    /* * Describe DW_TAG_call_site's DW_TAG_formal_parameter.  */
-
-    struct call_site_parameter parameter[1];
-  };
+  std::vector<call_site_parameter> parameters;
+};
 
 /* * The default value of TYPE_CPLUS_SPECIFIC(T) points to this shared
    static structure.  */

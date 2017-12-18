@@ -228,7 +228,7 @@ call_site_for_pc (struct gdbarch *gdbarch, CORE_ADDR pc)
   /* -1 as tail call PC can be already after the compilation unit range.  */
   cust = find_pc_compunit_symtab (pc - 1);
 
-  std::unordered_map<CORE_ADDR, call_site *>::iterator it;
+  std::unordered_map<CORE_ADDR, call_site>::iterator it;
   if (cust != NULL)
     it = cust->call_site_htab.find (pc);
 
@@ -246,7 +246,7 @@ call_site_for_pc (struct gdbarch *gdbarch, CORE_ADDR pc)
 		    : MSYMBOL_PRINT_NAME (msym.minsym)));
     }
 
-  return it->second;
+  return &it->second;
 }
 
 /* Return the blockvector immediately containing the innermost lexical block

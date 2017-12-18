@@ -721,7 +721,7 @@ struct dwarf2_cu
   VEC (delayed_method_info) *method_list = NULL;
 
   /* To be copied to symtab->call_site_htab.  */
-  std::unordered_map<CORE_ADDR, call_site *> call_site_htab;
+  std::unordered_map<CORE_ADDR, call_site> call_site_htab;
 
   /* Non-NULL if this CU came from a DWO file.
      There is an invariant here that is important to remember:
@@ -13921,7 +13921,6 @@ read_call_site_scope (struct die_info *die, struct dwarf2_cu *cu)
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
   CORE_ADDR pc, baseaddr;
   struct attribute *attr;
-  int nparams;
   struct die_info *child_die;
 
   baseaddr = ANOFFSET (objfile->section_offsets, SECT_OFF_TEXT (objfile));
@@ -13956,7 +13955,7 @@ read_call_site_scope (struct die_info *die, struct dwarf2_cu *cu)
 
   /* Count parameters at the caller.  */
 
-  nparams = 0;
+  int nparams = 0;
   for (child_die = die->child; child_die && child_die->tag;
        child_die = sibling_die (child_die))
     {
@@ -13974,14 +13973,10 @@ read_call_site_scope (struct die_info *die, struct dwarf2_cu *cu)
       nparams++;
     }
 
-  struct call_site *call_site
-    = ((struct call_site *)
-       obstack_alloc (&objfile->objfile_obstack,
-		      sizeof (*call_site)
-		      + (sizeof (*call_site->parameter) * (nparams - 1))));
-  cu->call_site_htab[pc] = call_site;
-  memset (call_site, 0, sizeof (*call_site) - sizeof (*call_site->parameter));
-  call_site->pc = pc;
+  auto insert_pair
+    = cu->call_site_htab.emplace (std::make_pair (pc, call_site (pc)));
+  gdb_assert (insert_pair.second);
+  struct call_site *call_site = &insert_pair.first->second;
 
   if (dwarf2_flag_true_p (die, DW_AT_call_tail_call, cu)
       || dwarf2_flag_true_p (die, DW_AT_GNU_tail_call, cu))
@@ -14110,7 +14105,6 @@ read_call_site_scope (struct die_info *die, struct dwarf2_cu *cu)
        child_die && child_die->tag;
        child_die = sibling_die (child_die))
     {
-      struct call_site_parameter *parameter;
       struct attribute *loc, *origin;
 
       if (child_die->tag != DW_TAG_call_site_parameter
@@ -14120,8 +14114,9 @@ read_call_site_scope (struct die_info *die, struct dwarf2_cu *cu)
 	  continue;
 	}
 
-      gdb_assert (call_site->parameter_count < nparams);
-      parameter = &call_site->parameter[call_site->parameter_count];
+      gdb_assert (call_site->parameters.size () < nparams);
+      call_site->parameters.emplace_back ();
+      call_site_parameter *parameter = &call_site->parameters.back ();
 
       /* DW_AT_location specifies the register number or DW_AT_abstract_origin
 	 specifies DW_TAG_formal_parameter.  Value of the data assumed for the
@@ -14205,7 +14200,6 @@ read_call_site_scope (struct die_info *die, struct dwarf2_cu *cu)
       /* Parameters are not pre-cleared by memset above.  */
       parameter->data_value = NULL;
       parameter->data_value_size = 0;
-      call_site->parameter_count++;
 
       attr = dwarf2_attr (child_die, DW_AT_call_data_value, cu);
       if (attr == NULL)

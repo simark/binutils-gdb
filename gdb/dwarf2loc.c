@@ -1181,19 +1181,19 @@ call_site_find_chain (struct gdbarch *gdbarch, CORE_ADDR caller_pc,
 /* Return 1 if KIND and KIND_U match PARAMETER.  Return 0 otherwise.  */
 
 static int
-call_site_parameter_matches (struct call_site_parameter *parameter,
+call_site_parameter_matches (const call_site_parameter &parameter,
 			     enum call_site_parameter_kind kind,
 			     union call_site_parameter_u kind_u)
 {
-  if (kind == parameter->kind)
+  if (kind == parameter.kind)
     switch (kind)
       {
       case CALL_SITE_PARAMETER_DWARF_REG:
-	return kind_u.dwarf_reg == parameter->u.dwarf_reg;
+	return kind_u.dwarf_reg == parameter.u.dwarf_reg;
       case CALL_SITE_PARAMETER_FB_OFFSET:
-	return kind_u.fb_offset == parameter->u.fb_offset;
+	return kind_u.fb_offset == parameter.u.fb_offset;
       case CALL_SITE_PARAMETER_PARAM_OFFSET:
-	return kind_u.param_cu_off == parameter->u.param_cu_off;
+	return kind_u.param_cu_off == parameter.u.param_cu_off;
       }
   return 0;
 }
@@ -1214,7 +1214,6 @@ dwarf_expr_reg_to_entry_parameter (struct frame_info *frame,
   struct gdbarch *gdbarch;
   struct frame_info *caller_frame;
   struct call_site *call_site;
-  int iparams;
   /* Initialize it just to avoid a GCC false warning.  */
   struct call_site_parameter *parameter = NULL;
   CORE_ADDR target_addr;
@@ -1279,13 +1278,15 @@ dwarf_expr_reg_to_entry_parameter (struct frame_info *frame,
      call itself via tail calls.  */
   func_verify_no_selftailcall (gdbarch, func_addr);
 
-  for (iparams = 0; iparams < call_site->parameter_count; iparams++)
+  std::vector<call_site_parameter>::iterator itparams;
+  for (itparams = call_site->parameters.begin ();
+       itparams != call_site->parameters.end ();
+       itparams++)
     {
-      parameter = &call_site->parameter[iparams];
-      if (call_site_parameter_matches (parameter, kind, kind_u))
+      if (call_site_parameter_matches (*itparams, kind, kind_u))
 	break;
     }
-  if (iparams == call_site->parameter_count)
+  if (itparams == call_site->parameters.end ())
     {
       struct minimal_symbol *msym
 	= lookup_minimal_symbol_by_pc (caller_pc).minsym;
