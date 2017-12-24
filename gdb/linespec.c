@@ -396,8 +396,8 @@ static std::vector<symtab_and_line> decode_digits_list_mode
    linespec_p ls,
    struct symtab_and_line val);
 
-static void minsym_found (struct linespec_state *self, struct objfile *objfile,
-			  struct minimal_symbol *msymbol,
+static void minsym_found (struct linespec_state *self,
+			  const bound_minimal_symbol &bmsymbol,
 			  std::vector<symtab_and_line> *result);
 
 static int compare_symbols (const void *a, const void *b);
@@ -2350,7 +2350,7 @@ convert_linespec_to_sals (struct linespec_state *state, linespec_p ls)
 	    {
 	      pspace = elem->objfile->pspace;
 	      set_current_program_space (pspace);
-	      minsym_found (state, elem->objfile, elem->minsym, &sals);
+	      minsym_found (state, *elem, &sals);
 	    }
 	}
     }
@@ -4333,14 +4333,14 @@ linespec_parse_variable (struct linespec_state *self, const char *variable)
    multiple-locations breakpoints could be placed.  */
 
 static void
-minsym_found (struct linespec_state *self, struct objfile *objfile,
-	      struct minimal_symbol *msymbol,
+minsym_found (struct linespec_state *self,
+	      const bound_minimal_symbol &bmsymbol,
 	      std::vector<symtab_and_line> *result)
 {
   struct symtab_and_line sal;
 
   CORE_ADDR func_addr;
-  if (msymbol_is_function (objfile, msymbol, &func_addr))
+  if (msymbol_is_function (bmsymbol.objfile, bmsymbol.minsym, &func_addr))
     {
       sal = find_pc_sect_line (func_addr, NULL, 0);
 
@@ -4350,7 +4350,7 @@ minsym_found (struct linespec_state *self, struct objfile *objfile,
 	      && (COMPUNIT_LOCATIONS_VALID (SYMTAB_COMPUNIT (sal.symtab))
 		  || SYMTAB_LANGUAGE (sal.symtab) == language_asm))
 	    {
-	      struct gdbarch *gdbarch = get_objfile_arch (objfile);
+	      struct gdbarch *gdbarch = get_objfile_arch (bmsymbol.objfile);
 
 	      sal.pc = func_addr;
 	      if (gdbarch_skip_entrypoint_p (gdbarch))
@@ -4362,15 +4362,15 @@ minsym_found (struct linespec_state *self, struct objfile *objfile,
     }
   else
     {
-      sal.objfile = objfile;
-      sal.pc = MSYMBOL_VALUE_ADDRESS (objfile, msymbol);
+      sal.objfile = bmsymbol.objfile;
+      sal.pc = BMSYMBOL_VALUE_ADDRESS (bmsymbol);
       sal.pspace = current_program_space;
     }
 
-  sal.section = MSYMBOL_OBJ_SECTION (objfile, msymbol);
+  sal.section = MSYMBOL_OBJ_SECTION (bmsymbol.objfile, bmsymbol.minsym);
 
-  if (maybe_add_address (self->addr_set, objfile->pspace, sal.pc))
-    add_sal_to_sals (self, result, &sal, MSYMBOL_NATURAL_NAME (msymbol), 0);
+  if (maybe_add_address (self->addr_set, bmsymbol.objfile->pspace, sal.pc))
+    add_sal_to_sals (self, result, &sal, MSYMBOL_NATURAL_NAME (bmsymbol.minsym), 0);
 }
 
 /* A helper struct to pass some data through

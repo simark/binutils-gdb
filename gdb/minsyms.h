@@ -51,7 +51,7 @@ struct bound_minimal_symbol
 
 /* For a bound minsym, we can easily compute the address directly.  */
 static inline CORE_ADDR
-BMSYMBOL_VALUE_ADDRESS (bound_minimal_symbol &symbol)
+BMSYMBOL_VALUE_ADDRESS (const bound_minimal_symbol &symbol)
 {
   return symbol.address ();
 }
