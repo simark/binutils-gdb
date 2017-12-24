@@ -555,7 +555,7 @@ lookup_minimal_symbol_text (const char *name, struct objfile *objf)
 
 /* See minsyms.h.  */
 
-struct minimal_symbol *
+bound_minimal_symbol
 lookup_minimal_symbol_by_pc_name (CORE_ADDR pc, const char *name,
 				  struct objfile *objf)
 {
@@ -577,12 +577,12 @@ lookup_minimal_symbol_by_pc_name (CORE_ADDR pc, const char *name,
 	    {
 	      if (bound_minimal_symbol (msymbol, objfile).address () == pc
 		  && strcmp (MSYMBOL_LINKAGE_NAME (msymbol), name) == 0)
-		return msymbol;
+		return bound_minimal_symbol (msymbol, objfile);
 	    }
 	}
     }
 
-  return NULL;
+  return bound_minimal_symbol ();
 }
 
 /* See minsyms.h.  */

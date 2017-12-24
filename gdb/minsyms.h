@@ -255,7 +255,7 @@ struct bound_minimal_symbol lookup_minimal_symbol_solib_trampoline
    limit the search to that objfile.  Returns a pointer to the minimal
    symbol that matches, or NULL if no match is found.  */
 
-struct minimal_symbol *lookup_minimal_symbol_by_pc_name
+bound_minimal_symbol lookup_minimal_symbol_by_pc_name
     (CORE_ADDR, const char *, struct objfile *);
 
 /* Search through the minimal symbol table for each objfile and find

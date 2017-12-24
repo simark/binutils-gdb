@@ -2179,7 +2179,7 @@ arm_exidx_new_objfile (struct objfile *objfile)
 
 		      for (k = 0; personality[k]; k++)
 			if (lookup_minimal_symbol_by_pc_name
-			      (pc, personality[k], objfile))
+			      (pc, personality[k], objfile).minsym)
 			  {
 			    gnu_personality = 1;
 			    break;

@@ -1636,16 +1636,15 @@ void
 fixup_section (struct general_symbol_info *ginfo,
 	       CORE_ADDR addr, struct objfile *objfile)
 {
-  struct minimal_symbol *msym;
-
   /* First, check whether a minimal symbol with the same name exists
      and points to the same address.  The address check is required
      e.g. on PowerPC64, where the minimal symbol for a function will
      point to the function descriptor, while the debug symbol will
      point to the actual function code.  */
-  msym = lookup_minimal_symbol_by_pc_name (addr, ginfo->name, objfile);
-  if (msym)
-    ginfo->section = MSYMBOL_SECTION (msym);
+  bound_minimal_symbol bmsym
+    = lookup_minimal_symbol_by_pc_name (addr, ginfo->name, objfile);
+  if (bmsym.minsym != NULL)
+    ginfo->section = MSYMBOL_SECTION (bmsym.minsym);
   else
     {
       /* Static, function-local variables do appear in the linker
