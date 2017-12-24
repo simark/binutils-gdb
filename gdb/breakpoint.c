@@ -9586,7 +9586,7 @@ resolve_sal_pc (struct symtab_and_line *sal)
 
 	      bound_minimal_symbol msym = lookup_minimal_symbol_by_pc (sal->pc);
 	      if (msym.minsym)
-		sal->section = MSYMBOL_OBJ_SECTION (msym.objfile, msym.minsym);
+		sal->section = msym.obj_section ();
 	    }
 	}
     }

@@ -669,7 +669,7 @@ elf_gnu_ifunc_record_cache (const char *name, CORE_ADDR addr)
   if (BMSYMBOL_VALUE_ADDRESS (msym) != addr)
     return 0;
   /* minimal symbols have always SYMBOL_OBJ_SECTION non-NULL.  */
-  sect = MSYMBOL_OBJ_SECTION (msym.objfile, msym.minsym)->the_bfd_section;
+  sect = msym.obj_section ()->the_bfd_section;
   objfile = msym.objfile;
 
   /* If .plt jumps back to .plt the symbol is still deferred for later
