@@ -361,9 +361,7 @@ convert_symbol_bmsym (struct compile_c_instance *context,
   enum gcc_c_symbol_kind kind;
   gcc_type sym_type;
   gcc_decl decl;
-  CORE_ADDR addr;
-
-  addr = MSYMBOL_VALUE_ADDRESS (objfile, msym);
+  CORE_ADDR addr = bmsym.address ();
 
   /* Conversion copied from write_exp_msymbol.  */
   switch (MSYMBOL_TYPE (msym))

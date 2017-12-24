@@ -608,6 +608,10 @@ gdb_static_assert (nr_minsym_types <= (1 << MINSYM_TYPE_BITS));
 
 struct minimal_symbol
 {
+  CORE_ADDR address () const
+  {
+    return this->mginfo.value.address;
+  }
 
   /* The general symbol info required for all types of symbols.
 
@@ -668,11 +672,6 @@ struct minimal_symbol
 #define MSYMBOL_VALUE(symbol)		(symbol)->mginfo.value.ivalue
 /* The unrelocated address of the minimal symbol.  */
 #define MSYMBOL_VALUE_RAW_ADDRESS(symbol) ((symbol)->mginfo.value.address + 0)
-/* The relocated address of the minimal symbol, using the section
-   offsets from OBJFILE.  */
-#define MSYMBOL_VALUE_ADDRESS(objfile, symbol)				\
-  ((symbol)->mginfo.value.address					\
-   + ANOFFSET ((objfile)->section_offsets, ((symbol)->mginfo.section)))
 
 #define SET_MSYMBOL_VALUE_ADDRESS(symbol, new_value)	\
   ((symbol)->mginfo.value.address = (new_value))

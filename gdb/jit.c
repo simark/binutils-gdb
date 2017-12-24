@@ -361,11 +361,13 @@ jit_read_descriptor (struct gdbarch *gdbarch,
   if (objf_data->descriptor == NULL)
     return 0;
 
+  CORE_ADDR descriptor_addr
+    = bound_minimal_symbol (objf_data->descriptor, ps_data->objfile).address ();
+
   if (jit_debug)
     fprintf_unfiltered (gdb_stdlog,
 			"jit_read_descriptor, descriptor_addr = %s\n",
-			paddress (gdbarch, MSYMBOL_VALUE_ADDRESS (ps_data->objfile,
-								  objf_data->descriptor)));
+			paddress (gdbarch, descriptor_addr));
 
   /* Figure out how big the descriptor is on the remote and how to read it.  */
   ptr_type = builtin_type (gdbarch)->builtin_data_ptr;
@@ -374,9 +376,7 @@ jit_read_descriptor (struct gdbarch *gdbarch,
   desc_buf = (gdb_byte *) alloca (desc_size);
 
   /* Read the descriptor.  */
-  err = target_read_memory (MSYMBOL_VALUE_ADDRESS (ps_data->objfile,
-						   objf_data->descriptor),
-			    desc_buf, desc_size);
+  err = target_read_memory (descriptor_addr, desc_buf, desc_size);
   if (err)
     {
       printf_unfiltered (_("Unable to read JIT descriptor from "
@@ -1042,7 +1042,6 @@ jit_breakpoint_re_set_internal (struct gdbarch *gdbarch,
   struct bound_minimal_symbol reg_symbol;
   struct bound_minimal_symbol desc_symbol;
   struct jit_objfile_data *objf_data;
-  CORE_ADDR addr;
 
   if (ps_data->objfile == NULL)
     {
@@ -1068,7 +1067,8 @@ jit_breakpoint_re_set_internal (struct gdbarch *gdbarch,
   else
     objf_data = get_jit_objfile_data (ps_data->objfile);
 
-  addr = MSYMBOL_VALUE_ADDRESS (ps_data->objfile, objf_data->register_code);
+  CORE_ADDR addr = bound_minimal_symbol (objf_data->register_code,
+					 ps_data->objfile).address ();
 
   if (jit_debug)
     fprintf_unfiltered (gdb_stdlog,

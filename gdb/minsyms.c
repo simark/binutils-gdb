@@ -575,7 +575,7 @@ lookup_minimal_symbol_by_pc_name (CORE_ADDR pc, const char *name,
 	       msymbol != NULL;
 	       msymbol = msymbol->hash_next)
 	    {
-	      if (MSYMBOL_VALUE_ADDRESS (objfile, msymbol) == pc
+	      if (bound_minimal_symbol (msymbol, objfile).address () == pc
 		  && strcmp (MSYMBOL_LINKAGE_NAME (msymbol), name) == 0)
 		return msymbol;
 	    }
@@ -1474,11 +1474,14 @@ find_solib_trampoline_target (struct frame_info *frame, CORE_ADDR pc)
     {
       ALL_MSYMBOLS (objfile, msymbol)
       {
+	CORE_ADDR bmsymbol_address
+	  = bound_minimal_symbol (msymbol, objfile).address ();
+
 	if ((MSYMBOL_TYPE (msymbol) == mst_text
 	    || MSYMBOL_TYPE (msymbol) == mst_text_gnu_ifunc)
 	    && strcmp (MSYMBOL_LINKAGE_NAME (msymbol),
 		       MSYMBOL_LINKAGE_NAME (tsymbol)) == 0)
-	  return MSYMBOL_VALUE_ADDRESS (objfile, msymbol);
+	  return bmsymbol_address;
 
 	/* Also handle minimal symbols pointing to function descriptors.  */
 	if (MSYMBOL_TYPE (msymbol) == mst_data
@@ -1489,11 +1492,11 @@ find_solib_trampoline_target (struct frame_info *frame, CORE_ADDR pc)
 
 	    func = gdbarch_convert_from_func_ptr_addr
 		    (get_objfile_arch (objfile),
-		     MSYMBOL_VALUE_ADDRESS (objfile, msymbol),
+		     bmsymbol_address,
 		     &current_target);
 
 	    /* Ignore data symbols that are not function descriptors.  */
-	    if (func != MSYMBOL_VALUE_ADDRESS (objfile, msymbol))
+	    if (func != bmsymbol_address)
 	      return func;
 	  }
       }
@@ -1535,11 +1538,12 @@ minimal_symbol_upper_bound (struct bound_minimal_symbol minsym)
 	break;
     }
 
+  CORE_ADDR next_bmsym_addr
+    = bound_minimal_symbol (msymbol + i, minsym.objfile).address ();
   obj_section = MSYMBOL_OBJ_SECTION (minsym.objfile, minsym.minsym);
   if (MSYMBOL_LINKAGE_NAME (msymbol + i) != NULL
-      && (MSYMBOL_VALUE_ADDRESS (minsym.objfile, msymbol + i)
-	  < obj_section_endaddr (obj_section)))
-    result = MSYMBOL_VALUE_ADDRESS (minsym.objfile, msymbol + i);
+      && (next_bmsym_addr < obj_section_endaddr (obj_section)))
+    result = next_bmsym_addr;
   else
     /* We got the start address from the last msymbol in the objfile.
        So the end address is the end of the section.  */
@@ -1551,5 +1555,6 @@ minimal_symbol_upper_bound (struct bound_minimal_symbol minsym)
 CORE_ADDR
 bound_minimal_symbol::address () const
 {
-  return MSYMBOL_VALUE_ADDRESS (this->objfile, this->minsym);
+  return (this->minsym->address ()
+	  + this->objfile->section_offsets->get (this->minsym->mginfo.section));
 }

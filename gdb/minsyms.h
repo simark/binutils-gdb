@@ -36,6 +36,9 @@ struct bound_minimal_symbol
   : minsym (minsym_), objfile (objfile_)
   {}
 
+  /* The relocated address of the minimal symbol, using the section
+     offsets from OBJFILE.  */
+
   CORE_ADDR address () const;
 
   /* The minimal symbol that was found, or NULL if no minimal symbol

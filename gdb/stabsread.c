@@ -4651,6 +4651,8 @@ scan_file_globals (struct objfile *objfile)
 	{
 	  QUIT;
 
+	  bound_minimal_symbol bmsymbol (msymbol, resolve_objfile);
+
 	  /* Skip static symbols.  */
 	  switch (MSYMBOL_TYPE (msymbol))
 	    {
@@ -4691,16 +4693,10 @@ scan_file_globals (struct objfile *objfile)
 		  if (sym)
 		    {
 		      if (SYMBOL_CLASS (sym) == LOC_BLOCK)
-			{
-			  fix_common_block (sym,
-					    MSYMBOL_VALUE_ADDRESS (resolve_objfile,
-								   msymbol));
-			}
+			fix_common_block (sym, bmsymbol.address ());
 		      else
-			{
-			  SYMBOL_VALUE_ADDRESS (sym)
-			    = MSYMBOL_VALUE_ADDRESS (resolve_objfile, msymbol);
-			}
+			SYMBOL_VALUE_ADDRESS (sym) = bmsymbol.address ();
+
 		      SYMBOL_SECTION (sym) = MSYMBOL_SECTION (msymbol);
 		    }
 

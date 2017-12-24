@@ -4353,6 +4353,7 @@ search_symbols (const char *regexp, enum search_domain kind,
       ALL_MSYMBOLS (objfile, msymbol)
       {
         QUIT;
+        bound_minimal_symbol bmsymbol (msymbol, objfile);
 
 	if (msymbol->created_by_gdb)
 	  continue;
@@ -4370,8 +4371,7 @@ search_symbols (const char *regexp, enum search_domain kind,
 		   is to expand the symbol table if msymbol is found, for the
 		   benefit of the next loop on ALL_COMPUNITS.  */
 		if (kind == FUNCTIONS_DOMAIN
-		    ? (find_pc_compunit_symtab
-		       (MSYMBOL_VALUE_ADDRESS (objfile, msymbol)) == NULL)
+		    ? (find_pc_compunit_symtab (bmsymbol.address ()) == NULL)
 		    : (lookup_symbol_in_objfile_from_linkage_name
 		       (objfile, MSYMBOL_LINKAGE_NAME (msymbol), VAR_DOMAIN)
 		       .symbol == NULL))
@@ -4449,11 +4449,12 @@ search_symbols (const char *regexp, enum search_domain kind,
 	    if (!preg || preg->exec (MSYMBOL_NATURAL_NAME (msymbol), 0,
 				     NULL, 0) == 0)
 	      {
+		bound_minimal_symbol bmsymbol (msymbol, objfile);
+
 		/* For functions we can do a quick check of whether the
 		   symbol might be found via find_pc_symtab.  */
 		if (kind != FUNCTIONS_DOMAIN
-		    || (find_pc_compunit_symtab
-			(MSYMBOL_VALUE_ADDRESS (objfile, msymbol)) == NULL))
+		    || (find_pc_compunit_symtab (bmsymbol.address ()) == NULL))
 		  {
 		    if (lookup_symbol_in_objfile_from_linkage_name
 			(objfile, MSYMBOL_LINKAGE_NAME (msymbol), VAR_DOMAIN)

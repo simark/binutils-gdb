@@ -198,6 +198,7 @@ dump_msymbols (struct objfile *objfile, struct ui_file *outfile)
   index = 0;
   ALL_OBJFILE_MSYMBOLS (objfile, msymbol)
     {
+      bound_minimal_symbol bmsymbol (msymbol, objfile);
       struct obj_section *section = MSYMBOL_OBJ_SECTION (objfile, msymbol);
 
       switch (MSYMBOL_TYPE (msymbol))
@@ -237,9 +238,7 @@ dump_msymbols (struct objfile *objfile, struct ui_file *outfile)
 	  break;
 	}
       fprintf_filtered (outfile, "[%2d] %c ", index, ms_type);
-      fputs_filtered (paddress (gdbarch, MSYMBOL_VALUE_ADDRESS (objfile,
-								msymbol)),
-		      outfile);
+      fputs_filtered (paddress (gdbarch, bmsymbol.address ()), outfile);
       fprintf_filtered (outfile, " %s", MSYMBOL_LINKAGE_NAME (msymbol));
       if (section)
 	{

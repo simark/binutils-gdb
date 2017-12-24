@@ -1328,7 +1328,7 @@ info_symbol_command (const char *arg, int from_tty)
 	struct cleanup *old_chain;
 
 	matches = 1;
-	offset = sect_addr - MSYMBOL_VALUE_ADDRESS (objfile, msymbol);
+	offset = sect_addr - bound_minimal_symbol (msymbol, objfile).address ();
 	mapped = section_is_mapped (osect) ? _("mapped") : _("unmapped");
 	sec_name = osect->the_bfd_section->name;
 	msym_name = MSYMBOL_PRINT_NAME (msymbol);
