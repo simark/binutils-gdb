@@ -5804,8 +5804,6 @@ symbol_set_symtab (struct symbol *symbol, struct symtab *symtab)
   symbol->owner.symtab = symtab;
 }
 
-
-
 void
 _initialize_symtab (void)
 {
