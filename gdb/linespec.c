@@ -4378,9 +4378,6 @@ minsym_found (struct linespec_state *self,
 
 struct collect_minsyms
 {
-  /* The objfile we're examining.  */
-  struct objfile *objfile;
-
   /* Only search the given symtab, or NULL to search for all symbols.  */
   struct symtab *symtab;
 
@@ -4435,7 +4432,7 @@ compare_msyms (const void *a, const void *b)
    the result.  */
 
 static void
-add_minsym (struct minimal_symbol *minsym, void *d)
+add_minsym (const bound_minimal_symbol &bmsymbol, void *d)
 {
   struct collect_minsyms *info = (struct collect_minsyms *) d;
 
@@ -4444,7 +4441,7 @@ add_minsym (struct minimal_symbol *minsym, void *d)
       /* We're looking for a label for which we don't have debug
 	 info.  */
       CORE_ADDR func_addr;
-      if (msymbol_is_function (info->objfile, minsym, &func_addr))
+      if (msymbol_is_function (bmsymbol.objfile, bmsymbol.minsym, &func_addr))
 	{
 	  symtab_and_line sal = find_pc_sect_line (func_addr, NULL, 0);
 
@@ -4454,11 +4451,11 @@ add_minsym (struct minimal_symbol *minsym, void *d)
     }
 
   /* Exclude data symbols when looking for breakpoint locations.  */
-  if (!info->list_mode && !msymbol_is_function (info->objfile, minsym))
+  if (!info->list_mode
+      && !msymbol_is_function (bmsymbol.objfile, bmsymbol.minsym))
     return;
 
-  bound_minimal_symbol_d mo = {minsym, info->objfile};
-  VEC_safe_push (bound_minimal_symbol_d, info->msyms, &mo);
+  VEC_safe_push (bound_minimal_symbol_d, info->msyms, &bmsymbol);
 }
 
 /* Search for minimal symbols called NAME.  If SEARCH_PSPACE
@@ -4500,10 +4497,8 @@ search_minsyms_for_name (struct collect_info *info,
 	set_current_program_space (pspace);
 
 	ALL_OBJFILES (objfile)
-	{
-	  local.objfile = objfile;
 	  iterate_over_minimal_symbols (objfile, name, add_minsym, &local);
-	}
+
       }
     }
   else
@@ -4511,8 +4506,8 @@ search_minsyms_for_name (struct collect_info *info,
       if (search_pspace == NULL || SYMTAB_PSPACE (symtab) == search_pspace)
 	{
 	  set_current_program_space (SYMTAB_PSPACE (symtab));
-	  local.objfile = SYMTAB_OBJFILE(symtab);
-	  iterate_over_minimal_symbols (local.objfile, name, add_minsym, &local);
+	  iterate_over_minimal_symbols (SYMTAB_OBJFILE (symtab), name,
+					add_minsym, &local);
 	}
     }
 

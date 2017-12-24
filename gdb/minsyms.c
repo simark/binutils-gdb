@@ -452,7 +452,7 @@ find_minimal_symbol_address (const char *name, CORE_ADDR *addr,
 void
 iterate_over_minimal_symbols (struct objfile *objf,
 			      const lookup_name_info &lookup_name,
-			      void (*callback) (struct minimal_symbol *,
+			      void (*callback) (const bound_minimal_symbol &,
 						void *),
 			      void *user_data)
 {
@@ -470,8 +470,10 @@ iterate_over_minimal_symbols (struct objfile *objf,
 	   iter != NULL;
 	   iter = iter->hash_next)
 	{
+	  bound_minimal_symbol bmsymbol (iter, objf);
+
 	  if (mangled_cmp (MSYMBOL_LINKAGE_NAME (iter), name) == 0)
-	    (*callback) (iter, user_data);
+	    (*callback) (bmsymbol, user_data);
 	}
     }
 
@@ -489,8 +491,14 @@ iterate_over_minimal_symbols (struct objfile *objf,
       for (minimal_symbol *iter = objf->per_bfd->msymbol_demangled_hash[hash];
 	   iter != NULL;
 	   iter = iter->demangled_hash_next)
-	if (name_match (MSYMBOL_SEARCH_NAME (iter), lookup_name, NULL))
-	  (*callback) (iter, user_data);
+	{
+	  if (name_match (MSYMBOL_SEARCH_NAME (iter), lookup_name, NULL))
+	    {
+	      bound_minimal_symbol bmsymbol (iter, objf);
+
+	      (*callback) (bmsymbol, user_data);
+	    }
+	}
     }
 }
 

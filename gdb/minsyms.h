@@ -285,11 +285,9 @@ struct bound_minimal_symbol lookup_minimal_symbol_by_pc (CORE_ADDR);
    For each matching symbol, CALLBACK is called with the symbol and
    USER_DATA as arguments.  */
 
-void iterate_over_minimal_symbols (struct objfile *objf,
-				   const lookup_name_info &name,
-				   void (*callback) (struct minimal_symbol *,
-						     void *),
-				   void *user_data);
+void iterate_over_minimal_symbols
+  (struct objfile *objf, const lookup_name_info &name,
+   void (*callback) (const bound_minimal_symbol &, void *), void *user_data);
 
 /* Compute the upper bound of MINSYM.  The upper bound is the last
    address thought to be part of the symbol.  If the symbol has a
