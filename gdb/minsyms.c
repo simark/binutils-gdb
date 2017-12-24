@@ -774,20 +774,25 @@ lookup_minimal_symbol_by_pc_section_1 (CORE_ADDR pc_in,
 		      continue;
 		    }
 
+		  struct obj_section *obj_section
+		    = bound_minimal_symbol (&msymbol[hi], objfile).obj_section ();
+
 		  /* If SECTION was specified, skip any symbol from
 		     wrong section.  */
 		  if (section
 		      /* Some types of debug info, such as COFF,
 			 don't fill the bfd_section member, so don't
 			 throw away symbols on those platforms.  */
-		      && MSYMBOL_OBJ_SECTION (objfile, &msymbol[hi]) != NULL
-		      && (!matching_obj_sections
-			  (MSYMBOL_OBJ_SECTION (objfile, &msymbol[hi]),
-			   section)))
+		      && obj_section != NULL
+		      && (!matching_obj_sections (obj_section, section)))
 		    {
 		      hi--;
 		      continue;
 		    }
+
+		  struct obj_section *obj_section_prev
+		    = bound_minimal_symbol (&msymbol[hi - 1], objfile)
+		        .obj_section ();
 
 		  /* If we are looking for a trampoline and this is a
 		     text symbol, or the other way around, check the
@@ -800,8 +805,7 @@ lookup_minimal_symbol_by_pc_section_1 (CORE_ADDR pc_in,
 			  == MSYMBOL_SIZE (&msymbol[hi - 1]))
 		      && (MSYMBOL_VALUE_RAW_ADDRESS (&msymbol[hi])
 			  == MSYMBOL_VALUE_RAW_ADDRESS (&msymbol[hi - 1]))
-		      && (MSYMBOL_OBJ_SECTION (objfile, &msymbol[hi])
-			  == MSYMBOL_OBJ_SECTION (objfile, &msymbol[hi - 1])))
+		      && (obj_section == obj_section_prev))
 		    {
 		      hi--;
 		      continue;
@@ -1540,7 +1544,7 @@ minimal_symbol_upper_bound (struct bound_minimal_symbol minsym)
 
   CORE_ADDR next_bmsym_addr
     = bound_minimal_symbol (msymbol + i, minsym.objfile).address ();
-  obj_section = MSYMBOL_OBJ_SECTION (minsym.objfile, minsym.minsym);
+  obj_section = minsym.obj_section ();
   if (MSYMBOL_LINKAGE_NAME (msymbol + i) != NULL
       && (next_bmsym_addr < obj_section_endaddr (obj_section)))
     result = next_bmsym_addr;

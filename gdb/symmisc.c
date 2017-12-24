@@ -199,7 +199,7 @@ dump_msymbols (struct objfile *objfile, struct ui_file *outfile)
   ALL_OBJFILE_MSYMBOLS (objfile, msymbol)
     {
       bound_minimal_symbol bmsymbol (msymbol, objfile);
-      struct obj_section *section = MSYMBOL_OBJ_SECTION (objfile, msymbol);
+      obj_section *section = bound_minimal_symbol (msymbol, objfile).obj_section ();
 
       switch (MSYMBOL_TYPE (msymbol))
 	{

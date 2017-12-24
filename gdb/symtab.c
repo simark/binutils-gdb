@@ -3682,7 +3682,7 @@ skip_prologue_sal (struct symtab_and_line *sal)
 
       objfile = msymbol.objfile;
       pc = BMSYMBOL_VALUE_ADDRESS (msymbol);
-      section = MSYMBOL_OBJ_SECTION (objfile, msymbol.minsym);
+      section = msymbol.obj_section ();
       name = MSYMBOL_LINKAGE_NAME (msymbol.minsym);
     }
 

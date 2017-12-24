@@ -772,7 +772,7 @@ default_read_var_value (struct symbol *var, const struct block *var_block,
 	    error (_("Missing %s symbol \"%s\"."),
 		   flavour_name, SYMBOL_LINKAGE_NAME (var));
 	  }
-	obj_section = MSYMBOL_OBJ_SECTION (lookup_data.result.objfile, msym);
+	obj_section = lookup_data.result.obj_section ();
 	/* Relocate address, unless there is no section or the variable is
 	   a TLS variable. */
 	if (obj_section == NULL

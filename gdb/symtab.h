@@ -680,10 +680,6 @@ struct minimal_symbol
 #define MSYMBOL_VALUE_CHAIN(symbol)	(symbol)->mginfo.value.chain
 #define MSYMBOL_LANGUAGE(symbol)	(symbol)->mginfo.language
 #define MSYMBOL_SECTION(symbol)		(symbol)->mginfo.section
-#define MSYMBOL_OBJ_SECTION(objfile, symbol)			\
-  (((symbol)->mginfo.section >= 0)				\
-   ? (&(((objfile)->sections)[(symbol)->mginfo.section]))	\
-   : NULL)
 
 #define MSYMBOL_NATURAL_NAME(symbol) \
   (symbol_natural_name (&(symbol)->mginfo))

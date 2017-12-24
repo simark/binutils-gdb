@@ -1956,9 +1956,7 @@ spu_catch_start (struct objfile *objfile)
   /* If we have debugging information, try to use it -- this
      will allow us to properly skip the prologue.  */
   pc = BMSYMBOL_VALUE_ADDRESS (minsym);
-  cust
-    = find_pc_sect_compunit_symtab (pc, MSYMBOL_OBJ_SECTION (minsym.objfile,
-							     minsym.minsym));
+  cust = find_pc_sect_compunit_symtab (pc, minsym.obj_section ());
   if (cust != NULL)
     {
       const struct blockvector *bv = COMPUNIT_BLOCKVECTOR (cust);
