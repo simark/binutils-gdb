@@ -1557,13 +1557,6 @@ minimal_symbol_upper_bound (struct bound_minimal_symbol minsym)
 }
 
 CORE_ADDR
-MSYMBOL_VALUE_ADDRESS (struct objfile *objfile, minimal_symbol *symbol)
-{
-  return (symbol->mginfo.value.address
-	  + ANOFFSET (objfile->section_offsets, symbol->mginfo.section));
-}
-
-CORE_ADDR
 bound_minimal_symbol::address () const
 {
   return (this->minsym->address ()

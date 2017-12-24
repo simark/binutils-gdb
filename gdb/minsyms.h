@@ -53,11 +53,6 @@ struct bound_minimal_symbol
   struct objfile *objfile;
 };
 
-/* The relocated address of the minimal symbol, using the section
-   offsets from OBJFILE.  */
-CORE_ADDR MSYMBOL_VALUE_ADDRESS (struct objfile *objfile,
-				 minimal_symbol *symbol);
-
 /* For a bound minsym, we can easily compute the address directly.  */
 static inline CORE_ADDR
 BMSYMBOL_VALUE_ADDRESS (const bound_minimal_symbol &symbol)
