@@ -3927,7 +3927,7 @@ symbol *
 find_function_alias_target (bound_minimal_symbol msymbol)
 {
   CORE_ADDR func_addr;
-  if (!msymbol_is_function (msymbol, &func_addr))
+  if (!bmsymbol_is_function (msymbol, &func_addr))
     return NULL;
 
   symbol *sym = find_pc_function (func_addr);

@@ -185,7 +185,7 @@ void terminate_minimal_symbol_table (struct objfile *objfile);
    set to the function's address, already resolved if MINSYM points to
    a function descriptor.  */
 
-bool msymbol_is_function (const bound_minimal_symbol &bmsym,
+bool bmsymbol_is_function (const bound_minimal_symbol &bmsym,
 			  CORE_ADDR *func_address_p = NULL);
 
 /* Compute a hash code for the string argument.  */

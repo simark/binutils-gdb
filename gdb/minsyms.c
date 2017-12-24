@@ -57,7 +57,7 @@
 /* See minsyms.h.  */
 
 bool
-msymbol_is_function (const bound_minimal_symbol &bmsym,
+bmsymbol_is_function (const bound_minimal_symbol &bmsym,
 		     CORE_ADDR *func_address_p)
 {
   CORE_ADDR msym_addr = bmsym.address ();
