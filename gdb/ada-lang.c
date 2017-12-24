@@ -4941,11 +4941,8 @@ defns_collected (struct obstack *obstackp, int finish)
 struct bound_minimal_symbol
 ada_lookup_simple_minsym (const char *name)
 {
-  struct bound_minimal_symbol result;
   struct objfile *objfile;
   struct minimal_symbol *msymbol;
-
-  memset (&result, 0, sizeof (result));
 
   symbol_name_match_type match_type = name_match_type_from_name (name);
   lookup_name_info lookup_name (name, match_type);
@@ -4957,14 +4954,10 @@ ada_lookup_simple_minsym (const char *name)
   {
     if (match_name (MSYMBOL_LINKAGE_NAME (msymbol), lookup_name, NULL)
         && MSYMBOL_TYPE (msymbol) != mst_solib_trampoline)
-      {
-	result.minsym = msymbol;
-	result.objfile = objfile;
-	break;
-      }
+      return bound_minimal_symbol (msymbol, objfile);
   }
 
-  return result;
+  return bound_minimal_symbol ();
 }
 
 /* For all subprograms that statically enclose the subprogram of the

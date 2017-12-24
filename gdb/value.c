@@ -3170,14 +3170,10 @@ value_fn_field (struct value **arg1p, struct fn_field *f,
   struct type *ftype = TYPE_FN_FIELD_TYPE (f, j);
   const char *physname = TYPE_FN_FIELD_PHYSNAME (f, j);
   struct symbol *sym;
-  struct bound_minimal_symbol msym;
+  bound_minimal_symbol msym;
 
   sym = lookup_symbol (physname, 0, VAR_DOMAIN, 0).symbol;
-  if (sym != NULL)
-    {
-      memset (&msym, 0, sizeof (msym));
-    }
-  else
+  if (sym == NULL)
     {
       gdb_assert (sym == NULL);
       msym = lookup_bound_minimal_symbol (physname);

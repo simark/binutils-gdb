@@ -398,8 +398,12 @@ symbol_read_needs_frame (struct symbol *sym)
 
 struct minsym_lookup_data
 {
+  minsym_lookup_data (const char *name_)
+  : name (name_)
+  {}
+
   /* The name of the minimal symbol we are searching for.  */
-  const char *name;
+  const char *name = NULL;
 
   /* The field where the callback should store the minimal symbol
      if found.  It should be initialized to NULL before the search
@@ -744,12 +748,9 @@ default_read_var_value (struct symbol *var, const struct block *var_block,
 
     case LOC_UNRESOLVED:
       {
-	struct minsym_lookup_data lookup_data;
+	minsym_lookup_data lookup_data (SYMBOL_LINKAGE_NAME (var));
 	struct minimal_symbol *msym;
 	struct obj_section *obj_section;
-
-	memset (&lookup_data, 0, sizeof (lookup_data));
-	lookup_data.name = SYMBOL_LINKAGE_NAME (var);
 
 	gdbarch_iterate_over_objfiles_in_search_order
 	  (symbol_arch (var),

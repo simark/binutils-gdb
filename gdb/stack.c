@@ -1067,15 +1067,14 @@ find_frame_funname (struct frame_info *frame, enum language *funlang,
          changed (and we'll create a find_pc_minimal_function or some
          such).  */
 
-      struct bound_minimal_symbol msymbol;
+      bound_minimal_symbol msymbol;
 
       /* Don't attempt to do this for inlined functions, which do not
 	 have a corresponding minimal symbol.  */
       if (!block_inlined_p (SYMBOL_BLOCK_VALUE (func)))
 	msymbol
 	  = lookup_minimal_symbol_by_pc (get_frame_address_in_block (frame));
-      else
-	memset (&msymbol, 0, sizeof (msymbol));
+
 
       if (msymbol.minsym != NULL
 	  && (BMSYMBOL_VALUE_ADDRESS (msymbol)

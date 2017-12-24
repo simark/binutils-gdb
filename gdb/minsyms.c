@@ -893,13 +893,9 @@ lookup_minimal_symbol_by_pc_section (CORE_ADDR pc, struct obj_section *section)
 	 debugging) always returns NULL making the call somewhat useless.  */
       section = find_pc_section (pc);
       if (section == NULL)
-	{
-	  struct bound_minimal_symbol result;
-
-	  memset (&result, 0, sizeof (result));
-	  return result;
-	}
+	return bound_minimal_symbol ();
     }
+
   return lookup_minimal_symbol_by_pc_section_1 (pc, section, 0);
 }
 
@@ -911,12 +907,8 @@ lookup_minimal_symbol_by_pc (CORE_ADDR pc)
   struct obj_section *section = find_pc_section (pc);
 
   if (section == NULL)
-    {
-      struct bound_minimal_symbol result;
+    return bound_minimal_symbol ();
 
-      memset (&result, 0, sizeof (result));
-      return result;
-    }
   return lookup_minimal_symbol_by_pc_section_1 (pc, section, 0);
 }
 
@@ -988,7 +980,6 @@ const struct gnu_ifunc_fns *gnu_ifunc_fns_p = &stub_gnu_ifunc_fns;
 struct bound_minimal_symbol
 lookup_minimal_symbol_and_objfile (const char *name)
 {
-  struct bound_minimal_symbol result;
   struct objfile *objfile;
   unsigned int hash = msymbol_hash (name) % MINIMAL_SYMBOL_HASH_SIZE;
 
@@ -1001,16 +992,11 @@ lookup_minimal_symbol_and_objfile (const char *name)
 	   msym = msym->hash_next)
 	{
 	  if (strcmp (MSYMBOL_LINKAGE_NAME (msym), name) == 0)
-	    {
-	      result.minsym = msym;
-	      result.objfile = objfile;
-	      return result;
-	    }
+	    return bound_minimal_symbol (msym, objfile);
 	}
     }
 
-  memset (&result, 0, sizeof (result));
-  return result;
+  return bound_minimal_symbol ();
 }
 
 
