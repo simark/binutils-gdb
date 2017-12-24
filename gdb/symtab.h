@@ -1256,14 +1256,22 @@ struct linetable
 
 struct section_offsets
 {
+  CORE_ADDR get (int whichone) const
+  {
+    if (whichone == -1)
+      internal_error (__FILE__, __LINE__, _("Section index is uninitialized"));
+
+    return this->offsets[whichone];
+  }
+
   CORE_ADDR offsets[1];		/* As many as needed.  */
 };
 
-#define	ANOFFSET(secoff, whichone) \
-  ((whichone == -1)			  \
-   ? (internal_error (__FILE__, __LINE__, \
-		      _("Section index is uninitialized")), -1) \
-   : secoff->offsets[whichone])
+static inline CORE_ADDR
+ANOFFSET (const section_offsets *secoff, int whichone)
+{
+  return secoff->get (whichone);
+}
 
 /* The size of a section_offsets table for N sections.  */
 #define SIZEOF_N_SECTION_OFFSETS(n) \
