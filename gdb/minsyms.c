@@ -57,12 +57,12 @@
 /* See minsyms.h.  */
 
 bool
-msymbol_is_function (struct objfile *objfile, minimal_symbol *minsym,
+msymbol_is_function (const bound_minimal_symbol &bmsym,
 		     CORE_ADDR *func_address_p)
 {
-  CORE_ADDR msym_addr = MSYMBOL_VALUE_ADDRESS (objfile, minsym);
+  CORE_ADDR msym_addr = bmsym.address ();
 
-  switch (minsym->type)
+  switch (bmsym.minsym->type)
     {
     case mst_slot_got_plt:
     case mst_data:
@@ -71,7 +71,7 @@ msymbol_is_function (struct objfile *objfile, minimal_symbol *minsym,
     case mst_file_data:
     case mst_file_bss:
       {
-	struct gdbarch *gdbarch = get_objfile_arch (objfile);
+	struct gdbarch *gdbarch = get_objfile_arch (bmsym.objfile);
 	CORE_ADDR pc = gdbarch_convert_from_func_ptr_addr (gdbarch, msym_addr,
 							   &current_target);
 	if (pc != msym_addr)

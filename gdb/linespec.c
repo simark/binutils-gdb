@@ -4340,7 +4340,7 @@ minsym_found (struct linespec_state *self,
   struct symtab_and_line sal;
 
   CORE_ADDR func_addr;
-  if (msymbol_is_function (bmsymbol.objfile, bmsymbol.minsym, &func_addr))
+  if (msymbol_is_function (bmsymbol, &func_addr))
     {
       sal = find_pc_sect_line (func_addr, NULL, 0);
 
@@ -4441,7 +4441,7 @@ add_minsym (const bound_minimal_symbol &bmsymbol, void *d)
       /* We're looking for a label for which we don't have debug
 	 info.  */
       CORE_ADDR func_addr;
-      if (msymbol_is_function (bmsymbol.objfile, bmsymbol.minsym, &func_addr))
+      if (msymbol_is_function (bmsymbol, &func_addr))
 	{
 	  symtab_and_line sal = find_pc_sect_line (func_addr, NULL, 0);
 
@@ -4452,7 +4452,7 @@ add_minsym (const bound_minimal_symbol &bmsymbol, void *d)
 
   /* Exclude data symbols when looking for breakpoint locations.  */
   if (!info->list_mode
-      && !msymbol_is_function (bmsymbol.objfile, bmsymbol.minsym))
+      && !msymbol_is_function (bmsymbol))
     return;
 
   VEC_safe_push (bound_minimal_symbol_d, info->msyms, &bmsymbol);
