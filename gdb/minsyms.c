@@ -1539,3 +1539,9 @@ minimal_symbol_upper_bound (struct bound_minimal_symbol minsym)
 
   return result;
 }
+
+CORE_ADDR
+bound_minimal_symbol::address () const
+{
+  return MSYMBOL_VALUE_ADDRESS (this->objfile, this->minsym);
+}

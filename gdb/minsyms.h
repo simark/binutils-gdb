@@ -36,6 +36,8 @@ struct bound_minimal_symbol
   : minsym (minsym_), objfile (objfile_)
   {}
 
+  CORE_ADDR address () const;
+
   /* The minimal symbol that was found, or NULL if no minimal symbol
      was found.  */
 
@@ -46,6 +48,13 @@ struct bound_minimal_symbol
 
   struct objfile *objfile;
 };
+
+/* For a bound minsym, we can easily compute the address directly.  */
+static inline CORE_ADDR
+BMSYMBOL_VALUE_ADDRESS (bound_minimal_symbol &symbol)
+{
+  return symbol.address ();
+}
 
 /* This header declares most of the API for dealing with minimal
    symbols and minimal symbol tables.  A few things are declared

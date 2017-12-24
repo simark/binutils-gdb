@@ -673,9 +673,7 @@ struct minimal_symbol
 #define MSYMBOL_VALUE_ADDRESS(objfile, symbol)				\
   ((symbol)->mginfo.value.address					\
    + ANOFFSET ((objfile)->section_offsets, ((symbol)->mginfo.section)))
-/* For a bound minsym, we can easily compute the address directly.  */
-#define BMSYMBOL_VALUE_ADDRESS(symbol) \
-  MSYMBOL_VALUE_ADDRESS ((symbol).objfile, (symbol).minsym)
+
 #define SET_MSYMBOL_VALUE_ADDRESS(symbol, new_value)	\
   ((symbol)->mginfo.value.address = (new_value))
 #define MSYMBOL_VALUE_BYTES(symbol)	(symbol)->mginfo.value.bytes
