@@ -671,7 +671,7 @@ struct minimal_symbol
 
 #define MSYMBOL_VALUE(symbol)		(symbol)->mginfo.value.ivalue
 /* The unrelocated address of the minimal symbol.  */
-#define MSYMBOL_VALUE_RAW_ADDRESS(symbol) ((symbol)->mginfo.value.address + 0)
+#define MSYMBOL_VALUE_RAW_ADDRESS(symbol) (symbol)->address ()
 
 #define SET_MSYMBOL_VALUE_ADDRESS(symbol, new_value)	\
   ((symbol)->mginfo.value.address = (new_value))
