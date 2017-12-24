@@ -4363,11 +4363,11 @@ minsym_found (struct linespec_state *self,
   else
     {
       sal.objfile = bmsymbol.objfile;
-      sal.pc = BMSYMBOL_VALUE_ADDRESS (bmsymbol);
+      sal.pc = bmsymbol.address ();
       sal.pspace = current_program_space;
     }
 
-  sal.section = MSYMBOL_OBJ_SECTION (bmsymbol.objfile, bmsymbol.minsym);
+  sal.section = bmsymbol.obj_section ();
 
   if (maybe_add_address (self->addr_set, bmsymbol.objfile->pspace, sal.pc))
     add_sal_to_sals (self, result, &sal, MSYMBOL_NATURAL_NAME (bmsymbol.minsym), 0);
