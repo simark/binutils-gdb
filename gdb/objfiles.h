@@ -581,12 +581,19 @@ extern void default_iterate_over_objfiles_in_search_order
 
 template <typename Func>
 static void
-for_each_objfile (Func callback)
+for_each_objfile (program_space *pspace, Func callback)
 {
-  for (struct objfile *objfile = current_program_space->objfiles;
+  for (struct objfile *objfile = pspace->objfiles;
        objfile != NULL;
        objfile = objfile->next)
     callback (objfile);
+}
+
+template <typename Func>
+static void
+for_each_objfile (Func callback)
+{
+  for_each_objfile (current_program_space, callback);
 }
 
 #define ALL_OBJFILES(obj)			    \

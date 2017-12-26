@@ -52,6 +52,7 @@
 #include "solist.h"
 #include "gdb_bfd.h"
 #include "btrace.h"
+#include "inferior.h"
 
 #include <vector>
 
@@ -1591,6 +1592,16 @@ objfile_flavour_name (struct objfile *objfile)
   return NULL;
 }
 
+static void
+objfiles_inferior_exit (inferior *inf)
+{
+  for_each_objfile (inf->pspace, [] (struct objfile *objfile)
+    {
+      for (int i = 0; i < objfile->num_sections; i++)
+	objfile->section_offsets->offsets[i] = 0;
+    });
+}
+
 void
 _initialize_objfiles (void)
 {
@@ -1600,4 +1611,6 @@ _initialize_objfiles (void)
 
   objfiles_bfd_data = register_bfd_data_with_cleanup (NULL,
 						      objfile_bfd_data_free);
+
+  observer_attach_inferior_exit (objfiles_inferior_exit);
 }
