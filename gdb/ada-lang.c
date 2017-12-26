@@ -4950,14 +4950,11 @@ ada_lookup_simple_minsym (const char *name)
   symbol_name_matcher_ftype *match_name
     = ada_get_symbol_name_matcher (lookup_name);
 
-  ALL_MSYMBOLS (objfile, msymbol)
-  {
-    if (match_name (MSYMBOL_LINKAGE_NAME (msymbol), lookup_name, NULL)
-        && MSYMBOL_TYPE (msymbol) != mst_solib_trampoline)
-      return bound_minimal_symbol (msymbol, objfile);
-  }
-
-  return bound_minimal_symbol ();
+  return find_msymbol ([&] (const bound_minimal_symbol &bmsymbol)
+    {
+      return (match_name (MSYMBOL_LINKAGE_NAME (msymbol), lookup_name, NULL)
+	      && MSYMBOL_TYPE (msymbol) != mst_solib_trampoline);
+    });
 }
 
 /* For all subprograms that statically enclose the subprogram of the
@@ -6465,7 +6462,6 @@ ada_collect_symbol_completion_matches (completion_tracker &tracker,
 {
   struct symbol *sym;
   struct compunit_symtab *s;
-  struct minimal_symbol *msymbol;
   struct objfile *objfile;
   const struct block *b, *surrounding_static_block = 0;
   struct block_iterator iter;
@@ -6487,18 +6483,18 @@ ada_collect_symbol_completion_matches (completion_tracker &tracker,
      anything that isn't a text symbol (everything else will be
      handled by the psymtab code above).  */
 
-  ALL_MSYMBOLS (objfile, msymbol)
-  {
-    QUIT;
+  for_each_msymbol ([&] (const bound_minimal_symbol &bmsymbol)
+    {
+      QUIT;
 
-    if (completion_skip_symbol (mode, msymbol))
-      continue;
+      if (completion_skip_symbol (mode, bmsymbol.minsym))
+	return;
 
-    completion_list_add_name (tracker,
-			      MSYMBOL_LANGUAGE (msymbol),
-			      MSYMBOL_LINKAGE_NAME (msymbol),
-			      lookup_name, text, word);
-  }
+      completion_list_add_name (tracker,
+				MSYMBOL_LANGUAGE (bmsymbol.minsym),
+				MSYMBOL_LINKAGE_NAME (bmsymbol.minsym),
+				lookup_name, text, word);
+    });
 
   /* Search upwards from currently selected frame (so that we can
      complete on local vars.  */

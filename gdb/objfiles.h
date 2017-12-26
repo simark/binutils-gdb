@@ -579,6 +579,16 @@ extern void default_iterate_over_objfiles_in_search_order
 #define ALL_PSPACE_OBJFILES(ss, obj)					\
   for ((obj) = ss->objfiles; (obj) != NULL; (obj) = (obj)->next)
 
+template <typename Func>
+static void
+for_each_objfile (Func callback)
+{
+  for (struct objfile *objfile = current_program_space->objfiles;
+       objfile != NULL;
+       objfile = objfile->next)
+    callback (objfile);
+}
+
 #define ALL_OBJFILES(obj)			    \
   for ((obj) = current_program_space->objfiles; \
        (obj) != NULL;				    \
@@ -602,6 +612,16 @@ extern void default_iterate_over_objfiles_in_search_order
 
 /* Traverse all minimal symbols in one objfile.  */
 
+template <typename Func>
+static void
+for_each_objfile_msymbol (struct objfile *objfile, Func callback)
+{
+  for (minimal_symbol *m = objfile->per_bfd->msymbols;
+       MSYMBOL_LINKAGE_NAME (m) != NULL;
+       m++)
+    callback (bound_minimal_symbol (m, objfile));
+}
+
 #define	ALL_OBJFILE_MSYMBOLS(objfile, m)	\
     for ((m) = (objfile)->per_bfd->msymbols;	\
 	 MSYMBOL_LINKAGE_NAME (m) != NULL;	\
@@ -622,6 +642,39 @@ extern void default_iterate_over_objfiles_in_search_order
 
 /* Traverse all minimal symbols in all objfiles in the current symbol
    space.  */
+
+template <typename Func>
+static void
+for_each_msymbol (Func callback)
+{
+  for_each_objfile ([&] (struct objfile *objfile)
+    {
+      for_each_objfile_msymbol (objfile, callback);
+    });
+}
+
+template <typename Func>
+static bound_minimal_symbol
+find_msymbol (Func callback)
+{
+  for (struct objfile *objfile = current_program_space->objfiles;
+       objfile != NULL;
+       objfile = objfile->next)
+    {
+      for (minimal_symbol *m = objfile->per_bfd->msymbols;
+	   MSYMBOL_LINKAGE_NAME (m) != NULL;
+	   m++)
+	{
+	  bound_minimal_symbol bmsymbol (m, objfile);
+
+	  if (callback (bmsymbol))
+	    return bmsymbol;
+	}
+    }
+
+  return bound_minimal_symbol ();
+}
+
 
 #define	ALL_MSYMBOLS(objfile, m) \
   ALL_OBJFILES (objfile)	 \
