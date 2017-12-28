@@ -3153,8 +3153,7 @@ remote_get_threads_with_qxfer (struct target_ops *ops,
     {
       xfer_partial_ctx ctx = xfer_partial_ctx::make_threads ();
 
-      gdb::unique_xmalloc_ptr<char> xml
-	= target_read_stralloc (ops, ctx, NULL);
+      gdb::unique_xmalloc_ptr<char> xml = target_read_stralloc (ops, ctx);
 
       if (xml != NULL && *xml != '\0')
 	{
@@ -10427,9 +10426,8 @@ remote_read_qxfer (struct target_ops *ops, const char *object_name,
 
 static enum target_xfer_status
 remote_xfer_partial (struct target_ops *ops, const xfer_partial_ctx &ctx,
-		     const char *annex, gdb_byte *readbuf,
-		     const gdb_byte *writebuf, ULONGEST offset, ULONGEST len,
-		     ULONGEST *xfered_len)
+		     gdb_byte *readbuf, const gdb_byte *writebuf,
+		     ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
   struct remote_state *rs;
   int i;
@@ -10463,36 +10461,35 @@ remote_xfer_partial (struct target_ops *ops, const xfer_partial_ctx &ctx,
   if (ctx.object == TARGET_OBJECT_SPU)
     {
       if (readbuf)
-	return remote_read_qxfer (ops, "spu", annex, readbuf, offset, len,
-				  xfered_len, &remote_protocol_packets
-				  [PACKET_qXfer_spu_read]);
+	return remote_read_qxfer
+	  (ops, "spu", ctx.spu.annex, readbuf, offset, len, xfered_len,
+	   &remote_protocol_packets[PACKET_qXfer_spu_read]);
       else
-	return remote_write_qxfer (ops, "spu", annex, writebuf, offset, len,
-				   xfered_len, &remote_protocol_packets
-				   [PACKET_qXfer_spu_write]);
+	return remote_write_qxfer
+	  (ops, "spu", ctx.spu.annex, writebuf, offset, len, xfered_len,
+	   &remote_protocol_packets[PACKET_qXfer_spu_write]);
     }
 
   /* Handle extra signal info using qxfer packets.  */
   if (ctx.object == TARGET_OBJECT_SIGNAL_INFO)
     {
       if (readbuf)
-	return remote_read_qxfer (ops, "siginfo", annex, readbuf, offset, len,
-				  xfered_len, &remote_protocol_packets
-				  [PACKET_qXfer_siginfo_read]);
+	return remote_read_qxfer
+	  (ops, "siginfo", NULL, readbuf, offset, len,
+	   xfered_len, &remote_protocol_packets[PACKET_qXfer_siginfo_read]);
       else
-	return remote_write_qxfer (ops, "siginfo", annex,
-				   writebuf, offset, len, xfered_len,
-				   &remote_protocol_packets
-				   [PACKET_qXfer_siginfo_write]);
+	return remote_write_qxfer
+	  (ops, "siginfo", NULL, writebuf, offset, len,
+	   xfered_len, &remote_protocol_packets[PACKET_qXfer_siginfo_write]);
     }
 
   if (ctx.object == TARGET_OBJECT_STATIC_TRACE_DATA)
     {
       if (readbuf)
-	return remote_read_qxfer (ops, "statictrace", annex,
-				  readbuf, offset, len, xfered_len,
-				  &remote_protocol_packets
-				  [PACKET_qXfer_statictrace_read]);
+	return remote_read_qxfer
+	  (ops, "statictrace", ctx.static_trace_data.annex, readbuf, offset,
+	   len, xfered_len,
+	   &remote_protocol_packets [PACKET_qXfer_statictrace_read]);
       else
 	return TARGET_XFER_E_IO;
     }
@@ -10520,75 +10517,71 @@ remote_xfer_partial (struct target_ops *ops, const xfer_partial_ctx &ctx,
       break;
 
     case TARGET_OBJECT_AUXV:
-      gdb_assert (annex == NULL);
-      return remote_read_qxfer (ops, "auxv", annex, readbuf, offset, len,
-				xfered_len,
-				&remote_protocol_packets[PACKET_qXfer_auxv]);
+      return remote_read_qxfer
+	(ops, "auxv", NULL, readbuf, offset, len, xfered_len,
+	 &remote_protocol_packets[PACKET_qXfer_auxv]);
 
     case TARGET_OBJECT_AVAILABLE_FEATURES:
       return remote_read_qxfer
-	(ops, "features", annex, readbuf, offset, len, xfered_len,
-	 &remote_protocol_packets[PACKET_qXfer_features]);
+	(ops, "features", ctx.available_features.annex, readbuf, offset, len,
+	 xfered_len, &remote_protocol_packets[PACKET_qXfer_features]);
 
     case TARGET_OBJECT_LIBRARIES:
       return remote_read_qxfer
-	(ops, "libraries", annex, readbuf, offset, len, xfered_len,
-	 &remote_protocol_packets[PACKET_qXfer_libraries]);
+	(ops, "libraries", NULL, readbuf, offset, len,
+	 xfered_len, &remote_protocol_packets[PACKET_qXfer_libraries]);
 
     case TARGET_OBJECT_LIBRARIES_SVR4:
       return remote_read_qxfer
-	(ops, "libraries-svr4", annex, readbuf, offset, len, xfered_len,
-	 &remote_protocol_packets[PACKET_qXfer_libraries_svr4]);
+	(ops, "libraries-svr4", ctx.libraries_svr4.annex, readbuf, offset, len,
+	 xfered_len, &remote_protocol_packets[PACKET_qXfer_libraries_svr4]);
 
     case TARGET_OBJECT_MEMORY_MAP:
-      gdb_assert (annex == NULL);
-      return remote_read_qxfer (ops, "memory-map", annex, readbuf, offset, len,
-				 xfered_len,
-				&remote_protocol_packets[PACKET_qXfer_memory_map]);
+      return remote_read_qxfer
+	(ops, "memory-map", NULL, readbuf, offset, len, xfered_len,
+	 &remote_protocol_packets[PACKET_qXfer_memory_map]);
 
     case TARGET_OBJECT_OSDATA:
       /* Should only get here if we're connected.  */
       gdb_assert (rs->remote_desc);
       return remote_read_qxfer
-	(ops, "osdata", annex, readbuf, offset, len, xfered_len,
-        &remote_protocol_packets[PACKET_qXfer_osdata]);
+	(ops, "osdata", ctx.osdata.annex, readbuf, offset, len, xfered_len,
+	 &remote_protocol_packets[PACKET_qXfer_osdata]);
 
     case TARGET_OBJECT_THREADS:
-      gdb_assert (annex == NULL);
-      return remote_read_qxfer (ops, "threads", annex, readbuf, offset, len,
-				xfered_len,
-				&remote_protocol_packets[PACKET_qXfer_threads]);
+      return remote_read_qxfer
+	(ops, "threads", NULL, readbuf, offset, len, xfered_len,
+	 &remote_protocol_packets[PACKET_qXfer_threads]);
 
     case TARGET_OBJECT_TRACEFRAME_INFO:
-      gdb_assert (annex == NULL);
       return remote_read_qxfer
-	(ops, "traceframe-info", annex, readbuf, offset, len, xfered_len,
+	(ops, "traceframe-info", NULL, readbuf, offset, len, xfered_len,
 	 &remote_protocol_packets[PACKET_qXfer_traceframe_info]);
 
     case TARGET_OBJECT_FDPIC:
-      return remote_read_qxfer (ops, "fdpic", annex, readbuf, offset, len,
-				xfered_len,
-				&remote_protocol_packets[PACKET_qXfer_fdpic]);
+      return remote_read_qxfer
+	(ops, "fdpic", ctx.fdpic.annex, readbuf, offset, len, xfered_len,
+	 &remote_protocol_packets[PACKET_qXfer_fdpic]);
 
     case TARGET_OBJECT_OPENVMS_UIB:
-      return remote_read_qxfer (ops, "uib", annex, readbuf, offset, len,
-				xfered_len,
-				&remote_protocol_packets[PACKET_qXfer_uib]);
+      return remote_read_qxfer
+	(ops, "uib", ctx.openvms_uib.annex, readbuf, offset, len, xfered_len,
+	 &remote_protocol_packets[PACKET_qXfer_uib]);
 
     case TARGET_OBJECT_BTRACE:
-      return remote_read_qxfer (ops, "btrace", annex, readbuf, offset, len,
-				xfered_len,
-        &remote_protocol_packets[PACKET_qXfer_btrace]);
+      return remote_read_qxfer
+	(ops, "btrace", ctx.btrace.annex, readbuf, offset, len, xfered_len,
+	 &remote_protocol_packets[PACKET_qXfer_btrace]);
 
     case TARGET_OBJECT_BTRACE_CONF:
-      return remote_read_qxfer (ops, "btrace-conf", annex, readbuf, offset,
-				len, xfered_len,
-	&remote_protocol_packets[PACKET_qXfer_btrace_conf]);
+      return remote_read_qxfer
+	(ops, "btrace-conf", NULL, readbuf, offset, len,
+	 xfered_len, &remote_protocol_packets[PACKET_qXfer_btrace_conf]);
 
     case TARGET_OBJECT_EXEC_FILE:
-      return remote_read_qxfer (ops, "exec-file", annex, readbuf, offset,
-				len, xfered_len,
-	&remote_protocol_packets[PACKET_qXfer_exec_file]);
+      return remote_read_qxfer
+	(ops, "exec-file", ctx.exec_file.annex, readbuf, offset, len,
+	 xfered_len, &remote_protocol_packets[PACKET_qXfer_exec_file]);
 
     default:
       return TARGET_XFER_E_IO;
@@ -10604,7 +10597,10 @@ remote_xfer_partial (struct target_ops *ops, const xfer_partial_ctx &ctx,
   if (!rs->remote_desc)
     error (_("remote query is only available after target open"));
 
-  gdb_assert (annex != NULL);
+
+  /* This is only kept as backwards-compatibility for TARGET_OBJECT_AVR.  */
+  gdb_assert (ctx.object == TARGET_OBJECT_AVR);
+  gdb_assert (ctx.avr.annex != NULL);
   gdb_assert (readbuf != NULL);
 
   p2 = rs->buf;
@@ -10617,15 +10613,17 @@ remote_xfer_partial (struct target_ops *ops, const xfer_partial_ctx &ctx,
      (remote_debug), we have PBUFZIZ - 7 left to pack the query
      string.  */
   i = 0;
-  while (annex[i] && (i < (get_remote_packet_size () - 8)))
+  while (ctx.avr.annex[i] && (i < (get_remote_packet_size () - 8)))
     {
       /* Bad caller may have sent forbidden characters.  */
-      gdb_assert (isprint (annex[i]) && annex[i] != '$' && annex[i] != '#');
-      *p2++ = annex[i];
+      gdb_assert (isprint (ctx.avr.annex[i])
+		  && ctx.avr.annex[i] != '$'
+		  && ctx.avr.annex[i] != '#');
+      *p2++ = ctx.avr.annex[i];
       i++;
     }
   *p2 = '\0';
-  gdb_assert (annex[i] == '\0');
+  gdb_assert (ctx.avr.annex[i] == '\0');
 
   i = putpkt (rs->buf);
   if (i < 0)
@@ -10815,7 +10813,7 @@ remote_memory_map (struct target_ops *ops)
   xfer_partial_ctx ctx = xfer_partial_ctx::make_memory_map ();
 
   gdb::unique_xmalloc_ptr<char> text
-    = target_read_stralloc (&current_target, ctx, NULL);
+    = target_read_stralloc (&current_target, ctx);
 
   if (text)
     result = parse_memory_map (text.get ());
@@ -12933,7 +12931,7 @@ remote_traceframe_info (struct target_ops *self)
 {
   xfer_partial_ctx ctx = xfer_partial_ctx::make_traceframe_info ();
   gdb::unique_xmalloc_ptr<char> text
-    = target_read_stralloc (&current_target, ctx, NULL);
+    = target_read_stralloc (&current_target, ctx);
   if (text != NULL)
     return parse_traceframe_info (text.get ());
 
@@ -13165,7 +13163,7 @@ btrace_read_config (struct btrace_config *conf)
 {
   xfer_partial_ctx ctx = xfer_partial_ctx::make_btrace_conf ();
   gdb::unique_xmalloc_ptr<char> xml
-    = target_read_stralloc (&current_target, ctx, "");
+    = target_read_stralloc (&current_target, ctx);
 
   if (xml != NULL)
     parse_xml_btrace_conf (conf, xml.get ());
@@ -13365,9 +13363,9 @@ remote_read_btrace (struct target_ops *self,
 		      (unsigned int) type);
     }
 
-  xfer_partial_ctx ctx = xfer_partial_ctx::make_btrace ();
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_btrace (annex);
   gdb::unique_xmalloc_ptr<char> xml
-    = target_read_stralloc (&current_target, ctx, annex);
+    = target_read_stralloc (&current_target, ctx);
   if (xml == NULL)
     return BTRACE_ERR_UNKNOWN;
 
@@ -13425,8 +13423,8 @@ remote_pid_to_exec_file (struct target_ops *self, int pid)
       xsnprintf (annex, annex_size, "%x", pid);
     }
 
-  xfer_partial_ctx ctx = xfer_partial_ctx::make_exec_file ();
-  filename = target_read_stralloc (&current_target, ctx, annex);
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_exec_file (annex);
+  filename = target_read_stralloc (&current_target, ctx);
 
   return filename.get ();
 }

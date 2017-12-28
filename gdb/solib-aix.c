@@ -281,8 +281,7 @@ solib_aix_get_library_list (struct inferior *inf, const char *warning_msg)
 
   xfer_partial_ctx ctx = xfer_partial_ctx::make_libraries_aix ();
   gdb::unique_xmalloc_ptr<char> library_document
-    = target_read_stralloc (&current_target, ctx,
-			    NULL);
+    = target_read_stralloc (&current_target, ctx);
   if (library_document == NULL && warning_msg != NULL)
     {
       warning (_("%s (failed to read TARGET_OBJECT_LIBRARIES_AIX)"),

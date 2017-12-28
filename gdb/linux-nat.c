@@ -3834,9 +3834,8 @@ siginfo_fixup (siginfo_t *siginfo, gdb_byte *inf_siginfo, int direction)
 
 static enum target_xfer_status
 linux_xfer_siginfo (struct target_ops *ops, const xfer_partial_ctx &ctx,
-                    const char *annex, gdb_byte *readbuf,
-		    const gdb_byte *writebuf, ULONGEST offset, ULONGEST len,
-		    ULONGEST *xfered_len)
+		    gdb_byte *readbuf, const gdb_byte *writebuf,
+		    ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
   int pid;
   siginfo_t siginfo;
@@ -3889,15 +3888,14 @@ linux_xfer_siginfo (struct target_ops *ops, const xfer_partial_ctx &ctx,
 
 static enum target_xfer_status
 linux_nat_xfer_partial (struct target_ops *ops, const xfer_partial_ctx &ctx,
-			const char *annex, gdb_byte *readbuf,
-			const gdb_byte *writebuf, ULONGEST offset, ULONGEST len,
-			ULONGEST *xfered_len)
+			gdb_byte *readbuf, const gdb_byte *writebuf,
+			ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
   enum target_xfer_status xfer;
 
   if (ctx.object == TARGET_OBJECT_SIGNAL_INFO)
-    return linux_xfer_siginfo (ops, ctx, annex, readbuf, writebuf,
-			       offset, len, xfered_len);
+    return linux_xfer_siginfo (ops, ctx, readbuf, writebuf, offset, len,
+			       xfered_len);
 
   /* The target is connected but no live inferior is selected.  Pass
      this request down to a lower stratum (e.g., the executable
@@ -3905,8 +3903,8 @@ linux_nat_xfer_partial (struct target_ops *ops, const xfer_partial_ctx &ctx,
   if (ctx.object == TARGET_OBJECT_MEMORY && ptid_equal (inferior_ptid, null_ptid))
     return TARGET_XFER_EOF;
 
-  xfer = linux_ops->to_xfer_partial (ops, ctx, annex, readbuf, writebuf, offset,
-				     len, xfered_len);
+  xfer = linux_ops->to_xfer_partial (ops, ctx, readbuf, writebuf, offset, len,
+				     xfered_len);
 
   return xfer;
 }
@@ -3980,8 +3978,7 @@ linux_child_pid_to_exec_file (struct target_ops *self, int pid)
 
 static enum target_xfer_status
 linux_proc_xfer_partial (struct target_ops *ops, const xfer_partial_ctx &ctx,
-			 const char *annex, gdb_byte *readbuf,
-			 const gdb_byte *writebuf,
+			 gdb_byte *readbuf, const gdb_byte *writebuf,
 			 ULONGEST offset, LONGEST len, ULONGEST *xfered_len)
 {
   LONGEST ret;
@@ -4084,8 +4081,7 @@ spu_enumerate_spu_ids (int pid, gdb_byte *buf, ULONGEST offset, ULONGEST len)
 
 static enum target_xfer_status
 linux_proc_xfer_spu (struct target_ops *ops, const xfer_partial_ctx &ctx,
-		     const char *annex, gdb_byte *readbuf,
-		     const gdb_byte *writebuf,
+		     gdb_byte *readbuf, const gdb_byte *writebuf,
 		     ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
   char buf[128];
@@ -4093,7 +4089,7 @@ linux_proc_xfer_spu (struct target_ops *ops, const xfer_partial_ctx &ctx,
   int ret = -1;
   int pid = ptid_get_lwp (inferior_ptid);
 
-  if (!annex)
+  if (ctx.spu.annex == NULL)
     {
       if (!readbuf)
 	return TARGET_XFER_E_IO;
@@ -4113,7 +4109,7 @@ linux_proc_xfer_spu (struct target_ops *ops, const xfer_partial_ctx &ctx,
 	}
     }
 
-  xsnprintf (buf, sizeof buf, "/proc/%d/fd/%s", pid, annex);
+  xsnprintf (buf, sizeof buf, "/proc/%d/fd/%s", pid, ctx.spu.annex);
   fd = gdb_open_cloexec (buf, writebuf? O_WRONLY : O_RDONLY, 0);
   if (fd <= 0)
     return TARGET_XFER_E_IO;
@@ -4224,13 +4220,13 @@ linux_proc_pending_signals (int pid, sigset_t *pending,
 
 static enum target_xfer_status
 linux_nat_xfer_osdata (struct target_ops *ops, const xfer_partial_ctx &ctx,
-		       const char *annex, gdb_byte *readbuf,
-		       const gdb_byte *writebuf, ULONGEST offset, ULONGEST len,
-		       ULONGEST *xfered_len)
+		       gdb_byte *readbuf, const gdb_byte *writebuf,
+		       ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
   gdb_assert (ctx.object == TARGET_OBJECT_OSDATA);
 
-  *xfered_len = linux_common_xfer_osdata (annex, readbuf, offset, len);
+  *xfered_len = linux_common_xfer_osdata (ctx.osdata.annex, readbuf, offset,
+					  len);
   if (*xfered_len == 0)
     return TARGET_XFER_EOF;
   else
@@ -4239,22 +4235,21 @@ linux_nat_xfer_osdata (struct target_ops *ops, const xfer_partial_ctx &ctx,
 
 static enum target_xfer_status
 linux_xfer_partial (struct target_ops *ops, const xfer_partial_ctx &ctx,
-		    const char *annex, gdb_byte *readbuf,
-		    const gdb_byte *writebuf, ULONGEST offset, ULONGEST len,
-		    ULONGEST *xfered_len)
+		    gdb_byte *readbuf, const gdb_byte *writebuf,
+		    ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
   enum target_xfer_status xfer;
 
   if (ctx.object == TARGET_OBJECT_AUXV)
-    return memory_xfer_auxv (ops, ctx, annex, readbuf, writebuf, offset, len,
+    return memory_xfer_auxv (ops, ctx, readbuf, writebuf, offset, len,
 			     xfered_len);
 
   if (ctx.object == TARGET_OBJECT_OSDATA)
-    return linux_nat_xfer_osdata (ops, ctx, annex, readbuf, writebuf, offset,
-				  len, xfered_len);
+    return linux_nat_xfer_osdata (ops, ctx, readbuf, writebuf, offset, len,
+				  xfered_len);
 
   if (ctx.object == TARGET_OBJECT_SPU)
-    return linux_proc_xfer_spu (ops, ctx, annex, readbuf, writebuf, offset, len,
+    return linux_proc_xfer_spu (ops, ctx, readbuf, writebuf, offset, len,
 				xfered_len);
 
   /* GDB calculates all the addresses in possibly larget width of the address.
@@ -4271,12 +4266,12 @@ linux_xfer_partial (struct target_ops *ops, const xfer_partial_ctx &ctx,
 	offset &= ((ULONGEST) 1 << addr_bit) - 1;
     }
 
-  xfer = linux_proc_xfer_partial (ops, ctx, annex, readbuf, writebuf, offset,
-				  len, xfered_len);
+  xfer = linux_proc_xfer_partial (ops, ctx, readbuf, writebuf, offset, len,
+				  xfered_len);
   if (xfer != TARGET_XFER_EOF)
     return xfer;
 
-  return super_xfer_partial (ops, ctx, annex, readbuf, writebuf, offset, len,
+  return super_xfer_partial (ops, ctx, readbuf, writebuf, offset, len,
 			     xfered_len);
 }
 

@@ -965,8 +965,7 @@ read_value_memory (struct value *val, LONGEST bit_offset,
       enum target_xfer_status status;
       ULONGEST xfered_partial;
 
-      status = target_xfer_partial (current_target.beneath,
-				    ctx, NULL,
+      status = target_xfer_partial (current_target.beneath, ctx,
 				    buffer + xfered_total * unit_size, NULL,
 				    memaddr + xfered_total,
 				    length - xfered_total,

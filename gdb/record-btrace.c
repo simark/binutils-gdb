@@ -1286,9 +1286,8 @@ record_btrace_will_replay (struct target_ops *self, ptid_t ptid, int dir)
 
 static enum target_xfer_status
 record_btrace_xfer_partial (struct target_ops *ops, const xfer_partial_ctx &ctx,
-			    const char *annex, gdb_byte *readbuf,
-			    const gdb_byte *writebuf, ULONGEST offset,
-			    ULONGEST len, ULONGEST *xfered_len)
+			    gdb_byte *readbuf, const gdb_byte *writebuf,
+			    ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
   /* Filter out requests that don't make sense during replay.  */
   if (replay_memory_access == replay_memory_access_read_only
@@ -1331,7 +1330,7 @@ record_btrace_xfer_partial (struct target_ops *ops, const xfer_partial_ctx &ctx,
 
   /* Forward the request.  */
   ops = ops->beneath;
-  return ops->to_xfer_partial (ops, ctx, annex, readbuf, writebuf, offset, len,
+  return ops->to_xfer_partial (ops, ctx, readbuf, writebuf, offset, len,
 			       xfered_len);
 }
 

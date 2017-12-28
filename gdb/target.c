@@ -1151,8 +1151,8 @@ raw_memory_xfer_partial (struct target_ops *ops, gdb_byte *readbuf,
 
   do
     {
-      res = ops->to_xfer_partial (ops, ctx, NULL, readbuf, writebuf, memaddr,
-				  len, xfered_len);
+      res = ops->to_xfer_partial (ops, ctx, readbuf, writebuf, memaddr, len,
+				  xfered_len);
       if (res == TARGET_XFER_OK)
 	break;
 
@@ -1347,9 +1347,8 @@ make_scoped_restore_show_memory_breakpoints (int show)
 
 enum target_xfer_status
 target_xfer_partial (struct target_ops *ops, const xfer_partial_ctx &ctx,
-		     const char *annex, gdb_byte *readbuf,
-		     const gdb_byte *writebuf, ULONGEST offset, ULONGEST len,
-		     ULONGEST *xfered_len)
+		     gdb_byte *readbuf, const gdb_byte *writebuf,
+		     ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
   enum target_xfer_status retval;
 
@@ -1390,8 +1389,8 @@ target_xfer_partial (struct target_ops *ops, const xfer_partial_ctx &ctx,
 					xfered_len);
     }
   else
-    retval = ops->to_xfer_partial (ops, ctx, annex, readbuf, writebuf, offset,
-				   len, xfered_len);
+    retval = ops->to_xfer_partial (ops, ctx, readbuf, writebuf, offset, len,
+				   xfered_len);
 
   if (targetdebug)
     {
@@ -1399,10 +1398,9 @@ target_xfer_partial (struct target_ops *ops, const xfer_partial_ctx &ctx,
 
       fprintf_unfiltered (gdb_stdlog,
 			  "%s:target_xfer_partial "
-			  "(%d, %s, %s, %s, %s, %s) = %d, %s",
+			  "(%d, %s, %s, %s, %s) = %d, %s",
 			  ops->to_shortname,
 			  (int) ctx.object,
-			  (annex ? annex : "(null)"),
 			  host_address_to_string (readbuf),
 			  host_address_to_string (writebuf),
 			  core_addr_to_string_nz (offset),
@@ -1465,7 +1463,7 @@ target_read_memory (CORE_ADDR memaddr, gdb_byte *myaddr, ssize_t len)
      flattened target doesn't inherit those.  */
   xfer_partial_ctx ctx = xfer_partial_ctx::make_memory ();
 
-  if (target_read (current_target.beneath, ctx, NULL, myaddr, memaddr, len)
+  if (target_read (current_target.beneath, ctx, myaddr, memaddr, len)
       == len)
     return 0;
   else
@@ -1499,7 +1497,7 @@ target_read_raw_memory (CORE_ADDR memaddr, gdb_byte *myaddr, ssize_t len)
      current_target.beneath.  */
   xfer_partial_ctx ctx = xfer_partial_ctx::make_raw_memory ();
 
-  if (target_read (current_target.beneath, ctx, NULL, myaddr, memaddr, len)
+  if (target_read (current_target.beneath, ctx, myaddr, memaddr, len)
       == len)
     return 0;
   else
@@ -1516,7 +1514,7 @@ target_read_stack (CORE_ADDR memaddr, gdb_byte *myaddr, ssize_t len)
      current_target.beneath.  */
   xfer_partial_ctx ctx = xfer_partial_ctx::make_stack_memory ();
 
-  if (target_read (current_target.beneath, ctx, NULL, myaddr, memaddr, len)
+  if (target_read (current_target.beneath, ctx, myaddr, memaddr, len)
       == len)
     return 0;
   else
@@ -1533,7 +1531,7 @@ target_read_code (CORE_ADDR memaddr, gdb_byte *myaddr, ssize_t len)
      current_target.beneath.  */
   xfer_partial_ctx ctx = xfer_partial_ctx::make_code_memory ();
 
-  if (target_read (current_target.beneath, ctx, NULL, myaddr, memaddr, len)
+  if (target_read (current_target.beneath, ctx, myaddr, memaddr, len)
       == len)
     return 0;
   else
@@ -1553,7 +1551,7 @@ target_write_memory (CORE_ADDR memaddr, const gdb_byte *myaddr, ssize_t len)
 
   /* See comment in target_read_memory about why the request starts at
      current_target.beneath.  */
-  if (target_write (current_target.beneath, ctx, NULL, myaddr, memaddr, len)
+  if (target_write (current_target.beneath, ctx, myaddr, memaddr, len)
       == len)
     return 0;
   else
@@ -1573,7 +1571,7 @@ target_write_raw_memory (CORE_ADDR memaddr, const gdb_byte *myaddr, ssize_t len)
 
   /* See comment in target_read_memory about why the request starts at
      current_target.beneath.  */
-  if (target_write (current_target.beneath, ctx, NULL, myaddr, memaddr, len)
+  if (target_write (current_target.beneath, ctx, myaddr, memaddr, len)
       == len)
     return 0;
   else
@@ -1637,24 +1635,19 @@ show_trust_readonly (struct ui_file *file, int from_tty,
 /* Target vector read/write partial wrapper functions.  */
 
 static enum target_xfer_status
-target_read_partial (struct target_ops *ops,
-		     const xfer_partial_ctx &ctx,
-		     const char *annex, gdb_byte *buf,
-		     ULONGEST offset, ULONGEST len,
+target_read_partial (struct target_ops *ops, const xfer_partial_ctx &ctx,
+		     gdb_byte *buf, ULONGEST offset, ULONGEST len,
 		     ULONGEST *xfered_len)
 {
-  return target_xfer_partial (ops, ctx, annex, buf, NULL, offset, len,
-			      xfered_len);
+  return target_xfer_partial (ops, ctx, buf, NULL, offset, len, xfered_len);
 }
 
 static enum target_xfer_status
-target_write_partial (struct target_ops *ops,
-		      const xfer_partial_ctx &ctx,
-		      const char *annex, const gdb_byte *buf,
-		      ULONGEST offset, LONGEST len, ULONGEST *xfered_len)
+target_write_partial (struct target_ops *ops, const xfer_partial_ctx &ctx,
+		      const gdb_byte *buf, ULONGEST offset, LONGEST len,
+		      ULONGEST *xfered_len)
 {
-  return target_xfer_partial (ops, ctx, annex, NULL, buf, offset, len,
-			      xfered_len);
+  return target_xfer_partial (ops, ctx, NULL, buf, offset, len, xfered_len);
 }
 
 /* Wrappers to perform the full transfer.  */
@@ -1662,9 +1655,7 @@ target_write_partial (struct target_ops *ops,
 /* For docs on target_read see target.h.  */
 
 LONGEST
-target_read (struct target_ops *ops,
-	     const xfer_partial_ctx &ctx,
-	     const char *annex, gdb_byte *buf,
+target_read (struct target_ops *ops, const xfer_partial_ctx &ctx, gdb_byte *buf,
 	     ULONGEST offset, LONGEST len)
 {
   LONGEST xfered_total = 0;
@@ -1683,7 +1674,7 @@ target_read (struct target_ops *ops,
       ULONGEST xfered_partial;
       enum target_xfer_status status;
 
-      status = target_read_partial (ops, ctx, annex,
+      status = target_read_partial (ops, ctx,
 				    buf + xfered_total * unit_size,
 				    offset + xfered_total, len - xfered_total,
 				    &xfered_partial);
@@ -1745,13 +1736,13 @@ read_whatever_is_readable (struct target_ops *ops,
   /* Check that either first or the last byte is readable, and give up
      if not.  This heuristic is meant to permit reading accessible memory
      at the boundary of accessible region.  */
-  if (target_read_partial (ops, ctx, NULL,
-			   buf.get (), begin, 1, &xfered_len) == TARGET_XFER_OK)
+  if (target_read_partial (ops, ctx, buf.get (), begin, 1, &xfered_len)
+      == TARGET_XFER_OK)
     {
       forward = 1;
       ++current_begin;
     }
-  else if (target_read_partial (ops, ctx, NULL,
+  else if (target_read_partial (ops, ctx,
 				buf.get () + (end - begin) - 1, end - 1, 1,
 				&xfered_len) == TARGET_XFER_OK)
     {
@@ -1788,7 +1779,7 @@ read_whatever_is_readable (struct target_ops *ops,
 	  second_half_end = middle;
 	}
 
-      xfer = target_read (ops, ctx, NULL,
+      xfer = target_read (ops, ctx,
 			  buf.get () + (first_half_begin - begin) * unit_size,
 			  first_half_begin,
 			  first_half_end - first_half_begin);
@@ -1867,7 +1858,7 @@ read_memory_robust (struct target_ops *ops,
 	  xfer_partial_ctx ctx = xfer_partial_ctx::make_memory ();
 
 	  LONGEST xfered_partial =
-	      target_read (ops, ctx, NULL, buffer.get (),
+	      target_read (ops, ctx, buffer.get (),
 			   offset + xfered_total, to_read);
 	  /* Call an observer, notifying them of the xfer progress?  */
 	  if (xfered_partial <= 0)
@@ -1899,7 +1890,7 @@ read_memory_robust (struct target_ops *ops,
 LONGEST
 target_write_with_progress (struct target_ops *ops,
 			    const xfer_partial_ctx &ctx,
-			    const char *annex, const gdb_byte *buf,
+			    const gdb_byte *buf,
 			    ULONGEST offset, LONGEST len,
 			    void (*progress) (ULONGEST, void *), void *baton)
 {
@@ -1923,7 +1914,7 @@ target_write_with_progress (struct target_ops *ops,
       ULONGEST xfered_partial;
       enum target_xfer_status status;
 
-      status = target_write_partial (ops, ctx, annex,
+      status = target_write_partial (ops, ctx,
 				     buf + xfered_total * unit_size,
 				     offset + xfered_total, len - xfered_total,
 				     &xfered_partial);
@@ -1945,11 +1936,10 @@ target_write_with_progress (struct target_ops *ops,
 LONGEST
 target_write (struct target_ops *ops,
 	      const xfer_partial_ctx &ctx,
-	      const char *annex, const gdb_byte *buf,
+	      const gdb_byte *buf,
 	      ULONGEST offset, LONGEST len)
 {
-  return target_write_with_progress (ops, ctx, annex, buf, offset, len,
-				     NULL, NULL);
+  return target_write_with_progress (ops, ctx, buf, offset, len, NULL, NULL);
 }
 
 /* Read OBJECT/ANNEX using OPS.  Store the result in *BUF_P and return
@@ -1960,7 +1950,7 @@ target_write (struct target_ops *ops,
 
 static LONGEST
 target_read_alloc_1 (struct target_ops *ops, const xfer_partial_ctx &ctx,
-		     const char *annex, gdb_byte **buf_p, int padding)
+		     gdb_byte **buf_p, int padding)
 {
   size_t buf_alloc, buf_pos;
   gdb_byte *buf;
@@ -1982,7 +1972,7 @@ target_read_alloc_1 (struct target_ops *ops, const xfer_partial_ctx &ctx,
       ULONGEST xfered_len;
       enum target_xfer_status status;
 
-      status = target_read_partial (ops, ctx, annex, &buf[buf_pos],
+      status = target_read_partial (ops, ctx, &buf[buf_pos],
 				    buf_pos, buf_alloc - buf_pos - padding,
 				    &xfered_len);
 
@@ -2021,22 +2011,21 @@ target_read_alloc_1 (struct target_ops *ops, const xfer_partial_ctx &ctx,
 
 LONGEST
 target_read_alloc (struct target_ops *ops, const xfer_partial_ctx &ctx,
-		   const char *annex, gdb_byte **buf_p)
+		   gdb_byte **buf_p)
 {
-  return target_read_alloc_1 (ops, ctx, annex, buf_p, 0);
+  return target_read_alloc_1 (ops, ctx, buf_p, 0);
 }
 
 /* See target.h.  */
 
 gdb::unique_xmalloc_ptr<char>
-target_read_stralloc (struct target_ops *ops, const xfer_partial_ctx &ctx,
-		      const char *annex)
+target_read_stralloc (struct target_ops *ops, const xfer_partial_ctx &ctx)
 {
   gdb_byte *buffer;
   char *bufstr;
   LONGEST i, transferred;
 
-  transferred = target_read_alloc_1 (ops, ctx, annex, &buffer, 1);
+  transferred = target_read_alloc_1 (ops, ctx, &buffer, 1);
   bufstr = (char *) buffer;
 
   if (transferred < 0)
@@ -2051,9 +2040,9 @@ target_read_stralloc (struct target_ops *ops, const xfer_partial_ctx &ctx,
   for (i = strlen (bufstr); i < transferred; i++)
     if (bufstr[i] != 0)
       {
-	warning (_("target object %d, annex %s, "
+	warning (_("target object %d, "
 		   "contained unexpected null characters"),
-		 (int) ctx.object, annex ? annex : "(none)");
+		 (int) ctx.object);
 	break;
       }
 
@@ -2072,7 +2061,7 @@ get_target_memory (struct target_ops *ops, CORE_ADDR addr, gdb_byte *buf,
      for this target).  */
   xfer_partial_ctx ctx = xfer_partial_ctx::make_raw_memory ();
 
-  if (target_read (ops, ctx, NULL, buf, addr, len) != len)
+  if (target_read (ops, ctx, buf, addr, len) != len)
     memory_error (TARGET_XFER_E_IO, addr);
 }
 
@@ -2454,8 +2443,7 @@ simple_search_memory (struct target_ops *ops,
 
   /* Prime the search buffer.  */
   xfer_partial_ctx ctx = xfer_partial_ctx::make_memory ();
-  if (target_read (ops, ctx, NULL, search_buf.data (), start_addr,
-		   search_buf_size)
+  if (target_read (ops, ctx, search_buf.data (), start_addr, search_buf_size)
       != search_buf_size)
     {
       warning (_("Unable to access %s bytes of target "
@@ -2509,8 +2497,7 @@ simple_search_memory (struct target_ops *ops,
 	  nr_to_read = std::min (search_space_len - keep_len,
 				 (ULONGEST) chunk_size);
 
-	  if (target_read (ops, ctx, NULL,
-			   &search_buf[keep_len], read_addr,
+	  if (target_read (ops, ctx, &search_buf[keep_len], read_addr,
 			   nr_to_read) != nr_to_read)
 	    {
 	      warning (_("Unable to access %s bytes of target "
@@ -2776,9 +2763,9 @@ target_get_osdata (const char *type)
   if (!t)
     return NULL;
 
-  xfer_partial_ctx ctx = xfer_partial_ctx::make_osdata ();
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_osdata (type);
 
-  return target_read_stralloc (t, ctx, type);
+  return target_read_stralloc (t, ctx);
 }
 
 static struct address_space *
@@ -3589,7 +3576,7 @@ simple_verify_memory (struct target_ops *ops,
       gdb_byte buf[1024];
       ULONGEST howmuch = std::min<ULONGEST> (sizeof (buf), size - total_xfered);
 
-      status = target_xfer_partial (ops, ctx, NULL, buf, NULL,
+      status = target_xfer_partial (ops, ctx, buf, NULL,
 				    lma + total_xfered, howmuch, &xfered_len);
       if (status == TARGET_XFER_OK
 	  && memcmp (data + total_xfered, buf, xfered_len) == 0)

@@ -694,8 +694,8 @@ fetch_available_features_from_target (const char *name, void *baton_)
 
   /* Read this object as a string.  This ensures that a NUL
      terminator is added.  */
-  xfer_partial_ctx ctx = xfer_partial_ctx::make_available_features ();
-  return target_read_stralloc (ops, ctx, name);
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_available_features (name);
+  return target_read_stralloc (ops, ctx);
 }
 
 

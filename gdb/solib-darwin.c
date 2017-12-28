@@ -499,8 +499,7 @@ darwin_solib_read_all_image_info_addr (struct darwin_info *info)
     return;
 
   xfer_partial_ctx ctx = xfer_partial_ctx::make_darwin_dyld_info ();
-  len = target_read (&current_target, ctx, NULL, buf, 0,
-		     TYPE_LENGTH (ptr_type));
+  len = target_read (&current_target, ctx, buf, 0, TYPE_LENGTH (ptr_type));
   if (len <= 0)
     return;
 

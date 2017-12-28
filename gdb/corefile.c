@@ -237,7 +237,7 @@ read_memory_object (const xfer_partial_ctx &ctx, CORE_ADDR memaddr,
       enum target_xfer_status status;
       ULONGEST xfered_len;
 
-      status = target_xfer_partial (current_target.beneath, ctx, NULL,
+      status = target_xfer_partial (current_target.beneath, ctx,
 				    myaddr + xfered, NULL,
 				    memaddr + xfered, len - xfered,
 				    &xfered_len);

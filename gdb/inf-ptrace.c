@@ -506,9 +506,8 @@ inf_ptrace_peek_poke (pid_t pid, gdb_byte *readbuf,
 
 static enum target_xfer_status
 inf_ptrace_xfer_partial (struct target_ops *ops, const xfer_partial_ctx &ctx,
-			 const char *annex, gdb_byte *readbuf,
-			 const gdb_byte *writebuf, ULONGEST offset,
-			 ULONGEST len, ULONGEST *xfered_len)
+			 gdb_byte *readbuf, const gdb_byte *writebuf,
+			 ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
   pid_t pid = get_ptrace_pid (inferior_ptid);
 

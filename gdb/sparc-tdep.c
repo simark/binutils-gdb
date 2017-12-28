@@ -193,7 +193,7 @@ sparc_fetch_wcookie (struct gdbarch *gdbarch)
   gdb_byte buf[8];
   xfer_partial_ctx ctx = xfer_partial_ctx::make_wcookie ();
 
-  int len = target_read (ops, ctx, NULL, buf, 0, 8);
+  int len = target_read (ops, ctx, buf, 0, 8);
   if (len == -1)
     return 0;
 

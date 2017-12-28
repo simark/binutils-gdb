@@ -1274,9 +1274,9 @@ svr4_current_sos_via_xfer_libraries (struct svr4_library_list *list,
   gdb_assert (annex == NULL || target_augmented_libraries_svr4_read ());
 
   /* Fetch the list of shared libraries.  */
-  xfer_partial_ctx ctx = xfer_partial_ctx::make_libraries_svr4 ();
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_libraries_svr4 (annex);
   gdb::unique_xmalloc_ptr<char> svr4_library_document
-    = target_read_stralloc (&current_target, ctx, annex);
+    = target_read_stralloc (&current_target, ctx);
   if (svr4_library_document == NULL)
     return 0;
 

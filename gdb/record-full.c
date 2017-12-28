@@ -1497,9 +1497,8 @@ record_full_store_registers (struct target_ops *ops,
 
 static enum target_xfer_status
 record_full_xfer_partial (struct target_ops *ops, const xfer_partial_ctx &ctx,
-			  const char *annex, gdb_byte *readbuf,
-			  const gdb_byte *writebuf, ULONGEST offset,
-			  ULONGEST len, ULONGEST *xfered_len)
+			  gdb_byte *readbuf, const gdb_byte *writebuf,
+			  ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
   if (!record_full_gdb_operation_disable
       && (ctx.object == TARGET_OBJECT_MEMORY
@@ -1552,8 +1551,8 @@ record_full_xfer_partial (struct target_ops *ops, const xfer_partial_ctx &ctx,
 	record_full_insn_num++;
     }
 
-  return ops->beneath->to_xfer_partial (ops->beneath, ctx, annex, readbuf,
-					writebuf, offset, len, xfered_len);
+  return ops->beneath->to_xfer_partial (ops->beneath, ctx, readbuf, writebuf,
+					offset, len, xfered_len);
 }
 
 /* This structure represents a breakpoint inserted while the record
@@ -2063,10 +2062,9 @@ record_full_core_store_registers (struct target_ops *ops,
 
 static enum target_xfer_status
 record_full_core_xfer_partial (struct target_ops *ops,
-			       const xfer_partial_ctx &ctx, const char *annex,
-			       gdb_byte *readbuf, const gdb_byte *writebuf,
-			       ULONGEST offset, ULONGEST len,
-			       ULONGEST *xfered_len)
+			       const xfer_partial_ctx &ctx, gdb_byte *readbuf,
+			       const gdb_byte *writebuf, ULONGEST offset,
+			       ULONGEST len, ULONGEST *xfered_len)
 {
   if (ctx.object == TARGET_OBJECT_MEMORY)
     {
@@ -2131,9 +2129,9 @@ record_full_core_xfer_partial (struct target_ops *ops,
 		    {
 		      if (!entry)
 			return ops->beneath->to_xfer_partial (ops->beneath, ctx,
-							      annex, readbuf,
-							      writebuf, offset,
-							      len, xfered_len);
+							      readbuf, writebuf,
+							      offset, len,
+							      xfered_len);
 
 		      memcpy (readbuf, entry->buf + sec_offset,
 			      (size_t) len);
@@ -2150,8 +2148,8 @@ record_full_core_xfer_partial (struct target_ops *ops,
 	error (_("You can't do that without a process to debug."));
     }
 
-  return ops->beneath->to_xfer_partial (ops->beneath, ctx, annex, readbuf,
-					writebuf, offset, len, xfered_len);
+  return ops->beneath->to_xfer_partial (ops->beneath, ctx, readbuf, writebuf,
+					offset, len, xfered_len);
 }
 
 /* "to_insert_breakpoint" method for prec over corefile.  */

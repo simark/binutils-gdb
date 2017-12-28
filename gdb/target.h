@@ -240,9 +240,11 @@ private:
   {}
 
 public:
-  static xfer_partial_ctx make_avr ()
+  static xfer_partial_ctx make_avr (const char *annex)
   {
-    return xfer_partial_ctx (TARGET_OBJECT_AVR);
+    xfer_partial_ctx ctx (TARGET_OBJECT_AVR);
+    ctx.avr.annex = annex;
+    return ctx;
   }
 
   static xfer_partial_ctx make_unwind_table ()
@@ -255,9 +257,11 @@ public:
     return xfer_partial_ctx (TARGET_OBJECT_WCOOKIE);
   }
 
-  static xfer_partial_ctx make_fdpic ()
+  static xfer_partial_ctx make_fdpic (const char *annex)
   {
-    return xfer_partial_ctx (TARGET_OBJECT_FDPIC);
+    xfer_partial_ctx ctx (TARGET_OBJECT_FDPIC);
+    ctx.fdpic.annex = annex;
+    return ctx;
   }
 
   static xfer_partial_ctx make_darwin_dyld_info ()
@@ -265,9 +269,11 @@ public:
     return xfer_partial_ctx (TARGET_OBJECT_DARWIN_DYLD_INFO);
   }
 
-  static xfer_partial_ctx make_available_features ()
+  static xfer_partial_ctx make_available_features (const char *annex)
   {
-    return xfer_partial_ctx (TARGET_OBJECT_AVAILABLE_FEATURES);
+    xfer_partial_ctx ctx (TARGET_OBJECT_AVAILABLE_FEATURES);
+    ctx.available_features.annex = annex;
+    return ctx;
   }
 
   static xfer_partial_ctx make_static_trace_data ()
@@ -280,9 +286,11 @@ public:
     return xfer_partial_ctx (TARGET_OBJECT_FLASH);
   }
 
-  static xfer_partial_ctx make_osdata ()
+  static xfer_partial_ctx make_osdata (const char *annex)
   {
-    return xfer_partial_ctx (TARGET_OBJECT_OSDATA);
+    xfer_partial_ctx ctx (TARGET_OBJECT_OSDATA);
+    ctx.osdata.annex = annex;
+    return ctx;
   }
 
   static xfer_partial_ctx make_libraries ()
@@ -295,19 +303,25 @@ public:
     return xfer_partial_ctx (TARGET_OBJECT_LIBRARIES_AIX);
   }
 
-  static xfer_partial_ctx make_libraries_svr4 ()
+  static xfer_partial_ctx make_libraries_svr4 (const char *annex)
   {
-    return xfer_partial_ctx (TARGET_OBJECT_LIBRARIES_SVR4);
+    xfer_partial_ctx ctx (TARGET_OBJECT_LIBRARIES_SVR4);
+    ctx.libraries_svr4.annex = annex;
+    return ctx;
   }
 
-  static xfer_partial_ctx make_exec_file ()
+  static xfer_partial_ctx make_exec_file (const char *annex)
   {
-    return xfer_partial_ctx (TARGET_OBJECT_EXEC_FILE);
+    xfer_partial_ctx ctx (TARGET_OBJECT_EXEC_FILE);
+    ctx.exec_file.annex = annex;
+    return ctx;
   }
 
-  static xfer_partial_ctx make_btrace ()
+  static xfer_partial_ctx make_btrace (const char *annex)
   {
-    return xfer_partial_ctx (TARGET_OBJECT_BTRACE);
+    xfer_partial_ctx ctx (TARGET_OBJECT_BTRACE);
+    ctx.btrace.annex = annex;
+    return ctx;
   }
 
   static xfer_partial_ctx make_btrace_conf ()
@@ -330,9 +344,11 @@ public:
     return xfer_partial_ctx (TARGET_OBJECT_AUXV);
   }
 
-  static xfer_partial_ctx make_spu ()
+  static xfer_partial_ctx make_spu (const char *annex)
   {
-    return xfer_partial_ctx (TARGET_OBJECT_SPU);
+    xfer_partial_ctx ctx (TARGET_OBJECT_SPU);
+    ctx.spu.annex = annex;
+    return ctx;
   }
 
   static xfer_partial_ctx make_signal_info ()
@@ -365,18 +381,67 @@ public:
     return xfer_partial_ctx (TARGET_OBJECT_THREADS);
   }
 
-  static xfer_partial_ctx make_openvms_uib ()
+  static xfer_partial_ctx make_openvms_uib (const char *annex)
   {
-    return xfer_partial_ctx (TARGET_OBJECT_OPENVMS_UIB);
+    xfer_partial_ctx ctx (TARGET_OBJECT_OPENVMS_UIB);
+    ctx.openvms_uib.annex = annex;
+    return ctx;
   }
 
   enum target_object object;
+
+  union
+  {
+    struct
+    {
+      const char *annex;
+    } available_features;
+
+    struct
+    {
+      const char *annex;
+    } avr;
+
+    struct
+    {
+      const char *annex;
+    } libraries_svr4;
+
+    struct
+    {
+      const char *annex;
+    } fdpic;
+
+    struct
+    {
+      const char *annex;
+    } osdata;
+
+    struct
+    {
+      const char *annex;
+    } openvms_uib;
+
+    struct
+    {
+      const char *annex;
+    } btrace;
+
+    struct
+    {
+      const char *annex;
+    } exec_file;
+
+    struct
+    {
+      const char *annex;
+    } spu;
+  };
 };
 
 typedef enum target_xfer_status
   target_xfer_partial_ftype (struct target_ops *ops,
 			     const xfer_partial_ctx &ctx,
-			     const char *annex,
 			     gdb_byte *readbuf,
 			     const gdb_byte *writebuf,
 			     ULONGEST offset,
@@ -404,10 +469,8 @@ enum target_xfer_status
    to_xfer_partial interface, callers of these functions do not need
    to retry partial transfers.  */
 
-extern LONGEST target_read (struct target_ops *ops,
-			    const xfer_partial_ctx &ctx,
-			    const char *annex, gdb_byte *buf,
-			    ULONGEST offset, LONGEST len);
+extern LONGEST target_read (struct target_ops *ops, const xfer_partial_ctx &ctx,
+			    gdb_byte *buf, ULONGEST offset, LONGEST len);
 
 struct memory_read_result
 {
@@ -453,7 +516,7 @@ extern std::vector<memory_read_result> read_memory_robust
 
 extern LONGEST target_write (struct target_ops *ops,
 			     const xfer_partial_ctx &ctx,
-			     const char *annex, const gdb_byte *buf,
+			     const gdb_byte *buf,
 			     ULONGEST offset, LONGEST len);
 
 /* Similar to target_write, except that it also calls PROGRESS with
@@ -465,7 +528,7 @@ extern LONGEST target_write (struct target_ops *ops,
 
 LONGEST target_write_with_progress (struct target_ops *ops,
 				    const xfer_partial_ctx &ctx,
-				    const char *annex, const gdb_byte *buf,
+				    const gdb_byte *buf,
 				    ULONGEST offset, LONGEST len,
 				    void (*progress) (ULONGEST, void *),
 				    void *baton);
@@ -484,7 +547,7 @@ LONGEST target_write_with_progress (struct target_ops *ops,
 
 extern LONGEST target_read_alloc (struct target_ops *ops,
 				  const xfer_partial_ctx &ctx,
-				  const char *annex, gdb_byte **buf_p);
+				  gdb_byte **buf_p);
 
 /* Read OBJECT/ANNEX using OPS.  The result is NUL-terminated and
    returned as a string.  If an error occurs or the transfer is
@@ -493,7 +556,7 @@ extern LONGEST target_read_alloc (struct target_ops *ops,
    contains any embedded NUL bytes.  */
 
 extern gdb::unique_xmalloc_ptr<char> target_read_stralloc
-    (struct target_ops *ops, const xfer_partial_ctx &ctx, const char *annex);
+    (struct target_ops *ops, const xfer_partial_ctx &ctx);
 
 /* See target_ops->to_xfer_partial.  */
 extern target_xfer_partial_ftype target_xfer_partial;
@@ -883,7 +946,6 @@ struct target_ops
 
     enum target_xfer_status (*to_xfer_partial) (struct target_ops *ops,
 						const xfer_partial_ctx &ctx,
-						const char *annex,
 						gdb_byte *readbuf,
 						const gdb_byte *writebuf,
 						ULONGEST offset, ULONGEST len,

@@ -657,8 +657,7 @@ add_to_spuid_list (bfd *abfd, asection *asect, void *list_p)
 
 static enum target_xfer_status
 core_xfer_partial (struct target_ops *ops, const xfer_partial_ctx &ctx,
-		   const char *annex, gdb_byte *readbuf,
-		   const gdb_byte *writebuf, ULONGEST offset,
+		   gdb_byte *readbuf, const gdb_byte *writebuf, ULONGEST offset,
 		   ULONGEST len, ULONGEST *xfered_len)
 {
   switch (ctx.object)
@@ -782,7 +781,7 @@ core_xfer_partial (struct target_ops *ops, const xfer_partial_ctx &ctx,
       /* FALL THROUGH */
 
     case TARGET_OBJECT_SPU:
-      if (readbuf && annex)
+      if (readbuf != NULL && ctx.spu.annex != NULL)
 	{
 	  /* When the SPU contexts are stored in a core file, BFD
 	     represents this with a fake section called
@@ -792,7 +791,7 @@ core_xfer_partial (struct target_ops *ops, const xfer_partial_ctx &ctx,
 	  bfd_size_type size;
 	  char sectionstr[100];
 
-	  xsnprintf (sectionstr, sizeof sectionstr, "SPU/%s", annex);
+	  xsnprintf (sectionstr, sizeof sectionstr, "SPU/%s", ctx.spu.annex);
 
 	  section = bfd_get_section_by_name (core_bfd, sectionstr);
 	  if (section == NULL)
@@ -861,7 +860,7 @@ core_xfer_partial (struct target_ops *ops, const xfer_partial_ctx &ctx,
       return TARGET_XFER_E_IO;
 
     default:
-      return ops->beneath->to_xfer_partial (ops->beneath, ctx, annex, readbuf,
+      return ops->beneath->to_xfer_partial (ops->beneath, ctx, readbuf,
 					    writebuf, offset, len, xfered_len);
     }
 }

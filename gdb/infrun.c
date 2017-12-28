@@ -8734,7 +8734,7 @@ siginfo_value_read (struct value *v)
 
   xfer_partial_ctx ctx = xfer_partial_ctx::make_signal_info ();
   transferred =
-    target_read (&current_target, ctx, NULL,
+    target_read (&current_target, ctx,
 		 value_contents_all_raw (v),
 		 value_offset (v),
 		 TYPE_LENGTH (value_type (v)));
@@ -8759,7 +8759,6 @@ siginfo_value_write (struct value *v, struct value *fromval)
 
   transferred = target_write (&current_target,
 			      ctx,
-			      NULL,
 			      value_contents_all_raw (fromval),
 			      value_offset (v),
 			      TYPE_LENGTH (value_type (fromval)));
@@ -8838,7 +8837,7 @@ save_infcall_suspend_state (void)
 
       xfer_partial_ctx ctx = xfer_partial_ctx::make_signal_info ();
 
-      if (target_read (&current_target, ctx, NULL, siginfo_data, 0, len) == len)
+      if (target_read (&current_target, ctx, siginfo_data, 0, len) == len)
 	discard_cleanups (back_to);
       else
 	{
@@ -8888,8 +8887,8 @@ restore_infcall_suspend_state (struct infcall_suspend_state *inf_state)
       xfer_partial_ctx ctx = xfer_partial_ctx::make_signal_info ();
 
       /* Errors ignored.  */
-      target_write (&current_target, ctx, NULL,
-		    inf_state->siginfo_data, 0, TYPE_LENGTH (type));
+      target_write (&current_target, ctx, inf_state->siginfo_data, 0,
+		    TYPE_LENGTH(type));
     }
 
   /* The inferior can be gone if the user types "print exit(0)"

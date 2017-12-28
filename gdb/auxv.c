@@ -222,7 +222,6 @@ ld_so_xfer_auxv (gdb_byte *readbuf,
 enum target_xfer_status
 memory_xfer_auxv (struct target_ops *ops,
 		  const xfer_partial_ctx &ctx,
-		  const char *annex,
 		  gdb_byte *readbuf,
 		  const gdb_byte *writebuf,
 		  ULONGEST offset,
@@ -361,8 +360,7 @@ get_auxv_inferior_data (struct target_ops *ops)
       xfer_partial_ctx ctx = xfer_partial_ctx::make_auxv ();
 
       info = XCNEW (struct auxv_info);
-      info->length = target_read_alloc (ops, ctx,
-					NULL, &info->data);
+      info->length = target_read_alloc (ops, ctx, &info->data);
       set_inferior_data (inf, auxv_inferior_data, info);
     }
 

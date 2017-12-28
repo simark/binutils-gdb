@@ -1533,6 +1533,7 @@ TAGFILES_NO_SRCDIR = $(SFILES) $(HFILES_NO_SRCDIR) $(ALLDEPFILES) \
 TAGFILES_WITH_SRCDIR = $(HFILES_WITH_SRCDIR)
 
 COMMON_OBS =  \
+	$(SUBDIR_GCC_COMPILE_OBS) $(DEPFILES) $(CONFIG_OBS) $(YYOBJ) \
 	btrace-common.o \
 	buffer.o \
 	cleanups.o \
@@ -1563,8 +1564,7 @@ COMMON_OBS =  \
 	xml-builtin.o \
 	xml-utils.o \
 	$(patsubst %.c,%.o,$(COMMON_SFILES)) \
-	$(SUBDIR_TARGET_OBS) \
-	$(SUBDIR_GCC_COMPILE_OBS) $(DEPFILES) $(CONFIG_OBS) $(YYOBJ)
+	$(SUBDIR_TARGET_OBS)
 
 TSOBS = inflow.o
 

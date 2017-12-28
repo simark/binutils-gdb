@@ -1556,11 +1556,10 @@ avr_io_reg_read_command (const char *args, int from_tty)
   unsigned int nreg = 0;
   unsigned int val;
   int i, j, k, step;
-  xfer_partial_ctx ctx = xfer_partial_ctx::make_avr ();
+  xfer_partial_ctx ctx = xfer_partial_ctx::make_avr ("avr.io_reg");
 
   /* Find out how many io registers the target has.  */
-  bufsiz = target_read_alloc (&current_target, ctx,
-			      "avr.io_reg", &buf);
+  bufsiz = target_read_alloc (&current_target, ctx, &buf);
   bufstr = (const char *) buf;
 
   if (bufsiz <= 0)
@@ -1596,7 +1595,8 @@ avr_io_reg_read_command (const char *args, int from_tty)
         j = nreg - i;           /* last block is less than 8 registers */
 
       snprintf (query, sizeof (query) - 1, "avr.io_reg:%x,%x", i, j);
-      bufsiz = target_read_alloc (&current_target, ctx, query, &buf);
+      xfer_partial_ctx ctx = xfer_partial_ctx::make_avr (query);
+      bufsiz = target_read_alloc (&current_target, ctx, &buf);
 
       p = (const char *) buf;
       for (k = i; k < (i + j); k++)

@@ -295,8 +295,8 @@ dsbt_get_initial_loadmaps (void)
   gdb_byte *buf;
   struct dsbt_info *info = get_dsbt_info ();
 
-  xfer_partial_ctx ctx = xfer_partial_ctx::make_fdpic ();
-  if (0 >= target_read_alloc (&current_target, ctx, "exec", &buf))
+  xfer_partial_ctx exec_ctx = xfer_partial_ctx::make_fdpic ("exec");
+  if (0 >= target_read_alloc (&current_target, exec_ctx, &buf))
     {
       info->exec_loadmap = NULL;
       error (_("Error reading DSBT exec loadmap"));
@@ -305,8 +305,8 @@ dsbt_get_initial_loadmaps (void)
   if (solib_dsbt_debug)
     dsbt_print_loadmap (info->exec_loadmap);
 
-  if (0 >= target_read_alloc (&current_target, ctx,
-			      "interp", &buf))
+  xfer_partial_ctx interp_ctx = xfer_partial_ctx::make_fdpic ("interp");
+  if (0 >= target_read_alloc (&current_target, interp_ctx, &buf))
     {
       info->interp_loadmap = NULL;
       error (_("Error reading DSBT interp loadmap"));
