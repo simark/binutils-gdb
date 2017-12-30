@@ -2108,7 +2108,7 @@ dispose_inferior (struct inferior *inf, void *args)
       if (target_has_execution)
 	target_kill ();
       else
-	target_detach (0);
+	target_detach (inf, 0);
     }
 
   return 0;
@@ -2144,7 +2144,7 @@ target_preopen (int from_tty)
 /* See target.h.  */
 
 void
-target_detach (int from_tty)
+target_detach (inferior *inf, int from_tty)
 {
   if (gdbarch_has_global_breakpoints (target_gdbarch ()))
     /* Don't remove global breakpoints here.  They're removed on
@@ -2157,7 +2157,7 @@ target_detach (int from_tty)
 
   prepare_for_detach ();
 
-  current_target.to_detach (&current_target, from_tty);
+  current_target.to_detach (&current_target, inf, from_tty);
 }
 
 void
