@@ -1924,13 +1924,9 @@ procfs_attach (struct target_ops *ops, const char *args, int from_tty)
 }
 
 static void
-procfs_detach (struct target_ops *ops, const char *args, int from_tty)
+procfs_detach (struct target_ops *ops, int from_tty)
 {
-  int sig = 0;
   int pid = ptid_get_pid (inferior_ptid);
-
-  if (args)
-    sig = atoi (args);
 
   if (from_tty)
     {
@@ -1945,7 +1941,7 @@ procfs_detach (struct target_ops *ops, const char *args, int from_tty)
       gdb_flush (gdb_stdout);
     }
 
-  do_detach (sig);
+  do_detach (0);
 
   inferior_ptid = null_ptid;
   detach_inferior (pid);
