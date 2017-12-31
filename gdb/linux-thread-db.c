@@ -1153,7 +1153,7 @@ thread_db_mourn_inferior (struct target_ops *ops, inferior *inf)
 {
   struct target_ops *target_beneath = find_target_beneath (ops);
 
-  delete_thread_db_info (ptid_get_pid (inferior_ptid));
+  delete_thread_db_info (inf->pid);
 
   target_beneath->to_mourn_inferior (target_beneath, inf);
 

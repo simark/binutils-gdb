@@ -160,9 +160,9 @@ inf_child_close (struct target_ops *target)
 }
 
 void
-inf_child_mourn_inferior (struct target_ops *ops)
+inf_child_mourn_inferior (struct target_ops *ops, inferior *inf)
 {
-  generic_mourn_inferior ();
+  generic_mourn_inferior (inf);
   inf_child_maybe_unpush_target (ops);
 }
 

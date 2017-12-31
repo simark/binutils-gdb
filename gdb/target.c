@@ -3199,23 +3199,19 @@ target_announce_detach (int from_tty)
 /* The inferior process has died.  Long live the inferior!  */
 
 void
-generic_mourn_inferior (void)
+generic_mourn_inferior (inferior *inf)
 {
-  ptid_t ptid;
+  gdb_assert (inf->pid == inferior_ptid.pid ());
 
-  ptid = inferior_ptid;
-  inferior_ptid = null_ptid;
+  if (inferior_ptid.pid () == inf->pid)
+    inferior_ptid = null_ptid;
 
   /* Mark breakpoints uninserted in case something tries to delete a
      breakpoint while we delete the inferior's threads (which would
      fail, since the inferior is long gone).  */
   mark_breakpoints_out ();
 
-  if (!ptid_equal (ptid, null_ptid))
-    {
-      int pid = ptid_get_pid (ptid);
-      exit_inferior (pid);
-    }
+  exit_inferior (inf->pid);
 
   /* Note this wipes step-resume breakpoints, so needs to be done
      after exit_inferior, which ends up referencing the step-resume

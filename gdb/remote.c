@@ -5241,7 +5241,7 @@ remote_disconnect (struct target_ops *target, const char *args, int from_tty)
      target_mourn_inferior won't unpush, and remote_mourn won't
      unpush if there is more than one inferior left.  */
   unpush_target (target);
-  generic_mourn_inferior ();
+  generic_mourn_inferior (current_inferior ());
 
   if (from_tty)
     puts_filtered ("Ending remote debugging.\n");
@@ -9388,7 +9388,7 @@ remote_mourn (struct target_ops *target, inferior *inf)
       unpush_target (target);
 
       /* remote_close takes care of doing most of the clean up.  */
-      generic_mourn_inferior ();
+      generic_mourn_inferior (inf);
       return;
     }
 
@@ -9422,7 +9422,7 @@ remote_mourn (struct target_ops *target, inferior *inf)
   record_currthread (rs, minus_one_ptid);
 
   /* Call common code to mark the inferior as not running.  */
-  generic_mourn_inferior ();
+  generic_mourn_inferior (inf);
 
   if (!have_inferiors ())
     {

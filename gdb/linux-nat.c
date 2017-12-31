@@ -3774,7 +3774,7 @@ linux_nat_kill (struct target_ops *ops)
 static void
 linux_nat_mourn_inferior (struct target_ops *ops, inferior *inf)
 {
-  int pid = ptid_get_pid (inferior_ptid);
+  int pid = inf->pid;
 
   purge_lwp_list (pid);
 

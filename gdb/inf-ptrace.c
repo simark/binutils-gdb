@@ -156,9 +156,9 @@ inf_ptrace_mourn_inferior (struct target_ops *ops, inferior *inf)
      Do not check whether this succeeds though, since we may be
      dealing with a process that we attached to.  Such a process will
      only report its exit status to its original parent.  */
-  waitpid (ptid_get_pid (inferior_ptid), &status, 0);
+  waitpid (inf->pid, &status, 0);
 
-  inf_child_mourn_inferior (ops);
+  inf_child_mourn_inferior (ops, inf);
 }
 
 /* Attach to the process specified by ARGS.  If FROM_TTY is non-zero,

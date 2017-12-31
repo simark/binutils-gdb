@@ -87,7 +87,7 @@ extern const char *get_inferior_io_terminal (void);
 
 extern ptid_t inferior_ptid;
 
-extern void generic_mourn_inferior (void);
+extern void generic_mourn_inferior (inferior *inf);
 
 extern CORE_ADDR unsigned_pointer_to_address (struct gdbarch *gdbarch,
 					      struct type *type,
