@@ -66,7 +66,7 @@ static ptid_t default_get_ada_task_ptid (struct target_ops *self,
 static int default_follow_fork (struct target_ops *self, int follow_child,
 				int detach_fork);
 
-static void default_mourn_inferior (struct target_ops *self);
+static void default_mourn_inferior (struct target_ops *self, inferior *inf);
 
 static int default_search_memory (struct target_ops *ops,
 				  CORE_ADDR start_addr,
@@ -2288,7 +2288,7 @@ target_follow_exec (struct inferior *inf, char *execd_pathname)
 }
 
 static void
-default_mourn_inferior (struct target_ops *self)
+default_mourn_inferior (struct target_ops *self, inferior *inf)
 {
   internal_error (__FILE__, __LINE__,
 		  _("could not find a target to follow mourn inferior"));
@@ -2298,7 +2298,11 @@ void
 target_mourn_inferior (ptid_t ptid)
 {
   gdb_assert (ptid_equal (ptid, inferior_ptid));
-  current_target.to_mourn_inferior (&current_target);
+  inferior *inf = find_inferior_ptid (ptid);
+
+  gdb_assert (inf != NULL);
+
+  current_target.to_mourn_inferior (&current_target, inf);
 
   /* We no longer need to keep handles on any of the object files.
      Make sure to release them to avoid unnecessarily locking any

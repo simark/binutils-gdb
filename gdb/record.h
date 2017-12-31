@@ -92,7 +92,7 @@ extern void record_disconnect (struct target_ops *, const char *, int);
 extern void record_detach (struct target_ops *, inferior *, int);
 
 /* The default "to_mourn_inferior" target method for record targets.  */
-extern void record_mourn_inferior (struct target_ops *);
+extern void record_mourn_inferior (struct target_ops *, inferior *inf);
 
 /* The default "to_kill" target method for record targets.  */
 extern void record_kill (struct target_ops *);

@@ -148,7 +148,7 @@ inf_ptrace_post_startup_inferior (struct target_ops *self, ptid_t pid)
 /* Clean up a rotting corpse of an inferior after it died.  */
 
 static void
-inf_ptrace_mourn_inferior (struct target_ops *ops)
+inf_ptrace_mourn_inferior (struct target_ops *ops, inferior *inf)
 {
   int status;
 

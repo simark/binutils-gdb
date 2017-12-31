@@ -118,7 +118,7 @@ static int remote_vkill (int pid, struct remote_state *rs);
 
 static void remote_kill_k (void);
 
-static void remote_mourn (struct target_ops *ops);
+static void remote_mourn (struct target_ops *ops, inferior *inf);
 
 static void extended_remote_restart (void);
 
@@ -9378,7 +9378,7 @@ remote_kill_k (void)
 }
 
 static void
-remote_mourn (struct target_ops *target)
+remote_mourn (struct target_ops *target, inferior *inf)
 {
   struct remote_state *rs = get_remote_state ();
 

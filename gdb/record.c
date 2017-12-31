@@ -202,7 +202,7 @@ record_detach (struct target_ops *t, inferior *inf, int from_tty)
 /* See record.h.  */
 
 void
-record_mourn_inferior (struct target_ops *t)
+record_mourn_inferior (struct target_ops *t, inferior *inf)
 {
   gdb_assert (t->to_stratum == record_stratum);
 
