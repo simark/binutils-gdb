@@ -1,3 +1,10 @@
+2018-01-05  Tom Tromey  <tom@tromey.com>
+
+	* dwarf2read.c (dwarf2_compute_name): Update comment.
+	(read_func_scope, read_variable): Update.
+	(new_symbol): Remove.
+	(new_symbol_full): Rename to new_symbol.
+
 2018-01-07  Simon Marchi  <simon.marchi@polymtl.ca>
 
 	* dwarf2read.c (struct dwarf2_cu) <dwarf2_per_objfile>: Remove.
