@@ -1,5 +1,25 @@
 2018-01-05  Tom Tromey  <tom@tromey.com>
 
+	* dwarf2read.c (class auto_free_abbrev_table): New.
+	(struct abbrev_table): Add constructor, destructor.
+	<alloc_abbrev, add_abbrev, lookup_abbrev>: Declare methods.
+	(read_cutu_die_from_dwo): Add abbrev_table parameter.
+	(init_cutu_and_read_dies): Update.
+	(init_cutu_and_read_dies_no_follow): Use auto_free_abbrev_table.
+	(build_type_psymtabs_1, peek_die_abbrev, read_full_die_1):
+	Update.
+	(abbrev_table::alloc_abbrev): Rename from
+	abbrev_table_alloc_abbrev.
+	(abbrev_table::add_abbrev): Rename from abbrev_table_add_abbrev.
+	(abbrev_table::lookup_abbrev): Rename from
+	abbrev_table_lookup_abbrev.
+	(abbrev_table_read_table): Return a unique_ptr.
+	(abbrev_table_free, abbrev_table_free_cleanup): Remove.
+	(dwarf2_read_abbrevs): Update.
+	(dwarf2_free_abbrev_table): Change argument type to dwarf2_cu*.
+
+2018-01-05  Tom Tromey  <tom@tromey.com>
+
 	* dwarf2read.c (dwarf2_compute_name): Update comment.
 	(read_func_scope, read_variable): Update.
 	(new_symbol): Remove.
