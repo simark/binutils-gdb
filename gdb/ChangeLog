@@ -1,5 +1,20 @@
 2018-01-05  Tom Tromey  <tom@tromey.com>
 
+	* dwarf2read.c (struct dwarf2_cu): Add constructor, destructor.
+	<free_abbrev_table>: Declare method.
+	(~auto_free_abbrev_table): Update.
+	(init_tu_and_read_dwo_dies): Use unique_ptr.  Remove cleanups.
+	(init_cutu_and_read_dies): Likewise.
+	(init_cutu_and_read_dies_no_follow): Update.
+	(dwarf2_free_abbrev_table): Remove.
+	(dwarf2_cu::dwarf2_cu): New.  Rename from init_one_comp_unit.
+	(dwarf2_cu::~dwarf2_cu): New.
+	(dwarf2_cu::free_abbrev_table): New method.
+	(free_heap_comp_unit, free_stack_comp_unit): Remove.
+	(age_cached_comp_units, free_one_cached_comp_unit): Use delete.
+
+2018-01-05  Tom Tromey  <tom@tromey.com>
+
 	* dwarf2read.c (class auto_free_abbrev_table): New.
 	(struct abbrev_table): Add constructor, destructor.
 	<alloc_abbrev, add_abbrev, lookup_abbrev>: Declare methods.
