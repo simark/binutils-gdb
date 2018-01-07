@@ -687,11 +687,6 @@ struct dwarf2_cu
      distinguish these in buildsym.c.  */
   struct pending **list_in_scope;
 
-  /* The abbrev table for this CU.
-     Normally this points to the abbrev table in the objfile.
-     But if DWO_UNIT is non-NULL this is the abbrev table in the DWO file.  */
-  struct abbrev_table *abbrev_table;
-
   /* Hash table holding all the loaded partial DIEs
      with partial_die->offset.SECT_OFF as hash.  */
   htab_t partial_dies;
@@ -791,28 +786,6 @@ struct dwarf2_cu
      this information, but later versions do.  */
 
   unsigned int processing_has_namespace_info : 1;
-};
-
-static void dwarf2_free_abbrev_table (struct dwarf2_cu *);
-
-/* Free an abbrev table on destruction.  */
-
-class auto_free_abbrev_table
-{
-public:
-  auto_free_abbrev_table (struct dwarf2_cu *cu)
-    : m_cu (cu)
-  {
-  }
-
-  ~auto_free_abbrev_table ()
-  {
-    dwarf2_free_abbrev_table (m_cu);
-  }
-
-private:
-
-  struct dwarf2_cu *m_cu;
 };
 
 /* Persistent data held for a compilation unit, even when not
@@ -1280,6 +1253,9 @@ struct die_reader_specs
 
   /* The value of the DW_AT_comp_dir attribute.  */
   const char *comp_dir;
+
+  /* The abbreviation table to use when reading the DIEs.  */
+  struct abbrev_table *abbrev_table;
 };
 
 /* Type of function passed to init_cutu_and_read_dies, et.al.  */
@@ -1573,6 +1549,8 @@ struct abbrev_table
   struct abbrev_info **abbrevs;
 };
 
+typedef std::unique_ptr<struct abbrev_table> abbrev_table_up;
+
 /* Attributes have a name and a value.  */
 struct attribute
   {
@@ -1802,12 +1780,9 @@ static void dwarf2_read_symtab (struct partial_symtab *,
 
 static void psymtab_to_symtab_1 (struct partial_symtab *);
 
-static std::unique_ptr<struct abbrev_table> abbrev_table_read_table
+static abbrev_table_up abbrev_table_read_table
   (struct dwarf2_per_objfile *dwarf2_per_objfile, struct dwarf2_section_info *,
    sect_offset);
-
-static void dwarf2_read_abbrevs (struct dwarf2_cu *,
-				 struct dwarf2_section_info *);
 
 static unsigned int peek_abbrev_code (bfd *, const gdb_byte *);
 
@@ -7457,7 +7432,8 @@ static void
 init_cu_die_reader (struct die_reader_specs *reader,
 		    struct dwarf2_cu *cu,
 		    struct dwarf2_section_info *section,
-		    struct dwo_file *dwo_file)
+		    struct dwo_file *dwo_file,
+		    struct abbrev_table *abbrev_table)
 {
   gdb_assert (section->readin && section->buffer != NULL);
   reader->abfd = get_section_bfd_owner (section);
@@ -7467,6 +7443,7 @@ init_cu_die_reader (struct die_reader_specs *reader,
   reader->buffer = section->buffer;
   reader->buffer_end = section->buffer + section->size;
   reader->comp_dir = NULL;
+  reader->abbrev_table = abbrev_table;
 }
 
 /* Subroutine of init_cutu_and_read_dies to simplify it.
@@ -7482,27 +7459,26 @@ init_cu_die_reader (struct die_reader_specs *reader,
    STUB_COMP_DIR may be non-NULL.
    *RESULT_READER,*RESULT_INFO_PTR,*RESULT_COMP_UNIT_DIE,*RESULT_HAS_CHILDREN
    are filled in with the info of the DIE from the DWO file.
-   ABBREV_TABLE_PROVIDED is non-zero if the caller of init_cutu_and_read_dies
-   provided an abbrev table to use.
-   *ABBREV_TABLE may be filled in with a new abbrev table.
+   *RESULT_DWO_ABBREV_TABLE will be filled in with the abbrev table allocated
+   from the dwo.  Since *RESULT_READER references this abbrev table, it must be
+   kept around for at least as long as *RESULT_READER.
+
    The result is non-zero if a valid (non-dummy) DIE was found.  */
 
 static int
 read_cutu_die_from_dwo (struct dwarf2_per_cu_data *this_cu,
 			struct dwo_unit *dwo_unit,
-			int abbrev_table_provided,
 			struct die_info *stub_comp_unit_die,
 			const char *stub_comp_dir,
 			struct die_reader_specs *result_reader,
 			const gdb_byte **result_info_ptr,
 			struct die_info **result_comp_unit_die,
 			int *result_has_children,
-			gdb::optional<auto_free_abbrev_table> *abbrev_table)
+			abbrev_table_up *result_dwo_abbrev_table)
 {
   struct dwarf2_per_objfile *dwarf2_per_objfile = this_cu->dwarf2_per_objfile;
   struct objfile *objfile = dwarf2_per_objfile->objfile;
   struct dwarf2_cu *cu = this_cu->cu;
-  struct dwarf2_section_info *section;
   bfd *abfd;
   const gdb_byte *begin_info_ptr, *info_ptr;
   struct attribute *comp_dir, *stmt_list, *low_pc, *high_pc, *ranges;
@@ -7565,13 +7541,12 @@ read_cutu_die_from_dwo (struct dwarf2_per_cu_data *this_cu,
 
   /* Set up for reading the DWO CU/TU.  */
   cu->dwo_unit = dwo_unit;
-  section = dwo_unit->section;
+  dwarf2_section_info *section = dwo_unit->section;
   dwarf2_read_section (objfile, section);
   abfd = get_section_bfd_owner (section);
   begin_info_ptr = info_ptr = (section->buffer
 			       + to_underlying (dwo_unit->sect_off));
   dwo_abbrev_section = &dwo_unit->dwo_file->sections.abbrev;
-  init_cu_die_reader (result_reader, cu, section, dwo_unit->dwo_file);
 
   if (this_cu->is_debug_types)
     {
@@ -7614,22 +7589,11 @@ read_cutu_die_from_dwo (struct dwarf2_per_cu_data *this_cu,
       dwo_unit->length = get_cu_length (&cu->header);
     }
 
-  /* Replace the CU's original abbrev table with the DWO's.
-     Reminder: We can't read the abbrev table until we've read the header.  */
-  if (abbrev_table_provided)
-    {
-      /* Don't free the provided abbrev table, the caller of
-	 init_cutu_and_read_dies owns it.  */
-      dwarf2_read_abbrevs (cu, dwo_abbrev_section);
-      /* Ensure the DWO abbrev table gets freed.  */
-      abbrev_table->emplace (cu);
-    }
-  else
-    {
-      dwarf2_free_abbrev_table (cu);
-      dwarf2_read_abbrevs (cu, dwo_abbrev_section);
-      /* Leave any existing abbrev table cleanup as is.  */
-    }
+  *result_dwo_abbrev_table
+    = abbrev_table_read_table (dwarf2_per_objfile, dwo_abbrev_section,
+			       cu->header.abbrev_sect_off);
+  init_cu_die_reader (result_reader, cu, section, dwo_unit->dwo_file,
+		      result_dwo_abbrev_table->get ());
 
   /* Read in the die, but leave space to copy over the attributes
      from the stub.  This has the benefit of simplifying the rest of
@@ -7783,14 +7747,16 @@ init_tu_and_read_dwo_dies (struct dwarf2_per_cu_data *this_cu,
      abbrev table.  When reading DWOs with skeletonless TUs, all the TUs
      could share abbrev tables.  */
 
-  gdb::optional<auto_free_abbrev_table> abbrev_table;
+  /* The abbreviation table used by READER, this must live at least as long as
+     READER.  */
+  abbrev_table_up dwo_abbrev_table;
+
   if (read_cutu_die_from_dwo (this_cu, sig_type->dwo_unit,
-			      0 /* abbrev_table_provided */,
 			      NULL /* stub_comp_unit_die */,
 			      sig_type->dwo_unit->dwo_file->comp_dir,
 			      &reader, &info_ptr,
 			      &comp_unit_die, &has_children,
-			      &abbrev_table) == 0)
+			      &dwo_abbrev_table) == 0)
     {
       /* Dummy die.  */
       do_cleanups (cleanups);
@@ -7972,37 +7938,32 @@ init_cutu_and_read_dies (struct dwarf2_per_cu_data *this_cu,
 
   /* If we don't have them yet, read the abbrevs for this compilation unit.
      And if we need to read them now, make sure they're freed when we're
-     done.  Note that it's important that if the CU had an abbrev table
-     on entry we don't free it when we're done: Somewhere up the call stack
-     it may be in use.  */
-  gdb::optional<auto_free_abbrev_table> abbrev_table_freer;
+     done (own the table through ABBREV_TABLE_HOLDER).  */
+  abbrev_table_up abbrev_table_holder;
   if (abbrev_table != NULL)
+    gdb_assert (cu->header.abbrev_sect_off == abbrev_table->sect_off);
+  else
     {
-      gdb_assert (cu->abbrev_table == NULL);
-      gdb_assert (cu->header.abbrev_sect_off == abbrev_table->sect_off);
-      cu->abbrev_table = abbrev_table;
-    }
-  else if (cu->abbrev_table == NULL)
-    {
-      dwarf2_read_abbrevs (cu, abbrev_section);
-      abbrev_table_freer.emplace (cu);
-    }
-  else if (rereading_dwo_cu)
-    {
-      dwarf2_free_abbrev_table (cu);
-      dwarf2_read_abbrevs (cu, abbrev_section);
+      abbrev_table_holder
+	= abbrev_table_read_table (dwarf2_per_objfile, abbrev_section,
+				   cu->header.abbrev_sect_off);
+      abbrev_table = abbrev_table_holder.get ();
     }
 
   /* Read the top level CU/TU die.  */
-  init_cu_die_reader (&reader, cu, section, NULL);
+  init_cu_die_reader (&reader, cu, section, NULL, abbrev_table);
   info_ptr = read_full_die (&reader, &comp_unit_die, info_ptr, &has_children);
 
   /* If we are in a DWO stub, process it and then read in the "real" CU/TU
-     from the DWO file.
+     from the DWO file.  read_cutu_die_from_dwo will allocate the abbreviation
+     table from the DWO file and pass the ownership over to us.  It will be
+     referenced from READER, so we must make sure to free it after we're done
+     with READER.
+
      Note that if USE_EXISTING_OK != 0, and THIS_CU->cu already contains a
      DWO CU, that this test will fail (the attribute will not be present).  */
   attr = dwarf2_attr (comp_unit_die, DW_AT_GNU_dwo_name, cu);
-  gdb::optional<auto_free_abbrev_table> abbrev_table_freer_2;
+  abbrev_table_up dwo_abbrev_table;
   if (attr)
     {
       struct dwo_unit *dwo_unit;
@@ -8019,11 +7980,10 @@ init_cutu_and_read_dies (struct dwarf2_per_cu_data *this_cu,
       if (dwo_unit != NULL)
 	{
 	  if (read_cutu_die_from_dwo (this_cu, dwo_unit,
-				      abbrev_table != NULL,
 				      comp_unit_die, NULL,
 				      &reader, &info_ptr,
 				      &dwo_comp_unit_die, &has_children,
-				      &abbrev_table_freer_2) == 0)
+				      &dwo_abbrev_table) == 0)
 	    {
 	      /* Dummy die.  */
 	      do_cleanups (cleanups);
@@ -8134,10 +8094,11 @@ init_cutu_and_read_dies_no_follow (struct dwarf2_per_cu_data *this_cu,
       return;
     }
 
-  dwarf2_read_abbrevs (&cu, abbrev_section);
-  auto_free_abbrev_table abbrev_table_freer (&cu);
+  abbrev_table_up abbrev_table
+    = abbrev_table_read_table (dwarf2_per_objfile, abbrev_section,
+			       cu.header.abbrev_sect_off);
 
-  init_cu_die_reader (&reader, &cu, section, dwo_file);
+  init_cu_die_reader (&reader, &cu, section, dwo_file, abbrev_table.get ());
   info_ptr = read_full_die (&reader, &comp_unit_die, info_ptr, &has_children);
 
   die_reader_func (&reader, info_ptr, comp_unit_die, has_children, data);
@@ -8613,7 +8574,7 @@ build_type_psymtabs_1 (struct dwarf2_per_objfile *dwarf2_per_objfile)
 {
   struct tu_stats *tu_stats = &dwarf2_per_objfile->tu_stats;
   struct cleanup *cleanups;
-  std::unique_ptr<struct abbrev_table> abbrev_table;
+  abbrev_table_up abbrev_table;
   sect_offset abbrev_offset;
   struct tu_abbrev_offset *sorted_by_abbrev;
   int i;
@@ -9628,25 +9589,26 @@ peek_abbrev_code (bfd *abfd, const gdb_byte *info_ptr)
   return read_unsigned_leb128 (abfd, info_ptr, &bytes_read);
 }
 
-/* Read the initial uleb128 in the die at INFO_PTR in compilation unit CU.
+/* Read the initial uleb128 in the die at INFO_PTR in compilation unit
+   READER::CU.  Use READER::ABBREV_TABLE to lookup any abbreviation.
+
    Return the corresponding abbrev, or NULL if the number is zero (indicating
    an empty DIE).  In either case *BYTES_READ will be set to the length of
    the initial number.  */
 
 static struct abbrev_info *
-peek_die_abbrev (const gdb_byte *info_ptr, unsigned int *bytes_read,
-		 struct dwarf2_cu *cu)
+peek_die_abbrev (const die_reader_specs &reader,
+		 const gdb_byte *info_ptr, unsigned int *bytes_read)
 {
+  dwarf2_cu *cu = reader.cu;
   bfd *abfd = cu->per_cu->dwarf2_per_objfile->objfile->obfd;
-  unsigned int abbrev_number;
-  struct abbrev_info *abbrev;
-
-  abbrev_number = read_unsigned_leb128 (abfd, info_ptr, bytes_read);
+  unsigned int abbrev_number
+    = read_unsigned_leb128 (abfd, info_ptr, bytes_read);
 
   if (abbrev_number == 0)
     return NULL;
 
-  abbrev = cu->abbrev_table->lookup_abbrev (abbrev_number);
+  abbrev_info *abbrev = reader.abbrev_table->lookup_abbrev (abbrev_number);
   if (!abbrev)
     {
       error (_("Dwarf Error: Could not find abbrev number %d in %s"
@@ -9665,13 +9627,11 @@ peek_die_abbrev (const gdb_byte *info_ptr, unsigned int *bytes_read,
 static const gdb_byte *
 skip_children (const struct die_reader_specs *reader, const gdb_byte *info_ptr)
 {
-  struct dwarf2_cu *cu = reader->cu;
-  struct abbrev_info *abbrev;
-  unsigned int bytes_read;
-
   while (1)
     {
-      abbrev = peek_die_abbrev (info_ptr, &bytes_read, cu);
+      unsigned int bytes_read;
+      abbrev_info *abbrev = peek_die_abbrev (*reader, info_ptr, &bytes_read);
+
       if (abbrev == NULL)
 	return info_ptr + bytes_read;
       else
@@ -18037,7 +17997,7 @@ read_full_die_1 (const struct die_reader_specs *reader,
       return info_ptr;
     }
 
-  abbrev = cu->abbrev_table->lookup_abbrev (abbrev_number);
+  abbrev = reader->abbrev_table->lookup_abbrev (abbrev_number);
   if (!abbrev)
     error (_("Dwarf Error: could not find abbrev number %d [in module %s]"),
 	   abbrev_number,
@@ -18145,7 +18105,7 @@ abbrev_table::lookup_abbrev (unsigned int abbrev_number)
 
 /* Read in an abbrev table.  */
 
-static std::unique_ptr<struct abbrev_table>
+static abbrev_table_up
 abbrev_table_read_table (struct dwarf2_per_objfile *dwarf2_per_objfile,
 			 struct dwarf2_section_info *section,
 			 sect_offset sect_off)
@@ -18159,8 +18119,7 @@ abbrev_table_read_table (struct dwarf2_per_objfile *dwarf2_per_objfile,
   struct attr_abbrev *cur_attrs;
   unsigned int allocated_attrs;
 
-  std::unique_ptr<struct abbrev_table> abbrev_table
-    (new struct abbrev_table (sect_off));
+  abbrev_table_up abbrev_table (new struct abbrev_table (sect_off));
 
   dwarf2_read_section (objfile, section);
   abbrev_ptr = section->buffer + to_underlying (sect_off);
@@ -18249,31 +18208,6 @@ abbrev_table_read_table (struct dwarf2_per_objfile *dwarf2_per_objfile,
   return abbrev_table;
 }
 
-/* Read the abbrev table for CU from ABBREV_SECTION.  */
-
-static void
-dwarf2_read_abbrevs (struct dwarf2_cu *cu,
-		     struct dwarf2_section_info *abbrev_section)
-{
-  cu->abbrev_table
-    = abbrev_table_read_table (cu->per_cu->dwarf2_per_objfile, abbrev_section,
-			       cu->header.abbrev_sect_off).release ();
-}
-
-/* Release the memory used by the abbrev table for a compilation unit.  */
-
-static void
-dwarf2_free_abbrev_table (struct dwarf2_cu *cu)
-{
-  if (cu->abbrev_table != NULL)
-    {
-      delete cu->abbrev_table;
-      /* Set this to NULL so that we SEGV if we try to read it later,
-	 and also because free_comp_unit verifies this is NULL.  */
-      cu->abbrev_table = NULL;
-    }
-}
-
 /* Returns nonzero if TAG represents a type that we might generate a partial
    symbol for.  */
 
@@ -18316,7 +18250,6 @@ load_partial_dies (const struct die_reader_specs *reader,
   struct objfile *objfile = cu->per_cu->dwarf2_per_objfile->objfile;
   struct partial_die_info *part_die;
   struct partial_die_info *parent_die, *last_die, *first_die = NULL;
-  struct abbrev_info *abbrev;
   unsigned int bytes_read;
   unsigned int load_all = 0;
   int nesting_level = 1;
@@ -18341,7 +18274,7 @@ load_partial_dies (const struct die_reader_specs *reader,
 
   while (1)
     {
-      abbrev = peek_die_abbrev (info_ptr, &bytes_read, cu);
+      abbrev_info *abbrev = peek_die_abbrev (*reader, info_ptr, &bytes_read);
 
       /* A NULL abbrev means the end of a series of children.  */
       if (abbrev == NULL)
