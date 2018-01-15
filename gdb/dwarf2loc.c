@@ -2392,6 +2392,14 @@ dwarf2_evaluate_loc_desc_full (struct type *type, struct frame_info *frame,
 	 outer type.  */
       if (bit_size > 8 * TYPE_LENGTH (type))
 	invalid_synthetic_pointer ();
+      else if (bit_size < 8 * TYPE_LENGTH (type))
+	{
+	  ctx.pieces.emplace_back ();
+	  dwarf_expr_piece &p = ctx.pieces.back ();
+	  p.location = DWARF_VALUE_OPTIMIZED_OUT;
+	  p.size = 8 * TYPE_LENGTH (type) - bit_size;
+	  p.offset = bit_size;
+	}
 
       c = allocate_piece_closure (per_cu, std::move (ctx.pieces), frame);
       /* We must clean up the value chain after creating the piece
