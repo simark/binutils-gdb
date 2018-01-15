@@ -2043,6 +2043,9 @@ rw_pieced_value (struct value *v, struct value *from)
       offset += this_size_bits;
       bits_to_skip = 0;
     }
+
+  if (offset < max_offset)
+    mark_value_bits_optimized_out (v, offset, max_offset - offset);
 }
 
 
@@ -2096,7 +2099,7 @@ check_pieced_synthetic_pointer (const struct value *value, LONGEST bit_offset,
 	return 0;
     }
 
-  return 1;
+  return bit_length == 0;
 }
 
 /* A wrapper function for get_frame_address_in_block.  */
