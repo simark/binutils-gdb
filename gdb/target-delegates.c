@@ -3315,66 +3315,6 @@ debug_set_permissions (struct target_ops *self)
   fputs_unfiltered (")\n", gdb_stdlog);
 }
 
-static int
-delegate_static_tracepoint_marker_at (struct target_ops *self, CORE_ADDR arg1, struct static_tracepoint_marker *arg2)
-{
-  self = self->beneath;
-  return self->to_static_tracepoint_marker_at (self, arg1, arg2);
-}
-
-static int
-tdefault_static_tracepoint_marker_at (struct target_ops *self, CORE_ADDR arg1, struct static_tracepoint_marker *arg2)
-{
-  return 0;
-}
-
-static int
-debug_static_tracepoint_marker_at (struct target_ops *self, CORE_ADDR arg1, struct static_tracepoint_marker *arg2)
-{
-  int result;
-  fprintf_unfiltered (gdb_stdlog, "-> %s->to_static_tracepoint_marker_at (...)\n", debug_target.to_shortname);
-  result = debug_target.to_static_tracepoint_marker_at (&debug_target, arg1, arg2);
-  fprintf_unfiltered (gdb_stdlog, "<- %s->to_static_tracepoint_marker_at (", debug_target.to_shortname);
-  target_debug_print_struct_target_ops_p (&debug_target);
-  fputs_unfiltered (", ", gdb_stdlog);
-  target_debug_print_CORE_ADDR (arg1);
-  fputs_unfiltered (", ", gdb_stdlog);
-  target_debug_print_struct_static_tracepoint_marker_p (arg2);
-  fputs_unfiltered (") = ", gdb_stdlog);
-  target_debug_print_int (result);
-  fputs_unfiltered ("\n", gdb_stdlog);
-  return result;
-}
-
-static VEC(static_tracepoint_marker_p) *
-delegate_static_tracepoint_markers_by_strid (struct target_ops *self, const char *arg1)
-{
-  self = self->beneath;
-  return self->to_static_tracepoint_markers_by_strid (self, arg1);
-}
-
-static VEC(static_tracepoint_marker_p) *
-tdefault_static_tracepoint_markers_by_strid (struct target_ops *self, const char *arg1)
-{
-  tcomplain ();
-}
-
-static VEC(static_tracepoint_marker_p) *
-debug_static_tracepoint_markers_by_strid (struct target_ops *self, const char *arg1)
-{
-  VEC(static_tracepoint_marker_p) * result;
-  fprintf_unfiltered (gdb_stdlog, "-> %s->to_static_tracepoint_markers_by_strid (...)\n", debug_target.to_shortname);
-  result = debug_target.to_static_tracepoint_markers_by_strid (&debug_target, arg1);
-  fprintf_unfiltered (gdb_stdlog, "<- %s->to_static_tracepoint_markers_by_strid (", debug_target.to_shortname);
-  target_debug_print_struct_target_ops_p (&debug_target);
-  fputs_unfiltered (", ", gdb_stdlog);
-  target_debug_print_const_char_p (arg1);
-  fputs_unfiltered (") = ", gdb_stdlog);
-  target_debug_print_VEC_static_tracepoint_marker_p_p (result);
-  fputs_unfiltered ("\n", gdb_stdlog);
-  return result;
-}
-
 static traceframe_info_up
 delegate_traceframe_info (struct target_ops *self)
 {
@@ -4419,10 +4359,6 @@ install_delegators (struct target_ops *ops)
     ops->to_get_tib_address = delegate_get_tib_address;
   if (ops->to_set_permissions == NULL)
     ops->to_set_permissions = delegate_set_permissions;
-  if (ops->to_static_tracepoint_marker_at == NULL)
-    ops->to_static_tracepoint_marker_at = delegate_static_tracepoint_marker_at;
-  if (ops->to_static_tracepoint_markers_by_strid == NULL)
-    ops->to_static_tracepoint_markers_by_strid = delegate_static_tracepoint_markers_by_strid;
   if (ops->to_traceframe_info == NULL)
     ops->to_traceframe_info = delegate_traceframe_info;
   if (ops->to_use_agent == NULL)
@@ -4611,8 +4547,6 @@ install_dummy_methods (struct target_ops *ops)
   ops->to_verify_memory = default_verify_memory;
   ops->to_get_tib_address = tdefault_get_tib_address;
   ops->to_set_permissions = tdefault_set_permissions;
-  ops->to_static_tracepoint_marker_at = tdefault_static_tracepoint_marker_at;
-  ops->to_static_tracepoint_markers_by_strid = tdefault_static_tracepoint_markers_by_strid;
   ops->to_traceframe_info = tdefault_traceframe_info;
   ops->to_use_agent = tdefault_use_agent;
   ops->to_can_use_agent = tdefault_can_use_agent;
@@ -4771,8 +4705,6 @@ init_debug_target (struct target_ops *ops)
   ops->to_verify_memory = debug_verify_memory;
   ops->to_get_tib_address = debug_get_tib_address;
   ops->to_set_permissions = debug_set_permissions;
-  ops->to_static_tracepoint_marker_at = debug_static_tracepoint_marker_at;
-  ops->to_static_tracepoint_markers_by_strid = debug_static_tracepoint_markers_by_strid;
   ops->to_traceframe_info = debug_traceframe_info;
   ops->to_use_agent = debug_use_agent;
   ops->to_can_use_agent = debug_can_use_agent;
