@@ -2371,6 +2371,81 @@ default_print_one_register_info (struct ui_file *file,
   fprintf_filtered (file, "\n");
 }
 
+#if GDB_SELF_TEST
+#include "selftest.h"
+#include "selftest-arch.h"
+
+namespace selftests {
+
+static void
+test_default_print_one_register_info (struct gdbarch *gdbarch)
+{
+  auto bfd_arch = gdbarch_bfd_arch_info (gdbarch)->arch;
+  const int num_regs = (gdbarch_num_regs (gdbarch)
+			+ gdbarch_num_pseudo_regs (gdbarch));
+
+  for (auto regnum = 0; regnum < num_regs; regnum++)
+    {
+      if (register_size (gdbarch, regnum) == 0)
+	continue;
+
+      auto t = register_type (gdbarch, regnum);
+      auto name = gdbarch_register_name (gdbarch, regnum);
+      struct value *mark = value_mark ();
+      struct value *v = allocate_value (t);
+
+      VALUE_LVAL (v) = lval_register;
+      VALUE_REGNUM (v) = regnum;
+
+      if (TYPE_CODE (t) == TYPE_CODE_FLAGS)
+	{
+	  if (bfd_arch == bfd_arch_i386)
+	    {
+	      /* Both eflags and mxcsr are 4-byte.  */
+	      SELF_CHECK (TYPE_LENGTH (t) == 4);
+
+	      ULONGEST val = 0x246;
+	      store_integer (value_contents_all_raw (v), TYPE_LENGTH (t),
+			     gdbarch_byte_order (gdbarch),  val);
+
+	      string_file file;
+	      default_print_one_register_info (&file, name, v);
+
+	      if (strcmp (name, "elfags") == 0)
+		{
+		  SELF_CHECK (file.string ().find (name) != std::string::npos);
+		  SELF_CHECK (file.string ().find ("0x246")
+			      != std::string::npos);
+		  SELF_CHECK (file.string ().find ("[ PF ZF IF ]")
+			      != std::string::npos);
+		}
+	    }
+	  else if (bfd_arch == bfd_arch_aarch64)
+	    {
+	      /* cpsr is 4-byte.  */
+	      SELF_CHECK (TYPE_LENGTH (t) == 4);
+
+	      ULONGEST val = 0x800003c9;
+	      store_integer (value_contents_all_raw (v), TYPE_LENGTH (t),
+			     gdbarch_byte_order (gdbarch),  val);
+
+	      string_file file;
+	      default_print_one_register_info (&file, name, v);
+
+	      SELF_CHECK (file.string ().find (name) != std::string::npos);
+	      SELF_CHECK (file.string ().find ("0x800003c9")
+			  != std::string::npos);
+	      SELF_CHECK (file.string ().find ("[ SP EL=2 F I A D N ]")
+			  != std::string::npos);
+	    }
+	}
+      value_free_to_mark (mark);
+    }
+}
+
+} // namespace selftests
+#endif /* GDB_SELF_TEST */
+
 /* Print out the machine register regnum.  If regnum is -1, print all
    registers (print_all == 1) or all non-float and non-vector
    registers (print_all == 0).
@@ -3537,4 +3612,9 @@ List absolute filename for executable of the process."),
   add_cmd ("all", class_info, info_proc_cmd_all, _("\
 List all available /proc info."),
 	   &info_proc_cmdlist);
+
+#if GDB_SELF_TEST
+  selftests::register_test_foreach_arch ("test_default_print_one_register_info",
+					 selftests::test_default_print_one_register_info);
+#endif
 }
