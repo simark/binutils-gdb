@@ -13254,70 +13254,75 @@ private:
 static void
 arm_record_test (void)
 {
-  struct gdbarch_info info;
-  gdbarch_info_init (&info);
-  info.bfd_arch_info = bfd_scan_arch ("arm");
+  std::array<bfd_endian, 2> endiannesses{{ BFD_ENDIAN_BIG, BFD_ENDIAN_LITTLE }};
 
-  struct gdbarch *gdbarch = gdbarch_find_by_info (info);
+  for (bfd_endian endian : endiannesses)
+    {
+      struct gdbarch_info info;
+      gdbarch_info_init (&info);
+      info.bfd_arch_info = bfd_scan_arch ("arm");
+      info.byte_order = endian;
+      info.byte_order_for_code = endian;
 
-  SELF_CHECK (gdbarch != NULL);
+      struct gdbarch *gdbarch = gdbarch_find_by_info (info);
 
-  /* 16-bit Thumb instructions.  */
-  {
-    insn_decode_record arm_record;
+      SELF_CHECK (gdbarch != NULL);
 
-    memset (&arm_record, 0, sizeof (insn_decode_record));
-    arm_record.gdbarch = gdbarch;
+      /* 16-bit Thumb instructions.  */
+      {
+	insn_decode_record arm_record;
 
-    static const uint16_t insns[] = {
-      /* db b2	uxtb	r3, r3 */
-      0xb2db,
-      /* cd 58	ldr	r5, [r1, r3] */
-      0x58cd,
-    };
+	memset (&arm_record, 0, sizeof (insn_decode_record));
+	arm_record.gdbarch = gdbarch;
 
-    enum bfd_endian endian = gdbarch_byte_order_for_code (arm_record.gdbarch);
-    instruction_reader_thumb reader (endian, insns);
-    int ret = decode_insn (reader, &arm_record, THUMB_RECORD,
+	static const uint16_t insns[] = {
+	  /* db b2	uxtb	r3, r3 */
+	  0xb2db,
+	  /* cd 58	ldr	r5, [r1, r3] */
+	  0x58cd,
+	};
+
+	instruction_reader_thumb reader (endian, insns);
+	int ret = decode_insn (reader, &arm_record, THUMB_RECORD,
+			       THUMB_INSN_SIZE_BYTES);
+
+	SELF_CHECK (ret == 0);
+	SELF_CHECK (arm_record.mem_rec_count == 0);
+	SELF_CHECK (arm_record.reg_rec_count == 1);
+	SELF_CHECK (arm_record.arm_regs[0] == 3);
+
+	arm_record.this_addr += 2;
+	ret = decode_insn (reader, &arm_record, THUMB_RECORD,
 			   THUMB_INSN_SIZE_BYTES);
 
-    SELF_CHECK (ret == 0);
-    SELF_CHECK (arm_record.mem_rec_count == 0);
-    SELF_CHECK (arm_record.reg_rec_count == 1);
-    SELF_CHECK (arm_record.arm_regs[0] == 3);
+	SELF_CHECK (ret == 0);
+	SELF_CHECK (arm_record.mem_rec_count == 0);
+	SELF_CHECK (arm_record.reg_rec_count == 1);
+	SELF_CHECK (arm_record.arm_regs[0] == 5);
+      }
 
-    arm_record.this_addr += 2;
-    ret = decode_insn (reader, &arm_record, THUMB_RECORD,
-		       THUMB_INSN_SIZE_BYTES);
+      /* 32-bit Thumb-2 instructions.  */
+      {
+	insn_decode_record arm_record;
 
-    SELF_CHECK (ret == 0);
-    SELF_CHECK (arm_record.mem_rec_count == 0);
-    SELF_CHECK (arm_record.reg_rec_count == 1);
-    SELF_CHECK (arm_record.arm_regs[0] == 5);
-  }
-
-  /* 32-bit Thumb-2 instructions.  */
-  {
-    insn_decode_record arm_record;
-
-    memset (&arm_record, 0, sizeof (insn_decode_record));
-    arm_record.gdbarch = gdbarch;
+	memset (&arm_record, 0, sizeof (insn_decode_record));
+	arm_record.gdbarch = gdbarch;
 
     static const uint16_t insns[] = {
       /* 1d ee 70 7f	 mrc	15, 0, r7, cr13, cr0, {3} */
       0xee1d, 0x7f70,
     };
 
-    enum bfd_endian endian = gdbarch_byte_order_for_code (arm_record.gdbarch);
-    instruction_reader_thumb reader (endian, insns);
-    int ret = decode_insn (reader, &arm_record, THUMB2_RECORD,
-			   THUMB2_INSN_SIZE_BYTES);
+	instruction_reader_thumb reader (endian, insns);
+	int ret = decode_insn (reader, &arm_record, THUMB2_RECORD,
+			       THUMB2_INSN_SIZE_BYTES);
 
-    SELF_CHECK (ret == 0);
-    SELF_CHECK (arm_record.mem_rec_count == 0);
-    SELF_CHECK (arm_record.reg_rec_count == 1);
-    SELF_CHECK (arm_record.arm_regs[0] == 7);
-  }
+	SELF_CHECK (ret == 0);
+	SELF_CHECK (arm_record.mem_rec_count == 0);
+	SELF_CHECK (arm_record.reg_rec_count == 1);
+	SELF_CHECK (arm_record.arm_regs[0] == 7);
+      }
+    }
 }
 } // namespace selftests
 #endif /* GDB_SELF_TEST */
