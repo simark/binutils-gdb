@@ -36,6 +36,8 @@
 #include <ctype.h>
 #include <algorithm>
 #include "common/byte-vector.h"
+#include "selftest.h"
+#include "selftest-arch.h"
 
 /* Maximum number of wchars returned from wchar_iterate.  */
 #define MAX_WCHARS 4
@@ -1184,12 +1186,13 @@ val_print_type_code_flags (struct type *type, const gdb_byte *valaddr,
 			   struct ui_file *stream)
 {
   ULONGEST val = unpack_long (type, valaddr);
-  int field, nfields = TYPE_NFIELDS (type);
+  int nfields = TYPE_NFIELDS (type);
   struct gdbarch *gdbarch = get_type_arch (type);
   struct type *bool_type = builtin_type (gdbarch)->builtin_bool;
+  int type_len_bits = TYPE_LENGTH (type) * TARGET_CHAR_BIT;
 
   fputs_filtered ("[", stream);
-  for (field = 0; field < nfields; field++)
+  for (int field = 0; field < nfields; field++)
     {
       if (TYPE_FIELD_NAME (type, field)[0] != '\0')
 	{
@@ -1202,14 +1205,31 @@ val_print_type_code_flags (struct type *type, const gdb_byte *valaddr,
 		 int.  */
 	      && TYPE_FIELD_BITSIZE (type, field) == 1)
 	    {
-	      if (val & ((ULONGEST)1 << TYPE_FIELD_BITPOS (type, field)))
+	      int shift;
+
+	      if (gdbarch_byte_order (gdbarch) == BFD_ENDIAN_BIG)
+		shift = type_len_bits - 1 - TYPE_FIELD_BITPOS (type, field);
+	      else
+		shift = TYPE_FIELD_BITPOS (type, field);
+
+	      ULONGEST mask = ((ULONGEST) 1) << shift;
+
+	      if (val & mask)
 		fprintf_filtered (stream, " %s",
 				  TYPE_FIELD_NAME (type, field));
 	    }
 	  else
 	    {
+	      int shift;
+
+	      if (gdbarch_byte_order (gdbarch) == BFD_ENDIAN_BIG)
+		shift = (type_len_bits - TYPE_FIELD_BITSIZE (type, field)
+			 - TYPE_FIELD_BITPOS (type, field));
+	      else
+		shift = TYPE_FIELD_BITPOS (type, field);
+
 	      unsigned field_len = TYPE_FIELD_BITSIZE (type, field);
-	      ULONGEST field_val = val >> TYPE_FIELD_BITPOS (type, field);
+	      ULONGEST field_val = val >> shift;
 
 	      if (field_len < sizeof (ULONGEST) * TARGET_CHAR_BIT)
 		field_val &= ((ULONGEST) 1 << field_len) - 1;
@@ -3033,7 +3053,92 @@ show_print_raw (const char *args, int from_tty)
   cmd_show_list (showprintrawlist, from_tty, "");
 }
 
-
+#if GDB_SELF_TEST
+namespace selftests {
+
+static type *
+make_test_enum_type (gdbarch *arch, const char *enum_type_name,
+		     int num_enumerators, const char *enumerator_basename)
+{
+  type *enum_type = arch_type (arch, TYPE_CODE_ENUM, 8, enum_type_name);
+  for (int i = 0; i < num_enumerators; i++)
+    {
+      char *name = xstrprintf ("%s%d", enumerator_basename, i);
+      field *f = append_composite_type_field_raw (enum_type, name, NULL);
+      FIELD_ENUMVAL_LVAL(*f) = i;
+    }
+
+  return enum_type;
+}
+
+static void
+val_print_type_code_flags_test (gdbarch *arch)
+{
+  gdb::byte_vector buffer (2);
+  const struct builtin_type *bt = builtin_type (arch);
+
+
+  if (gdbarch_byte_order (arch) == BFD_ENDIAN_BIG)
+    {
+      SELF_CHECK (gdbarch_bits_big_endian(arch));
+      buffer = {0x95, 0x6d};
+    }
+  else
+    {
+      SELF_CHECK (!gdbarch_bits_big_endian(arch));
+      buffer = {0x6d, 0x95};
+    }
+
+  /* Our imaginary 16-bits flag type:
+  bits big endian:      0                    15
+  bits little endian:  15                     0
+                         FFEX XXXD DDXX CCBA
+
+    The values we use:
+         A: 1, B: 0, C: 3, D: 5, F: 2
+         [ A C=3 D=D_5 F=2 ]
+
+    values:     100     1 01   1101
+    don't care:    1 010    10
+    result:     1001 0101 0110 1101
+                9    5    6    d
+   */
+
+  type *flags_type = arch_flags_type (arch, "someflags", 16);
+  /* Omit C_3 on purpose, to test what happens when we print an enum with a
+     value that corresponds to no enumerator.  */
+  type *enum_type_c = make_test_enum_type (arch, "enum_c", 3, "C_");
+  type *enum_type_d = make_test_enum_type (arch, "enum_d", 8, "D_");
+  type *int_type_f = bt->builtin_int8;
+
+  if (gdbarch_byte_order (arch) == BFD_ENDIAN_BIG)
+    {
+      append_flags_type_flag (flags_type, 15, "A");
+      append_flags_type_flag (flags_type, 14, "B");
+      append_flags_type_field (flags_type, 12, 2, enum_type_c, "C");
+      append_flags_type_field (flags_type, 7, 3, enum_type_d, "D");
+      append_flags_type_flag (flags_type, 2, "E");
+      append_flags_type_field (flags_type, 0, 2, int_type_f, "F");
+    }
+  else
+    {
+      append_flags_type_flag (flags_type, 0, "A");
+      append_flags_type_flag (flags_type, 1, "B");
+      append_flags_type_field (flags_type, 2, 2, enum_type_c, "C");
+      append_flags_type_field (flags_type, 6, 3, enum_type_d, "D");
+      append_flags_type_flag (flags_type, 13, "E");
+      append_flags_type_field (flags_type, 14, 2, int_type_f, "F");
+    }
+
+  string_file out;
+  val_print_type_code_flags(flags_type, buffer.data (), &out);
+
+  SELF_CHECK (out.string () == "[ A C=3 D=D_5 F=2 ]");
+}
+
+} /* namespace selftests */
+#endif
+
 void
 _initialize_valprint (void)
 {
@@ -3162,4 +3267,9 @@ Use 'show input-radix' or 'show output-radix' to independently show each."),
 Set printing of array indexes."), _("\
 Show printing of array indexes"), NULL, NULL, show_print_array_indexes,
                            &setprintlist, &showprintlist);
+
+#if GDB_SELF_TEST
+  selftests::register_test_foreach_arch
+    ("val_print_type_code_flags", selftests::val_print_type_code_flags_test);
+#endif
 }
