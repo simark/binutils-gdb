@@ -13089,14 +13089,25 @@ extract_arm_insn (abstract_memory_reader& reader,
 		  insn_decode_record *insn_record, uint32_t insn_size)
 {
   gdb_byte buf[insn_size];
-
   memset (&buf[0], 0, insn_size);
   
+  gdb_assert (insn_size == 2 || insn_size == 4);
+
   if (!reader.read (insn_record->this_addr, buf, insn_size))
     return 1;
-  insn_record->arm_insn = (uint32_t) extract_unsigned_integer (&buf[0],
-                           insn_size, 
-			   gdbarch_byte_order_for_code (insn_record->gdbarch));
+
+  bfd_endian endian = gdbarch_byte_order_for_code (insn_record->gdbarch);
+
+  insn_record->arm_insn
+    = (uint32_t) extract_unsigned_integer (&buf[0], 2, endian);
+
+  if (insn_size == 4)
+    {
+      insn_record->arm_insn <<= 16;
+      insn_record->arm_insn
+	|= (uint32_t) extract_unsigned_integer (&buf[2], 2, endian);
+    }
+
   return 0;
 }
 
@@ -13187,10 +13198,6 @@ decode_insn (abstract_memory_reader &reader, insn_decode_record *arm_record,
     {
       /* As thumb does not have condition codes, we set negative.  */
       arm_record->cond = -1;
-
-      /* Swap first half of 32bit thumb instruction with second half.  */
-      arm_record->arm_insn
-	= (arm_record->arm_insn >> 16) | (arm_record->arm_insn << 16);
 
       ret = thumb2_record_decode_insn_handler (arm_record);
 
