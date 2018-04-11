@@ -1,9 +1,13 @@
 # If V is undefined or V=0 is specified, use the silent/verbose/compact mode.
 V ?= 0
 ifeq ($(V),0)
+ECHO_AR  =    @echo "  AR     $@";
+ECHO_CC  =    @echo "  CC     $@";
 ECHO_CXX =    @echo "  CXX    $@";
 ECHO_CXXLD =  @echo "  CXXLD  $@";
+ECHO_RANLIB = @echo "  RANLIB $@";
 ECHO_REGDAT = @echo "  REGDAT $@";
+ECHO_RM =     @echo "  RM     $@";
 ECHO_GEN =    @echo "  GEN    $@";
 ECHO_GEN_XML_BUILTIN = \
               @echo "  GEN    xml-builtin.c";
