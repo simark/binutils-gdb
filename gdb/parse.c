@@ -1594,7 +1594,7 @@ follow_types (struct type *follow_type)
   int done = 0;
   int make_const = 0;
   int make_volatile = 0;
-  int make_addr_space = 0;
+  type_instance_flags make_addr_space = 0;
   int array_size;
 
   while (!done)
@@ -1623,7 +1623,7 @@ follow_types (struct type *follow_type)
 	make_volatile = 1;
 	break;
       case tp_space_identifier:
-	make_addr_space = pop_type_int ();
+	make_addr_space = (type_instance_flag_value) pop_type_int ();
 	break;
       case tp_pointer:
 	follow_type = lookup_pointer_type (follow_type);

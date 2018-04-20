@@ -1368,7 +1368,7 @@ avr_dwarf_reg_to_regnum (struct gdbarch *gdbarch, int reg)
    This method maps DW_AT_address_class attributes to a
    type_instance_flag_value.  */
 
-static int
+static type_instance_flags
 avr_address_class_type_flags (int byte_size, int dwarf2_addr_class)
 {
   /* The value 1 of the DW_AT_address_class attribute corresponds to the
@@ -1385,7 +1385,8 @@ avr_address_class_type_flags (int byte_size, int dwarf2_addr_class)
    Convert a type_instance_flag_value to an address space qualifier.  */
 
 static const char*
-avr_address_class_type_flags_to_name (struct gdbarch *gdbarch, int type_flags)
+avr_address_class_type_flags_to_name (struct gdbarch *gdbarch,
+				      type_instance_flags type_flags)
 {
   if (type_flags & AVR_TYPE_INSTANCE_FLAG_ADDRESS_CLASS_FLASH)
     return "flash";
@@ -1400,7 +1401,7 @@ avr_address_class_type_flags_to_name (struct gdbarch *gdbarch, int type_flags)
 static int
 avr_address_class_name_to_type_flags (struct gdbarch *gdbarch,
                                       const char* name,
-                                      int *type_flags_ptr)
+                                      type_instance_flags *type_flags_ptr)
 {
   if (strcmp (name, "flash") == 0)
     {

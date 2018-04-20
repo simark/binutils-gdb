@@ -426,7 +426,7 @@ spu_gdbarch_id (struct gdbarch *gdbarch)
   return id;
 }
 
-static int
+static type_instance_flags
 spu_address_class_type_flags (int byte_size, int dwarf2_addr_class)
 {
   if (dwarf2_addr_class == 1)
@@ -436,7 +436,8 @@ spu_address_class_type_flags (int byte_size, int dwarf2_addr_class)
 }
 
 static const char *
-spu_address_class_type_flags_to_name (struct gdbarch *gdbarch, int type_flags)
+spu_address_class_type_flags_to_name (struct gdbarch *gdbarch,
+				      type_instance_flags type_flags)
 {
   if (type_flags & TYPE_INSTANCE_FLAG_ADDRESS_CLASS_1)
     return "__ea";
@@ -446,7 +447,8 @@ spu_address_class_type_flags_to_name (struct gdbarch *gdbarch, int type_flags)
 
 static int
 spu_address_class_name_to_type_flags (struct gdbarch *gdbarch,
-				      const char *name, int *type_flags_ptr)
+				      const char *name,
+				      type_instance_flags *type_flags_ptr)
 {
   if (strcmp (name, "__ea") == 0)
     {

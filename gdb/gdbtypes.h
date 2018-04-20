@@ -812,15 +812,15 @@ struct type
      The debugger may add the address of such a type
      if it has to construct one later.  */
 
-  struct type *pointer_type;
+  struct type *pointer_type = nullptr;
 
   /* * C++: also need a reference type.  */
 
-  struct type *reference_type;
+  struct type *reference_type = nullptr;
 
   /* * A C++ rvalue reference type added in C++11. */
 
-  struct type *rvalue_reference_type;
+  struct type *rvalue_reference_type = nullptr;
 
   /* * Variant chain.  This points to a type that differs from this
      one only in qualifiers and length.  Currently, the possible
@@ -829,7 +829,7 @@ struct type
      address class flags are set.  The variants are linked in a
      circular ring and share MAIN_TYPE.  */
 
-  struct type *chain;
+  struct type *chain = nullptr;
 
   /* * Flags specific to this instance of the type, indicating where
      on the ring we are.
@@ -841,7 +841,11 @@ struct type
      instance flags are completely inherited from the target type.  No
      qualifiers can be cleared by the typedef.  See also
      check_typedef.  */
-  int instance_flags;
+
+  type_instance_flags instance_flags;
+
+  void set_instance_flags (type_instance_flags new_instance_flags)
+  { instance_flags = new_instance_flags; }
 
   /* * Length of storage for a value of this type.  The value is the
      expression in host bytes of what sizeof(type) would return.  This
@@ -859,11 +863,11 @@ struct type
      type_length_units function should be used in order to get the length
      expressed in target addressable memory units.  */
 
-  unsigned int length;
+  unsigned int length = 0;
 
   /* * Core type, shared by a group of qualified types.  */
 
-  struct main_type *main_type;
+  struct main_type *main_type = nullptr;
 };
 
 #define	NULL_TYPE ((struct type *) 0)
@@ -1278,7 +1282,12 @@ extern void allocate_gnat_aux_type (struct type *);
      TYPE_ZALLOC (type,							       \
 		  sizeof (*TYPE_MAIN_TYPE (type)->type_specific.func_stuff)))
 
-#define TYPE_INSTANCE_FLAGS(thistype) (thistype)->instance_flags
+static inline type_instance_flags
+TYPE_INSTANCE_FLAGS(const struct type *thistype)
+{
+  return thistype->instance_flags;
+}
+
 #define TYPE_MAIN_TYPE(thistype) (thistype)->main_type
 #define TYPE_NAME(thistype) TYPE_MAIN_TYPE(thistype)->name
 #define TYPE_TAG_NAME(type) TYPE_MAIN_TYPE(type)->tag_name
@@ -1828,12 +1837,13 @@ extern struct type *make_atomic_type (struct type *);
 
 extern void replace_type (struct type *, struct type *);
 
-extern int address_space_name_to_int (struct gdbarch *, char *);
+extern type_instance_flags address_space_name_to_int (struct gdbarch *, char *);
 
-extern const char *address_space_int_to_name (struct gdbarch *, int);
+extern const char *address_space_int_to_name (struct gdbarch *,
+					      type_instance_flags);
 
-extern struct type *make_type_with_address_space (struct type *type, 
-						  int space_identifier);
+extern struct type *make_type_with_address_space
+  (struct type *type, type_instance_flags space_identifier);
 
 extern struct type *lookup_memberptr_type (struct type *, struct type *);
 
