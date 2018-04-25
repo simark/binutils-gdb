@@ -3601,8 +3601,7 @@ dwarf2_read_index (struct dwarf2_per_objfile *dwarf2_per_objfile)
 
   create_addrmap_from_index (dwarf2_per_objfile, &local_map);
 
-  map = XOBNEW (&objfile->objfile_obstack, struct mapped_index);
-  map = new (map) mapped_index ();
+  map = obstack_new<mapped_index> (&objfile->objfile_obstack);
   *map = local_map;
 
   dwarf2_per_objfile->index_table = map;
