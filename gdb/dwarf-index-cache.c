@@ -261,6 +261,8 @@ std::string
 index_cache::make_index_filename (const bfd_build_id *build_id,
 				  const char *suffix) const
 {
+  gdb_assert (!m_dir.empty ());
+
   std::string build_id_str = build_id_to_string (build_id);
 
   return m_dir + SLASH_STRING + build_id_str + suffix;

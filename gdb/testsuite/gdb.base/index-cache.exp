@@ -16,6 +16,13 @@
 # This test checks that the index-cache feature generates the expected files at
 # the expected location.
 
+# The index-cache-gdb board changes the default values, which messes with this
+# test.  Better just skip it.
+if { $target_info(target,name) == "index-cache-gdb" } {
+    unsupported "test unsupported on this board"
+    return
+}
+
 standard_testfile
 
 if { [prepare_for_testing "failed to prepare" $testfile $srcfile] } {

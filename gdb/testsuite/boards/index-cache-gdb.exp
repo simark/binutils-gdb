@@ -1,0 +1,87 @@
+# Copyright 2018 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This board file can be used to run test cases with the DWARF index cache
+# enabled, using the GDB index format.   When loading a binary file in GDB, it
+# will load it twice, in order to first populate the cache and then read from
+# it.  It also sets GDBFLAGS to enable the index cache, using a test-specific
+# directory as the cache directory.
+#
+# Example usage:
+# bash$ make check RUNTESTFLAGS='--host_board=index-cache-gdb'
+
+load_generic_config "unix"
+load_board_description "local-board" "index-cache-gdb"
+process_multilib_options ""
+set_board_info compiler "[find_gcc]"
+set_board_info index-cache 1
+
+# Augment GDBFLAGS to activate the index cache, then call the usual gdb_spawn.
+
+proc gdb_spawn { } {
+    set cache_dir [standard_output_file "index-cache"]
+    global GDBFLAGS
+    save_vars { GDBFLAGS } {
+	set GDBFLAGS "-iex \"set index-cache on\" ${GDBFLAGS}"
+	set GDBFLAGS "-iex \"set index-cache directory ${cache_dir}\" ${GDBFLAGS}"
+	set GDBFLAGS "-iex \"set index-cache format gdb\" ${GDBFLAGS}"
+	default_gdb_spawn
+    }
+}
+
+# Same as the above, but for MI.
+
+proc mi_gdb_start { args } {
+    set cache_dir [standard_output_file "index-cache"]
+    global GDBFLAGS
+    save_vars { GDBFLAGS } {
+	set GDBFLAGS "-iex \"set index-cache on\" ${GDBFLAGS}"
+	set GDBFLAGS "-iex \"set index-cache directory ${cache_dir}\" ${GDBFLAGS}"
+	set GDBFLAGS "-iex \"set index-cache format gdb\" ${GDBFLAGS}"
+	set res [eval default_mi_gdb_start $args]
+    }
+    return $res
+}
+
+# Try to load the object file twice to first populate the cache, then load the
+# index from it.
+
+proc gdb_load { arg } {
+    if { $arg != "" } {
+	set res [gdb_file_cmd $arg]
+
+	if { $res != 0 } {
+	    return $res
+	}
+
+	return [gdb_file_cmd $arg]
+    }
+    return 0
+}
+
+# Same as the above, but for MI.
+
+proc mi_gdb_load { arg } {
+    if { $arg != "" } {
+	set res [mi_gdb_file_cmd $arg]
+
+	if { $res != 0 } {
+	    return $res
+	}
+
+	return [mi_gdb_file_cmd $arg]
+    }
+    return 0
+}

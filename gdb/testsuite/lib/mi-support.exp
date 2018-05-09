@@ -327,8 +327,10 @@ proc default_mi_gdb_start { args } {
 # Overridable function. You can override this function in your
 # baseboard file.
 #
-proc mi_gdb_start { args } {
-  return [eval default_mi_gdb_start $args]
+if { [info procs mi_gdb_start] == "" } {
+    proc mi_gdb_start { args } {
+	return [eval default_mi_gdb_start $args]
+    }
 }
 
 # Many of the tests depend on setting breakpoints at various places and
@@ -642,14 +644,19 @@ proc mi_gdb_target_load { } {
 }
 
 #
+# Overridable function. You can override this function in your
+# baseboard file.
+#
 # load a file into the debugger.
 # return a -1 if anything goes wrong.
 #
-proc mi_gdb_load { arg } {
-    if { $arg != "" } {
-	return [mi_gdb_file_cmd $arg]
+if { [info procs mi_gdb_load] == "" } {
+    proc mi_gdb_load { arg } {
+	if { $arg != "" } {
+	    return [mi_gdb_file_cmd $arg]
+	}
+	return 0
     }
-    return 0
 }
 
 # mi_gdb_test COMMAND PATTERN MESSAGE [IPATTERN] -- send a command to gdb; 
