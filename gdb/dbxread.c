@@ -2095,7 +2095,7 @@ dbx_psymtab_to_symtab_1 (struct objfile *objfile, struct partial_symtab *pst)
 {
   int i;
 
-  if (pst->readin)
+  if (psymtab_read_in_p (objfile, pst))
     {
       fprintf_unfiltered (gdb_stderr, "Psymtab for %s already read in.  "
 			  "Shouldn't happen.\n",
@@ -2105,7 +2105,7 @@ dbx_psymtab_to_symtab_1 (struct objfile *objfile, struct partial_symtab *pst)
 
   /* Read in all partial symtabs on which this one is dependent.  */
   for (i = 0; i < pst->number_of_dependencies; i++)
-    if (!pst->dependencies[i]->readin)
+    if (!psymtab_read_in_p (objfile, pst->dependencies[i]))
       {
 	/* Inform about additional files that need to be read in.  */
 	if (info_verbose)
@@ -2135,7 +2135,7 @@ dbx_psymtab_to_symtab_1 (struct objfile *objfile, struct partial_symtab *pst)
       read_ofile_symtab (objfile, pst);
     }
 
-  pst->readin = 1;
+  associate_psymtab_with_symtab (objfile, pst, nullptr, false);
 }
 
 /* Read in all of the symbols for a given psymtab for real.
@@ -2144,7 +2144,7 @@ dbx_psymtab_to_symtab_1 (struct objfile *objfile, struct partial_symtab *pst)
 static void
 dbx_read_symtab (struct partial_symtab *self, struct objfile *objfile)
 {
-  if (self->readin)
+  if (psymtab_read_in_p (objfile, self))
     {
       fprintf_unfiltered (gdb_stderr, "Psymtab for %s already read in.  "
 			  "Shouldn't happen.\n",
@@ -2348,8 +2348,9 @@ read_ofile_symtab (struct objfile *objfile, struct partial_symtab *pst)
   if (get_last_source_start_addr () > text_offset)
     set_last_source_start_addr (text_offset);
 
-  pst->compunit_symtab = end_symtab (text_offset + text_size,
-				     SECT_OFF_TEXT (objfile));
+  associate_psymtab_with_symtab (objfile, pst,
+				 end_symtab (text_offset + text_size,
+					     SECT_OFF_TEXT (objfile)));
 
   end_stabs ();
 

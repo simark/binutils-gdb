@@ -228,12 +228,6 @@ struct partial_symtab
   int statics_offset;
   int n_static_syms;
 
-  /* Non-zero if the symtab corresponding to this psymtab has been
-     readin.  This is located here so that this structure packs better
-     on 64-bit systems.  */
-
-  unsigned char readin;
-
   /* True iff objfile->psymtabs_addrmap is properly populated for this
      partial_symtab.  For discontiguous overlapping psymtabs is the only usable
      info in PSYMTABS_ADDRMAP.  */
@@ -252,11 +246,6 @@ struct partial_symtab
 
   unsigned int textlow_valid : 1;
   unsigned int texthigh_valid : 1;
-
-  /* Pointer to compunit eventually allocated for this source file, 0 if
-     !readin or if we haven't looked for the symtab after it was readin.  */
-
-  struct compunit_symtab *compunit_symtab;
 
   /* Pointer to function which will read in the symtab corresponding to
      this psymtab.  */

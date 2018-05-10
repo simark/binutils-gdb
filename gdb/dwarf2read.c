@@ -1469,7 +1469,7 @@ static void add_partial_subprogram (struct partial_die_info *pdi,
 static void dwarf2_read_symtab (struct partial_symtab *,
 				struct objfile *);
 
-static void psymtab_to_symtab_1 (struct partial_symtab *);
+static void psymtab_to_symtab_1 (struct objfile *, struct partial_symtab *);
 
 static abbrev_table_up abbrev_table_read_table
   (struct dwarf2_per_objfile *dwarf2_per_objfile, struct dwarf2_section_info *,
@@ -2863,7 +2863,9 @@ dw2_do_instantiate_symtab (struct dwarf2_per_cu_data *per_cu, bool skip_partial)
 
   if (dwarf2_per_objfile->using_index
       ? per_cu->v.quick->compunit_symtab == NULL
-      : (per_cu->v.psymtab == NULL || !per_cu->v.psymtab->readin))
+      : (per_cu->v.psymtab == NULL
+	 || !psymtab_read_in_p (dwarf2_per_objfile->objfile,
+				per_cu->v.psymtab)))
     {
       queue_comp_unit (per_cu, language_minimal);
       load_cu (per_cu, skip_partial);
@@ -9311,7 +9313,7 @@ dwarf2_read_symtab (struct partial_symtab *self,
   struct dwarf2_per_objfile *dwarf2_per_objfile
     = get_dwarf2_per_objfile (objfile);
 
-  if (self->readin)
+  if (psymtab_read_in_p (objfile, self))
     {
       warning (_("bug: psymtab for %s is already read in."),
 	       self->filename);
@@ -9340,7 +9342,7 @@ dwarf2_read_symtab (struct partial_symtab *self,
 
       dwarf2_per_objfile->reading_partial_symbols = 0;
 
-      psymtab_to_symtab_1 (self);
+      psymtab_to_symtab_1 (objfile, self);
 
       /* Finish up the debug error message.  */
       if (info_verbose)
@@ -9441,7 +9443,9 @@ process_queue (struct dwarf2_per_objfile *dwarf2_per_objfile)
     {
       if ((dwarf2_per_objfile->using_index
 	   ? !item->per_cu->v.quick->compunit_symtab
-	   : (item->per_cu->v.psymtab && !item->per_cu->v.psymtab->readin))
+	   : (item->per_cu->v.psymtab
+	      && !psymtab_read_in_p (dwarf2_per_objfile->objfile,
+				     item->per_cu->v.psymtab)))
 	  /* Skip dummy CUs.  */
 	  && item->per_cu->cu != NULL)
 	{
@@ -9497,16 +9501,16 @@ process_queue (struct dwarf2_per_objfile *dwarf2_per_objfile)
 /* Read in full symbols for PST, and anything it depends on.  */
 
 static void
-psymtab_to_symtab_1 (struct partial_symtab *pst)
+psymtab_to_symtab_1 (struct objfile *objfile, struct partial_symtab *pst)
 {
   struct dwarf2_per_cu_data *per_cu;
   int i;
 
-  if (pst->readin)
+  if (psymtab_read_in_p (objfile, pst))
     return;
 
   for (i = 0; i < pst->number_of_dependencies; i++)
-    if (!pst->dependencies[i]->readin
+    if (!psymtab_read_in_p (objfile, pst->dependencies[i])
 	&& pst->dependencies[i]->user == NULL)
       {
         /* Inform about additional files that need to be read in.  */
@@ -9521,7 +9525,7 @@ psymtab_to_symtab_1 (struct partial_symtab *pst)
             wrap_here ("");     /* Flush output.  */
             gdb_flush (gdb_stdout);
           }
-        psymtab_to_symtab_1 (pst->dependencies[i]);
+        psymtab_to_symtab_1 (objfile, pst->dependencies[i]);
       }
 
   per_cu = (struct dwarf2_per_cu_data *) pst->read_symtab_private;
@@ -9530,7 +9534,7 @@ psymtab_to_symtab_1 (struct partial_symtab *pst)
     {
       /* It's an include file, no symbols to read for it.
          Everything is in the parent symtab.  */
-      pst->readin = 1;
+      associate_psymtab_with_symtab (objfile, pst, nullptr);
       return;
     }
 
@@ -10088,9 +10092,11 @@ rust_union_quirks (struct dwarf2_cu *cu)
 static struct compunit_symtab *
 get_compunit_symtab (struct dwarf2_per_cu_data *per_cu)
 {
-  return (per_cu->dwarf2_per_objfile->using_index
-	  ? per_cu->v.quick->compunit_symtab
-	  : per_cu->v.psymtab->compunit_symtab);
+  if (per_cu->dwarf2_per_objfile->using_index)
+    return per_cu->v.quick->compunit_symtab;
+
+  struct objfile *objfile = per_cu->dwarf2_per_objfile->objfile;
+  return get_psymtab_compunit (objfile, per_cu->v.psymtab);
 }
 
 /* A helper function for computing the list of all symbol tables
@@ -10318,8 +10324,7 @@ process_full_comp_unit (struct dwarf2_per_cu_data *per_cu,
   else
     {
       struct partial_symtab *pst = per_cu->v.psymtab;
-      pst->compunit_symtab = cust;
-      pst->readin = 1;
+      associate_psymtab_with_symtab (objfile, pst, cust);
     }
 
   /* Push it for inclusion processing later.  */
@@ -10399,8 +10404,7 @@ process_full_type_unit (struct dwarf2_per_cu_data *per_cu,
   else
     {
       struct partial_symtab *pst = per_cu->v.psymtab;
-      pst->compunit_symtab = cust;
-      pst->readin = 1;
+      associate_psymtab_with_symtab (objfile, pst, cust);
     }
 }
 

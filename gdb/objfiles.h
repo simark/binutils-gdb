@@ -28,6 +28,7 @@
 #include "registry.h"
 #include "gdb_bfd.h"
 #include <vector>
+#include <unordered_map>
 
 struct bcache;
 struct htab;
@@ -371,6 +372,11 @@ struct objfile
 
   std::vector<partial_symbol *> global_psymbols;
   std::vector<partial_symbol *> static_psymbols;
+
+  /* Map from a psymtab to its corresponding full symtab.  If a
+     psymtab is read in but fails to resolve to a full symtab, this
+     map will hold an entry for the psymtab that maps to nullptr.  */
+  std::unordered_map<partial_symtab *, compunit_symtab *> psymtab_map;
 
   /* Structure which keeps track of functions that manipulate objfile's
      of the same type as this objfile.  I.e. the function to read partial

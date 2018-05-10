@@ -3867,16 +3867,16 @@ psymtab_to_symtab_1 (struct objfile *objfile,
   int last_symtab_ended = 0;
   struct section_offsets *section_offsets = objfile->section_offsets;
 
-  if (pst->readin)
+  if (psymtab_read_in_p (objfile, pst))
     return;
-  pst->readin = 1;
+  associate_psymtab_with_symtab (objfile, pst, nullptr, false);
 
   /* Read in all partial symbtabs on which this one is dependent.
      NOTE that we do have circular dependencies, sigh.  We solved
      that by setting pst->readin before this point.  */
 
   for (i = 0; i < pst->number_of_dependencies; i++)
-    if (!pst->dependencies[i]->readin)
+    if (!psymtab_read_in_p (objfile, pst->dependencies[i]))
       {
 	/* Inform about additional files to be read in.  */
 	if (info_verbose)
@@ -4241,7 +4241,7 @@ psymtab_to_symtab_1 (struct objfile *objfile,
     }
 
   /* Now link the psymtab and the symtab.  */
-  pst->compunit_symtab = cust;
+  associate_psymtab_with_symtab (objfile, pst, cust);
 
   mdebugread_objfile = NULL;
 }

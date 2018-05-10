@@ -1130,8 +1130,9 @@ read_xcoff_symtab (struct objfile *objfile, struct partial_symtab *pst)
 	{
 	  if (get_last_source_file ())
 	    {
-	      pst->compunit_symtab = end_symtab (cur_src_end_addr,
-						 SECT_OFF_TEXT (objfile));
+	      associate_psymtab_with_symtab
+		(objfile, pst, end_symtab (cur_src_end_addr,
+					   SECT_OFF_TEXT (objfile)));
 	      end_stabs ();
 	    }
 
@@ -1525,8 +1526,7 @@ read_xcoff_symtab (struct objfile *objfile, struct partial_symtab *pst)
          to make sure that we set pst->compunit_symtab to the symtab for the
          file, not to the _globals_ symtab.  I'm not sure whether this
          actually works right or when/if it comes up.  */
-      if (pst->compunit_symtab == NULL)
-	pst->compunit_symtab = cust;
+      associate_psymtab_with_symtab (objfile, pst, cust, false);
       end_stabs ();
     }
 }
@@ -1838,7 +1838,7 @@ xcoff_psymtab_to_symtab_1 (struct objfile *objfile, struct partial_symtab *pst)
   if (!pst)
     return;
 
-  if (pst->readin)
+  if (psymtab_read_in_p (objfile, pst))
     {
       fprintf_unfiltered
 	(gdb_stderr, "Psymtab for %s already read in.  Shouldn't happen.\n",
@@ -1848,7 +1848,7 @@ xcoff_psymtab_to_symtab_1 (struct objfile *objfile, struct partial_symtab *pst)
 
   /* Read in all partial symtabs on which this one is dependent.  */
   for (i = 0; i < pst->number_of_dependencies; i++)
-    if (!pst->dependencies[i]->readin)
+    if (!psymtab_read_in_p (objfile, pst->dependencies[i]))
       {
 	/* Inform about additional files that need to be read in.  */
 	if (info_verbose)
@@ -1874,7 +1874,7 @@ xcoff_psymtab_to_symtab_1 (struct objfile *objfile, struct partial_symtab *pst)
       read_xcoff_symtab (objfile, pst);
     }
 
-  pst->readin = 1;
+  associate_psymtab_with_symtab (objfile, pst, nullptr, false);
 }
 
 /* Read in all of the symbols for a given psymtab for real.
@@ -1883,7 +1883,7 @@ xcoff_psymtab_to_symtab_1 (struct objfile *objfile, struct partial_symtab *pst)
 static void
 xcoff_read_symtab (struct partial_symtab *self, struct objfile *objfile)
 {
-  if (self->readin)
+  if (psymtab_read_in_p (objfile, self))
     {
       fprintf_unfiltered
 	(gdb_stderr, "Psymtab for %s already read in.  Shouldn't happen.\n",

@@ -24,6 +24,8 @@
 
 /* A bcache for partial symbols.  */
 
+struct compunit_symtab;
+struct partial_symtab;
 struct psymbol_bcache;
 
 extern struct psymbol_bcache *psymbol_bcache_init (void);
@@ -42,5 +44,30 @@ extern const struct quick_symbol_functions dwarf2_debug_names_functions;
 
 extern struct objfile *require_partial_symbols (struct objfile *objfile,
 						int verbose);
+
+/* Record that, for the given objfile, PST has expanded to SYMTAB.
+   SYMTAB may be nullptr, indicating that an attempt to expand PST was
+   made, but yielded no results (perhaps this was an included
+   psymtab).  By default, this association is always made, but if
+   ALWAYS_SET is false, then an association is only made if one has
+   not been made previously.  */
+
+extern void associate_psymtab_with_symtab (struct objfile *objfile,
+					   partial_symtab *pst,
+					   compunit_symtab *symtab,
+					   bool always_set = true);
+
+/* Return true if PST was ever read in for the given objfile, false
+   otherwise.  This only records whether an attempt was made -- not
+   whether it yielded a full symtab.  */
+
+extern bool psymtab_read_in_p (struct objfile *objfile, partial_symtab *pst);
+
+/* Return the full symtab corresponding to PST.  Returns NULL if the
+   partial symtab was never read, or if the attempt to read it yielded
+   no results.  */
+
+extern compunit_symtab *get_psymtab_compunit (struct objfile *objfile,
+					      partial_symtab *pst);
 
 #endif /* PSYMTAB_H */
