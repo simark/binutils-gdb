@@ -271,12 +271,14 @@ struct partial_symtab
   void *read_symtab_private;
 };
 
-/* Compute a section offset given an objfile, a section_offsets field
-   from a partial symtab, and an index.  */
+/* Specify whether a partial psymbol should be allocated on the global
+   list or the static list.  */
 
-#define PST_OFFSET(OBJF, OFFS, INDEX)				\
-  (ANOFFSET ((OBJF)->section_offsets, (INDEX))			\
-   + ((((OFFS) == NULL)) ? 0 : ANOFFSET ((OFFS), (INDEX))))
+enum class psymbol_placement
+{
+  STATIC,
+  GLOBAL
+};
 
 /* Add any kind of symbol to a partial_symbol vector.  */
 
@@ -284,7 +286,7 @@ extern void add_psymbol_to_list (const char *, int,
 				 int, domain_enum,
 				 enum address_class,
 				 short /* section */,
-				 std::vector<partial_symbol *> *,
+				 psymbol_placement,
 				 CORE_ADDR,
 				 enum language, struct objfile *);
 

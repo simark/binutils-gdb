@@ -1477,7 +1477,7 @@ read_dbx_symtab (minimal_symbol_reader &reader, struct objfile *objfile)
 	      add_psymbol_to_list (sym_name, sym_len, 1,
 				   VAR_DOMAIN, LOC_STATIC,
 				   data_sect_index,
-				   &objfile->static_psymbols,
+				   psymbol_placement::STATIC,
 				   nlist.n_value, psymtab_language, objfile);
 	      continue;
 
@@ -1487,7 +1487,7 @@ read_dbx_symtab (minimal_symbol_reader &reader, struct objfile *objfile)
 	      add_psymbol_to_list (sym_name, sym_len, 1,
 				   VAR_DOMAIN, LOC_STATIC,
 				   data_sect_index,
-				   &objfile->global_psymbols,
+				   psymbol_placement::GLOBAL,
 				   nlist.n_value, psymtab_language, objfile);
 	      continue;
 
@@ -1504,14 +1504,14 @@ read_dbx_symtab (minimal_symbol_reader &reader, struct objfile *objfile)
 		{
 		  add_psymbol_to_list (sym_name, sym_len, 1,
 				       STRUCT_DOMAIN, LOC_TYPEDEF, -1,
-				       &objfile->static_psymbols,
+				       psymbol_placement::STATIC,
 				       0, psymtab_language, objfile);
 		  if (p[2] == 't')
 		    {
 		      /* Also a typedef with the same name.  */
 		      add_psymbol_to_list (sym_name, sym_len, 1,
 					   VAR_DOMAIN, LOC_TYPEDEF, -1,
-					   &objfile->static_psymbols,
+					   psymbol_placement::STATIC,
 					   0, psymtab_language, objfile);
 		      p += 1;
 		    }
@@ -1523,7 +1523,7 @@ read_dbx_symtab (minimal_symbol_reader &reader, struct objfile *objfile)
 		{
 		  add_psymbol_to_list (sym_name, sym_len, 1,
 				       VAR_DOMAIN, LOC_TYPEDEF, -1,
-				       &objfile->static_psymbols,
+				       psymbol_placement::STATIC,
 				       0, psymtab_language, objfile);
 		}
 	    check_enum:
@@ -1584,7 +1584,7 @@ read_dbx_symtab (minimal_symbol_reader &reader, struct objfile *objfile)
 			 enum constants in psymtabs, just in symtabs.  */
 		      add_psymbol_to_list (p, q - p, 1,
 					   VAR_DOMAIN, LOC_CONST, -1,
-					   &objfile->static_psymbols, 0,
+					   psymbol_placement::STATIC, 0,
 					   psymtab_language, objfile);
 		      /* Point past the name.  */
 		      p = q;
@@ -1602,7 +1602,7 @@ read_dbx_symtab (minimal_symbol_reader &reader, struct objfile *objfile)
 	      /* Constant, e.g. from "const" in Pascal.  */
 	      add_psymbol_to_list (sym_name, sym_len, 1,
 				   VAR_DOMAIN, LOC_CONST, -1,
-				   &objfile->static_psymbols, 0,
+				   psymbol_placement::STATIC, 0,
 				   psymtab_language, objfile);
 	      continue;
 
@@ -1664,7 +1664,7 @@ read_dbx_symtab (minimal_symbol_reader &reader, struct objfile *objfile)
 	      add_psymbol_to_list (sym_name, sym_len, 1,
 				   VAR_DOMAIN, LOC_BLOCK,
 				   SECT_OFF_TEXT (objfile),
-				   &objfile->static_psymbols,
+				   psymbol_placement::STATIC,
 				   nlist.n_value, psymtab_language, objfile);
 	      continue;
 
@@ -1729,7 +1729,7 @@ read_dbx_symtab (minimal_symbol_reader &reader, struct objfile *objfile)
 	      add_psymbol_to_list (sym_name, sym_len, 1,
 				   VAR_DOMAIN, LOC_BLOCK,
 				   SECT_OFF_TEXT (objfile),
-				   &objfile->global_psymbols,
+				   psymbol_placement::GLOBAL,
 				   nlist.n_value, psymtab_language, objfile);
 	      continue;
 
