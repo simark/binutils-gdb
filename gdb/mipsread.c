@@ -29,6 +29,7 @@
 #include "objfiles.h"
 #include "buildsym.h"
 #include "stabsread.h"
+#include "mdebugread.h"
 
 #include "coff/sym.h"
 #include "coff/internal.h"
