@@ -320,7 +320,7 @@ amd64_windows_return_value (struct gdbarch *gdbarch, struct value *function,
         {
 	  ULONGEST addr;
 
-	  regcache_raw_read_unsigned (regcache, AMD64_RAX_REGNUM, &addr);
+	  regcache->raw_read (AMD64_RAX_REGNUM, &addr);
 	  read_memory (addr, readbuf, TYPE_LENGTH (type));
 	}
       return RETURN_VALUE_ABI_RETURNS_ADDRESS;

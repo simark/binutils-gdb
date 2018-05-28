@@ -509,7 +509,7 @@ i386_linux_record_signal (struct gdbarch *gdbarch,
     return -1;
 
   /* Record the change in the stack.  */
-  regcache_raw_read_unsigned (regcache, I386_ESP_REGNUM, &esp);
+  regcache->raw_read (I386_ESP_REGNUM, &esp);
   /* This is for xstate.
      sp -= sizeof (struct _fpstate);  */
   esp -= I386_LINUX_xstate;

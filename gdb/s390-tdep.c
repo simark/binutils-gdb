@@ -1369,7 +1369,7 @@ s390_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
       val = extract_unsigned_integer (buf, regsize, byte_order);
       if (register_size (gdbarch, S390_PSWA_REGNUM) == 4)
 	{
-	  regcache_raw_read_unsigned (regcache, S390_PSWA_REGNUM, &psw);
+	  regcache->raw_read (S390_PSWA_REGNUM, &psw);
 	  val = (psw & 0x80000000) | (val & 0x7fffffff);
 	}
       regcache_raw_write_unsigned (regcache, S390_PSWA_REGNUM, val);
@@ -1379,7 +1379,7 @@ s390_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
   if (regnum == tdep->cc_regnum)
     {
       val = extract_unsigned_integer (buf, regsize, byte_order);
-      regcache_raw_read_unsigned (regcache, S390_PSWM_REGNUM, &psw);
+      regcache->raw_read (S390_PSWM_REGNUM, &psw);
       if (register_size (gdbarch, S390_PSWA_REGNUM) == 4)
 	val = (psw & ~((ULONGEST)3 << 12)) | ((val & 3) << 12);
       else
@@ -2734,12 +2734,12 @@ s390_record_address_mask (struct gdbarch *gdbarch, struct regcache *regcache,
   int am;
   if (tdep->abi == ABI_LINUX_S390)
     {
-      regcache_raw_read_unsigned (regcache, S390_PSWA_REGNUM, &pswa);
+      regcache->raw_read (S390_PSWA_REGNUM, &pswa);
       am = pswa >> 31 & 1;
     }
   else
     {
-      regcache_raw_read_unsigned (regcache, S390_PSWM_REGNUM, &pswm);
+      regcache->raw_read (S390_PSWM_REGNUM, &pswm);
       am = pswm >> 31 & 3;
     }
   switch (am)
@@ -2770,7 +2770,7 @@ s390_record_calc_disp_common (struct gdbarch *gdbarch, struct regcache *regcache
   CORE_ADDR res = d + x;
   if (rb)
     {
-      regcache_raw_read_unsigned (regcache, S390_R0_REGNUM + rb, &b);
+      regcache->raw_read (S390_R0_REGNUM + rb, &b);
       res += b;
     }
   return s390_record_address_mask (gdbarch, regcache, res);
@@ -2785,7 +2785,7 @@ s390_record_calc_disp (struct gdbarch *gdbarch, struct regcache *regcache,
 {
   ULONGEST x = 0;
   if (rx)
-    regcache_raw_read_unsigned (regcache, S390_R0_REGNUM + rx, &x);
+    regcache->raw_read (S390_R0_REGNUM + rx, &x);
   return s390_record_calc_disp_common (gdbarch, regcache, x, bd, dh);
 }
 
@@ -2961,7 +2961,7 @@ ex:
 	/* 0x08-0x09 undefined */
 
 	case 0x0a: /* PFPO - perform floating point operation */
-	  regcache_raw_read_unsigned (regcache, S390_R0_REGNUM, &tmp);
+	  regcache->raw_read (S390_R0_REGNUM, &tmp);
 	  if (!(tmp & 0x80000000u))
 	    {
 	      uint8_t ofc = tmp >> 16 & 0xff;
@@ -3078,9 +3078,9 @@ ex:
       break;
 
     case 0x0e: /* MVCL - move long [interruptible] */
-      regcache_raw_read_unsigned (regcache, S390_R0_REGNUM + inib[2], &tmp);
+      regcache->raw_read (S390_R0_REGNUM + inib[2], &tmp);
       oaddr = s390_record_address_mask (gdbarch, regcache, tmp);
-      regcache_raw_read_unsigned (regcache, S390_R0_REGNUM + (inib[2] | 1), &tmp);
+      regcache->raw_read (S390_R0_REGNUM + (inib[2] | 1), &tmp);
       tmp &= 0xffffff;
       if (record_full_arch_list_add_mem (oaddr, tmp))
 	return -1;
@@ -3279,7 +3279,7 @@ ex:
       addr = s390_record_calc_disp (gdbarch, regcache, inib[3], insn[1], 0);
       if (inib[2])
 	{
-	  regcache_raw_read_unsigned (regcache, S390_R0_REGNUM + inib[2], &tmp);
+	  regcache->raw_read (S390_R0_REGNUM + inib[2], &tmp);
 	  ex = tmp & 0xff;
 	}
       else
@@ -3478,9 +3478,9 @@ ex:
     /* 0xa6 undefined */
 
     case 0xa8: /* MVCLE - move long extended [partial] */
-      regcache_raw_read_unsigned (regcache, S390_R0_REGNUM + inib[2], &tmp);
+      regcache->raw_read (S390_R0_REGNUM + inib[2], &tmp);
       oaddr = s390_record_address_mask (gdbarch, regcache, tmp);
-      regcache_raw_read_unsigned (regcache, S390_R0_REGNUM + (inib[2] | 1), &tmp);
+      regcache->raw_read (S390_R0_REGNUM + (inib[2] | 1), &tmp);
       if (record_full_arch_list_add_mem (oaddr, tmp))
 	return -1;
       if (record_full_arch_list_add_reg (regcache, S390_R0_REGNUM + inib[2]))
@@ -3615,10 +3615,10 @@ ex:
 	    gdb_byte cur;
 	    ULONGEST num = 0;
 	    /* Read ending byte.  */
-	    regcache_raw_read_unsigned (regcache, S390_R0_REGNUM, &tmp);
+	    regcache->raw_read (S390_R0_REGNUM, &tmp);
 	    end = tmp & 0xff;
 	    /* Get address of second operand.  */
-	    regcache_raw_read_unsigned (regcache, S390_R0_REGNUM + inib[7], &tmp);
+	    regcache->raw_read (S390_R0_REGNUM + inib[7], &tmp);
 	    oaddr = s390_record_address_mask (gdbarch, regcache, tmp);
 	    /* Search for ending byte and compute length.  */
 	    do {
@@ -3628,7 +3628,7 @@ ex:
 	      oaddr++;
 	    } while (cur != end);
 	    /* Get address of first operand and record it.  */
-	    regcache_raw_read_unsigned (regcache, S390_R0_REGNUM + inib[6], &tmp);
+	    regcache->raw_read (S390_R0_REGNUM + inib[6], &tmp);
 	    oaddr = s390_record_address_mask (gdbarch, regcache, tmp);
 	    if (record_full_arch_list_add_mem (oaddr, num))
 	      return -1;
@@ -3673,9 +3673,9 @@ ex:
 	/* 0xb25f-0xb262 undefined */
 
 	case 0xb263: /* CMPSC - compression call [interruptible] */
-	  regcache_raw_read_unsigned (regcache, S390_R0_REGNUM + inib[6], &tmp);
+	  regcache->raw_read (S390_R0_REGNUM + inib[6], &tmp);
 	  oaddr = s390_record_address_mask (gdbarch, regcache, tmp);
-	  regcache_raw_read_unsigned (regcache, S390_R0_REGNUM + (inib[6] | 1), &tmp);
+	  regcache->raw_read (S390_R0_REGNUM + (inib[6] | 1), &tmp);
 	  if (record_full_arch_list_add_mem (oaddr, tmp))
 	    return -1;
 	  if (record_full_arch_list_add_reg (regcache, S390_R0_REGNUM + inib[6]))
@@ -3735,9 +3735,9 @@ ex:
 	/* 0xb29e-0xb2a4 undefined */
 
 	case 0xb2a5: /* TRE - translate extended [partial] */
-	  regcache_raw_read_unsigned (regcache, S390_R0_REGNUM + inib[6], &tmp);
+	  regcache->raw_read (S390_R0_REGNUM + inib[6], &tmp);
 	  oaddr = s390_record_address_mask (gdbarch, regcache, tmp);
-	  regcache_raw_read_unsigned (regcache, S390_R0_REGNUM + (inib[6] | 1), &tmp);
+	  regcache->raw_read (S390_R0_REGNUM + (inib[6] | 1), &tmp);
 	  if (record_full_arch_list_add_mem (oaddr, tmp))
 	    return -1;
 	  if (record_full_arch_list_add_reg (regcache, S390_R0_REGNUM + inib[6]))
@@ -3754,9 +3754,9 @@ ex:
 	case 0xb9b1: /* CU24 - convert UTF-16 to UTF-32 [partial] */
 	case 0xb9b2: /* CU41 - convert UTF-32 to UTF-8 [partial] */
 	case 0xb9b3: /* CU42 - convert UTF-32 to UTF-16 [partial] */
-	  regcache_raw_read_unsigned (regcache, S390_R0_REGNUM + inib[6], &tmp);
+	  regcache->raw_read (S390_R0_REGNUM + inib[6], &tmp);
 	  oaddr = s390_record_address_mask (gdbarch, regcache, tmp);
-	  regcache_raw_read_unsigned (regcache, S390_R0_REGNUM + (inib[6] | 1), &tmp);
+	  regcache->raw_read (S390_R0_REGNUM + (inib[6] | 1), &tmp);
 	  if (record_full_arch_list_add_mem (oaddr, tmp))
 	    return -1;
 	  if (record_full_arch_list_add_reg (regcache, S390_R0_REGNUM + inib[6]))
@@ -3775,7 +3775,7 @@ ex:
 
 	case 0xb2b0: /* STFLE - store facility list extended */
 	  oaddr = s390_record_calc_disp (gdbarch, regcache, 0, insn[1], 0);
-	  regcache_raw_read_unsigned (regcache, S390_R0_REGNUM, &tmp);
+	  regcache->raw_read (S390_R0_REGNUM, &tmp);
 	  tmp &= 0xff;
 	  if (record_full_arch_list_add_mem (oaddr, 8 * (tmp + 1)))
 	    return -1;
@@ -4213,9 +4213,9 @@ ex:
 	/* 0xb915 undefined */
 
 	case 0xb91e: /* KMAC - compute message authentication code [partial] */
-	  regcache_raw_read_unsigned (regcache, S390_R1_REGNUM, &tmp);
+	  regcache->raw_read (S390_R1_REGNUM, &tmp);
 	  oaddr = s390_record_address_mask (gdbarch, regcache, tmp);
-	  regcache_raw_read_unsigned (regcache, S390_R0_REGNUM, &tmp);
+	  regcache->raw_read (S390_R0_REGNUM, &tmp);
 	  tmp &= 0xff;
 	  switch (tmp)
 	    {
@@ -4268,9 +4268,9 @@ ex:
 	case 0xb92a: /* KMF - cipher message with cipher feedback [partial] */
 	case 0xb92b: /* KMO - cipher message with output feedback [partial] */
 	case 0xb92f: /* KMC - cipher message with chaining [partial] */
-	  regcache_raw_read_unsigned (regcache, S390_R1_REGNUM, &tmp);
+	  regcache->raw_read (S390_R1_REGNUM, &tmp);
 	  oaddr = s390_record_address_mask (gdbarch, regcache, tmp);
-	  regcache_raw_read_unsigned (regcache, S390_R0_REGNUM, &tmp);
+	  regcache->raw_read (S390_R0_REGNUM, &tmp);
 	  tmp &= 0x7f;
 	  switch (tmp)
 	    {
@@ -4316,9 +4316,9 @@ ex:
 	    }
 	  if (tmp != 0)
 	    {
-	      regcache_raw_read_unsigned (regcache, S390_R0_REGNUM + inib[6], &tmp);
+	      regcache->raw_read (S390_R0_REGNUM + inib[6], &tmp);
 	      oaddr2 = s390_record_address_mask (gdbarch, regcache, tmp);
-	      regcache_raw_read_unsigned (regcache, S390_R0_REGNUM + (inib[7] | 1), &tmp);
+	      regcache->raw_read (S390_R0_REGNUM + (inib[7] | 1), &tmp);
 	      if (record_full_arch_list_add_mem (oaddr2, tmp))
 		return -1;
 	      if (record_full_arch_list_add_reg (regcache, S390_R0_REGNUM + inib[6]))
@@ -4342,9 +4342,9 @@ ex:
 	  break;
 
 	case 0xb92c: /* PCC - perform cryptographic computation [partial] */
-	  regcache_raw_read_unsigned (regcache, S390_R1_REGNUM, &tmp);
+	  regcache->raw_read (S390_R1_REGNUM, &tmp);
 	  oaddr = s390_record_address_mask (gdbarch, regcache, tmp);
-	  regcache_raw_read_unsigned (regcache, S390_R0_REGNUM, &tmp);
+	  regcache->raw_read (S390_R0_REGNUM, &tmp);
 	  tmp &= 0x7f;
 	  switch (tmp)
 	    {
@@ -4403,9 +4403,9 @@ ex:
 	  break;
 
 	case 0xb92d: /* KMCTR - cipher message with counter [partial] */
-	  regcache_raw_read_unsigned (regcache, S390_R1_REGNUM, &tmp);
+	  regcache->raw_read (S390_R1_REGNUM, &tmp);
 	  oaddr = s390_record_address_mask (gdbarch, regcache, tmp);
-	  regcache_raw_read_unsigned (regcache, S390_R0_REGNUM, &tmp);
+	  regcache->raw_read (S390_R0_REGNUM, &tmp);
 	  tmp &= 0x7f;
 	  switch (tmp)
 	    {
@@ -4435,9 +4435,9 @@ ex:
 	    }
 	  if (tmp != 0)
 	    {
-	      regcache_raw_read_unsigned (regcache, S390_R0_REGNUM + inib[6], &tmp);
+	      regcache->raw_read (S390_R0_REGNUM + inib[6], &tmp);
 	      oaddr2 = s390_record_address_mask (gdbarch, regcache, tmp);
-	      regcache_raw_read_unsigned (regcache, S390_R0_REGNUM + (inib[7] | 1), &tmp);
+	      regcache->raw_read (S390_R0_REGNUM + (inib[7] | 1), &tmp);
 	      if (record_full_arch_list_add_mem (oaddr2, tmp))
 		return -1;
 	      if (record_full_arch_list_add_reg (regcache, S390_R0_REGNUM + inib[6]))
@@ -4454,9 +4454,9 @@ ex:
 	  break;
 
 	case 0xb92e: /* KM - cipher message [partial] */
-	  regcache_raw_read_unsigned (regcache, S390_R1_REGNUM, &tmp);
+	  regcache->raw_read (S390_R1_REGNUM, &tmp);
 	  oaddr = s390_record_address_mask (gdbarch, regcache, tmp);
-	  regcache_raw_read_unsigned (regcache, S390_R0_REGNUM, &tmp);
+	  regcache->raw_read (S390_R0_REGNUM, &tmp);
 	  tmp &= 0x7f;
 	  switch (tmp)
 	    {
@@ -4506,9 +4506,9 @@ ex:
 	    }
 	  if (tmp != 0)
 	    {
-	      regcache_raw_read_unsigned (regcache, S390_R0_REGNUM + inib[6], &tmp);
+	      regcache->raw_read (S390_R0_REGNUM + inib[6], &tmp);
 	      oaddr2 = s390_record_address_mask (gdbarch, regcache, tmp);
-	      regcache_raw_read_unsigned (regcache, S390_R0_REGNUM + (inib[7] | 1), &tmp);
+	      regcache->raw_read (S390_R0_REGNUM + (inib[7] | 1), &tmp);
 	      if (record_full_arch_list_add_mem (oaddr2, tmp))
 		return -1;
 	      if (record_full_arch_list_add_reg (regcache, S390_R0_REGNUM + inib[6]))
@@ -4525,9 +4525,9 @@ ex:
 	/* 0xb932-0xb93b undefined */
 
 	case 0xb93c: /* PPNO - perform pseudorandom number operation [partial] */
-	  regcache_raw_read_unsigned (regcache, S390_R1_REGNUM, &tmp);
+	  regcache->raw_read (S390_R1_REGNUM, &tmp);
 	  oaddr = s390_record_address_mask (gdbarch, regcache, tmp);
-	  regcache_raw_read_unsigned (regcache, S390_R0_REGNUM, &tmp);
+	  regcache->raw_read (S390_R0_REGNUM, &tmp);
 	  tmp &= 0xff;
 	  switch (tmp)
 	    {
@@ -4540,9 +4540,9 @@ ex:
 	      case 0x03: /* PPNO-SHA-512-DRNG - generate */
 		if (record_full_arch_list_add_mem (oaddr, 240))
 		  return -1;
-		regcache_raw_read_unsigned (regcache, S390_R0_REGNUM + inib[6], &tmp);
+		regcache->raw_read (S390_R0_REGNUM + inib[6], &tmp);
 		oaddr2 = s390_record_address_mask (gdbarch, regcache, tmp);
-		regcache_raw_read_unsigned (regcache, S390_R0_REGNUM + (inib[6] | 1), &tmp);
+		regcache->raw_read (S390_R0_REGNUM + (inib[6] | 1), &tmp);
 		if (record_full_arch_list_add_mem (oaddr2, tmp))
 		  return -1;
 		if (record_full_arch_list_add_reg (regcache, S390_R0_REGNUM + inib[6]))
@@ -4576,9 +4576,9 @@ ex:
 
 	case 0xb93e: /* KIMD - compute intermediate message digest [partial] */
 	case 0xb93f: /* KLMD - compute last message digest [partial] */
-	  regcache_raw_read_unsigned (regcache, S390_R1_REGNUM, &tmp);
+	  regcache->raw_read (S390_R1_REGNUM, &tmp);
 	  oaddr = s390_record_address_mask (gdbarch, regcache, tmp);
-	  regcache_raw_read_unsigned (regcache, S390_R0_REGNUM, &tmp);
+	  regcache->raw_read (S390_R0_REGNUM, &tmp);
 	  tmp &= 0xff;
 	  switch (tmp)
 	    {
@@ -4664,9 +4664,9 @@ ex:
 	case 0xb991: /* TRTO - translate two to one [partial] */
 	case 0xb992: /* TROT - translate one to two [partial] */
 	case 0xb993: /* TROO - translate one to one [partial] */
-	  regcache_raw_read_unsigned (regcache, S390_R0_REGNUM + inib[6], &tmp);
+	  regcache->raw_read (S390_R0_REGNUM + inib[6], &tmp);
 	  oaddr = s390_record_address_mask (gdbarch, regcache, tmp);
-	  regcache_raw_read_unsigned (regcache, S390_R0_REGNUM + (inib[6] | 1), &tmp);
+	  regcache->raw_read (S390_R0_REGNUM + (inib[6] | 1), &tmp);
 	  /* tmp is source length, we want destination length.  Adjust.  */
 	  if (insn[0] == 0xb991)
 	    tmp >>= 1;
@@ -4926,7 +4926,7 @@ ex:
 	  addr = s390_record_calc_rl (gdbarch, regcache, addr, insn[1], insn[2]);
 	  if (inib[2])
 	    {
-	      regcache_raw_read_unsigned (regcache, S390_R0_REGNUM + inib[2], &tmp);
+	      regcache->raw_read (S390_R0_REGNUM + inib[2], &tmp);
 	      ex = tmp & 0xff;
 	    }
 	  else
@@ -4976,7 +4976,7 @@ ex:
 	case 0xc82: /* CSST - compare and swap and store */
 	  {
 	    uint8_t fc, sc;
-	    regcache_raw_read_unsigned (regcache, S390_R0_REGNUM, &tmp);
+	    regcache->raw_read (S390_R0_REGNUM, &tmp);
 	    fc = tmp & 0xff;
 	    sc = tmp >> 8 & 0xff;
 
@@ -5693,7 +5693,7 @@ ex:
 	case 0xe63f: /* VSTRLR - vector store rightmost with length */
 	case 0xe73f: /* VSTL - vector store with length */
 	  oaddr = s390_record_calc_disp (gdbarch, regcache, 0, insn[1], 0);
-	  regcache_raw_read_unsigned (regcache, S390_R0_REGNUM + inib[3], &tmp);
+	  regcache->raw_read (S390_R0_REGNUM + inib[3], &tmp);
 	  tmp &= 0xffffffffu;
 	  if (tmp > 15)
 	    tmp = 15;
@@ -5979,9 +5979,9 @@ ex:
 	/* 0xeb82-0xeb8d undefined */
 
 	case 0xeb8e: /* MVCLU - move long unicode [partial] */
-	  regcache_raw_read_unsigned (regcache, S390_R0_REGNUM + inib[2], &tmp);
+	  regcache->raw_read (S390_R0_REGNUM + inib[2], &tmp);
 	  oaddr = s390_record_address_mask (gdbarch, regcache, tmp);
-	  regcache_raw_read_unsigned (regcache, S390_R0_REGNUM + (inib[2] | 1), &tmp);
+	  regcache->raw_read (S390_R0_REGNUM + (inib[2] | 1), &tmp);
 	  if (record_full_arch_list_add_mem (oaddr, tmp))
 	    return -1;
 	  if (record_full_arch_list_add_reg (regcache, S390_R0_REGNUM + inib[2]))
@@ -6384,7 +6384,7 @@ ex:
       break;
 
     case 0xee: /* PLO - perform locked operation */
-      regcache_raw_read_unsigned (regcache, S390_R0_REGNUM, &tmp);
+      regcache->raw_read (S390_R0_REGNUM, &tmp);
       oaddr = s390_record_calc_disp (gdbarch, regcache, 0, insn[1], 0);
       oaddr2 = s390_record_calc_disp (gdbarch, regcache, 0, insn[2], 0);
       if (!(tmp & 0x100))

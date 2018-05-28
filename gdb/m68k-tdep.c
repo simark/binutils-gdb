@@ -410,7 +410,7 @@ m68k_return_value (struct gdbarch *gdbarch, struct value *function,
 	{
 	  ULONGEST addr;
 
-	  regcache_raw_read_unsigned (regcache, M68K_D0_REGNUM, &addr);
+	  regcache->raw_read (M68K_D0_REGNUM, &addr);
 	  read_memory (addr, readbuf, TYPE_LENGTH (type));
 	}
 
@@ -450,7 +450,7 @@ m68k_svr4_return_value (struct gdbarch *gdbarch, struct value *function,
 	{
 	  ULONGEST addr;
 
-	  regcache_raw_read_unsigned (regcache, M68K_A0_REGNUM, &addr);
+	  regcache->raw_read (M68K_A0_REGNUM, &addr);
 	  read_memory (addr, readbuf, TYPE_LENGTH (type));
 	}
 

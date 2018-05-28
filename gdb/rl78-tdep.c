@@ -767,7 +767,7 @@ rl78_pseudo_register_write (struct gdbarch *gdbarch,
       int bank;
       int raw_regnum;
 
-      regcache_raw_read_unsigned (regcache, RL78_PSW_REGNUM, &psw);
+      regcache->raw_read (RL78_PSW_REGNUM, &psw);
       bank = ((psw >> 3) & 1) | ((psw >> 4) & 1);
       /* RSB0 is at bit 3; RSBS1 is at bit 5.  */
       raw_regnum = RL78_RAW_BANK0_R0_REGNUM + bank * RL78_REGS_PER_BANK
@@ -779,7 +779,7 @@ rl78_pseudo_register_write (struct gdbarch *gdbarch,
       ULONGEST psw;
       int bank, raw_regnum;
 
-      regcache_raw_read_unsigned (regcache, RL78_PSW_REGNUM, &psw);
+      regcache->raw_read (RL78_PSW_REGNUM, &psw);
       bank = ((psw >> 3) & 1) | ((psw >> 4) & 1);
       /* RSB0 is at bit 3; RSBS1 is at bit 5.  */
       raw_regnum = RL78_RAW_BANK0_R0_REGNUM + bank * RL78_REGS_PER_BANK

@@ -623,7 +623,7 @@ alpha_return_value (struct gdbarch *gdbarch, struct value *function,
       if (readbuf)
 	{
 	  ULONGEST addr;
-	  regcache_raw_read_unsigned (regcache, ALPHA_V0_REGNUM, &addr);
+	  regcache->raw_read (ALPHA_V0_REGNUM, &addr);
 	  read_memory (addr, readbuf, TYPE_LENGTH (type));
 	}
 

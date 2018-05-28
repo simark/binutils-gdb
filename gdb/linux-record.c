@@ -93,7 +93,7 @@ record_mem_at_reg (struct regcache *regcache, int regnum, int len)
 {
   ULONGEST addr;
 
-  regcache_raw_read_unsigned (regcache, regnum, &addr);
+  regcache->raw_read (regnum, &addr);
   return record_full_arch_list_add_mem ((CORE_ADDR) addr, len);
 }
 
@@ -266,7 +266,7 @@ record_linux_system_call (enum gdb_syscall syscall,
     case gdb_sys_read:
     case gdb_sys_readlink:
     case gdb_sys_recv:
-      regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
+      regcache->raw_read (tdep->arg3, &tmpulongest);
       if (record_mem_at_reg (regcache, tdep->arg2, (int) tmpulongest))
 	return -1;
       break;
@@ -277,7 +277,7 @@ record_linux_system_call (enum gdb_syscall syscall,
       break;
 
     case gdb_sys_waitpid:
-      regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
+      regcache->raw_read (tdep->arg2, &tmpulongest);
       if (tmpulongest)
 	if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
 					   tdep->size_int))
@@ -292,7 +292,7 @@ record_linux_system_call (enum gdb_syscall syscall,
       break;
 
     case gdb_sys_time:
-      regcache_raw_read_unsigned (regcache, tdep->arg1, &tmpulongest);
+      regcache->raw_read (tdep->arg1, &tmpulongest);
       if (tmpulongest)
 	if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
 					   tdep->size_time_t))
@@ -323,7 +323,7 @@ record_linux_system_call (enum gdb_syscall syscall,
       break;
 
     case gdb_sys_ptrace:
-      regcache_raw_read_unsigned (regcache, tdep->arg1, &tmpulongest);
+      regcache->raw_read (tdep->arg1, &tmpulongest);
       if (tmpulongest == RECORD_PTRACE_PEEKTEXT
 	  || tmpulongest == RECORD_PTRACE_PEEKDATA
 	  || tmpulongest == RECORD_PTRACE_PEEKUSR)
@@ -374,7 +374,7 @@ record_linux_system_call (enum gdb_syscall syscall,
 
     case gdb_sys_ioctl:
       /* XXX Need to add a lot of support of other ioctl requests.  */
-      regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
+      regcache->raw_read (tdep->arg2, &tmpulongest);
       if (tmpulongest == tdep->ioctl_FIOCLEX
 	  || tmpulongest == tdep->ioctl_FIONCLEX
 	  || tmpulongest == tdep->ioctl_FIONBIO
@@ -506,7 +506,7 @@ record_linux_system_call (enum gdb_syscall syscall,
 
     case gdb_sys_fcntl:
       /* XXX */
-      regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
+      regcache->raw_read (tdep->arg2, &tmpulongest);
     sys_fcntl:
       if (tmpulongest == tdep->fcntl_F_GETLK)
 	{
@@ -584,12 +584,12 @@ record_linux_system_call (enum gdb_syscall syscall,
       break;
 
     case gdb_sys_getgroups16:
-      regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
+      regcache->raw_read (tdep->arg2, &tmpulongest);
       if (tmpulongest)
 	{
 	  ULONGEST gidsetsize;
 
-	  regcache_raw_read_unsigned (regcache, tdep->arg1,
+	  regcache->raw_read (tdep->arg1,
 				      &gidsetsize);
 	  tmpint = tdep->size_old_gid_t * (int) gidsetsize;
 	  if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest, tmpint))
@@ -606,7 +606,7 @@ record_linux_system_call (enum gdb_syscall syscall,
 	gdb_byte *a = (gdb_byte *) alloca (sz_sel_arg);
 	CORE_ADDR inp, outp, exp, tvp;
 
-	regcache_raw_read_unsigned (regcache, tdep->arg1,
+	regcache->raw_read (tdep->arg1,
 				    &tmpulongest);
 	if (tmpulongest)
 	  {
@@ -671,9 +671,9 @@ record_linux_system_call (enum gdb_syscall syscall,
       {
 	ULONGEST len;
 
-	regcache_raw_read_unsigned (regcache, tdep->arg1,
+	regcache->raw_read (tdep->arg1,
 				    &tmpulongest);
-	regcache_raw_read_unsigned (regcache, tdep->arg2, &len);
+	regcache->raw_read (tdep->arg2, &len);
 	if (record_full_memory_query)
 	  {
 	    if (yquery (_("\
@@ -721,8 +721,8 @@ Do you want to stop the program?"),
       {
 	ULONGEST len;
 
-	regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-	regcache_raw_read_unsigned (regcache, tdep->arg3, &len);
+	regcache->raw_read (tdep->arg2, &tmpulongest);
+	regcache->raw_read (tdep->arg3, &len);
 	if (record_linux_sockaddr (regcache, tdep, tmpulongest, len))
 	  return -1;
       }
@@ -732,15 +732,15 @@ Do you want to stop the program?"),
       {
 	ULONGEST len;
 
-	regcache_raw_read_unsigned (regcache, tdep->arg4, &tmpulongest);
-	regcache_raw_read_unsigned (regcache, tdep->arg5, &len);
+	regcache->raw_read (tdep->arg4, &tmpulongest);
+	regcache->raw_read (tdep->arg5, &len);
 	if (record_linux_sockaddr (regcache, tdep, tmpulongest, len))
 	  return -1;
       }
       break;
 
     case gdb_sys_recvmsg:
-      regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
+      regcache->raw_read (tdep->arg2, &tmpulongest);
       if (record_linux_msghdr (regcache, tdep, tmpulongest))
 	return -1;
       break;
@@ -751,7 +751,7 @@ Do you want to stop the program?"),
       break;
 
     case gdb_sys_getsockopt:
-      regcache_raw_read_unsigned (regcache, tdep->arg5, &tmpulongest);
+      regcache->raw_read (tdep->arg5, &tmpulongest);
       if (tmpulongest)
 	{
 	  ULONGEST optvalp;
@@ -769,7 +769,7 @@ Do you want to stop the program?"),
 				    tdep->size_int);
 	      return -1;
 	    }
-	  regcache_raw_read_unsigned (regcache, tdep->arg4, &optvalp);
+	  regcache->raw_read (tdep->arg4, &optvalp);
 	  tmpint = (int) extract_signed_integer (optlenp, tdep->size_int,
 						 byte_order);
 	  if (record_full_arch_list_add_mem ((CORE_ADDR) optvalp, tmpint))
@@ -781,7 +781,7 @@ Do you want to stop the program?"),
       break;
 
     case gdb_sys_socketcall:
-      regcache_raw_read_unsigned (regcache, tdep->arg1, &tmpulongest);
+      regcache->raw_read (tdep->arg1, &tmpulongest);
       switch (tmpulongest)
 	{
 	case RECORD_SYS_SOCKET:
@@ -793,7 +793,7 @@ Do you want to stop the program?"),
 	case RECORD_SYS_GETSOCKNAME:
 	case RECORD_SYS_GETPEERNAME:
 	  {
-	    regcache_raw_read_unsigned (regcache, tdep->arg2,
+	    regcache->raw_read (tdep->arg2,
 					&tmpulongest);
 	    if (tmpulongest)
 	      {
@@ -827,7 +827,7 @@ Do you want to stop the program?"),
 	  {
 	    gdb_byte *a = (gdb_byte *) alloca (tdep->size_ulong);
 
-	    regcache_raw_read_unsigned (regcache, tdep->arg2,
+	    regcache->raw_read (tdep->arg2,
 					&tmpulongest);
 	    if (tmpulongest)
 	      {
@@ -855,7 +855,7 @@ Do you want to stop the program?"),
 	case RECORD_SYS_SENDTO:
 	  break;
 	case RECORD_SYS_RECVFROM:
-	  regcache_raw_read_unsigned (regcache, tdep->arg2,
+	  regcache->raw_read (tdep->arg2,
 				      &tmpulongest);
 	  if (tmpulongest)
 	    {
@@ -883,7 +883,7 @@ Do you want to stop the program?"),
 	    }
 	  break;
 	case RECORD_SYS_RECV:
-	  regcache_raw_read_unsigned (regcache, tdep->arg2,
+	  regcache->raw_read (tdep->arg2,
 				      &tmpulongest);
 	  if (tmpulongest)
 	    {
@@ -922,7 +922,7 @@ Do you want to stop the program?"),
 	    gdb_byte *a = (gdb_byte *) alloca (tdep->size_ulong * 2);
 	    gdb_byte *av = (gdb_byte *) alloca (tdep->size_int);
 
-	    regcache_raw_read_unsigned (regcache, tdep->arg2,
+	    regcache->raw_read (tdep->arg2,
 					&tmpulongest);
 	    if (tmpulongest)
 	      {
@@ -983,7 +983,7 @@ Do you want to stop the program?"),
 	  {
 	    gdb_byte *a = (gdb_byte *) alloca (tdep->size_ulong);
 
-	    regcache_raw_read_unsigned (regcache, tdep->arg2,
+	    regcache->raw_read (tdep->arg2,
 					&tmpulongest);
 	    if (tmpulongest)
 	      {
@@ -1036,7 +1036,7 @@ Do you want to stop the program?"),
       break;
 
     case gdb_sys_newfstatat:
-      regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
+      regcache->raw_read (tdep->arg3, &tmpulongest);
       if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
 					 tdep->size_stat))
 	return -1;
@@ -1108,7 +1108,7 @@ Do you want to stop the program?"),
       break;
 
     case gdb_sys_ipc:
-      regcache_raw_read_unsigned (regcache, tdep->arg1, &tmpulongest);
+      regcache->raw_read (tdep->arg1, &tmpulongest);
       tmpulongest &= 0xffff;
       switch (tmpulongest)
 	{
@@ -1167,12 +1167,12 @@ Do you want to stop the program?"),
       break;
 
     case gdb_sys_modify_ldt:
-      regcache_raw_read_unsigned (regcache, tdep->arg1, &tmpulongest);
+      regcache->raw_read (tdep->arg1, &tmpulongest);
       if (tmpulongest == 0 || tmpulongest == 2)
 	{
 	  ULONGEST bytecount;
 
-	  regcache_raw_read_unsigned (regcache, tdep->arg3, &bytecount);
+	  regcache->raw_read (tdep->arg3, &bytecount);
 	  if (record_mem_at_reg (regcache, tdep->arg2, (int) bytecount))
 	    return -1;
 	}
@@ -1199,7 +1199,7 @@ Do you want to stop the program?"),
       break;
 
     case gdb_sys_quotactl:
-      regcache_raw_read_unsigned (regcache, tdep->arg1, &tmpulongest);
+      regcache->raw_read (tdep->arg1, &tmpulongest);
       switch (tmpulongest)
 	{
 	case RECORD_Q_GETFMT:
@@ -1232,7 +1232,7 @@ Do you want to stop the program?"),
       break;
 
     case gdb_sys_sysfs:
-      regcache_raw_read_unsigned (regcache, tdep->arg1, &tmpulongest);
+      regcache->raw_read (tdep->arg1, &tmpulongest);
       if (tmpulongest == 2)
 	{
 	  /*XXX the size of memory is not very clear.  */
@@ -1254,7 +1254,7 @@ Do you want to stop the program?"),
 
     case gdb_sys_getdents:
     case gdb_sys_getdents64:
-      regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
+      regcache->raw_read (tdep->arg3, &tmpulongest);
       if (record_mem_at_reg (regcache, tdep->arg2, tmpulongest))
 	return -1;
       break;
@@ -1275,12 +1275,12 @@ Do you want to stop the program?"),
       {
 	ULONGEST vec, vlen;
 
-	regcache_raw_read_unsigned (regcache, tdep->arg2, &vec);
+	regcache->raw_read (tdep->arg2, &vec);
 	if (vec)
 	  {
 	    gdb_byte *iov = (gdb_byte *) alloca (tdep->size_iovec);
 
-	    regcache_raw_read_unsigned (regcache, tdep->arg3, &vlen);
+	    regcache->raw_read (tdep->arg3, &vlen);
 	    for (tmpulongest = 0; tmpulongest < vlen; tmpulongest++)
 	      {
 		if (target_read_memory ((CORE_ADDR) vec, iov,
@@ -1357,12 +1357,12 @@ Do you want to stop the program?"),
       break;
 
     case gdb_sys_poll:
-      regcache_raw_read_unsigned (regcache, tdep->arg1, &tmpulongest);
+      regcache->raw_read (tdep->arg1, &tmpulongest);
       if (tmpulongest)
 	{
 	  ULONGEST nfds;
 
-	  regcache_raw_read_unsigned (regcache, tdep->arg2, &nfds);
+	  regcache->raw_read (tdep->arg2, &nfds);
 	  if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
 					     tdep->size_pollfd * nfds))
 	    return -1;
@@ -1370,7 +1370,7 @@ Do you want to stop the program?"),
       break;
 
     case gdb_sys_nfsservctl:
-      regcache_raw_read_unsigned (regcache, tdep->arg1, &tmpulongest);
+      regcache->raw_read (tdep->arg1, &tmpulongest);
       if (tmpulongest == 7 || tmpulongest == 8)
 	{
 	  int rsize;
@@ -1397,7 +1397,7 @@ Do you want to stop the program?"),
       break;
 
     case gdb_sys_prctl:
-      regcache_raw_read_unsigned (regcache, tdep->arg1, &tmpulongest);
+      regcache->raw_read (tdep->arg1, &tmpulongest);
       switch (tmpulongest)
 	{
 	case 2:
@@ -1426,12 +1426,12 @@ Do you want to stop the program?"),
       break;
 
     case gdb_sys_rt_sigpending:
-      regcache_raw_read_unsigned (regcache, tdep->arg1, &tmpulongest);
+      regcache->raw_read (tdep->arg1, &tmpulongest);
       if (tmpulongest)
 	{
 	  ULONGEST sigsetsize;
 
-	  regcache_raw_read_unsigned (regcache, tdep->arg2,&sigsetsize);
+	  regcache->raw_read (tdep->arg2,&sigsetsize);
 	  if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
 					     (int) sigsetsize))
 	    return -1;
@@ -1448,12 +1448,12 @@ Do you want to stop the program?"),
       break;
 
     case gdb_sys_pread64:
-      regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
+      regcache->raw_read (tdep->arg2, &tmpulongest);
       if (tmpulongest)
 	{
 	  ULONGEST count;
 
-	  regcache_raw_read_unsigned (regcache, tdep->arg3,&count);
+	  regcache->raw_read (tdep->arg3,&count);
 	  if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
 					     (int) count))
 	    return -1;
@@ -1465,12 +1465,12 @@ Do you want to stop the program?"),
       break;
 
     case gdb_sys_getcwd:
-      regcache_raw_read_unsigned (regcache, tdep->arg1, &tmpulongest);
+      regcache->raw_read (tdep->arg1, &tmpulongest);
       if (tmpulongest)
 	{
 	  ULONGEST size;
 
-	  regcache_raw_read_unsigned (regcache, tdep->arg2, &size);
+	  regcache->raw_read (tdep->arg2, &size);
 	  if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
 					     (int) size))
 	    return -1;
@@ -1530,12 +1530,12 @@ Do you want to stop the program?"),
       break;
 
     case gdb_sys_getgroups:
-      regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
+      regcache->raw_read (tdep->arg2, &tmpulongest);
       if (tmpulongest)
 	{
 	  ULONGEST gidsetsize;
 
-	  regcache_raw_read_unsigned (regcache, tdep->arg1,
+	  regcache->raw_read (tdep->arg1,
 				      &gidsetsize);
 	  tmpint = tdep->size_gid_t * (int) gidsetsize;
 	  if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest, tmpint))
@@ -1582,7 +1582,7 @@ Do you want to stop the program?"),
       break;
 
     case gdb_sys_fcntl64:
-      regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
+      regcache->raw_read (tdep->arg2, &tmpulongest);
       if (tmpulongest == tdep->fcntl_F_GETLK64)
 	{
 	  if (record_mem_at_reg (regcache, tdep->arg3,
@@ -1608,12 +1608,12 @@ Do you want to stop the program?"),
     case gdb_sys_getxattr:
     case gdb_sys_lgetxattr:
     case gdb_sys_fgetxattr:
-      regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
+      regcache->raw_read (tdep->arg3, &tmpulongest);
       if (tmpulongest)
 	{
 	  ULONGEST size;
 
-	  regcache_raw_read_unsigned (regcache, tdep->arg4, &size);
+	  regcache->raw_read (tdep->arg4, &size);
 	  if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
 					     (int) size))
 	    return -1;
@@ -1623,12 +1623,12 @@ Do you want to stop the program?"),
     case gdb_sys_listxattr:
     case gdb_sys_llistxattr:
     case gdb_sys_flistxattr:
-      regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
+      regcache->raw_read (tdep->arg2, &tmpulongest);
       if (tmpulongest)
 	{
 	  ULONGEST size;
 
-	  regcache_raw_read_unsigned (regcache, tdep->arg3, &size);
+	  regcache->raw_read (tdep->arg3, &size);
 	  if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
 					     (int) size))
 	    return -1;
@@ -1651,12 +1651,12 @@ Do you want to stop the program?"),
       break;
 
     case gdb_sys_sched_getaffinity:
-      regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
+      regcache->raw_read (tdep->arg3, &tmpulongest);
       if (tmpulongest)
 	{
 	  ULONGEST len;
 
-	  regcache_raw_read_unsigned (regcache, tdep->arg2, &len);
+	  regcache->raw_read (tdep->arg2, &len);
 	  if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
 					     (int) len))
 	    return -1;
@@ -1682,12 +1682,12 @@ Do you want to stop the program?"),
       break;
 
     case gdb_sys_io_getevents:
-      regcache_raw_read_unsigned (regcache, tdep->arg4, &tmpulongest);
+      regcache->raw_read (tdep->arg4, &tmpulongest);
       if (tmpulongest)
 	{
 	  ULONGEST nr;
 
-	  regcache_raw_read_unsigned (regcache, tdep->arg3, &nr);
+	  regcache->raw_read (tdep->arg3, &nr);
 	  if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
 					     nr * tdep->size_io_event))
 	    return -1;
@@ -1695,13 +1695,13 @@ Do you want to stop the program?"),
       break;
 
     case gdb_sys_io_submit:
-      regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
+      regcache->raw_read (tdep->arg3, &tmpulongest);
       if (tmpulongest)
 	{
 	  ULONGEST nr, i;
 	  gdb_byte *iocbp;
 
-	  regcache_raw_read_unsigned (regcache, tdep->arg2, &nr);
+	  regcache->raw_read (tdep->arg2, &nr);
 	  iocbp = (gdb_byte *) alloca (nr * tdep->size_pointer);
 	  if (target_read_memory ((CORE_ADDR) tmpulongest, iocbp,
 				  nr * tdep->size_pointer))
@@ -1744,12 +1744,12 @@ Do you want to stop the program?"),
       break;
 
     case gdb_sys_lookup_dcookie:
-      regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
+      regcache->raw_read (tdep->arg2, &tmpulongest);
       if (tmpulongest)
 	{
 	  ULONGEST len;
 
-	  regcache_raw_read_unsigned (regcache, tdep->arg3, &len);
+	  regcache->raw_read (tdep->arg3, &len);
 	  if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
 					     (int) len))
 	    return -1;
@@ -1761,12 +1761,12 @@ Do you want to stop the program?"),
       break;
 
     case gdb_sys_epoll_wait:
-      regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
+      regcache->raw_read (tdep->arg2, &tmpulongest);
       if (tmpulongest)
 	{
 	  ULONGEST maxevents;
 
-	  regcache_raw_read_unsigned (regcache, tdep->arg3, &maxevents);
+	  regcache->raw_read (tdep->arg3, &maxevents);
 	  if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
 					     (maxevents
 					      * tdep->size_epoll_event)))
@@ -1829,12 +1829,12 @@ Do you want to stop the program?"),
     case gdb_sys_get_mempolicy:
       if (record_mem_at_reg (regcache, tdep->arg1, tdep->size_int))
 	return -1;
-      regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
+      regcache->raw_read (tdep->arg2, &tmpulongest);
       if (tmpulongest)
 	{
 	  ULONGEST maxnode;
 
-	  regcache_raw_read_unsigned (regcache, tdep->arg3, &maxnode);
+	  regcache->raw_read (tdep->arg3, &maxnode);
 	  if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
 					     maxnode * tdep->size_long))
 	    return -1;
@@ -1848,12 +1848,12 @@ Do you want to stop the program?"),
       break;
 
     case gdb_sys_mq_timedreceive:
-      regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
+      regcache->raw_read (tdep->arg2, &tmpulongest);
       if (tmpulongest)
 	{
 	  ULONGEST msg_len;
 
-	  regcache_raw_read_unsigned (regcache, tdep->arg3, &msg_len);
+	  regcache->raw_read (tdep->arg3, &msg_len);
 	  if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
 					     (int) msg_len))
 	    return -1;
@@ -1885,16 +1885,16 @@ Do you want to stop the program?"),
       break;
 
     case gdb_sys_keyctl:
-      regcache_raw_read_unsigned (regcache, tdep->arg1, &tmpulongest);
+      regcache->raw_read (tdep->arg1, &tmpulongest);
       if (tmpulongest == 6 || tmpulongest == 11)
 	{
-	  regcache_raw_read_unsigned (regcache, tdep->arg3,
+	  regcache->raw_read (tdep->arg3,
 				      &tmpulongest);
 	  if (tmpulongest)
 	    {
 	      ULONGEST buflen;
 
-	      regcache_raw_read_unsigned (regcache, tdep->arg4, &buflen);
+	      regcache->raw_read (tdep->arg4, &buflen);
 	      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
 						 (int) buflen))
 		return -1;
@@ -1927,12 +1927,12 @@ Do you want to stop the program?"),
       break;
 
     case gdb_sys_readlinkat:
-      regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
+      regcache->raw_read (tdep->arg3, &tmpulongest);
       if (tmpulongest)
 	{
 	  ULONGEST bufsiz;
 
-	  regcache_raw_read_unsigned (regcache, tdep->arg4, &bufsiz);
+	  regcache->raw_read (tdep->arg4, &bufsiz);
 	  if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
 					     (int) bufsiz))
 	    return -1;
@@ -1952,12 +1952,12 @@ Do you want to stop the program?"),
       break;
 
     case gdb_sys_ppoll:
-      regcache_raw_read_unsigned (regcache, tdep->arg1, &tmpulongest);
+      regcache->raw_read (tdep->arg1, &tmpulongest);
       if (tmpulongest)
 	{
 	  ULONGEST nfds;
 
-	  regcache_raw_read_unsigned (regcache, tdep->arg2, &nfds);
+	  regcache->raw_read (tdep->arg2, &nfds);
 	  if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
 					     tdep->size_pollfd * nfds))
 	    return -1;
@@ -1988,12 +1988,12 @@ Do you want to stop the program?"),
       break;
 
     case gdb_sys_move_pages:
-      regcache_raw_read_unsigned (regcache, tdep->arg5, &tmpulongest);
+      regcache->raw_read (tdep->arg5, &tmpulongest);
       if (tmpulongest)
 	{
 	  ULONGEST nr_pages;
 
-	  regcache_raw_read_unsigned (regcache, tdep->arg2, &nr_pages);
+	  regcache->raw_read (tdep->arg2, &nr_pages);
 	  if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
 					     nr_pages * tdep->size_int))
 	    return -1;
@@ -2009,12 +2009,12 @@ Do you want to stop the program?"),
       break;
 
     case gdb_sys_epoll_pwait:
-      regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
+      regcache->raw_read (tdep->arg2, &tmpulongest);
       if (tmpulongest)
 	{
 	  ULONGEST maxevents;
 
-	  regcache_raw_read_unsigned (regcache, tdep->arg3, &maxevents);
+	  regcache->raw_read (tdep->arg3, &maxevents);
 	  tmpint = (int) maxevents * tdep->size_epoll_event;
 	  if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest, tmpint))
 	    return -1;

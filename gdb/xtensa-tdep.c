@@ -168,7 +168,7 @@ xtensa_read_register (int regnum)
 {
   ULONGEST value;
 
-  regcache_raw_read_unsigned (get_current_regcache (), regnum, &value);
+  get_current_regcache ()->raw_read (regnum, &value);
   return (unsigned long) value;
 }
 
@@ -653,8 +653,7 @@ xtensa_pseudo_register_write (struct gdbarch *gdbarch,
       && (regnum <= gdbarch_tdep (gdbarch)->a0_base + 15))
     {
       ULONGEST value;
-      regcache_raw_read_unsigned (regcache,
-				  gdbarch_tdep (gdbarch)->wb_regnum, &value);
+      regcache->raw_read (gdbarch_tdep (gdbarch)->wb_regnum, &value);
       regnum = arreg_number (gdbarch, regnum, value);
     }
 
@@ -1565,7 +1564,7 @@ xtensa_extract_return_value (struct type *type,
   if (gdbarch_tdep (gdbarch)->call_abi != CallAbiCall0Only)
     {
       /* First, we have to find the caller window in the register file.  */
-      regcache_raw_read_unsigned (regcache, gdbarch_pc_regnum (gdbarch), &pc);
+      regcache->raw_read (gdbarch_pc_regnum (gdbarch), &pc);
       callsize = extract_call_winsize (gdbarch, pc);
 
       /* On Xtensa, we can return up to 4 words (or 2 for call12).  */
@@ -1576,8 +1575,7 @@ xtensa_extract_return_value (struct type *type,
 
       /* Get the register offset of the return
 	 register (A2) in the caller window.  */
-      regcache_raw_read_unsigned
-	(regcache, gdbarch_tdep (gdbarch)->wb_regnum, &wb);
+      regcache->raw_read (gdbarch_tdep (gdbarch)->wb_regnum, &wb);
       areg = arreg_number (gdbarch,
 			  gdbarch_tdep (gdbarch)->a0_base + 2 + callsize, wb);
     }
@@ -1619,9 +1617,8 @@ xtensa_store_return_value (struct type *type,
 
   if (gdbarch_tdep (gdbarch)->call_abi != CallAbiCall0Only)
     {
-      regcache_raw_read_unsigned 
-	(regcache, gdbarch_tdep (gdbarch)->wb_regnum, &wb);
-      regcache_raw_read_unsigned (regcache, gdbarch_pc_regnum (gdbarch), &pc);
+      regcache->raw_read (gdbarch_tdep (gdbarch)->wb_regnum, &wb);
+      regcache->raw_read (gdbarch_pc_regnum (gdbarch), &pc);
       callsize = extract_call_winsize (gdbarch, pc);
 
       if (len > (callsize > 8 ? 8 : 16))
@@ -1914,7 +1911,7 @@ xtensa_push_dummy_call (struct gdbarch *gdbarch,
       ULONGEST val;
 
       ra = (bp_addr & 0x3fffffff) | 0x40000000;
-      regcache_raw_read_unsigned (regcache, gdbarch_ps_regnum (gdbarch), &val);
+      regcache->raw_read (gdbarch_ps_regnum (gdbarch), &val);
       ps = (unsigned long) val & ~0x00030000;
       regcache_cooked_write_unsigned
 	(regcache, gdbarch_tdep (gdbarch)->a0_base + 4, ra);

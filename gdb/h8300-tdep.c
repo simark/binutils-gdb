@@ -917,7 +917,7 @@ h8300h_return_value (struct gdbarch *gdbarch, struct value *function,
 	{
 	  ULONGEST addr;
 
-	  regcache_raw_read_unsigned (regcache, E_R0_REGNUM, &addr);
+	  regcache->raw_read (E_R0_REGNUM, &addr);
 	  read_memory (addr, readbuf, TYPE_LENGTH (type));
 	}
 

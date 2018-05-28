@@ -879,7 +879,7 @@ ppc_linux_syscall_record (struct regcache *regcache)
   int ret;
   int i;
 
-  regcache_raw_read_unsigned (regcache, tdep->ppc_gp0_regnum, &scnum);
+  regcache->raw_read (tdep->ppc_gp0_regnum, &scnum);
   syscall_gdb = ppc_canonicalize_syscall (scnum);
 
   if (syscall_gdb < 0)
@@ -985,7 +985,7 @@ ppc_linux_record_signal (struct gdbarch *gdbarch, struct regcache *regcache,
 
   /* Record the change in the stack.
      frame-size = sizeof (struct rt_sigframe) + SIGNAL_FRAMESIZE  */
-  regcache_raw_read_unsigned (regcache, gdbarch_sp_regnum (gdbarch), &sp);
+  regcache->raw_read (gdbarch_sp_regnum (gdbarch), &sp);
   sp -= SIGNAL_FRAMESIZE;
   sp -= sizeof_rt_sigframe;
 

@@ -9800,8 +9800,7 @@ arm_record_strx (insn_decode_record *arm_insn_r, uint32_t *record_buf,
       immed_low = bits (arm_insn_r->arm_insn, 0, 3);
       immed_high = bits (arm_insn_r->arm_insn, 8, 11);
       reg_src1 = bits (arm_insn_r->arm_insn, 16, 19);
-      regcache_raw_read_unsigned (reg_cache, reg_src1,
-                                  &u_regval[0]);
+      reg_cache->raw_read (reg_src1, &u_regval[0]);
       if (ARM_PC_REGNUM == reg_src1)
         {
           /* If R15 was used as Rn, hence current PC+8.  */
@@ -9839,8 +9838,8 @@ arm_record_strx (insn_decode_record *arm_insn_r, uint32_t *record_buf,
       reg_src1 = bits (arm_insn_r->arm_insn, 0, 3);
       /* Get Rn.  */
       reg_src2 = bits (arm_insn_r->arm_insn, 16, 19);
-      regcache_raw_read_unsigned (reg_cache, reg_src1, &u_regval[0]);
-      regcache_raw_read_unsigned (reg_cache, reg_src2, &u_regval[1]);
+      reg_cache->raw_read (reg_src1, &u_regval[0]);
+      reg_cache->raw_read (reg_src2, &u_regval[1]);
       if (15 == reg_src2)
         {
           /* If R15 was used as Rn, hence current PC+8.  */
@@ -9879,7 +9878,7 @@ arm_record_strx (insn_decode_record *arm_insn_r, uint32_t *record_buf,
       immed_high = bits (arm_insn_r->arm_insn, 8, 11);
       offset_8 = (immed_high << 4) | immed_low;
       reg_src1 = bits (arm_insn_r->arm_insn, 16, 19);
-      regcache_raw_read_unsigned (reg_cache, reg_src1, &u_regval[0]);
+      reg_cache->raw_read (reg_src1, &u_regval[0]);
       /* Calculate target store address, Rn +/- Rm, register offset.  */
       if (15 == arm_insn_r->opcode || 6 == arm_insn_r->opcode)
         {
@@ -9914,8 +9913,8 @@ arm_record_strx (insn_decode_record *arm_insn_r, uint32_t *record_buf,
       /* 6) Store, register post -indexed.  */
       reg_src1 = bits (arm_insn_r->arm_insn, 0, 3);
       reg_src2 = bits (arm_insn_r->arm_insn, 16, 19);
-      regcache_raw_read_unsigned (reg_cache, reg_src1, &u_regval[0]);
-      regcache_raw_read_unsigned (reg_cache, reg_src2, &u_regval[1]);
+      reg_cache->raw_read (reg_src1, &u_regval[0]);
+      reg_cache->raw_read (reg_src2, &u_regval[1]);
       /* Calculate target store address, Rn +/- Rm, register offset.  */
       if (13 == arm_insn_r->opcode || 4 == arm_insn_r->opcode)
         {
@@ -10147,7 +10146,7 @@ arm_record_extension_space (insn_decode_record *arm_insn_r)
           /* SWP or SWPB insn.  */
           /* Get memory address given by Rn.  */
           reg_src1 = bits (arm_insn_r->arm_insn, 16, 19);
-          regcache_raw_read_unsigned (reg_cache, reg_src1, &u_regval);
+          reg_cache->raw_read (reg_src1, &u_regval);
           /* SWP insn ?, swaps word.  */
           if (8 == arm_insn_r->opcode)
             {
@@ -10325,7 +10324,7 @@ arm_record_data_proc_misc_ld_str (insn_decode_record *arm_insn_r)
       /* SWP or SWPB insn.  */
 
       reg_src1 = bits (arm_insn_r->arm_insn, 16, 19);
-      regcache_raw_read_unsigned (reg_cache, reg_src1, &u_regval[0]);
+      reg_cache->raw_read (reg_src1, &u_regval[0]);
       /* SWP insn ?, swaps word.  */
       if (8 == arm_insn_r->opcode)
 	{
@@ -10675,7 +10674,7 @@ arm_record_ld_st_imm_offset (insn_decode_record *arm_insn_r)
       /* STR (immediate), STRB (immediate), STRBT and STRT.  */
 
       offset_12 = bits (arm_insn_r->arm_insn, 0, 11);
-      regcache_raw_read_unsigned (reg_cache, reg_base, &u_regval);
+      reg_cache->raw_read (reg_base, &u_regval);
 
       /* Handle bit U.  */
       if (bit (arm_insn_r->arm_insn, 23))
@@ -10776,10 +10775,8 @@ arm_record_ld_st_reg_offset (insn_decode_record *arm_insn_r)
           reg_src1 = bits (arm_insn_r->arm_insn, 0, 3);
           /* Get Rn.  */
           reg_src2 = bits (arm_insn_r->arm_insn, 16, 19);
-          regcache_raw_read_unsigned (reg_cache, reg_src1
-                                      , &u_regval[0]);
-          regcache_raw_read_unsigned (reg_cache, reg_src2
-                                      , &u_regval[1]);
+          reg_cache->raw_read (reg_src1, &u_regval[0]);
+          reg_cache->raw_read (reg_src2, &u_regval[1]);
           if (15 == reg_src2)
             {
               /* If R15 was used as Rn, hence current PC+8.  */
@@ -10860,9 +10857,9 @@ arm_record_ld_st_reg_offset (insn_decode_record *arm_insn_r)
           reg_src2 = bits (arm_insn_r->arm_insn, 16, 19);
           /* Get shift_imm.  */
           shift_imm = bits (arm_insn_r->arm_insn, 7, 11);
-          regcache_raw_read_unsigned (reg_cache, reg_src1, &u_regval[0]);
+          reg_cache->raw_read (reg_src1, &u_regval[0]);
           reg_cache->raw_read (reg_src1, &s_word);
-          regcache_raw_read_unsigned (reg_cache, reg_src2, &u_regval[1]);
+          reg_cache->raw_read (reg_src2, &u_regval[1]);
           /* Offset_12 used as shift.  */
           switch (offset_12)
             {
@@ -10897,8 +10894,7 @@ arm_record_ld_st_reg_offset (insn_decode_record *arm_insn_r)
               case 3:
                 if (!shift_imm)
                   {
-                    regcache_raw_read_unsigned (reg_cache, ARM_PS_REGNUM,
-                                                &u_regval[1]);
+                    reg_cache->raw_read (ARM_PS_REGNUM, &u_regval[1]);
                     /* Get C flag value and shift it by 31.  */
                     offset_12 = (((bit (u_regval[1], 29)) << 31) \
                                   | (u_regval[0]) >> 1);
@@ -10916,7 +10912,7 @@ arm_record_ld_st_reg_offset (insn_decode_record *arm_insn_r)
               break;
             }
 
-          regcache_raw_read_unsigned (reg_cache, reg_src2, &u_regval[1]);
+          reg_cache->raw_read (reg_src2, &u_regval[1]);
           /* bit U set.  */
           if (bit (arm_insn_r->arm_insn, 23))
             {
@@ -11038,7 +11034,7 @@ arm_record_ld_st_multiple (insn_decode_record *arm_insn_r)
 
       addr_mode = bits (arm_insn_r->arm_insn, 23, 24); 
 
-      regcache_raw_read_unsigned (reg_cache, reg_base, &u_regval);
+      reg_cache->raw_read (reg_base, &u_regval);
 
       /* Find out how many registers are going to be stored to memory.  */
       while (register_bits)
@@ -11267,7 +11263,7 @@ arm_record_exreg_ld_st_insn (insn_decode_record *arm_insn_r)
       uint32_t memory_index = 0;
 
       reg_rn = bits (arm_insn_r->arm_insn, 16, 19);
-      regcache_raw_read_unsigned (reg_cache, reg_rn, &u_regval);
+      reg_cache->raw_read (reg_rn, &u_regval);
       imm_off8 = bits (arm_insn_r->arm_insn, 0, 7);
       imm_off32 = imm_off8 << 2;
       memory_count = imm_off8;
@@ -11352,7 +11348,7 @@ arm_record_exreg_ld_st_insn (insn_decode_record *arm_insn_r)
       uint32_t memory_index = 0;
 
       reg_rn = bits (arm_insn_r->arm_insn, 16, 19);
-      regcache_raw_read_unsigned (reg_cache, reg_rn, &u_regval);
+      reg_cache->raw_read (reg_rn, &u_regval);
       imm_off8 = bits (arm_insn_r->arm_insn, 0, 7);
       imm_off32 = imm_off8 << 2;
 
@@ -11693,7 +11689,7 @@ arm_record_coproc_data_proc (insn_decode_record *arm_insn_r)
           if (svc_operand)  /* OABI.  */
             svc_number = svc_operand - 0x900000;
           else /* EABI.  */
-            regcache_raw_read_unsigned (reg_cache, 7, &svc_number);
+            reg_cache->raw_read (7, &svc_number);
 
           return tdep->arm_syscall_record (reg_cache, svc_number);
         }
@@ -11867,8 +11863,8 @@ thumb_record_ld_st_reg_offset (insn_decode_record *thumb_insn_r)
           /* STR(2), STRB(2), STRH(2) .  */
           reg_src1 = bits (thumb_insn_r->arm_insn, 3, 5);
           reg_src2 = bits (thumb_insn_r->arm_insn, 6, 8);
-          regcache_raw_read_unsigned (reg_cache, reg_src1, &u_regval[0]);
-          regcache_raw_read_unsigned (reg_cache, reg_src2, &u_regval[1]);
+          reg_cache->raw_read (reg_src1, &u_regval[0]);
+          reg_cache->raw_read (reg_src2, &u_regval[1]);
           if (0 == opB)
             record_buf_mem[0] = 4;    /* STR (2).  */
           else if (2 == opB)
@@ -11954,7 +11950,7 @@ thumb_record_ld_st_imm_offset (insn_decode_record *thumb_insn_r)
       /* STR(1).  */
       reg_src1 = bits (thumb_insn_r->arm_insn, 3, 5);
       immed_5 = bits (thumb_insn_r->arm_insn, 6, 10);
-      regcache_raw_read_unsigned (reg_cache, reg_src1, &u_regval);
+      reg_cache->raw_read (reg_src1, &u_regval);
       record_buf_mem[0] = 4;
       record_buf_mem[1] = u_regval + (immed_5 * 4);
       thumb_insn_r->mem_rec_count = 1;
@@ -12000,7 +11996,7 @@ thumb_record_ld_st_stack (insn_decode_record *thumb_insn_r)
     {
       /* STR(3).  */
       immed_8 = bits (thumb_insn_r->arm_insn, 0, 7);
-      regcache_raw_read_unsigned (reg_cache, ARM_SP_REGNUM, &u_regval);
+      reg_cache->raw_read (ARM_SP_REGNUM, &u_regval);
       record_buf_mem[0] = 4;
       record_buf_mem[1] = u_regval + (immed_8 * 4);
       thumb_insn_r->mem_rec_count = 1;
@@ -12010,7 +12006,7 @@ thumb_record_ld_st_stack (insn_decode_record *thumb_insn_r)
       /* STRH(1).  */
       immed_5 = bits (thumb_insn_r->arm_insn, 6, 10);
       reg_src1 = bits (thumb_insn_r->arm_insn, 3, 5);
-      regcache_raw_read_unsigned (reg_cache, reg_src1, &u_regval);
+      reg_cache->raw_read (reg_src1, &u_regval);
       record_buf_mem[0] = 2;
       record_buf_mem[1] = u_regval + (immed_5 * 2);
       thumb_insn_r->mem_rec_count = 1;
@@ -12079,7 +12075,7 @@ thumb_record_misc (insn_decode_record *thumb_insn_r)
 	case 5:
 	  /* PUSH.  */
 	  register_bits = bits (thumb_insn_r->arm_insn, 0, 7);
-	  regcache_raw_read_unsigned (reg_cache, ARM_SP_REGNUM, &u_regval);
+	  reg_cache->raw_read (ARM_SP_REGNUM, &u_regval);
 	  while (register_bits)
 	    {
 	      if (register_bits & 0x00000001)
@@ -12195,7 +12191,7 @@ thumb_record_ldm_stm_swi (insn_decode_record *thumb_insn_r)
       register_bits = bits (thumb_insn_r->arm_insn, 0, 7);
       /* Get Rn.  */
       reg_src1 = bits (thumb_insn_r->arm_insn, 8, 10);
-      regcache_raw_read_unsigned (reg_cache, reg_src1, &u_regval);
+      reg_cache->raw_read (reg_src1, &u_regval);
       while (register_bits)
         {
           if (register_bits & 0x00000001)
@@ -12217,7 +12213,7 @@ thumb_record_ldm_stm_swi (insn_decode_record *thumb_insn_r)
         /* Handle arm syscall insn.  */
         if (tdep->arm_syscall_record != NULL)
           {
-            regcache_raw_read_unsigned (reg_cache, 7, &u_regval);
+            reg_cache->raw_read (7, &u_regval);
             ret = tdep->arm_syscall_record (reg_cache, u_regval);
           }
         else
@@ -12322,7 +12318,7 @@ thumb2_record_ld_st_multiple (insn_decode_record *thumb2_insn_r)
         {
           /* Handle STM/STMIA/STMEA and STMDB/STMFD.  */
           register_bits = bits (thumb2_insn_r->arm_insn, 0, 15);
-          regcache_raw_read_unsigned (reg_cache, reg_rn, &u_regval);
+          reg_cache->raw_read (reg_rn, &u_regval);
           while (register_bits)
             {
               if (register_bits & 0x00000001)
@@ -12403,7 +12399,7 @@ thumb2_record_ld_st_dual_ex_tbb (insn_decode_record *thumb2_insn_r)
   else
     {
       reg_rn = bits (thumb2_insn_r->arm_insn, 16, 19);
-      regcache_raw_read_unsigned (reg_cache, reg_rn, &u_regval[0]);
+      reg_cache->raw_read (reg_rn, &u_regval[0]);
 
       if (0 == op1 && 0 == op2)
         {
@@ -12586,7 +12582,7 @@ thumb2_record_str_single_data (insn_decode_record *thumb2_insn_r)
   op1 = bits (thumb2_insn_r->arm_insn, 21, 23);
   op2 = bits (thumb2_insn_r->arm_insn, 6, 11);
   reg_rn = bits (thumb2_insn_r->arm_insn, 16, 19);
-  regcache_raw_read_unsigned (reg_cache, reg_rn, &u_regval[0]);
+  reg_cache->raw_read (reg_rn, &u_regval[0]);
 
   if (bit (thumb2_insn_r->arm_insn, 23))
     {
@@ -12602,7 +12598,7 @@ thumb2_record_str_single_data (insn_decode_record *thumb2_insn_r)
         {
           /* Handle STRB (register).  */
           reg_rm = bits (thumb2_insn_r->arm_insn, 0, 3);
-          regcache_raw_read_unsigned (reg_cache, reg_rm, &u_regval[1]);
+          reg_cache->raw_read (reg_rm, &u_regval[1]);
           shift_imm = bits (thumb2_insn_r->arm_insn, 4, 5);
           offset_addr = u_regval[1] << shift_imm;
           address = u_regval[0] + offset_addr;
@@ -12773,7 +12769,7 @@ thumb2_record_asimd_struct_ld_st (insn_decode_record *thumb2_insn_r)
   if (!l_bit)
     {
       ULONGEST u_regval = 0;
-      regcache_raw_read_unsigned (reg_cache, reg_rn, &u_regval);
+      reg_cache->raw_read (reg_rn, &u_regval);
       address = u_regval;
 
       if (!a_bit)
@@ -13359,7 +13355,7 @@ arm_process_record (struct gdbarch *gdbarch, struct regcache *regcache,
   /* Check the insn, whether it is thumb or arm one.  */
 
   t_bit = arm_psr_thumb_bit (arm_record.gdbarch);
-  regcache_raw_read_unsigned (arm_record.regcache, ARM_PS_REGNUM, &u_regval);
+  arm_record.regcache->raw_read (ARM_PS_REGNUM, &u_regval);
 
 
   if (!(u_regval & t_bit))

@@ -3275,8 +3275,7 @@ aarch64_record_branch_except_sys (insn_decode_record *aarch64_insn_r)
 	    {
 	      ULONGEST svc_number;
 
-	      regcache_raw_read_unsigned (aarch64_insn_r->regcache, 8,
-					  &svc_number);
+	      aarch64_insn_r->regcache->raw_read (8, &svc_number);
 	      return tdep->aarch64_syscall_record (aarch64_insn_r->regcache,
 						   svc_number);
 	    }
@@ -3348,7 +3347,7 @@ aarch64_record_asimd_load_store (insn_decode_record *aarch64_insn_r)
   reg_rn = bits (aarch64_insn_r->aarch64_insn, 5, 9);
   size_bits = bits (aarch64_insn_r->aarch64_insn, 10, 11);
   opcode_bits = bits (aarch64_insn_r->aarch64_insn, 12, 15);
-  regcache_raw_read_unsigned (aarch64_insn_r->regcache, reg_rn, &address);
+  aarch64_insn_r->regcache->raw_read (reg_rn, &address);
 
   if (record_debug)
     debug_printf ("Process record: Advanced SIMD load/store\n");
@@ -3545,8 +3544,7 @@ aarch64_record_load_store (insn_decode_record *aarch64_insn_r)
 	    datasize = (8 << size_bits) * 2;
 	  else
 	    datasize = (8 << size_bits);
-	  regcache_raw_read_unsigned (aarch64_insn_r->regcache, reg_rn,
-				      &address);
+	  aarch64_insn_r->regcache->raw_read (reg_rn, &address);
 	  record_buf_mem[0] = datasize / 8;
 	  record_buf_mem[1] = address;
 	  aarch64_insn_r->mem_rec_count = 1;
@@ -3598,8 +3596,7 @@ aarch64_record_load_store (insn_decode_record *aarch64_insn_r)
           datasize = 8 << (2 + size_bits);
           offset = (imm7_off & 0x40) ? (~imm7_off & 0x007f) + 1 : imm7_off;
           offset = offset << (2 + size_bits);
-          regcache_raw_read_unsigned (aarch64_insn_r->regcache, reg_rn,
-                                      &address);
+          aarch64_insn_r->regcache->raw_read (reg_rn, &address);
           if (!((insn_bits24_27 & 0x0b) == 0x08 && insn_bit23))
             {
               if (imm7_off & 0x40)
@@ -3660,8 +3657,7 @@ aarch64_record_load_store (insn_decode_record *aarch64_insn_r)
         {
           offset = bits (aarch64_insn_r->aarch64_insn, 10, 21);
           datasize = 8 << size_bits;
-          regcache_raw_read_unsigned (aarch64_insn_r->regcache, reg_rn,
-                                      &address);
+          aarch64_insn_r->regcache->raw_read (reg_rn, &address);
           offset = offset << size_bits;
           address = address + offset;
 
@@ -3700,15 +3696,14 @@ aarch64_record_load_store (insn_decode_record *aarch64_insn_r)
         {
           ULONGEST reg_rm_val;
 
-          regcache_raw_read_unsigned (aarch64_insn_r->regcache,
-                     bits (aarch64_insn_r->aarch64_insn, 16, 20), &reg_rm_val);
+          aarch64_insn_r->regcache->raw_read
+	    (bits (aarch64_insn_r->aarch64_insn, 16, 20), &reg_rm_val);
           if (bit (aarch64_insn_r->aarch64_insn, 12))
             offset = reg_rm_val << size_bits;
           else
             offset = reg_rm_val;
           datasize = 8 << size_bits;
-          regcache_raw_read_unsigned (aarch64_insn_r->regcache, reg_rn,
-                                      &address);
+          aarch64_insn_r->regcache->raw_read (reg_rn, &address);
           address = address + offset;
           record_buf_mem[0] = datasize >> 3;
           record_buf_mem[1] = address;
@@ -3750,8 +3745,7 @@ aarch64_record_load_store (insn_decode_record *aarch64_insn_r)
           imm9_off = bits (aarch64_insn_r->aarch64_insn, 12, 20);
           offset = (imm9_off & 0x0100) ? (((~imm9_off) & 0x01ff) + 1) : imm9_off;
           datasize = 8 << size_bits;
-          regcache_raw_read_unsigned (aarch64_insn_r->regcache, reg_rn,
-                                      &address);
+          aarch64_insn_r->regcache->raw_read (reg_rn, &address);
           if (insn_bits10_11 != 0x01)
             {
               if (imm9_off & 0x0100)

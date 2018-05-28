@@ -259,7 +259,7 @@ spu_pseudo_register_write_spu (struct regcache *regcache, const char *regname,
   char annex[32];
   ULONGEST id;
 
-  regcache_raw_read_unsigned (regcache, SPU_ID_REGNUM, &id);
+  regcache->raw_read (SPU_ID_REGNUM, &id);
   xsnprintf (annex, sizeof annex, "%d/%s", (int) id, regname);
   xsnprintf (reg, sizeof reg, "0x%s",
 	     phex_nz (extract_unsigned_integer (buf, 4, byte_order), 4));
@@ -284,7 +284,7 @@ spu_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
       break;
 
     case SPU_FPSCR_REGNUM:
-      regcache_raw_read_unsigned (regcache, SPU_ID_REGNUM, &id);
+      regcache->raw_read (SPU_ID_REGNUM, &id);
       xsnprintf (annex, sizeof annex, "%d/fpcr", (int) id);
       target_write (target_stack, TARGET_OBJECT_SPU, annex, buf, 0, 16);
       break;

@@ -1924,7 +1924,7 @@ i387_return_value (struct gdbarch *gdbarch, struct regcache *regcache)
      actual value doesn't really matter, but 7 is what a normal
      function return would end up with if the program started out with
      a freshly initialized FPU.  */
-  regcache_raw_read_unsigned (regcache, I387_FSTAT_REGNUM (tdep), &fstat);
+  regcache->raw_read (I387_FSTAT_REGNUM (tdep), &fstat);
   fstat |= (7 << 11);
   regcache_raw_write_unsigned (regcache, I387_FSTAT_REGNUM (tdep), fstat);
 

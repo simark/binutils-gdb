@@ -1190,7 +1190,7 @@ mep_pseudo_csr_write (struct gdbarch *gdbarch,
       ULONGEST new_bits;
       ULONGEST mixed_bits;
           
-      regcache_raw_read_unsigned (regcache, r->raw, &old_bits);
+      regcache->raw_read (r->raw, &old_bits);
       new_bits = extract_unsigned_integer (buf, size, byte_order);
       mixed_bits = ((r->writeable_bits & new_bits)
                     | (~r->writeable_bits & old_bits));
@@ -2166,7 +2166,7 @@ mep_return_value (struct gdbarch *gdbarch, struct value *function,
 	  /* Although the address of the struct buffer gets passed in R1, it's
 	     returned in R0.  Fetch R0's value and then read the memory
 	     at that address.  */
-	  regcache_raw_read_unsigned (regcache, MEP_R0_REGNUM, &addr);
+	  regcache->raw_read (MEP_R0_REGNUM, &addr);
 	  read_memory (addr, readbuf, TYPE_LENGTH (type));
 	}
       if (writebuf)

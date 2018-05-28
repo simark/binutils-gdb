@@ -874,7 +874,7 @@ s390_linux_record_signal (struct gdbarch *gdbarch, struct regcache *regcache,
 
   /* Record the change in the stack.
      frame-size = sizeof (struct rt_sigframe) + SIGNAL_FRAMESIZE  */
-  regcache_raw_read_unsigned (regcache, S390_SP_REGNUM, &sp);
+  regcache->raw_read (S390_SP_REGNUM, &sp);
   sp -= sizeof_rt_sigframe;
 
   if (record_full_arch_list_add_mem (sp, sizeof_rt_sigframe))

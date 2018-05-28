@@ -2865,7 +2865,7 @@ i386_store_return_value (struct gdbarch *gdbarch, struct type *type,
          actual value doesn't really matter, but 7 is what a normal
          function return would end up with if the program started out
          with a freshly initialized FPU.  */
-      regcache_raw_read_unsigned (regcache, I387_FSTAT_REGNUM (tdep), &fstat);
+      regcache->raw_read (I387_FSTAT_REGNUM (tdep), &fstat);
       fstat |= (7 << 11);
       regcache_raw_write_unsigned (regcache, I387_FSTAT_REGNUM (tdep), fstat);
 
@@ -2984,7 +2984,7 @@ i386_return_value (struct gdbarch *gdbarch, struct value *function,
 	{
 	  ULONGEST addr;
 
-	  regcache_raw_read_unsigned (regcache, I386_EAX_REGNUM, &addr);
+	  regcache->raw_read (I386_EAX_REGNUM, &addr);
 	  read_memory (addr, readbuf, TYPE_LENGTH (type));
 	}
 
@@ -4738,8 +4738,7 @@ i386_record_lea_modrm_addr (struct i386_record_s *irp, uint64_t *addr)
         {
 	  if (base == 4 && irp->popl_esp_hack)
 	    *addr += irp->popl_esp_hack;
-	  regcache_raw_read_unsigned (irp->regcache, irp->regmap[base],
-                                      &offset64);
+	  irp->regcache->raw_read (irp->regmap[base], &offset64);
 	}
       if (irp->aflag == 2)
         {
@@ -4750,8 +4749,7 @@ i386_record_lea_modrm_addr (struct i386_record_s *irp, uint64_t *addr)
 
       if (havesib && (index != 4 || scale != 0))
 	{
-	  regcache_raw_read_unsigned (irp->regcache, irp->regmap[index],
-                                      &offset64);
+	  irp->regcache->raw_read (irp->regmap[index], &offset64);
 	  if (irp->aflag == 2)
 	    *addr += offset64 << scale;
 	  else
@@ -4798,67 +4796,55 @@ i386_record_lea_modrm_addr (struct i386_record_s *irp, uint64_t *addr)
       switch (irp->rm)
 	{
 	case 0:
-	  regcache_raw_read_unsigned (irp->regcache,
-				      irp->regmap[X86_RECORD_REBX_REGNUM],
-                                      &offset64);
+	  irp->regcache->raw_read (irp->regmap[X86_RECORD_REBX_REGNUM],
+				   &offset64);
 	  *addr = (uint32_t) (*addr + offset64);
-	  regcache_raw_read_unsigned (irp->regcache,
-				      irp->regmap[X86_RECORD_RESI_REGNUM],
-                                      &offset64);
+	  irp->regcache->raw_read (irp->regmap[X86_RECORD_RESI_REGNUM],
+				   &offset64);
 	  *addr = (uint32_t) (*addr + offset64);
 	  break;
 	case 1:
-	  regcache_raw_read_unsigned (irp->regcache,
-				      irp->regmap[X86_RECORD_REBX_REGNUM],
-                                      &offset64);
+	  irp->regcache->raw_read (irp->regmap[X86_RECORD_REBX_REGNUM],
+				   &offset64);
 	  *addr = (uint32_t) (*addr + offset64);
-	  regcache_raw_read_unsigned (irp->regcache,
-				      irp->regmap[X86_RECORD_REDI_REGNUM],
-                                      &offset64);
+	  irp->regcache->raw_read (irp->regmap[X86_RECORD_REDI_REGNUM],
+				   &offset64);
 	  *addr = (uint32_t) (*addr + offset64);
 	  break;
 	case 2:
-	  regcache_raw_read_unsigned (irp->regcache,
-				      irp->regmap[X86_RECORD_REBP_REGNUM],
-                                      &offset64);
+	  irp->regcache->raw_read (irp->regmap[X86_RECORD_REBP_REGNUM],
+				   &offset64);
 	  *addr = (uint32_t) (*addr + offset64);
-	  regcache_raw_read_unsigned (irp->regcache,
-				      irp->regmap[X86_RECORD_RESI_REGNUM],
-                                      &offset64);
+	  irp->regcache->raw_read (irp->regmap[X86_RECORD_RESI_REGNUM],
+				   &offset64);
 	  *addr = (uint32_t) (*addr + offset64);
 	  break;
 	case 3:
-	  regcache_raw_read_unsigned (irp->regcache,
-				      irp->regmap[X86_RECORD_REBP_REGNUM],
-                                      &offset64);
+	  irp->regcache->raw_read (irp->regmap[X86_RECORD_REBP_REGNUM],
+				   &offset64);
 	  *addr = (uint32_t) (*addr + offset64);
-	  regcache_raw_read_unsigned (irp->regcache,
-				      irp->regmap[X86_RECORD_REDI_REGNUM],
-                                      &offset64);
+	  irp->regcache->raw_read (irp->regmap[X86_RECORD_REDI_REGNUM],
+				   &offset64);
 	  *addr = (uint32_t) (*addr + offset64);
 	  break;
 	case 4:
-	  regcache_raw_read_unsigned (irp->regcache,
-				      irp->regmap[X86_RECORD_RESI_REGNUM],
-                                      &offset64);
+	  irp->regcache->raw_read (irp->regmap[X86_RECORD_RESI_REGNUM],
+				   &offset64);
 	  *addr = (uint32_t) (*addr + offset64);
 	  break;
 	case 5:
-	  regcache_raw_read_unsigned (irp->regcache,
-				      irp->regmap[X86_RECORD_REDI_REGNUM],
-                                      &offset64);
+	  irp->regcache->raw_read (irp->regmap[X86_RECORD_REDI_REGNUM],
+				   &offset64);
 	  *addr = (uint32_t) (*addr + offset64);
 	  break;
 	case 6:
-	  regcache_raw_read_unsigned (irp->regcache,
-				      irp->regmap[X86_RECORD_REBP_REGNUM],
-                                      &offset64);
+	  irp->regcache->raw_read (irp->regmap[X86_RECORD_REBP_REGNUM],
+				   &offset64);
 	  *addr = (uint32_t) (*addr + offset64);
 	  break;
 	case 7:
-	  regcache_raw_read_unsigned (irp->regcache,
-				      irp->regmap[X86_RECORD_REBX_REGNUM],
-                                      &offset64);
+	  irp->regcache->raw_read (irp->regmap[X86_RECORD_REBX_REGNUM],
+				   &offset64);
 	  *addr = (uint32_t) (*addr + offset64);
 	  break;
 	}
@@ -4914,9 +4900,7 @@ i386_record_push (struct i386_record_s *irp, int size)
   if (record_full_arch_list_add_reg (irp->regcache,
 				     irp->regmap[X86_RECORD_RESP_REGNUM]))
     return -1;
-  regcache_raw_read_unsigned (irp->regcache,
-			      irp->regmap[X86_RECORD_RESP_REGNUM],
-			      &addr);
+  irp->regcache->raw_read (irp->regmap[X86_RECORD_RESP_REGNUM], &addr);
   if (record_full_arch_list_add_mem ((CORE_ADDR) addr - size, size))
     return -1;
 
@@ -6434,9 +6418,7 @@ Do you want to stop the program?"),
     case 0xab:
     case 0x6c:    /* insS */
     case 0x6d:
-      regcache_raw_read_unsigned (ir.regcache,
-                                  ir.regmap[X86_RECORD_RECX_REGNUM],
-                                  &addr);
+      ir.regcache->raw_read (ir.regmap[X86_RECORD_RECX_REGNUM], &addr);
       if (addr)
         {
           ULONGEST es, ds;
@@ -6445,16 +6427,10 @@ Do you want to stop the program?"),
 	    ir.ot = OT_BYTE;
           else
 	    ir.ot = ir.dflag + OT_WORD;
-          regcache_raw_read_unsigned (ir.regcache,
-                                      ir.regmap[X86_RECORD_REDI_REGNUM],
-                                      &addr);
+          ir.regcache->raw_read (ir.regmap[X86_RECORD_REDI_REGNUM], &addr);
 
-          regcache_raw_read_unsigned (ir.regcache,
-                                      ir.regmap[X86_RECORD_ES_REGNUM],
-                                      &es);
-          regcache_raw_read_unsigned (ir.regcache,
-                                      ir.regmap[X86_RECORD_DS_REGNUM],
-                                      &ds);
+          ir.regcache->raw_read (ir.regmap[X86_RECORD_ES_REGNUM], &es);
+          ir.regcache->raw_read (ir.regmap[X86_RECORD_DS_REGNUM], &ds);
           if (ir.aflag && (es != ds))
             {
               /* addr += ((uint32_t) read_register (I386_ES_REGNUM)) << 4; */
@@ -6735,9 +6711,7 @@ Do you want to stop the program?"),
           uint64_t addr64;
           if (i386_record_lea_modrm_addr (&ir, &addr64))
             return -1;
-          regcache_raw_read_unsigned (ir.regcache,
-                                      ir.regmap[ir.reg | rex_r],
-                                      &addr);
+          ir.regcache->raw_read (ir.regmap[ir.reg | rex_r], &addr);
           switch (ir.dflag)
             {
             case 0:
@@ -8039,17 +8013,13 @@ reswitch_prefix_add:
           break;
 
         case 0x0ff7:    /* maskmovq */
-          regcache_raw_read_unsigned (ir.regcache,
-                                      ir.regmap[X86_RECORD_REDI_REGNUM],
-                                      &addr);
+          ir.regcache->raw_read (ir.regmap[X86_RECORD_REDI_REGNUM], &addr);
           if (record_full_arch_list_add_mem (addr, 64))
             return -1;
           break;
 
         case 0x660ff7:    /* maskmovdqu */
-          regcache_raw_read_unsigned (ir.regcache,
-                                      ir.regmap[X86_RECORD_REDI_REGNUM],
-                                      &addr);
+          ir.regcache->raw_read (ir.regmap[X86_RECORD_REDI_REGNUM], &addr);
           if (record_full_arch_list_add_mem (addr, 128))
             return -1;
           break;
@@ -8747,7 +8717,7 @@ i386_mpx_bd_base (void)
   rcache = get_current_regcache ();
   tdep = gdbarch_tdep (rcache->arch ());
 
-  regstatus = regcache_raw_read_unsigned (rcache, tdep->bndcfgu_regnum, &ret);
+  regstatus = rcache->raw_read (tdep->bndcfgu_regnum, &ret);
 
   if (regstatus != REG_VALID)
     error (_("BNDCFGU register invalid, read status %d."), regstatus);

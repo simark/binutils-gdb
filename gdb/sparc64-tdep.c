@@ -1017,7 +1017,7 @@ sparc64_pseudo_register_write (struct gdbarch *gdbarch,
     {
       ULONGEST state, bits;
 
-      regcache_raw_read_unsigned (regcache, SPARC64_STATE_REGNUM, &state);
+      regcache->raw_read (SPARC64_STATE_REGNUM, &state);
       bits = extract_unsigned_integer (buf, 8, byte_order);
       switch (regnum)
 	{

@@ -4338,7 +4338,7 @@ ppc_process_record_op31 (struct gdbarch *gdbarch, struct regcache *regcache,
 	}
       else
 	{
-	  regcache_raw_read_unsigned (regcache, tdep->ppc_xer_regnum, &xer);
+	  regcache->raw_read (tdep->ppc_xer_regnum, &xer);
 	  nr = PPC_XER_NB (xer);
 	}
 
@@ -4489,10 +4489,8 @@ ppc_process_record_op31 (struct gdbarch *gdbarch, struct regcache *regcache,
 
       ra = 0;
       if (PPC_RA (insn) != 0)
-	regcache_raw_read_unsigned (regcache,
-				    tdep->ppc_gp0_regnum + PPC_RA (insn), &ra);
-      regcache_raw_read_unsigned (regcache,
-				  tdep->ppc_gp0_regnum + PPC_RB (insn), &rb);
+	regcache->raw_read (tdep->ppc_gp0_regnum + PPC_RA (insn), &ra);
+      regcache->raw_read (tdep->ppc_gp0_regnum + PPC_RB (insn), &rb);
       ea = ra + rb;
 
       switch (ext)
@@ -4572,11 +4570,9 @@ ppc_process_record_op31 (struct gdbarch *gdbarch, struct regcache *regcache,
     case 429:		/* Store VSX Vector Left-justified with Length */
       ra = 0;
       if (PPC_RA (insn) != 0)
-	regcache_raw_read_unsigned (regcache,
-				    tdep->ppc_gp0_regnum + PPC_RA (insn), &ra);
+	regcache->raw_read (tdep->ppc_gp0_regnum + PPC_RA (insn), &ra);
       ea = ra;
-      regcache_raw_read_unsigned (regcache,
-				  tdep->ppc_gp0_regnum + PPC_RB (insn), &rb);
+      regcache->raw_read (tdep->ppc_gp0_regnum + PPC_RB (insn), &rb);
       /* Store up to 16 bytes.  */
       nb = (rb & 0xff) > 16 ? 16 : (rb & 0xff);
       if (nb > 0)
@@ -4587,8 +4583,7 @@ ppc_process_record_op31 (struct gdbarch *gdbarch, struct regcache *regcache,
     case 742:		/* Store Doubleword Atomic */
       ra = 0;
       if (PPC_RA (insn) != 0)
-	regcache_raw_read_unsigned (regcache,
-				    tdep->ppc_gp0_regnum + PPC_RA (insn), &ra);
+	regcache->raw_read (tdep->ppc_gp0_regnum + PPC_RA (insn), &ra);
       ea = ra;
       switch (ext)
 	{
@@ -4607,8 +4602,7 @@ ppc_process_record_op31 (struct gdbarch *gdbarch, struct regcache *regcache,
     case 725:		/* Store String Word Immediate */
       ra = 0;
       if (PPC_RA (insn) != 0)
-	regcache_raw_read_unsigned (regcache,
-				    tdep->ppc_gp0_regnum + PPC_RA (insn), &ra);
+	regcache->raw_read (tdep->ppc_gp0_regnum + PPC_RA (insn), &ra);
       ea += ra;
 
       nb = PPC_NB (insn);
@@ -4622,18 +4616,15 @@ ppc_process_record_op31 (struct gdbarch *gdbarch, struct regcache *regcache,
     case 661:		/* Store String Word Indexed */
       ra = 0;
       if (PPC_RA (insn) != 0)
-	regcache_raw_read_unsigned (regcache,
-				    tdep->ppc_gp0_regnum + PPC_RA (insn), &ra);
+	regcache->raw_read (tdep->ppc_gp0_regnum + PPC_RA (insn), &ra);
       ea += ra;
 
-      regcache_raw_read_unsigned (regcache, tdep->ppc_xer_regnum, &xer);
+      regcache->raw_read (tdep->ppc_xer_regnum, &xer);
       nb = PPC_XER_NB (xer);
 
       if (nb != 0)
 	{
-	  regcache_raw_read_unsigned (regcache,
-				      tdep->ppc_gp0_regnum + PPC_RB (insn),
-				      &rb);
+	  regcache->raw_read (tdep->ppc_gp0_regnum + PPC_RB (insn), &rb);
 	  ea += rb;
 	  record_full_arch_list_add_mem (ea, nb);
 	}
@@ -4707,10 +4698,8 @@ ppc_process_record_op31 (struct gdbarch *gdbarch, struct regcache *regcache,
 
       ra = 0;
       if (PPC_RA (insn) != 0)
-	regcache_raw_read_unsigned (regcache,
-				    tdep->ppc_gp0_regnum + PPC_RA (insn), &ra);
-      regcache_raw_read_unsigned (regcache,
-				  tdep->ppc_gp0_regnum + PPC_RB (insn), &rb);
+	regcache->raw_read (tdep->ppc_gp0_regnum + PPC_RA (insn), &ra);
+      regcache->raw_read (tdep->ppc_gp0_regnum + PPC_RB (insn), &rb);
       ea = (ra + rb) & ~((ULONGEST) (at_dcsz - 1));
       record_full_arch_list_add_mem (ea, at_dcsz);
       return 0;
@@ -5195,9 +5184,7 @@ ppc_process_record_op61 (struct gdbarch *gdbarch, struct regcache *regcache,
     case 2:		/* Store VSX Scalar Doubleword */
     case 3:		/* Store VSX Scalar Single */
       if (PPC_RA (insn) != 0)
-	regcache_raw_read_unsigned (regcache,
-				    tdep->ppc_gp0_regnum + PPC_RA (insn),
-				    &ea);
+	regcache->raw_read (tdep->ppc_gp0_regnum + PPC_RA (insn), &ea);
       ea += PPC_DS (insn) << 2;
       switch (insn & 0x3)
 	{
@@ -5224,9 +5211,7 @@ ppc_process_record_op61 (struct gdbarch *gdbarch, struct regcache *regcache,
       return 0;
     case 5:		/* Store VSX Vector */
       if (PPC_RA (insn) != 0)
-	regcache_raw_read_unsigned (regcache,
-				    tdep->ppc_gp0_regnum + PPC_RA (insn),
-				    &ea);
+	regcache->raw_read (tdep->ppc_gp0_regnum + PPC_RA (insn), &ea);
       ea += PPC_DQ (insn) << 4;
       record_full_arch_list_add_mem (ea, 16);
       return 0;
@@ -5655,9 +5640,7 @@ ppc_process_record (struct gdbarch *gdbarch, struct regcache *regcache,
 	  ULONGEST addr = 0;
 
 	  if (PPC_RA (insn) != 0)
-	    regcache_raw_read_unsigned (regcache,
-					tdep->ppc_gp0_regnum + PPC_RA (insn),
-					&addr);
+	    regcache->raw_read (tdep->ppc_gp0_regnum + PPC_RA (insn), &addr);
 
 	  addr += PPC_D (insn);
 	  record_full_arch_list_add_mem (addr, 4 * (32 - PPC_RS (insn)));
@@ -5682,9 +5665,7 @@ ppc_process_record (struct gdbarch *gdbarch, struct regcache *regcache,
 	  int size = -1;
 
 	  if (PPC_RA (insn) != 0)
-	    regcache_raw_read_unsigned (regcache,
-					tdep->ppc_gp0_regnum + PPC_RA (insn),
-					&addr);
+	    regcache->raw_read (tdep->ppc_gp0_regnum + PPC_RA (insn), &addr);
 	  addr += PPC_D (insn);
 
 	  if (op6 == 36 || op6 == 37 || op6 == 52 || op6 == 53)
@@ -5759,9 +5740,7 @@ ppc_process_record (struct gdbarch *gdbarch, struct regcache *regcache,
 	    goto UNKNOWN_OP;
 
 	  if (PPC_RA (insn) != 0)
-	    regcache_raw_read_unsigned (regcache,
-					tdep->ppc_gp0_regnum + PPC_RA (insn),
-					&addr);
+	    regcache->raw_read (tdep->ppc_gp0_regnum + PPC_RA (insn), &addr);
 
 	  size = (sub2 == 2) ? 16 : 8;
 

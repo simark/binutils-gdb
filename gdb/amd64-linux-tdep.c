@@ -1457,7 +1457,7 @@ amd64_linux_syscall_record_common (struct regcache *regcache,
   ULONGEST syscall_native;
   enum gdb_syscall syscall_gdb = gdb_sys_no_syscall;
 
-  regcache_raw_read_unsigned (regcache, AMD64_RAX_REGNUM, &syscall_native);
+  regcache->raw_read (AMD64_RAX_REGNUM, &syscall_native);
 
   switch (syscall_native)
     {
@@ -1472,15 +1472,13 @@ amd64_linux_syscall_record_common (struct regcache *regcache,
     case amd64_x32_sys_arch_prctl:
       {
 	ULONGEST arg3;
-	regcache_raw_read_unsigned (regcache, linux_record_tdep_p->arg3,
+	regcache->raw_read (linux_record_tdep_p->arg3,
 				    &arg3);
 	if (arg3 == RECORD_ARCH_GET_FS || arg3 == RECORD_ARCH_GET_GS)
 	  {
 	    CORE_ADDR addr;
 
-	    regcache_raw_read_unsigned (regcache,
-					linux_record_tdep_p->arg2,
-					&addr);
+	    regcache->raw_read (linux_record_tdep_p->arg2, &addr);
 	    if (record_full_arch_list_add_mem
 		(addr, linux_record_tdep_p->size_ulong))
 	      return -1;
@@ -1550,7 +1548,7 @@ amd64_linux_record_signal (struct gdbarch *gdbarch,
     return -1;
 
   /* Record the change in the stack.  */
-  regcache_raw_read_unsigned (regcache, AMD64_RSP_REGNUM, &rsp);
+  regcache->raw_read (AMD64_RSP_REGNUM, &rsp);
   /* redzone
      sp -= 128; */
   rsp -= AMD64_LINUX_redzone;
