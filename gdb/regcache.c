@@ -546,13 +546,6 @@ regcache_raw_read_unsigned (struct regcache *regcache, int regnum,
   return regcache->raw_read (regnum, val);
 }
 
-void
-regcache_raw_write_signed (struct regcache *regcache, int regnum, LONGEST val)
-{
-  gdb_assert (regcache != NULL);
-  regcache->raw_write (regnum, val);
-}
-
 template<typename T, typename>
 void
 regcache::raw_write (int regnum, T val)
@@ -565,6 +558,10 @@ regcache::raw_write (int regnum, T val)
 		 gdbarch_byte_order (m_descr->gdbarch), val);
   raw_write (regnum, buf);
 }
+
+/* Explicit instantiation of the above with T = LONGEST.  */
+
+template void regcache::raw_write<> (int, LONGEST);
 
 void
 regcache_raw_write_unsigned (struct regcache *regcache, int regnum,

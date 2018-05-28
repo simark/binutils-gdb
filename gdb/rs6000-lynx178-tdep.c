@@ -196,8 +196,7 @@ ran_out_of_registers_for_arguments:
          to use this area.  So, update %sp first before doing anything
          else.  */
 
-      regcache_raw_write_signed (regcache,
-				 gdbarch_sp_regnum (gdbarch), sp);
+      regcache->raw_write (gdbarch_sp_regnum (gdbarch), sp);
 
       /* If the last argument copied into the registers didn't fit there
          completely, push the rest of it into stack.  */
@@ -243,7 +242,7 @@ ran_out_of_registers_for_arguments:
      Not doing this can lead to conflicts with the kernel which thinks
      that it still has control over this not-yet-allocated stack
      region.  */
-  regcache_raw_write_signed (regcache, gdbarch_sp_regnum (gdbarch), sp);
+  regcache->raw_write (gdbarch_sp_regnum (gdbarch), sp);
 
   /* Set back chain properly.  */
   store_unsigned_integer (tmp_buffer, wordsize, byte_order, saved_sp);
@@ -251,7 +250,7 @@ ran_out_of_registers_for_arguments:
 
   /* Point the inferior function call's return address at the dummy's
      breakpoint.  */
-  regcache_raw_write_signed (regcache, tdep->ppc_lr_regnum, bp_addr);
+  regcache->raw_write (tdep->ppc_lr_regnum, bp_addr);
 
   target_store_registers (regcache, -1);
   return sp;

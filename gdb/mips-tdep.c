@@ -786,7 +786,7 @@ mips_pseudo_register_write (struct gdbarch *gdbarch,
 	     some mips64 parts in order to avoid unpredictable behavior.  */
 	  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
 	  LONGEST regval = extract_signed_integer (buf, 4, byte_order);
-	  regcache_raw_write_signed (regcache, rawnum, regval);
+	  regcache->raw_write (rawnum, regval);
 	}
     }
   else
