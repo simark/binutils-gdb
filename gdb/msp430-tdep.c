@@ -255,7 +255,7 @@ msp430_pseudo_register_write (struct gdbarch *gdbarch,
       int raw_regnum = regnum - MSP430_NUM_REGS;
 
       val = extract_unsigned_integer (buffer, regsize, byte_order);
-      regcache_raw_write_unsigned (regcache, raw_regnum, val);
+      regcache->raw_write (raw_regnum, val);
 
     }
   else

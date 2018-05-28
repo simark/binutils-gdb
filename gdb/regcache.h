@@ -35,9 +35,6 @@ extern struct regcache *get_thread_arch_aspace_regcache (ptid_t,
 							 struct gdbarch *,
 							 struct address_space *);
 
-extern void regcache_raw_write_unsigned (struct regcache *regcache,
-					 int regnum, ULONGEST val);
-
 /* Return the register's value in signed or throw if it's not
    available.  */
 

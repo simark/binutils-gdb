@@ -1372,7 +1372,7 @@ s390_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
 	  regcache->raw_read (S390_PSWA_REGNUM, &psw);
 	  val = (psw & 0x80000000) | (val & 0x7fffffff);
 	}
-      regcache_raw_write_unsigned (regcache, S390_PSWA_REGNUM, val);
+      regcache->raw_write (S390_PSWA_REGNUM, val);
       return;
     }
 
@@ -1384,7 +1384,7 @@ s390_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
 	val = (psw & ~((ULONGEST)3 << 12)) | ((val & 3) << 12);
       else
 	val = (psw & ~((ULONGEST)3 << 44)) | ((val & 3) << 44);
-      regcache_raw_write_unsigned (regcache, S390_PSWM_REGNUM, val);
+      regcache->raw_write (S390_PSWM_REGNUM, val);
       return;
     }
 
@@ -1392,10 +1392,8 @@ s390_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
     {
       regnum -= tdep->gpr_full_regnum;
       val = extract_unsigned_integer (buf, regsize, byte_order);
-      regcache_raw_write_unsigned (regcache, S390_R0_REGNUM + regnum,
-				   val & 0xffffffff);
-      regcache_raw_write_unsigned (regcache, S390_R0_UPPER_REGNUM + regnum,
-				   val >> 32);
+      regcache->raw_write (S390_R0_REGNUM + regnum, val & 0xffffffff);
+      regcache->raw_write (S390_R0_UPPER_REGNUM + regnum, val >> 32);
       return;
     }
 

@@ -559,17 +559,10 @@ regcache::raw_write (int regnum, T val)
   raw_write (regnum, buf);
 }
 
-/* Explicit instantiation of the above with T = LONGEST.  */
+/* Explicit instantiations of the above with T = LONGEST and T = ULONGEST.  */
 
 template void regcache::raw_write<> (int, LONGEST);
-
-void
-regcache_raw_write_unsigned (struct regcache *regcache, int regnum,
-			     ULONGEST val)
-{
-  gdb_assert (regcache != NULL);
-  regcache->raw_write (regnum, val);
-}
+template void regcache::raw_write<> (int, ULONGEST);
 
 LONGEST
 regcache_raw_get_signed (struct regcache *regcache, int regnum)

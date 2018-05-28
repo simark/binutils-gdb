@@ -1194,7 +1194,7 @@ mep_pseudo_csr_write (struct gdbarch *gdbarch,
       new_bits = extract_unsigned_integer (buf, size, byte_order);
       mixed_bits = ((r->writeable_bits & new_bits)
                     | (~r->writeable_bits & old_bits));
-      regcache_raw_write_unsigned (regcache, r->raw, mixed_bits);
+      regcache->raw_write (r->raw, mixed_bits);
     }
 }
                       

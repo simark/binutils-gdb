@@ -1926,12 +1926,12 @@ i387_return_value (struct gdbarch *gdbarch, struct regcache *regcache)
      a freshly initialized FPU.  */
   regcache->raw_read (I387_FSTAT_REGNUM (tdep), &fstat);
   fstat |= (7 << 11);
-  regcache_raw_write_unsigned (regcache, I387_FSTAT_REGNUM (tdep), fstat);
+  regcache->raw_write (I387_FSTAT_REGNUM (tdep), fstat);
 
   /* Mark %st(1) through %st(7) as empty.  Since we set the top of the
      floating-point register stack to 7, the appropriate value for the
      tag word is 0x3fff.  */
-  regcache_raw_write_unsigned (regcache, I387_FTAG_REGNUM (tdep), 0x3fff);
+  regcache->raw_write (I387_FTAG_REGNUM (tdep), (ULONGEST) 0x3fff);
 
 }
 

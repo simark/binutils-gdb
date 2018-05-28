@@ -66,8 +66,7 @@ rs6000_lynx178_push_dummy_call (struct gdbarch *gdbarch,
      register to copy parameters.  */
   if (struct_return)
     {
-      regcache_raw_write_unsigned (regcache, tdep->ppc_gp0_regnum + 3,
-				   struct_addr);
+      regcache->raw_write (tdep->ppc_gp0_regnum + 3, struct_addr);
       ii++;
     }
 

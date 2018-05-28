@@ -1034,7 +1034,7 @@ sparc64_pseudo_register_write (struct gdbarch *gdbarch,
 	  state |= ((bits & ((1 << 8) - 1)) << 32);
 	  break;
 	}
-      regcache_raw_write_unsigned (regcache, SPARC64_STATE_REGNUM, state);
+      regcache->raw_write (SPARC64_STATE_REGNUM, state);
     }
 }
 

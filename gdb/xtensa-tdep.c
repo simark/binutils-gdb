@@ -176,7 +176,7 @@ xtensa_read_register (int regnum)
 static void
 xtensa_write_register (int regnum, ULONGEST value)
 {
-  regcache_raw_write_unsigned (get_current_regcache (), regnum, value);
+  get_current_regcache ()->raw_write (regnum, value);
 }
 
 /* Return the window size of the previous call to the function from which we

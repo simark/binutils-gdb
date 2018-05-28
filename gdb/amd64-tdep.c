@@ -781,7 +781,7 @@ amd64_return_value (struct gdbarch *gdbarch, struct value *function,
 
 	  /* Fix up the tag word such that both %st(0) and %st(1) are
 	     marked as valid.  */
-	  regcache_raw_write_unsigned (regcache, AMD64_FTAG_REGNUM, 0xfff);
+	  regcache->raw_write (AMD64_FTAG_REGNUM, (ULONGEST) 0xfff);
 	}
 
       return RETURN_VALUE_REGISTER_CONVENTION;
@@ -983,7 +983,7 @@ amd64_push_arguments (struct regcache *regcache, int nargs,
      varargs or stdargs (prototype-less calls or calls to functions
      containing ellipsis (...) in the declaration) %al is used as
      hidden argument to specify the number of SSE registers used.  */
-  regcache_raw_write_unsigned (regcache, AMD64_RAX_REGNUM, sse_reg);
+  regcache->raw_write (AMD64_RAX_REGNUM, (ULONGEST) sse_reg);
   return sp; 
 }
 

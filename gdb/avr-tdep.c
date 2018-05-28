@@ -414,7 +414,7 @@ avr_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
     case AVR_PSEUDO_PC_REGNUM:
       val = extract_unsigned_integer (buf, 4, gdbarch_byte_order (gdbarch));
       val <<= 1;
-      regcache_raw_write_unsigned (regcache, AVR_PC_REGNUM, val);
+      regcache->raw_write (AVR_PC_REGNUM, val);
       break;
     default:
       internal_error (__FILE__, __LINE__, _("invalid regnum"));

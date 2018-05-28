@@ -1186,7 +1186,7 @@ raw_from_pseudo_register (struct gdbarch *gdbarch, struct regcache *regcache,
 
   val = extract_unsigned_integer (buf, register_size (gdbarch, pseudo_regno),
 				  byte_order);
-  regcache_raw_write_unsigned (regcache, raw_regno, val);
+  regcache->raw_write (raw_regno, val);
 }
 
 static enum register_status
