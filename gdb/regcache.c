@@ -519,13 +519,6 @@ readable_regcache::raw_read (int regnum, gdb_byte *buf)
   return m_register_status[regnum];
 }
 
-enum register_status
-regcache_raw_read_signed (struct regcache *regcache, int regnum, LONGEST *val)
-{
-  gdb_assert (regcache != NULL);
-  return regcache->raw_read (regnum, val);
-}
-
 template<typename T, typename>
 enum register_status
 readable_regcache::raw_read (int regnum, T *val)
@@ -585,9 +578,8 @@ LONGEST
 regcache_raw_get_signed (struct regcache *regcache, int regnum)
 {
   LONGEST value;
-  enum register_status status;
 
-  status = regcache_raw_read_signed (regcache, regnum, &value);
+  register_status status = regcache->raw_read (regnum, &value);
   if (status == REG_UNAVAILABLE)
     throw_error (NOT_AVAILABLE_ERROR,
 		 _("Register %d is not available"), regnum);

@@ -1095,7 +1095,7 @@ Do you want to stop the program?"),
       {
 	LONGEST l;
 
-	regcache_raw_read_signed (regcache, tdep->arg3, &l);
+	regcache->raw_read (tdep->arg3, &l);
 	tmpint = l + tdep->size_long;
 	if (record_mem_at_reg (regcache, tdep->arg2, tmpint))
 	  return -1;
@@ -1125,7 +1125,7 @@ Do you want to stop the program?"),
 	  {
 	    LONGEST second;
 
-	    regcache_raw_read_signed (regcache, tdep->arg3, &second);
+	    regcache->raw_read (tdep->arg3, &second);
 	    tmpint = (int) second + tdep->size_long;
 	    if (record_mem_at_reg (regcache, tdep->arg5, tmpint))
 	      return -1;

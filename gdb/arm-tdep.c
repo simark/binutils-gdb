@@ -10861,7 +10861,7 @@ arm_record_ld_st_reg_offset (insn_decode_record *arm_insn_r)
           /* Get shift_imm.  */
           shift_imm = bits (arm_insn_r->arm_insn, 7, 11);
           regcache_raw_read_unsigned (reg_cache, reg_src1, &u_regval[0]);
-          regcache_raw_read_signed (reg_cache, reg_src1, &s_word);
+          reg_cache->raw_read (reg_src1, &s_word);
           regcache_raw_read_unsigned (reg_cache, reg_src2, &u_regval[1]);
           /* Offset_12 used as shift.  */
           switch (offset_12)

@@ -808,7 +808,7 @@ s390_linux_syscall_record (struct regcache *regcache, LONGEST syscall_native)
   /* On s390, syscall number can be passed either as immediate field of svc
      instruction, or in %r1 (with svc 0).  */
   if (syscall_native == 0)
-    regcache_raw_read_signed (regcache, S390_R1_REGNUM, &syscall_native);
+    regcache->raw_read (S390_R1_REGNUM, &syscall_native);
 
   syscall_gdb = s390_canonicalize_syscall (syscall_native, tdep->abi);
 

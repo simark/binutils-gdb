@@ -460,7 +460,7 @@ i386_linux_intx80_sysenter_syscall_record (struct regcache *regcache)
   LONGEST syscall_native;
   enum gdb_syscall syscall_gdb;
 
-  regcache_raw_read_signed (regcache, I386_EAX_REGNUM, &syscall_native);
+  regcache->raw_read (I386_EAX_REGNUM, &syscall_native);
 
   syscall_gdb = i386_canonicalize_syscall (syscall_native);
 

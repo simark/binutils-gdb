@@ -35,10 +35,6 @@ extern struct regcache *get_thread_arch_aspace_regcache (ptid_t,
 							 struct gdbarch *,
 							 struct address_space *);
 
-extern enum register_status
-  regcache_raw_read_signed (struct regcache *regcache,
-			    int regnum, LONGEST *val);
-
 extern void regcache_raw_write_signed (struct regcache *regcache,
 				       int regnum, LONGEST val);
 extern void regcache_raw_write_unsigned (struct regcache *regcache,
@@ -191,8 +187,9 @@ public:
 
   /* Transfer a raw register [0..NUM_REGS) from core-gdb to this regcache,
      return its value in *BUF and return its availability status.  */
-
   enum register_status raw_read (int regnum, gdb_byte *buf);
+
+  /* Read a raw register into a signed or unsigned integer.  */
   template<typename T, typename = RequireLongest<T>>
   enum register_status raw_read (int regnum, T *val);
 
