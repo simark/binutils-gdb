@@ -132,6 +132,26 @@ public:
      buffer.  */
   enum register_status get_register_status (int regnum) const;
 
+  void raw_collect (int regnum, void *buf) const;
+
+  void raw_collect_integer (int regnum, gdb_byte *addr, int addr_len,
+			    bool is_signed) const;
+
+  /* Supply register REGNUM, whose contents are stored in BUF, to REGCACHE.  */
+  void raw_supply (int regnum, const void *buf);
+
+  void raw_supply (int regnum, const reg_buffer &src)
+  {
+    raw_supply (regnum, src.register_buffer (regnum));
+  }
+
+  void raw_supply_integer (int regnum, const gdb_byte *addr, int addr_len,
+			   bool is_signed);
+
+  void raw_supply_zeroed (int regnum);
+
+  void invalidate (int regnum);
+
   virtual ~reg_buffer () = 0;
 
 protected:
@@ -213,23 +233,9 @@ public:
     : readable_regcache (gdbarch, has_pseudo)
   {}
 
-  /* Supply register REGNUM, whose contents are stored in BUF, to REGCACHE.  */
-  void raw_supply (int regnum, const void *buf);
-
-  void raw_supply (int regnum, const reg_buffer &src)
-  {
-    raw_supply (regnum, src.register_buffer (regnum));
-  }
-
   void raw_update (int regnum) override
   {}
 
-  void raw_supply_integer (int regnum, const gdb_byte *addr, int addr_len,
-			   bool is_signed);
-
-  void raw_supply_zeroed (int regnum);
-
-  void invalidate (int regnum);
 
   DISABLE_COPY_AND_ASSIGN (detached_regcache);
 };
