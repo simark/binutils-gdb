@@ -1098,7 +1098,7 @@ tic6x_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	}
     }
 
-  regcache_cooked_write_signed (regcache, TIC6X_SP_REGNUM, sp);
+  regcache->cooked_write (TIC6X_SP_REGNUM, sp);
 
   /* Return adjusted stack pointer.  */
   return sp;

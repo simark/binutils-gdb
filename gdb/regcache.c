@@ -674,14 +674,6 @@ readable_regcache::cooked_read (int regnum, T *val)
 
 template register_status readable_regcache::cooked_read<> (int, LONGEST *);
 
-void
-regcache_cooked_write_signed (struct regcache *regcache, int regnum,
-			      LONGEST val)
-{
-  gdb_assert (regcache != NULL);
-  regcache->cooked_write (regnum, val);
-}
-
 template<typename T, typename>
 void
 regcache::cooked_write (int regnum, T val)
@@ -694,6 +686,10 @@ regcache::cooked_write (int regnum, T val)
 		 gdbarch_byte_order (m_descr->gdbarch), val);
   cooked_write (regnum, buf);
 }
+
+/* Explicit instantiations of the above with T = LONGEST.  */
+
+template void regcache::cooked_write<> (int, LONGEST);
 
 void
 regcache_cooked_write_unsigned (struct regcache *regcache, int regnum,

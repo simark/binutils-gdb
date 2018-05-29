@@ -109,9 +109,7 @@ ppc_sysv_abi_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
       if (struct_return)
 	{
 	  if (write_pass)
-	    regcache_cooked_write_signed (regcache,
-					  tdep->ppc_gp0_regnum + greg,
-					  struct_addr);
+	    regcache->cooked_write (tdep->ppc_gp0_regnum + greg, struct_addr);
 	  greg++;
 	}
 
@@ -577,14 +575,14 @@ ppc_sysv_abi_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
     }
 
   /* Update %sp.   */
-  regcache_cooked_write_signed (regcache, gdbarch_sp_regnum (gdbarch), sp);
+  regcache->cooked_write (gdbarch_sp_regnum (gdbarch), sp);
 
   /* Write the backchain (it occupies WORDSIZED bytes).  */
   write_memory_signed_integer (sp, tdep->wordsize, byte_order, saved_sp);
 
   /* Point the inferior function call's return address at the dummy's
      breakpoint.  */
-  regcache_cooked_write_signed (regcache, tdep->ppc_lr_regnum, bp_addr);
+  regcache->cooked_write (tdep->ppc_lr_regnum, bp_addr);
 
   return sp;
 }
@@ -1682,14 +1680,14 @@ ppc64_sysv_abi_push_dummy_call (struct gdbarch *gdbarch,
     }
 
   /* Update %sp.   */
-  regcache_cooked_write_signed (regcache, gdbarch_sp_regnum (gdbarch), sp);
+  regcache->cooked_write (gdbarch_sp_regnum (gdbarch), sp);
 
   /* Write the backchain (it occupies WORDSIZED bytes).  */
   write_memory_signed_integer (sp, tdep->wordsize, byte_order, back_chain);
 
   /* Point the inferior function call's return address at the dummy's
      breakpoint.  */
-  regcache_cooked_write_signed (regcache, tdep->ppc_lr_regnum, bp_addr);
+  regcache->cooked_write (tdep->ppc_lr_regnum, bp_addr);
 
   /* In the ELFv1 ABI, use the func_addr to find the descriptor, and use
      that to find the TOC.  If we're calling via a function pointer,

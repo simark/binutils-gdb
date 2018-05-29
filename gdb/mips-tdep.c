@@ -4478,11 +4478,11 @@ mips_eabi_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
   /* For shared libraries, "t9" needs to point at the function
      address.  */
-  regcache_cooked_write_signed (regcache, MIPS_T9_REGNUM, func_addr);
+  regcache->cooked_write (MIPS_T9_REGNUM, func_addr);
 
   /* Set the return address register to point to the entry point of
      the program, where a breakpoint lies in wait.  */
-  regcache_cooked_write_signed (regcache, MIPS_RA_REGNUM, bp_addr);
+  regcache->cooked_write (MIPS_RA_REGNUM, bp_addr);
 
   /* First ensure that the stack and structure return address (if any)
      are properly aligned.  The stack has to be at least 64-bit
@@ -4599,7 +4599,7 @@ mips_eabi_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	      if (mips_debug)
 		fprintf_unfiltered (gdb_stdlog, " - fpreg=%d val=%s",
 				    float_argreg, phex (regval, 4));
-	      regcache_cooked_write_signed (regcache, float_argreg++, regval);
+	      regcache->cooked_write (float_argreg++, regval);
 
 	      /* Write the high word of the double to the odd register(s).  */
 	      regval = extract_signed_integer (val + 4 - low_offset,
@@ -4607,7 +4607,7 @@ mips_eabi_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	      if (mips_debug)
 		fprintf_unfiltered (gdb_stdlog, " - fpreg=%d val=%s",
 				    float_argreg, phex (regval, 4));
-	      regcache_cooked_write_signed (regcache, float_argreg++, regval);
+	      regcache->cooked_write (float_argreg++, regval);
 	    }
 	  else
 	    {
@@ -4619,7 +4619,7 @@ mips_eabi_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	      if (mips_debug)
 		fprintf_unfiltered (gdb_stdlog, " - fpreg=%d val=%s",
 				    float_argreg, phex (regval, len));
-	      regcache_cooked_write_signed (regcache, float_argreg++, regval);
+	      regcache->cooked_write (float_argreg++, regval);
 	    }
 	}
       else
@@ -4708,7 +4708,7 @@ mips_eabi_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		    fprintf_filtered (gdb_stdlog, " - reg=%d val=%s",
 				      argreg,
 				      phex (regval, abi_regsize));
-		  regcache_cooked_write_signed (regcache, argreg, regval);
+		  regcache->cooked_write (argreg, regval);
 		  argreg++;
 		}
 
@@ -4729,7 +4729,7 @@ mips_eabi_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	fprintf_unfiltered (gdb_stdlog, "\n");
     }
 
-  regcache_cooked_write_signed (regcache, MIPS_SP_REGNUM, sp);
+  regcache->cooked_write (MIPS_SP_REGNUM, sp);
 
   /* Return adjusted stack pointer.  */
   return sp;
@@ -4871,11 +4871,11 @@ mips_n32n64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
   /* For shared libraries, "t9" needs to point at the function
      address.  */
-  regcache_cooked_write_signed (regcache, MIPS_T9_REGNUM, func_addr);
+  regcache->cooked_write (MIPS_T9_REGNUM, func_addr);
 
   /* Set the return address register to point to the entry point of
      the program, where a breakpoint lies in wait.  */
-  regcache_cooked_write_signed (regcache, MIPS_RA_REGNUM, bp_addr);
+  regcache->cooked_write (MIPS_RA_REGNUM, bp_addr);
 
   /* First ensure that the stack and structure return address (if any)
      are properly aligned.  The stack has to be at least 64-bit
@@ -5120,7 +5120,7 @@ mips_n32n64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	fprintf_unfiltered (gdb_stdlog, "\n");
     }
 
-  regcache_cooked_write_signed (regcache, MIPS_SP_REGNUM, sp);
+  regcache->cooked_write (MIPS_SP_REGNUM, sp);
 
   /* Return adjusted stack pointer.  */
   return sp;
@@ -5327,11 +5327,11 @@ mips_o32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
   /* For shared libraries, "t9" needs to point at the function
      address.  */
-  regcache_cooked_write_signed (regcache, MIPS_T9_REGNUM, func_addr);
+  regcache->cooked_write (MIPS_T9_REGNUM, func_addr);
 
   /* Set the return address register to point to the entry point of
      the program, where a breakpoint lies in wait.  */
-  regcache_cooked_write_signed (regcache, MIPS_RA_REGNUM, bp_addr);
+  regcache->cooked_write (MIPS_RA_REGNUM, bp_addr);
 
   /* First ensure that the stack and structure return address (if any)
      are properly aligned.  The stack has to be at least 64-bit
@@ -5612,7 +5612,7 @@ mips_o32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	fprintf_unfiltered (gdb_stdlog, "\n");
     }
 
-  regcache_cooked_write_signed (regcache, MIPS_SP_REGNUM, sp);
+  regcache->cooked_write (MIPS_SP_REGNUM, sp);
 
   /* Return adjusted stack pointer.  */
   return sp;
@@ -5851,11 +5851,11 @@ mips_o64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
   /* For shared libraries, "t9" needs to point at the function
      address.  */
-  regcache_cooked_write_signed (regcache, MIPS_T9_REGNUM, func_addr);
+  regcache->cooked_write (MIPS_T9_REGNUM, func_addr);
 
   /* Set the return address register to point to the entry point of
      the program, where a breakpoint lies in wait.  */
-  regcache_cooked_write_signed (regcache, MIPS_RA_REGNUM, bp_addr);
+  regcache->cooked_write (MIPS_RA_REGNUM, bp_addr);
 
   /* First ensure that the stack and structure return address (if any)
      are properly aligned.  The stack has to be at least 64-bit
@@ -6058,7 +6058,7 @@ mips_o64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	fprintf_unfiltered (gdb_stdlog, "\n");
     }
 
-  regcache_cooked_write_signed (regcache, MIPS_SP_REGNUM, sp);
+  regcache->cooked_write (MIPS_SP_REGNUM, sp);
 
   /* Return adjusted stack pointer.  */
   return sp;

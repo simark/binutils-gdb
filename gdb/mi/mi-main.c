@@ -1199,7 +1199,7 @@ mi_cmd_data_write_register_values (const char *command, char **argv, int argc)
 	  value = parse_and_eval_address (argv[i + 1]);
 
 	  /* Write it down.  */
-	  regcache_cooked_write_signed (regcache, regnum, value);
+	  regcache->cooked_write (regnum, value);
 	}
       else
 	error (_("bad register number"));

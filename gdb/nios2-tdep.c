@@ -1825,7 +1825,7 @@ nios2_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
   /* Set the return address register to point to the entry point of
      the program, where a breakpoint lies in wait.  */
-  regcache_cooked_write_signed (regcache, NIOS2_RA_REGNUM, bp_addr);
+  regcache->cooked_write (NIOS2_RA_REGNUM, bp_addr);
 
   /* Now make space on the stack for the args.  */
   for (argnum = 0; argnum < nargs; argnum++)
@@ -1882,7 +1882,7 @@ nios2_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	}
     }
 
-  regcache_cooked_write_signed (regcache, NIOS2_SP_REGNUM, sp);
+  regcache->cooked_write (NIOS2_SP_REGNUM, sp);
 
   /* Return adjusted stack pointer.  */
   return sp;

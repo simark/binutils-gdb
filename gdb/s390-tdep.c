@@ -1998,9 +1998,8 @@ s390_register_return_value (struct gdbarch *gdbarch, struct type *type,
 	  (regcache, S390_R2_REGNUM,
 	   extract_unsigned_integer (in, length, byte_order));
       else
-	regcache_cooked_write_signed
-	  (regcache, S390_R2_REGNUM,
-	   extract_signed_integer (in, length, byte_order));
+	regcache->cooked_write
+	  (S390_R2_REGNUM, extract_signed_integer (in, length, byte_order));
     }
   else if (length == 2 * word_size)
     {

@@ -313,11 +313,11 @@ alpha_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   CORE_ADDR func_addr = find_function_addr (function, NULL);
 
   /* The ABI places the address of the called function in T12.  */
-  regcache_cooked_write_signed (regcache, ALPHA_T12_REGNUM, func_addr);
+  regcache->cooked_write (ALPHA_T12_REGNUM, func_addr);
 
   /* Set the return address register to point to the entry point
      of the program, where a breakpoint lies in wait.  */
-  regcache_cooked_write_signed (regcache, ALPHA_RA_REGNUM, bp_addr);
+  regcache->cooked_write (ALPHA_RA_REGNUM, bp_addr);
 
   /* Lay out the arguments in memory.  */
   for (i = 0, m_arg = alpha_args; i < nargs; i++, m_arg++)
@@ -460,7 +460,7 @@ alpha_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
     }
 
   /* Finally, update the stack pointer.  */
-  regcache_cooked_write_signed (regcache, ALPHA_SP_REGNUM, sp);
+  regcache->cooked_write (ALPHA_SP_REGNUM, sp);
 
   return sp;
 }

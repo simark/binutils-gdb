@@ -236,7 +236,7 @@ lm32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   int i;
 
   /* Set the return address.  */
-  regcache_cooked_write_signed (regcache, SIM_LM32_RA_REGNUM, bp_addr);
+  regcache->cooked_write (SIM_LM32_RA_REGNUM, bp_addr);
 
   /* If we're returning a large struct, a pointer to the address to
      store it at is passed as a first hidden parameter.  */
@@ -291,7 +291,7 @@ lm32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
     }
 
   /* Update stack pointer.  */
-  regcache_cooked_write_signed (regcache, SIM_LM32_SP_REGNUM, sp);
+  regcache->cooked_write (SIM_LM32_SP_REGNUM, sp);
 
   /* Return adjusted stack pointer.  */
   return sp;
