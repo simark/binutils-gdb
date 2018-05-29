@@ -1420,7 +1420,7 @@ mips_write_pc (struct regcache *regcache, CORE_ADDR pc)
 {
   int regnum = gdbarch_pc_regnum (regcache->arch ());
 
-  regcache_cooked_write_unsigned (regcache, regnum, pc);
+  regcache->cooked_write (regnum, pc);
 }
 
 /* Fetch and return instruction from the specified location.  Handle
@@ -4517,7 +4517,7 @@ mips_eabi_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 			    "mips_eabi_push_dummy_call: "
 			    "struct_return reg=%d %s\n",
 			    argreg, paddress (gdbarch, struct_addr));
-      regcache_cooked_write_unsigned (regcache, argreg++, struct_addr);
+      regcache->cooked_write (argreg++, struct_addr);
     }
 
   /* Now load as many as possible of the first arguments into
@@ -4908,7 +4908,7 @@ mips_n32n64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 			    "mips_n32n64_push_dummy_call: "
 			    "struct_return reg=%d %s\n",
 			    argreg, paddress (gdbarch, struct_addr));
-      regcache_cooked_write_unsigned (regcache, argreg++, struct_addr);
+      regcache->cooked_write (argreg++, struct_addr);
     }
 
   /* Now load as many as possible of the first arguments into
@@ -4949,12 +4949,12 @@ mips_n32n64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	  if (mips_debug)
 	    fprintf_unfiltered (gdb_stdlog, " - fpreg=%d val=%s",
 				float_argreg, phex (regval, reglen));
-	  regcache_cooked_write_unsigned (regcache, float_argreg, regval);
+	  regcache->cooked_write (float_argreg, regval);
 
 	  if (mips_debug)
 	    fprintf_unfiltered (gdb_stdlog, " - reg=%d val=%s",
 				argreg, phex (regval, reglen));
-	  regcache_cooked_write_unsigned (regcache, argreg, regval);
+	  regcache->cooked_write (argreg, regval);
 	  float_argreg++;
 	  argreg++;
 	  if (len == 16)
@@ -4964,12 +4964,12 @@ mips_n32n64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	      if (mips_debug)
 		fprintf_unfiltered (gdb_stdlog, " - fpreg=%d val=%s",
 				    float_argreg, phex (regval, reglen));
-	      regcache_cooked_write_unsigned (regcache, float_argreg, regval);
+	      regcache->cooked_write (float_argreg, regval);
 
 	      if (mips_debug)
 		fprintf_unfiltered (gdb_stdlog, " - reg=%d val=%s",
 				    argreg, phex (regval, reglen));
-	      regcache_cooked_write_unsigned (regcache, argreg, regval);
+	      regcache->cooked_write (argreg, regval);
 	      float_argreg++;
 	      argreg++;
 	    }
@@ -5086,7 +5086,7 @@ mips_n32n64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		    fprintf_filtered (gdb_stdlog, " - reg=%d val=%s",
 				      argreg,
 				      phex (regval, MIPS64_REGSIZE));
-		  regcache_cooked_write_unsigned (regcache, argreg, regval);
+		  regcache->cooked_write (argreg, regval);
 
 		  if (mips_n32n64_fp_arg_chunk_p (gdbarch, arg_type,
 						  TYPE_LENGTH (arg_type) - len))
@@ -5095,8 +5095,7 @@ mips_n32n64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 			fprintf_filtered (gdb_stdlog, " - fpreg=%d val=%s",
 					  float_argreg,
 					  phex (regval, MIPS64_REGSIZE));
-		      regcache_cooked_write_unsigned (regcache, float_argreg,
-						      regval);
+		      regcache->cooked_write (float_argreg, regval);
 		    }
 
 		  float_argreg++;
@@ -5372,7 +5371,7 @@ mips_o32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 			    "mips_o32_push_dummy_call: "
 			    "struct_return reg=%d %s\n",
 			    argreg, paddress (gdbarch, struct_addr));
-      regcache_cooked_write_unsigned (regcache, argreg++, struct_addr);
+      regcache->cooked_write (argreg++, struct_addr);
       stack_offset += MIPS32_REGSIZE;
     }
 
@@ -5431,13 +5430,11 @@ mips_o32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		fprintf_unfiltered (gdb_stdlog, " - fpreg=%d val=%s",
 				    float_argreg + freg_offset,
 				    phex (regval, 4));
-	      regcache_cooked_write_unsigned (regcache,
-					      float_argreg++ + freg_offset,
-					      regval);
+	      regcache->cooked_write (float_argreg++ + freg_offset, regval);
 	      if (mips_debug)
 		fprintf_unfiltered (gdb_stdlog, " - reg=%d val=%s",
 				    argreg, phex (regval, 4));
-	      regcache_cooked_write_unsigned (regcache, argreg++, regval);
+	      regcache->cooked_write (argreg++, regval);
 
 	      /* Second word.  */
 	      regval = extract_unsigned_integer (val + 4, 4, byte_order);
@@ -5445,13 +5442,11 @@ mips_o32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		fprintf_unfiltered (gdb_stdlog, " - fpreg=%d val=%s",
 				    float_argreg - freg_offset,
 				    phex (regval, 4));
-	      regcache_cooked_write_unsigned (regcache,
-					      float_argreg++ - freg_offset,
-					      regval);
+	      regcache->cooked_write (float_argreg++ - freg_offset, regval);
 	      if (mips_debug)
 		fprintf_unfiltered (gdb_stdlog, " - reg=%d val=%s",
 				    argreg, phex (regval, 4));
-	      regcache_cooked_write_unsigned (regcache, argreg++, regval);
+	      regcache->cooked_write (argreg++, regval);
 	    }
 	  else
 	    {
@@ -5463,15 +5458,14 @@ mips_o32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	      if (mips_debug)
 		fprintf_unfiltered (gdb_stdlog, " - fpreg=%d val=%s",
 				    float_argreg, phex (regval, len));
-	      regcache_cooked_write_unsigned (regcache,
-					      float_argreg++, regval);
+	      regcache->cooked_write (float_argreg++, regval);
 	      /* Although two FP registers are reserved for each
 		 argument, only one corresponding integer register is
 		 reserved.  */
 	      if (mips_debug)
 		fprintf_unfiltered (gdb_stdlog, " - reg=%d val=%s",
 				    argreg, phex (regval, len));
-	      regcache_cooked_write_unsigned (regcache, argreg++, regval);
+	      regcache->cooked_write (argreg++, regval);
 	    }
 	  /* Reserve space for the FP register.  */
 	  stack_offset += align_up (len, MIPS32_REGSIZE);
@@ -5586,7 +5580,7 @@ mips_o32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		    fprintf_filtered (gdb_stdlog, " - reg=%d val=%s",
 				      argreg,
 				      phex (regval, MIPS32_REGSIZE));
-		  regcache_cooked_write_unsigned (regcache, argreg, regval);
+		  regcache->cooked_write (argreg, regval);
 		  argreg++;
 
 		  /* Prevent subsequent floating point arguments from
@@ -5893,7 +5887,7 @@ mips_o64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 			    "mips_o64_push_dummy_call: "
 			    "struct_return reg=%d %s\n",
 			    argreg, paddress (gdbarch, struct_addr));
-      regcache_cooked_write_unsigned (regcache, argreg++, struct_addr);
+      regcache->cooked_write (argreg++, struct_addr);
       stack_offset += MIPS64_REGSIZE;
     }
 
@@ -5932,11 +5926,11 @@ mips_o64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	  if (mips_debug)
 	    fprintf_unfiltered (gdb_stdlog, " - fpreg=%d val=%s",
 				float_argreg, phex (regval, len));
-	  regcache_cooked_write_unsigned (regcache, float_argreg++, regval);
+	  regcache->cooked_write (float_argreg++, regval);
 	  if (mips_debug)
 	    fprintf_unfiltered (gdb_stdlog, " - reg=%d val=%s",
 				argreg, phex (regval, len));
-	  regcache_cooked_write_unsigned (regcache, argreg, regval);
+	  regcache->cooked_write (argreg, regval);
 	  argreg++;
 	  /* Reserve space for the FP register.  */
 	  stack_offset += align_up (len, MIPS64_REGSIZE);
@@ -6032,7 +6026,7 @@ mips_o64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		    fprintf_filtered (gdb_stdlog, " - reg=%d val=%s",
 				      argreg,
 				      phex (regval, MIPS64_REGSIZE));
-		  regcache_cooked_write_unsigned (regcache, argreg, regval);
+		  regcache->cooked_write (argreg, regval);
 		  argreg++;
 
 		  /* Prevent subsequent floating point arguments from

@@ -294,7 +294,7 @@ amd64_linux_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
 static void
 amd64_linux_write_pc (struct regcache *regcache, CORE_ADDR pc)
 {
-  regcache_cooked_write_unsigned (regcache, AMD64_RIP_REGNUM, pc);
+  regcache->cooked_write (AMD64_RIP_REGNUM, pc);
 
   /* We must be careful with modifying the program counter.  If we
      just interrupted a system call, the kernel might try to restart
@@ -310,7 +310,7 @@ amd64_linux_write_pc (struct regcache *regcache, CORE_ADDR pc)
      when we resume the inferior on return from a function call from
      within GDB.  In all other cases the system call will not be
      restarted.  */
-  regcache_cooked_write_unsigned (regcache, AMD64_LINUX_ORIG_RAX_REGNUM, -1);
+  regcache->cooked_write (AMD64_LINUX_ORIG_RAX_REGNUM, (ULONGEST) -1);
 }
 
 /* Record all registers but IP register for process-record.  */

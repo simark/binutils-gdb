@@ -891,13 +891,13 @@ tic6x_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
   /* Set the return address register to point to the entry point of
      the program, where a breakpoint lies in wait.  */
-  regcache_cooked_write_unsigned (regcache, TIC6X_RA_REGNUM, bp_addr);
+  regcache->cooked_write (TIC6X_RA_REGNUM, bp_addr);
 
   /* The caller must pass an argument in A3 containing a destination address
      for the returned value.  The callee returns the object by copying it to
      the address in A3.  */
   if (struct_return)
-    regcache_cooked_write_unsigned (regcache, 3, struct_addr);
+    regcache->cooked_write (3, struct_addr);
 
   /* Determine the type of this function.  */
   func_type = check_typedef (func_type);
@@ -968,8 +968,7 @@ tic6x_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		  CORE_ADDR regval = extract_unsigned_integer (val, len,
 							       byte_order);
 
-		  regcache_cooked_write_unsigned (regcache, arg_regs[argreg],
-						  regval);
+		  regcache->cooked_write (arg_regs[argreg], regval);
 		}
 	    }
 	  else
@@ -1004,12 +1003,9 @@ tic6x_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		      ULONGEST regval = extract_unsigned_integer (val, len,
 								  byte_order);
 
-		      regcache_cooked_write_unsigned (regcache,
-						      arg_regs[argreg],
-						      regval);
-		      regcache_cooked_write_unsigned (regcache,
-						      arg_regs[argreg] + 1,
-						      regval >> 32);
+		      regcache->cooked_write (arg_regs[argreg], regval);
+		      regcache->cooked_write (arg_regs[argreg] + 1,
+					      regval >> 32);
 		    }
 		}
 	      else
@@ -1027,8 +1023,7 @@ tic6x_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		  addr = sp + references_offset;
 		  write_memory (addr, val, len);
 		  references_offset += align_up (len, 4);
-		  regcache_cooked_write_unsigned (regcache, arg_regs[argreg],
-						  addr);
+		  regcache->cooked_write (arg_regs[argreg], addr);
 		}
 	    }
 	  argreg++;

@@ -929,7 +929,7 @@ i386_displaced_step_fixup (struct gdbarch *gdbarch,
 	     the pc on purpose; this is to match behaviour without
 	     stepping.  */
 
-          regcache_cooked_write_unsigned (regs, I386_EIP_REGNUM, eip);
+          regs->cooked_write (I386_EIP_REGNUM, eip);
 
           if (debug_displaced)
             fprintf_unfiltered (gdb_stdlog,

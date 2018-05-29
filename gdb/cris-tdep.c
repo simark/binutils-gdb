@@ -817,14 +817,14 @@ cris_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   struct stack_item *si = NULL;
 
   /* Push the return address.  */
-  regcache_cooked_write_unsigned (regcache, SRP_REGNUM, bp_addr);
+  regcache->cooked_write (SRP_REGNUM, bp_addr);
 
   /* Are we returning a value using a structure return or a normal value
      return?  struct_addr is the address of the reserved space for the return
      structure to be written on the stack.  */
   if (struct_return)
     {
-      regcache_cooked_write_unsigned (regcache, STR_REGNUM, struct_addr);
+      regcache->cooked_write (STR_REGNUM, struct_addr);
     }
 
   /* Now load as many as possible of the first arguments into registers,
@@ -884,7 +884,7 @@ cris_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
 	  if (argreg <= ARG4_REGNUM)
 	    {
-	      regcache_cooked_write_unsigned (regcache, argreg, sp);
+	      regcache->cooked_write (argreg, sp);
 	      argreg++;
 	    }
 	  else
@@ -912,7 +912,7 @@ cris_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
     }
 
   /* Finally, update the SP register.  */
-  regcache_cooked_write_unsigned (regcache, gdbarch_sp_regnum (gdbarch), sp);
+  regcache->cooked_write (gdbarch_sp_regnum (gdbarch), sp);
 
   return sp;
 }
@@ -1652,15 +1652,15 @@ cris_store_return_value (struct type *type, struct regcache *regcache,
     {
       /* Put the return value in R10.  */
       val = extract_unsigned_integer (valbuf, len, byte_order);
-      regcache_cooked_write_unsigned (regcache, ARG1_REGNUM, val);
+      regcache->cooked_write (ARG1_REGNUM, val);
     }
   else if (len <= 8)
     {
       /* Put the return value in R10 and R11.  */
       val = extract_unsigned_integer (valbuf, 4, byte_order);
-      regcache_cooked_write_unsigned (regcache, ARG1_REGNUM, val);
+      regcache->cooked_write (ARG1_REGNUM, val);
       val = extract_unsigned_integer (valbuf + 4, len - 4, byte_order);
-      regcache_cooked_write_unsigned (regcache, ARG2_REGNUM, val);
+      regcache->cooked_write (ARG2_REGNUM, val);
     }
   else
     error (_("cris_store_return_value: type length too large."));

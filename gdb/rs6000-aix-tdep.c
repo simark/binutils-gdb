@@ -477,8 +477,8 @@ rs6000_return_value (struct gdbarch *gdbarch, struct value *function,
 	{
 	  /* For writing, use unpack_long since that should handle any
 	     required sign extension.  */
-	  regcache_cooked_write_unsigned (regcache, tdep->ppc_gp0_regnum + 3,
-					  unpack_long (valtype, writebuf));
+	  regcache->cooked_write (tdep->ppc_gp0_regnum + 3,
+				  unpack_long (valtype, writebuf));
 	}
 
       return RETURN_VALUE_REGISTER_CONVENTION;

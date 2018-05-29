@@ -631,7 +631,7 @@ msp430_return_value (struct gdbarch *gdbarch,
 	    }
 
 	  u = extract_unsigned_integer (writebuf + offset, size, byte_order);
-	  regcache_cooked_write_unsigned (regcache, argreg, u);
+	  regcache->cooked_write (argreg, u);
 	  valtype_len -= size;
 	  offset += size;
 	  argreg++;
@@ -702,7 +702,7 @@ msp430_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
       if (struct_return)
 	{
 	  if (write_pass)
-	    regcache_cooked_write_unsigned (regcache, arg_reg, struct_addr);
+	    regcache->cooked_write (arg_reg, struct_addr);
 	  arg_reg++;
 	}
 
@@ -768,10 +768,9 @@ msp430_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		    }
 
 		  if (write_pass)
-		    regcache_cooked_write_unsigned (regcache, arg_reg,
-						    extract_unsigned_integer
-						    (arg_bits + offset, size,
-						     byte_order));
+		    regcache->cooked_write (arg_reg, extract_unsigned_integer
+						       (arg_bits + offset, size,
+							byte_order));
 
 		  arg_reg++;
 		}
@@ -801,7 +800,7 @@ msp430_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   }
 
   /* Update the stack pointer.  */
-  regcache_cooked_write_unsigned (regcache, MSP430_SP_REGNUM, sp);
+  regcache->cooked_write (MSP430_SP_REGNUM, sp);
 
   return cfa;
 }

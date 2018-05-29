@@ -1838,7 +1838,7 @@ nios2_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   /* The struct_return pointer occupies the first parameter-passing
      register.  */
   if (struct_return)
-    regcache_cooked_write_unsigned (regcache, argreg++, struct_addr);
+    regcache->cooked_write (argreg++, struct_addr);
 
   /* Now load as many as possible of the first arguments into
      registers, and push the rest onto the stack.  Loop through args
@@ -1865,7 +1865,7 @@ nios2_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	      CORE_ADDR regval = extract_unsigned_integer (val, partial_len,
 							   byte_order);
 
-	      regcache_cooked_write_unsigned (regcache, argreg, regval);
+	      regcache->cooked_write (argreg, regval);
 	      argreg++;
 	    }
 	  else

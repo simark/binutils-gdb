@@ -2191,14 +2191,14 @@ riscv_push_dummy_call (struct gdbarch *gdbarch,
   if (riscv_debug_infcall > 0)
     fprintf_unfiltered (gdb_stdlog, ": writing $ra = %s\n",
 			core_addr_to_string (bp_addr));
-  regcache_cooked_write_unsigned (regcache, RISCV_RA_REGNUM, bp_addr);
+  regcache->cooked_write (RISCV_RA_REGNUM, bp_addr);
 
   /* Finally, update the stack pointer.  */
 
   if (riscv_debug_infcall > 0)
     fprintf_unfiltered (gdb_stdlog, ": writing $sp = %s\n",
 			core_addr_to_string (sp));
-  regcache_cooked_write_unsigned (regcache, RISCV_SP_REGNUM, sp);
+  regcache->cooked_write (RISCV_SP_REGNUM, sp);
 
   return sp;
 }

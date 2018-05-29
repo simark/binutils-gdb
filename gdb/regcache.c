@@ -692,14 +692,6 @@ regcache::cooked_write (int regnum, T val)
 template void regcache::cooked_write<> (int, LONGEST);
 
 void
-regcache_cooked_write_unsigned (struct regcache *regcache, int regnum,
-				ULONGEST val)
-{
-  gdb_assert (regcache != NULL);
-  regcache->cooked_write (regnum, val);
-}
-
-void
 regcache::raw_write (int regnum, const gdb_byte *buf)
 {
 
@@ -1086,8 +1078,7 @@ regcache_write_pc (struct regcache *regcache, CORE_ADDR pc)
   if (gdbarch_write_pc_p (gdbarch))
     gdbarch_write_pc (gdbarch, regcache, pc);
   else if (gdbarch_pc_regnum (gdbarch) >= 0)
-    regcache_cooked_write_unsigned (regcache,
-				    gdbarch_pc_regnum (gdbarch), pc);
+    regcache->cooked_write (gdbarch_pc_regnum (gdbarch), pc);
   else
     internal_error (__FILE__, __LINE__,
 		    _("regcache_write_pc: Unable to update PC"));

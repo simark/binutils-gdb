@@ -900,8 +900,8 @@ ia64_write_pc (struct regcache *regcache, CORE_ADDR new_pc)
 
   new_pc &= ~0xfLL;
 
-  regcache_cooked_write_unsigned (regcache, IA64_PSR_REGNUM, psr_value);
-  regcache_cooked_write_unsigned (regcache, IA64_IP_REGNUM, new_pc);
+  regcache->cooked_write (IA64_PSR_REGNUM, psr_value);
+  regcache->cooked_write (IA64_IP_REGNUM, new_pc);
 }
 
 #define IS_NaT_COLLECTION_ADDR(addr) ((((addr) >> 3) & 0x3f) == 0x3f)
@@ -1116,7 +1116,7 @@ ia64_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
 	unat &= ~unatN_mask;
       else if (unatN_val == 1)
 	unat |= unatN_mask;
-      regcache_cooked_write_unsigned (regcache, IA64_UNAT_REGNUM, unat);
+      regcache->cooked_write (IA64_UNAT_REGNUM, unat);
     }
   else if (IA64_NAT32_REGNUM <= regnum && regnum <= IA64_NAT127_REGNUM)
     {
@@ -1155,8 +1155,7 @@ ia64_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
 		nat_collection |= natN_mask;
 	      else
 		nat_collection &= ~natN_mask;
-	      regcache_cooked_write_unsigned (regcache, IA64_RNAT_REGNUM,
-					      nat_collection);
+	      regcache->cooked_write (IA64_RNAT_REGNUM, nat_collection);
 	    }
 	  else
 	    {
@@ -1199,7 +1198,7 @@ ia64_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
 	pr &= ~prN_mask;
       else if (prN_val == 1)
 	pr |= prN_mask;
-      regcache_cooked_write_unsigned (regcache, IA64_PR_REGNUM, pr);
+      regcache->cooked_write (IA64_PR_REGNUM, pr);
     }
 }
 
@@ -3293,7 +3292,7 @@ ia64_store_return_value (struct type *type, struct regcache *regcache,
 	{
 	  ULONGEST val;
 	  memcpy (&val, (char *)valbuf + offset, reglen);
-	  regcache_cooked_write_unsigned (regcache, regnum, val);
+	  regcache->cooked_write (regnum, val);
 	  offset += reglen;
 	  regnum++;
 	}
@@ -3301,7 +3300,7 @@ ia64_store_return_value (struct type *type, struct regcache *regcache,
       if (m)
 	{
 	  memcpy (&val, (char *)valbuf + offset, m);
-          regcache_cooked_write_unsigned (regcache, regnum, val);
+	  regcache->cooked_write (regnum, val);
 	}
     }
 }
@@ -3651,16 +3650,16 @@ ia64_allocate_new_rse_frame (struct regcache *regcache, ULONGEST bsp, int sof)
   regcache->cooked_read (IA64_CFM_REGNUM, &cfm);
 
   new_bsp = rse_address_add (bsp, sof);
-  regcache_cooked_write_unsigned (regcache, IA64_BSP_REGNUM, new_bsp);
+  regcache->cooked_write (IA64_BSP_REGNUM, new_bsp);
 
   regcache->cooked_read (IA64_PFS_REGNUM, &pfs);
   pfs &= 0xc000000000000000LL;
   pfs |= (cfm & 0xffffffffffffLL);
-  regcache_cooked_write_unsigned (regcache, IA64_PFS_REGNUM, pfs);
+  regcache->cooked_write (IA64_PFS_REGNUM, pfs);
 
   cfm &= 0xc000000000000000LL;
   cfm |= sof;
-  regcache_cooked_write_unsigned (regcache, IA64_CFM_REGNUM, cfm);
+  regcache->cooked_write (IA64_CFM_REGNUM, cfm);
 }
 
 /* The default "store_argument_in_slot" ia64_infcall_ops routine for
@@ -3841,24 +3840,21 @@ ia64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
   /* Store the struct return value in r8 if necessary.  */
   if (struct_return)
-    {
-      regcache_cooked_write_unsigned (regcache, IA64_GR8_REGNUM,
-				      (ULONGEST) struct_addr);
-    }
+    regcache->cooked_write (IA64_GR8_REGNUM, (ULONGEST) struct_addr);
 
   global_pointer = ia64_find_global_pointer (gdbarch, func_addr);
 
   if (global_pointer != 0)
-    regcache_cooked_write_unsigned (regcache, IA64_GR1_REGNUM, global_pointer);
+    regcache->cooked_write (IA64_GR1_REGNUM, global_pointer);
 
   /* The following is not necessary on HP-UX, because we're using
      a dummy code sequence pushed on the stack to make the call, and
      this sequence doesn't need b0 to be set in order for our dummy
      breakpoint to be hit.  Nonetheless, this doesn't interfere, and
      it's needed for other OSes, so we do this unconditionaly.  */
-  regcache_cooked_write_unsigned (regcache, IA64_BR0_REGNUM, bp_addr);
+  regcache->cooked_write (IA64_BR0_REGNUM, bp_addr);
 
-  regcache_cooked_write_unsigned (regcache, sp_regnum, sp);
+  regcache->cooked_write (sp_regnum, sp);
 
   tdep->infcall_ops.set_function_addr (regcache, func_addr);
 

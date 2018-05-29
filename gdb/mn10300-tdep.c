@@ -1229,7 +1229,7 @@ mn10300_push_dummy_call (struct gdbarch *gdbarch,
   if (struct_return)
     {
       regs_used = 1;
-      regcache_cooked_write_unsigned (regcache, E_D0_REGNUM, struct_addr);
+      regcache->cooked_write (E_D0_REGNUM, struct_addr);
     }
   else
     regs_used = 0;
@@ -1256,8 +1256,8 @@ mn10300_push_dummy_call (struct gdbarch *gdbarch,
 
       while (regs_used < 2 && arg_len > 0)
 	{
-	  regcache_cooked_write_unsigned (regcache, regs_used, 
-		  extract_unsigned_integer (val, push_size, byte_order));
+	  regcache->cooked_write
+	    (regs_used, extract_unsigned_integer (val, push_size, byte_order));
 	  val += push_size;
 	  arg_len -= push_size;
 	  regs_used++;
@@ -1283,10 +1283,10 @@ mn10300_push_dummy_call (struct gdbarch *gdbarch,
 
   /* The CPU also writes the return address always into the
      MDR register on "call".  */
-  regcache_cooked_write_unsigned (regcache, E_MDR_REGNUM, bp_addr);
+  regcache->cooked_write (E_MDR_REGNUM, bp_addr);
 
   /* Update $sp.  */
-  regcache_cooked_write_unsigned (regcache, E_SP_REGNUM, sp);
+  regcache->cooked_write (E_SP_REGNUM, sp);
 
   /* On the mn10300, it's possible to move some of the stack adjustment
      and saving of the caller-save registers out of the prologue and
@@ -1310,8 +1310,7 @@ mn10300_push_dummy_call (struct gdbarch *gdbarch,
     CORE_ADDR unwound_sp 
       = mn10300_unwind_sp (gdbarch, create_new_frame (sp, func_addr));
     if (sp != unwound_sp)
-      regcache_cooked_write_unsigned (regcache, E_SP_REGNUM,
-                                      sp - (unwound_sp - sp));
+      regcache->cooked_write (E_SP_REGNUM, sp - (unwound_sp - sp));
   }
 
   return sp;

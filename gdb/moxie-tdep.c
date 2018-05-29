@@ -115,11 +115,11 @@ moxie_store_return_value (struct type *type, struct regcache *regcache,
 
   /* Things always get returned in RET1_REGNUM, RET2_REGNUM.  */
   regval = extract_unsigned_integer (valbuf, len > 4 ? 4 : len, byte_order);
-  regcache_cooked_write_unsigned (regcache, RET1_REGNUM, regval);
+  regcache->cooked_write (RET1_REGNUM, regval);
   if (len > 4)
     {
       regval = extract_unsigned_integer (valbuf + 4, len - 4, byte_order);
-      regcache_cooked_write_unsigned (regcache, RET1_REGNUM + 1, regval);
+      regcache->cooked_write (RET1_REGNUM + 1, regval);
     }
 }
 

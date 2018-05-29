@@ -1152,21 +1152,20 @@ sh_push_dummy_call_fpu (struct gdbarch *gdbarch,
 	      if (gdbarch_byte_order (gdbarch) == BFD_ENDIAN_LITTLE
 	          && TYPE_LENGTH (type) == 2 * reg_size)
 	        {
-		  regcache_cooked_write_unsigned (regcache, flt_argreg + 1,
-						  regval);
+		  regcache->cooked_write (flt_argreg + 1, regval);
 		  val += reg_size;
 		  len -= reg_size;
 		  regval = extract_unsigned_integer (val, reg_size,
 						     byte_order);
 		}
-	      regcache_cooked_write_unsigned (regcache, flt_argreg++, regval);
+	      regcache->cooked_write (flt_argreg++, regval);
 	    }
 	  else if (!treat_as_flt && argreg <= ARGLAST_REGNUM)
 	    {
 	      /* there's room in a register */
 	      reg_size = register_size (gdbarch, argreg);
 	      regval = extract_unsigned_integer (val, reg_size, byte_order);
-	      regcache_cooked_write_unsigned (regcache, argreg++, regval);
+	      regcache->cooked_write (argreg++, regval);
 	    }
 	  /* Store the value one register at a time or in one step on
 	     stack.  */
@@ -1184,16 +1183,14 @@ sh_push_dummy_call_fpu (struct gdbarch *gdbarch,
       else
 	/* Using the gcc ABI, the "struct return pointer" pseudo-argument has
 	   its own dedicated register.  */
-	regcache_cooked_write_unsigned (regcache,
-					STRUCT_RETURN_REGNUM, struct_addr);
+	regcache->cooked_write (STRUCT_RETURN_REGNUM, struct_addr);
     }
 
   /* Store return address.  */
-  regcache_cooked_write_unsigned (regcache, PR_REGNUM, bp_addr);
+  regcache->cooked_write (PR_REGNUM, bp_addr);
 
   /* Update stack pointer.  */
-  regcache_cooked_write_unsigned (regcache,
-				  gdbarch_sp_regnum (gdbarch), sp);
+  regcache->cooked_write (gdbarch_sp_regnum (gdbarch), sp);
 
   return sp;
 }
@@ -1268,7 +1265,7 @@ sh_push_dummy_call_nofpu (struct gdbarch *gdbarch,
 	      /* There's room in a register.  */
 	      reg_size = register_size (gdbarch, argreg);
 	      regval = extract_unsigned_integer (val, reg_size, byte_order);
-	      regcache_cooked_write_unsigned (regcache, argreg++, regval);
+	      regcache->cooked_write (argreg++, regval);
 	    }
 	  /* Store the value reg_size bytes at a time.  This means that things
 	     larger than reg_size bytes may go partly in registers and partly
@@ -1287,16 +1284,14 @@ sh_push_dummy_call_nofpu (struct gdbarch *gdbarch,
       else
 	/* Using the gcc ABI, the "struct return pointer" pseudo-argument has
 	   its own dedicated register.  */
-	regcache_cooked_write_unsigned (regcache,
-					STRUCT_RETURN_REGNUM, struct_addr);
+	regcache->cooked_write (STRUCT_RETURN_REGNUM, struct_addr);
     }
 
   /* Store return address.  */
-  regcache_cooked_write_unsigned (regcache, PR_REGNUM, bp_addr);
+  regcache->cooked_write (PR_REGNUM, bp_addr);
 
   /* Update stack pointer.  */
-  regcache_cooked_write_unsigned (regcache,
-				  gdbarch_sp_regnum (gdbarch), sp);
+  regcache->cooked_write (gdbarch_sp_regnum (gdbarch), sp);
 
   return sp;
 }
@@ -1368,7 +1363,7 @@ sh_store_return_value_nofpu (struct type *type, struct regcache *regcache,
   if (len <= 4)
     {
       val = extract_unsigned_integer (valbuf, len, byte_order);
-      regcache_cooked_write_unsigned (regcache, R0_REGNUM, val);
+      regcache->cooked_write (R0_REGNUM, val);
     }
   else
     {

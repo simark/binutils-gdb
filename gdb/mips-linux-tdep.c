@@ -1271,7 +1271,7 @@ mips_linux_write_pc (struct regcache *regcache, CORE_ADDR pc)
 
   /* Clear the syscall restart flag.  */
   if (mips_linux_restart_reg_p (gdbarch))
-    regcache_cooked_write_unsigned (regcache, MIPS_RESTART_REGNUM, 0);
+    regcache->cooked_write (MIPS_RESTART_REGNUM, 0);
 }
 
 /* Return 1 if MIPS_RESTART_REGNUM is usable.  */

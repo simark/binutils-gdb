@@ -345,14 +345,12 @@ m68hc11_pseudo_register_write (struct gdbarch *gdbarch,
       if (pc >= 0x1000000)
         {
           pc -= 0x1000000;
-          regcache_cooked_write_unsigned (regcache, HARD_PAGE_REGNUM,
-                                          (pc >> 14) & 0x0ff);
+          regcache->cooked_write (HARD_PAGE_REGNUM, (pc >> 14) & 0x0ff);
           pc &= 0x03fff;
-          regcache_cooked_write_unsigned (regcache, HARD_PC_REGNUM,
-                                          pc + 0x8000);
+          regcache->cooked_write (HARD_PC_REGNUM, pc + 0x8000);
         }
       else
-        regcache_cooked_write_unsigned (regcache, HARD_PC_REGNUM, pc);
+        regcache->cooked_write (HARD_PC_REGNUM, pc);
       return;
     }
   
@@ -1169,7 +1167,7 @@ m68hc11_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   first_stack_argnum = 0;
   if (struct_return)
     {
-      regcache_cooked_write_unsigned (regcache, HARD_D_REGNUM, struct_addr);
+      regcache->cooked_write (HARD_D_REGNUM, struct_addr);
     }
   else if (nargs > 0)
     {
@@ -1184,11 +1182,11 @@ m68hc11_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 					TYPE_LENGTH (type), byte_order);
           first_stack_argnum = 1;
 
-          regcache_cooked_write_unsigned (regcache, HARD_D_REGNUM, v);
+          regcache->cooked_write (HARD_D_REGNUM, v);
           if (TYPE_LENGTH (type) > 2)
             {
               v >>= 16;
-              regcache_cooked_write_unsigned (regcache, HARD_X_REGNUM, v);
+              regcache->cooked_write (HARD_X_REGNUM, v);
             }
         }
     }
@@ -1216,10 +1214,10 @@ m68hc11_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
   /* Finally, update the stack pointer...  */
   sp -= STACK_CORRECTION (gdbarch);
-  regcache_cooked_write_unsigned (regcache, HARD_SP_REGNUM, sp);
+  regcache->cooked_write (HARD_SP_REGNUM, sp);
 
   /* ...and fake a frame pointer.  */
-  regcache_cooked_write_unsigned (regcache, SOFT_FP_REGNUM, sp);
+  regcache->cooked_write (SOFT_FP_REGNUM, sp);
 
   /* DWARF2/GCC uses the stack address *before* the function call as a
      frame's CFA.  */

@@ -1229,8 +1229,7 @@ frv_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   argreg = 8;
 
   if (struct_return)
-    regcache_cooked_write_unsigned (regcache, struct_return_regnum,
-                                    struct_addr);
+    regcache->cooked_write (struct_return_regnum, struct_addr);
 
   for (argnum = 0; argnum < nargs; ++argnum)
     {
@@ -1278,7 +1277,7 @@ frv_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	      printf("  Argnum %d data %x -> reg %d\n",
 		     argnum, (int) regval, argreg);
 #endif
-	      regcache_cooked_write_unsigned (regcache, argreg, regval);
+	      regcache->cooked_write (argreg, regval);
 	      ++argreg;
 	    }
 	  else
@@ -1298,18 +1297,17 @@ frv_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
   /* Set the return address.  For the frv, the return breakpoint is
      always at BP_ADDR.  */
-  regcache_cooked_write_unsigned (regcache, lr_regnum, bp_addr);
+  regcache->cooked_write (lr_regnum, bp_addr);
 
   if (abi == FRV_ABI_FDPIC)
     {
       /* Set the GOT register for the FDPIC ABI.  */
-      regcache_cooked_write_unsigned
-	(regcache, first_gpr_regnum + 15,
-         frv_fdpic_find_global_pointer (func_addr));
+      regcache->cooked_write (first_gpr_regnum + 15,
+			      frv_fdpic_find_global_pointer (func_addr));
     }
 
   /* Finally, update the SP register.  */
-  regcache_cooked_write_unsigned (regcache, sp_regnum, sp);
+  regcache->cooked_write (sp_regnum, sp);
 
   return sp;
 }

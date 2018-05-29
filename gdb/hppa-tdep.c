@@ -850,19 +850,19 @@ hppa32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   /* If a structure has to be returned, set up register 28 to hold its
      address.  */
   if (struct_return)
-    regcache_cooked_write_unsigned (regcache, 28, struct_addr);
+    regcache->cooked_write (28, struct_addr);
 
   gp = tdep->find_global_pointer (gdbarch, function);
 
   if (gp != 0)
-    regcache_cooked_write_unsigned (regcache, 19, gp);
+    regcache->cooked_write (19, gp);
 
   /* Set the return address.  */
   if (!gdbarch_push_dummy_code_p (gdbarch))
-    regcache_cooked_write_unsigned (regcache, HPPA_RP_REGNUM, bp_addr);
+    regcache->cooked_write (HPPA_RP_REGNUM, bp_addr);
 
   /* Update the Stack Pointer.  */
-  regcache_cooked_write_unsigned (regcache, HPPA_SP_REGNUM, param_end);
+  regcache->cooked_write (HPPA_SP_REGNUM, param_end);
 
   return param_end;
 }
@@ -1098,7 +1098,7 @@ hppa64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
     }
 
   /* Set up GR29 (%ret1) to hold the argument pointer (ap).  */
-  regcache_cooked_write_unsigned (regcache, HPPA_RET1_REGNUM, sp + 64);
+  regcache->cooked_write (HPPA_RET1_REGNUM, sp + 64);
 
   /* Allocate the outgoing parameter area.  Make sure the outgoing
      parameter area is multiple of 16 bytes in length.  */
@@ -1114,19 +1114,19 @@ hppa64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   /* If a structure has to be returned, set up GR 28 (%ret0) to hold
      its address.  */
   if (struct_return)
-    regcache_cooked_write_unsigned (regcache, HPPA_RET0_REGNUM, struct_addr);
+    regcache->cooked_write (HPPA_RET0_REGNUM, struct_addr);
 
   /* Set up GR27 (%dp) to hold the global pointer (gp).  */
   gp = tdep->find_global_pointer (gdbarch, function);
   if (gp != 0)
-    regcache_cooked_write_unsigned (regcache, HPPA_DP_REGNUM, gp);
+    regcache->cooked_write (HPPA_DP_REGNUM, gp);
 
   /* Set up GR2 (%rp) to hold the return pointer (rp).  */
   if (!gdbarch_push_dummy_code_p (gdbarch))
-    regcache_cooked_write_unsigned (regcache, HPPA_RP_REGNUM, bp_addr);
+    regcache->cooked_write (HPPA_RP_REGNUM, bp_addr);
 
   /* Set up GR30 to hold the stack pointer (sp).  */
-  regcache_cooked_write_unsigned (regcache, HPPA_SP_REGNUM, sp);
+  regcache->cooked_write (HPPA_SP_REGNUM, sp);
 
   return sp;
 }
@@ -1319,8 +1319,8 @@ hppa_read_pc (readable_regcache *regcache)
 void
 hppa_write_pc (struct regcache *regcache, CORE_ADDR pc)
 {
-  regcache_cooked_write_unsigned (regcache, HPPA_PCOQ_HEAD_REGNUM, pc);
-  regcache_cooked_write_unsigned (regcache, HPPA_PCOQ_TAIL_REGNUM, pc + 4);
+  regcache->cooked_write (HPPA_PCOQ_HEAD_REGNUM, pc);
+  regcache->cooked_write (HPPA_PCOQ_TAIL_REGNUM, pc + 4);
 }
 
 /* For the given instruction (INST), return any adjustment it makes

@@ -321,7 +321,7 @@ i386_linux_sigcontext_addr (struct frame_info *this_frame)
 static void
 i386_linux_write_pc (struct regcache *regcache, CORE_ADDR pc)
 {
-  regcache_cooked_write_unsigned (regcache, I386_EIP_REGNUM, pc);
+  regcache->cooked_write (I386_EIP_REGNUM, pc);
 
   /* We must be careful with modifying the program counter.  If we
      just interrupted a system call, the kernel might try to restart
@@ -337,7 +337,7 @@ i386_linux_write_pc (struct regcache *regcache, CORE_ADDR pc)
      when we resume the inferior on return from a function call from
      within GDB.  In all other cases the system call will not be
      restarted.  */
-  regcache_cooked_write_unsigned (regcache, I386_LINUX_ORIG_EAX_REGNUM, -1);
+  regcache->cooked_write (I386_LINUX_ORIG_EAX_REGNUM, (ULONGEST) -1);
 }
 
 /* Record all registers but IP register for process-record.  */

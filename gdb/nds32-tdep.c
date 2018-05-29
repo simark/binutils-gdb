@@ -1506,14 +1506,14 @@ nds32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
   /* Set the return address.  For the NDS32, the return breakpoint is
      always at BP_ADDR.  */
-  regcache_cooked_write_unsigned (regcache, NDS32_LP_REGNUM, bp_addr);
+  regcache->cooked_write (NDS32_LP_REGNUM, bp_addr);
 
   /* If STRUCT_RETURN is true, then the struct return address (in
      STRUCT_ADDR) will consume the first argument-passing register.
      Both adjust the register count and store that value.  */
   if (struct_return)
     {
-      regcache_cooked_write_unsigned (regcache, NDS32_R0_REGNUM, struct_addr);
+      regcache->cooked_write (NDS32_R0_REGNUM, struct_addr);
       goff++;
     }
 
@@ -1644,9 +1644,7 @@ nds32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		{
 		  regval = extract_unsigned_integer (val, (len > 4) ? 4 : len,
 						     byte_order);
-		  regcache_cooked_write_unsigned (regcache,
-						  NDS32_R0_REGNUM + goff,
-						  regval);
+		  regcache->cooked_write (NDS32_R0_REGNUM + goff, regval);
 		  len -= 4;
 		  val += 4;
 		  goff++;
@@ -1660,9 +1658,7 @@ nds32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		{
 		  regval = extract_unsigned_integer (val, (len > 4) ? 4 : len,
 						     byte_order);
-		  regcache_cooked_write_unsigned (regcache,
-						  NDS32_R0_REGNUM + goff,
-						  regval);
+		  regcache->cooked_write (NDS32_R0_REGNUM + goff, regval);
 		  len -= 4;
 		  val += 4;
 		  goff++;
@@ -1709,7 +1705,7 @@ use_stack:
     }
 
   /* Finally, update the SP register.  */
-  regcache_cooked_write_unsigned (regcache, NDS32_SP_REGNUM, sp);
+  regcache->cooked_write (NDS32_SP_REGNUM, sp);
 
   return sp;
 
@@ -1843,7 +1839,7 @@ nds32_store_return_value (struct gdbarch *gdbarch, struct type *type,
       if (len < 4)
 	{
 	  regval = extract_unsigned_integer (valbuf, len, byte_order);
-	  regcache_cooked_write_unsigned (regcache, NDS32_R0_REGNUM, regval);
+	  regcache->cooked_write (NDS32_R0_REGNUM, regval);
 	}
       else if (len == 4)
 	{
@@ -1857,11 +1853,10 @@ nds32_store_return_value (struct gdbarch *gdbarch, struct type *type,
 	  len2 = len - len1;
 
 	  regval = extract_unsigned_integer (valbuf, len1, byte_order);
-	  regcache_cooked_write_unsigned (regcache, NDS32_R0_REGNUM, regval);
+	  regcache->cooked_write (NDS32_R0_REGNUM, regval);
 
 	  regval = extract_unsigned_integer (valbuf + len1, len2, byte_order);
-	  regcache_cooked_write_unsigned (regcache, NDS32_R0_REGNUM + 1,
-					  regval);
+	  regcache->cooked_write (NDS32_R0_REGNUM + 1, regval);
 	}
       else
 	{

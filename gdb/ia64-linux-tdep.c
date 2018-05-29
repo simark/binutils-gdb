@@ -118,7 +118,7 @@ ia64_linux_write_pc (struct regcache *regcache, CORE_ADDR pc)
 
      The clearing of r10 is safe as long as ia64_write_pc() is only
      called as part of setting up an inferior call.  */
-  regcache_cooked_write_unsigned (regcache, IA64_GR10_REGNUM, 0);
+  regcache->cooked_write (IA64_GR10_REGNUM, (ULONGEST) 0);
 }
 
 /* Implementation of `gdbarch_stap_is_single_operand', as defined in

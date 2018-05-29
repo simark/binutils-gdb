@@ -542,7 +542,7 @@ enable_watchpoints_in_psr (ptid_t ptid)
     {
       psr |= IA64_PSR_DB;	/* Set the db bit - this enables hardware
 			           watchpoints and breakpoints.  */
-      regcache_cooked_write_unsigned (regcache, IA64_PSR_REGNUM, psr);
+      regcache->cooked_write (IA64_PSR_REGNUM, psr);
     }
 }
 
@@ -706,7 +706,7 @@ ia64_linux_nat_target::stopped_data_address (CORE_ADDR *addr_p)
   regcache->cooked_read (IA64_PSR_REGNUM, &psr);
   psr |= IA64_PSR_DD;	/* Set the dd bit - this will disable the watchpoint
                            for the next instruction.  */
-  regcache_cooked_write_unsigned (regcache, IA64_PSR_REGNUM, psr);
+  regcache->cooked_write (IA64_PSR_REGNUM, psr);
 
   *addr_p = (CORE_ADDR) siginfo.si_addr;
   return true;

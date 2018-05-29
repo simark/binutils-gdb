@@ -841,8 +841,7 @@ rx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	      || TYPE_LENGTH (return_type) % 4 != 0)
 	    {
 	      if (write_pass)
-		regcache_cooked_write_unsigned (regcache, RX_R15_REGNUM,
-						struct_addr);
+		regcache->cooked_write (RX_R15_REGNUM, struct_addr);
 	    }
 	}
 
@@ -863,8 +862,7 @@ rx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	         possibly other languages) store their return value.
 	         Put this value in R15.  */
 	      if (write_pass)
-		regcache_cooked_write_unsigned (regcache, RX_R15_REGNUM,
-						struct_addr);
+		regcache->cooked_write (RX_R15_REGNUM, struct_addr);
 	    }
 	  else if (TYPE_CODE (arg_type) != TYPE_CODE_STRUCT
 		   && TYPE_CODE (arg_type) != TYPE_CODE_UNION
@@ -881,15 +879,13 @@ rx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		         must be available.  */
 		      if (write_pass)
 			{
-			  regcache_cooked_write_unsigned (regcache, arg_reg,
-							  extract_unsigned_integer
-							  (arg_bits, 4,
-							   byte_order));
-			  regcache_cooked_write_unsigned (regcache,
-							  arg_reg + 1,
-							  extract_unsigned_integer
-							  (arg_bits + 4, 4,
-							   byte_order));
+			  regcache->cooked_write (arg_reg,
+						  extract_unsigned_integer
+						    (arg_bits, 4, byte_order));
+			  regcache->cooked_write (arg_reg + 1,
+						  extract_unsigned_integer
+						    (arg_bits + 4, 4,
+						     byte_order));
 			}
 		      arg_reg += 2;
 		    }
@@ -915,7 +911,7 @@ rx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		      && arg_reg <= RX_R4_REGNUM)
 		    {
 		      if (write_pass)
-			regcache_cooked_write_unsigned (regcache, arg_reg, u);
+			regcache->cooked_write (arg_reg, u);
 		      arg_reg += 1;
 		    }
 		  else
@@ -954,10 +950,9 @@ rx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		      int len = std::min (arg_size, (ULONGEST) 4);
 
 		      if (write_pass)
-			regcache_cooked_write_unsigned (regcache, arg_reg,
-							extract_unsigned_integer
-							(arg_bits, len,
-							 byte_order));
+			regcache->cooked_write (arg_reg,
+						extract_unsigned_integer
+						  (arg_bits, len, byte_order));
 		      arg_bits += len;
 		      arg_size -= len;
 		      arg_reg++;
@@ -984,7 +979,7 @@ rx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   write_memory_unsigned_integer (sp, 4, byte_order, bp_addr);
 
   /* Update the stack pointer.  */
-  regcache_cooked_write_unsigned (regcache, RX_SP_REGNUM, sp);
+  regcache->cooked_write (RX_SP_REGNUM, sp);
 
   return cfa;
 }
@@ -1035,7 +1030,7 @@ rx_return_value (struct gdbarch *gdbarch,
 	  int len = std::min (valtype_len, (ULONGEST) 4);
 
 	  u = extract_unsigned_integer (writebuf + offset, len, byte_order);
-	  regcache_cooked_write_unsigned (regcache, argreg, u);
+	  regcache->cooked_write (argreg, u);
 	  valtype_len -= len;
 	  offset += len;
 	  argreg++;

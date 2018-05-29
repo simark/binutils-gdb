@@ -717,7 +717,7 @@ sparc32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   CORE_ADDR call_pc = (struct_return ? (bp_addr - 12) : (bp_addr - 8));
 
   /* Set return address.  */
-  regcache_cooked_write_unsigned (regcache, SPARC_O7_REGNUM, call_pc);
+  regcache->cooked_write (SPARC_O7_REGNUM, call_pc);
 
   /* Set up function arguments.  */
   sp = sparc32_store_arguments (regcache, nargs, args, sp,
@@ -730,7 +730,7 @@ sparc32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   gdb_assert (sp % 8 == 0);
 
   /* Finally, update the stack pointer.  */
-  regcache_cooked_write_unsigned (regcache, SPARC_SP_REGNUM, sp);
+  regcache->cooked_write (SPARC_SP_REGNUM, sp);
 
   return sp;
 }
@@ -1762,8 +1762,8 @@ sparc_write_pc (struct regcache *regcache, CORE_ADDR pc)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (regcache->arch ());
 
-  regcache_cooked_write_unsigned (regcache, tdep->pc_regnum, pc);
-  regcache_cooked_write_unsigned (regcache, tdep->npc_regnum, pc + 4);
+  regcache->cooked_write (tdep->pc_regnum, pc);
+  regcache->cooked_write (tdep->npc_regnum, pc + 4);
 }
 
 

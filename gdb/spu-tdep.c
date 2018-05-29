@@ -1193,8 +1193,8 @@ spu_write_pc (struct regcache *regcache, CORE_ADDR pc)
   ULONGEST old_pc;
 
   regcache->cooked_read (SPU_PC_REGNUM, &old_pc);
-  regcache_cooked_write_unsigned (regcache, SPU_PC_REGNUM,
-				  (SPUADDR_ADDR (pc) & -4) | (old_pc & 3));
+  regcache->cooked_write (SPU_PC_REGNUM,
+			  (SPUADDR_ADDR (pc) & -4) | (old_pc & 3));
 }
 
 

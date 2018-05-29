@@ -153,7 +153,7 @@ vax_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
   /* Store return value address.  */
   if (struct_return)
-    regcache_cooked_write_unsigned (regcache, VAX_R1_REGNUM, struct_addr);
+    regcache->cooked_write (VAX_R1_REGNUM, struct_addr);
 
   /* Store return address in the PC slot.  */
   sp -= 4;

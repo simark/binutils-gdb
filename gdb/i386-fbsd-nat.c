@@ -84,8 +84,7 @@ i386_fbsd_nat_target::resume (ptid_t ptid, int step, enum gdb_signal signal)
 
       regcache->cooked_read (I386_EFLAGS_REGNUM, &eflags);
       if (eflags & 0x0100)
-	regcache_cooked_write_unsigned (regcache, I386_EFLAGS_REGNUM,
-					eflags & ~0x0100);
+	regcache->cooked_write (I386_EFLAGS_REGNUM, eflags & ~0x0100);
 
       request = PT_CONTINUE;
     }

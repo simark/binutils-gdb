@@ -1296,7 +1296,7 @@ rl78_return_value (struct gdbarch *gdbarch,
 	    write_memory (g10_raddr, &b, 1);
 	  }
 	  else
-	    regcache_cooked_write_unsigned (regcache, argreg, u);
+	    regcache->cooked_write (argreg, u);
 	  valtype_len -= 1;
 	  offset += 1;
 	  argreg++;
@@ -1368,7 +1368,7 @@ rl78_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   write_memory (rl78_make_data_address (sp), buf, 4);
 
   /* Finally, update the stack pointer...  */
-  regcache_cooked_write_unsigned (regcache, RL78_SP_REGNUM, sp);
+  regcache->cooked_write (RL78_SP_REGNUM, sp);
 
   /* DWARF2/GCC uses the stack address *before* the function call as a
      frame's CFA.  */

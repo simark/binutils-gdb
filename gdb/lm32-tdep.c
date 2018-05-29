@@ -242,7 +242,7 @@ lm32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
      store it at is passed as a first hidden parameter.  */
   if (struct_return)
     {
-      regcache_cooked_write_unsigned (regcache, first_arg_reg, struct_addr);
+      regcache->cooked_write (first_arg_reg, struct_addr);
       first_arg_reg++;
       num_arg_regs--;
       sp -= 4;
@@ -281,7 +281,7 @@ lm32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
       /* First num_arg_regs parameters are passed by registers, 
          and the rest are passed on the stack.  */
       if (i < num_arg_regs)
-	regcache_cooked_write_unsigned (regcache, first_arg_reg + i, val);
+	regcache->cooked_write (first_arg_reg + i, val);
       else
 	{
 	  write_memory_unsigned_integer (sp, TYPE_LENGTH (arg_type), byte_order,
@@ -348,14 +348,14 @@ lm32_store_return_value (struct type *type, struct regcache *regcache,
   if (len <= 4)
     {
       val = extract_unsigned_integer (valbuf, len, byte_order);
-      regcache_cooked_write_unsigned (regcache, SIM_LM32_R1_REGNUM, val);
+      regcache->cooked_write (SIM_LM32_R1_REGNUM, val);
     }
   else if (len <= 8)
     {
       val = extract_unsigned_integer (valbuf, 4, byte_order);
-      regcache_cooked_write_unsigned (regcache, SIM_LM32_R1_REGNUM, val);
+      regcache->cooked_write (SIM_LM32_R1_REGNUM, val);
       val = extract_unsigned_integer (valbuf + 4, len - 4, byte_order);
-      regcache_cooked_write_unsigned (regcache, SIM_LM32_R2_REGNUM, val);
+      regcache->cooked_write (SIM_LM32_R2_REGNUM, val);
     }
   else
     error (_("lm32_store_return_value: type length too large."));

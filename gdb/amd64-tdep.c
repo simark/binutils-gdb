@@ -1383,7 +1383,7 @@ fixup_riprel (struct gdbarch *gdbarch, amd64_displaced_step_closure *dsc,
   dsc->insn_buf[modrm_offset] &= ~0xc7;
   dsc->insn_buf[modrm_offset] |= 0x80 + arch_tmp_regno;
 
-  regcache_cooked_write_unsigned (regs, tmp_regno, rip_base);
+  regs->cooked_write (tmp_regno, rip_base);
 
   if (debug_displaced)
     fprintf_unfiltered (gdb_stdlog, "displaced: %%rip-relative addressing used.\n"
@@ -1645,7 +1645,7 @@ amd64_displaced_step_fixup (struct gdbarch *gdbarch,
       if (debug_displaced)
 	fprintf_unfiltered (gdb_stdlog, "displaced: restoring reg %d to %s\n",
 			    dsc->tmp_regno, paddress (gdbarch, dsc->tmp_save));
-      regcache_cooked_write_unsigned (regs, dsc->tmp_regno, dsc->tmp_save);
+      regs->cooked_write (dsc->tmp_regno, dsc->tmp_save);
     }
 
   /* The list of issues to contend with here is taken from
@@ -1703,7 +1703,7 @@ amd64_displaced_step_fixup (struct gdbarch *gdbarch,
 	     the pc on purpose; this is to match behaviour without
 	     stepping.  */
 
-	  regcache_cooked_write_unsigned (regs, AMD64_RIP_REGNUM, rip);
+	  regs->cooked_write (AMD64_RIP_REGNUM, rip);
 
 	  if (debug_displaced)
 	    fprintf_unfiltered (gdb_stdlog,

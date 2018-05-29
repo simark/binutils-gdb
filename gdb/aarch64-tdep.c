@@ -1241,7 +1241,7 @@ pass_in_x (struct gdbarch *gdbarch, struct regcache *regcache,
 			gdbarch_register_name (gdbarch, regnum),
 			phex (regval, X_REGISTER_SIZE));
 	}
-      regcache_cooked_write_unsigned (regcache, regnum, regval);
+      regcache->cooked_write (regnum, regval);
       len -= partial_len;
       buf += partial_len;
       regnum++;
@@ -1430,7 +1430,7 @@ aarch64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
   /* Set the return address.  For the AArch64, the return breakpoint
      is always at BP_ADDR.  */
-  regcache_cooked_write_unsigned (regcache, AARCH64_LR_REGNUM, bp_addr);
+  regcache->cooked_write (AARCH64_LR_REGNUM, bp_addr);
 
   /* If we were given an initial argument for the return slot because
      lang_struct_return was true, lose it.  */
@@ -1450,8 +1450,7 @@ aarch64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 					       AARCH64_STRUCT_RETURN_REGNUM),
 			paddress (gdbarch, struct_addr));
 	}
-      regcache_cooked_write_unsigned (regcache, AARCH64_STRUCT_RETURN_REGNUM,
-				      struct_addr);
+      regcache->cooked_write (AARCH64_STRUCT_RETURN_REGNUM, struct_addr);
     }
 
   for (argnum = 0; argnum < nargs; argnum++)
@@ -1587,7 +1586,7 @@ aarch64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   VEC_free (stack_item_t, info.si);
 
   /* Finally, update the SP register.  */
-  regcache_cooked_write_unsigned (regcache, AARCH64_SP_REGNUM, sp);
+  regcache->cooked_write (AARCH64_SP_REGNUM, sp);
 
   return sp;
 }
@@ -2544,8 +2543,7 @@ aarch64_displaced_step_b (const int is_bl, const int32_t offset,
   if (is_bl)
     {
       /* Update LR.  */
-      regcache_cooked_write_unsigned (dsd->regs, AARCH64_LR_REGNUM,
-				      data->insn_addr + 4);
+      dsd->regs->cooked_write (AARCH64_LR_REGNUM, data->insn_addr + 4);
     }
 }
 
@@ -2650,12 +2648,10 @@ aarch64_displaced_step_adr (const int32_t offset, const unsigned rd,
   if (is_adrp)
     {
       /* Clear the lower 12 bits of the offset to get the 4K page.  */
-      regcache_cooked_write_unsigned (dsd->regs, AARCH64_X0_REGNUM + rd,
-				      address & ~0xfff);
+      dsd->regs->cooked_write (AARCH64_X0_REGNUM + rd, address & ~0xfff);
     }
   else
-      regcache_cooked_write_unsigned (dsd->regs, AARCH64_X0_REGNUM + rd,
-				      address);
+    dsd->regs->cooked_write (AARCH64_X0_REGNUM + rd, address);
 
   dsd->dsc->pc_adjust = 4;
   emit_nop (dsd->insn_buf);
@@ -2674,8 +2670,7 @@ aarch64_displaced_step_ldr_literal (const int32_t offset, const int is_sw,
   CORE_ADDR address = data->insn_addr + offset;
   struct aarch64_memory_operand zero = { MEMORY_OPERAND_OFFSET, 0 };
 
-  regcache_cooked_write_unsigned (dsd->regs, AARCH64_X0_REGNUM + rt,
-				  address);
+  dsd->regs->cooked_write (AARCH64_X0_REGNUM + rt,address);
 
   if (is_sw)
     dsd->insn_count = emit_ldrsw (dsd->insn_buf, aarch64_register (rt, 1),
@@ -2813,8 +2808,7 @@ aarch64_displaced_step_fixup (struct gdbarch *gdbarch,
 	  debug_printf ("displaced: fixup: set PC to %s:%d\n",
 			paddress (gdbarch, from), dsc->pc_adjust);
 	}
-      regcache_cooked_write_unsigned (regs, AARCH64_PC_REGNUM,
-				      from + dsc->pc_adjust);
+      regs->cooked_write (AARCH64_PC_REGNUM, from + dsc->pc_adjust);
     }
 }
 

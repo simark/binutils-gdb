@@ -251,13 +251,13 @@ m32r_store_return_value (struct type *type, struct regcache *regcache,
   int len = TYPE_LENGTH (type);
 
   regval = extract_unsigned_integer (valbuf, len > 4 ? 4 : len, byte_order);
-  regcache_cooked_write_unsigned (regcache, RET1_REGNUM, regval);
+  regcache->cooked_write (RET1_REGNUM, regval);
 
   if (len > 4)
     {
       regval = extract_unsigned_integer (valbuf + 4,
 					 len - 4, byte_order);
-      regcache_cooked_write_unsigned (regcache, RET1_REGNUM + 1, regval);
+      regcache->cooked_write (RET1_REGNUM + 1, regval);
     }
 }
 
@@ -678,14 +678,14 @@ m32r_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
   /* Set the return address.  For the m32r, the return breakpoint is
      always at BP_ADDR.  */
-  regcache_cooked_write_unsigned (regcache, LR_REGNUM, bp_addr);
+  regcache->cooked_write (LR_REGNUM, bp_addr);
 
   /* If STRUCT_RETURN is true, then the struct return address (in
      STRUCT_ADDR) will consume the first argument-passing register.
      Both adjust the register count and store that value.  */
   if (struct_return)
     {
-      regcache_cooked_write_unsigned (regcache, argreg, struct_addr);
+      regcache->cooked_write (argreg, struct_addr);
       argreg++;
     }
 
@@ -737,7 +737,7 @@ m32r_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		extract_unsigned_integer (val,
 					  register_size (gdbarch, argreg),
 					  byte_order);
-	      regcache_cooked_write_unsigned (regcache, argreg++, regval);
+	      regcache->cooked_write (argreg++, regval);
 	    }
 
 	  /* Store the value 4 bytes at a time.  This means that things
@@ -749,7 +749,7 @@ m32r_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
     }
 
   /* Finally, update the SP register.  */
-  regcache_cooked_write_unsigned (regcache, M32R_SP_REGNUM, sp);
+  regcache->cooked_write (M32R_SP_REGNUM, sp);
 
   return sp;
 }

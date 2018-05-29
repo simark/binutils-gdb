@@ -1040,7 +1040,7 @@ v850_push_dummy_call (struct gdbarch *gdbarch,
   argreg = E_ARG0_REGNUM;
   /* The struct_return pointer occupies the first parameter register.  */
   if (struct_return)
-    regcache_cooked_write_unsigned (regcache, argreg++, struct_addr);
+    regcache->cooked_write (argreg++, struct_addr);
 
   /* Now load as many as possible of the first arguments into
      registers, and push the rest onto the stack.  There are 16 bytes
@@ -1081,7 +1081,7 @@ v850_push_dummy_call (struct gdbarch *gdbarch,
 	    CORE_ADDR regval;
 
 	    regval = extract_unsigned_integer (val, v850_reg_size, byte_order);
-	    regcache_cooked_write_unsigned (regcache, argreg, regval);
+	    regcache->cooked_write (argreg, regval);
 
 	    len -= v850_reg_size;
 	    val += v850_reg_size;
@@ -1099,10 +1099,10 @@ v850_push_dummy_call (struct gdbarch *gdbarch,
     }
 
   /* Store return address.  */
-  regcache_cooked_write_unsigned (regcache, E_LP_REGNUM, bp_addr);
+  regcache->cooked_write (E_LP_REGNUM, bp_addr);
 
   /* Update stack pointer.  */
-  regcache_cooked_write_unsigned (regcache, E_SP_REGNUM, sp);
+  regcache->cooked_write (E_SP_REGNUM, sp);
 
   return sp;
 }
@@ -1143,9 +1143,8 @@ v850_store_return_value (struct type *type, struct regcache *regcache,
   int len = TYPE_LENGTH (type);
 
   if (len <= v850_reg_size)
-      regcache_cooked_write_unsigned
-	(regcache, E_V0_REGNUM,
-	 extract_unsigned_integer (valbuf, len, byte_order));
+    regcache->cooked_write
+      (E_V0_REGNUM, extract_unsigned_integer (valbuf, len, byte_order));
   else if (len <= 2 * v850_reg_size)
     {
       int i, regnum = E_V0_REGNUM;

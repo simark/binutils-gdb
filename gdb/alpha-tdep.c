@@ -603,7 +603,7 @@ alpha_store_return_value (struct type *valtype, struct regcache *regcache,
       if (TYPE_LENGTH (valtype) == 4)
 	valtype = builtin_type (gdbarch)->builtin_int32;
       l = unpack_long (valtype, valbuf);
-      regcache_cooked_write_unsigned (regcache, ALPHA_V0_REGNUM, l);
+      regcache->cooked_write (ALPHA_V0_REGNUM, l);
       break;
     }
 }

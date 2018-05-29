@@ -378,8 +378,7 @@ avr_read_pc (readable_regcache *regcache)
 static void
 avr_write_pc (struct regcache *regcache, CORE_ADDR val)
 {
-  regcache_cooked_write_unsigned (regcache, AVR_PC_REGNUM,
-                                  avr_convert_iaddr_to_raw (val));
+  regcache->cooked_write (AVR_PC_REGNUM, avr_convert_iaddr_to_raw (val));
 }
 
 static enum register_status
@@ -1274,10 +1273,8 @@ avr_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
   if (struct_return)
     {
-      regcache_cooked_write_unsigned
-        (regcache, regnum--, (struct_addr >> 8) & 0xff);
-      regcache_cooked_write_unsigned
-        (regcache, regnum--, struct_addr & 0xff);
+      regcache->cooked_write (regnum--, (struct_addr >> 8) & 0xff);
+      regcache->cooked_write (regnum--, struct_addr & 0xff);
       /* SP being post decremented, we need to reserve one byte so that the
          return address won't overwrite the result (or vice-versa).  */
       if (sp == struct_addr)
@@ -1309,8 +1306,7 @@ avr_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
           /* Write MSB of argument into register and subsequent bytes in
              decreasing register numbers.  */
           for (j = 0; j < len; j++)
-            regcache_cooked_write_unsigned
-              (regcache, regnum--, contents[len - j - 1]);
+            regcache->cooked_write (regnum--, (ULONGEST) contents[len - j - 1]);
         }
       /* No registers available, push the args onto the stack.  */
       else
@@ -1343,8 +1339,7 @@ avr_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   write_memory (sp + 1, buf, call_length);
 
   /* Finally, update the SP register.  */
-  regcache_cooked_write_unsigned (regcache, AVR_SP_REGNUM,
-				  avr_convert_saddr_to_raw (sp));
+  regcache->cooked_write (AVR_SP_REGNUM, avr_convert_saddr_to_raw (sp));
 
   /* Return SP value for the dummy frame, where the return address hasn't been
      pushed.  */

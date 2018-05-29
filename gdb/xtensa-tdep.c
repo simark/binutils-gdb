@@ -443,7 +443,7 @@ xtensa_register_write_masked (struct regcache *regcache,
 	  m = 0xffffffff >> (32 - size) << start;
 	  regval <<= start;
 	  regval = (regval & m) | (old_val & ~m);
-	  regcache_cooked_write_unsigned (regcache, r, regval);
+	  regcache->cooked_write (r, (ULONGEST) regval);
 	}
     }
 }
@@ -1913,11 +1913,8 @@ xtensa_push_dummy_call (struct gdbarch *gdbarch,
       ra = (bp_addr & 0x3fffffff) | 0x40000000;
       regcache->raw_read (gdbarch_ps_regnum (gdbarch), &val);
       ps = (unsigned long) val & ~0x00030000;
-      regcache_cooked_write_unsigned
-	(regcache, gdbarch_tdep (gdbarch)->a0_base + 4, ra);
-      regcache_cooked_write_unsigned (regcache,
-				      gdbarch_ps_regnum (gdbarch),
-				      ps | 0x00010000);
+      regcache->cooked_write (gdbarch_tdep (gdbarch)->a0_base + 4, ra);
+      regcache->cooked_write (gdbarch_ps_regnum (gdbarch), ps | 0x00010000);
 
       /* All the registers have been saved.  After executing
 	 dummy call, they all will be restored.  So it's safe
@@ -1925,20 +1922,18 @@ xtensa_push_dummy_call (struct gdbarch *gdbarch,
 	 is only one register window corresponding to WINDOWEBASE.  */
 
       regcache->raw_read (gdbarch_tdep (gdbarch)->wb_regnum, buf);
-      regcache_cooked_write_unsigned
-	(regcache, gdbarch_tdep (gdbarch)->ws_regnum,
-	 1 << extract_unsigned_integer (buf, 4, byte_order));
+      regcache->cooked_write
+	(gdbarch_tdep (gdbarch)->ws_regnum,
+	 (ULONGEST) 1 << extract_unsigned_integer (buf, 4, byte_order));
     }
   else
     {
       /* Simulate CALL0: write RA into A0 register.  */
-      regcache_cooked_write_unsigned
-	(regcache, gdbarch_tdep (gdbarch)->a0_base, bp_addr);
+      regcache->cooked_write (gdbarch_tdep (gdbarch)->a0_base, bp_addr);
     }
 
   /* Set new stack pointer and return it.  */
-  regcache_cooked_write_unsigned (regcache,
-				  gdbarch_tdep (gdbarch)->a0_base + 1, sp);
+  regcache->cooked_write (gdbarch_tdep (gdbarch)->a0_base + 1, sp);
   /* Make dummy frame ID unique by adding a constant.  */
   return sp + SP_ALIGNMENT;
 }

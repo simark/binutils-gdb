@@ -570,7 +570,7 @@ ppc_sysv_abi_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	    cr |= 0x02000000;
 	  else
 	    cr &= ~0x02000000;
-	  regcache_cooked_write_unsigned (regcache, tdep->ppc_cr_regnum, cr);
+	  regcache->cooked_write (tdep->ppc_cr_regnum, cr);
 	}
     }
 
@@ -791,8 +791,8 @@ do_ppc_sysv_return_value (struct gdbarch *gdbarch, struct type *func_type,
 	{
 	  /* Some sort of integer stored in r3.  Use unpack_long since
 	     that should handle any required sign extension.  */
-	  regcache_cooked_write_unsigned (regcache, tdep->ppc_gp0_regnum + 3,
-					  unpack_long (type, writebuf));
+	  regcache->cooked_write (tdep->ppc_gp0_regnum + 3,
+				  unpack_long (type, writebuf));
 	}
       return RETURN_VALUE_REGISTER_CONVENTION;
     }
@@ -837,7 +837,7 @@ do_ppc_sysv_return_value (struct gdbarch *gdbarch, struct type *func_type,
 	      if (writebuf != NULL)
 		{
 		  regval = unpack_long (eltype, writebuf + offset);
-		  regcache_cooked_write_unsigned (regcache, regnum, regval);
+		  regcache->cooked_write (regnum, regval);
 		}
 	      if (readbuf != NULL)
 		{
@@ -1705,16 +1705,14 @@ ppc64_sysv_abi_push_dummy_call (struct gdbarch *gdbarch,
 	    read_memory_unsigned_integer (desc_addr + tdep->wordsize,
 					  tdep->wordsize, byte_order);
 
-	  regcache_cooked_write_unsigned (regcache,
-					  tdep->ppc_gp0_regnum + 2, toc);
+	  regcache->cooked_write (tdep->ppc_gp0_regnum + 2, toc);
 	}
     }
 
   /* In the ELFv2 ABI, we need to pass the target address in r12 since
      we may be calling a global entry point.  */
   if (tdep->elf_abi == POWERPC_ELF_V2)
-    regcache_cooked_write_unsigned (regcache,
-				    tdep->ppc_gp0_regnum + 12, func_addr);
+    regcache->cooked_write (tdep->ppc_gp0_regnum + 12, func_addr);
 
   return sp;
 }
@@ -1746,8 +1744,7 @@ ppc64_sysv_abi_return_value_base (struct gdbarch *gdbarch, struct type *valtype,
       if (writebuf != NULL)
 	{
 	  /* Be careful to sign extend the value.  */
-	  regcache_cooked_write_unsigned (regcache, regnum,
-					  unpack_long (valtype, writebuf));
+	  regcache->cooked_write (regnum, unpack_long (valtype, writebuf));
 	}
       if (readbuf != NULL)
 	{

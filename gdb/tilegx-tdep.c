@@ -294,7 +294,7 @@ tilegx_push_dummy_call (struct gdbarch *gdbarch,
   /* If struct_return is 1, then the struct return address will
      consume one argument-passing register.  */
   if (struct_return)
-    regcache_cooked_write_unsigned (regcache, argreg++, struct_addr);
+    regcache->cooked_write (argreg++, struct_addr);
 
   /* Arguments are passed in R0 - R9, and as soon as an argument
      will not fit completely in the remaining registers, then it,
@@ -316,7 +316,7 @@ tilegx_push_dummy_call (struct gdbarch *gdbarch,
 	  int n = (typelen - j == 1) ? 1 : tilegx_reg_size;
 	  ULONGEST w = extract_unsigned_integer (val + j, n, byte_order);
 
-	  regcache_cooked_write_unsigned (regcache, argreg++, w);
+	  regcache->cooked_write (argreg++, w);
 	}
     }
 
@@ -345,11 +345,11 @@ tilegx_push_dummy_call (struct gdbarch *gdbarch,
   write_memory (stack_dest, four_zero_words, 16);
 
   /* Update stack pointer.  */
-  regcache_cooked_write_unsigned (regcache, TILEGX_SP_REGNUM, stack_dest);
+  regcache->cooked_write (TILEGX_SP_REGNUM, stack_dest);
 
   /* Set the return address register to point to the entry point of
      the program, where a breakpoint lies in wait.  */
-  regcache_cooked_write_unsigned (regcache, TILEGX_LR_REGNUM, bp_addr);
+  regcache->cooked_write (TILEGX_LR_REGNUM, bp_addr);
 
   return stack_dest;
 }
@@ -817,7 +817,7 @@ tilegx_get_longjmp_target (struct frame_info *frame, CORE_ADDR *pc)
 static void
 tilegx_write_pc (struct regcache *regcache, CORE_ADDR pc)
 {
-  regcache_cooked_write_unsigned (regcache, TILEGX_PC_REGNUM, pc);
+  regcache->cooked_write (TILEGX_PC_REGNUM, pc);
 
   /* We must be careful with modifying the program counter.  If we
      just interrupted a system call, the kernel might try to restart
@@ -833,8 +833,8 @@ tilegx_write_pc (struct regcache *regcache, CORE_ADDR pc)
      when we resume the inferior on return from a function call from
      within GDB.  In all other cases the system call will not be
      restarted.  */
-  regcache_cooked_write_unsigned (regcache, TILEGX_FAULTNUM_REGNUM,
-                                  INT_SWINT_1_SIGRETURN);
+  regcache->cooked_write (TILEGX_FAULTNUM_REGNUM,
+			  (ULONGEST) INT_SWINT_1_SIGRETURN);
 }
 
 /* 64-bit pattern for a { bpt ; nop } bundle.  */

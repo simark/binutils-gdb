@@ -241,7 +241,7 @@ xstormy16_push_dummy_call (struct gdbarch *gdbarch,
      consume one argument-passing register.  */
   if (struct_return)
     {
-      regcache_cooked_write_unsigned (regcache, E_PTR_RET_REGNUM, struct_addr);
+      regcache->cooked_write (E_PTR_RET_REGNUM, struct_addr);
       argreg++;
     }
 
@@ -264,7 +264,7 @@ xstormy16_push_dummy_call (struct gdbarch *gdbarch,
 	  int size = (typelen - j == 1) ? 1 : xstormy16_reg_size;
 
 	  regval = extract_unsigned_integer (val + j, size, byte_order);
-	  regcache_cooked_write_unsigned (regcache, argreg++, regval);
+	  regcache->cooked_write (argreg++, regval);
 	}
     }
 
@@ -293,7 +293,7 @@ xstormy16_push_dummy_call (struct gdbarch *gdbarch,
   stack_dest += xstormy16_pc_size;
 
   /* Update stack pointer.  */
-  regcache_cooked_write_unsigned (regcache, E_SP_REGNUM, stack_dest);
+  regcache->cooked_write (E_SP_REGNUM, stack_dest);
 
   /* Return the new stack pointer minus the return address slot since
      that's what DWARF2/GCC uses as the frame's CFA.  */

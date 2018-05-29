@@ -490,8 +490,7 @@ s390_displaced_step_fixup (struct gdbarch *gdbarch,
       || is_rx (insn, op_bas, &r1, &d2, &x2, &b2))
     {
       /* Recompute saved return address in R1.  */
-      regcache_cooked_write_unsigned (regs, S390_R0_REGNUM + r1,
-				      amode | (from + insnlen));
+      regs->cooked_write (S390_R0_REGNUM + r1, amode | (from + insnlen));
     }
 
   /* Handle absolute branch instructions.  */
@@ -518,8 +517,7 @@ s390_displaced_step_fixup (struct gdbarch *gdbarch,
       /* Update PC.  */
       regcache_write_pc (regs, pc - to + from);
       /* Recompute saved return address in R1.  */
-      regcache_cooked_write_unsigned (regs, S390_R0_REGNUM + r1,
-				      amode | (from + insnlen));
+      regs->cooked_write (S390_R0_REGNUM + r1, amode | (from + insnlen));
     }
 
   /* Handle LOAD ADDRESS RELATIVE LONG.  */
@@ -528,8 +526,7 @@ s390_displaced_step_fixup (struct gdbarch *gdbarch,
       /* Update PC.  */
       regcache_write_pc (regs, from + insnlen);
       /* Recompute output address in R1.  */
-      regcache_cooked_write_unsigned (regs, S390_R0_REGNUM + r1,
-				      amode | (from + i2 * 2));
+      regs->cooked_write (S390_R0_REGNUM + r1, amode | (from + i2 * 2));
     }
 
   /* If we executed a breakpoint instruction, point PC right back at it.  */
@@ -1776,9 +1773,7 @@ s390_handle_arg (struct s390_arg_state *as, struct value *arg,
       if (as->gr <= 6)
 	{
 	  if (write_mode)
-	    regcache_cooked_write_unsigned (as->regcache,
-					    S390_R0_REGNUM + as->gr,
-					    val);
+	    as->regcache->cooked_write (S390_R0_REGNUM + as->gr, val);
 	  as->gr++;
 	}
       else
@@ -1825,9 +1820,7 @@ s390_handle_arg (struct s390_arg_state *as, struct value *arg,
       if (as->gr <= 6)
 	{
 	  if (write_mode)
-	    regcache_cooked_write_unsigned (as->regcache,
-					    S390_R0_REGNUM + as->gr,
-					    as->copy);
+	    as->regcache->cooked_write (S390_R0_REGNUM + as->gr, as->copy);
 	  as->gr++;
 	}
       else
@@ -1903,7 +1896,7 @@ s390_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
   /* Pass the structure return address in general register 2.  */
   if (struct_return)
-    regcache_cooked_write_unsigned (regcache, S390_R2_REGNUM, struct_addr);
+    regcache->cooked_write (S390_R2_REGNUM, struct_addr);
 
   /* Initialize arg_state for "write mode".  */
   arg_state = arg_prep;
@@ -1922,10 +1915,10 @@ s390_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
       regcache->cooked_read (S390_PSWA_REGNUM, &pswa);
       bp_addr = (bp_addr & 0x7fffffff) | (pswa & 0x80000000);
     }
-  regcache_cooked_write_unsigned (regcache, S390_RETADDR_REGNUM, bp_addr);
+  regcache->cooked_write (S390_RETADDR_REGNUM, bp_addr);
 
   /* Store updated stack pointer.  */
-  regcache_cooked_write_unsigned (regcache, S390_SP_REGNUM, new_sp);
+  regcache->cooked_write (S390_SP_REGNUM, new_sp);
 
   /* We need to return the 'stack part' of the frame ID,
      which is actually the top of the register save area.  */
@@ -1994,9 +1987,8 @@ s390_register_return_value (struct gdbarch *gdbarch, struct type *type,
 	regcache->cooked_read_part (S390_R2_REGNUM, word_size - length, length,
 				    out);
       else if (TYPE_UNSIGNED (type))
-	regcache_cooked_write_unsigned
-	  (regcache, S390_R2_REGNUM,
-	   extract_unsigned_integer (in, length, byte_order));
+	regcache->cooked_write
+	  (S390_R2_REGNUM, extract_unsigned_integer (in, length, byte_order));
       else
 	regcache->cooked_write
 	  (S390_R2_REGNUM, extract_signed_integer (in, length, byte_order));

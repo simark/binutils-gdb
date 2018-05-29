@@ -719,7 +719,7 @@ iq2000_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
     {
       /* A function that returns a struct will consume one argreg to do so.
        */
-      regcache_cooked_write_unsigned (regcache, argreg++, struct_addr);
+      regcache->cooked_write (argreg++, struct_addr);
     }
 
   for (i = 0; i < nargs; i++)
@@ -775,7 +775,7 @@ iq2000_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	  struct_ptr -= ((typelen + 7) & ~7);
 	  write_memory (struct_ptr, val, typelen);
 	  if (argreg <= E_LAST_ARGREG)
-	    regcache_cooked_write_unsigned (regcache, argreg++, struct_ptr);
+	    regcache->cooked_write (argreg++, struct_ptr);
 	  else
 	    {
 	      store_unsigned_integer (buf, 4, byte_order, struct_ptr);
@@ -786,10 +786,10 @@ iq2000_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
     }
 
   /* Store return address.  */
-  regcache_cooked_write_unsigned (regcache, E_LR_REGNUM, bp_addr);
+  regcache->cooked_write (E_LR_REGNUM, bp_addr);
 
   /* Update stack pointer.  */
-  regcache_cooked_write_unsigned (regcache, E_SP_REGNUM, sp);
+  regcache->cooked_write (E_SP_REGNUM, sp);
 
   /* And that should do it.  Return the new stack pointer.  */
   return sp;

@@ -81,7 +81,7 @@ s390_write_pc (struct regcache *regcache, CORE_ADDR pc)
   struct gdbarch *gdbarch = regcache->arch ();
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
-  regcache_cooked_write_unsigned (regcache, tdep->pc_regnum, pc);
+  regcache->cooked_write (tdep->pc_regnum, pc);
 
   /* Set special SYSTEM_CALL register to 0 to prevent the kernel from
      messing with the PC we just installed, if we happen to be within
@@ -91,7 +91,7 @@ s390_write_pc (struct regcache *regcache, CORE_ADDR pc)
      ORIG_R2 registers will be automatically restored, and the kernel
      continues to restart the system call at this point.  */
   if (register_size (gdbarch, S390_SYSTEM_CALL_REGNUM) > 0)
-    regcache_cooked_write_unsigned (regcache, S390_SYSTEM_CALL_REGNUM, 0);
+    regcache->cooked_write (S390_SYSTEM_CALL_REGNUM, 0);
 }
 
 /* Maps for register sets.  */

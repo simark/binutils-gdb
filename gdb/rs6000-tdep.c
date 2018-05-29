@@ -927,9 +927,7 @@ ppc_displaced_step_fixup (struct gdbarch *gdbarch,
 		   paddress (gdbarch, insn), paddress (gdbarch, current_pc),
 		   paddress (gdbarch, from + offset));
 
-	      regcache_cooked_write_unsigned (regs,
-					      gdbarch_pc_regnum (gdbarch),
-					      from + offset);
+	      regs->cooked_write (gdbarch_pc_regnum (gdbarch), from + offset);
 	    }
 	}
       else
@@ -939,8 +937,8 @@ ppc_displaced_step_fixup (struct gdbarch *gdbarch,
 	     instruction), so it's safe to assume that an offset of 4 means we
 	     did not take the branch.  */
 	  if (offset == PPC_INSN_SIZE)
-	    regcache_cooked_write_unsigned (regs, gdbarch_pc_regnum (gdbarch),
-					    from + PPC_INSN_SIZE);
+	    regs->cooked_write (gdbarch_pc_regnum (gdbarch),
+				from + PPC_INSN_SIZE);
 	}
 
       /* Check for LK bit indicating whether we should set the link
@@ -949,9 +947,8 @@ ppc_displaced_step_fixup (struct gdbarch *gdbarch,
       if (insn & 0x1)
 	{
 	  /* Link register needs to be set to the next instruction's PC.  */
-	  regcache_cooked_write_unsigned (regs,
-					  gdbarch_tdep (gdbarch)->ppc_lr_regnum,
-					  from + PPC_INSN_SIZE);
+	  regs->cooked_write (gdbarch_tdep (gdbarch)->ppc_lr_regnum,
+			      from + PPC_INSN_SIZE);
 	  if (debug_displaced)
 		fprintf_unfiltered (gdb_stdlog,
 				    "displaced: (ppc) adjusted LR to %s\n",
@@ -962,11 +959,10 @@ ppc_displaced_step_fixup (struct gdbarch *gdbarch,
   /* Check for breakpoints in the inferior.  If we've found one, place the PC
      right at the breakpoint instruction.  */
   else if ((insn & BP_MASK) == BP_INSN)
-    regcache_cooked_write_unsigned (regs, gdbarch_pc_regnum (gdbarch), from);
+    regs->cooked_write (gdbarch_pc_regnum (gdbarch), from);
   else
   /* Handle any other instructions that do not fit in the categories above.  */
-    regcache_cooked_write_unsigned (regs, gdbarch_pc_regnum (gdbarch),
-				    from + offset);
+    regs->cooked_write (gdbarch_pc_regnum (gdbarch), from + offset);
 }
 
 /* Always use hardware single-stepping to execute the

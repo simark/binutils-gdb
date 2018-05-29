@@ -535,25 +535,25 @@ bfin_push_dummy_call (struct gdbarch *gdbarch,
   /* Initialize R0, R1, and R2 to the first 3 words of parameters.  */
 
   reg_r0 = read_memory_integer (sp, 4, byte_order);
-  regcache_cooked_write_unsigned (regcache, BFIN_R0_REGNUM, reg_r0);
+  regcache->cooked_write (BFIN_R0_REGNUM, reg_r0);
   reg_r1 = read_memory_integer (sp + 4, 4, byte_order);
-  regcache_cooked_write_unsigned (regcache, BFIN_R1_REGNUM, reg_r1);
+  regcache->cooked_write (BFIN_R1_REGNUM, reg_r1);
   reg_r2 = read_memory_integer (sp + 8, 4, byte_order);
-  regcache_cooked_write_unsigned (regcache, BFIN_R2_REGNUM, reg_r2);
+  regcache->cooked_write (BFIN_R2_REGNUM, reg_r2);
 
   /* Store struct value address.  */
 
   if (struct_return)
-    regcache_cooked_write_unsigned (regcache, BFIN_P0_REGNUM, struct_addr);
+    regcache->cooked_write (BFIN_P0_REGNUM, struct_addr);
 
   /* Set the dummy return value to bp_addr.
      A dummy breakpoint will be setup to execute the call.  */
 
-  regcache_cooked_write_unsigned (regcache, BFIN_RETS_REGNUM, bp_addr);
+  regcache->cooked_write (BFIN_RETS_REGNUM, bp_addr);
 
   /* Finally, update the stack pointer.  */
 
-  regcache_cooked_write_unsigned (regcache, BFIN_SP_REGNUM, sp);
+  regcache->cooked_write (BFIN_SP_REGNUM, sp);
 
   return sp;
 }

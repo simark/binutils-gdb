@@ -521,7 +521,7 @@ score_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   CORE_ADDR addr = 0;
 
   /* Step 1, Save RA.  */
-  regcache_cooked_write_unsigned (regcache, SCORE_RA_REGNUM, bp_addr);
+  regcache->cooked_write (SCORE_RA_REGNUM, bp_addr);
 
   /* Step 2, Make space on the stack for the args.  */
   struct_addr = align_down (struct_addr, 16);
@@ -537,7 +537,7 @@ score_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
      r4 and increase the stack_offset by 4.  */
   if (struct_return)
     {
-      regcache_cooked_write_unsigned (regcache, argreg++, struct_addr);
+      regcache->cooked_write (argreg++, struct_addr);
       stack_offset += SCORE_REGSIZE;
     }
 
@@ -605,7 +605,7 @@ score_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
           if (argreg <= SCORE_LAST_ARG_REGNUM)
             {
-              regcache_cooked_write_unsigned (regcache, argreg++, regval);
+              regcache->cooked_write (argreg++, regval);
               if (arglen > SCORE_REGSIZE && arglen < SCORE_REGSIZE * 2)
                 arg_last_part_p = 1;
             }
@@ -617,7 +617,7 @@ score_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
     }
 
   /* Step 5, Save SP.  */
-  regcache_cooked_write_unsigned (regcache, SCORE_SP_REGNUM, sp);
+  regcache->cooked_write (SCORE_SP_REGNUM, sp);
 
   return sp;
 }

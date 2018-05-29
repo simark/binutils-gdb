@@ -1478,7 +1478,7 @@ sparc64_store_arguments (struct regcache *regcache, int nargs,
 
   if (struct_return)
     {
-      regcache_cooked_write_unsigned (regcache, SPARC_O0_REGNUM, struct_addr);
+      regcache->cooked_write (SPARC_O0_REGNUM, struct_addr);
       element++;
     }
 
@@ -1623,7 +1623,7 @@ sparc64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 			 int struct_return, CORE_ADDR struct_addr)
 {
   /* Set return address.  */
-  regcache_cooked_write_unsigned (regcache, SPARC_O7_REGNUM, bp_addr - 8);
+  regcache->cooked_write (SPARC_O7_REGNUM, bp_addr - 8);
 
   /* Set up function arguments.  */
   sp = sparc64_store_arguments (regcache, nargs, args, sp,
@@ -1636,7 +1636,7 @@ sparc64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   gdb_assert ((sp + BIAS) % 16 == 0);
 
   /* Finally, update the stack pointer.  */
-  regcache_cooked_write_unsigned (regcache, SPARC_SP_REGNUM, sp);
+  regcache->cooked_write (SPARC_SP_REGNUM, sp);
 
   return sp + BIAS;
 }

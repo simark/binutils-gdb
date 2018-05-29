@@ -2083,7 +2083,7 @@ m32c_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	  ULONGEST u = extract_unsigned_integer (arg_bits, arg_size,
 						 byte_order);
 	  struct m32c_reg *reg = (mach == bfd_mach_m16c) ? tdep->r1 : tdep->r0;
-	  regcache_cooked_write_unsigned (regcache, reg->num, u);
+	  regcache->cooked_write (reg->num, u);
 	}
 
       /* Can it go in r2?  */
@@ -2116,7 +2116,7 @@ m32c_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 				 bp_addr);
 
   /* Update the stack pointer.  */
-  regcache_cooked_write_unsigned (regcache, tdep->sp->num, sp);
+  regcache->cooked_write (tdep->sp->num, sp);
 
   /* We need to borrow an odd trick from the i386 target here.
 
@@ -2254,7 +2254,7 @@ m32c_return_value (struct gdbarch *gdbarch,
 	{
 	  ULONGEST u = extract_unsigned_integer (writebuf, valtype_len,
 						 byte_order);
-	  regcache_cooked_write_unsigned (regcache, tdep->r0->num, u);
+	  regcache->cooked_write (tdep->r0->num, u);
 	}
       else
 	{

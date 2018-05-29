@@ -3702,7 +3702,7 @@ arm_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
      always at BP_ADDR.  */
   if (arm_pc_is_thumb (gdbarch, bp_addr))
     bp_addr |= 1;
-  regcache_cooked_write_unsigned (regcache, ARM_LR_REGNUM, bp_addr);
+  regcache->cooked_write (ARM_LR_REGNUM, bp_addr);
 
   /* Walk through the list of args and determine how large a temporary
      stack is required.  Need to take care here as structs may be
@@ -3720,7 +3720,7 @@ arm_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	fprintf_unfiltered (gdb_stdlog, "struct return in %s = %s\n",
 			    gdbarch_register_name (gdbarch, argreg),
 			    paddress (gdbarch, struct_addr));
-      regcache_cooked_write_unsigned (regcache, argreg, struct_addr);
+      regcache->cooked_write (argreg, struct_addr);
       argreg++;
     }
 
@@ -3869,7 +3869,7 @@ arm_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 				    gdbarch_register_name
 				      (gdbarch, argreg),
 				    phex (regval, INT_REGISTER_SIZE));
-	      regcache_cooked_write_unsigned (regcache, argreg, regval);
+	      regcache->cooked_write (argreg, regval);
 	      argreg++;
 	    }
 	  else
@@ -3904,7 +3904,7 @@ arm_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
     }
 
   /* Finally, update teh SP register.  */
-  regcache_cooked_write_unsigned (regcache, ARM_SP_REGNUM, sp);
+  regcache->cooked_write (ARM_SP_REGNUM, sp);
 
   return sp;
 }
@@ -4458,11 +4458,9 @@ branch_write_pc (struct regcache *regs, arm_displaced_step_closure *dsc,
   if (!dsc->is_thumb)
     /* Note: If bits 0/1 are set, this branch would be unpredictable for
        architecture versions < 6.  */
-    regcache_cooked_write_unsigned (regs, ARM_PC_REGNUM,
-				    val & ~(ULONGEST) 0x3);
+    regs->cooked_write (ARM_PC_REGNUM, val & ~(ULONGEST) 0x3);
   else
-    regcache_cooked_write_unsigned (regs, ARM_PC_REGNUM,
-				    val & ~(ULONGEST) 0x1);
+    regs->cooked_write (ARM_PC_REGNUM, val & ~(ULONGEST) 0x1);
 }
 
 /* Write to the PC as from a branch-exchange instruction.  */
@@ -4477,21 +4475,21 @@ bx_write_pc (struct regcache *regs, ULONGEST val)
 
   if ((val & 1) == 1)
     {
-      regcache_cooked_write_unsigned (regs, ARM_PS_REGNUM, ps | t_bit);
-      regcache_cooked_write_unsigned (regs, ARM_PC_REGNUM, val & 0xfffffffe);
+      regs->cooked_write (ARM_PS_REGNUM, ps | t_bit);
+      regs->cooked_write (ARM_PC_REGNUM, val & 0xfffffffe);
     }
   else if ((val & 2) == 0)
     {
-      regcache_cooked_write_unsigned (regs, ARM_PS_REGNUM, ps & ~t_bit);
-      regcache_cooked_write_unsigned (regs, ARM_PC_REGNUM, val);
+      regs->cooked_write (ARM_PS_REGNUM, ps & ~t_bit);
+      regs->cooked_write (ARM_PC_REGNUM, val);
     }
   else
     {
       /* Unpredictable behaviour.  Try to do something sensible (switch to ARM
 	  mode, align dest to 4 bytes).  */
       warning (_("Single-stepping BX to non-word-aligned ARM instruction."));
-      regcache_cooked_write_unsigned (regs, ARM_PS_REGNUM, ps & ~t_bit);
-      regcache_cooked_write_unsigned (regs, ARM_PC_REGNUM, val & 0xfffffffc);
+      regs->cooked_write (ARM_PS_REGNUM, ps & ~t_bit);
+      regs->cooked_write (ARM_PC_REGNUM, val & 0xfffffffc);
     }
 }
 
@@ -4567,7 +4565,7 @@ displaced_write_reg (struct regcache *regs, arm_displaced_step_closure *dsc,
       if (debug_displaced)
 	fprintf_unfiltered (gdb_stdlog, "displaced: writing r%d value %.8lx\n",
 			    regno, (unsigned long) val);
-      regcache_cooked_write_unsigned (regs, regno, val);
+      regs->cooked_write (regno, val);
     }
 }
 
@@ -7672,8 +7670,7 @@ arm_displaced_step_fixup (struct gdbarch *gdbarch,
     dsc->cleanup (gdbarch, regs, dsc);
 
   if (!dsc->wrote_to_pc)
-    regcache_cooked_write_unsigned (regs, ARM_PC_REGNUM,
-				    dsc->insn_addr + dsc->insn_size);
+    regs->cooked_write (ARM_PC_REGNUM, dsc->insn_addr + dsc->insn_size);
 
 }
 
@@ -8640,7 +8637,7 @@ static void
 arm_write_pc (struct regcache *regcache, CORE_ADDR pc)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  regcache_cooked_write_unsigned (regcache, ARM_PC_REGNUM, pc);
+  regcache->cooked_write (ARM_PC_REGNUM, pc);
 
   /* If necessary, set the T bit.  */
   if (arm_apcs_32)
@@ -8649,11 +8646,9 @@ arm_write_pc (struct regcache *regcache, CORE_ADDR pc)
       regcache->cooked_read (ARM_PS_REGNUM, &val);
       t_bit = arm_psr_thumb_bit (gdbarch);
       if (arm_pc_is_thumb (gdbarch, pc))
-	regcache_cooked_write_unsigned (regcache, ARM_PS_REGNUM,
-					val | t_bit);
+	regcache->cooked_write (ARM_PS_REGNUM, val | t_bit);
       else
-	regcache_cooked_write_unsigned (regcache, ARM_PS_REGNUM,
-					val & ~t_bit);
+	regcache->cooked_write (ARM_PS_REGNUM, val & ~t_bit);
     }
 }
 

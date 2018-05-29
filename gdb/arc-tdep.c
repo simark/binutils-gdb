@@ -449,8 +449,7 @@ arc_write_pc (struct regcache *regcache, CORE_ADDR new_pc)
     debug_printf ("arc: Writing PC, new value=%s\n",
 		  paddress (gdbarch, new_pc));
 
-  regcache_cooked_write_unsigned (regcache, gdbarch_pc_regnum (gdbarch),
-				  new_pc);
+  regcache->cooked_write (gdbarch_pc_regnum (gdbarch), new_pc);
 
   ULONGEST status32;
   regcache->cooked_read (gdbarch_ps_regnum (gdbarch), &status32);
@@ -468,8 +467,7 @@ arc_write_pc (struct regcache *regcache, CORE_ADDR new_pc)
 
       /* Reset bit and write to the cache.  */
       status32 &= ~0x40;
-      regcache_cooked_write_unsigned (regcache, gdbarch_ps_regnum (gdbarch),
-				      status32);
+      regcache->cooked_write (gdbarch_ps_regnum (gdbarch), status32);
     }
 }
 
@@ -596,7 +594,7 @@ arc_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   int arg_reg = ARC_FIRST_ARG_REGNUM;
 
   /* Push the return address.  */
-  regcache_cooked_write_unsigned (regcache, ARC_BLINK_REGNUM, bp_addr);
+  regcache->cooked_write (ARC_BLINK_REGNUM, bp_addr);
 
   /* Are we returning a value using a structure return instead of a normal
      value return?  If so, struct_addr is the address of the reserved space for
@@ -605,7 +603,7 @@ arc_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   if (struct_return)
     {
       /* Pass the return address in the first argument register.  */
-      regcache_cooked_write_unsigned (regcache, arg_reg, struct_addr);
+      regcache->cooked_write (arg_reg, struct_addr);
 
       if (arc_debug)
 	debug_printf ("arc: struct return address %s passed in R%d",
@@ -686,7 +684,7 @@ arc_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
     }
 
   /* Finally, update the SP register.  */
-  regcache_cooked_write_unsigned (regcache, gdbarch_sp_regnum (gdbarch), sp);
+  regcache->cooked_write (gdbarch_sp_regnum (gdbarch), sp);
 
   return sp;
 }
@@ -836,7 +834,7 @@ arc_store_return_value (struct gdbarch *gdbarch, struct type *type,
       /* Put the return value into one register.  */
       val = extract_unsigned_integer (valbuf, (int) len,
 				      gdbarch_byte_order (gdbarch));
-      regcache_cooked_write_unsigned (regcache, ARC_R0_REGNUM, val);
+      regcache->cooked_write (ARC_R0_REGNUM, val);
 
       if (arc_debug)
 	debug_printf ("arc: storing 0x%s\n", phex (val, ARC_REGISTER_SIZE));
@@ -852,8 +850,8 @@ arc_store_return_value (struct gdbarch *gdbarch, struct type *type,
 				       (int) len - ARC_REGISTER_SIZE,
 				       gdbarch_byte_order (gdbarch));
 
-      regcache_cooked_write_unsigned (regcache, ARC_R0_REGNUM, low);
-      regcache_cooked_write_unsigned (regcache, ARC_R1_REGNUM, high);
+      regcache->cooked_write (ARC_R0_REGNUM, low);
+      regcache->cooked_write (ARC_R1_REGNUM, high);
 
       if (arc_debug)
 	debug_printf ("arc: storing 0x%s%s\n",

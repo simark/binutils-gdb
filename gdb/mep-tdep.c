@@ -2289,7 +2289,7 @@ mep_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
      buffer as the first argument.  */
   if (struct_return)
     {
-      regcache_cooked_write_unsigned (regcache, arg_reg, struct_addr);
+      regcache->cooked_write (arg_reg, struct_addr);
       arg_reg++;
     }
 
@@ -2311,7 +2311,7 @@ mep_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
       /* We use $1 -- $4 for passing arguments, then use the stack.  */
       if (arg_reg <= MEP_R4_REGNUM)
         {
-          regcache_cooked_write_unsigned (regcache, arg_reg, value);
+	  regcache->cooked_write (arg_reg, value);
           arg_reg++;
         }
       else
@@ -2326,10 +2326,10 @@ mep_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   gdb_assert (arg_stack <= arg_stack_end);
 
   /* Set the return address.  */
-  regcache_cooked_write_unsigned (regcache, MEP_LP_REGNUM, bp_addr);
+  regcache->cooked_write (MEP_LP_REGNUM, bp_addr);
 
   /* Update the stack pointer.  */
-  regcache_cooked_write_unsigned (regcache, MEP_SP_REGNUM, sp);
+  regcache->cooked_write (MEP_SP_REGNUM, sp);
   
   return sp;
 }

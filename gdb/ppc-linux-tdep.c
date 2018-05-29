@@ -1003,7 +1003,7 @@ ppc_linux_write_pc (struct regcache *regcache, CORE_ADDR pc)
 {
   struct gdbarch *gdbarch = regcache->arch ();
 
-  regcache_cooked_write_unsigned (regcache, gdbarch_pc_regnum (gdbarch), pc);
+  regcache->cooked_write (gdbarch_pc_regnum (gdbarch), pc);
 
   /* Set special TRAP register to -1 to prevent the kernel from
      messing with the PC we just installed, if we happen to be
@@ -1014,7 +1014,7 @@ ppc_linux_write_pc (struct regcache *regcache, CORE_ADDR pc)
      ORIG_R3 registers will be automatically restored, and the
      kernel continues to restart the system call at this point.  */
   if (ppc_linux_trap_reg_p (gdbarch))
-    regcache_cooked_write_unsigned (regcache, PPC_TRAP_REGNUM, -1);
+    regcache->cooked_write (PPC_TRAP_REGNUM, (ULONGEST) -1);
 }
 
 static int

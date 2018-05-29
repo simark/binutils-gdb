@@ -658,7 +658,7 @@ h8300_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
      pointer to the buffer for the return value as an invisible first
      argument.  */
   if (struct_return)
-    regcache_cooked_write_unsigned (regcache, reg++, struct_addr);
+    regcache->cooked_write (reg++, struct_addr);
 
   for (argument = 0; argument < nargs; argument++)
     {
@@ -703,7 +703,7 @@ h8300_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		  ULONGEST word
 		    = extract_unsigned_integer (&padded[offset],
 						wordsize, byte_order);
-		  regcache_cooked_write_unsigned (regcache, reg++, word);
+		  regcache->cooked_write (reg++, word);
 		}
 	    }
 	}
@@ -724,7 +724,7 @@ h8300_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   write_memory_unsigned_integer (sp, wordsize, byte_order, bp_addr);
 
   /* Update stack pointer.  */
-  regcache_cooked_write_unsigned (regcache, E_SP_REGNUM, sp);
+  regcache->cooked_write (E_SP_REGNUM, sp);
 
   /* Return the new stack pointer minus the return address slot since
      that's what DWARF2/GCC uses as the frame's CFA.  */
@@ -850,13 +850,13 @@ h8300_store_return_value (struct type *type, struct regcache *regcache,
     case 1:
     case 2:			/* short...  */
       val = extract_unsigned_integer (valbuf, TYPE_LENGTH (type), byte_order);
-      regcache_cooked_write_unsigned (regcache, E_RET0_REGNUM, val);
+      regcache->cooked_write (E_RET0_REGNUM, val);
       break;
     case 4:			/* long, float */
       val = extract_unsigned_integer (valbuf, TYPE_LENGTH (type), byte_order);
-      regcache_cooked_write_unsigned (regcache, E_RET0_REGNUM,
+      regcache->cooked_write (E_RET0_REGNUM,
 				      (val >> 16) & 0xffff);
-      regcache_cooked_write_unsigned (regcache, E_RET1_REGNUM, val & 0xffff);
+      regcache->cooked_write (E_RET1_REGNUM, val & 0xffff);
       break;
     case 8:			/* long long, double and long double
 				   are all defined as 4 byte types so
@@ -880,13 +880,13 @@ h8300h_store_return_value (struct type *type, struct regcache *regcache,
     case 2:
     case 4:			/* long, float */
       val = extract_unsigned_integer (valbuf, TYPE_LENGTH (type), byte_order);
-      regcache_cooked_write_unsigned (regcache, E_RET0_REGNUM, val);
+      regcache->cooked_write (E_RET0_REGNUM, val);
       break;
     case 8:
       val = extract_unsigned_integer (valbuf, TYPE_LENGTH (type), byte_order);
-      regcache_cooked_write_unsigned (regcache, E_RET0_REGNUM,
+      regcache->cooked_write (E_RET0_REGNUM,
 				      (val >> 32) & 0xffffffff);
-      regcache_cooked_write_unsigned (regcache, E_RET1_REGNUM,
+      regcache->cooked_write (E_RET1_REGNUM,
 				      val & 0xffffffff);
       break;
     }

@@ -264,8 +264,8 @@ sparc64_linux_write_pc (struct regcache *regcache, CORE_ADDR pc)
   struct gdbarch_tdep *tdep = gdbarch_tdep (regcache->arch ());
   ULONGEST state;
 
-  regcache_cooked_write_unsigned (regcache, tdep->pc_regnum, pc);
-  regcache_cooked_write_unsigned (regcache, tdep->npc_regnum, pc + 4);
+  regcache->cooked_write (tdep->pc_regnum, pc);
+  regcache->cooked_write (tdep->npc_regnum, pc + 4);
 
   /* Clear the "in syscall" bit to prevent the kernel from
      messing with the PCs we just installed, if we happen to be
@@ -277,7 +277,7 @@ sparc64_linux_write_pc (struct regcache *regcache, CORE_ADDR pc)
      continues to restart the system call at this point.  */
   regcache->cooked_read (SPARC64_STATE_REGNUM, &state);
   state &= ~TSTATE_SYSCALL;
-  regcache_cooked_write_unsigned (regcache, SPARC64_STATE_REGNUM, state);
+  regcache->cooked_write (SPARC64_STATE_REGNUM, state);
 }
 
 static LONGEST

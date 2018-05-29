@@ -53,9 +53,8 @@ static void
 hppa_linux_target_write_pc (struct regcache *regcache, CORE_ADDR v)
 {
   /* Probably this should be done by the kernel, but it isn't.  */
-  regcache_cooked_write_unsigned (regcache, HPPA_PCOQ_HEAD_REGNUM, v | 0x3);
-  regcache_cooked_write_unsigned (regcache,
-				  HPPA_PCOQ_TAIL_REGNUM, (v + 4) | 0x3);
+  regcache->cooked_write (HPPA_PCOQ_HEAD_REGNUM, v | 0x3);
+  regcache->cooked_write (HPPA_PCOQ_TAIL_REGNUM, (v + 4) | 0x3);
 }
 
 /* An instruction to match.  */
