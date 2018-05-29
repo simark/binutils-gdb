@@ -1016,7 +1016,7 @@ rx_return_value (struct gdbarch *gdbarch,
 	{
 	  int len = std::min (valtype_len, (ULONGEST) 4);
 
-	  regcache_cooked_read_unsigned (regcache, argreg, &u);
+	  regcache->cooked_read (argreg, &u);
 	  store_unsigned_integer (readbuf + offset, len, byte_order, u);
 	  valtype_len -= len;
 	  offset += len;

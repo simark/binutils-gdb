@@ -111,15 +111,13 @@ frv_fdpic_loadmap_addresses (struct gdbarch *gdbarch, CORE_ADDR *interp_addr,
       if (interp_addr != NULL)
 	{
 	  ULONGEST val;
-	  regcache_cooked_read_unsigned (regcache,
-					 fdpic_loadmap_interp_regnum, &val);
+	  regcache->cooked_read (fdpic_loadmap_interp_regnum, &val);
 	  *interp_addr = val;
 	}
       if (exec_addr != NULL)
 	{
 	  ULONGEST val;
-	  regcache_cooked_read_unsigned (regcache,
-					 fdpic_loadmap_exec_regnum, &val);
+	  regcache->cooked_read (fdpic_loadmap_exec_regnum, &val);
 	  *exec_addr = val;
 	}
       return 0;
@@ -1117,16 +1115,16 @@ frv_extract_return_value (struct type *type, struct regcache *regcache,
   if (len <= 4)
     {
       ULONGEST gpr8_val;
-      regcache_cooked_read_unsigned (regcache, 8, &gpr8_val);
+      regcache->cooked_read (8, &gpr8_val);
       store_unsigned_integer (valbuf, len, byte_order, gpr8_val);
     }
   else if (len == 8)
     {
       ULONGEST regval;
 
-      regcache_cooked_read_unsigned (regcache, 8, &regval);
+      regcache->cooked_read (8, &regval);
       store_unsigned_integer (valbuf, 4, byte_order, regval);
-      regcache_cooked_read_unsigned (regcache, 9, &regval);
+      regcache->cooked_read (9, &regval);
       store_unsigned_integer ((bfd_byte *) valbuf + 4, 4, byte_order, regval);
     }
   else

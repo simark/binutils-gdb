@@ -1374,7 +1374,7 @@ fixup_riprel (struct gdbarch *gdbarch, amd64_displaced_step_closure *dsc,
 	gdb_assert_not_reached ("unhandled prefix");
     }
 
-  regcache_cooked_read_unsigned (regs, tmp_regno, &orig_value);
+  regs->cooked_read (tmp_regno, &orig_value);
   dsc->tmp_regno = tmp_regno;
   dsc->tmp_save = orig_value;
   dsc->tmp_used = 1;
@@ -1667,7 +1667,7 @@ amd64_displaced_step_fixup (struct gdbarch *gdbarch,
       ULONGEST orig_rip;
       int insn_len;
 
-      regcache_cooked_read_unsigned (regs, AMD64_RIP_REGNUM, &orig_rip);
+      regs->cooked_read (AMD64_RIP_REGNUM, &orig_rip);
 
       /* A signal trampoline system call changes the %rip, resuming
 	 execution of the main program after the signal handler has
@@ -1728,7 +1728,7 @@ amd64_displaced_step_fixup (struct gdbarch *gdbarch,
       ULONGEST retaddr;
       const ULONGEST retaddr_len = 8;
 
-      regcache_cooked_read_unsigned (regs, AMD64_RSP_REGNUM, &rsp);
+      regs->cooked_read (AMD64_RSP_REGNUM, &rsp);
       retaddr = read_memory_unsigned_integer (rsp, retaddr_len, byte_order);
       retaddr = (retaddr - insn_offset) & 0xffffffffffffffffULL;
       write_memory_unsigned_integer (rsp, retaddr_len, byte_order, retaddr);

@@ -275,7 +275,7 @@ sparc64_linux_write_pc (struct regcache *regcache, CORE_ADDR pc)
      Note that after we return from the dummy call, the TSTATE et al.
      registers will be automatically restored, and the kernel
      continues to restart the system call at this point.  */
-  regcache_cooked_read_unsigned (regcache, SPARC64_STATE_REGNUM, &state);
+  regcache->cooked_read (SPARC64_STATE_REGNUM, &state);
   state &= ~TSTATE_SYSCALL;
   regcache_cooked_write_unsigned (regcache, SPARC64_STATE_REGNUM, state);
 }

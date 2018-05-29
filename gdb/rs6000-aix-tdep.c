@@ -288,9 +288,7 @@ rs6000_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
 ran_out_of_registers_for_arguments:
 
-  regcache_cooked_read_unsigned (regcache,
-				 gdbarch_sp_regnum (gdbarch),
-				 &saved_sp);
+  regcache->cooked_read (gdbarch_sp_regnum (gdbarch), &saved_sp);
 
   /* Location for 8 parameters are always reserved.  */
   sp -= wordsize * 8;
@@ -471,8 +469,7 @@ rs6000_return_value (struct gdbarch *gdbarch, struct value *function,
 	  ULONGEST regval;
 
 	  /* For reading we don't have to worry about sign extension.  */
-	  regcache_cooked_read_unsigned (regcache, tdep->ppc_gp0_regnum + 3,
-					 &regval);
+	  regcache->cooked_read (tdep->ppc_gp0_regnum + 3, &regval);
 	  store_unsigned_integer (readbuf, TYPE_LENGTH (valtype), byte_order,
 				  regval);
 	}

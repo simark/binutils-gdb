@@ -674,14 +674,6 @@ readable_regcache::cooked_read (int regnum, T *val)
 
 template register_status readable_regcache::cooked_read<> (int, LONGEST *);
 
-enum register_status
-regcache_cooked_read_unsigned (struct regcache *regcache, int regnum,
-			       ULONGEST *val)
-{
-  gdb_assert (regcache != NULL);
-  return regcache->cooked_read (regnum, val);
-}
-
 void
 regcache_cooked_write_signed (struct regcache *regcache, int regnum,
 			      LONGEST val)
@@ -1078,9 +1070,8 @@ regcache_read_pc (struct regcache *regcache)
     {
       ULONGEST raw_val;
 
-      if (regcache_cooked_read_unsigned (regcache,
-					 gdbarch_pc_regnum (gdbarch),
-					 &raw_val) == REG_UNAVAILABLE)
+      if (regcache->cooked_read (gdbarch_pc_regnum (gdbarch),
+				 &raw_val) == REG_UNAVAILABLE)
 	throw_error (NOT_AVAILABLE_ERROR, _("PC register is not available"));
 
       pc_val = gdbarch_addr_bits_remove (gdbarch, raw_val);

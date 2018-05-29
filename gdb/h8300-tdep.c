@@ -748,19 +748,19 @@ h8300_extract_return_value (struct type *type, struct regcache *regcache,
     {
     case 1:
     case 2:
-      regcache_cooked_read_unsigned (regcache, E_RET0_REGNUM, &c);
+      regcache->cooked_read (E_RET0_REGNUM, &c);
       store_unsigned_integer (valbuf, len, byte_order, c);
       break;
     case 4:			/* Needs two registers on plain H8/300 */
-      regcache_cooked_read_unsigned (regcache, E_RET0_REGNUM, &c);
+      regcache->cooked_read (E_RET0_REGNUM, &c);
       store_unsigned_integer (valbuf, 2, byte_order, c);
-      regcache_cooked_read_unsigned (regcache, E_RET1_REGNUM, &c);
+      regcache->cooked_read (E_RET1_REGNUM, &c);
       store_unsigned_integer (valbuf + 2, 2, byte_order, c);
       break;
     case 8:			/* long long is now 8 bytes.  */
       if (TYPE_CODE (type) == TYPE_CODE_INT)
 	{
-	  regcache_cooked_read_unsigned (regcache, E_RET0_REGNUM, &addr);
+	  regcache->cooked_read (E_RET0_REGNUM, &addr);
 	  c = read_memory_unsigned_integer ((CORE_ADDR) addr, len, byte_order);
 	  store_unsigned_integer (valbuf, len, byte_order, c);
 	}
@@ -785,15 +785,15 @@ h8300h_extract_return_value (struct type *type, struct regcache *regcache,
     case 1:
     case 2:
     case 4:
-      regcache_cooked_read_unsigned (regcache, E_RET0_REGNUM, &c);
+      regcache->cooked_read (E_RET0_REGNUM, &c);
       store_unsigned_integer (valbuf, TYPE_LENGTH (type), byte_order, c);
       break;
     case 8:			/* long long is now 8 bytes.  */
       if (TYPE_CODE (type) == TYPE_CODE_INT)
 	{
-	  regcache_cooked_read_unsigned (regcache, E_RET0_REGNUM, &c);
+	  regcache->cooked_read (E_RET0_REGNUM, &c);
 	  store_unsigned_integer (valbuf, 4, byte_order, c);
-	  regcache_cooked_read_unsigned (regcache, E_RET1_REGNUM, &c);
+	  regcache->cooked_read (E_RET1_REGNUM, &c);
 	  store_unsigned_integer (valbuf + 4, 4, byte_order, c);
 	}
       else

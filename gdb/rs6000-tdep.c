@@ -909,8 +909,7 @@ ppc_displaced_step_fixup (struct gdbarch *gdbarch,
       /* Read the current PC value after the instruction has been executed
 	 in a displaced location.  Calculate the offset to be applied to the
 	 original PC value before the displaced stepping.  */
-      regcache_cooked_read_unsigned (regs, gdbarch_pc_regnum (gdbarch),
-				      &current_pc);
+      regs->cooked_read (gdbarch_pc_regnum (gdbarch), &current_pc);
       offset = current_pc - to;
 
       if (opcode != BXL_INSN)

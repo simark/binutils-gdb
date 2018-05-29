@@ -313,22 +313,22 @@ lm32_extract_return_value (struct type *type, struct regcache *regcache,
       && TYPE_CODE (type) != TYPE_CODE_ARRAY && TYPE_LENGTH (type) <= 4)
     {
       /* Return value is returned in a single register.  */
-      regcache_cooked_read_unsigned (regcache, SIM_LM32_R1_REGNUM, &l);
+      regcache->cooked_read (SIM_LM32_R1_REGNUM, &l);
       store_unsigned_integer (valbuf, TYPE_LENGTH (type), byte_order, l);
     }
   else if ((TYPE_CODE (type) == TYPE_CODE_INT) && (TYPE_LENGTH (type) == 8))
     {
       /* 64-bit values are returned in a register pair.  */
-      regcache_cooked_read_unsigned (regcache, SIM_LM32_R1_REGNUM, &l);
+      regcache->cooked_read (SIM_LM32_R1_REGNUM, &l);
       memcpy (valbuf, &l, 4);
-      regcache_cooked_read_unsigned (regcache, SIM_LM32_R2_REGNUM, &l);
+      regcache->cooked_read (SIM_LM32_R2_REGNUM, &l);
       memcpy (valbuf + 4, &l, 4);
     }
   else
     {
       /* Aggregate types greater than a single register are returned
          in memory.  FIXME: Unless they are only 2 regs?.  */
-      regcache_cooked_read_unsigned (regcache, SIM_LM32_R1_REGNUM, &l);
+      regcache->cooked_read (SIM_LM32_R1_REGNUM, &l);
       return_buffer = l;
       read_memory (return_buffer, valbuf, TYPE_LENGTH (type));
     }

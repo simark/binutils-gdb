@@ -406,14 +406,14 @@ ft32_extract_return_value (struct type *type, struct regcache *regcache,
 
   /* By using store_unsigned_integer we avoid having to do
      anything special for small big-endian values.  */
-  regcache_cooked_read_unsigned (regcache, FT32_R0_REGNUM, &tmp);
+  regcache->cooked_read (FT32_R0_REGNUM, &tmp);
   store_unsigned_integer (valbuf, (len > 4 ? len - 4 : len), byte_order, tmp);
 
   /* Ignore return values more than 8 bytes in size because the ft32
      returns anything more than 8 bytes in the stack.  */
   if (len > 4)
     {
-      regcache_cooked_read_unsigned (regcache, FT32_R1_REGNUM, &tmp);
+      regcache->cooked_read (FT32_R1_REGNUM, &tmp);
       store_unsigned_integer (valbuf + len - 4, 4, byte_order, tmp);
     }
 }

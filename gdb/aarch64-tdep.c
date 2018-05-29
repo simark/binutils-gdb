@@ -1813,7 +1813,7 @@ aarch64_extract_return_value (struct type *type, struct regcache *regs,
 	{
 	  /* By using store_unsigned_integer we avoid having to do
 	     anything special for small big-endian values.  */
-	  regcache_cooked_read_unsigned (regs, regno++, &tmp);
+	  regs->cooked_read (regno++, &tmp);
 	  store_unsigned_integer (valbuf,
 				  (len > X_REGISTER_SIZE
 				   ? X_REGISTER_SIZE : len), byte_order, tmp);
@@ -2792,7 +2792,7 @@ aarch64_displaced_step_fixup (struct gdbarch *gdbarch,
     {
       ULONGEST pc;
 
-      regcache_cooked_read_unsigned (regs, AARCH64_PC_REGNUM, &pc);
+      regs->cooked_read (AARCH64_PC_REGNUM, &pc);
       if (pc - to == 8)
 	{
 	  /* Condition is true.  */

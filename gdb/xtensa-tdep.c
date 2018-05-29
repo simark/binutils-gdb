@@ -439,7 +439,7 @@ xtensa_register_write_masked (struct regcache *regcache,
 	{
 	  /* Don't overwrite the unmasked areas.  */
 	  ULONGEST old_val;
-	  regcache_cooked_read_unsigned (regcache, r, &old_val);
+	  regcache->cooked_read (r, &old_val);
 	  m = 0xffffffff >> (32 - size) << start;
 	  regval <<= start;
 	  regval = (regval & m) | (old_val & ~m);

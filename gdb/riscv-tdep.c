@@ -2286,8 +2286,7 @@ riscv_return_value (struct gdbarch  *gdbarch,
 	    {
 	      ULONGEST addr;
 
-	      regcache_cooked_read_unsigned (regcache, RISCV_A0_REGNUM,
-					     &addr);
+	      regcache->cooked_read (RISCV_A0_REGNUM, &addr);
 	      if (readbuf != nullptr)
 		read_memory (addr, readbuf, info.length);
 	      if (writebuf != nullptr)

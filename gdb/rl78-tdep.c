@@ -1272,7 +1272,7 @@ rl78_return_value (struct gdbarch *gdbarch,
 	    u = read_memory_integer (g10_raddr, 1,
 	                             gdbarch_byte_order (gdbarch));
 	  else
-	    regcache_cooked_read_unsigned (regcache, argreg, &u);
+	    regcache->cooked_read (argreg, &u);
 	  store_unsigned_integer (readbuf + offset, 1, byte_order, u);
 	  valtype_len -= 1;
 	  offset += 1;

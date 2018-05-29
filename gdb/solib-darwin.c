@@ -390,9 +390,8 @@ darwin_read_exec_load_addr_at_init (struct darwin_info *info)
   gdb_byte buf[8];
 
   /* Get SP.  */
-  if (regcache_cooked_read_unsigned (get_current_regcache (),
-				     gdbarch_sp_regnum (gdbarch),
-				     &load_ptr_addr) != REG_VALID)
+  if (get_current_regcache ()->cooked_read (gdbarch_sp_regnum (gdbarch),
+					    &load_ptr_addr) != REG_VALID)
     return 0;
 
   /* Read value at SP (image load address).  */

@@ -4430,7 +4430,7 @@ displaced_read_reg (struct regcache *regs, arm_displaced_step_closure *dsc,
     }
   else
     {
-      regcache_cooked_read_unsigned (regs, regno, &ret);
+      regs->cooked_read (regno, &ret);
       if (debug_displaced)
 	fprintf_unfiltered (gdb_stdlog, "displaced: read r%d value %.8lx\n",
 			    regno, (unsigned long) ret);
@@ -4444,7 +4444,7 @@ displaced_in_arm_mode (struct regcache *regs)
   ULONGEST ps;
   ULONGEST t_bit = arm_psr_thumb_bit (regs->arch ());
 
-  regcache_cooked_read_unsigned (regs, ARM_PS_REGNUM, &ps);
+  regs->cooked_read (ARM_PS_REGNUM, &ps);
 
   return (ps & t_bit) == 0;
 }
@@ -4473,7 +4473,7 @@ bx_write_pc (struct regcache *regs, ULONGEST val)
   ULONGEST ps;
   ULONGEST t_bit = arm_psr_thumb_bit (regs->arch ());
 
-  regcache_cooked_read_unsigned (regs, ARM_PS_REGNUM, &ps);
+  regs->cooked_read (ARM_PS_REGNUM, &ps);
 
   if ((val & 1) == 1)
     {
@@ -7933,7 +7933,7 @@ arm_extract_return_value (struct type *type, struct regcache *regs,
 	{
 	  /* By using store_unsigned_integer we avoid having to do
 	     anything special for small big-endian values.  */
-	  regcache_cooked_read_unsigned (regs, regno++, &tmp);
+	  regs->cooked_read (regno++, &tmp);
 	  store_unsigned_integer (valbuf, 
 				  (len > INT_REGISTER_SIZE
 				   ? INT_REGISTER_SIZE : len),
@@ -8646,7 +8646,7 @@ arm_write_pc (struct regcache *regcache, CORE_ADDR pc)
   if (arm_apcs_32)
     {
       ULONGEST val, t_bit;
-      regcache_cooked_read_unsigned (regcache, ARM_PS_REGNUM, &val);
+      regcache->cooked_read (ARM_PS_REGNUM, &val);
       t_bit = arm_psr_thumb_bit (gdbarch);
       if (arm_pc_is_thumb (gdbarch, pc))
 	regcache_cooked_write_unsigned (regcache, ARM_PS_REGNUM,

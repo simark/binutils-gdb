@@ -1819,15 +1819,15 @@ cris_extract_return_value (struct type *type, struct regcache *regcache,
   if (len <= 4)
     {
       /* Get the return value from R10.  */
-      regcache_cooked_read_unsigned (regcache, ARG1_REGNUM, &val);
+      regcache->cooked_read (ARG1_REGNUM, &val);
       store_unsigned_integer (valbuf, len, byte_order, val);
     }
   else if (len <= 8)
     {
       /* Get the return value from R10 and R11.  */
-      regcache_cooked_read_unsigned (regcache, ARG1_REGNUM, &val);
+      regcache->cooked_read (ARG1_REGNUM, &val);
       store_unsigned_integer (valbuf, 4, byte_order, val);
-      regcache_cooked_read_unsigned (regcache, ARG2_REGNUM, &val);
+      regcache->cooked_read (ARG2_REGNUM, &val);
       store_unsigned_integer (valbuf + 4, len - 4, byte_order, val);
     }
   else

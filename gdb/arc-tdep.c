@@ -170,9 +170,7 @@ arc_insn_get_operand_value (const struct arc_instruction &insn,
       /* Value in instruction is a register number.  */
       struct regcache *regcache = get_current_regcache ();
       ULONGEST value;
-      regcache_cooked_read_unsigned (regcache,
-				     insn.operands[operand_num].value,
-				     &value);
+      regcache->cooked_read (insn.operands[operand_num].value, &value);
       return value;
     }
 }
@@ -295,7 +293,7 @@ arc_insn_get_branch_target (const struct arc_instruction &insn)
     {
       struct regcache *regcache = get_current_regcache ();
       ULONGEST value;
-      regcache_cooked_read_unsigned (regcache, ARC_BLINK_REGNUM, &value);
+      regcache->cooked_read (ARC_BLINK_REGNUM, &value);
       return value;
     }
   /* BBIT0/1, BRcc: PC = currentPC + operand.  */
@@ -455,8 +453,7 @@ arc_write_pc (struct regcache *regcache, CORE_ADDR new_pc)
 				  new_pc);
 
   ULONGEST status32;
-  regcache_cooked_read_unsigned (regcache, gdbarch_ps_regnum (gdbarch),
-				 &status32);
+  regcache->cooked_read (gdbarch_ps_regnum (gdbarch), &status32);
 
   /* Mask for DE bit is 0x40.  */
   if (status32 & 0x40)
@@ -783,7 +780,7 @@ arc_extract_return_value (struct gdbarch *gdbarch, struct type *type,
       ULONGEST val;
 
       /* Get the return value from one register.  */
-      regcache_cooked_read_unsigned (regcache, ARC_R0_REGNUM, &val);
+      regcache->cooked_read (ARC_R0_REGNUM, &val);
       store_unsigned_integer (valbuf, (int) len,
 			      gdbarch_byte_order (gdbarch), val);
 
@@ -795,8 +792,8 @@ arc_extract_return_value (struct gdbarch *gdbarch, struct type *type,
       ULONGEST low, high;
 
       /* Get the return value from two registers.  */
-      regcache_cooked_read_unsigned (regcache, ARC_R0_REGNUM, &low);
-      regcache_cooked_read_unsigned (regcache, ARC_R1_REGNUM, &high);
+      regcache->cooked_read (ARC_R0_REGNUM, &low);
+      regcache->cooked_read (ARC_R1_REGNUM, &high);
 
       store_unsigned_integer (valbuf, ARC_REGISTER_SIZE,
 			      gdbarch_byte_order (gdbarch), low);

@@ -427,7 +427,7 @@ moxie_software_single_step (struct regcache *regcache)
 	  break;
 
 	case 0x04: /* ret */
-	  regcache_cooked_read_unsigned (regcache, MOXIE_FP_REGNUM, &fp);
+	  regcache->cooked_read (MOXIE_FP_REGNUM, &fp);
 	  next_pcs.push_back (moxie_process_readu (fp + 4, buf, 4, byte_order));
 	  break;
 
@@ -469,14 +469,14 @@ moxie_extract_return_value (struct type *type, struct regcache *regcache,
 
   /* By using store_unsigned_integer we avoid having to do
      anything special for small big-endian values.  */
-  regcache_cooked_read_unsigned (regcache, RET1_REGNUM, &tmp);
+  regcache->cooked_read (RET1_REGNUM, &tmp);
   store_unsigned_integer (dst, (len > 4 ? len - 4 : len), byte_order, tmp);
 
   /* Ignore return values more than 8 bytes in size because the moxie
      returns anything more than 8 bytes in the stack.  */
   if (len > 4)
     {
-      regcache_cooked_read_unsigned (regcache, RET1_REGNUM + 1, &tmp);
+      regcache->cooked_read (RET1_REGNUM + 1, &tmp);
       store_unsigned_integer (dst + len - 4, 4, byte_order, tmp);
     }
 }

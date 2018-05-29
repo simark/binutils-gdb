@@ -475,7 +475,7 @@ s390_displaced_step_fixup (struct gdbarch *gdbarch,
 
   if (register_size (gdbarch, S390_PSWA_REGNUM) == 4)
     {
-      regcache_cooked_read_unsigned (regs, S390_PSWA_REGNUM, &amode);
+      regs->cooked_read (S390_PSWA_REGNUM, &amode);
       amode &= 0x80000000;
     }
 
@@ -1919,7 +1919,7 @@ s390_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   if (word_size == 4)
     {
       ULONGEST pswa;
-      regcache_cooked_read_unsigned (regcache, S390_PSWA_REGNUM, &pswa);
+      regcache->cooked_read (S390_PSWA_REGNUM, &pswa);
       bp_addr = (bp_addr & 0x7fffffff) | (pswa & 0x80000000);
     }
   regcache_cooked_write_unsigned (regcache, S390_RETADDR_REGNUM, bp_addr);

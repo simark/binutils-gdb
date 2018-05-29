@@ -1317,7 +1317,7 @@ sh_extract_return_value_nofpu (struct type *type, struct regcache *regcache,
     {
       ULONGEST c;
 
-      regcache_cooked_read_unsigned (regcache, R0_REGNUM, &c);
+      regcache->cooked_read (R0_REGNUM, &c);
       store_unsigned_integer (valbuf, len, byte_order, c);
     }
   else if (len == 8)

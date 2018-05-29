@@ -1970,7 +1970,7 @@ sparc64_supply_gregset (const struct sparc_gregmap *gregmap,
 	{
 	  ULONGEST sp;
 
-	  regcache_cooked_read_unsigned (regcache, SPARC_SP_REGNUM, &sp);
+	  regcache->cooked_read (SPARC_SP_REGNUM, &sp);
 	  sparc_supply_rwindow (regcache, sp, regnum);
 	}
       else

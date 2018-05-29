@@ -1119,7 +1119,7 @@ v850_extract_return_value (struct type *type, struct regcache *regcache,
     {
       ULONGEST val;
 
-      regcache_cooked_read_unsigned (regcache, E_V0_REGNUM, &val);
+      regcache->cooked_read (E_V0_REGNUM, &val);
       store_unsigned_integer (valbuf, len, byte_order, val);
     }
   else if (len <= 2 * v850_reg_size)

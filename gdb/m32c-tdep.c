@@ -2221,7 +2221,7 @@ m32c_return_value (struct gdbarch *gdbarch,
       if (valtype_len <= TYPE_LENGTH (tdep->r0->type))
 	{
 	  ULONGEST u;
-	  regcache_cooked_read_unsigned (regcache, tdep->r0->num, &u);
+	  regcache->cooked_read (tdep->r0->num, &u);
 	  store_unsigned_integer (readbuf, valtype_len, byte_order, u);
 	}
       else

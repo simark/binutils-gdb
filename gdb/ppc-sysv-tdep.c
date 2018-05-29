@@ -73,8 +73,7 @@ ppc_sysv_abi_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
   gdb_assert (tdep->wordsize == 4);
 
-  regcache_cooked_read_unsigned (regcache, gdbarch_sp_regnum (gdbarch),
-				 &saved_sp);
+  regcache->cooked_read (gdbarch_sp_regnum (gdbarch), &saved_sp);
 
   /* Go through the argument list twice.
 
@@ -568,7 +567,7 @@ ppc_sysv_abi_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	{
 	  ULONGEST cr;
 
-	  regcache_cooked_read_unsigned (regcache, tdep->ppc_cr_regnum, &cr);
+	  regcache->cooked_read (tdep->ppc_cr_regnum, &cr);
 	  if (freg > 1)
 	    cr |= 0x02000000;
 	  else
@@ -786,8 +785,7 @@ do_ppc_sysv_return_value (struct gdbarch *gdbarch, struct type *func_type,
 	     bigger than the register, sign extension isn't a problem
 	     - just do everything unsigned.  */
 	  ULONGEST regval;
-	  regcache_cooked_read_unsigned (regcache, tdep->ppc_gp0_regnum + 3,
-					 &regval);
+	  regcache->cooked_read (tdep->ppc_gp0_regnum + 3, &regval);
 	  store_unsigned_integer (readbuf, TYPE_LENGTH (type), byte_order,
 				  regval);
 	}
@@ -845,7 +843,7 @@ do_ppc_sysv_return_value (struct gdbarch *gdbarch, struct type *func_type,
 		}
 	      if (readbuf != NULL)
 		{
-		  regcache_cooked_read_unsigned (regcache, regnum, &regval);
+		  regcache->cooked_read (regnum, &regval);
 		  store_unsigned_integer (readbuf + offset,
 					  TYPE_LENGTH (eltype), byte_order,
 					  regval);
@@ -1572,8 +1570,7 @@ ppc64_sysv_abi_push_dummy_call (struct gdbarch *gdbarch,
   /* By this stage in the proceedings, SP has been decremented by "red
      zone size" + "struct return size".  Fetch the stack-pointer from
      before this and use that as the BACK_CHAIN.  */
-  regcache_cooked_read_unsigned (regcache, gdbarch_sp_regnum (gdbarch),
-				 &back_chain);
+  regcache->cooked_read (gdbarch_sp_regnum (gdbarch), &back_chain);
 
   /* Go through the argument list twice.
 
@@ -1760,7 +1757,7 @@ ppc64_sysv_abi_return_value_base (struct gdbarch *gdbarch, struct type *valtype,
 	     value, there isn't a sign extension problem.  */
 	  ULONGEST regval;
 
-	  regcache_cooked_read_unsigned (regcache, regnum, &regval);
+	  regcache->cooked_read (regnum, &regval);
 	  store_unsigned_integer (readbuf, TYPE_LENGTH (valtype),
 				  gdbarch_byte_order (gdbarch), regval);
 	}

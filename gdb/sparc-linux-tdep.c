@@ -267,7 +267,7 @@ sparc_linux_write_pc (struct regcache *regcache, CORE_ADDR pc)
      Note that after we return from the dummy call, the PSR et al.
      registers will be automatically restored, and the kernel
      continues to restart the system call at this point.  */
-  regcache_cooked_read_unsigned (regcache, SPARC32_PSR_REGNUM, &psr);
+  regcache->cooked_read (SPARC32_PSR_REGNUM, &psr);
   psr &= ~PSR_SYSCALL;
   regcache_cooked_write_unsigned (regcache, SPARC32_PSR_REGNUM, psr);
 }

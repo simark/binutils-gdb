@@ -122,14 +122,14 @@ parse_spufs_run (ptid_t ptid, int *fd, CORE_ADDR *addr)
   if (extract_unsigned_integer (buf, 4, byte_order) != INSTR_SC)
     return 0;
   /* System call number should be NR_spu_run.  */
-  regcache_cooked_read_unsigned (regcache, tdep->ppc_gp0_regnum, &regval);
+  regcache->cooked_read (tdep->ppc_gp0_regnum, &regval);
   if (regval != NR_spu_run)
     return 0;
 
   /* Register 3 contains fd, register 4 the NPC param pointer.  */
-  regcache_cooked_read_unsigned (regcache, PPC_ORIG_R3_REGNUM, &regval);
+  regcache->cooked_read (PPC_ORIG_R3_REGNUM, &regval);
   *fd = (int) regval;
-  regcache_cooked_read_unsigned (regcache, tdep->ppc_gp0_regnum + 4, &regval);
+  regcache->cooked_read (tdep->ppc_gp0_regnum + 4, &regval);
   *addr = (CORE_ADDR) regval;
   return 1;
 }

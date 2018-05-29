@@ -894,7 +894,7 @@ ia64_write_pc (struct regcache *regcache, CORE_ADDR new_pc)
   int slot_num = (int) (new_pc & 0xf) / SLOT_MULTIPLIER;
   ULONGEST psr_value;
 
-  regcache_cooked_read_unsigned (regcache, IA64_PSR_REGNUM, &psr_value);
+  regcache->cooked_read (IA64_PSR_REGNUM, &psr_value);
   psr_value &= ~(3LL << 41);
   psr_value |= (ULONGEST)(slot_num & 0x3) << 41;
 
@@ -1093,8 +1093,8 @@ ia64_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
     {
       ULONGEST bsp;
       ULONGEST cfm;
-      regcache_cooked_read_unsigned (regcache, IA64_BSP_REGNUM, &bsp);
-      regcache_cooked_read_unsigned (regcache, IA64_CFM_REGNUM, &cfm);
+      regcache->cooked_read (IA64_BSP_REGNUM, &bsp);
+      regcache->cooked_read (IA64_CFM_REGNUM, &cfm);
 
       bsp = rse_address_add (bsp, -(cfm & 0x7f));
  
@@ -1107,7 +1107,7 @@ ia64_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
   else if (IA64_NAT0_REGNUM <= regnum && regnum <= IA64_NAT31_REGNUM)
     {
       ULONGEST unatN_val, unat, unatN_mask;
-      regcache_cooked_read_unsigned (regcache, IA64_UNAT_REGNUM, &unat);
+      regcache->cooked_read (IA64_UNAT_REGNUM, &unat);
       unatN_val = extract_unsigned_integer (buf, register_size (gdbarch,
 								regnum),
 					    byte_order);
@@ -1124,8 +1124,8 @@ ia64_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
       ULONGEST bsp;
       ULONGEST cfm;
       CORE_ADDR gr_addr = 0;
-      regcache_cooked_read_unsigned (regcache, IA64_BSP_REGNUM, &bsp);
-      regcache_cooked_read_unsigned (regcache, IA64_CFM_REGNUM, &cfm);
+      regcache->cooked_read (IA64_BSP_REGNUM, &bsp);
+      regcache->cooked_read (IA64_CFM_REGNUM, &cfm);
 
       /* The bsp points at the end of the register frame so we
 	 subtract the size of frame from it to get start of register frame.  */
@@ -1150,9 +1150,7 @@ ia64_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
 	     collection from the computed address.  */
 	  if (nat_addr >= bsp)
 	    {
-	      regcache_cooked_read_unsigned (regcache,
-					     IA64_RNAT_REGNUM,
-					     &nat_collection);
+	      regcache->cooked_read (IA64_RNAT_REGNUM, &nat_collection);
 	      if (natN_val)
 		nat_collection |= natN_mask;
 	      else
@@ -1181,8 +1179,8 @@ ia64_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
       ULONGEST prN_val;
       ULONGEST prN_mask;
 
-      regcache_cooked_read_unsigned (regcache, IA64_PR_REGNUM, &pr);
-      regcache_cooked_read_unsigned (regcache, IA64_CFM_REGNUM, &cfm);
+      regcache->cooked_read (IA64_PR_REGNUM, &pr);
+      regcache->cooked_read (IA64_CFM_REGNUM, &cfm);
 
       if (VP16_REGNUM <= regnum && regnum <= VP63_REGNUM)
 	{
@@ -2567,8 +2565,8 @@ ia64_access_rse_reg (unw_addr_space_t as, unw_regnum_t uw_regnum,
       case UNW_REG_IP:
 	/* Libunwind expects to see the pc value which means the slot number
 	   from the psr must be merged with the ip word address.  */
-	regcache_cooked_read_unsigned (regcache, IA64_IP_REGNUM, &ip);
-	regcache_cooked_read_unsigned (regcache, IA64_PSR_REGNUM, &psr);
+	regcache->cooked_read (IA64_IP_REGNUM, &ip);
+	regcache->cooked_read (IA64_PSR_REGNUM, &psr);
 	*val = ip | ((psr >> 41) & 0x3);
 	break;
 	  
@@ -2577,8 +2575,8 @@ ia64_access_rse_reg (unw_addr_space_t as, unw_regnum_t uw_regnum,
 	   register frame so we must account for the fact that
 	   ptrace() will return a value for bsp that points *after*
 	   the current register frame.  */
-	regcache_cooked_read_unsigned (regcache, IA64_BSP_REGNUM, &bsp);
-	regcache_cooked_read_unsigned (regcache, IA64_CFM_REGNUM, &cfm);
+	regcache->cooked_read (IA64_BSP_REGNUM, &bsp);
+	regcache->cooked_read (IA64_CFM_REGNUM, &cfm);
 	sof = (cfm & 0x7f);
 	*val = ia64_rse_skip_regs (bsp, -sof);
 	break;
@@ -2586,12 +2584,12 @@ ia64_access_rse_reg (unw_addr_space_t as, unw_regnum_t uw_regnum,
       case UNW_IA64_AR_BSPSTORE:
 	/* Libunwind wants bspstore to be after the current register frame.
 	   This is what ptrace() and gdb treats as the regular bsp value.  */
-	regcache_cooked_read_unsigned (regcache, IA64_BSP_REGNUM, val);
+	regcache->cooked_read (IA64_BSP_REGNUM, val);
 	break;
 
       default:
         /* For all other registers, just unwind the value directly.  */
-	regcache_cooked_read_unsigned (regcache, regnum, val);
+	regcache->cooked_read (regnum, val);
 	break;
     }
       
@@ -3229,7 +3227,7 @@ ia64_extract_return_value (struct type *type, struct regcache *regcache,
       enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
       ULONGEST val;
 
-      regcache_cooked_read_unsigned (regcache, IA64_GR8_REGNUM, &val);
+      regcache->cooked_read (IA64_GR8_REGNUM, &val);
       store_unsigned_integer (valbuf, TYPE_LENGTH (type), byte_order, val);
     }
   else
@@ -3244,7 +3242,7 @@ ia64_extract_return_value (struct type *type, struct regcache *regcache,
       while (n-- > 0)
 	{
 	  ULONGEST val;
-	  regcache_cooked_read_unsigned (regcache, regnum, &val);
+	  regcache->cooked_read (regnum, &val);
 	  memcpy ((char *)valbuf + offset, &val, reglen);
 	  offset += reglen;
 	  regnum++;
@@ -3252,7 +3250,7 @@ ia64_extract_return_value (struct type *type, struct regcache *regcache,
 
       if (m)
 	{
-          regcache_cooked_read_unsigned (regcache, regnum, &val);
+          regcache->cooked_read (regnum, &val);
 	  memcpy ((char *)valbuf + offset, &val, m);
 	}
     }
@@ -3579,8 +3577,7 @@ find_func_descr (struct regcache *regcache, CORE_ADDR faddr, CORE_ADDR *fdaptr)
       global_pointer = ia64_find_global_pointer (gdbarch, faddr);
 
       if (global_pointer == 0)
-	regcache_cooked_read_unsigned (regcache,
-				       IA64_GR1_REGNUM, &global_pointer);
+	regcache->cooked_read (IA64_GR1_REGNUM, &global_pointer);
 
       store_unsigned_integer (buf, 8, byte_order, faddr);
       store_unsigned_integer (buf + 8, 8, byte_order, global_pointer);
@@ -3651,12 +3648,12 @@ ia64_allocate_new_rse_frame (struct regcache *regcache, ULONGEST bsp, int sof)
 {
   ULONGEST cfm, pfs, new_bsp;
 
-  regcache_cooked_read_unsigned (regcache, IA64_CFM_REGNUM, &cfm);
+  regcache->cooked_read (IA64_CFM_REGNUM, &cfm);
 
   new_bsp = rse_address_add (bsp, sof);
   regcache_cooked_write_unsigned (regcache, IA64_BSP_REGNUM, new_bsp);
 
-  regcache_cooked_read_unsigned (regcache, IA64_PFS_REGNUM, &pfs);
+  regcache->cooked_read (IA64_PFS_REGNUM, &pfs);
   pfs &= 0xc000000000000000LL;
   pfs |= (cfm & 0xffffffffffffLL);
   regcache_cooked_write_unsigned (regcache, IA64_PFS_REGNUM, pfs);
@@ -3725,7 +3722,7 @@ ia64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   memslots = nslots - rseslots;
 
   /* Allocate a new RSE frame.  */
-  regcache_cooked_read_unsigned (regcache, IA64_BSP_REGNUM, &bsp);
+  regcache->cooked_read (IA64_BSP_REGNUM, &bsp);
   tdep->infcall_ops.allocate_new_rse_frame (regcache, bsp, rseslots);
   
   /* We will attempt to find function descriptors in the .opd segment,

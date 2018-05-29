@@ -847,8 +847,7 @@ current_me_module (void)
   if (target_has_registers)
     {
       ULONGEST regval;
-      regcache_cooked_read_unsigned (get_current_regcache (),
-				     MEP_MODULE_REGNUM, &regval);
+      get_current_regcache ()->cooked_read (MEP_MODULE_REGNUM, &regval);
       return (CONFIG_ATTR) regval;
     }
   else
@@ -870,8 +869,7 @@ current_options (void)
   if (target_has_registers)
     {
       ULONGEST regval;
-      regcache_cooked_read_unsigned (get_current_regcache (),
-				     MEP_OPT_REGNUM, &regval);
+      get_current_regcache ()->cooked_read (MEP_OPT_REGNUM, &regval);
       return regval;
     }
   else

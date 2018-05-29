@@ -892,7 +892,7 @@ i386_displaced_step_fixup (struct gdbarch *gdbarch,
       ULONGEST orig_eip;
       int insn_len;
 
-      regcache_cooked_read_unsigned (regs, I386_EIP_REGNUM, &orig_eip);
+      regs->cooked_read (I386_EIP_REGNUM, &orig_eip);
 
       /* A signal trampoline system call changes the %eip, resuming
          execution of the main program after the signal handler has
@@ -954,7 +954,7 @@ i386_displaced_step_fixup (struct gdbarch *gdbarch,
       ULONGEST retaddr;
       const ULONGEST retaddr_len = 4;
 
-      regcache_cooked_read_unsigned (regs, I386_ESP_REGNUM, &esp);
+      regs->cooked_read (I386_ESP_REGNUM, &esp);
       retaddr = read_memory_unsigned_integer (esp, retaddr_len, byte_order);
       retaddr = (retaddr - insn_offset) & 0xffffffffUL;
       write_memory_unsigned_integer (esp, retaddr_len, byte_order, retaddr);

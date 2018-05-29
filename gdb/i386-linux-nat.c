@@ -665,8 +665,7 @@ i386_linux_nat_target::low_resume (ptid_t ptid, int step, enum gdb_signal signal
 
       request = PTRACE_SINGLESTEP;
 
-      regcache_cooked_read_unsigned (regcache,
-				     gdbarch_pc_regnum (gdbarch), &pc);
+      regcache->cooked_read (gdbarch_pc_regnum (gdbarch), &pc);
 
       /* Returning from a signal trampoline is done by calling a
          special system call (sigreturn or rt_sigreturn, see
@@ -681,8 +680,7 @@ i386_linux_nat_target::low_resume (ptid_t ptid, int step, enum gdb_signal signal
 	  && memcmp (buf, linux_syscall, LINUX_SYSCALL_LEN) == 0)
 	{
 	  ULONGEST syscall;
-	  regcache_cooked_read_unsigned (regcache,
-					 LINUX_SYSCALL_REGNUM, &syscall);
+	  regcache->cooked_read (LINUX_SYSCALL_REGNUM, &syscall);
 
 	  /* Then check the system call number.  */
 	  if (syscall == SYS_sigreturn || syscall == SYS_rt_sigreturn)
@@ -690,7 +688,7 @@ i386_linux_nat_target::low_resume (ptid_t ptid, int step, enum gdb_signal signal
 	      ULONGEST sp, addr;
 	      unsigned long int eflags;
 
-	      regcache_cooked_read_unsigned (regcache, I386_ESP_REGNUM, &sp);
+	      regcache->cooked_read (I386_ESP_REGNUM, &sp);
 	      if (syscall == SYS_rt_sigreturn)
 		addr = read_memory_unsigned_integer (sp + 8, 4, byte_order)
 		  + 20;

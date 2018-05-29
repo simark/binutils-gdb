@@ -537,7 +537,7 @@ enable_watchpoints_in_psr (ptid_t ptid)
   struct regcache *regcache = get_thread_regcache (ptid);
   ULONGEST psr;
 
-  regcache_cooked_read_unsigned (regcache, IA64_PSR_REGNUM, &psr);
+  regcache->cooked_read (IA64_PSR_REGNUM, &psr);
   if (!(psr & IA64_PSR_DB))
     {
       psr |= IA64_PSR_DB;	/* Set the db bit - this enables hardware
@@ -703,7 +703,7 @@ ia64_linux_nat_target::stopped_data_address (CORE_ADDR *addr_p)
       || (siginfo.si_code & 0xffff) != 0x0004 /* TRAP_HWBKPT */)
     return false;
 
-  regcache_cooked_read_unsigned (regcache, IA64_PSR_REGNUM, &psr);
+  regcache->cooked_read (IA64_PSR_REGNUM, &psr);
   psr |= IA64_PSR_DD;	/* Set the dd bit - this will disable the watchpoint
                            for the next instruction.  */
   regcache_cooked_write_unsigned (regcache, IA64_PSR_REGNUM, psr);

@@ -262,14 +262,14 @@ or1k_return_value (struct gdbarch *gdbarch, struct value *functype,
 	{
 	  ULONGEST tmp;
 
-	  regcache_cooked_read_unsigned (regcache, OR1K_RV_REGNUM, &tmp);
+	  regcache->cooked_read (OR1K_RV_REGNUM, &tmp);
 	  read_memory (tmp, readbuf, rv_size);
 	}
       if (writebuf != NULL)
 	{
 	  ULONGEST tmp;
 
-	  regcache_cooked_read_unsigned (regcache, OR1K_RV_REGNUM, &tmp);
+	  regcache->cooked_read (OR1K_RV_REGNUM, &tmp);
 	  write_memory (tmp, writebuf, rv_size);
 	}
 
@@ -283,7 +283,7 @@ or1k_return_value (struct gdbarch *gdbarch, struct value *functype,
 	{
 	  ULONGEST tmp;
 
-	  regcache_cooked_read_unsigned (regcache, OR1K_RV_REGNUM, &tmp);
+	  regcache->cooked_read (OR1K_RV_REGNUM, &tmp);
 	  store_unsigned_integer (readbuf, rv_size, byte_order, tmp);
 
 	}
@@ -311,10 +311,8 @@ or1k_return_value (struct gdbarch *gdbarch, struct value *functype,
 	  ULONGEST tmp_hi;
 	  ULONGEST tmp;
 
-	  regcache_cooked_read_unsigned (regcache, OR1K_RV_REGNUM,
-					 &tmp_hi);
-	  regcache_cooked_read_unsigned (regcache, OR1K_RV_REGNUM + 1,
-					 &tmp_lo);
+	  regcache->cooked_read (OR1K_RV_REGNUM, &tmp_hi);
+	  regcache->cooked_read (OR1K_RV_REGNUM + 1, &tmp_lo);
 	  tmp = (tmp_hi << (bpw * 8)) | tmp_lo;
 
 	  store_unsigned_integer (readbuf, rv_size, byte_order, tmp);
@@ -363,9 +361,9 @@ or1k_single_step_through_delay (struct gdbarch *gdbarch,
 
   /* Get the previous and current instruction addresses.  If they are not
     adjacent, we cannot be in a delay slot.  */
-  regcache_cooked_read_unsigned (regcache, OR1K_PPC_REGNUM, &val);
+  regcache->cooked_read (OR1K_PPC_REGNUM, &val);
   ppc = (CORE_ADDR) val;
-  regcache_cooked_read_unsigned (regcache, OR1K_NPC_REGNUM, &val);
+  regcache->cooked_read (OR1K_NPC_REGNUM, &val);
   npc = (CORE_ADDR) val;
 
   if (0x4 != (npc - ppc))

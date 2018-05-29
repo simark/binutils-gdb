@@ -213,7 +213,7 @@ sparc_store_inferior_registers (struct regcache *regcache, int regnum)
 	{
 	  ULONGEST sp;
 
-	  regcache_cooked_read_unsigned (regcache, SPARC_SP_REGNUM, &sp);
+	  regcache->cooked_read (SPARC_SP_REGNUM, &sp);
 	  sparc_collect_rwindow (regcache, sp, regnum);
 	}
 

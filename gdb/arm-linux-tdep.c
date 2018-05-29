@@ -797,7 +797,7 @@ arm_linux_sigreturn_next_pc (struct regcache *regcache,
 	      || svc_number == ARM_RT_SIGRETURN);
 
   is_sigreturn = (svc_number == ARM_SIGRETURN);
-  regcache_cooked_read_unsigned (regcache, ARM_SP_REGNUM, &sp);
+  regcache->cooked_read (ARM_SP_REGNUM, &sp);
   sp_data = read_memory_unsigned_integer (sp, 4, byte_order);
 
   pc_offset = arm_linux_sigreturn_next_pc_offset (sp, sp_data, svc_number,
@@ -829,14 +829,12 @@ arm_linux_get_syscall_number (struct gdbarch *gdbarch,
   int is_thumb;
   ULONGEST svc_number = -1;
 
-  regcache_cooked_read_unsigned (regs, ARM_PC_REGNUM, &pc);
-  regcache_cooked_read_unsigned (regs, ARM_PS_REGNUM, &cpsr);
+  regs->cooked_read (ARM_PC_REGNUM, &pc);
+  regs->cooked_read (ARM_PS_REGNUM, &cpsr);
   is_thumb = (cpsr & t_bit) != 0;
 
   if (is_thumb)
-    {
-      regcache_cooked_read_unsigned (regs, 7, &svc_number);
-    }
+    regs->cooked_read (7, &svc_number);
   else
     {
       enum bfd_endian byte_order_for_code = 
@@ -857,7 +855,7 @@ arm_linux_get_syscall_number (struct gdbarch *gdbarch,
       else
 	{
           /* EABI */
-	  regcache_cooked_read_unsigned (regs, 7, &svc_number);
+	  regs->cooked_read (7, &svc_number);
 	}
     }
 
@@ -952,7 +950,7 @@ arm_linux_cleanup_svc (struct gdbarch *gdbarch,
   ULONGEST apparent_pc;
   int within_scratch;
 
-  regcache_cooked_read_unsigned (regs, ARM_PC_REGNUM, &apparent_pc);
+  regs->cooked_read (ARM_PC_REGNUM, &apparent_pc);
 
   within_scratch = (apparent_pc >= dsc->scratch_base
 		    && apparent_pc < (dsc->scratch_base

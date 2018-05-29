@@ -1192,7 +1192,7 @@ spu_write_pc (struct regcache *regcache, CORE_ADDR pc)
   /* Keep interrupt enabled state unchanged.  */
   ULONGEST old_pc;
 
-  regcache_cooked_read_unsigned (regcache, SPU_PC_REGNUM, &old_pc);
+  regcache->cooked_read (SPU_PC_REGNUM, &old_pc);
   regcache_cooked_write_unsigned (regcache, SPU_PC_REGNUM,
 				  (SPUADDR_ADDR (pc) & -4) | (old_pc & 3));
 }
@@ -1633,8 +1633,7 @@ spu_software_single_step (struct regcache *regcache)
   insn = extract_unsigned_integer (buf, 4, byte_order);
 
   /* Get local store limit.  */
-  if ((regcache_cooked_read_unsigned (regcache, SPU_LSLR_REGNUM, &lslr)
-       != REG_VALID) || !lslr)
+  if ((regcache->cooked_read (SPU_LSLR_REGNUM, &lslr) != REG_VALID) || !lslr)
     lslr = (ULONGEST) -1;
 
   /* Next sequential instruction is at PC + 4, except if the current

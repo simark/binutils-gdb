@@ -1520,13 +1520,13 @@ sparc32_return_value (struct gdbarch *gdbarch, struct value *function,
 
       if (readbuf)
 	{
-	  regcache_cooked_read_unsigned (regcache, SPARC_SP_REGNUM, &sp);
+	  regcache->cooked_read (SPARC_SP_REGNUM, &sp);
 	  addr = read_memory_unsigned_integer (sp + 64, 4, byte_order);
 	  read_memory (addr, readbuf, TYPE_LENGTH (type));
 	}
       if (writebuf)
 	{
-	  regcache_cooked_read_unsigned (regcache, SPARC_SP_REGNUM, &sp);
+	  regcache->cooked_read (SPARC_SP_REGNUM, &sp);
 	  addr = read_memory_unsigned_integer (sp + 64, 4, byte_order);
 	  write_memory (addr, writebuf, TYPE_LENGTH (type));
 	}
@@ -2127,7 +2127,7 @@ sparc32_supply_gregset (const struct sparc_gregmap *gregmap,
 	{
 	  ULONGEST sp;
 
-	  regcache_cooked_read_unsigned (regcache, SPARC_SP_REGNUM, &sp);
+	  regcache->cooked_read (SPARC_SP_REGNUM, &sp);
 	  sparc_supply_rwindow (regcache, sp, regnum);
 	}
       else

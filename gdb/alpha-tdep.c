@@ -492,7 +492,7 @@ alpha_extract_return_value (struct type *valtype, struct regcache *regcache,
 	  break;
 
 	case 16:
-	  regcache_cooked_read_unsigned (regcache, ALPHA_V0_REGNUM, &l);
+	  regcache->cooked_read (ALPHA_V0_REGNUM, &l);
 	  read_memory (l, valbuf, 16);
 	  break;
 
@@ -516,7 +516,7 @@ alpha_extract_return_value (struct type *valtype, struct regcache *regcache,
 	  break;
 
 	case 32:
-	  regcache_cooked_read_unsigned (regcache, ALPHA_V0_REGNUM, &l);
+	  regcache->cooked_read (ALPHA_V0_REGNUM, &l);
 	  read_memory (l, valbuf, 32);
 	  break;
 
@@ -528,7 +528,7 @@ alpha_extract_return_value (struct type *valtype, struct regcache *regcache,
 
     default:
       /* Assume everything else degenerates to an integer.  */
-      regcache_cooked_read_unsigned (regcache, ALPHA_V0_REGNUM, &l);
+      regcache->cooked_read (ALPHA_V0_REGNUM, &l);
       store_unsigned_integer (valbuf, TYPE_LENGTH (valtype), byte_order, l);
       break;
     }

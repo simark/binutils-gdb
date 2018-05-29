@@ -82,8 +82,7 @@ i386_fbsd_nat_target::resume (ptid_t ptid, int step, enum gdb_signal signal)
  	 never goes through the kernel's trap() function which would
  	 normally clear it.  */
 
-      regcache_cooked_read_unsigned (regcache, I386_EFLAGS_REGNUM,
-				     &eflags);
+      regcache->cooked_read (I386_EFLAGS_REGNUM, &eflags);
       if (eflags & 0x0100)
 	regcache_cooked_write_unsigned (regcache, I386_EFLAGS_REGNUM,
 					eflags & ~0x0100);

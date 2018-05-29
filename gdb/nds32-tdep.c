@@ -1781,7 +1781,7 @@ nds32_extract_return_value (struct gdbarch *gdbarch, struct type *type,
 	{
 	  /* By using store_unsigned_integer we avoid having to do
 	     anything special for small big-endian values.  */
-	  regcache_cooked_read_unsigned (regcache, NDS32_R0_REGNUM, &tmp);
+	  regcache->cooked_read (NDS32_R0_REGNUM, &tmp);
 	  store_unsigned_integer (valbuf, len, byte_order, tmp);
 	}
       else if (len == 4)
@@ -1795,10 +1795,10 @@ nds32_extract_return_value (struct gdbarch *gdbarch, struct type *type,
 	  len1 = byte_order == BFD_ENDIAN_BIG ? len - 4 : 4;
 	  len2 = len - len1;
 
-	  regcache_cooked_read_unsigned (regcache, NDS32_R0_REGNUM, &tmp);
+	  regcache->cooked_read (NDS32_R0_REGNUM, &tmp);
 	  store_unsigned_integer (valbuf, len1, byte_order, tmp);
 
-	  regcache_cooked_read_unsigned (regcache, NDS32_R0_REGNUM + 1, &tmp);
+	  regcache->cooked_read (NDS32_R0_REGNUM + 1, &tmp);
 	  store_unsigned_integer (valbuf + len1, len2, byte_order, tmp);
 	}
       else

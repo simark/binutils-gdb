@@ -190,7 +190,7 @@ s390_supply_tdb_regset (const struct regset *regset, struct regcache *regcache,
   enum register_status ret;
 
   regcache_supply_regset (regset, regcache, regnum, regs, len);
-  ret = regcache_cooked_read_unsigned (regcache, S390_TDB_DWORD0_REGNUM, &tdw);
+  ret = regcache->cooked_read (S390_TDB_DWORD0_REGNUM, &tdw);
   if (ret != REG_VALID || (tdw >> 56) != 1)
     regcache_supply_regset (regset, regcache, regnum, NULL, len);
 }
@@ -568,7 +568,7 @@ s390_linux_get_syscall_number (struct gdbarch *gdbarch,
 
   /* Assume that the PC points after the 2-byte SVC instruction.  We
      don't currently support SVC via EXECUTE. */
-  regcache_cooked_read_unsigned (regs, tdep->pc_regnum, &pc);
+  regs->cooked_read (tdep->pc_regnum, &pc);
   pc -= 2;
   opcode = read_memory_unsigned_integer ((CORE_ADDR) pc, 1, byte_order);
   if (opcode != op_svc)
@@ -577,7 +577,7 @@ s390_linux_get_syscall_number (struct gdbarch *gdbarch,
   svc_number = read_memory_unsigned_integer ((CORE_ADDR) pc + 1, 1,
 					     byte_order);
   if (svc_number == 0)
-    regcache_cooked_read_unsigned (regs, S390_R1_REGNUM, &svc_number);
+    regs->cooked_read (S390_R1_REGNUM, &svc_number);
 
   return svc_number;
 }

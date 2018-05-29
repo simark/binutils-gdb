@@ -118,7 +118,7 @@ sparc_ravenscar_fetch_registers (struct regcache *regcache, int regnum)
   current_address = thread_descriptor_address
     + sparc_register_offsets [sp_regnum];
   supply_register_at_address (regcache, sp_regnum, current_address);
-  regcache_cooked_read_unsigned (regcache, sp_regnum, &stack_address);
+  regcache->cooked_read (sp_regnum, &stack_address);
 
   /* Read registers.  */
   for (current_regnum = 0; current_regnum < num_regs; current_regnum ++)
@@ -165,8 +165,7 @@ sparc_ravenscar_store_registers (struct regcache *regcache, int regnum)
       ptid_get_tid (inferior_ptid) + sparc_register_offsets [regnum];
   else if (register_on_stack_p (regnum))
     {
-      regcache_cooked_read_unsigned (regcache, SPARC_SP_REGNUM,
-                                     &register_address);
+      regcache->cooked_read (SPARC_SP_REGNUM, &register_address);
       register_address += sparc_register_offsets [regnum];
     }
   else
