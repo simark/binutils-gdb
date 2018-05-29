@@ -43,9 +43,6 @@ extern LONGEST regcache_raw_get_signed (struct regcache *regcache,
 
 /* Read a register as a signed/unsigned quantity.  */
 extern enum register_status
-  regcache_cooked_read_signed (struct regcache *regcache,
-			       int regnum, LONGEST *val);
-extern enum register_status
   regcache_cooked_read_unsigned (struct regcache *regcache,
 				 int regnum, ULONGEST *val);
 extern void regcache_cooked_write_signed (struct regcache *regcache,
@@ -198,6 +195,8 @@ public:
   /* Transfer a raw register [0..NUM_REGS+NUM_PSEUDO_REGS) from core-gdb to
      this regcache, return its value in *BUF and return its availability status.  */
   enum register_status cooked_read (int regnum, gdb_byte *buf);
+
+  /* Read a register as a signed/unsigned quantity.  */
   template<typename T, typename = RequireLongest<T>>
   enum register_status cooked_read (int regnum, T *val);
 

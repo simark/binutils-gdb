@@ -199,9 +199,7 @@ arc_insn_get_operand_value_signed (const struct arc_instruction &insn,
       /* Value in instruction is a register number.  */
       struct regcache *regcache = get_current_regcache ();
       LONGEST value;
-      regcache_cooked_read_signed (regcache,
-				   insn.operands[operand_num].value,
-				   &value);
+      regcache->cooked_read (insn.operands[operand_num].value, &value);
       return value;
     }
 }

@@ -652,14 +652,6 @@ readable_regcache::cooked_read_value (int regnum)
 					       this, regnum);
 }
 
-enum register_status
-regcache_cooked_read_signed (struct regcache *regcache, int regnum,
-			     LONGEST *val)
-{
-  gdb_assert (regcache != NULL);
-  return regcache->cooked_read (regnum, val);
-}
-
 template<typename T, typename>
 enum register_status
 readable_regcache::cooked_read (int regnum, T *val)
@@ -677,6 +669,10 @@ readable_regcache::cooked_read (int regnum, T *val)
     *val = 0;
   return status;
 }
+
+/* Explicit instantiations of the above with T = LONGEST.  */
+
+template register_status readable_regcache::cooked_read<> (int, LONGEST *);
 
 enum register_status
 regcache_cooked_read_unsigned (struct regcache *regcache, int regnum,
