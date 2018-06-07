@@ -98,6 +98,31 @@ enum psymtab_search_status
 
 struct partial_symtab
 {
+  /* Return the low text address of this partial_symtab.  */
+  CORE_ADDR text_low () const
+  {
+    return m_textlow;
+  }
+
+  /* Return the high text address of this partial_symtab.  */
+  CORE_ADDR text_high () const
+  {
+    return m_texthigh;
+  }
+
+  /* Set the low text address of this partial_symtab.  */
+  void set_text_low (CORE_ADDR addr)
+  {
+    m_textlow = addr;
+  }
+
+  /* Set the hight text address of this partial_symtab.  */
+  void set_text_high (CORE_ADDR addr)
+  {
+    m_texthigh = addr;
+  }
+
+
   /* Chain of all existing partial symtabs.  */
 
   struct partial_symtab *next;
@@ -118,10 +143,11 @@ struct partial_symtab
 
   /* Range of text addresses covered by this file; texthigh is the
      beginning of the next section.  Do not use if PSYMTABS_ADDRMAP_SUPPORTED
-     is set.  */
+     is set.  Do not refer directly to these fields.  Instead, use the
+     accessors.  */
 
-  CORE_ADDR textlow;
-  CORE_ADDR texthigh;
+  CORE_ADDR m_textlow;
+  CORE_ADDR m_texthigh;
 
   /* If NULL, this is an ordinary partial symbol table.
 
@@ -221,6 +247,13 @@ struct partial_symtab
 
   void *read_symtab_private;
 };
+
+/* Compute a section offset given an objfile, a section_offsets field
+   from a partial symtab, and an index.  */
+
+#define PST_OFFSET(OBJF, OFFS, INDEX)				\
+  (ANOFFSET ((OBJF)->section_offsets, (INDEX))			\
+   + ((((OFFS) == NULL)) ? 0 : ANOFFSET ((OFFS), (INDEX))))
 
 /* Add any kind of symbol to a partial_symbol vector.  */
 
