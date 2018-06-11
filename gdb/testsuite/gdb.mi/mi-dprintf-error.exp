@@ -1,0 +1,38 @@
+#   Copyright (C) 2018 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+load_lib mi-support.exp
+set MIFLAGS "-i=mi"
+
+gdb_exit
+if [mi_gdb_start] {
+    continue
+}
+
+standard_testfile
+
+if {[build_executable $testfile.exp $testfile $srcfile {debug}] == -1} {
+    untested "failed to compile"
+    return -1
+}
+
+mi_delete_breakpoints
+mi_run_to_main
+
+mi_gdb_test "-dprintf-insert foo \"Hello %d\" doesnt_exist" \
+    "\\^done,.*" "insert dprintf"
+
+set extra [list "" {bkptno="[0-9]+",error-message="No symbol \\"doesnt_exist\\" in current context.".*}]
+mi_execute_to exec-continue dprintf-error foo "" "mi-dprintf-error.c" $decimal $extra "continue to failed dprintf"

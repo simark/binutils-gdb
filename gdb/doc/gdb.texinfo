@@ -5170,6 +5170,12 @@ may be the values of local variables, but if that is the case, then
 all enabled dynamic prints must be at locations within the scope of
 those locals.  If evaluation fails, @value{GDBN} will report an error.
 
+When using @code{dprintf-style} values @code{gdb} or @code{call}, if
+@value{GDBN} fails to evaluate an expression passed as an argument (a reference
+to an unknown symbol or an access to an invalid memory location, for example),
+it will report the error and the dynamic printf will cause a stop, as if it was
+a breakpoint.
+
 @node Save Breakpoints
 @subsection How to save breakpoints to a file
 
@@ -27338,6 +27344,9 @@ The inferior returned from a system call.  This is reported when
 @item exec
 The inferior called @code{exec}.  This is reported when @code{catch exec}
 (@pxref{Set Catchpoints}) has been used.
+@item dprintf-error
+GDB failed to evaluate the argument of a dynamic printf (@xref{Dynamic Printf}).
+An error message is available in the @code{error-message} field.
 @end table
 
 The @var{id} field identifies the global thread ID of the thread

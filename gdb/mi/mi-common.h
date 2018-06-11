@@ -46,6 +46,7 @@ enum async_reply_reason
   EXEC_ASYNC_SYSCALL_ENTRY,
   EXEC_ASYNC_SYSCALL_RETURN,
   EXEC_ASYNC_EXEC,
+  EXEC_ASYNC_DPRINTF_ERROR,
   /* This is here only to represent the number of enums.  */
   EXEC_ASYNC_LAST
 };

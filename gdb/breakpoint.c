@@ -5677,8 +5677,10 @@ bpstat_what (bpstat bs_head)
 	  break;
 
 	case bp_dprintf:
+	  /* We may stop on a dprintf if we failed to evaluate the expressions to
+	     print.  */
 	  if (bs->stop)
-	    this_action = BPSTAT_WHAT_STOP_SILENT;
+	    this_action = BPSTAT_WHAT_STOP_NOISY;
 	  else
 	    this_action = BPSTAT_WHAT_SINGLE;
 	  break;
@@ -12993,6 +12995,31 @@ dprintf_re_set (struct breakpoint *b)
     update_dprintf_command_list (b);
 }
 
+/* Implement the "print_it" breakpoint_ops method for dprintf.  */
+
+static enum print_stop_action
+dprintf_print_it (bpstat bs)
+{
+  struct ui_out *uiout = current_uiout;
+  gdb_assert (bs->bp_location_at != NULL);
+  breakpoint *bp = bs->breakpoint_at;
+
+  maybe_print_thread_hit_breakpoint (uiout);
+
+  uiout->text ("Dprintf ");
+  if (uiout->is_mi_like_p ())
+    {
+      uiout->field_string ("reason",
+			   async_reason_lookup (EXEC_ASYNC_DPRINTF_ERROR));
+    }
+  uiout->field_int ("bkptno", bp->number);
+  uiout->text (", failed to evaluate: ");
+  uiout->field_string ("error-message", bs->dprintf_error);
+  uiout->text ("\n");
+
+  return PRINT_SRC_AND_LOC;
+}
+
 /* Implement the "print_recreate" breakpoint_ops method for dprintf.  */
 
 static void
@@ -13032,7 +13059,17 @@ dprintf_after_condition_true (struct bpstats *bs)
   tmp_bs.commands = bs->commands;
   bs->commands = NULL;
 
-  bpstat_do_actions_1 (&tmp_bs_p);
+  TRY
+    {
+      bpstat_do_actions_1 (&tmp_bs_p);
+    }
+  CATCH (ex, RETURN_MASK_ALL)
+    {
+      /* Stop the inferior if we fail to evaluate an expression.  */
+      bs->stop = 1;
+      bs->dprintf_error = ex.message;
+    }
+  END_CATCH
 
   /* 'tmp_bs.commands' will usually be NULL by now, but
      bpstat_do_actions_1 may return early without processing the whole
@@ -15504,7 +15541,7 @@ initialize_breakpoint_ops (void)
   *ops = bkpt_base_breakpoint_ops;
   ops->re_set = dprintf_re_set;
   ops->resources_needed = bkpt_resources_needed;
-  ops->print_it = bkpt_print_it;
+  ops->print_it = dprintf_print_it;
   ops->print_mention = bkpt_print_mention;
   ops->print_recreate = dprintf_print_recreate;
   ops->after_condition_true = dprintf_after_condition_true;

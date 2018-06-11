@@ -1167,6 +1167,10 @@ struct bpstats
     /* Tell bpstat_print and print_bp_stop_message how to print stuff
        associated with this element of the bpstat chain.  */
     enum bp_print_how print_it;
+
+    /* When we stop due to a failed dprintf evaluation (e.g. referenced an
+       unknown symbol), this contains a meaningful error message.  */
+    std::string dprintf_error;
   };
 
 enum inf_context
