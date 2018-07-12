@@ -689,15 +689,6 @@ mark_general (struct m32c_reg *reg)
 }
 
 
-/* Mark REG as a DMA register, and return it.  */
-static struct m32c_reg *
-mark_dma (struct m32c_reg *reg)
-{
-  reg->dma_p = 1;
-  return reg;
-}
-
-
 /* Mark REG as a SYSTEM register, and return it.  */
 static struct m32c_reg *
 mark_system (struct m32c_reg *reg)
@@ -838,20 +829,6 @@ make_regs (struct gdbarch *arch)
   struct m32c_reg *intb        = S (RC (intb));
   struct m32c_reg *pc          = G (RC (pc));
   struct m32c_reg *flg         = G (R16U (flg));
-
-  if (mach == bfd_mach_m32c)
-    {
-      struct m32c_reg *svf     = S (R16U (svf));
-      struct m32c_reg *svp     = S (RC (svp));
-      struct m32c_reg *vct     = S (RC (vct));
-
-      struct m32c_reg *dmd01   = DMA (RP (dmd, tdep->uint8));
-      struct m32c_reg *dct01   = DMA (RP (dct, tdep->uint16));
-      struct m32c_reg *drc01   = DMA (RP (drc, tdep->uint16));
-      struct m32c_reg *dma01   = DMA (RP (dma, tdep->data_addr_reg_type));
-      struct m32c_reg *dsa01   = DMA (RP (dsa, tdep->data_addr_reg_type));
-      struct m32c_reg *dra01   = DMA (RP (dra, tdep->data_addr_reg_type));
-    }
 
   num_raw_regs = tdep->num_regs;
 
