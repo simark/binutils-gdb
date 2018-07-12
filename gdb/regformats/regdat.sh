@@ -164,12 +164,12 @@ done
 echo
 echo "static const char *expedite_regs_${name}[] = { \"`echo ${expedite} | sed 's/,/", "/g'`\", 0 };"
 if test "${feature}" != x; then
-  echo "static const char *xmltarget_${name} = 0;"
+  echo "static const char *xmltarget_${name} ATTRIBUTE_UNUSED = 0;"
 elif test "${xmltarget}" = x; then
   if test "${xmlarch}" = x && test "${xmlosabi}" = x; then
-    echo "static const char *xmltarget_${name} = 0;"
+    echo "static const char *xmltarget_${name} ATTRIBUTE_UNUSED = 0;"
   else
-    echo "static const char *xmltarget_${name} = \"@<target>\\"
+    echo "static const char *xmltarget_${name} ATTRIBUTE_UNUSED = \"@<target>\\"
     if test "${xmlarch}" != x; then
       echo "<architecture>${xmlarch}</architecture>\\"
     fi
@@ -179,7 +179,7 @@ elif test "${xmltarget}" = x; then
     echo "</target>\";"
   fi
 else
-  echo "static const char *xmltarget_${name} = \"${xmltarget}\";"
+  echo "static const char *xmltarget_${name} ATTRIBUTE_UNUSED = \"${xmltarget}\";"
 fi
 echo
 
