@@ -563,7 +563,6 @@ literal:
 		{ $$ = ast_dliteral ($1); }
 |	STRING
 		{
-		  const struct rust_op *str = ast_string ($1);
 		  struct set_field field;
 		  struct typed_val_int val;
 		  struct stoken token;
