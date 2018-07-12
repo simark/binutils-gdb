@@ -16,11 +16,15 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #ifndef X86_TDESC_H
+#define X86_TDESC_H
 
 /* The "expedite" registers for x86 targets.  */
-static const char *i386_expedite_regs[] = {"ebp", "esp", "eip", NULL};
+static const char *i386_expedite_regs[] ATTRIBUTE_UNUSED
+    = {"ebp", "esp", "eip", NULL};
 
+#ifdef __x86_64__
 /* The "expedite" registers for x86_64 targets.  */
 static const char *amd64_expedite_regs[] = {"rbp", "rsp", "rip", NULL};
+#endif
 
 #endif /* X86_TDESC_H */
