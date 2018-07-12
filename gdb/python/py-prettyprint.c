@@ -662,7 +662,9 @@ gdbpy_apply_val_pretty_printer (const struct extension_language_defn *extlang,
   struct gdbarch *gdbarch = get_type_arch (type);
   struct value *value;
   enum string_repr_result print_result;
-  const gdb_byte *valaddr = value_contents_for_printing (val);
+
+  /* Call for side effects.  */
+  value_contents_for_printing (val);
 
   /* No pretty-printer support for unavailable values.  */
   if (!value_bytes_available (val, embedded_offset, TYPE_LENGTH (type)))
