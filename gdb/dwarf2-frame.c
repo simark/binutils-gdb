@@ -1290,8 +1290,16 @@ dwarf2_frame_prev_register (struct frame_info *this_frame, void **this_cache,
 	 registers are actually undefined (which is different to CFI
 	 "undefined").  Code above issues a complaint about this.
 	 Here just fudge the books, assume GCC, and that the value is
-	 more inner on the stack.  */
-      return frame_unwind_got_register (this_frame, regnum, regnum);
+	 more inner on the stack.
+
+	 If the register is a pseudo one, it's possible that we don't have
+	 unwind info for it, but we have unwind info for the raw registers
+	 that compose it.  Return nullptr, so that frame_unwind_register_value
+	 attempts reconstructing the value from raw registers. */
+      if (regnum < gdbarch_num_regs (gdbarch))
+	return frame_unwind_got_register (this_frame, regnum, regnum);
+      else
+	return nullptr;
 
     case DWARF2_FRAME_REG_SAME_VALUE:
       return frame_unwind_got_register (this_frame, regnum, regnum);

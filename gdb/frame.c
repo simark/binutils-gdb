@@ -1175,14 +1175,74 @@ get_frame_register (struct frame_info *frame,
   frame_unwind_register (frame->next, regnum, buf);
 }
 
+/* Implement the register_reader interface, but read the registers of a given
+   frame.  */
+
+struct frame_register_reader : public virtual register_reader
+{
+  frame_register_reader (frame_info *next_frame)
+  : m_next_frame (next_frame)
+  {}
+
+  gdbarch *arch () const override
+  {
+    return get_frame_arch (m_next_frame);
+  }
+
+  register_status raw_read (int regnum, gdb_byte *buf) override
+  {
+    return cooked_read (regnum, buf);
+  }
+
+  register_status cooked_read (int regnum, gdb_byte *buf) override
+  {
+    TRY
+      {
+	frame_unwind_register (m_next_frame, regnum, buf);
+	return REG_VALID;
+      }
+    CATCH (ex, RETURN_MASK_ALL)
+      {
+	return REG_UNAVAILABLE;
+      }
+    END_CATCH
+  }
+
+protected:
+  frame_info *m_next_frame;
+};
+
+/* Implement the register_readwriter interface, but read/write the registers of
+   a given frame.  */
+
+struct frame_register_readwriter : public frame_register_reader,
+				   public register_readwriter
+{
+  frame_register_readwriter (frame_info *next_frame)
+  : frame_register_reader (next_frame)
+  {}
+
+  void raw_write (int regnum, const gdb_byte *buf) override
+  {
+    cooked_write (regnum, buf);
+  }
+
+  void cooked_write (int regnum, const gdb_byte *buf) override
+  {
+    frame_info *this_frame = get_prev_frame (m_next_frame);
+    put_frame_register (this_frame, regnum, buf);
+  }
+};
+
 struct value *
 frame_unwind_register_value (frame_info *next_frame, int regnum)
 {
-  struct gdbarch *gdbarch;
-  struct value *value;
-
   gdb_assert (next_frame != NULL);
-  gdbarch = frame_unwind_arch (next_frame);
+
+  struct gdbarch *gdbarch = frame_unwind_arch (next_frame);
+
+  gdb_assert (regnum >= 0);
+  gdb_assert (regnum < gdbarch_num_cooked_regs (gdbarch));
 
   if (frame_debug)
     {
@@ -1198,9 +1258,41 @@ frame_unwind_register_value (frame_info *next_frame, int regnum)
     frame_unwind_find_by_frame (next_frame, &next_frame->prologue_cache);
 
   /* Ask this frame to unwind its register.  */
-  value = next_frame->unwind->prev_register (next_frame,
-					     &next_frame->prologue_cache,
-					     regnum);
+  struct value *value
+    = next_frame->unwind->prev_register (next_frame,
+					 &next_frame->prologue_cache, regnum);
+
+  if (value == nullptr)
+    {
+      frame_register_reader reg_read (next_frame);
+
+      if (gdbarch_pseudo_register_read_value_p (gdbarch))
+	{
+	  /* This is a pseudo register, we don't know how how what raw registers
+	     this pseudo register is made of.  Ask the gdbarch to read the
+	     value, it will itself ask the next frame to unwind the values of
+	     the raw registers it needs to compose the value of the pseudo
+	     register.  */
+	  value
+	    = gdbarch_pseudo_register_read_value (gdbarch, &reg_read, regnum);
+	  VALUE_LVAL (value) = not_lval;
+	}
+      else if (gdbarch_pseudo_register_read_p (gdbarch))
+	{
+	  value = allocate_value (register_type (gdbarch, regnum));
+	  VALUE_LVAL (value) = not_lval;
+
+	  register_status st
+	    = gdbarch_pseudo_register_read (gdbarch, &reg_read, regnum,
+					    value_contents_raw (value));
+	  if (st == REG_UNAVAILABLE)
+	    mark_value_bytes_unavailable (value, 0,
+					  TYPE_LENGTH (value_type (value)));
+	}
+      else
+	error (_("Can't unwind value of register %d (%s)"), regnum,
+	       user_reg_map_regnum_to_name (gdbarch, regnum));
+    }
 
   if (frame_debug)
     {
@@ -1348,10 +1440,14 @@ put_frame_register (struct frame_info *frame, int regnum,
   enum lval_type lval;
   CORE_ADDR addr;
 
+  gdb_assert (regnum >= 0);
+  gdb_assert (regnum < gdbarch_num_cooked_regs (gdbarch));
+
   frame_register (frame, regnum, &optim, &unavail,
 		  &lval, &addr, &realnum, NULL);
   if (optim)
     error (_("Attempt to assign to a register that was not saved."));
+
   switch (lval)
     {
     case lval_memory:
@@ -1363,7 +1459,17 @@ put_frame_register (struct frame_info *frame, int regnum,
       get_current_regcache ()->cooked_write (realnum, buf);
       break;
     default:
-      error (_("Attempt to assign to an unmodifiable value."));
+      {
+	if (regnum < gdbarch_num_regs (gdbarch))
+	  error (_("Attempt to assign to an unmodifiable value."));
+
+	frame_info *next_frame = get_next_frame_sentinel_okay (frame);
+	frame_register_readwriter frame_readwriter (next_frame);
+
+	/* This is a pseudo-register, the arch will find out which raw registers
+	   to modify and update them.  */
+	gdbarch_pseudo_register_write (gdbarch, &frame_readwriter, regnum, buf);
+      }
     }
 }
 
