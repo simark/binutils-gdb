@@ -1651,8 +1651,7 @@ info_frame_command (const char *addr_exp, int from_tty)
       }
 
     count = 0;
-    numregs = gdbarch_num_regs (gdbarch)
-	      + gdbarch_num_pseudo_regs (gdbarch);
+    numregs = gdbarch_num_cooked_regs (gdbarch);
     for (i = 0; i < numregs; i++)
       if (i != sp_regnum
 	  && gdbarch_register_reggroup_p (gdbarch, i, all_reggroup))
