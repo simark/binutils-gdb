@@ -854,7 +854,6 @@ tdesc_register_name (struct gdbarch *gdbarch, int regno)
 {
   struct tdesc_reg *reg = tdesc_find_register (gdbarch, regno);
   int num_regs = gdbarch_num_regs (gdbarch);
-  int num_pseudo_regs = gdbarch_num_pseudo_regs (gdbarch);
 
   if (reg != NULL)
     return reg->name.c_str ();

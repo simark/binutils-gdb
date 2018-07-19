@@ -1614,7 +1614,9 @@ cooked_read_test (struct gdbarch *gdbarch)
 	break;
     }
 
-  readwrite_regcache readwrite (gdbarch);
+  //readwrite_regcache readwrite (gdbarch);
+  regcache *r = get_thread_regcache (mock_ptid);
+  regcache &readwrite = *r;
   gdb::def_vector<gdb_byte> buf (register_size (gdbarch, regnum));
 
   readwrite.raw_read (regnum, buf.data ());
@@ -1732,12 +1734,29 @@ cooked_write_test (struct gdbarch *gdbarch)
   if (current_top_target ()->to_stratum >= process_stratum)
     error (_("target already pushed"));
 
-  /* Create a mock environment.  A process_stratum target pushed.  */
-
   target_ops_no_register mock_target;
+  ptid_t mock_ptid (1, 1);
+  inferior mock_inferior (mock_ptid.pid ());
+  address_space mock_aspace
+    { };
+  mock_inferior.gdbarch = gdbarch;
+  mock_inferior.aspace = &mock_aspace;
+  thread_info mock_thread (&mock_inferior, mock_ptid);
+
+  scoped_restore restore_thread_list = make_scoped_restore (&thread_list,
+							    &mock_thread);
+
+  /* Add the mock inferior to the inferior list so that look ups by
+   target+ptid can find it.  */
+  scoped_restore restore_inferior_list = make_scoped_restore (&inferior_list);
+  inferior_list = &mock_inferior;
+
+  /* Switch to the mock inferior.  */
+  scoped_restore_current_inferior restore_current_inferior;
+  set_current_inferior (&mock_inferior);
 
   /* Push the process_stratum target so we can mock accessing
-     registers.  */
+   registers.  */
   push_target (&mock_target);
 
   /* Pop it again on exit (return/exception).  */
@@ -1749,7 +1768,12 @@ cooked_write_test (struct gdbarch *gdbarch)
     }
   } pop_targets;
 
-  readwrite_regcache readwrite (gdbarch);
+  /* Switch to the mock thread.  */
+  scoped_restore restore_inferior_ptid = make_scoped_restore (&inferior_ptid,
+							      mock_ptid);
+
+  regcache *r = get_thread_regcache (mock_ptid);
+  regcache &readwrite = *r;
 
   const int num_regs = gdbarch_num_cooked_regs (gdbarch);
 
