@@ -227,10 +227,10 @@ static void show_disassembly_style_sfunc (struct ui_file *, int,
 					  const char *);
 
 static enum register_status arm_neon_quad_read (struct gdbarch *gdbarch,
-						readable_regcache *regcache,
+						register_reader *regs,
 						int regnum, gdb_byte *buf);
 static void arm_neon_quad_write (struct gdbarch *gdbarch,
-				 struct regcache *regcache,
+				 register_readwriter *regcache,
 				 int regnum, const gdb_byte *buf);
 
 static CORE_ADDR
@@ -8665,7 +8665,7 @@ arm_write_pc (struct regcache *regcache, CORE_ADDR pc)
    the quad register, in [0, 15].  */
 
 static enum register_status
-arm_neon_quad_read (struct gdbarch *gdbarch, readable_regcache *regcache,
+arm_neon_quad_read (struct gdbarch *gdbarch, register_reader *regcache,
 		    int regnum, gdb_byte *buf)
 {
   char name_buf[4];
@@ -8698,7 +8698,7 @@ arm_neon_quad_read (struct gdbarch *gdbarch, readable_regcache *regcache,
 }
 
 static enum register_status
-arm_pseudo_read (struct gdbarch *gdbarch, readable_regcache *regcache,
+arm_pseudo_read (struct gdbarch *gdbarch, register_reader *regcache,
 		 int regnum, gdb_byte *buf)
 {
   const int num_regs = gdbarch_num_regs (gdbarch);
@@ -8744,7 +8744,7 @@ arm_pseudo_read (struct gdbarch *gdbarch, readable_regcache *regcache,
    of the quad register, in [0, 15].  */
 
 static void
-arm_neon_quad_write (struct gdbarch *gdbarch, struct regcache *regcache,
+arm_neon_quad_write (struct gdbarch *gdbarch, register_readwriter *regcache,
 		     int regnum, const gdb_byte *buf)
 {
   char name_buf[4];
@@ -8766,7 +8766,7 @@ arm_neon_quad_write (struct gdbarch *gdbarch, struct regcache *regcache,
 }
 
 static void
-arm_pseudo_write (struct gdbarch *gdbarch, struct regcache *regcache,
+arm_pseudo_write (struct gdbarch *gdbarch, register_readwriter *regcache,
 		  int regnum, const gdb_byte *buf)
 {
   const int num_regs = gdbarch_num_regs (gdbarch);

@@ -897,7 +897,7 @@ sparc64_register_type (struct gdbarch *gdbarch, int regnum)
 
 static enum register_status
 sparc64_pseudo_register_read (struct gdbarch *gdbarch,
-			      readable_regcache *regcache,
+			      register_reader *regcache,
 			      int regnum, gdb_byte *buf)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -976,7 +976,7 @@ sparc64_pseudo_register_read (struct gdbarch *gdbarch,
 
 static void
 sparc64_pseudo_register_write (struct gdbarch *gdbarch,
-			       struct regcache *regcache,
+			       register_readwriter *regcache,
 			       int regnum, const gdb_byte *buf)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -1015,7 +1015,7 @@ sparc64_pseudo_register_write (struct gdbarch *gdbarch,
     {
       ULONGEST state, bits;
 
-      regcache_raw_read_unsigned (regcache, SPARC64_STATE_REGNUM, &state);
+      regcache->raw_read (SPARC64_STATE_REGNUM, &state);
       bits = extract_unsigned_integer (buf, 8, byte_order);
       switch (regnum)
 	{

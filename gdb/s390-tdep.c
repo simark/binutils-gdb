@@ -1284,7 +1284,7 @@ s390_pseudo_register_type (struct gdbarch *gdbarch, int regnum)
 /* Implement pseudo_register_read gdbarch method.  */
 
 static enum register_status
-s390_pseudo_register_read (struct gdbarch *gdbarch, readable_regcache *regcache,
+s390_pseudo_register_read (struct gdbarch *gdbarch, register_reader *regcache,
 			   int regnum, gdb_byte *buf)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
@@ -1332,7 +1332,7 @@ s390_pseudo_register_read (struct gdbarch *gdbarch, readable_regcache *regcache,
       status = regcache->raw_read (S390_R0_REGNUM + regnum, &val);
       if (status == REG_VALID)
 	status = regcache->raw_read (S390_R0_UPPER_REGNUM + regnum,
-				     &val_upper);
+					      &val_upper);
       if (status == REG_VALID)
 	{
 	  val |= val_upper << 32;
@@ -1359,7 +1359,8 @@ s390_pseudo_register_read (struct gdbarch *gdbarch, readable_regcache *regcache,
 /* Implement pseudo_register_write gdbarch method.  */
 
 static void
-s390_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
+s390_pseudo_register_write (struct gdbarch *gdbarch,
+			    register_readwriter *regcache,
 			    int regnum, const gdb_byte *buf)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
@@ -1372,7 +1373,7 @@ s390_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
       val = extract_unsigned_integer (buf, regsize, byte_order);
       if (register_size (gdbarch, S390_PSWA_REGNUM) == 4)
 	{
-	  regcache_raw_read_unsigned (regcache, S390_PSWA_REGNUM, &psw);
+	  regcache->raw_read (S390_PSWA_REGNUM, &psw);
 	  val = (psw & 0x80000000) | (val & 0x7fffffff);
 	}
       regcache_raw_write_unsigned (regcache, S390_PSWA_REGNUM, val);
@@ -1382,7 +1383,7 @@ s390_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
   if (regnum == tdep->cc_regnum)
     {
       val = extract_unsigned_integer (buf, regsize, byte_order);
-      regcache_raw_read_unsigned (regcache, S390_PSWM_REGNUM, &psw);
+      regcache->raw_read (S390_PSWM_REGNUM, &psw);
       if (register_size (gdbarch, S390_PSWA_REGNUM) == 4)
 	val = (psw & ~((ULONGEST)3 << 12)) | ((val & 3) << 12);
       else

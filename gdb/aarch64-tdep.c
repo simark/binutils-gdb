@@ -2318,9 +2318,9 @@ aarch64_pseudo_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
 /* Helper for aarch64_pseudo_read_value.  */
 
 static struct value *
-aarch64_pseudo_read_value_1 (struct gdbarch *gdbarch,
-			     readable_regcache *regcache, int regnum_offset,
-			     int regsize, struct value *result_value)
+aarch64_pseudo_read_value_1 (struct gdbarch *gdbarch, register_reader *regcache,
+			     int regnum_offset, int regsize,
+			     struct value *result_value)
 {
   unsigned v_regnum = AARCH64_V0_REGNUM + regnum_offset;
 
@@ -2340,7 +2340,7 @@ aarch64_pseudo_read_value_1 (struct gdbarch *gdbarch,
 /* Implement the "pseudo_register_read_value" gdbarch method.  */
 
 static struct value *
-aarch64_pseudo_read_value (struct gdbarch *gdbarch, readable_regcache *regcache,
+aarch64_pseudo_read_value (struct gdbarch *gdbarch, register_reader *regcache,
 			   int regnum)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
@@ -2388,7 +2388,7 @@ aarch64_pseudo_read_value (struct gdbarch *gdbarch, readable_regcache *regcache,
 /* Helper for aarch64_pseudo_write.  */
 
 static void
-aarch64_pseudo_write_1 (struct gdbarch *gdbarch, struct regcache *regcache,
+aarch64_pseudo_write_1 (struct gdbarch *gdbarch, register_readwriter *regcache,
 			int regnum_offset, int regsize, const gdb_byte *buf)
 {
   unsigned v_regnum = AARCH64_V0_REGNUM + regnum_offset;
@@ -2410,7 +2410,7 @@ aarch64_pseudo_write_1 (struct gdbarch *gdbarch, struct regcache *regcache,
 /* Implement the "pseudo_register_write" gdbarch method.  */
 
 static void
-aarch64_pseudo_write (struct gdbarch *gdbarch, struct regcache *regcache,
+aarch64_pseudo_write (struct gdbarch *gdbarch, register_readwriter *regcache,
 		      int regnum, const gdb_byte *buf)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);

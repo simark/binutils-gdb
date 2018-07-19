@@ -1114,7 +1114,7 @@ mep_register_type (struct gdbarch *gdbarch, int reg_nr)
 
 static enum register_status
 mep_pseudo_cr32_read (struct gdbarch *gdbarch,
-		      readable_regcache *regcache,
+		      register_reader *regcache,
                       int cookednum,
                       gdb_byte *buf)
 {
@@ -1140,7 +1140,7 @@ mep_pseudo_cr32_read (struct gdbarch *gdbarch,
 
 static enum register_status
 mep_pseudo_cr64_read (struct gdbarch *gdbarch,
-                      readable_regcache *regcache,
+		      register_reader *regcache,
                       int cookednum,
                       gdb_byte *buf)
 {
@@ -1150,7 +1150,7 @@ mep_pseudo_cr64_read (struct gdbarch *gdbarch,
 
 static enum register_status
 mep_pseudo_register_read (struct gdbarch *gdbarch,
-			  readable_regcache *regcache,
+			  register_reader *regcache,
                           int cookednum,
                           gdb_byte *buf)
 {
@@ -1170,7 +1170,7 @@ mep_pseudo_register_read (struct gdbarch *gdbarch,
 
 static void
 mep_pseudo_csr_write (struct gdbarch *gdbarch,
-                      struct regcache *regcache,
+		      register_readwriter *regcache,
                       int cookednum,
                       const gdb_byte *buf)
 {
@@ -1190,7 +1190,7 @@ mep_pseudo_csr_write (struct gdbarch *gdbarch,
       ULONGEST new_bits;
       ULONGEST mixed_bits;
           
-      regcache_raw_read_unsigned (regcache, r->raw, &old_bits);
+      regcache->raw_read (r->raw, &old_bits);
       new_bits = extract_unsigned_integer (buf, size, byte_order);
       mixed_bits = ((r->writeable_bits & new_bits)
                     | (~r->writeable_bits & old_bits));
@@ -1201,7 +1201,7 @@ mep_pseudo_csr_write (struct gdbarch *gdbarch,
 
 static void
 mep_pseudo_cr32_write (struct gdbarch *gdbarch,
-                       struct regcache *regcache,
+		       register_readwriter *regcache,
                        int cookednum,
                        const gdb_byte *buf)
 {
@@ -1222,9 +1222,9 @@ mep_pseudo_cr32_write (struct gdbarch *gdbarch,
 
 static void
 mep_pseudo_cr64_write (struct gdbarch *gdbarch,
-                     struct regcache *regcache,
-                     int cookednum,
-                     const gdb_byte *buf)
+		       register_readwriter *regcache,
+		       int cookednum,
+		       const gdb_byte *buf)
 {
   regcache->raw_write (mep_pseudo_to_raw[cookednum], buf);
 }
@@ -1232,7 +1232,7 @@ mep_pseudo_cr64_write (struct gdbarch *gdbarch,
 
 static void
 mep_pseudo_register_write (struct gdbarch *gdbarch,
-                           struct regcache *regcache,
+			   register_readwriter *regcache,
                            int cookednum,
                            const gdb_byte *buf)
 {

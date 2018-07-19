@@ -928,7 +928,7 @@ rse_address_add(CORE_ADDR addr, int nslots)
 }
 
 static enum register_status
-ia64_pseudo_register_read (struct gdbarch *gdbarch, readable_regcache *regcache,
+ia64_pseudo_register_read (struct gdbarch *gdbarch, register_reader *regcache,
                            int regnum, gdb_byte *buf)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -1085,7 +1085,8 @@ ia64_pseudo_register_read (struct gdbarch *gdbarch, readable_regcache *regcache,
 }
 
 static void
-ia64_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
+ia64_pseudo_register_write (struct gdbarch *gdbarch,
+			    register_readwriter *regcache,
 			    int regnum, const gdb_byte *buf)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);

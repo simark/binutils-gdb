@@ -23,6 +23,8 @@
 #include "common-regcache.h"
 #include <forward_list>
 
+struct register_reader;
+struct register_readwriter;
 struct regcache;
 struct regset;
 struct gdbarch;
@@ -40,12 +42,12 @@ extern struct regcache *get_thread_arch_aspace_regcache (ptid_t,
 							 struct address_space *);
 
 extern enum register_status
-  regcache_raw_read_signed (struct regcache *regcache,
+  regcache_raw_read_signed (register_reader *regcache,
 			    int regnum, LONGEST *val);
 
-extern void regcache_raw_write_signed (struct regcache *regcache,
+extern void regcache_raw_write_signed (register_readwriter *regcache,
 				       int regnum, LONGEST val);
-extern void regcache_raw_write_unsigned (struct regcache *regcache,
+extern void regcache_raw_write_unsigned (register_readwriter *regcache,
 					 int regnum, ULONGEST val);
 
 /* Return the register's value in signed or throw if it's not
@@ -56,14 +58,14 @@ extern LONGEST regcache_raw_get_signed (struct regcache *regcache,
 
 /* Read a register as a signed/unsigned quantity.  */
 extern enum register_status
-  regcache_cooked_read_signed (struct regcache *regcache,
+  regcache_cooked_read_signed (register_reader *regcache,
 			       int regnum, LONGEST *val);
 extern enum register_status
-  regcache_cooked_read_unsigned (struct regcache *regcache,
+  regcache_cooked_read_unsigned (register_reader *regcache,
 				 int regnum, ULONGEST *val);
-extern void regcache_cooked_write_signed (struct regcache *regcache,
+extern void regcache_cooked_write_signed (register_readwriter *regcache,
 					  int regnum, LONGEST val);
-extern void regcache_cooked_write_unsigned (struct regcache *regcache,
+extern void regcache_cooked_write_unsigned (register_readwriter *regcache,
 					    int regnum, ULONGEST val);
 
 /* Special routines to read/write the PC.  */
@@ -227,49 +229,100 @@ protected:
   friend class detached_regcache;
 };
 
+struct register_reader
+{
+  virtual ~register_reader () = default;
+
+  virtual gdbarch *arch () const = 0;
+
+  virtual register_status raw_read (int regnum, gdb_byte *buf) = 0;
+  virtual register_status cooked_read (int regnum, gdb_byte *buf) = 0;
+
+  /* Variants of the above to read the value in a LONGEST or ULONGEST.  */
+  template<typename T, typename = RequireLongest<T>>
+  register_status raw_read (int regnum, T *val);
+  template<typename T, typename = RequireLongest<T>>
+  register_status cooked_read (int regnum, T *val);
+
+  /* Partial transfer of raw registers.  Return the status of the register.  */
+  register_status raw_read_part (int regnum, int offset, int len,
+				 gdb_byte *buf);
+  /* Partial transfer of a cooked register.  */
+  register_status cooked_read_part (int regnum, int offset, int len,
+				    gdb_byte *buf);
+
+  /* Read register REGNUM from the regcache and return a new value.  This
+     will call mark_value_bytes_unavailable as appropriate.  */
+  struct value *cooked_read_value (int regnum);
+
+private:
+
+
+  register_status read_part (int regnum, int offset, int len, gdb_byte *in,
+			     bool is_raw);
+};
+
+struct register_readwriter : public virtual register_reader
+{
+  virtual ~register_readwriter () = default;
+
+  /* Update the value of raw register REGNUM (in the range [0..NUM_REGS)) and
+     transfer its value to core-gdb.  */
+  virtual void raw_write (int regnum, const gdb_byte *buf) = 0;
+
+  /* Transfer of pseudo-registers.  */
+  virtual void cooked_write (int regnum, const gdb_byte *buf) = 0;
+
+  /* Variants of the above to read the value in a LONGEST or ULONGEST.  */
+  template<typename T, typename = RequireLongest<T>>
+  void raw_write (int regnum, T val);
+  template<typename T, typename = RequireLongest<T>>
+  void cooked_write (int regnum, T val);
+
+  /* Partial transfer of raw registers.  Perform read, modify, write style
+     operations.  */
+  void raw_write_part (int regnum, int offset, int len, const gdb_byte *buf);
+
+  /* Partial transfer of a cooked register.  Perform read, modify, write style
+     operations.  */
+  void cooked_write_part (int regnum, int offset, int len,
+			  const gdb_byte *buf);
+
+  virtual void invalidate (int regnum)
+  {};
+
+private:
+  /* Perform a partial register transfer using a read, modify, write
+     operation.  */
+  register_status write_part (int regnum, int offset, int len,
+			      const gdb_byte *in, bool is_raw);
+};
+
 /* An abstract class which only has methods doing read.  */
 
-class readable_regcache : public reg_buffer
+class readable_regcache : public reg_buffer, public virtual register_reader
 {
 public:
   readable_regcache (gdbarch *gdbarch, bool has_pseudo)
     : reg_buffer (gdbarch, has_pseudo)
   {}
 
+  gdbarch *arch () const override
+  { return reg_buffer::arch (); }
+
   /* Transfer a raw register [0..NUM_REGS) from core-gdb to this regcache,
      return its value in *BUF and return its availability status.  */
 
-  enum register_status raw_read (int regnum, gdb_byte *buf);
-  template<typename T, typename = RequireLongest<T>>
-  enum register_status raw_read (int regnum, T *val);
-
-  /* Partial transfer of raw registers.  Return the status of the register.  */
-  enum register_status raw_read_part (int regnum, int offset, int len,
-				      gdb_byte *buf);
-
-  /* Make certain that the register REGNUM is up-to-date.  */
-  virtual void raw_update (int regnum) = 0;
+  virtual register_status raw_read (int regnum, gdb_byte *buf) override;
+  using register_reader::raw_read;
 
   /* Transfer a raw register [0..NUM_REGS+NUM_PSEUDO_REGS) from core-gdb to
      this regcache, return its value in *BUF and return its availability status.  */
-  enum register_status cooked_read (int regnum, gdb_byte *buf);
-  template<typename T, typename = RequireLongest<T>>
-  enum register_status cooked_read (int regnum, T *val);
+  virtual register_status cooked_read (int regnum, gdb_byte *buf) override;
+  using register_reader::cooked_read;
 
-  /* Partial transfer of a cooked register.  */
-  enum register_status cooked_read_part (int regnum, int offset, int len,
-					 gdb_byte *buf);
-
-  /* Read register REGNUM from the regcache and return a new value.  This
-     will call mark_value_bytes_unavailable as appropriate.  */
-  struct value *cooked_read_value (int regnum);
-
-protected:
-
-  /* Perform a partial register transfer using a read, modify, write
-     operation.  Will fail if register is currently invalid.  */
-  enum register_status read_part (int regnum, int offset, int len,
-				  gdb_byte *out, bool is_raw);
+  /* Make certain that the register REGNUM is up-to-date.  */
+  virtual void raw_update (int regnum) = 0;
 };
 
 /* Buffer of registers, can be read and written.  */
@@ -291,7 +344,7 @@ class readonly_detached_regcache;
 
 /* The register cache for storing raw register values.  */
 
-class regcache : public detached_regcache
+class regcache : public detached_regcache, public register_readwriter
 {
 public:
   DISABLE_COPY_AND_ASSIGN (regcache);
@@ -300,6 +353,14 @@ public:
   const address_space *aspace () const
   {
     return m_aspace;
+  }
+
+  gdbarch *arch () const override
+  { return readable_regcache::arch (); }
+
+  void invalidate (int regnum) override
+  {
+    detached_regcache::invalidate (regnum);
   }
 
   /* Restore 'this' regcache.  The set of registers restored into
@@ -311,27 +372,14 @@ public:
   /* Update the value of raw register REGNUM (in the range [0..NUM_REGS)) and
      transfer its value to core-gdb.  */
 
-  void raw_write (int regnum, const gdb_byte *buf);
-
-  template<typename T, typename = RequireLongest<T>>
-  void raw_write (int regnum, T val);
+  void raw_write (int regnum, const gdb_byte *buf) override;
+  using register_readwriter::raw_write;
 
   /* Transfer of pseudo-registers.  */
-  void cooked_write (int regnum, const gdb_byte *buf);
-
-  template<typename T, typename = RequireLongest<T>>
-  void cooked_write (int regnum, T val);
+  void cooked_write (int regnum, const gdb_byte *buf) override;
+  using register_readwriter::cooked_write;
 
   void raw_update (int regnum) override;
-
-  /* Partial transfer of raw registers.  Perform read, modify, write style
-     operations.  */
-  void raw_write_part (int regnum, int offset, int len, const gdb_byte *buf);
-
-  /* Partial transfer of a cooked register.  Perform read, modify, write style
-     operations.  */
-  void cooked_write_part (int regnum, int offset, int len,
-			  const gdb_byte *buf);
 
   void supply_regset (const struct regset *regset,
 		      int regnum, const void *buf, size_t size);
@@ -378,11 +426,6 @@ private:
 			struct regcache *out_regcache,
 			int regnum, const gdb_byte *in_buf,
 			gdb_byte *out_buf, size_t size) const;
-
-  /* Perform a partial register transfer using a read, modify, write
-     operation.  */
-  enum register_status write_part (int regnum, int offset, int len,
-				   const gdb_byte *in, bool is_raw);
 
   /* The address space of this register cache (for registers where it
      makes sense, like PC or SP).  */

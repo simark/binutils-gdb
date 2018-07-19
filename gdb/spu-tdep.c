@@ -182,7 +182,7 @@ spu_register_type (struct gdbarch *gdbarch, int reg_nr)
 /* Pseudo registers for preferred slots - stack pointer.  */
 
 static enum register_status
-spu_pseudo_register_read_spu (readable_regcache *regcache, const char *regname,
+spu_pseudo_register_read_spu (register_reader *regcache, const char *regname,
 			      gdb_byte *buf)
 {
   struct gdbarch *gdbarch = regcache->arch ();
@@ -207,7 +207,7 @@ spu_pseudo_register_read_spu (readable_regcache *regcache, const char *regname,
 }
 
 static enum register_status
-spu_pseudo_register_read (struct gdbarch *gdbarch, readable_regcache *regcache,
+spu_pseudo_register_read (struct gdbarch *gdbarch, register_reader *regcache,
                           int regnum, gdb_byte *buf)
 {
   gdb_byte reg[16];
@@ -250,7 +250,8 @@ spu_pseudo_register_read (struct gdbarch *gdbarch, readable_regcache *regcache,
 }
 
 static void
-spu_pseudo_register_write_spu (struct regcache *regcache, const char *regname,
+spu_pseudo_register_write_spu (register_readwriter *regcache,
+			       const char *regname,
 			       const gdb_byte *buf)
 {
   struct gdbarch *gdbarch = regcache->arch ();
@@ -259,7 +260,7 @@ spu_pseudo_register_write_spu (struct regcache *regcache, const char *regname,
   char annex[32];
   ULONGEST id;
 
-  regcache_raw_read_unsigned (regcache, SPU_ID_REGNUM, &id);
+  regcache->raw_read (SPU_ID_REGNUM, &id);
   xsnprintf (annex, sizeof annex, "%d/%s", (int) id, regname);
   xsnprintf (reg, sizeof reg, "0x%s",
 	     phex_nz (extract_unsigned_integer (buf, 4, byte_order), 4));
@@ -268,7 +269,8 @@ spu_pseudo_register_write_spu (struct regcache *regcache, const char *regname,
 }
 
 static void
-spu_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
+spu_pseudo_register_write (struct gdbarch *gdbarch,
+			   register_readwriter *regcache,
                            int regnum, const gdb_byte *buf)
 {
   gdb_byte reg[16];
@@ -284,7 +286,7 @@ spu_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
       break;
 
     case SPU_FPSCR_REGNUM:
-      regcache_raw_read_unsigned (regcache, SPU_ID_REGNUM, &id);
+      regcache->raw_read (SPU_ID_REGNUM, &id);
       xsnprintf (annex, sizeof annex, "%d/fpcr", (int) id);
       target_write (current_top_target (), TARGET_OBJECT_SPU, annex, buf, 0, 16);
       break;

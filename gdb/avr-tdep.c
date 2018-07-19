@@ -383,7 +383,7 @@ avr_write_pc (struct regcache *regcache, CORE_ADDR val)
 }
 
 static enum register_status
-avr_pseudo_register_read (struct gdbarch *gdbarch, readable_regcache *regcache,
+avr_pseudo_register_read (struct gdbarch *gdbarch, register_reader *regcache,
                           int regnum, gdb_byte *buf)
 {
   ULONGEST val;
@@ -404,7 +404,7 @@ avr_pseudo_register_read (struct gdbarch *gdbarch, readable_regcache *regcache,
 }
 
 static void
-avr_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
+avr_pseudo_register_write (struct gdbarch *gdbarch, register_readwriter *regcache,
                            int regnum, const gdb_byte *buf)
 {
   ULONGEST val;

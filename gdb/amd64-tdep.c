@@ -349,7 +349,7 @@ amd64_pseudo_register_name (struct gdbarch *gdbarch, int regnum)
 
 static struct value *
 amd64_pseudo_register_read_value (struct gdbarch *gdbarch,
-				  readable_regcache *regcache,
+				  register_reader *regcache,
 				  int regnum)
 {
   gdb_byte *raw_buf = (gdb_byte *) alloca (register_size (gdbarch, regnum));
@@ -409,7 +409,7 @@ amd64_pseudo_register_read_value (struct gdbarch *gdbarch,
 
 static void
 amd64_pseudo_register_write (struct gdbarch *gdbarch,
-			     struct regcache *regcache,
+			     register_readwriter *regcache,
 			     int regnum, const gdb_byte *buf)
 {
   gdb_byte *raw_buf = (gdb_byte *) alloca (register_size (gdbarch, regnum));

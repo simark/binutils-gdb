@@ -47,11 +47,11 @@ struct m32c_reg;
 /* The type of a function that moves the value of REG between CACHE or
    BUF --- in either direction.  */
 typedef enum register_status (m32c_write_reg_t) (struct m32c_reg *reg,
-						 struct regcache *cache,
+						 register_readwriter *cache,
 						 const gdb_byte *buf);
 
 typedef enum register_status (m32c_read_reg_t) (struct m32c_reg *reg,
-						readable_regcache *cache,
+						register_reader *cache,
 						gdb_byte *buf);
 
 struct m32c_reg
@@ -310,7 +310,7 @@ static m32c_write_reg_t m32c_r3r2r1r0_write;
 
 /* Copy the value of the raw register REG from CACHE to BUF.  */
 static enum register_status
-m32c_raw_read (struct m32c_reg *reg, readable_regcache *cache, gdb_byte *buf)
+m32c_raw_read (struct m32c_reg *reg, register_reader *cache, gdb_byte *buf)
 {
   return cache->raw_read (reg->num, buf);
 }
@@ -318,7 +318,7 @@ m32c_raw_read (struct m32c_reg *reg, readable_regcache *cache, gdb_byte *buf)
 
 /* Copy the value of the raw register REG from BUF to CACHE.  */
 static enum register_status
-m32c_raw_write (struct m32c_reg *reg, struct regcache *cache,
+m32c_raw_write (struct m32c_reg *reg, register_readwriter *cache,
 		const gdb_byte *buf)
 {
   cache->raw_write (reg->num, buf);
@@ -329,7 +329,7 @@ m32c_raw_write (struct m32c_reg *reg, struct regcache *cache,
 
 /* Return the value of the 'flg' register in CACHE.  */
 static int
-m32c_read_flg (readable_regcache *cache)
+m32c_read_flg (register_reader *cache)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (cache->arch ());
   ULONGEST flg;
@@ -341,7 +341,7 @@ m32c_read_flg (readable_regcache *cache)
 
 /* Evaluate the real register number of a banked register.  */
 static struct m32c_reg *
-m32c_banked_register (struct m32c_reg *reg, readable_regcache *cache)
+m32c_banked_register (struct m32c_reg *reg, register_reader *cache)
 {
   return ((m32c_read_flg (cache) & reg->n) ? reg->ry : reg->rx);
 }
@@ -352,7 +352,7 @@ m32c_banked_register (struct m32c_reg *reg, readable_regcache *cache)
    masked in REG->n set, then read REG->ry.  Otherwise, read
    REG->rx.  */
 static enum register_status
-m32c_banked_read (struct m32c_reg *reg, readable_regcache *cache, gdb_byte *buf)
+m32c_banked_read (struct m32c_reg *reg, register_reader *cache, gdb_byte *buf)
 {
   struct m32c_reg *bank_reg = m32c_banked_register (reg, cache);
   return cache->raw_read (bank_reg->num, buf);
@@ -364,7 +364,8 @@ m32c_banked_read (struct m32c_reg *reg, readable_regcache *cache, gdb_byte *buf)
    masked in REG->n set, then write REG->ry.  Otherwise, write
    REG->rx.  */
 static enum register_status
-m32c_banked_write (struct m32c_reg *reg, struct regcache *cache,
+m32c_banked_write (struct m32c_reg *reg,
+		   register_readwriter *cache,
 		   const gdb_byte *buf)
 {
   struct m32c_reg *bank_reg = m32c_banked_register (reg, cache);
@@ -377,7 +378,7 @@ m32c_banked_write (struct m32c_reg *reg, struct regcache *cache,
 /* Move the value of SB from CACHE to BUF.  On bfd_mach_m32c, SB is a
    banked register; on bfd_mach_m16c, it's not.  */
 static enum register_status
-m32c_sb_read (struct m32c_reg *reg, readable_regcache *cache, gdb_byte *buf)
+m32c_sb_read (struct m32c_reg *reg, register_reader *cache, gdb_byte *buf)
 {
   if (gdbarch_bfd_arch_info (reg->arch)->mach == bfd_mach_m16c)
     return m32c_raw_read (reg->rx, cache, buf);
@@ -389,7 +390,8 @@ m32c_sb_read (struct m32c_reg *reg, readable_regcache *cache, gdb_byte *buf)
 /* Move the value of SB from BUF to CACHE.  On bfd_mach_m32c, SB is a
    banked register; on bfd_mach_m16c, it's not.  */
 static enum register_status
-m32c_sb_write (struct m32c_reg *reg, struct regcache *cache, const gdb_byte *buf)
+m32c_sb_write (struct m32c_reg *reg, register_readwriter *cache,
+	       const gdb_byte *buf)
 {
   if (gdbarch_bfd_arch_info (reg->arch)->mach == bfd_mach_m16c)
     m32c_raw_write (reg->rx, cache, buf);
@@ -442,7 +444,7 @@ m32c_find_part (struct m32c_reg *reg, int *offset_p, int *len_p)
    REG->type values, where higher indices refer to more significant
    bits, read the value of the REG->n'th element.  */
 static enum register_status
-m32c_part_read (struct m32c_reg *reg, readable_regcache *cache, gdb_byte *buf)
+m32c_part_read (struct m32c_reg *reg, register_reader *cache, gdb_byte *buf)
 {
   int offset, len;
 
@@ -457,7 +459,7 @@ m32c_part_read (struct m32c_reg *reg, readable_regcache *cache, gdb_byte *buf)
    values, where higher indices refer to more significant bits, write
    the value of the REG->n'th element.  */
 static enum register_status
-m32c_part_write (struct m32c_reg *reg, struct regcache *cache,
+m32c_part_write (struct m32c_reg *reg, register_readwriter *cache,
 		 const gdb_byte *buf)
 {
   int offset, len;
@@ -473,7 +475,7 @@ m32c_part_write (struct m32c_reg *reg, struct regcache *cache,
    concatenation of the values of the registers REG->rx and REG->ry,
    with REG->rx contributing the more significant bits.  */
 static enum register_status
-m32c_cat_read (struct m32c_reg *reg, readable_regcache *cache, gdb_byte *buf)
+m32c_cat_read (struct m32c_reg *reg, register_reader *cache, gdb_byte *buf)
 {
   int high_bytes = TYPE_LENGTH (reg->rx->type);
   int low_bytes  = TYPE_LENGTH (reg->ry->type);
@@ -501,7 +503,7 @@ m32c_cat_read (struct m32c_reg *reg, readable_regcache *cache, gdb_byte *buf)
    concatenation of the values of the registers REG->rx and REG->ry,
    with REG->rx contributing the more significant bits.  */
 static enum register_status
-m32c_cat_write (struct m32c_reg *reg, struct regcache *cache,
+m32c_cat_write (struct m32c_reg *reg, register_readwriter *cache,
 		const gdb_byte *buf)
 {
   int high_bytes = TYPE_LENGTH (reg->rx->type);
@@ -528,7 +530,7 @@ m32c_cat_write (struct m32c_reg *reg, struct regcache *cache,
    the concatenation (from most significant to least) of r3, r2, r1,
    and r0.  */
 static enum register_status
-m32c_r3r2r1r0_read (struct m32c_reg *reg, readable_regcache *cache, gdb_byte *buf)
+m32c_r3r2r1r0_read (struct m32c_reg *reg, register_reader *cache, gdb_byte *buf)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (reg->arch);
   int len = TYPE_LENGTH (tdep->r0->type);
@@ -563,7 +565,7 @@ m32c_r3r2r1r0_read (struct m32c_reg *reg, readable_regcache *cache, gdb_byte *bu
    the concatenation (from most significant to least) of r3, r2, r1,
    and r0.  */
 static enum register_status
-m32c_r3r2r1r0_write (struct m32c_reg *reg, struct regcache *cache,
+m32c_r3r2r1r0_write (struct m32c_reg *reg, register_readwriter *cache,
 		     const gdb_byte *buf)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (reg->arch);
@@ -590,7 +592,7 @@ m32c_r3r2r1r0_write (struct m32c_reg *reg, struct regcache *cache,
 
 static enum register_status
 m32c_pseudo_register_read (struct gdbarch *arch,
-			   readable_regcache *cache,
+			   register_reader *cache,
 			   int cookednum,
 			   gdb_byte *buf)
 {
@@ -608,7 +610,7 @@ m32c_pseudo_register_read (struct gdbarch *arch,
 
 static void
 m32c_pseudo_register_write (struct gdbarch *arch,
-			    struct regcache *cache,
+			    register_readwriter *cache,
 			    int cookednum,
 			    const gdb_byte *buf)
 {
