@@ -523,7 +523,7 @@ sparc32_register_type (struct gdbarch *gdbarch, int regnum)
 
 static enum register_status
 sparc32_pseudo_register_read (struct gdbarch *gdbarch,
-			      readable_regcache *regcache,
+			      register_reader *regcache,
 			      int regnum, gdb_byte *buf)
 {
   enum register_status status;
@@ -540,7 +540,7 @@ sparc32_pseudo_register_read (struct gdbarch *gdbarch,
 
 static void
 sparc32_pseudo_register_write (struct gdbarch *gdbarch,
-			       struct regcache *regcache,
+			       register_readwriter *regcache,
 			       int regnum, const gdb_byte *buf)
 {
   regnum -= gdbarch_num_regs (gdbarch);

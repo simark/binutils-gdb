@@ -364,12 +364,12 @@ extern struct type *i386_pseudo_register_type (struct gdbarch *gdbarch,
 					       int regnum);
 
 extern void i386_pseudo_register_read_into_value (struct gdbarch *gdbarch,
-						  readable_regcache *regcache,
+						  register_reader *regcache,
 						  int regnum,
 						  struct value *result);
 
 extern void i386_pseudo_register_write (struct gdbarch *gdbarch,
-					struct regcache *regcache,
+					register_readwriter *regcache,
 					int regnum, const gdb_byte *buf);
 
 extern int i386_ax_pseudo_register_collect (struct gdbarch *gdbarch,

@@ -362,7 +362,7 @@ xtensa_reg_to_regnum (struct gdbarch *gdbarch, int regnum)
    than or equal to 32 bits.  */
 
 static void
-xtensa_register_write_masked (struct regcache *regcache,
+xtensa_register_write_masked (register_readwriter *regcache,
 			      xtensa_register_t *reg, const gdb_byte *buffer)
 {
   unsigned int value[(XTENSA_MAX_REGISTER_SIZE + 3) / 4];
@@ -446,7 +446,7 @@ xtensa_register_write_masked (struct regcache *regcache,
    of the registers and assemble them into a single value.  */
 
 static enum register_status
-xtensa_register_read_masked (readable_regcache *regcache,
+xtensa_register_read_masked (register_reader *regcache,
 			     xtensa_register_t *reg, gdb_byte *buffer)
 {
   unsigned int value[(XTENSA_MAX_REGISTER_SIZE + 3) / 4];
@@ -540,7 +540,7 @@ xtensa_register_read_masked (readable_regcache *regcache,
 
 static enum register_status
 xtensa_pseudo_register_read (struct gdbarch *gdbarch,
-			     readable_regcache *regcache,
+			     register_reader *regcache,
 			     int regnum,
 			     gdb_byte *buffer)
 {
@@ -555,8 +555,7 @@ xtensa_pseudo_register_read (struct gdbarch *gdbarch,
       ULONGEST value;
       enum register_status status;
 
-      status = regcache->raw_read (gdbarch_tdep (gdbarch)->wb_regnum,
-				   &value);
+      status = regcache->raw_read (gdbarch_tdep (gdbarch)->wb_regnum, &value);
       if (status != REG_VALID)
 	return status;
       regnum = arreg_number (gdbarch, regnum, value);
@@ -631,7 +630,7 @@ xtensa_pseudo_register_read (struct gdbarch *gdbarch,
 
 static void
 xtensa_pseudo_register_write (struct gdbarch *gdbarch,
-			      struct regcache *regcache,
+			      register_readwriter *regcache,
 			      int regnum,
 			      const gdb_byte *buffer)
 {
@@ -644,8 +643,7 @@ xtensa_pseudo_register_write (struct gdbarch *gdbarch,
       && (regnum <= gdbarch_tdep (gdbarch)->a0_base + 15))
     {
       ULONGEST value;
-      regcache_raw_read_unsigned (regcache,
-				  gdbarch_tdep (gdbarch)->wb_regnum, &value);
+      regcache->raw_read (gdbarch_tdep (gdbarch)->wb_regnum, &value);
       regnum = arreg_number (gdbarch, regnum, value);
     }
 

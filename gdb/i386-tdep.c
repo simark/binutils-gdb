@@ -3250,7 +3250,7 @@ i386_pseudo_register_type (struct gdbarch *gdbarch, int regnum)
    the MMX registers need to be mapped onto floating point registers.  */
 
 static int
-i386_mmx_regnum_to_fp_regnum (readable_regcache *regcache, int regnum)
+i386_mmx_regnum_to_fp_regnum (register_reader *regcache, int regnum)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (regcache->arch ());
   int mmxreg, fpreg;
@@ -3271,7 +3271,7 @@ i386_mmx_regnum_to_fp_regnum (readable_regcache *regcache, int regnum)
 
 void
 i386_pseudo_register_read_into_value (struct gdbarch *gdbarch,
-				      readable_regcache *regcache,
+				      register_reader *regcache,
 				      int regnum,
 				      struct value *result_value)
 {
@@ -3450,7 +3450,7 @@ i386_pseudo_register_read_into_value (struct gdbarch *gdbarch,
 
 static struct value *
 i386_pseudo_register_read_value (struct gdbarch *gdbarch,
-				 readable_regcache *regcache,
+				 register_reader *regcache,
 				 int regnum)
 {
   struct value *result;
@@ -3465,7 +3465,8 @@ i386_pseudo_register_read_value (struct gdbarch *gdbarch,
 }
 
 void
-i386_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
+i386_pseudo_register_write (struct gdbarch *gdbarch,
+			    register_readwriter *regcache,
 			    int regnum, const gdb_byte *buf)
 {
   gdb_byte raw_buf[I386_MAX_REGISTER_SIZE];

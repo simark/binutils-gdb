@@ -2576,7 +2576,7 @@ rs6000_value_to_register (struct frame_info *frame,
 
  /* The type of a function that moves the value of REG between CACHE
     or BUF --- in either direction.  */
-typedef enum register_status (*move_ev_register_func) (struct regcache *,
+typedef enum register_status (*move_ev_register_func) (register_readwriter *,
 						       int, void *);
 
 /* Move SPE vector register values between a 64-bit buffer and the two
@@ -2605,7 +2605,7 @@ typedef enum register_status (*move_ev_register_func) (struct regcache *,
 
 static enum register_status
 e500_move_ev_register (move_ev_register_func move,
-		       struct regcache *regcache, int ev_reg, void *buffer)
+		       register_readwriter *regcache, int ev_reg, void *buffer)
 {
   struct gdbarch *arch = regcache->arch ();
   struct gdbarch_tdep *tdep = gdbarch_tdep (arch); 
@@ -2637,7 +2637,7 @@ e500_move_ev_register (move_ev_register_func move,
 }
 
 static enum register_status
-do_regcache_raw_write (struct regcache *regcache, int regnum, void *buffer)
+do_regcache_raw_write (register_readwriter *regcache, int regnum, void *buffer)
 {
   regcache->raw_write (regnum, (const gdb_byte *) buffer);
 
@@ -2645,7 +2645,7 @@ do_regcache_raw_write (struct regcache *regcache, int regnum, void *buffer)
 }
 
 static enum register_status
-e500_pseudo_register_read (struct gdbarch *gdbarch, readable_regcache *regcache,
+e500_pseudo_register_read (struct gdbarch *gdbarch, register_reader *regcache,
 			   int ev_reg, gdb_byte *buffer)
 {
   struct gdbarch *arch = regcache->arch ();
@@ -2678,7 +2678,8 @@ e500_pseudo_register_read (struct gdbarch *gdbarch, readable_regcache *regcache,
 }
 
 static void
-e500_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
+e500_pseudo_register_write (struct gdbarch *gdbarch,
+			    register_readwriter *regcache,
 			    int reg_nr, const gdb_byte *buffer)
 {
   e500_move_ev_register (do_regcache_raw_write, regcache,
@@ -2687,7 +2688,7 @@ e500_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
 
 /* Read method for DFP pseudo-registers.  */
 static enum register_status
-dfp_pseudo_register_read (struct gdbarch *gdbarch, readable_regcache *regcache,
+dfp_pseudo_register_read (struct gdbarch *gdbarch, register_reader *regcache,
 			   int reg_nr, gdb_byte *buffer)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
@@ -2727,8 +2728,9 @@ dfp_pseudo_register_read (struct gdbarch *gdbarch, readable_regcache *regcache,
 
 /* Write method for DFP pseudo-registers.  */
 static void
-dfp_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
-			    int reg_nr, const gdb_byte *buffer)
+dfp_pseudo_register_write (struct gdbarch *gdbarch,
+			   register_readwriter *regcache,
+			   int reg_nr, const gdb_byte *buffer)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   int reg_index, fp0;
@@ -2764,7 +2766,7 @@ dfp_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
 
 static enum register_status
 v_alias_pseudo_register_read (struct gdbarch *gdbarch,
-			      readable_regcache *regcache, int reg_nr,
+			      register_reader *regcache, int reg_nr,
 			      gdb_byte *buffer)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
@@ -2779,7 +2781,7 @@ v_alias_pseudo_register_read (struct gdbarch *gdbarch,
 
 static void
 v_alias_pseudo_register_write (struct gdbarch *gdbarch,
-			       struct regcache *regcache,
+			       register_readwriter *regcache,
 			       int reg_nr, const gdb_byte *buffer)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
@@ -2791,7 +2793,7 @@ v_alias_pseudo_register_write (struct gdbarch *gdbarch,
 
 /* Read method for POWER7 VSX pseudo-registers.  */
 static enum register_status
-vsx_pseudo_register_read (struct gdbarch *gdbarch, readable_regcache *regcache,
+vsx_pseudo_register_read (struct gdbarch *gdbarch, register_reader *regcache,
 			   int reg_nr, gdb_byte *buffer)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
@@ -2839,8 +2841,9 @@ vsx_pseudo_register_read (struct gdbarch *gdbarch, readable_regcache *regcache,
 
 /* Write method for POWER7 VSX pseudo-registers.  */
 static void
-vsx_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
-			    int reg_nr, const gdb_byte *buffer)
+vsx_pseudo_register_write (struct gdbarch *gdbarch,
+			   register_readwriter *regcache,
+			   int reg_nr, const gdb_byte *buffer)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   int reg_index, vr0, fp0, vsr0_upper;
@@ -2881,8 +2884,8 @@ vsx_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
 
 /* Read method for POWER7 Extended FP pseudo-registers.  */
 static enum register_status
-efp_pseudo_register_read (struct gdbarch *gdbarch, readable_regcache *regcache,
-			   int reg_nr, gdb_byte *buffer)
+efp_pseudo_register_read (struct gdbarch *gdbarch, register_reader *regcache,
+			  int reg_nr, gdb_byte *buffer)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   int reg_index, vr0;
@@ -2910,7 +2913,7 @@ efp_pseudo_register_read (struct gdbarch *gdbarch, readable_regcache *regcache,
 
 /* Write method for POWER7 Extended FP pseudo-registers.  */
 static void
-efp_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
+efp_pseudo_register_write (struct gdbarch *gdbarch, register_readwriter *regcache,
 			   int reg_nr, const gdb_byte *buffer)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
@@ -2943,7 +2946,7 @@ efp_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
 
 static enum register_status
 rs6000_pseudo_register_read (struct gdbarch *gdbarch,
-			     readable_regcache *regcache,
+			     register_reader *regcache,
 			     int reg_nr, gdb_byte *buffer)
 {
   struct gdbarch *regcache_arch = regcache->arch ();
@@ -2974,7 +2977,7 @@ rs6000_pseudo_register_read (struct gdbarch *gdbarch,
 
 static void
 rs6000_pseudo_register_write (struct gdbarch *gdbarch,
-			      struct regcache *regcache,
+			      register_readwriter *regcache,
 			      int reg_nr, const gdb_byte *buffer)
 {
   struct gdbarch *regcache_arch = regcache->arch ();

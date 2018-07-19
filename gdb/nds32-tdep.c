@@ -437,7 +437,7 @@ nds32_pseudo_register_name (struct gdbarch *gdbarch, int regnum)
 
 static enum register_status
 nds32_pseudo_register_read (struct gdbarch *gdbarch,
-			    readable_regcache *regcache, int regnum,
+			    register_reader *regcache, int regnum,
 			    gdb_byte *buf)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
@@ -476,7 +476,7 @@ nds32_pseudo_register_read (struct gdbarch *gdbarch,
 
 static void
 nds32_pseudo_register_write (struct gdbarch *gdbarch,
-			     struct regcache *regcache, int regnum,
+			     register_readwriter *regcache, int regnum,
 			     const gdb_byte *buf)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);

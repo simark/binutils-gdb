@@ -295,7 +295,7 @@ frv_register_type (struct gdbarch *gdbarch, int reg)
 }
 
 static enum register_status
-frv_pseudo_register_read (struct gdbarch *gdbarch, readable_regcache *regcache,
+frv_pseudo_register_read (struct gdbarch *gdbarch, register_reader *regcache,
                           int reg, gdb_byte *buffer)
 {
   enum register_status status;
@@ -332,8 +332,9 @@ frv_pseudo_register_read (struct gdbarch *gdbarch, readable_regcache *regcache,
 }
 
 static void
-frv_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
-                          int reg, const gdb_byte *buffer)
+frv_pseudo_register_write (struct gdbarch *gdbarch,
+			   register_readwriter *regcache,
+			   int reg, const gdb_byte *buffer)
 {
   if (reg == iacc0_regnum)
     {

@@ -71,7 +71,7 @@ unw_word_t libunwind_find_dyn_list (unw_addr_space_t, unw_dyn_info_t *,
 				    void *);
 
 int libunwind_get_reg_special (struct gdbarch *gdbarch,
-			       readable_regcache *regcache,
+			       register_reader *regcache,
 			       int regnum, void *buf);
 
 #endif /* IA64_LIBUNWIND_TDEP_H */

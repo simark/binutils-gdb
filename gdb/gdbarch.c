@@ -1955,13 +1955,13 @@ gdbarch_pseudo_register_read_p (struct gdbarch *gdbarch)
 }
 
 enum register_status
-gdbarch_pseudo_register_read (struct gdbarch *gdbarch, readable_regcache *regcache, int cookednum, gdb_byte *buf)
+gdbarch_pseudo_register_read (struct gdbarch *gdbarch, register_reader *regs, int cookednum, gdb_byte *buf)
 {
   gdb_assert (gdbarch != NULL);
   gdb_assert (gdbarch->pseudo_register_read != NULL);
   if (gdbarch_debug >= 2)
     fprintf_unfiltered (gdb_stdlog, "gdbarch_pseudo_register_read called\n");
-  return gdbarch->pseudo_register_read (gdbarch, regcache, cookednum, buf);
+  return gdbarch->pseudo_register_read (gdbarch, regs, cookednum, buf);
 }
 
 void
@@ -1979,13 +1979,13 @@ gdbarch_pseudo_register_read_value_p (struct gdbarch *gdbarch)
 }
 
 struct value *
-gdbarch_pseudo_register_read_value (struct gdbarch *gdbarch, readable_regcache *regcache, int cookednum)
+gdbarch_pseudo_register_read_value (struct gdbarch *gdbarch, register_reader *regs, int cookednum)
 {
   gdb_assert (gdbarch != NULL);
   gdb_assert (gdbarch->pseudo_register_read_value != NULL);
   if (gdbarch_debug >= 2)
     fprintf_unfiltered (gdb_stdlog, "gdbarch_pseudo_register_read_value called\n");
-  return gdbarch->pseudo_register_read_value (gdbarch, regcache, cookednum);
+  return gdbarch->pseudo_register_read_value (gdbarch, regs, cookednum);
 }
 
 void
@@ -2003,13 +2003,13 @@ gdbarch_pseudo_register_write_p (struct gdbarch *gdbarch)
 }
 
 void
-gdbarch_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache, int cookednum, const gdb_byte *buf)
+gdbarch_pseudo_register_write (struct gdbarch *gdbarch, register_readwriter *regs, int cookednum, const gdb_byte *buf)
 {
   gdb_assert (gdbarch != NULL);
   gdb_assert (gdbarch->pseudo_register_write != NULL);
   if (gdbarch_debug >= 2)
     fprintf_unfiltered (gdb_stdlog, "gdbarch_pseudo_register_write called\n");
-  gdbarch->pseudo_register_write (gdbarch, regcache, cookednum, buf);
+  gdbarch->pseudo_register_write (gdbarch, regs, cookednum, buf);
 }
 
 void

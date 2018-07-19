@@ -688,7 +688,7 @@ bfin_register_name (struct gdbarch *gdbarch, int i)
 }
 
 static enum register_status
-bfin_pseudo_register_read (struct gdbarch *gdbarch, readable_regcache *regcache,
+bfin_pseudo_register_read (struct gdbarch *gdbarch, register_reader *regcache,
 			   int regnum, gdb_byte *buffer)
 {
   gdb_byte buf[BFIN_MAX_REGISTER_SIZE];
@@ -709,7 +709,8 @@ bfin_pseudo_register_read (struct gdbarch *gdbarch, readable_regcache *regcache,
 }
 
 static void
-bfin_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
+bfin_pseudo_register_write (struct gdbarch *gdbarch,
+			    register_readwriter *regcache,
 			    int regnum, const gdb_byte *buffer)
 {
   gdb_byte buf[BFIN_MAX_REGISTER_SIZE];
