@@ -15420,7 +15420,7 @@ build_warnings="-Wall -Wpointer-arith \
 -Wduplicated-cond"
 
 case "${host}" in
-  *-*-mingw32*)
+  *-*-mingw*)
     # Enable -Wno-format by default when using gcc on mingw since many
     # GCC versions complain about %I64.
     build_warnings="$build_warnings -Wno-format" ;;
