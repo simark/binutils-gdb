@@ -225,14 +225,16 @@ mips_fill_gregset (const struct regcache *regcache,
     }
 }
 
-static void
+static gdb::byte_vector
 mips_fill_gregset_wrapper (const struct regset *regset,
 			   const struct regcache *regcache,
-			   int regnum, void *gregs, size_t len)
+			   int regnum)
 {
-  gdb_assert (len >= sizeof (mips_elf_gregset_t));
+  gdb::byte_vector gregs (sizeof (mips_elf_gregset_t));
 
-  mips_fill_gregset (regcache, (mips_elf_gregset_t *)gregs, regnum);
+  mips_fill_gregset (regcache, (mips_elf_gregset_t *) gregs.data (), regnum);
+
+  return gregs;
 }
 
 /* Support for 64-bit ABIs.  */
@@ -393,14 +395,17 @@ mips64_fill_gregset (const struct regcache *regcache,
     }
 }
 
-static void
+static gdb::byte_vector
 mips64_fill_gregset_wrapper (const struct regset *regset,
 			     const struct regcache *regcache,
-			     int regnum, void *gregs, size_t len)
+			     int regnum)
 {
-  gdb_assert (len >= sizeof (mips64_elf_gregset_t));
+  gdb::byte_vector gregs (sizeof (mips64_elf_gregset_t));
 
-  mips64_fill_gregset (regcache, (mips64_elf_gregset_t *)gregs, regnum);
+  mips64_fill_gregset (regcache, (mips64_elf_gregset_t *) gregs.data (),
+		       regnum);
+
+  return gregs;
 }
 
 /* Likewise, unpack an elf_fpregset_t.  Linux only uses even-numbered
@@ -514,14 +519,17 @@ mips64_fill_fpregset (const struct regcache *regcache,
     }
 }
 
-static void
+static gdb::byte_vector
 mips64_fill_fpregset_wrapper (const struct regset *regset,
 			      const struct regcache *regcache,
-			      int regnum, void *gregs, size_t len)
+			      int regnum)
 {
-  gdb_assert (len >= sizeof (mips64_elf_fpregset_t));
+  gdb::byte_vector gregs (sizeof (mips64_elf_fpregset_t));
 
-  mips64_fill_fpregset (regcache, (mips64_elf_fpregset_t *)gregs, regnum);
+  mips64_fill_fpregset (regcache, (mips64_elf_fpregset_t *) gregs.data (),
+			regnum);
+
+  return gregs;
 }
 
 static const struct regset mips_linux_gregset =

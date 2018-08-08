@@ -54,12 +54,12 @@ sparc64fbsd_supply_gregset (const struct regset *regset,
   sparc64_supply_gregset (&sparc64fbsd_gregmap, regcache, regnum, gregs);
 }
 
-static void
+static gdb::byte_vector
 sparc64fbsd_collect_gregset (const struct regset *regset,
 			     const struct regcache *regcache,
-			     int regnum, void *gregs, size_t len)
+			     int regnum)
 {
-  sparc64_collect_gregset (&sparc64fbsd_gregmap, regcache, regnum, gregs);
+  return sparc64_collect_gregset (&sparc64fbsd_gregmap, regcache, regnum);
 }
 
 static void
@@ -70,12 +70,12 @@ sparc64fbsd_supply_fpregset (const struct regset *regset,
   sparc64_supply_fpregset (&sparc64_bsd_fpregmap, regcache, regnum, fpregs);
 }
 
-static void
+static gdb::byte_vector
 sparc64fbsd_collect_fpregset (const struct regset *regset,
 			      const struct regcache *regcache,
-			      int regnum, void *fpregs, size_t len)
+			      int regnum)
 {
-  sparc64_collect_fpregset (&sparc64_bsd_fpregmap, regcache, regnum, fpregs);
+  return sparc64_collect_fpregset (&sparc64_bsd_fpregmap, regcache, regnum);
 }
 
 

@@ -112,13 +112,17 @@ rs6000_aix_supply_regset (const struct regset *regset,
    GREGS and LEN.  If REGNUM is -1, do this for all registers in
    REGSET.  */
 
-static void
+static gdb::byte_vector
 rs6000_aix_collect_regset (const struct regset *regset,
-			   const struct regcache *regcache, int regnum,
-			   void *gregs, size_t len)
+			   const struct regcache *regcache, int regnum)
 {
-  ppc_collect_gregset (regset, regcache, regnum, gregs, len);
-  ppc_collect_fpregset (regset, regcache, regnum, gregs, len);
+  struct gdbarch_tdep *tdep = gdbarch_tdep (regcache->arch ());
+  gdb::byte_vector gregs (tdep->wordsize == 4 ? 592 : 576);
+
+  ppc_collect_gregset (regset, regcache, regnum, &gregs);
+  ppc_collect_fpregset (regset, regcache, regnum, &gregs);
+
+  return gregs;
 }
 
 /* AIX register set.  */

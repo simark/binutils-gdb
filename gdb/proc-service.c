@@ -178,8 +178,9 @@ ps_lgetfpregs (struct ps_prochandle *ph, lwpid_t lwpid, gdb_prfpregset_t *fpregs
   struct regcache *regcache = get_ps_regcache (ph, lwpid);
 
   target_fetch_registers (regcache, -1);
-  fill_fpregset (regcache, (gdb_fpregset_t *) fpregset, -1);
-
+  gdb::byte_vector regs = fill_fpregset (regcache, -1);
+  gdb_assert (regs.size () == sizeof (gdb_prfpregset_t));
+  memcpy (fpregset, regs.data (), sizeof (gdb_prfpregset_t));
   return PS_OK;
 }
 

@@ -389,12 +389,13 @@ m32r_linux_supply_gregset (const struct regset *regset,
     }
 }
 
-static void
+static gdb::byte_vector
 m32r_linux_collect_gregset (const struct regset *regset,
 			    const struct regcache *regcache,
-			    int regnum, void *gregs, size_t size)
+			    int regnum)
 {
-  gdb_byte *regs = (gdb_byte *) gregs;
+  gdb::byte_vector gregs;
+  gdb_byte *regs = gregs.data ();
   int i;
   enum bfd_endian byte_order =
     gdbarch_byte_order (regcache->arch ());
@@ -427,6 +428,8 @@ m32r_linux_collect_gregset (const struct regset *regset,
 	  regcache->raw_collect (i, regs + m32r_pt_regs_offset[i]);
 	}
     }
+
+  return gregs;
 }
 
 static const struct regset m32r_linux_gregset = {

@@ -1988,15 +1988,16 @@ sparc64_supply_gregset (const struct sparc_gregmap *gregmap,
     }
 }
 
-void
+gdb::byte_vector
 sparc64_collect_gregset (const struct sparc_gregmap *gregmap,
 			 const struct regcache *regcache,
-			 int regnum, void *gregs)
+			 int regnum)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   int sparc32 = (gdbarch_ptr_bit (gdbarch) == 32);
-  gdb_byte *regs = (gdb_byte *) gregs;
+  gdb::byte_vector gregs (gdbarch_tdep (gdbarch)->sizeof_gregset);
+  gdb_byte *regs = gregs.data ();
   int i;
 
   if (sparc32)
@@ -2096,6 +2097,8 @@ sparc64_collect_gregset (const struct sparc_gregmap *gregmap,
 	    }
 	}
     }
+
+  return gregs;
 }
 
 void
@@ -2136,13 +2139,14 @@ sparc64_supply_fpregset (const struct sparc_fpregmap *fpregmap,
     }
 }
 
-void
+gdb::byte_vector
 sparc64_collect_fpregset (const struct sparc_fpregmap *fpregmap,
 			  const struct regcache *regcache,
-			  int regnum, void *fpregs)
+			  int regnum)
 {
   int sparc32 = (gdbarch_ptr_bit (regcache->arch ()) == 32);
-  gdb_byte *regs = (gdb_byte *) fpregs;
+  gdb::byte_vector fpregs (gdbarch_tdep (regcache->arch ())->sizeof_fpregset);
+  gdb_byte *regs = fpregs.data ();
   int i;
 
   for (i = 0; i < 32; i++)
@@ -2172,6 +2176,8 @@ sparc64_collect_fpregset (const struct sparc_fpregmap *fpregmap,
 	regcache->raw_collect (SPARC64_FSR_REGNUM,
 			       regs + fpregmap->r_fsr_offset);
     }
+
+  return fpregs;
 }
 
 const struct sparc_fpregmap sparc64_bsd_fpregmap =

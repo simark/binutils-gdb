@@ -282,12 +282,12 @@ i386fbsd_supply_xstateregset (const struct regset *regset,
 
 /* Similar to i386_collect_fpregset, but use XSAVE extended state.  */
 
-static void
+static gdb::byte_vector
 i386fbsd_collect_xstateregset (const struct regset *regset,
 			       const struct regcache *regcache,
-			       int regnum, void *xstateregs, size_t len)
+			       int regnum)
 {
-  i387_collect_xsave (regcache, regnum, xstateregs, 1);
+  return i387_collect_xsave (regcache, regnum, 1);
 }
 
 /* Register set definitions.  */

@@ -510,12 +510,13 @@ arm_linux_supply_gregset (const struct regset *regset,
     }
 }
 
-void
+gdb::byte_vector
 arm_linux_collect_gregset (const struct regset *regset,
 			   const struct regcache *regcache,
-			   int regnum, void *gregs_buf, size_t len)
+			   int regnum)
 {
-  gdb_byte *gregs = (gdb_byte *) gregs_buf;
+  gdb::byte_vector gregs_buf (ARM_LINUX_SIZEOF_GREGSET);
+  gdb_byte *gregs = gregs_buf.data ();
   int regno;
 
   for (regno = ARM_A1_REGNUM; regno < ARM_PC_REGNUM; regno++)
@@ -536,6 +537,8 @@ arm_linux_collect_gregset (const struct regset *regset,
   if (regnum == ARM_PC_REGNUM || regnum == -1)
     regcache->raw_collect (ARM_PC_REGNUM,
 			   gregs + INT_REGISTER_SIZE * ARM_PC_REGNUM);
+
+  return gregs_buf;
 }
 
 /* Support for register format used by the NWFPE FPA emulator.  */
@@ -634,12 +637,13 @@ arm_linux_supply_nwfpe (const struct regset *regset,
       supply_nwfpe_register (regcache, regno, regs);
 }
 
-void
+gdb::byte_vector
 arm_linux_collect_nwfpe (const struct regset *regset,
 			 const struct regcache *regcache,
-			 int regnum, void *regs_buf, size_t len)
+			 int regnum)
 {
-  gdb_byte *regs = (gdb_byte *) regs_buf;
+  gdb::byte_vector regs_buf (ARM_LINUX_SIZEOF_NWFPE);
+  gdb_byte *regs = regs_buf.data ();
   int regno;
 
   for (regno = ARM_F0_REGNUM; regno <= ARM_F7_REGNUM; regno++)
@@ -649,6 +653,8 @@ arm_linux_collect_nwfpe (const struct regset *regset,
   if (regnum == ARM_FPS_REGNUM || regnum == -1)
     regcache->raw_collect (ARM_FPS_REGNUM,
 			   regs + INT_REGISTER_SIZE * ARM_FPS_REGNUM);
+
+  return regs_buf;
 }
 
 /* Support VFP register format.  */
@@ -671,12 +677,13 @@ arm_linux_supply_vfp (const struct regset *regset,
       regcache->raw_supply (regno, regs + (regno - ARM_D0_REGNUM) * 8);
 }
 
-static void
+static gdb::byte_vector
 arm_linux_collect_vfp (const struct regset *regset,
-			 const struct regcache *regcache,
-			 int regnum, void *regs_buf, size_t len)
+		       const struct regcache *regcache,
+		       int regnum)
 {
-  gdb_byte *regs = (gdb_byte *) regs_buf;
+  gdb::byte_vector regs_buf (ARM_LINUX_SIZEOF_VFP);
+  gdb_byte *regs = regs_buf.data ();
   int regno;
 
   if (regnum == ARM_FPSCR_REGNUM || regnum == -1)
@@ -685,6 +692,8 @@ arm_linux_collect_vfp (const struct regset *regset,
   for (regno = ARM_D0_REGNUM; regno <= ARM_D31_REGNUM; regno++)
     if (regnum == -1 || regnum == regno)
       regcache->raw_collect (regno, regs + (regno - ARM_D0_REGNUM) * 8);
+
+  return regs_buf;
 }
 
 static const struct regset arm_linux_gregset =

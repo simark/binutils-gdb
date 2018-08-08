@@ -490,11 +490,12 @@ i387_supply_fsave (struct regcache *regcache, int regnum,
    registers.  This function doesn't touch any of the reserved bits in
    *FSAVE.  */
 
-void
-i387_collect_fsave (const struct regcache *regcache, int regnum, void *fsave)
+gdb::byte_vector
+i387_collect_fsave (const struct regcache *regcache, int regnum)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (regcache->arch ());
-  gdb_byte *regs = (gdb_byte *) fsave;
+  gdb::byte_vector fsave (tdep->sizeof_fpregset);
+  gdb_byte *regs = fsave.data ();
   int i;
 
   gdb_assert (tdep->st0_regnum >= I386_ST0_REGNUM);
@@ -523,6 +524,8 @@ i387_collect_fsave (const struct regcache *regcache, int regnum, void *fsave)
 	else
 	  regcache->raw_collect (i, FSAVE_ADDR (tdep, regs, i));
       }
+
+  return fsave;
 }
 
 
@@ -668,10 +671,11 @@ i387_supply_fxsave (struct regcache *regcache, int regnum,
    bits in *FXSAVE.  */
 
 void
-i387_collect_fxsave (const struct regcache *regcache, int regnum, void *fxsave)
+i387_collect_fxsave (const struct regcache *regcache, int regnum,
+		     gdb::byte_vector *fxsave)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (regcache->arch ());
-  gdb_byte *regs = (gdb_byte *) fxsave;
+  gdb_byte *regs = fxsave->data ();
   int i;
 
   gdb_assert (tdep->st0_regnum >= I386_ST0_REGNUM);
@@ -724,6 +728,16 @@ i387_collect_fxsave (const struct regcache *regcache, int regnum, void *fxsave)
   if (regnum == I387_MXCSR_REGNUM (tdep) || regnum == -1)
     regcache->raw_collect (I387_MXCSR_REGNUM (tdep),
 			  FXSAVE_MXCSR_ADDR (regs));
+}
+
+gdb::byte_vector
+i387_collect_fxsave (const struct regcache *regcache, int regnum)
+{
+  struct gdbarch_tdep *tdep = gdbarch_tdep (regcache->arch ());
+  gdb::byte_vector fxsave (tdep->sizeof_fpregset);
+
+  i387_collect_fxsave (regcache, regnum, &fxsave);
+  return fxsave;
 }
 
 /* `xstate_bv' is at byte offset 512.  */
@@ -1334,12 +1348,12 @@ i387_supply_xsave (struct regcache *regcache, int regnum,
 
 void
 i387_collect_xsave (const struct regcache *regcache, int regnum,
-		    void *xsave, int gcore)
+		    gdb::byte_vector *xsave, int gcore)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-  gdb_byte *p, *regs = (gdb_byte *) xsave;
+  gdb_byte *p, *regs = xsave->data ();
   gdb_byte raw[I386_MAX_REGISTER_SIZE];
   ULONGEST initial_xstate_bv, clear_bv, xstate_bv = 0;
   unsigned int i;
@@ -1863,6 +1877,16 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
 			      8, byte_order,
 			      initial_xstate_bv);
     }
+}
+
+gdb::byte_vector
+i387_collect_xsave (const struct regcache *regcache, int regnum, int gcore)
+{
+  struct gdbarch_tdep *tdep = gdbarch_tdep (regcache->arch ());
+  gdb::byte_vector xsave (X86_XSTATE_SIZE (tdep->xcr0));
+
+  i387_collect_xsave (regcache, regnum, &xsave, gcore);
+  return xsave;
 }
 
 /* Recreate the FTW (tag word) valid bits from the 80-bit FP data in

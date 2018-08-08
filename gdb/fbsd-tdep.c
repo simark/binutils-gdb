@@ -432,7 +432,6 @@ fbsd_collect_regset_section_cb (const char *sect_name, int size,
 				const struct regset *regset,
 				const char *human_name, void *cb_data)
 {
-  char *buf;
   struct fbsd_collect_regset_section_cb_data *data
     = (struct fbsd_collect_regset_section_cb_data *) cb_data;
 
@@ -441,19 +440,17 @@ fbsd_collect_regset_section_cb (const char *sect_name, int size,
 
   gdb_assert (regset->collect_regset);
 
-  buf = (char *) xmalloc (size);
-  regset->collect_regset (regset, data->regcache, -1, buf, size);
+  gdb::byte_vector buf = regset->collect_regset (regset, data->regcache, -1);
 
   /* PRSTATUS still needs to be treated specially.  */
   if (strcmp (sect_name, ".reg") == 0)
     data->note_data = (char *) elfcore_write_prstatus
       (data->obfd, data->note_data, data->note_size, data->lwp,
-       gdb_signal_to_host (data->stop_signal), buf);
+       gdb_signal_to_host (data->stop_signal), buf.data ());
   else
     data->note_data = (char *) elfcore_write_register_note
       (data->obfd, data->note_data, data->note_size,
-       sect_name, buf, size);
-  xfree (buf);
+       sect_name, buf.data (), size);
 
   if (data->note_data == NULL)
     data->abort_iteration = 1;

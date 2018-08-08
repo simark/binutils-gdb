@@ -75,12 +75,13 @@ nios2_supply_gregset (const struct regset *regset,
 
 /* Implement the collect_regset hook for core files.  */
 
-static void
+static gdb::byte_vector
 nios2_collect_gregset (const struct regset *regset,
 		       const struct regcache *regcache,
-		       int regnum, void *gregs_buf, size_t len)
+		       int regnum)
 {
-  gdb_byte *gregs = (gdb_byte *) gregs_buf;
+  gdb::byte_vector gregs_buf (NIOS2_GREGS_SIZE);
+  gdb_byte *gregs = gregs_buf.data ();
   int regno;
 
   for (regno = NIOS2_Z_REGNUM; regno <= NIOS2_MPUACC_REGNUM; regno++)
@@ -89,6 +90,8 @@ nios2_collect_gregset (const struct regset *regset,
 	if (reg_offsets[regno] != -1)
 	  regcache->raw_collect (regno, gregs + 4 * reg_offsets[regno]);
       }
+
+  return gregs_buf;
 }
 
 static const struct regset nios2_core_regset =

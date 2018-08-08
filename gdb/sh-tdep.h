@@ -109,8 +109,8 @@ extern const struct regset sh_corefile_gregset;
 
 void sh_corefile_supply_regset (const struct regset *regset,
 				struct regcache *regcache,
-				int regnum, const void *regs, size_t len);
-void sh_corefile_collect_regset (const struct regset *regset,
-				 const struct regcache *regcache,
-				 int regnum, void *regs, size_t len);
+				int regnum,
+				gdb::array_view<const gdb_byte> regs);
+gdb::byte_vector sh_corefile_collect_regset
+  (const struct regset *regset, const struct regcache *regcache, int regnum);
 #endif /* SH_TDEP_H */

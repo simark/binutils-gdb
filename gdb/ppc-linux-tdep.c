@@ -414,42 +414,60 @@ ppc_linux_supply_gregset (const struct regset *regset,
     }
 }
 
-static void
+static gdb::byte_vector
 ppc_linux_collect_gregset (const struct regset *regset,
 			   const struct regcache *regcache,
-			   int regnum, void *gregs, size_t len)
+			   int regnum)
 {
   const struct ppc_reg_offsets *offsets
     = (const struct ppc_reg_offsets *) regset->regmap;
+  struct gdbarch_tdep *tdep = gdbarch_tdep (regcache->arch ());
+
+  gdb::byte_vector gregs_buf (48 * tdep->wordsize);
 
   /* Clear areas in the linux gregset not written elsewhere.  */
   if (regnum == -1)
-    memset (gregs, 0, len);
+    memset (gregs_buf.data (), 0, gregs_buf.size ());
 
-  ppc_collect_gregset (regset, regcache, regnum, gregs, len);
+  ppc_collect_gregset (regset, regcache, regnum, &gregs_buf);
 
   if (ppc_linux_trap_reg_p (regcache->arch ()))
     {
       /* "orig_r3" is stored 2 slots after "pc".  */
       if (regnum == -1 || regnum == PPC_ORIG_R3_REGNUM)
-	ppc_collect_reg (regcache, PPC_ORIG_R3_REGNUM, (gdb_byte *) gregs,
+	ppc_collect_reg (regcache, PPC_ORIG_R3_REGNUM, gregs_buf.data (),
 			 offsets->pc_offset + 2 * offsets->gpr_size,
 			 offsets->gpr_size);
 
       /* "trap" is stored 8 slots after "pc".  */
       if (regnum == -1 || regnum == PPC_TRAP_REGNUM)
-	ppc_collect_reg (regcache, PPC_TRAP_REGNUM, (gdb_byte *) gregs,
+	ppc_collect_reg (regcache, PPC_TRAP_REGNUM, gregs_buf.data (),
 			 offsets->pc_offset + 8 * offsets->gpr_size,
 			 offsets->gpr_size);
     }
+
+  return gregs_buf;
 }
 
-static void
+static gdb::byte_vector
+ppc_linux_collect_fpregset (const struct regset *regset,
+			   const struct regcache *regcache,
+			   int regnum)
+{
+  gdb::byte_vector fpregs (264);
+
+  ppc_collect_fpregset (regset, regcache, regnum, &fpregs);
+
+  return fpregs;
+}
+
+static gdb::byte_vector
 ppc_linux_collect_vrregset (const struct regset *regset,
 			    const struct regcache *regcache,
-			    int regnum, void *buf, size_t len)
+			    int regnum)
 {
-  gdb_byte *vrregs = (gdb_byte *) buf;
+  gdb::byte_vector buf = regcache_collect_regset (regset, regcache, regnum);
+  gdb_byte *vrregs = buf.data ();
 
   /* Zero-pad the unused bytes in the fields for vscr and vrsave
      in case they get displayed somewhere (e.g. in core files).  */
@@ -459,7 +477,7 @@ ppc_linux_collect_vrregset (const struct regset *regset,
   if (regnum == PPC_VRSAVE_REGNUM || regnum == -1)
     memset (&vrregs[33 * 16], 0, 16);
 
-  regcache_collect_regset (regset, regcache, regnum, buf, len);
+  return buf;
 }
 
 /* Regset descriptions.  */
@@ -518,7 +536,7 @@ static const struct regset ppc64_linux_gregset = {
 static const struct regset ppc32_linux_fpregset = {
   &ppc32_linux_reg_offsets,
   ppc_supply_fpregset,
-  ppc_collect_fpregset
+  ppc_linux_collect_fpregset
 };
 
 static const struct regcache_map_entry ppc32_le_linux_vrregmap[] =

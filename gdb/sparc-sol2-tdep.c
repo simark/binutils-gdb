@@ -61,12 +61,17 @@ sparc32_sol2_supply_core_gregset (const struct regset *regset,
   sparc32_supply_gregset (&sparc32_sol2_gregmap, regcache, regnum, gregs);
 }
 
-static void
+static gdb::byte_vector
 sparc32_sol2_collect_core_gregset (const struct regset *regset,
 				   const struct regcache *regcache,
-				   int regnum, void *gregs, size_t len)
+				   int regnum)
 {
-  sparc32_collect_gregset (&sparc32_sol2_gregmap, regcache, regnum, gregs);
+  size_t len = gdbarch_tdep (regcache->arch ())->sizeof_gregset;
+  gdb::byte_vector gregs (len);
+
+  sparc32_collect_gregset (&sparc32_sol2_gregmap, regcache, regnum,
+			   gregs.data ());
+  return gregs;
 }
 
 static void
@@ -78,12 +83,18 @@ sparc32_sol2_supply_core_fpregset (const struct regset *regset,
   sparc32_supply_fpregset (&sparc32_sol2_fpregmap, regcache, regnum, fpregs);
 }
 
-static void
+static gdb::byte_vector
 sparc32_sol2_collect_core_fpregset (const struct regset *regset,
 				    const struct regcache *regcache,
-				    int regnum, void *fpregs, size_t len)
+				    int regnum)
 {
-  sparc32_collect_fpregset (&sparc32_sol2_fpregmap, regcache, regnum, fpregs);
+  size_t len = gdbarch_tdep (regcache->arch ())->sizeof_fpregset;
+  gdb::byte_vector fpregs (len);
+
+  sparc32_collect_fpregset (&sparc32_sol2_fpregmap, regcache, regnum,
+			    fpregs.data ());
+
+  return fpregs;
 }
 
 static const struct regset sparc32_sol2_gregset =

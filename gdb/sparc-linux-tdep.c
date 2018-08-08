@@ -221,13 +221,17 @@ sparc32_linux_supply_core_gregset (const struct regset *regset,
 			  regcache, regnum, gregs);
 }
 
-static void
+static gdb::byte_vector
 sparc32_linux_collect_core_gregset (const struct regset *regset,
 				    const struct regcache *regcache,
-				    int regnum, void *gregs, size_t len)
+				    int regnum)
 {
+  size_t len = gdbarch_tdep (regcache->arch ())->sizeof_gregset;
+  gdb::byte_vector gregs (len);
+
   sparc32_collect_gregset (&sparc32_linux_core_gregmap,
-			   regcache, regnum, gregs);
+			   regcache, regnum, gregs.data ());
+  return gregs;
 }
 
 static void
@@ -239,12 +243,16 @@ sparc32_linux_supply_core_fpregset (const struct regset *regset,
   sparc32_supply_fpregset (&sparc32_bsd_fpregmap, regcache, regnum, fpregs);
 }
 
-static void
+static gdb::byte_vector
 sparc32_linux_collect_core_fpregset (const struct regset *regset,
 				     const struct regcache *regcache,
-				     int regnum, void *fpregs, size_t len)
+				     int regnum)
 {
-  sparc32_collect_fpregset (&sparc32_bsd_fpregmap, regcache, regnum, fpregs);
+  size_t len = gdbarch_tdep (regcache->arch ())->sizeof_fpregset;
+  gdb::byte_vector fpregs (len);
+  sparc32_collect_fpregset (&sparc32_bsd_fpregmap, regcache, regnum,
+			    fpregs.data ());
+  return fpregs;
 }
 
 /* Set the program counter for process PTID to PC.  */

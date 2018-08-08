@@ -127,11 +127,16 @@ extern void amd64_supply_xsave (struct regcache *regcache, int regnum,
    all registers.  This function doesn't touch any of the reserved
    bits in *FXSAVE.  */
 
-extern void amd64_collect_fxsave (const struct regcache *regcache, int regnum,
-				  void *fxsave);
+extern gdb::byte_vector amd64_collect_fxsave (const struct regcache *regcache,
+					      int regnum);
+extern void amd64_collect_fxsave (const struct regcache *regcache,
+				  int regnum, gdb::byte_vector *fxsave);
 /* Similar to amd64_collect_fxsave, but use XSAVE extended state.  */
+extern gdb::byte_vector amd64_collect_xsave (const struct regcache *regcache,
+					     int regnum, int gcore);
 extern void amd64_collect_xsave (const struct regcache *regcache,
-				 int regnum, void *xsave, int gcore);
+				 int regnum, gdb::byte_vector *xsave,
+				 int gcore);
 
 /* Floating-point register set. */
 extern const struct regset amd64_fpregset;

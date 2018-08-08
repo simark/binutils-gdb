@@ -265,14 +265,11 @@ am33_supply_fpregset_method (const struct regset *regset,
 /* Copy register values from regcache to regset.  */
 
 static void
-am33_collect_gregset_method (const struct regset *regset, 
-			     const struct regcache *regcache, 
-			     int regnum, void *gregs, size_t len)
+am33_collect_gregset_method_1 (const struct regset *regset,
+			       const struct regcache *regcache,
+			       int regnum, mn10300_elf_gregset_t *regp)
 {
-  mn10300_elf_gregset_t *regp = (gdb_byte (*)[28][4]) gregs;
   int i;
-
-  gdb_assert (len >= sizeof (mn10300_elf_gregset_t));
 
   switch (regnum) {
   case E_D0_REGNUM:
@@ -404,31 +401,40 @@ am33_collect_gregset_method (const struct regset *regset,
     break;
   case -1:
     for (i = 0; i < MN10300_ELF_NGREG; i++)
-      am33_collect_gregset_method (regset, regcache, i, gregs, len);
+      am33_collect_gregset_method_1 (regset, regcache, i, regp);
     break;
   }
   return;
 }
 
+static gdb::byte_vector
+am33_collect_gregset_method (const struct regset *regset,
+			     const struct regcache *regcache,
+			     int regnum)
+{
+  gdb::byte_vector gregs (sizeof (mn10300_elf_gregset_t));
+
+  am33_collect_gregset_method_1 (regset, regcache, regnum,
+				 (mn10300_elf_gregset_t *) gregs.data ());
+
+  return gregs;
+}
+
 /* Copy fp register values from regcache to regset.  */
 
 static void
-am33_collect_fpregset_method (const struct regset *regset, 
-			      const struct regcache *regcache, 
-			      int regnum, void *fpregs, size_t len)
+am33_collect_fpregset_method_1 (const struct regset *regset,
+				const struct regcache *regcache,
+				int regnum, mn10300_elf_fpregset_t *fpregset)
 {
-  mn10300_elf_fpregset_t *fpregset = (mn10300_elf_fpregset_t *) fpregs;
-
-  gdb_assert (len >= sizeof (mn10300_elf_fpregset_t));
-
   if (regnum == -1)
     {
       int i;
       for (i = 0; i < MN10300_ELF_NFPREG; i++)
-	am33_collect_fpregset_method (regset, regcache, E_FS0_REGNUM + i,
-	                              fpregs, len);
-      am33_collect_fpregset_method (regset, regcache, 
-				    E_FPCR_REGNUM, fpregs, len);
+	am33_collect_fpregset_method_1 (regset, regcache, E_FS0_REGNUM + i,
+					fpregset);
+      am33_collect_fpregset_method_1 (regset, regcache,
+				      E_FPCR_REGNUM, fpregset);
     }
   else if (regnum == E_FPCR_REGNUM)
     regcache->raw_collect (E_FPCR_REGNUM, &fpregset->fpcr);
@@ -437,6 +443,19 @@ am33_collect_fpregset_method (const struct regset *regset,
     regcache->raw_collect (regnum, &fpregset->fpregs[regnum - E_FS0_REGNUM]);
 
   return;
+}
+
+static gdb::byte_vector
+am33_collect_fpregset_method (const struct regset *regset,
+			      const struct regcache *regcache,
+			      int regnum)
+{
+  gdb::byte_vector fpregs (sizeof (mn10300_elf_fpregset_t));
+
+  am33_collect_fpregset_method_1 (regset, regcache, regnum,
+				  (mn10300_elf_fpregset_t *) fpregs.data ());
+
+  return fpregs;
 }
 
 static const struct regset am33_gregset =
@@ -459,7 +478,7 @@ am33_iterate_over_regset_sections (struct gdbarch *gdbarch,
 {
   cb (".reg", sizeof (mn10300_elf_gregset_t), &am33_gregset,
       NULL, cb_data);
-  cb (".reg2", sizeof(mn10300_elf_fpregset_t), &am33_fpregset,
+  cb (".reg2", sizeof (mn10300_elf_fpregset_t), &am33_fpregset,
       NULL, cb_data);
 }
 

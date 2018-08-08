@@ -57,13 +57,17 @@ ppcobsd_supply_gregset (const struct regset *regset,
    GREGS and LEN.  If REGNUM is -1, do this for all registers in
    REGSET.  */
 
-void
+gdb::byte_vector
 ppcobsd_collect_gregset (const struct regset *regset,
-			 const struct regcache *regcache, int regnum,
-			 void *gregs, size_t len)
+			 const struct regcache *regcache, int regnum)
 {
-  ppc_collect_gregset (regset, regcache, regnum, gregs, len);
-  ppc_collect_fpregset (regset, regcache, regnum, gregs, len);
+  // fixme
+  gdb::byte_vector gregs (999);
+
+  ppc_collect_gregset (regset, regcache, regnum, &gregs);
+  ppc_collect_fpregset (regset, regcache, regnum, &gregs);
+
+  return gregs;
 }
 
 /* OpenBSD/powerpc register set.  */

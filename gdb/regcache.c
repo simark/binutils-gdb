@@ -1075,7 +1075,7 @@ reg_buffer::raw_collect_integer (int regnum, gdb_byte *addr, int addr_len,
 void
 regcache::transfer_regset_register (struct regcache *out_regcache, int regnum,
 				    gdb::array_view<const gdb_byte> *in_buf,
-				    gdb_byte *out_buf,
+				    gdb::byte_vector *out_buf,
 				    int slot_size, int offs) const
 {
   struct gdbarch *gdbarch = arch ();
@@ -1086,11 +1086,11 @@ regcache::transfer_regset_register (struct regcache *out_regcache, int regnum,
 
   if (out_buf != nullptr)
     {
-      raw_collect_part (regnum, 0, reg_size, out_buf + offs);
+      raw_collect_part (regnum, 0, reg_size, &(*out_buf)[offs]);
 
       /* Ensure any additional space is cleared.  */
       if (slot_size > reg_size)
-	memset (out_buf + offs + reg_size, 0, slot_size - reg_size);
+	memset (&(*out_buf)[offs + reg_size], 0, slot_size - reg_size);
     }
   else if (in_buf != nullptr)
     out_regcache->raw_supply_part (regnum, 0, reg_size, &(*in_buf)[offs]);
@@ -1107,10 +1107,19 @@ void
 regcache::transfer_regset (const struct regset *regset,
 			   struct regcache *out_regcache,
 			   int regnum, gdb::array_view<const gdb_byte> *in_buf,
-			   gdb_byte *out_buf, size_t size) const
+			   gdb::byte_vector *out_buf) const
 {
   const struct regcache_map_entry *map;
   int offs = 0, count;
+
+  int size;
+  if (out_buf != nullptr)
+    {
+      size = regcache_map_entry_size((const struct regcache_map_entry *) regset->regmap);
+      out_buf->resize (size);
+    }
+  else
+    size = in_buf->size ();
 
   for (map = (const struct regcache_map_entry *) regset->regmap;
        (count = map->count) != 0;
@@ -1166,32 +1175,33 @@ void
 regcache::supply_regset (const struct regset *regset,
 			 int regnum, gdb::array_view<const gdb_byte> buf)
 {
-  transfer_regset (regset, this, regnum, &buf, nullptr, buf.size ());
+  transfer_regset (regset, this, regnum, &buf, nullptr);
 }
 
 void
 regcache::supply_regset_unavailable (const struct regset *regset, int regnum)
 {
-  transfer_regset (regset, this, regnum, nullptr, nullptr, SIZE_MAX);
+  transfer_regset (regset, this, regnum, nullptr, nullptr);
 }
 
 /* Collect register REGNUM from REGCACHE to BUF, using the register
    map in REGSET.  If REGNUM is -1, do this for all registers in
    REGSET.  */
 
-void
+gdb::byte_vector
 regcache_collect_regset (const struct regset *regset,
 			 const struct regcache *regcache,
-			 int regnum, void *buf, size_t size)
+			 int regnum)
 {
-  regcache->collect_regset (regset, regnum, (gdb_byte *) buf, size);
+  return regcache->collect_regset (regset, regnum);
 }
 
-void
-regcache::collect_regset (const struct regset *regset,
-			 int regnum, void *buf, size_t size) const
+gdb::byte_vector
+regcache::collect_regset (const struct regset *regset, int regnum) const
 {
-  transfer_regset (regset, nullptr, regnum, nullptr, (gdb_byte *) buf, size);
+  gdb::byte_vector buf;
+  transfer_regset (regset, nullptr, regnum, nullptr, &buf);
+  return buf;
 }
 
 /* See common/common-regcache.h.  */

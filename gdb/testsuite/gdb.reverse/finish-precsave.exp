@@ -56,6 +56,8 @@ gdb_test "record restore $precsave" \
 
 # Test finish from void func
 
+set timeout 999999
+gdb_interact
 set breakloc [gdb_get_line_number "VOID FUNC" "$srcfile"]
 gdb_test "break void_func" \
     "Breakpoint $decimal at .*$srcfile, line $breakloc\." \

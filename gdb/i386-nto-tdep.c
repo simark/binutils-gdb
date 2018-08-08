@@ -261,10 +261,14 @@ i386nto_regset_fill (const struct regcache *regcache, int regset, char *data)
     }
   else if (regset == NTO_REG_FLOAT)
     {
+      gdb::byte_vector regs;
+
       if (nto_cpuinfo_valid && nto_cpuinfo_flags | X86_CPU_FXSR)
-	i387_collect_fxsave (regcache, -1, data);
+	regs = i387_collect_fxsave (regcache, -1);
       else
-	i387_collect_fsave (regcache, -1, data);
+	regs = i387_collect_fsave (regcache, -1);
+
+      memcpy (data, regs.data (), regs.size ());
     }
   else
     return -1;

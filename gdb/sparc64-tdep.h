@@ -104,16 +104,16 @@ extern void sparc64_supply_gregset (const struct sparc_gregmap *gregmap,
 				    struct regcache *regcache,
 				    int regnum,
 				    gdb::array_view<const gdb_byte> gregs);
-extern void sparc64_collect_gregset (const struct sparc_gregmap *gregmap,
-				     const struct regcache *regcache,
-				     int regnum, void *gregs);
+extern gdb::byte_vector sparc64_collect_gregset
+  (const struct sparc_gregmap *gregmap, const struct regcache *regcache,
+   int regnum);
 extern void sparc64_supply_fpregset (const struct sparc_fpregmap *fpregmap,
 				     struct regcache *regcache,
 				     int regnum,
 				     gdb::array_view<const gdb_byte> fpregs);
-extern void sparc64_collect_fpregset (const struct sparc_fpregmap *fpregmap,
-				      const struct regcache *regcache,
-				      int regnum, void *fpregs);
+extern gdb::byte_vector sparc64_collect_fpregset
+  (const struct sparc_fpregmap *fpregmap, const struct regcache *regcache,
+   int regnum);
 
 /* Functions and variables exported from sparc64-sol2-tdep.c.  */
 

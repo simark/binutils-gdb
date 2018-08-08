@@ -2185,16 +2185,19 @@ sh_corefile_supply_regset (const struct regset *regset,
    REGTABLE specifies where each register can be found in REGS.
    If REGNUM is -1, do this for all registers in REGSET.  */
 
-void
+gdb::byte_vector
 sh_corefile_collect_regset (const struct regset *regset,
 			    const struct regcache *regcache,
-			    int regnum, void *regs, size_t len)
+			    int regnum)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   const struct sh_corefile_regmap *regmap = (regset == &sh_corefile_gregset
 					     ? tdep->core_gregmap
 					     : tdep->core_fpregmap);
+  size_t len = (regset == &sh_corefile_gregset
+		? tdep->sizeof_gregset : tdep->sizeof_fpregset);
+  gdb::byte_vector regs (len);
   int i;
 
   for (i = 0; regmap[i].regnum != -1; i++)
@@ -2202,8 +2205,10 @@ sh_corefile_collect_regset (const struct regset *regset,
       if ((regnum == -1 || regnum == regmap[i].regnum)
 	  && regmap[i].offset + 4 <= len)
 	regcache->raw_collect (regmap[i].regnum,
-			      (char *)regs + regmap[i].offset);
+			       regs.data () + regmap[i].offset);
     }
+
+  return regs;
 }
 
 /* The following two regsets have the same contents, so it is tempting to

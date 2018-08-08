@@ -129,11 +129,10 @@ supply_fpregset (struct regcache *regcache, const elf_fpregset_t *fpregsetp)
    *FPREGSETP with the value in GDB's register cache.  If REGNUM is
    -1, do this for all registers.  */
 
-void
-fill_fpregset (const struct regcache *regcache,
-	       elf_fpregset_t *fpregsetp, int regnum)
+gdb::byte_vector
+fill_fpregset (const struct regcache *regcache, int regnum)
 {
-  amd64_collect_fxsave (regcache, regnum, fpregsetp);
+  return amd64_collect_fxsave (regcache, regnum);
 }
 
 
@@ -250,20 +249,18 @@ amd64_linux_nat_target::store_registers (struct regcache *regcache, int regnum)
 
   if (regnum == -1 || !amd64_native_gregset_supplies_p (gdbarch, regnum))
     {
-      elf_fpregset_t fpregs;
-
       if (have_ptrace_getregset == TRIBOOL_TRUE)
 	{
-	  char xstateregs[X86_XSTATE_MAX_SIZE];
+	  gdb::byte_vector xstateregs (X86_XSTATE_MAX_SIZE);
 	  struct iovec iov;
 
-	  iov.iov_base = xstateregs;
-	  iov.iov_len = sizeof (xstateregs);
+	  iov.iov_base = xstateregs.data ();
+	  iov.iov_len = xstateregs.size ();
 	  if (ptrace (PTRACE_GETREGSET, tid,
 		      (unsigned int) NT_X86_XSTATE, (long) &iov) < 0)
 	    perror_with_name (_("Couldn't get extended state status"));
 
-	  amd64_collect_xsave (regcache, regnum, xstateregs, 0);
+	  amd64_collect_xsave (regcache, regnum, &xstateregs, 0);
 
 	  if (ptrace (PTRACE_SETREGSET, tid,
 		      (unsigned int) NT_X86_XSTATE, (long) &iov) < 0)
@@ -271,12 +268,14 @@ amd64_linux_nat_target::store_registers (struct regcache *regcache, int regnum)
 	}
       else
 	{
-	  if (ptrace (PTRACE_GETFPREGS, tid, 0, (long) &fpregs) < 0)
+	  gdb::byte_vector fpregs (sizeof (elf_fpregset_t));
+
+	  if (ptrace (PTRACE_GETFPREGS, tid, 0, (long) fpregs.data ()) < 0)
 	    perror_with_name (_("Couldn't get floating point status"));
 
 	  amd64_collect_fxsave (regcache, regnum, &fpregs);
 
-	  if (ptrace (PTRACE_SETFPREGS, tid, 0, (long) &fpregs) < 0)
+	  if (ptrace (PTRACE_SETFPREGS, tid, 0, (long) fpregs.data ()) < 0)
 	    perror_with_name (_("Couldn't write floating point status"));
 	}
 

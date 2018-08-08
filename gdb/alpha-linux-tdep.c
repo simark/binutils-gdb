@@ -176,16 +176,20 @@ alpha_linux_supply_gregset (const struct regset *regset,
    general-purpose register set REGSET.  If REGNUM is -1, do this for
    all registers in REGSET.  */
 
-static void
+static gdb::byte_vector
 alpha_linux_collect_gregset (const struct regset *regset,
 			     const struct regcache *regcache,
-			     int regnum, void *gregs, size_t len)
+			     int regnum)
 {
-  gdb_byte *regs = (gdb_byte *) gregs;
+  gdb::byte_vector gregs (32 * 8);
+  gdb_byte *regs = gregs.data ();
+  size_t len = gregs.size ();
 
   gdb_assert (len >= 32 * 8);
   alpha_fill_int_regs (regcache, regnum, regs, regs + 31 * 8,
 		       len >= 33 * 8 ? regs + 32 * 8 : NULL);
+
+  return gregs;
 }
 
 /* Supply register REGNUM from the buffer specified by FPREGS and LEN
@@ -209,15 +213,19 @@ alpha_linux_supply_fpregset (const struct regset *regset,
    general-purpose register set REGSET.  If REGNUM is -1, do this for
    all registers in REGSET.  */
 
-static void
+static gdb::byte_vector
 alpha_linux_collect_fpregset (const struct regset *regset,
 			      const struct regcache *regcache,
-			      int regnum, void *fpregs, size_t len)
+			      int regnum)
 {
-  gdb_byte *regs = (gdb_byte *) fpregs;
+  gdb::byte_vector fpregs (32 * 8);
+  gdb_byte *regs = fpregs.data ();
+  size_t len = fpregs.size ();
 
   gdb_assert (len >= 32 * 8);
   alpha_fill_fp_regs (regcache, regnum, regs, regs + 31 * 8);
+
+  return fpregs;
 }
 
 static const struct regset alpha_linux_gregset =

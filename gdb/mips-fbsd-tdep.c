@@ -113,12 +113,13 @@ mips_fbsd_supply_gregs (struct regcache *regcache, int regnum,
    in FPREGS.  Each floating-point register in FPREGS is REGSIZE bytes
    in length.  */
 
-void
+gdb::byte_vector
 mips_fbsd_collect_fpregs (const struct regcache *regcache, int regnum,
-			  void *fpregs, size_t regsize)
+			  size_t regsize)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  gdb_byte *regs = (gdb_byte *) fpregs;
+  gdb::byte_vector fpregs (MIPS_FBSD_NUM_FPREGS * regsize);
+  gdb_byte *regs = fpregs.data ();
   int i, fp0num;
 
   fp0num = mips_regnum (gdbarch)->fp0;
@@ -134,23 +135,28 @@ mips_fbsd_collect_fpregs (const struct regcache *regcache, int regnum,
     mips_fbsd_collect_reg (regcache,
 			   mips_regnum (gdbarch)->fp_implementation_revision,
 			   regs + 33 * regsize, regsize);
+
+  return fpregs;
 }
 
 /* Collect the general-purpose registers from REGCACHE and store them
    in GREGS.  Each general-purpose register in GREGS is REGSIZE bytes
    in length.  */
 
-void
+gdb::byte_vector
 mips_fbsd_collect_gregs (const struct regcache *regcache, int regnum,
-			 void *gregs, size_t regsize)
+			 size_t regsize)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  gdb_byte *regs = (gdb_byte *) gregs;
+  gdb::byte_vector gregs (MIPS_FBSD_NUM_GREGS * regsize);
+  gdb_byte *regs = gregs.data ();
   int i;
 
   for (i = 0; i <= mips_regnum (gdbarch)->pc; i++)
     if (regnum == i || regnum == -1)
       mips_fbsd_collect_reg (regcache, i, regs + i * regsize, regsize);
+
+  return gregs;
 }
 
 /* Supply register REGNUM from the buffer specified by FPREGS and LEN
@@ -175,16 +181,13 @@ mips_fbsd_supply_fpregset (const struct regset *regset,
    register set REGSET.  If REGNUM is -1, do this for all registers in
    REGSET.  */
 
-static void
+static gdb::byte_vector
 mips_fbsd_collect_fpregset (const struct regset *regset,
 			    const struct regcache *regcache,
-			    int regnum, void *fpregs, size_t len)
+			    int regnum)
 {
   size_t regsize = mips_abi_regsize (regcache->arch ());
-
-  gdb_assert (len >= MIPS_FBSD_NUM_FPREGS * regsize);
-
-  mips_fbsd_collect_fpregs (regcache, regnum, fpregs, regsize);
+  return mips_fbsd_collect_fpregs (regcache, regnum, regsize);
 }
 
 /* Supply register REGNUM from the buffer specified by GREGS and LEN
@@ -209,16 +212,13 @@ mips_fbsd_supply_gregset (const struct regset *regset,
    register set REGSET.  If REGNUM is -1, do this for all registers in
    REGSET.  */
 
-static void
+static gdb::byte_vector
 mips_fbsd_collect_gregset (const struct regset *regset,
 			   const struct regcache *regcache,
-			   int regnum, void *gregs, size_t len)
+			   int regnum)
 {
   size_t regsize = mips_abi_regsize (regcache->arch ());
-
-  gdb_assert (len >= MIPS_FBSD_NUM_GREGS * regsize);
-
-  mips_fbsd_collect_gregs (regcache, regnum, gregs, regsize);
+  return mips_fbsd_collect_gregs (regcache, regnum, regsize);
 }
 
 /* FreeBSD/mips register sets.  */

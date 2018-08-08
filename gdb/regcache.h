@@ -21,6 +21,7 @@
 #define REGCACHE_H
 
 #include "common-regcache.h"
+#include "common/byte-vector.h"
 #include "common/array-view.h"
 #include <forward_list>
 
@@ -93,6 +94,15 @@ struct regcache_map_entry
   int size;
 };
 
+static inline
+int regcache_map_entry_size (const struct regcache_map_entry *map)
+{
+  int size = 0;
+  for (int i = 0; map[i].count != 0; i++)
+    size += (map[i].count * map[i].size);
+  return size;
+}
+
 /* Special value for the 'regno' field in the struct above.  */
 
 enum
@@ -112,9 +122,9 @@ enum
 extern void regcache_supply_regset (const struct regset *regset,
 				    struct regcache *regcache,
 				    int regnum, gdb::array_view<const gdb_byte> buf);
-extern void regcache_collect_regset (const struct regset *regset,
+extern gdb::byte_vector regcache_collect_regset (const struct regset *regset,
 				     const struct regcache *regcache,
-				     int regnum, void *buf, size_t size);
+				     int regnum);
 
 
 /* The type of a register.  This function is slightly more efficient
@@ -338,8 +348,8 @@ public:
 
   void supply_regset_unavailable (const struct regset *regset, int regnum);
 
-  void collect_regset (const struct regset *regset, int regnum,
-		       void *buf, size_t size) const;
+  gdb::byte_vector collect_regset (const struct regset *regset, int regnum)
+    const;
 
   /* Return REGCACHE's ptid.  */
 
@@ -370,7 +380,7 @@ private:
   /* Helper function for transfer_regset.  Copies across a single register.  */
   void transfer_regset_register (struct regcache *out_regcache, int regnum,
 				 gdb::array_view<const gdb_byte> *in_buf,
-				 gdb_byte *out_buf,
+				 gdb::byte_vector *out_buf,
 				 int slot_size, int offs) const;
 
   /* Transfer a single or all registers belonging to a certain register
@@ -379,7 +389,7 @@ private:
   void transfer_regset (const struct regset *regset,
 			struct regcache *out_regcache,
 			int regnum, gdb::array_view<const gdb_byte> *in_buf,
-			gdb_byte *out_buf, size_t size) const;
+			gdb::byte_vector *out_buf) const;
 
   /* Perform a partial register transfer using a read, modify, write
      operation.  */

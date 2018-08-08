@@ -57,7 +57,7 @@ extern void supply_fpregset (struct regcache *regcache,
 
 extern void fill_gregset (const struct regcache *regcache,
 			  gdb_gregset_t *gregs, int regno);
-extern void fill_fpregset (const struct regcache *regcache,
-			   gdb_fpregset_t *fpregs, int regno);
+extern gdb::byte_vector fill_fpregset (const struct regcache *regcache,
+				       int regno);
 
 #endif

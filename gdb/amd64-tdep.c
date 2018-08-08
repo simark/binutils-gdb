@@ -2975,16 +2975,12 @@ amd64_supply_fpregset (const struct regset *regset, struct regcache *regcache,
    floating-point register set REGSET.  If REGNUM is -1, do this for
    all registers in REGSET.  */
 
-static void
+static gdb::byte_vector
 amd64_collect_fpregset (const struct regset *regset,
 			const struct regcache *regcache,
-			int regnum, void *fpregs, size_t len)
+			int regnum)
 {
-  struct gdbarch *gdbarch = regcache->arch ();
-  const struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-
-  gdb_assert (len >= tdep->sizeof_fpregset);
-  amd64_collect_fxsave (regcache, regnum, fpregs);
+  return amd64_collect_fxsave (regcache, regnum);
 }
 
 const struct regset amd64_fpregset =
@@ -3396,11 +3392,11 @@ amd64_supply_xsave (struct regcache *regcache, int regnum,
 
 void
 amd64_collect_fxsave (const struct regcache *regcache, int regnum,
-		      void *fxsave)
+		      gdb::byte_vector *fxsave)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-  gdb_byte *regs = (gdb_byte *) fxsave;
+  gdb_byte *regs = fxsave->data ();
 
   i387_collect_fxsave (regcache, regnum, fxsave);
 
@@ -3413,15 +3409,25 @@ amd64_collect_fxsave (const struct regcache *regcache, int regnum,
     }
 }
 
+gdb::byte_vector
+amd64_collect_fxsave (const struct regcache *regcache, int regnum)
+{
+  struct gdbarch_tdep *tdep = gdbarch_tdep (regcache->arch ());
+  gdb::byte_vector fxsave (tdep->sizeof_fpregset);
+
+  amd64_collect_fxsave (regcache, regnum, &fxsave);
+  return fxsave;
+}
+
 /* Similar to amd64_collect_fxsave, but use XSAVE extended state.  */
 
 void
 amd64_collect_xsave (const struct regcache *regcache, int regnum,
-		     void *xsave, int gcore)
+		     gdb::byte_vector *xsave, int gcore)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-  gdb_byte *regs = (gdb_byte *) xsave;
+  gdb_byte *regs = xsave->data ();
 
   i387_collect_xsave (regcache, regnum, xsave, gcore);
 
@@ -3435,3 +3441,14 @@ amd64_collect_xsave (const struct regcache *regcache, int regnum,
 			      regs + 20);
     }
 }
+
+gdb::byte_vector
+amd64_collect_xsave (const struct regcache *regcache, int regnum, int gcore)
+{
+  struct gdbarch_tdep *tdep = gdbarch_tdep (regcache->arch ());
+  gdb::byte_vector xsave (X86_XSTATE_SIZE (tdep->xcr0));
+
+  amd64_collect_xsave (regcache, regnum, &xsave, gcore);
+  return xsave;
+}
+

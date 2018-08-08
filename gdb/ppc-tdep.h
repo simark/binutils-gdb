@@ -147,9 +147,12 @@ extern void ppc_supply_vsxregset (const struct regset *regset,
    GREGS and LEN.  If REGNUM is -1, do this for all registers in
    REGSET.  */
 
+extern gdb::byte_vector ppc_collect_gregset (const struct regset *regset,
+					     const struct regcache *regcache,
+					     int regnum);
 extern void ppc_collect_gregset (const struct regset *regset,
 				 const struct regcache *regcache,
-				 int regnum, void *gregs, size_t len);
+				 int regnum, gdb::byte_vector *gregs);
 
 /* Collect register REGNUM in the floating-point register set
    REGSET, from register cache REGCACHE into the buffer specified by
@@ -158,7 +161,7 @@ extern void ppc_collect_gregset (const struct regset *regset,
 
 extern void ppc_collect_fpregset (const struct regset *regset,
 				  const struct regcache *regcache,
-				  int regnum, void *fpregs, size_t len);
+				  int regnum, gdb::byte_vector *fpregs);
 
 /* Collect register REGNUM in the Altivec register set
    REGSET from register cache REGCACHE into the buffer specified by

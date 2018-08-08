@@ -129,8 +129,8 @@ extern void i387_supply_fsave
    registers.  This function doesn't touch any of the reserved bits in
    *FSAVE.  */
 
-extern void i387_collect_fsave (const struct regcache *regcache, int regnum,
-				void *fsave);
+extern gdb::byte_vector i387_collect_fsave (const struct regcache *regcache,
+					    int regnum);
 
 /* Fill register REGNUM in REGCACHE with the appropriate
    floating-point or SSE register value from *FXSAVE.  This function
@@ -150,13 +150,18 @@ extern void i387_supply_xsave (struct regcache *regcache, int regnum,
    all registers.  This function doesn't touch any of the reserved
    bits in *FXSAVE.  */
 
-extern void i387_collect_fxsave (const struct regcache *regcache, int regnum,
-				 void *fxsave);
+extern gdb::byte_vector i387_collect_fxsave (const struct regcache *regcache,
+					     int regnum);
+extern void i387_collect_fxsave (const struct regcache *regcache,
+				 int regnum, gdb::byte_vector *fxsave);
 
 /* Similar to i387_collect_fxsave, but use XSAVE extended state.  */
 
+extern gdb::byte_vector i387_collect_xsave (const struct regcache *regcache,
+					    int regnum, int gcore);
 extern void i387_collect_xsave (const struct regcache *regcache,
-				int regnum, void *xsave, int gcore);
+				int regnum, gdb::byte_vector *xsave,
+				int gcore);
 
 /* Extract a bitset from XSAVE indicating which features are available in
    the inferior, but not yet initialised.  */

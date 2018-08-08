@@ -1626,12 +1626,12 @@ amd64_linux_supply_xstateregset (const struct regset *regset,
 
 /* Similar to amd64_collect_fpregset, but use XSAVE extended state.  */
 
-static void
+static gdb::byte_vector
 amd64_linux_collect_xstateregset (const struct regset *regset,
 				  const struct regcache *regcache,
-				  int regnum, void *xstateregs, size_t len)
+				  int regnum)
 {
-  amd64_collect_xsave (regcache, regnum, xstateregs, 1);
+  return amd64_collect_xsave (regcache, regnum, 1);
 }
 
 static const struct regset amd64_linux_xstateregset =

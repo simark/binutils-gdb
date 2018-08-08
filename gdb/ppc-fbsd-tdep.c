@@ -81,12 +81,45 @@ static const struct ppc_reg_offsets ppc64_fbsd_reg_offsets =
 	/* .fpscr_size = */    8
   };
 
+static gdb::byte_vector
+ppc32_fbsd_collect_gregset (const struct regset *regset,
+			    const struct regcache *regcache, int regnum)
+{
+  gdb::byte_vector gregs (148);
+
+  ppc_collect_gregset (regset, regcache, regnum, &gregs);
+
+  return gregs;
+}
+
+static gdb::byte_vector
+ppc64_fbsd_collect_gregset (const struct regset *regset,
+			    const struct regcache *regcache, int regnum)
+{
+  gdb::byte_vector gregs (296);
+
+  ppc_collect_gregset (regset, regcache, regnum, &gregs);
+
+  return gregs;
+}
+
+static gdb::byte_vector
+ppc32_fbsd_collect_fpregset (const struct regset *regset,
+			     const struct regcache *regcache, int regnum)
+{
+  gdb::byte_vector gregs (264);
+
+  ppc_collect_gregset (regset, regcache, regnum, &gregs);
+
+  return gregs;
+}
+
 /* 32-bit general-purpose register set.  */
 
 static const struct regset ppc32_fbsd_gregset = {
   &ppc32_fbsd_reg_offsets,
   ppc_supply_gregset,
-  ppc_collect_gregset
+  ppc32_fbsd_collect_gregset
 };
 
 /* 64-bit general-purpose register set.  */
@@ -94,7 +127,7 @@ static const struct regset ppc32_fbsd_gregset = {
 static const struct regset ppc64_fbsd_gregset = {
   &ppc64_fbsd_reg_offsets,
   ppc_supply_gregset,
-  ppc_collect_gregset
+  ppc64_fbsd_collect_gregset
 };
 
 /* 32-/64-bit floating-point register set.  */
@@ -102,7 +135,7 @@ static const struct regset ppc64_fbsd_gregset = {
 static const struct regset ppc32_fbsd_fpregset = {
   &ppc32_fbsd_reg_offsets,
   ppc_supply_fpregset,
-  ppc_collect_fpregset
+  ppc32_fbsd_collect_fpregset
 };
 
 const struct regset *
