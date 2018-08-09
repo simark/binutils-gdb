@@ -120,7 +120,9 @@ fill_gregset (const struct regcache *regcache,
 void
 supply_fpregset (struct regcache *regcache, const elf_fpregset_t *fpregsetp)
 {
-  amd64_supply_fxsave (regcache, -1, fpregsetp);
+  gdb::array_view<const gdb_byte> view ((const gdb_byte *) fpregsetp,
+					sizeof (elf_fpregset_t));
+  amd64_supply_fxsave (regcache, -1, view);
 }
 
 /* Fill register REGNUM (if it is a floating-point or SSE register) in
@@ -166,11 +168,9 @@ amd64_linux_nat_target::fetch_registers (struct regcache *regcache, int regnum)
 
   if (regnum == -1 || !amd64_native_gregset_supplies_p (gdbarch, regnum))
     {
-      elf_fpregset_t fpregs;
-
       if (have_ptrace_getregset == TRIBOOL_TRUE)
 	{
-	  char xstateregs[X86_XSTATE_MAX_SIZE];
+	  gdb_byte xstateregs[X86_XSTATE_MAX_SIZE];
 	  struct iovec iov;
 
 	  iov.iov_base = xstateregs;
@@ -183,10 +183,12 @@ amd64_linux_nat_target::fetch_registers (struct regcache *regcache, int regnum)
 	}
       else
 	{
+	  elf_fpregset_t fpregs;
+
 	  if (ptrace (PTRACE_GETFPREGS, tid, 0, (long) &fpregs) < 0)
 	    perror_with_name (_("Couldn't get floating point status"));
 
-	  amd64_supply_fxsave (regcache, -1, &fpregs);
+	  supply_fpregset (regcache, &fpregs);
 	}
 #ifndef HAVE_STRUCT_USER_REGS_STRUCT_FS_BASE
       {

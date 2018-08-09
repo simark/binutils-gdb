@@ -3802,11 +3802,12 @@ i386_value_to_register (struct frame_info *frame, int regnum,
 
 void
 i386_supply_gregset (const struct regset *regset, struct regcache *regcache,
-		     int regnum, const void *gregs, size_t len)
+		     int regnum, gdb::array_view<const gdb_byte> gregs)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   const struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-  const gdb_byte *regs = (const gdb_byte *) gregs;
+  const gdb_byte *regs = gregs.data ();
+  size_t len = gregs.size ();
   int i;
 
   gdb_assert (len >= tdep->sizeof_gregset);
@@ -3850,10 +3851,11 @@ i386_collect_gregset (const struct regset *regset,
 
 static void
 i386_supply_fpregset (const struct regset *regset, struct regcache *regcache,
-		      int regnum, const void *fpregs, size_t len)
+		      int regnum, gdb::array_view<const gdb_byte> fpregs)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   const struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  size_t len = fpregs.size ();
 
   if (len == I387_SIZEOF_FXSAVE)
     {

@@ -158,11 +158,13 @@ mips_supply_gregset (struct regcache *regcache,
 static void
 mips_supply_gregset_wrapper (const struct regset *regset,
 			     struct regcache *regcache,
-			     int regnum, const void *gregs, size_t len)
+			     int regnum, gdb::array_view<const gdb_byte> gregs)
 {
+  size_t len = gregs.size ();
+
   gdb_assert (len >= sizeof (mips_elf_gregset_t));
 
-  mips_supply_gregset (regcache, (const mips_elf_gregset_t *)gregs);
+  mips_supply_gregset (regcache, (const mips_elf_gregset_t *) gregs.data ());
 }
 
 /* Pack our registers (or one register) into an elf_gregset_t.  */
@@ -326,11 +328,15 @@ mips64_supply_gregset (struct regcache *regcache,
 static void
 mips64_supply_gregset_wrapper (const struct regset *regset,
 			       struct regcache *regcache,
-			       int regnum, const void *gregs, size_t len)
+			       int regnum,
+			       gdb::array_view<const gdb_byte> gregs)
 {
+  size_t len = gregs.size ();
+
   gdb_assert (len >= sizeof (mips64_elf_gregset_t));
 
-  mips64_supply_gregset (regcache, (const mips64_elf_gregset_t *)gregs);
+  mips64_supply_gregset (regcache,
+			 (const mips64_elf_gregset_t *) gregs.data ());
 }
 
 /* Pack our registers (or one register) into a 64-bit elf_gregset_t.  */
@@ -443,11 +449,15 @@ mips64_supply_fpregset (struct regcache *regcache,
 static void
 mips64_supply_fpregset_wrapper (const struct regset *regset,
 				struct regcache *regcache,
-				int regnum, const void *gregs, size_t len)
+				int regnum,
+				gdb::array_view<const gdb_byte> gregs)
 {
+  size_t len = gregs.size ();
+
   gdb_assert (len >= sizeof (mips64_elf_fpregset_t));
 
-  mips64_supply_fpregset (regcache, (const mips64_elf_fpregset_t *)gregs);
+  mips64_supply_fpregset (regcache,
+			  (const mips64_elf_fpregset_t *) gregs.data ());
 }
 
 /* Likewise, pack one or all floating point registers into an

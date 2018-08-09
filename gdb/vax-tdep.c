@@ -68,9 +68,9 @@ vax_register_type (struct gdbarch *gdbarch, int regnum)
 
 static void
 vax_supply_gregset (const struct regset *regset, struct regcache *regcache,
-		    int regnum, const void *gregs, size_t len)
+		    int regnum, gdb::array_view<const gdb_byte> gregs)
 {
-  const gdb_byte *regs = (const gdb_byte *) gregs;
+  const gdb_byte *regs = gregs.data ();
   int i;
 
   for (i = 0; i < VAX_NUM_REGS; i++)

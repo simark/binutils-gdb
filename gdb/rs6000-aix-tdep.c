@@ -101,10 +101,10 @@ static struct ppc_reg_offsets rs6000_aix64_reg_offsets =
 static void
 rs6000_aix_supply_regset (const struct regset *regset,
 			  struct regcache *regcache, int regnum,
-			  const void *gregs, size_t len)
+			  gdb::array_view<const gdb_byte> gregs)
 {
-  ppc_supply_gregset (regset, regcache, regnum, gregs, len);
-  ppc_supply_fpregset (regset, regcache, regnum, gregs, len);
+  ppc_supply_gregset (regset, regcache, regnum, gregs);
+  ppc_supply_fpregset (regset, regcache, regnum, gregs);
 }
 
 /* Collect register REGNUM in the general-purpose register set

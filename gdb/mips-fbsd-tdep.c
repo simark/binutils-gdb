@@ -69,10 +69,10 @@ mips_fbsd_collect_reg (const struct regcache *regcache, int regnum, void *addr,
 
 void
 mips_fbsd_supply_fpregs (struct regcache *regcache, int regnum,
-			 const void *fpregs, size_t regsize)
+			 gdb::array_view<const gdb_byte> fpregs, size_t regsize)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  const gdb_byte *regs = (const gdb_byte *) fpregs;
+  const gdb_byte *regs = fpregs.data ();
   int i, fp0num;
 
   fp0num = mips_regnum (gdbarch)->fp0;
@@ -98,10 +98,10 @@ mips_fbsd_supply_fpregs (struct regcache *regcache, int regnum,
 
 void
 mips_fbsd_supply_gregs (struct regcache *regcache, int regnum,
-			const void *gregs, size_t regsize)
+			gdb::array_view<const gdb_byte> gregs, size_t regsize)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  const gdb_byte *regs = (const gdb_byte *) gregs;
+  const gdb_byte *regs = gregs.data ();
   int i;
 
   for (i = 0; i <= mips_regnum (gdbarch)->pc; i++)
@@ -160,9 +160,10 @@ mips_fbsd_collect_gregs (const struct regcache *regcache, int regnum,
 static void
 mips_fbsd_supply_fpregset (const struct regset *regset,
 			   struct regcache *regcache,
-			   int regnum, const void *fpregs, size_t len)
+			   int regnum, gdb::array_view<const gdb_byte> fpregs)
 {
   size_t regsize = mips_abi_regsize (regcache->arch ());
+  size_t len = fpregs.size ();
 
   gdb_assert (len >= MIPS_FBSD_NUM_FPREGS * regsize);
 
@@ -193,9 +194,10 @@ mips_fbsd_collect_fpregset (const struct regset *regset,
 static void
 mips_fbsd_supply_gregset (const struct regset *regset,
 			  struct regcache *regcache, int regnum,
-			  const void *gregs, size_t len)
+			  gdb::array_view<const gdb_byte> gregs)
 {
   size_t regsize = mips_abi_regsize (regcache->arch ());
+  size_t len = gregs.size ();
 
   gdb_assert (len >= MIPS_FBSD_NUM_GREGS * regsize);
 

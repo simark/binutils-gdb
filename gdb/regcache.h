@@ -21,6 +21,7 @@
 #define REGCACHE_H
 
 #include "common-regcache.h"
+#include "common/array-view.h"
 #include <forward_list>
 
 struct regcache;
@@ -110,8 +111,7 @@ enum
 
 extern void regcache_supply_regset (const struct regset *regset,
 				    struct regcache *regcache,
-				    int regnum, const void *buf,
-				    size_t size);
+				    int regnum, gdb::array_view<const gdb_byte> buf);
 extern void regcache_collect_regset (const struct regset *regset,
 				     const struct regcache *regcache,
 				     int regnum, void *buf, size_t size);
@@ -334,8 +334,9 @@ public:
 			  const gdb_byte *buf);
 
   void supply_regset (const struct regset *regset,
-		      int regnum, const void *buf, size_t size);
+		      int regnum, gdb::array_view<const gdb_byte> buf);
 
+  void supply_regset_unavailable (const struct regset *regset, int regnum);
 
   void collect_regset (const struct regset *regset, int regnum,
 		       void *buf, size_t size) const;
@@ -368,7 +369,8 @@ private:
 
   /* Helper function for transfer_regset.  Copies across a single register.  */
   void transfer_regset_register (struct regcache *out_regcache, int regnum,
-				 const gdb_byte *in_buf, gdb_byte *out_buf,
+				 gdb::array_view<const gdb_byte> *in_buf,
+				 gdb_byte *out_buf,
 				 int slot_size, int offs) const;
 
   /* Transfer a single or all registers belonging to a certain register
@@ -376,7 +378,7 @@ private:
      regcache_supply_regset and regcache_collect_regset.  */
   void transfer_regset (const struct regset *regset,
 			struct regcache *out_regcache,
-			int regnum, const gdb_byte *in_buf,
+			int regnum, gdb::array_view<const gdb_byte> *in_buf,
 			gdb_byte *out_buf, size_t size) const;
 
   /* Perform a partial register transfer using a read, modify, write

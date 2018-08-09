@@ -53,22 +53,27 @@ const struct sparc_gregmap sparc32nbsd_gregmap =
 static void
 sparc32nbsd_supply_gregset (const struct regset *regset,
 			    struct regcache *regcache,
-			    int regnum, const void *gregs, size_t len)
+			    int regnum, gdb::array_view<const gdb_byte> gregs)
 {
   sparc32_supply_gregset (&sparc32nbsd_gregmap, regcache, regnum, gregs);
+
+  size_t len = gregs.size ();
 
   /* Traditional NetBSD core files don't use multiple register sets.
      Instead, the general-purpose and floating-point registers are
      lumped together in a single section.  */
   if (len >= 212)
-    sparc32_supply_fpregset (&sparc32_bsd_fpregmap, regcache, regnum,
-			     (const char *) gregs + 80);
+    {
+      gdb::array_view<const gdb_byte> fpregs (gregs.data () + 80,
+					      len - 80);
+      sparc32_supply_fpregset (&sparc32_bsd_fpregmap, regcache, regnum, fpregs);
+    }
 }
 
 static void
 sparc32nbsd_supply_fpregset (const struct regset *regset,
 			     struct regcache *regcache,
-			     int regnum, const void *fpregs, size_t len)
+			     int regnum, gdb::array_view<const gdb_byte> fpregs)
 {
   sparc32_supply_fpregset (&sparc32_bsd_fpregmap, regcache, regnum, fpregs);
 }

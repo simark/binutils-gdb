@@ -435,12 +435,13 @@ static int fsave_offset[] =
    *FSAVE.  */
 
 void
-i387_supply_fsave (struct regcache *regcache, int regnum, const void *fsave)
+i387_supply_fsave (struct regcache *regcache, int regnum,
+		   gdb::optional<gdb::array_view<const gdb_byte>> fsave)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  const gdb_byte *regs = (const gdb_byte *) fsave;
+  const gdb_byte *regs = fsave ? fsave->data () : nullptr;
   int i;
 
   gdb_assert (tdep->st0_regnum >= I386_ST0_REGNUM);
@@ -448,7 +449,7 @@ i387_supply_fsave (struct regcache *regcache, int regnum, const void *fsave)
   for (i = I387_ST0_REGNUM (tdep); i < I387_XMM0_REGNUM (tdep); i++)
     if (regnum == -1 || regnum == i)
       {
-	if (fsave == NULL)
+	if (regs == NULL)
 	  {
 	    regcache->raw_supply (i, NULL);
 	    continue;
@@ -583,10 +584,11 @@ static int i387_tag (const gdb_byte *raw);
    masks off any of the reserved bits in *FXSAVE.  */
 
 void
-i387_supply_fxsave (struct regcache *regcache, int regnum, const void *fxsave)
+i387_supply_fxsave (struct regcache *regcache, int regnum,
+		    gdb::optional<gdb::array_view<const gdb_byte>> fxsave)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (regcache->arch ());
-  const gdb_byte *regs = (const gdb_byte *) fxsave;
+  const gdb_byte *regs = fxsave ? fxsave->data () : nullptr;
   int i;
 
   gdb_assert (tdep->st0_regnum >= I386_ST0_REGNUM);
@@ -917,12 +919,12 @@ i387_xsave_get_clear_bv (struct gdbarch *gdbarch, const void *xsave)
 
 void
 i387_supply_xsave (struct regcache *regcache, int regnum,
-		   const void *xsave)
+		   gdb::array_view<const gdb_byte> xsave)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-  const gdb_byte *regs = (const gdb_byte *) xsave;
+  const gdb_byte *regs = xsave.data ();
   int i;
   ULONGEST clear_bv;
   static const gdb_byte zero[I386_MAX_REGISTER_SIZE] = { 0 };
@@ -978,7 +980,7 @@ i387_supply_xsave (struct regcache *regcache, int regnum,
   else
     regclass = none;
 
-  clear_bv = i387_xsave_get_clear_bv (gdbarch, xsave);
+  clear_bv = i387_xsave_get_clear_bv (gdbarch, xsave.data ());
 
   /* With the delayed xsave mechanism, in between the program
      starting, and the program accessing the vector registers for the

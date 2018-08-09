@@ -120,8 +120,9 @@ extern void i387_value_to_register (struct frame_info *frame, int regnum,
    *FSAVE.  This function masks off any of the reserved bits in
    *FSAVE.  */
 
-extern void i387_supply_fsave (struct regcache *regcache, int regnum,
-			       const void *fsave);
+extern void i387_supply_fsave
+  (struct regcache *regcache, int regnum,
+   gdb::optional<gdb::array_view<const gdb_byte>> fsave);
 
 /* Fill register REGNUM (if it is a floating-point register) in *FSAVE
    with the value from REGCACHE.  If REGNUM is -1, do this for all
@@ -135,13 +136,14 @@ extern void i387_collect_fsave (const struct regcache *regcache, int regnum,
    floating-point or SSE register value from *FXSAVE.  This function
    masks off any of the reserved bits in *FXSAVE.  */
 
-extern void i387_supply_fxsave (struct regcache *regcache, int regnum,
-				const void *fxsave);
+extern void i387_supply_fxsave
+  (struct regcache *regcache, int regnum,
+   gdb::optional<gdb::array_view<const gdb_byte>> fxsave);
 
 /* Similar to i387_supply_fxsave, but use XSAVE extended state.  */
 
 extern void i387_supply_xsave (struct regcache *regcache, int regnum,
-			       const void *xsave);
+			       gdb::array_view<const gdb_byte> xsave);
 
 /* Fill register REGNUM (if it is a floating-point or SSE register) in
    *FXSAVE with the value from REGCACHE.  If REGNUM is -1, do this for

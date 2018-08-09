@@ -1419,17 +1419,17 @@ static const struct regcache_map_entry score7_linux_gregmap[] =
 static void
 score7_linux_supply_gregset(const struct regset *regset,
 			    struct regcache *regcache,
-			    int regnum, const void *buf,
-			    size_t size)
+			    int regnum, gdb::array_view<const gdb_byte> buf)
 {
-  regcache_supply_regset (regset, regcache, regnum, buf, size);
+  size_t size = buf.size ();
+  regcache_supply_regset (regset, regcache, regnum, buf);
 
   /* Supply the EPC from the same slot as the PC.  Note that the
      collect function will store the PC in that slot.  */
   if ((regnum == -1 || regnum == SCORE_EPC_REGNUM)
       && size >= SCORE7_LINUX_EPC_OFFSET + 4)
     regcache->raw_supply
-      (SCORE_EPC_REGNUM, (const gdb_byte *) buf + SCORE7_LINUX_EPC_OFFSET);
+      (SCORE_EPC_REGNUM, &buf[SCORE7_LINUX_EPC_OFFSET]);
 }
 
 static const struct regset score7_linux_gregset =

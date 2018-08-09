@@ -80,17 +80,23 @@ i386nto_supply_gregset (struct regcache *regcache, char *gpregs)
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
   gdb_assert (tdep->gregset_reg_offset == i386nto_gregset_reg_offset);
-  i386_gregset.supply_regset (&i386_gregset, regcache, -1,
-			      gpregs, NUM_GPREGS * 4);
+  gdb::array_view<const gdb_byte> view ((gdb_byte *) gpregs,
+					tdep->sizeof_gregset);
+  i386_gregset.supply_regset (&i386_gregset, regcache, -1, view);
 }
 
 static void
 i386nto_supply_fpregset (struct regcache *regcache, char *fpregs)
 {
+  struct gdbarch *gdbarch = regcache->arch ();
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  gdb::array_view<const gdb_byte> view ((gdb_byte *) fpregs,
+					tdep->sizeof_fpregset);
+
   if (nto_cpuinfo_valid && nto_cpuinfo_flags | X86_CPU_FXSR)
-    i387_supply_fxsave (regcache, -1, fpregs);
+    i387_supply_fxsave (regcache, -1, view);
   else
-    i387_supply_fsave (regcache, -1, fpregs);
+    i387_supply_fsave (regcache, -1, view);
 }
 
 static void

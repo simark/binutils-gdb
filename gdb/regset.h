@@ -20,13 +20,15 @@
 #ifndef REGSET_H
 #define REGSET_H 1
 
+#include "common/array-view.h"
+
 struct gdbarch;
 struct regcache;
 
 /* Data structure describing a register set.  */
 
 typedef void (supply_regset_ftype) (const struct regset *, struct regcache *,
-                                    int, const void *, size_t);
+                                    int, gdb::array_view<const gdb_byte>);
 typedef void (collect_regset_ftype) (const struct regset *, 
                                      const struct regcache *,
                                      int, void *, size_t);

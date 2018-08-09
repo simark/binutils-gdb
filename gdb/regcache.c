@@ -1074,7 +1074,8 @@ reg_buffer::raw_collect_integer (int regnum, gdb_byte *addr, int addr_len,
 
 void
 regcache::transfer_regset_register (struct regcache *out_regcache, int regnum,
-				    const gdb_byte *in_buf, gdb_byte *out_buf,
+				    gdb::array_view<const gdb_byte> *in_buf,
+				    gdb_byte *out_buf,
 				    int slot_size, int offs) const
 {
   struct gdbarch *gdbarch = arch ();
@@ -1092,7 +1093,7 @@ regcache::transfer_regset_register (struct regcache *out_regcache, int regnum,
 	memset (out_buf + offs + reg_size, 0, slot_size - reg_size);
     }
   else if (in_buf != nullptr)
-    out_regcache->raw_supply_part (regnum, 0, reg_size, in_buf + offs);
+    out_regcache->raw_supply_part (regnum, 0, reg_size, &(*in_buf)[offs]);
   else
     {
       /* Invalidate the register.  */
@@ -1105,7 +1106,7 @@ regcache::transfer_regset_register (struct regcache *out_regcache, int regnum,
 void
 regcache::transfer_regset (const struct regset *regset,
 			   struct regcache *out_regcache,
-			   int regnum, const gdb_byte *in_buf,
+			   int regnum, gdb::array_view<const gdb_byte> *in_buf,
 			   gdb_byte *out_buf, size_t size) const
 {
   const struct regcache_map_entry *map;
@@ -1156,16 +1157,22 @@ regcache::transfer_regset (const struct regset *regset,
 void
 regcache_supply_regset (const struct regset *regset,
 			struct regcache *regcache,
-			int regnum, const void *buf, size_t size)
+			int regnum, gdb::array_view<const gdb_byte> buf)
 {
-  regcache->supply_regset (regset, regnum, (const gdb_byte *) buf, size);
+  regcache->supply_regset (regset, regnum, buf);
 }
 
 void
 regcache::supply_regset (const struct regset *regset,
-			 int regnum, const void *buf, size_t size)
+			 int regnum, gdb::array_view<const gdb_byte> buf)
 {
-  transfer_regset (regset, this, regnum, (const gdb_byte *) buf, nullptr, size);
+  transfer_regset (regset, this, regnum, &buf, nullptr, buf.size ());
+}
+
+void
+regcache::supply_regset_unavailable (const struct regset *regset, int regnum)
+{
+  transfer_regset (regset, this, regnum, nullptr, nullptr, SIZE_MAX);
 }
 
 /* Collect register REGNUM from REGCACHE to BUF, using the register

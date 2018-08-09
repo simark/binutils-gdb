@@ -223,7 +223,8 @@ const struct sparc_gregmap sparc64_linux_core_gregmap =
 static void
 sparc64_linux_supply_core_gregset (const struct regset *regset,
 				   struct regcache *regcache,
-				   int regnum, const void *gregs, size_t len)
+				   int regnum,
+				   gdb::array_view<const gdb_byte> gregs)
 {
   sparc64_supply_gregset (&sparc64_linux_core_gregmap,
 			  regcache, regnum, gregs);
@@ -241,7 +242,8 @@ sparc64_linux_collect_core_gregset (const struct regset *regset,
 static void
 sparc64_linux_supply_core_fpregset (const struct regset *regset,
 				    struct regcache *regcache,
-				    int regnum, const void *fpregs, size_t len)
+				    int regnum,
+				    gdb::array_view<const gdb_byte> fpregs)
 {
   sparc64_supply_fpregset (&sparc64_bsd_fpregmap, regcache, regnum, fpregs);
 }

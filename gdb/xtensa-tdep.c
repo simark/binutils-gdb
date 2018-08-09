@@ -836,11 +836,10 @@ xtensa_register_reggroup_p (struct gdbarch *gdbarch,
 static void
 xtensa_supply_gregset (const struct regset *regset,
 		       struct regcache *rc,
-		       int regnum,
-		       const void *gregs,
-		       size_t len)
+		       int regnum, gdb::array_view<const gdb_byte> gregs)
 {
-  const xtensa_elf_gregset_t *regs = (const xtensa_elf_gregset_t *) gregs;
+  const xtensa_elf_gregset_t *regs
+    = (const xtensa_elf_gregset_t *) gregs.data ();
   struct gdbarch *gdbarch = rc->arch ();
   int i;
 

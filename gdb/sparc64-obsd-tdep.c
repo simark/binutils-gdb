@@ -73,9 +73,10 @@ const struct sparc_gregmap sparc64obsd_core_gregmap =
 static void
 sparc64obsd_supply_gregset (const struct regset *regset,
 			    struct regcache *regcache,
-			    int regnum, const void *gregs, size_t len)
+			    int regnum, gdb::array_view<const gdb_byte> gregs)
 {
-  const void *fpregs = (char *)gregs + 288;
+  size_t len = gregs.size ();
+  gdb::array_view<const gdb_byte> fpregs (gregs.data () + 288, len - 288);
 
   if (len < 832)
     {
@@ -90,7 +91,7 @@ sparc64obsd_supply_gregset (const struct regset *regset,
 static void
 sparc64obsd_supply_fpregset (const struct regset *regset,
 			     struct regcache *regcache,
-			     int regnum, const void *fpregs, size_t len)
+			     int regnum, gdb::array_view<const gdb_byte> fpregs)
 {
   sparc64_supply_fpregset (&sparc64_bsd_fpregmap, regcache, regnum, fpregs);
 }

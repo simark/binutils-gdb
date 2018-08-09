@@ -476,11 +476,11 @@ static struct tramp_frame arm_kernel_linux_restart_syscall_tramp_frame = {
 void
 arm_linux_supply_gregset (const struct regset *regset,
 			  struct regcache *regcache,
-			  int regnum, const void *gregs_buf, size_t len)
+			  int regnum, gdb::array_view<const gdb_byte> gregs_buf)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  const gdb_byte *gregs = (const gdb_byte *) gregs_buf;
+  const gdb_byte *gregs = gregs_buf.data ();
   int regno;
   CORE_ADDR reg_pc;
   gdb_byte pc_buf[INT_REGISTER_SIZE];
@@ -620,9 +620,9 @@ collect_nwfpe_register (const struct regcache *regcache, int regno,
 void
 arm_linux_supply_nwfpe (const struct regset *regset,
 			struct regcache *regcache,
-			int regnum, const void *regs_buf, size_t len)
+			int regnum, gdb::array_view<const gdb_byte> regs_buf)
 {
-  const gdb_byte *regs = (const gdb_byte *) regs_buf;
+  const gdb_byte *regs = regs_buf.data ();
   int regno;
 
   if (regnum == ARM_FPS_REGNUM || regnum == -1)
@@ -658,9 +658,9 @@ arm_linux_collect_nwfpe (const struct regset *regset,
 static void
 arm_linux_supply_vfp (const struct regset *regset,
 		      struct regcache *regcache,
-		      int regnum, const void *regs_buf, size_t len)
+		      int regnum, gdb::array_view<const gdb_byte> regs_buf)
 {
-  const gdb_byte *regs = (const gdb_byte *) regs_buf;
+  const gdb_byte *regs = regs_buf.data ();
   int regno;
 
   if (regnum == ARM_FPSCR_REGNUM || regnum == -1)

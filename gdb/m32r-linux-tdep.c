@@ -349,9 +349,9 @@ static int m32r_pt_regs_offset[] = {
 static void
 m32r_linux_supply_gregset (const struct regset *regset,
 			   struct regcache *regcache, int regnum,
-			   const void *gregs, size_t size)
+			   gdb::array_view<const gdb_byte> gregs)
 {
-  const gdb_byte *regs = (const gdb_byte *) gregs;
+  const gdb_byte *regs = gregs.data ();
   enum bfd_endian byte_order =
     gdbarch_byte_order (regcache->arch ());
   ULONGEST psw, bbpsw;

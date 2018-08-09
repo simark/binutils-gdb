@@ -172,13 +172,13 @@ static const struct regcache_map_entry ia64_linux_fpregmap[] =
 static void
 ia64_linux_supply_fpregset (const struct regset *regset,
 			    struct regcache *regcache,
-			    int regnum, const void *regs, size_t len)
+			    int regnum, gdb::array_view<const gdb_byte> regs)
 {
   const gdb_byte f_zero[16] = { 0 };
   const gdb_byte f_one[16] =
     { 0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0xff, 0, 0, 0, 0, 0, 0 };
 
-  regcache_supply_regset (regset, regcache, regnum, regs, len);
+  regcache_supply_regset (regset, regcache, regnum, regs);
 
   /* Kernel generated cores have fr1==0 instead of 1.0.  Older GDBs
      did the same.  So ignore whatever might be recorded in fpregset_t

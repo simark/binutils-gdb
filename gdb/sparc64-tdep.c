@@ -1874,12 +1874,12 @@ sparc64_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 void
 sparc64_supply_gregset (const struct sparc_gregmap *gregmap,
 			struct regcache *regcache,
-			int regnum, const void *gregs)
+			int regnum, gdb::array_view<const gdb_byte> gregs)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   int sparc32 = (gdbarch_ptr_bit (gdbarch) == 32);
-  const gdb_byte *regs = (const gdb_byte *) gregs;
+  const gdb_byte *regs = gregs.data ();
   gdb_byte zero[8] = { 0 };
   int i;
 
@@ -2101,10 +2101,10 @@ sparc64_collect_gregset (const struct sparc_gregmap *gregmap,
 void
 sparc64_supply_fpregset (const struct sparc_fpregmap *fpregmap,
 			 struct regcache *regcache,
-			 int regnum, const void *fpregs)
+			 int regnum, gdb::array_view<const gdb_byte> fpregs)
 {
   int sparc32 = (gdbarch_ptr_bit (regcache->arch ()) == 32);
-  const gdb_byte *regs = (const gdb_byte *) fpregs;
+  const gdb_byte *regs = fpregs.data ();
   int i;
 
   for (i = 0; i < 32; i++)

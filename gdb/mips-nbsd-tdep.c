@@ -53,10 +53,11 @@
 static void
 mipsnbsd_supply_fpregset (const struct regset *regset,
 			  struct regcache *regcache,
-			  int regnum, const void *fpregs, size_t len)
+			  int regnum, gdb::array_view<const gdb_byte> fpregs)
 {
   size_t regsize = mips_isa_regsize (regcache->arch ());
-  const char *regs = (const char *) fpregs;
+  const gdb_byte *regs = fpregs.data ();
+  size_t len = fpregs.size ();
   int i;
 
   gdb_assert (len >= MIPSNBSD_NUM_FPREGS * regsize);
@@ -75,10 +76,11 @@ mipsnbsd_supply_fpregset (const struct regset *regset,
 static void
 mipsnbsd_supply_gregset (const struct regset *regset,
 			 struct regcache *regcache, int regnum,
-			 const void *gregs, size_t len)
+			 gdb::array_view<const gdb_byte> gregs)
 {
   size_t regsize = mips_isa_regsize (regcache->arch ());
-  const char *regs = (const char *) gregs;
+  const gdb_byte *regs = gregs.data ();
+  size_t len = gregs.size ();
   int i;
 
   gdb_assert (len >= MIPSNBSD_NUM_GREGS * regsize);
@@ -91,9 +93,10 @@ mipsnbsd_supply_gregset (const struct regset *regset,
 
   if (len >= (MIPSNBSD_NUM_GREGS + MIPSNBSD_NUM_FPREGS) * regsize)
     {
-      regs += MIPSNBSD_NUM_GREGS * regsize;
-      len -= MIPSNBSD_NUM_GREGS * regsize;
-      mipsnbsd_supply_fpregset (regset, regcache, regnum, regs, len);
+      gdb::array_view<const gdb_byte> fpregs
+	(regs + MIPSNBSD_NUM_GREGS * regsize,
+	 len - MIPSNBSD_NUM_GREGS * regsize);
+      mipsnbsd_supply_fpregset (regset, regcache, regnum, fpregs);
     }
 }
 

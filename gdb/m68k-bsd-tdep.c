@@ -56,10 +56,11 @@ m68kbsd_fpreg_offset (struct gdbarch *gdbarch, int regnum)
 static void
 m68kbsd_supply_fpregset (const struct regset *regset,
 			 struct regcache *regcache,
-			 int regnum, const void *fpregs, size_t len)
+			 int regnum, gdb::array_view<const gdb_byte> fpregs)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  const gdb_byte *regs = (const gdb_byte *) fpregs;
+  const gdb_byte *regs = fpregs.data ();
+  size_t len = fpregs.size ();
   int i;
 
   gdb_assert (len >= M68KBSD_SIZEOF_FPREGS);
@@ -78,9 +79,10 @@ m68kbsd_supply_fpregset (const struct regset *regset,
 static void
 m68kbsd_supply_gregset (const struct regset *regset,
 			struct regcache *regcache,
-			int regnum, const void *gregs, size_t len)
+			int regnum, gdb::array_view<const gdb_byte> gregs)
 {
-  const gdb_byte *regs = (const gdb_byte *) gregs;
+  const gdb_byte *regs = gregs.data ();
+  size_t len = gregs.size ();
   int i;
 
   gdb_assert (len >= M68KBSD_SIZEOF_GREGS);
@@ -93,9 +95,9 @@ m68kbsd_supply_gregset (const struct regset *regset,
 
   if (len >= M68KBSD_SIZEOF_GREGS + M68KBSD_SIZEOF_FPREGS)
     {
-      regs += M68KBSD_SIZEOF_GREGS;
-      len -= M68KBSD_SIZEOF_GREGS;
-      m68kbsd_supply_fpregset (regset, regcache, regnum, regs, len);
+      gdb::array_view<const gdb_byte> fpregs (regs + M68KBSD_SIZEOF_GREGS,
+					      len - M68KBSD_SIZEOF_GREGS);
+      m68kbsd_supply_fpregset (regset, regcache, regnum, fpregs);
     }
 }
 

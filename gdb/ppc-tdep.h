@@ -103,7 +103,8 @@ struct ppc_reg_offsets
 };
 
 extern void ppc_supply_reg (struct regcache *regcache, int regnum,
-			    const gdb_byte *regs, size_t offset, int regsize);
+			    gdb::array_view<const gdb_byte> regs,
+			    size_t offset, int regsize);
 
 extern void ppc_collect_reg (const struct regcache *regcache, int regnum,
 			     gdb_byte *regs, size_t offset, int regsize);
@@ -114,7 +115,7 @@ extern void ppc_collect_reg (const struct regcache *regcache, int regnum,
 
 extern void ppc_supply_gregset (const struct regset *regset,
 				struct regcache *regcache,
-				int regnum, const void *gregs, size_t len);
+				int regnum, gdb::array_view<const gdb_byte> gregs);
 
 /* Supply register REGNUM in the floating-point register set REGSET
    from the buffer specified by FPREGS and LEN to register cache
@@ -122,7 +123,8 @@ extern void ppc_supply_gregset (const struct regset *regset,
 
 extern void ppc_supply_fpregset (const struct regset *regset,
 				 struct regcache *regcache,
-				 int regnum, const void *fpregs, size_t len);
+				 int regnum,
+				 gdb::array_view<const gdb_byte> fpregs);
 
 /* Supply register REGNUM in the Altivec register set REGSET
    from the buffer specified by VRREGS and LEN to register cache

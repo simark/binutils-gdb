@@ -41,10 +41,11 @@
 static void
 hppaobsd_supply_gregset (const struct regset *regset,
 			 struct regcache *regcache,
-			 int regnum, const void *gregs, size_t len)
+			 int regnum, gdb::array_view<const gdb_byte> gregs)
 {
   gdb_byte zero[4] = { 0 };
-  const gdb_byte *regs = (const gdb_byte *) gregs;
+  const gdb_byte *regs = gregs.data ();
+  size_t len = gregs.size ();
   size_t offset;
   int i;
 
@@ -111,9 +112,10 @@ hppaobsd_supply_gregset (const struct regset *regset,
 static void
 hppaobsd_supply_fpregset (const struct regset *regset,
 			  struct regcache *regcache,
-			  int regnum, const void *fpregs, size_t len)
+			  int regnum, gdb::array_view<const gdb_byte> fpregs)
 {
-  const gdb_byte *regs = (const gdb_byte *) fpregs;
+  const gdb_byte *regs = fpregs.data ();
+  size_t len = fpregs.size ();
   int i;
 
   gdb_assert (len >= HPPAOBSD_SIZEOF_FPREGS);

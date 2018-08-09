@@ -576,7 +576,7 @@ core_target::get_core_register_section (struct regcache *regcache,
 {
   struct bfd_section *section;
   bfd_size_type size;
-  char *contents;
+  gdb_byte *contents;
   bool variable_size_section = (regset != NULL
 				&& regset->flags & REGSET_VARIABLE_SIZE);
 
@@ -604,7 +604,7 @@ core_target::get_core_register_section (struct regcache *regcache,
 	       section_name.c_str ());
     }
 
-  contents = (char *) alloca (size);
+  contents = (gdb_byte *) alloca (size);
   if (! bfd_get_section_contents (core_bfd, section, contents,
 				  (file_ptr) 0, size))
     {
@@ -615,12 +615,13 @@ core_target::get_core_register_section (struct regcache *regcache,
 
   if (regset != NULL)
     {
-      regset->supply_regset (regset, regcache, -1, contents, size);
+      gdb::array_view<const gdb_byte> view (contents, size);
+      regset->supply_regset (regset, regcache, -1, view);
       return;
     }
 
   gdb_assert (m_core_vec != nullptr);
-  m_core_vec->core_read_registers (regcache, contents, size, which,
+  m_core_vec->core_read_registers (regcache, (char *) contents, size, which,
 				   ((CORE_ADDR)
 				    bfd_section_vma (core_bfd, section)));
 }

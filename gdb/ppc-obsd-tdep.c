@@ -46,10 +46,10 @@ struct ppc_reg_offsets ppcobsd_fpreg_offsets;
 void
 ppcobsd_supply_gregset (const struct regset *regset,
 			struct regcache *regcache, int regnum,
-			const void *gregs, size_t len)
+			gdb::array_view<const gdb_byte> gregs)
 {
-  ppc_supply_gregset (regset, regcache, regnum, gregs, len);
-  ppc_supply_fpregset (regset, regcache, regnum, gregs, len);
+  ppc_supply_gregset (regset, regcache, regnum, gregs);
+  ppc_supply_fpregset (regset, regcache, regnum, gregs);
 }
 
 /* Collect register REGNUM in the general-purpose register set

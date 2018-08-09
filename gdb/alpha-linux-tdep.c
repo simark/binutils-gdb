@@ -161,9 +161,10 @@ alpha_linux_sigcontext_addr (struct frame_info *this_frame)
 static void
 alpha_linux_supply_gregset (const struct regset *regset,
 			    struct regcache *regcache,
-			    int regnum, const void *gregs, size_t len)
+			    int regnum, gdb::array_view<const gdb_byte> gregs)
 {
-  const gdb_byte *regs = (const gdb_byte *) gregs;
+  const gdb_byte *regs = gregs.data ();
+  size_t len = gregs.size ();
 
   gdb_assert (len >= 32 * 8);
   alpha_supply_int_regs (regcache, regnum, regs, regs + 31 * 8,
@@ -194,9 +195,10 @@ alpha_linux_collect_gregset (const struct regset *regset,
 static void
 alpha_linux_supply_fpregset (const struct regset *regset,
 			     struct regcache *regcache,
-			     int regnum, const void *fpregs, size_t len)
+			     int regnum, gdb::array_view<const gdb_byte> fpregs)
 {
-  const gdb_byte *regs = (const gdb_byte *) fpregs;
+  const gdb_byte *regs = fpregs.data ();
+  size_t len = fpregs.size ();
 
   gdb_assert (len >= 32 * 8);
   alpha_supply_fp_regs (regcache, regnum, regs, regs + 31 * 8);

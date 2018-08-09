@@ -184,15 +184,15 @@ static const struct regcache_map_entry s390_regmap_gsbc[] =
 
 static void
 s390_supply_tdb_regset (const struct regset *regset, struct regcache *regcache,
-		    int regnum, const void *regs, size_t len)
+		    int regnum, gdb::array_view<const gdb_byte> regs)
 {
   ULONGEST tdw;
   enum register_status ret;
 
-  regcache_supply_regset (regset, regcache, regnum, regs, len);
+  regcache_supply_regset (regset, regcache, regnum, regs);
   ret = regcache_cooked_read_unsigned (regcache, S390_TDB_DWORD0_REGNUM, &tdw);
   if (ret != REG_VALID || (tdw >> 56) != 1)
-    regcache_supply_regset (regset, regcache, regnum, NULL, len);
+    regcache->supply_regset_unavailable (regset, regnum);
 }
 
 const struct regset s390_gregset = {

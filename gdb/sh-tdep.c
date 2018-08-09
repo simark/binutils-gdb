@@ -2162,7 +2162,7 @@ sh_stack_frame_destroyed_p (struct gdbarch *gdbarch, CORE_ADDR pc)
 void
 sh_corefile_supply_regset (const struct regset *regset,
 			   struct regcache *regcache,
-			   int regnum, const void *regs, size_t len)
+			   int regnum, gdb::array_view<const gdb_byte> regs)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
@@ -2170,13 +2170,13 @@ sh_corefile_supply_regset (const struct regset *regset,
 					     ? tdep->core_gregmap
 					     : tdep->core_fpregmap);
   int i;
+  size_t len = regs.size ();
 
   for (i = 0; regmap[i].regnum != -1; i++)
     {
       if ((regnum == -1 || regnum == regmap[i].regnum)
 	  && regmap[i].offset + 4 <= len)
-	regcache->raw_supply
-	  (regmap[i].regnum, (char *) regs + regmap[i].offset);
+	regcache->raw_supply (regmap[i].regnum, &regs[regmap[i].offset]);
     }
 }
 

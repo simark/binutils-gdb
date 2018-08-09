@@ -410,7 +410,7 @@ static const struct regcache_map_entry frv_linux_fpregmap[] =
 static void 
 frv_linux_supply_gregset (const struct regset *regset,
                           struct regcache *regcache,
-			  int regnum, const void *gregs, size_t len)
+			  int regnum, gdb::array_view<const gdb_byte> gregs)
 {
   int regi;
 
@@ -422,7 +422,7 @@ frv_linux_supply_gregset (const struct regset *regset,
   for (regi = first_gpr_regnum + 32; regi <= last_gpr_regnum; regi++)
     regcache->raw_supply_zeroed (regi);
 
-  regcache_supply_regset (regset, regcache, regnum, gregs, len);
+  regcache_supply_regset (regset, regcache, regnum, gregs);
 }
 
 /* FRV Linux kernel register sets.  */

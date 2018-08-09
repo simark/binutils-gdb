@@ -391,24 +391,24 @@ ppc_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
 static void
 ppc_linux_supply_gregset (const struct regset *regset,
 			  struct regcache *regcache,
-			  int regnum, const void *gregs, size_t len)
+			  int regnum, gdb::array_view<const gdb_byte> gregs)
 {
   const struct ppc_reg_offsets *offsets
     = (const struct ppc_reg_offsets *) regset->regmap;
 
-  ppc_supply_gregset (regset, regcache, regnum, gregs, len);
+  ppc_supply_gregset (regset, regcache, regnum, gregs);
 
   if (ppc_linux_trap_reg_p (regcache->arch ()))
     {
       /* "orig_r3" is stored 2 slots after "pc".  */
       if (regnum == -1 || regnum == PPC_ORIG_R3_REGNUM)
-	ppc_supply_reg (regcache, PPC_ORIG_R3_REGNUM, (const gdb_byte *) gregs,
+	ppc_supply_reg (regcache, PPC_ORIG_R3_REGNUM, gregs,
 			offsets->pc_offset + 2 * offsets->gpr_size,
 			offsets->gpr_size);
 
       /* "trap" is stored 8 slots after "pc".  */
       if (regnum == -1 || regnum == PPC_TRAP_REGNUM)
-	ppc_supply_reg (regcache, PPC_TRAP_REGNUM, (const gdb_byte *) gregs,
+	ppc_supply_reg (regcache, PPC_TRAP_REGNUM, gregs,
 			offsets->pc_offset + 8 * offsets->gpr_size,
 			offsets->gpr_size);
     }

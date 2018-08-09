@@ -44,9 +44,9 @@
 static void
 mips64obsd_supply_gregset (const struct regset *regset,
 			   struct regcache *regcache, int regnum,
-			   const void *gregs, size_t len)
+			   gdb::array_view<const gdb_byte> gregs)
 {
-  const char *regs = (const char *) gregs;
+  const gdb_byte *regs = gregs.data ();
   int i;
 
   for (i = 0; i < MIPS64OBSD_NUM_REGS; i++)

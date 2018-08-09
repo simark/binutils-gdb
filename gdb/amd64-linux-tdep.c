@@ -1619,7 +1619,7 @@ amd64_linux_core_read_description (struct gdbarch *gdbarch,
 static void
 amd64_linux_supply_xstateregset (const struct regset *regset,
 				 struct regcache *regcache, int regnum,
-				 const void *xstateregs, size_t len)
+				 gdb::array_view<const gdb_byte> xstateregs)
 {
   amd64_supply_xsave (regcache, regnum, xstateregs);
 }

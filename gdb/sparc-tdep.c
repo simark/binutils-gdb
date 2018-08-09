@@ -2086,9 +2086,9 @@ sparc_collect_rwindow (const struct regcache *regcache,
 void
 sparc32_supply_gregset (const struct sparc_gregmap *gregmap,
 			struct regcache *regcache,
-			int regnum, const void *gregs)
+			int regnum, gdb::array_view<const gdb_byte> gregs)
 {
-  const gdb_byte *regs = (const gdb_byte *) gregs;
+  const gdb_byte *regs = gregs.data ();
   gdb_byte zero[4] = { 0 };
   int i;
 
@@ -2198,9 +2198,9 @@ sparc32_collect_gregset (const struct sparc_gregmap *gregmap,
 void
 sparc32_supply_fpregset (const struct sparc_fpregmap *fpregmap,
 			 struct regcache *regcache,
-			 int regnum, const void *fpregs)
+			 int regnum, gdb::array_view<const gdb_byte> fpregs)
 {
-  const gdb_byte *regs = (const gdb_byte *) fpregs;
+  const gdb_byte *regs = fpregs.data ();
   int i;
 
   for (i = 0; i < 32; i++)

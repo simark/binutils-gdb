@@ -84,9 +84,10 @@ typedef struct
 static void
 am33_supply_gregset_method (const struct regset *regset, 
 			    struct regcache *regcache, 
-			    int regnum, const void *gregs, size_t len)
+			    int regnum, gdb::array_view<const gdb_byte> gregs)
 {
-  const mn10300_elf_greg_t *regp = (const mn10300_elf_greg_t *) gregs;
+  const mn10300_elf_greg_t *regp = (const mn10300_elf_greg_t *) gregs.data ();
+  size_t len = gregs.size ();
   int i;
 
   gdb_assert (len >= sizeof (mn10300_elf_gregset_t));
@@ -222,7 +223,7 @@ am33_supply_gregset_method (const struct regset *regset,
     break;
   case -1:
     for (i = 0; i < MN10300_ELF_NGREG; i++)
-      am33_supply_gregset_method (regset, regcache, i, gregs, len);
+      am33_supply_gregset_method (regset, regcache, i, gregs);
     break;
   }
   return;
@@ -234,10 +235,11 @@ am33_supply_gregset_method (const struct regset *regset,
 static void
 am33_supply_fpregset_method (const struct regset *regset, 
 			     struct regcache *regcache, 
-			     int regnum, const void *fpregs, size_t len)
+			     int regnum, gdb::array_view<const gdb_byte> fpregs)
 {
   const mn10300_elf_fpregset_t *fpregset
-    = (const mn10300_elf_fpregset_t *) fpregs;
+    = (const mn10300_elf_fpregset_t *) fpregs.data ();
+  size_t len = fpregs.size ();
 
   gdb_assert (len >= sizeof (mn10300_elf_fpregset_t));
 
@@ -247,9 +249,9 @@ am33_supply_fpregset_method (const struct regset *regset,
 
       for (i = 0; i < MN10300_ELF_NFPREG; i++)
 	am33_supply_fpregset_method (regset, regcache,
-	                             E_FS0_REGNUM + i, fpregs, len);
+	                             E_FS0_REGNUM + i, fpregs);
       am33_supply_fpregset_method (regset, regcache, 
-				   E_FPCR_REGNUM, fpregs, len);
+				   E_FPCR_REGNUM, fpregs);
     }
   else if (regnum == E_FPCR_REGNUM)
     regcache->raw_supply (E_FPCR_REGNUM, &fpregset->fpcr);

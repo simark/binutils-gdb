@@ -48,9 +48,10 @@ armbsd_fpreg_offset (int regnum)
 static void
 armbsd_supply_fpregset (const struct regset *regset,
 			struct regcache *regcache,
-			int regnum, const void *fpregs, size_t len)
+			int regnum, gdb::array_view<const gdb_byte> fpregs)
 {
-  const gdb_byte *regs = (const gdb_byte *) fpregs;
+  const gdb_byte *regs = fpregs.data ();
+  size_t len = fpregs.size ();
   int i;
 
   gdb_assert (len >= ARMBSD_SIZEOF_FPREGS);
@@ -69,9 +70,10 @@ armbsd_supply_fpregset (const struct regset *regset,
 static void
 armbsd_supply_gregset (const struct regset *regset,
 		       struct regcache *regcache,
-		       int regnum, const void *gregs, size_t len)
+		       int regnum, gdb::array_view<const gdb_byte> gregs)
 {
-  const gdb_byte *regs = (const gdb_byte *) gregs;
+  const gdb_byte *regs = gregs.data ();
+  size_t len = gregs.size ();
   int i;
 
   gdb_assert (len >= ARMBSD_SIZEOF_GREGS);
@@ -87,9 +89,9 @@ armbsd_supply_gregset (const struct regset *regset,
 
   if (len >= ARMBSD_SIZEOF_GREGS + ARMBSD_SIZEOF_FPREGS)
     {
-      regs += ARMBSD_SIZEOF_GREGS;
-      len -= ARMBSD_SIZEOF_GREGS;
-      armbsd_supply_fpregset (regset, regcache, regnum, regs, len);
+      gdb::array_view<const gdb_byte> fpregs (regs + ARMBSD_SIZEOF_GREGS,
+					      len - ARMBSD_SIZEOF_GREGS);
+      armbsd_supply_fpregset (regset, regcache, regnum, fpregs);
     }
 }
 

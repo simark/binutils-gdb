@@ -48,9 +48,10 @@
 static void
 alphanbsd_supply_fpregset (const struct regset *regset,
 			   struct regcache *regcache,
-			   int regnum, const void *fpregs, size_t len)
+			   int regnum, gdb::array_view<const gdb_byte> fpregs)
 {
-  const gdb_byte *regs = (const gdb_byte *) fpregs;
+  const gdb_byte *regs = fpregs.data ();
+  size_t len = fpregs.size ();
   int i;
 
   gdb_assert (len >= ALPHANBSD_SIZEOF_FPREGS);
@@ -72,9 +73,11 @@ alphanbsd_supply_fpregset (const struct regset *regset,
 static void
 alphanbsd_aout_supply_gregset (const struct regset *regset,
 			       struct regcache *regcache,
-			       int regnum, const void *gregs, size_t len)
+			       int regnum,
+			       gdb::array_view<const gdb_byte> gregs)
 {
-  const gdb_byte *regs = (const gdb_byte *) gregs;
+  const gdb_byte *regs = gregs.data ();
+  size_t len = gregs.size ();
   int i;
 
   /* Table to map a GDB register number to a trapframe register index.  */
@@ -103,9 +106,9 @@ alphanbsd_aout_supply_gregset (const struct regset *regset,
 
   if (len >= ALPHANBSD_SIZEOF_GREGS + ALPHANBSD_SIZEOF_FPREGS)
     {
-      regs += ALPHANBSD_SIZEOF_GREGS;
-      len -= ALPHANBSD_SIZEOF_GREGS;
-      alphanbsd_supply_fpregset (regset, regcache, regnum, regs, len);
+      gdb::array_view<const gdb_byte> fpregs (regs + ALPHANBSD_SIZEOF_GREGS,
+					      len - ALPHANBSD_SIZEOF_GREGS);
+      alphanbsd_supply_fpregset (regset, regcache, regnum, fpregs);
     }
 }
 
@@ -116,14 +119,15 @@ alphanbsd_aout_supply_gregset (const struct regset *regset,
 static void
 alphanbsd_supply_gregset (const struct regset *regset,
 			  struct regcache *regcache,
-			  int regnum, const void *gregs, size_t len)
+			  int regnum, gdb::array_view<const gdb_byte> gregs)
 {
-  const gdb_byte *regs = (const gdb_byte *) gregs;
+  const gdb_byte *regs = gregs.data ();
+  size_t len = gregs.size ();
   int i;
 
   if (len >= ALPHANBSD_SIZEOF_GREGS + ALPHANBSD_SIZEOF_FPREGS)
     {
-      alphanbsd_aout_supply_gregset (regset, regcache, regnum, gregs, len);
+      alphanbsd_aout_supply_gregset (regset, regcache, regnum, gregs);
       return;
     }
 

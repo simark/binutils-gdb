@@ -2960,10 +2960,11 @@ amd64_frame_align (struct gdbarch *gdbarch, CORE_ADDR sp)
 
 static void
 amd64_supply_fpregset (const struct regset *regset, struct regcache *regcache,
-		       int regnum, const void *fpregs, size_t len)
+		       int regnum, gdb::array_view<const gdb_byte> fpregs)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   const struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  size_t len = fpregs.size ();
 
   gdb_assert (len >= tdep->sizeof_fpregset);
   amd64_supply_fxsave (regcache, regnum, fpregs);
@@ -3339,17 +3340,16 @@ _initialize_amd64_tdep (void)
 
 void
 amd64_supply_fxsave (struct regcache *regcache, int regnum,
-		     const void *fxsave)
+		     gdb::optional<gdb::array_view<const gdb_byte>> fxsave)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
   i387_supply_fxsave (regcache, regnum, fxsave);
 
-  if (fxsave
-      && gdbarch_bfd_arch_info (gdbarch)->bits_per_word == 64)
+  if (fxsave && gdbarch_bfd_arch_info (gdbarch)->bits_per_word == 64)
     {
-      const gdb_byte *regs = (const gdb_byte *) fxsave;
+      const gdb_byte *regs = fxsave->data ();
 
       if (regnum == -1 || regnum == I387_FISEG_REGNUM (tdep))
 	regcache->raw_supply (I387_FISEG_REGNUM (tdep), regs + 12);
@@ -3362,20 +3362,19 @@ amd64_supply_fxsave (struct regcache *regcache, int regnum,
 
 void
 amd64_supply_xsave (struct regcache *regcache, int regnum,
-		    const void *xsave)
+		    gdb::array_view<const gdb_byte> xsave)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
   i387_supply_xsave (regcache, regnum, xsave);
 
-  if (xsave
-      && gdbarch_bfd_arch_info (gdbarch)->bits_per_word == 64)
+  if (gdbarch_bfd_arch_info (gdbarch)->bits_per_word == 64)
     {
-      const gdb_byte *regs = (const gdb_byte *) xsave;
+      const gdb_byte *regs = xsave.data ();
       ULONGEST clear_bv;
 
-      clear_bv = i387_xsave_get_clear_bv (gdbarch, xsave);
+      clear_bv = i387_xsave_get_clear_bv (gdbarch, regs);
 
       /* If the FISEG and FOSEG registers have not been initialised yet
 	 (their CLEAR_BV bit is set) then their default values of zero will
