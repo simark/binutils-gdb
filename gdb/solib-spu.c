@@ -119,10 +119,8 @@ append_ocl_sos (struct so_list **link_ptr)
 					      byte_order);
 	      if (data != 0x0)
 		{
-		  struct so_list *newobj;
-
 		  /* Allocate so_list structure.  */
-		  newobj = XCNEW (struct so_list);
+		  so_list *newobj = new so_list;
 
 		  /* Encode FD and object ID in path name.  */
 		  xsnprintf (newobj->so_name, sizeof newobj->so_name, "@%s <%d>",
@@ -196,7 +194,6 @@ spu_current_sos (void)
   for (i = 0; i < size; i += 4)
     {
       int fd = extract_unsigned_integer (buf + i, 4, byte_order);
-      struct so_list *newobj;
 
       unsigned long long addr;
       char annex[32], id[100];
@@ -215,7 +212,7 @@ spu_current_sos (void)
 	continue;
 
       /* Allocate so_list structure.  */
-      newobj = XCNEW (struct so_list);
+      so_list *newobj = new so_list;
 
       /* Encode FD and object ID in path name.  Choose the name so as not
 	 to conflict with any (normal) SVR4 library path name.  */

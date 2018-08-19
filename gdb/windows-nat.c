@@ -666,7 +666,6 @@ static struct so_list solib_start, *solib_end;
 static struct so_list *
 windows_make_so (const char *name, LPVOID load_addr)
 {
-  struct so_list *so;
   char *p;
 #ifndef __CYGWIN__
   char buf[__PMAX];
@@ -715,7 +714,7 @@ windows_make_so (const char *name, LPVOID load_addr)
 #endif
     }
 #endif
-  so = XCNEW (struct so_list);
+  so_list *so = new so_list;
   lm_info_windows *li = new lm_info_windows;
   so->lm_info = li;
   li->load_addr = load_addr;
@@ -856,7 +855,7 @@ windows_free_so (struct so_list *so)
   lm_info_windows *li = (lm_info_windows *) so->lm_info;
 
   delete li;
-  xfree (so);
+  delete so;
 }
 
 /* Handle a DLL unload event.

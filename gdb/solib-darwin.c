@@ -291,7 +291,7 @@ darwin_current_sos (void)
 	break;
 
       /* Create and fill the new so_list element.  */
-      gdb::unique_xmalloc_ptr<struct so_list> newobj (XCNEW (struct so_list));
+      so_list_up newobj (new so_list);
 
       lm_info_darwin *li = new lm_info_darwin;
       newobj->lm_info = li;

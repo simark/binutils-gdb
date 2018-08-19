@@ -541,7 +541,7 @@ solib_aix_current_sos (void)
      to the main executable, not a shared library.  */
   for (ix = 1; VEC_iterate (lm_info_aix_p, library_list, ix, info); ix++)
     {
-      struct so_list *new_solib = XCNEW (struct so_list);
+      so_list *new_solib = new so_list;
       std::string so_name;
 
       if (info->member_name.empty ())

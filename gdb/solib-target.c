@@ -251,7 +251,7 @@ solib_target_parse_libraries (const char *library)
 static struct so_list *
 solib_target_current_sos (void)
 {
-  struct so_list *new_solib, *start = NULL, *last = NULL;
+  struct so_list *start = NULL, *last = NULL;
   VEC(lm_info_target_p) *library_list;
   lm_info_target *info;
   int ix;
@@ -272,7 +272,7 @@ solib_target_current_sos (void)
   /* Build a struct so_list for each entry on the list.  */
   for (ix = 0; VEC_iterate (lm_info_target_p, library_list, ix, info); ix++)
     {
-      new_solib = XCNEW (struct so_list);
+      so_list *new_solib = new so_list;
       strncpy (new_solib->so_name, info->name.c_str (),
 	       SO_NAME_MAX_PATH_SIZE - 1);
       new_solib->so_name[SO_NAME_MAX_PATH_SIZE - 1] = '\0';
