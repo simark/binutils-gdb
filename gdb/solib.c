@@ -634,17 +634,13 @@ clear_so (struct so_list *so)
    objfile associated with SO that needs to be removed, the caller is
    responsible for taking care of that.  */
 
-void
-free_so (struct so_list *so)
+so_list::~so_list ()
 {
   const struct target_so_ops *ops = solib_ops (target_gdbarch ());
 
-  clear_so (so);
-  ops->free_so (so);
-
-  delete so;
+  clear_so (this);
+  ops->free_so (this);
 }
-
 
 /* Return address of first so_list entry in master shared object list.  */
 struct so_list *
@@ -814,7 +810,7 @@ update_solib_list (int from_tty)
       if (i)
 	{
 	  *i_link = i->next;
-	  free_so (i);
+	  delete i;
 	  gdb_link = &gdb->next;
 	  gdb = *gdb_link;
 	}
@@ -839,7 +835,7 @@ update_solib_list (int from_tty)
 	     sections from so->abfd; remove them.  */
 	  remove_target_sections (gdb);
 
-	  free_so (gdb);
+	  delete gdb;
 	  gdb = *gdb_link;
 	}
     }
@@ -1195,7 +1191,7 @@ clear_solib (void)
       so_list_head = so->next;
       gdb::observers::solib_unloaded.notify (so);
       remove_target_sections (so);
-      free_so (so);
+      delete so;
     }
 
   ops->clear_solib ();

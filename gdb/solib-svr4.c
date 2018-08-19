@@ -1055,7 +1055,7 @@ svr4_free_library_list (void *p_list)
     {
       struct so_list *next = list->next;
 
-      free_so (list);
+      delete list;
       list = next;
     }
 }
@@ -1511,7 +1511,7 @@ svr4_current_sos (void)
 	  if (address_in_mem_range (li->l_ld, &vsyscall_range))
 	    {
 	      *sop = so->next;
-	      free_so (so);
+	      delete so;
 	      break;
 	    }
 
