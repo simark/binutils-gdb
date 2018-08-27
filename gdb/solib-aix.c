@@ -541,7 +541,6 @@ solib_aix_current_sos (void)
      to the main executable, not a shared library.  */
   for (ix = 1; VEC_iterate (lm_info_aix_p, library_list, ix, info); ix++)
     {
-      so_list *new_solib = new so_list;
       std::string so_name;
 
       if (info->member_name.empty ())
@@ -561,12 +560,13 @@ solib_aix_current_sos (void)
 	 so_name = string_printf ("%s(%s)", info->filename.c_str (),
 				  info->member_name.c_str ());
 	}
+
+      so_list *new_solib = new so_list (new lm_info_aix (*info));
       strncpy (new_solib->so_original_name, so_name.c_str (),
 	       SO_NAME_MAX_PATH_SIZE - 1);
       new_solib->so_name[SO_NAME_MAX_PATH_SIZE - 1] = '\0';
       memcpy (new_solib->so_name, new_solib->so_original_name,
 	      SO_NAME_MAX_PATH_SIZE);
-      new_solib->lm_info = new lm_info_aix (*info);
 
       /* Add it to the list.  */
       if (!start)

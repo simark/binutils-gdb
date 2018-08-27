@@ -393,9 +393,8 @@ frv_current_sos (void)
 	      break;
 	    }
 
-	  so_list *sop = new so_list;
 	  lm_info_frv *li = new lm_info_frv;
-	  sop->lm_info = li;
+	  so_list *sop = new so_list (li);
 	  li->map = loadmap;
 	  li->got_value = got_addr;
 	  li->lm_addr = lm_addr;

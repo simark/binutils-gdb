@@ -1107,8 +1107,8 @@ library_list_start_library (struct gdb_xml_parser *parser,
   ULONGEST *l_ldp
     = (ULONGEST *) xml_find_attribute (attributes, "l_ld")->value.get ();
 
-  so_list *new_elem = new so_list;
   lm_info_svr4 *li = new lm_info_svr4;
+  so_list *new_elem = new so_list (li);
   new_elem->lm_info = li;
   li->lm_addr = *lmp;
   li->l_addr_inferior = *l_addrp;
@@ -1254,8 +1254,8 @@ svr4_default_sos (void)
   if (!info->debug_loader_offset_p)
     return NULL;
 
-  so_list *newobj = new so_list;
   lm_info_svr4 *li = new lm_info_svr4;
+  so_list *newobj = new so_list (li);
   newobj->lm_info = li;
 
   /* Nothing will ever check the other fields if we set l_addr_p.  */
@@ -1289,10 +1289,8 @@ svr4_read_so_list (CORE_ADDR lm, CORE_ADDR prev_lm,
       int errcode;
       gdb::unique_xmalloc_ptr<char> buffer;
 
-      so_list_up newobj (new so_list);
-
       lm_info_svr4 *li = lm_info_read (lm).release ();
-      newobj->lm_info = li;
+      so_list_up newobj (new so_list (li));
       if (li == NULL)
 	return 0;
 

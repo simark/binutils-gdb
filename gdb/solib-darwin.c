@@ -291,10 +291,8 @@ darwin_current_sos (void)
 	break;
 
       /* Create and fill the new so_list element.  */
-      so_list_up newobj (new so_list);
-
       lm_info_darwin *li = new lm_info_darwin;
-      newobj->lm_info = li;
+      so_list_up newobj (new so_list (li));
 
       strncpy (newobj->so_name, file_path.get (), SO_NAME_MAX_PATH_SIZE - 1);
       newobj->so_name[SO_NAME_MAX_PATH_SIZE - 1] = '\0';

@@ -120,7 +120,7 @@ append_ocl_sos (struct so_list **link_ptr)
 	      if (data != 0x0)
 		{
 		  /* Allocate so_list structure.  */
-		  so_list *newobj = new so_list;
+		  so_list *newobj = new so_list (nullptr);
 
 		  /* Encode FD and object ID in path name.  */
 		  xsnprintf (newobj->so_name, sizeof newobj->so_name, "@%s <%d>",
@@ -212,7 +212,7 @@ spu_current_sos (void)
 	continue;
 
       /* Allocate so_list structure.  */
-      so_list *newobj = new so_list;
+      so_list *newobj = new so_list (nullptr);
 
       /* Encode FD and object ID in path name.  Choose the name so as not
 	 to conflict with any (normal) SVR4 library path name.  */

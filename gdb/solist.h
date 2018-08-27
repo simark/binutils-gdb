@@ -37,7 +37,10 @@ struct lm_info_base
 
 struct so_list
 {
-  so_list () {}
+  so_list (lm_info_base *lm_info)
+    : lm_info (lm_info)
+  {}
+
   ~so_list ();
 
   /* The following fields of the structure come directly from the
@@ -50,7 +53,7 @@ struct so_list
      will be a copy of struct link_map from the user process, but
      it need not be; it can be any collection of data needed to
      traverse the dynamic linker's data structures.  */
-  lm_info_base *lm_info = nullptr;
+  lm_info_base *lm_info;
 
   /* Shared object file name, exactly as it appears in the
      inferior's link map.  This may be a relative path, or something

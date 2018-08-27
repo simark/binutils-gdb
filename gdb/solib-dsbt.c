@@ -707,9 +707,8 @@ dsbt_current_sos (void)
 	      break;
 	    }
 
-	  so_list *sop = new so_list;
 	  lm_info_dsbt *li = new lm_info_dsbt;
-	  sop->lm_info = li;
+	  so_list *sop = new so_list (li);
 	  li->map = loadmap;
 	  /* Fetch the name.  */
 	  addr = extract_unsigned_integer (lm_buf.l_name,

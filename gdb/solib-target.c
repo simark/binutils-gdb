@@ -272,14 +272,13 @@ solib_target_current_sos (void)
   /* Build a struct so_list for each entry on the list.  */
   for (ix = 0; VEC_iterate (lm_info_target_p, library_list, ix, info); ix++)
     {
-      so_list *new_solib = new so_list;
+      so_list *new_solib = new so_list (info);
       strncpy (new_solib->so_name, info->name.c_str (),
 	       SO_NAME_MAX_PATH_SIZE - 1);
       new_solib->so_name[SO_NAME_MAX_PATH_SIZE - 1] = '\0';
       strncpy (new_solib->so_original_name, info->name.c_str (),
 	       SO_NAME_MAX_PATH_SIZE - 1);
       new_solib->so_original_name[SO_NAME_MAX_PATH_SIZE - 1] = '\0';
-      new_solib->lm_info = info;
 
       /* We no longer need this copy of the name.  */
       info->name.clear ();
