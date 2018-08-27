@@ -661,7 +661,7 @@ struct lm_info_windows : public lm_info_base
   LPVOID load_addr = 0;
 };
 
-static so_list solib_start (nullptr), *solib_end;
+static so_list solib_start (nullptr, "dummy"), *solib_end;
 
 static struct so_list *
 windows_make_so (const char *name, LPVOID load_addr)
@@ -716,10 +716,9 @@ windows_make_so (const char *name, LPVOID load_addr)
 #endif
   lm_info_windows *li = new lm_info_windows;
   li->load_addr = load_addr;
-  so_list *so = new so_list (li);
-  strcpy (so->so_original_name, name);
+  so_list *so = new so_list (li, name);
 #ifndef __CYGWIN__
-  strcpy (so->so_name, buf);
+  so->so_name = buf;
 #else
   if (buf[0])
     cygwin_conv_path (CCP_WIN_W_TO_POSIX, buf, so->so_name,
@@ -2941,7 +2940,7 @@ windows_xfer_shared_libraries (struct target_ops *ops,
     {
       lm_info_windows *li = (lm_info_windows *) so->lm_info;
 
-      windows_xfer_shared_library (so->so_name, (CORE_ADDR)
+      windows_xfer_shared_library (so->so_name.c_str (), (CORE_ADDR)
 				   (uintptr_t) li->load_addr,
 				   target_gdbarch (), &obstack);
     }

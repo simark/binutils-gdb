@@ -119,15 +119,11 @@ append_ocl_sos (struct so_list **link_ptr)
 					      byte_order);
 	      if (data != 0x0)
 		{
-		  /* Allocate so_list structure.  */
-		  so_list *newobj = new so_list (nullptr);
-
 		  /* Encode FD and object ID in path name.  */
-		  xsnprintf (newobj->so_name, sizeof newobj->so_name, "@%s <%d>",
-			     hex_string (data),
-			     SPUADDR_SPU (*ocl_program_addr_base));
-		  strcpy (newobj->so_original_name, newobj->so_name);
-
+		  std::string so_name = string_printf ("@%s <%d>", hex_string (data),
+						       SPUADDR_SPU (*ocl_program_addr_base));
+		  /* Allocate so_list structure.  */
+		  so_list *newobj = new so_list (nullptr, std::move (so_name));
 		  *link_ptr = newobj;
 		  link_ptr = &newobj->next;
 		}
@@ -211,15 +207,13 @@ spu_current_sos (void)
       if (sscanf (id, "0x%llx", &addr) != 1 || !addr)
 	continue;
 
-      /* Allocate so_list structure.  */
-      so_list *newobj = new so_list (nullptr);
 
       /* Encode FD and object ID in path name.  Choose the name so as not
 	 to conflict with any (normal) SVR4 library path name.  */
-      xsnprintf (newobj->so_name, sizeof newobj->so_name, "@%s <%d>",
-		 hex_string (addr), fd);
-      strcpy (newobj->so_original_name, newobj->so_name);
+      std::string so_name = string_printf ("@%s <%d>", hex_string (addr), fd);
 
+      /* Allocate so_list structure.  */
+      so_list *newobj = new so_list (nullptr, std::move (so_name));
       *link_ptr = newobj;
       link_ptr = &newobj->next;
     }
@@ -259,7 +253,8 @@ spu_relocate_section_addresses (struct so_list *so,
         }
 
       /* Decode object ID.  */
-      if (sscanf (so->so_original_name, "@0x%llx <%d>", &addr, &fd) != 2)
+      if (sscanf (so->so_original_name.c_str (), "@0x%llx <%d>", &addr, &fd)
+	  != 2)
 	internal_error (__FILE__, __LINE__, "bad object ID");
 
       sec->addr = SPUADDR (fd, sec->addr);
@@ -525,14 +520,14 @@ set_spu_solib_ops (struct gdbarch *gdbarch)
 static void
 spu_solib_loaded (struct so_list *so)
 {
-  if (strstr (so->so_original_name, "/libspe") != NULL)
+  if (so->so_original_name.find ("/libspe") != std::string::npos)
     {
       solib_read_symbols (so, 0);
       spu_enable_break (so->objfile);
     }
   /* In case the OpenCL runtime is loaded we install a breakpoint
      to get notified whenever an OpenCL program gets loaded.  */
-  if (strstr (so->so_name, "CLRuntimeAccelCellSPU@") != NULL)
+  if (so->so_name.find ("CLRuntimeAccelCellSPU@") != std::string::npos)
     {
       solib_read_symbols (so, 0);
       ocl_enable_break (so->objfile);

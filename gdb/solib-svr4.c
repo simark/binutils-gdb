@@ -138,9 +138,9 @@ static const struct probe_info probe_info[] =
    the same shared library.  */
 
 static int
-svr4_same_1 (const char *gdb_so_name, const char *inferior_so_name)
+svr4_same_1 (const std::string &gdb_so_name, const std::string &inferior_so_name)
 {
-  if (strcmp (gdb_so_name, inferior_so_name) == 0)
+  if (gdb_so_name == inferior_so_name)
     return 1;
 
   /* On Solaris, when starting inferior we think that dynamic linker is
@@ -149,14 +149,13 @@ svr4_same_1 (const char *gdb_so_name, const char *inferior_so_name)
      sometimes they have identical content, but are not linked to each
      other.  We don't restrict this check for Solaris, but the chances
      of running into this situation elsewhere are very low.  */
-  if (strcmp (gdb_so_name, "/usr/lib/ld.so.1") == 0
-      && strcmp (inferior_so_name, "/lib/ld.so.1") == 0)
+  if (gdb_so_name == "/usr/lib/ld.so.1" && inferior_so_name == "/lib/ld.so.1")
     return 1;
 
   /* Similarly, we observed the same issue with sparc64, but with
      different locations.  */
-  if (strcmp (gdb_so_name, "/usr/lib/sparcv9/ld.so.1") == 0
-      && strcmp (inferior_so_name, "/lib/sparcv9/ld.so.1") == 0)
+  if (gdb_so_name == "/usr/lib/sparcv9/ld.so.1"
+      && inferior_so_name == "/lib/sparcv9/ld.so.1")
     return 1;
 
   return 0;
@@ -286,7 +285,7 @@ lm_addr_check (const struct so_list *so, bfd *abfd)
 		printf_unfiltered (_("Using PIC (Position Independent Code) "
 				     "prelink displacement %s for \"%s\".\n"),
 				   paddress (target_gdbarch (), l_addr),
-				   so->so_name);
+				   so->so_name.c_str ());
 	    }
 	  else
 	    {
@@ -301,7 +300,8 @@ lm_addr_check (const struct so_list *so, bfd *abfd)
 
 	      warning (_(".dynamic section for \"%s\" "
 			 "is not at the expected address "
-			 "(wrong library or version mismatch?)"), so->so_name);
+			 "(wrong library or version mismatch?)"),
+		       so->so_name.c_str ());
 	    }
 	}
 
@@ -1108,16 +1108,11 @@ library_list_start_library (struct gdb_xml_parser *parser,
     = (ULONGEST *) xml_find_attribute (attributes, "l_ld")->value.get ();
 
   lm_info_svr4 *li = new lm_info_svr4;
-  so_list *new_elem = new so_list (li);
-  new_elem->lm_info = li;
   li->lm_addr = *lmp;
   li->l_addr_inferior = *l_addrp;
   li->l_ld = *l_ldp;
 
-  strncpy (new_elem->so_name, name, sizeof (new_elem->so_name) - 1);
-  new_elem->so_name[sizeof (new_elem->so_name) - 1] = 0;
-  strcpy (new_elem->so_original_name, new_elem->so_name);
-
+  so_list *new_elem = new so_list (li, name);
   *list->tailp = new_elem;
   list->tailp = &new_elem->next;
 }
@@ -1255,16 +1250,12 @@ svr4_default_sos (void)
     return NULL;
 
   lm_info_svr4 *li = new lm_info_svr4;
-  so_list *newobj = new so_list (li);
-  newobj->lm_info = li;
 
   /* Nothing will ever check the other fields if we set l_addr_p.  */
   li->l_addr = info->debug_loader_offset;
   li->l_addr_p = 1;
 
-  strncpy (newobj->so_name, info->debug_loader_name, SO_NAME_MAX_PATH_SIZE - 1);
-  newobj->so_name[SO_NAME_MAX_PATH_SIZE - 1] = '\0';
-  strcpy (newobj->so_original_name, newobj->so_name);
+  so_list *newobj = new so_list (li, info->debug_loader_name);
 
   return newobj;
 }
@@ -1290,7 +1281,6 @@ svr4_read_so_list (CORE_ADDR lm, CORE_ADDR prev_lm,
       gdb::unique_xmalloc_ptr<char> buffer;
 
       lm_info_svr4 *li = lm_info_read (lm).release ();
-      so_list_up newobj (new so_list (li));
       if (li == NULL)
 	return 0;
 
@@ -1333,16 +1323,13 @@ svr4_read_so_list (CORE_ADDR lm, CORE_ADDR prev_lm,
 	  continue;
 	}
 
-      strncpy (newobj->so_name, buffer.get (), SO_NAME_MAX_PATH_SIZE - 1);
-      newobj->so_name[SO_NAME_MAX_PATH_SIZE - 1] = '\0';
-      strcpy (newobj->so_original_name, newobj->so_name);
-
+      const char *name = buffer.get ();
       /* If this entry has no name, or its name matches the name
 	 for the main executable, don't include it in the list.  */
-      if (! newobj->so_name[0] || match_main (newobj->so_name))
+      if (name[0] == '\0' || match_main (name))
 	continue;
 
-      newobj->next = 0;
+      so_list_up newobj (new so_list (li, name));
       /* Don't free it now.  */
       **link_ptr_ptr = newobj.release ();
       *link_ptr_ptr = &(**link_ptr_ptr)->next;

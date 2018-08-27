@@ -1239,7 +1239,7 @@ ppc_linux_spe_context_inferior_created (struct target_ops *t, int from_tty)
 static void
 ppc_linux_spe_context_solib_loaded (struct so_list *so)
 {
-  if (strstr (so->so_original_name, "/libspe") != NULL)
+  if (so->so_original_name.find ("/libspe") != std::string::npos)
     {
       solib_read_symbols (so, 0);
       ppc_linux_spe_context_lookup (so->objfile);

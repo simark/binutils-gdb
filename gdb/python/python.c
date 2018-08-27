@@ -638,7 +638,7 @@ execute_gdb_command (PyObject *self, PyObject *args, PyObject *kw)
 static PyObject *
 gdbpy_solib_name (PyObject *self, PyObject *args)
 {
-  char *soname;
+  const char *soname;
   PyObject *str_obj;
   gdb_py_ulongest pc;
 

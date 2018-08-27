@@ -420,7 +420,7 @@ solib_aix_free_so (struct so_list *so)
 
   if (solib_aix_debug)
     fprintf_unfiltered (gdb_stdlog, "DEBUG: solib_aix_free_so (%s)\n",
-			so->so_name);
+			so->so_name.c_str ());
 
   delete li;
 }
@@ -561,12 +561,8 @@ solib_aix_current_sos (void)
 				  info->member_name.c_str ());
 	}
 
-      so_list *new_solib = new so_list (new lm_info_aix (*info));
-      strncpy (new_solib->so_original_name, so_name.c_str (),
-	       SO_NAME_MAX_PATH_SIZE - 1);
-      new_solib->so_name[SO_NAME_MAX_PATH_SIZE - 1] = '\0';
-      memcpy (new_solib->so_name, new_solib->so_original_name,
-	      SO_NAME_MAX_PATH_SIZE);
+      so_list *new_solib = new so_list (new lm_info_aix (*info),
+					std::move (so_name));
 
       /* Add it to the list.  */
       if (!start)

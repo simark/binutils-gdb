@@ -272,13 +272,7 @@ solib_target_current_sos (void)
   /* Build a struct so_list for each entry on the list.  */
   for (ix = 0; VEC_iterate (lm_info_target_p, library_list, ix, info); ix++)
     {
-      so_list *new_solib = new so_list (info);
-      strncpy (new_solib->so_name, info->name.c_str (),
-	       SO_NAME_MAX_PATH_SIZE - 1);
-      new_solib->so_name[SO_NAME_MAX_PATH_SIZE - 1] = '\0';
-      strncpy (new_solib->so_original_name, info->name.c_str (),
-	       SO_NAME_MAX_PATH_SIZE - 1);
-      new_solib->so_original_name[SO_NAME_MAX_PATH_SIZE - 1] = '\0';
+      so_list *new_solib = new so_list (info, std::move (info->name));
 
       /* We no longer need this copy of the name.  */
       info->name.clear ();
@@ -353,7 +347,7 @@ solib_target_relocate_section_addresses (struct so_list *so,
 	  if (num_alloc_sections != li->section_bases.size ())
 	    warning (_("\
 Could not relocate shared library \"%s\": wrong number of ALLOC sections"),
-		     so->so_name);
+		     so->so_name.c_str ());
 	  else
 	    {
 	      int bases_index = 0;
@@ -396,7 +390,7 @@ Could not relocate shared library \"%s\": wrong number of ALLOC sections"),
 	  data = get_symfile_segment_data (so->abfd);
 	  if (data == NULL)
 	    warning (_("\
-Could not relocate shared library \"%s\": no segments"), so->so_name);
+Could not relocate shared library \"%s\": no segments"), so->so_name.c_str ());
 	  else
 	    {
 	      ULONGEST orig_delta;
@@ -406,7 +400,7 @@ Could not relocate shared library \"%s\": no segments"), so->so_name);
 						    li->segment_bases.size (),
 						    li->segment_bases.data ()))
 		warning (_("\
-Could not relocate shared library \"%s\": bad offsets"), so->so_name);
+Could not relocate shared library \"%s\": bad offsets"), so->so_name.c_str ());
 
 	      /* Find the range of addresses to report for this library in
 		 "info sharedlibrary".  Report any consecutive segments

@@ -7592,7 +7592,7 @@ disable_breakpoints_in_unloaded_shlib (struct so_list *solib)
 	    target_terminal::ours_for_output ();
 	    warning (_("Temporarily disabling breakpoints "
 		       "for unloaded shared library \"%s\""),
-		     solib->so_name);
+		     solib->so_name.c_str ());
 	  }
 	disabled_shlib_breaks = 1;
       }
@@ -7997,7 +7997,7 @@ check_status_catch_solib (struct bpstats *bs)
       for (so_list *iter : current_program_space->added_solibs)
 	{
 	  if (!self->regex
-	      || self->compiled->exec (iter->so_name, 0, NULL, 0) == 0)
+	      || self->compiled->exec (iter->so_name.c_str (), 0, NULL, 0) == 0)
 	    return;
 	}
     }

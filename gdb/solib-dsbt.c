@@ -708,7 +708,6 @@ dsbt_current_sos (void)
 	    }
 
 	  lm_info_dsbt *li = new lm_info_dsbt;
-	  so_list *sop = new so_list (li);
 	  li->map = loadmap;
 	  /* Fetch the name.  */
 	  addr = extract_unsigned_integer (lm_buf.l_name,
@@ -717,19 +716,20 @@ dsbt_current_sos (void)
 	  target_read_string (addr, &name_buf, SO_NAME_MAX_PATH_SIZE - 1,
 			      &errcode);
 
+	  std::string name;
 	  if (errcode != 0)
 	    warning (_("Can't read pathname for link map entry: %s."),
 		     safe_strerror (errcode));
 	  else
 	    {
+	      name = name_buf.get ();
+
 	      if (solib_dsbt_debug)
 		fprintf_unfiltered (gdb_stdlog, "current_sos: name = %s\n",
-				    name_buf.get ());
-
-	      strncpy (sop->so_name, name_buf.get (), SO_NAME_MAX_PATH_SIZE - 1);
-	      sop->so_name[SO_NAME_MAX_PATH_SIZE - 1] = '\0';
-	      strcpy (sop->so_original_name, sop->so_name);
+				    name.c_str ());
 	    }
+
+	  so_list *sop = new so_list (li, std::move (name));
 
 	  *sos_next_ptr = sop;
 	  sos_next_ptr = &sop->next;

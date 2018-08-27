@@ -1238,10 +1238,11 @@ print_frame (struct frame_info *frame, int print_level,
 
     if (pc_p && (funname == NULL || sal.symtab == NULL))
       {
-	char *lib = solib_name_from_address (get_frame_program_space (frame),
-					     get_frame_pc (frame));
+	const char *lib
+	  = solib_name_from_address (get_frame_program_space (frame),
+				     get_frame_pc (frame));
 
-	if (lib)
+	if (lib != nullptr)
 	  {
 	    annotate_frame_where ();
 	    uiout->wrap_hint ("  ");

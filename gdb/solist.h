@@ -37,8 +37,9 @@ struct lm_info_base
 
 struct so_list
 {
-  so_list (lm_info_base *lm_info)
-    : lm_info (lm_info)
+  so_list (lm_info_base *lm_info, std::string so_name)
+    : lm_info (lm_info), so_original_name (so_name),
+      so_name (std::move (so_name))
   {}
 
   ~so_list ();
@@ -60,10 +61,10 @@ struct so_list
      which needs to be looked up in LD_LIBRARY_PATH, etc.  We use it
      to tell which entries in the inferior's dynamic linker's link
      map we've already loaded.  */
-  char so_original_name[SO_NAME_MAX_PATH_SIZE] {};
+  std::string so_original_name;
 
   /* Shared object file name, expanded to something GDB can open.  */
-  char so_name[SO_NAME_MAX_PATH_SIZE] {};
+  std::string so_name;
 
   /* Program space this shared library belongs to.  */
   struct program_space *pspace = nullptr;

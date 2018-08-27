@@ -292,11 +292,7 @@ darwin_current_sos (void)
 
       /* Create and fill the new so_list element.  */
       lm_info_darwin *li = new lm_info_darwin;
-      so_list_up newobj (new so_list (li));
-
-      strncpy (newobj->so_name, file_path.get (), SO_NAME_MAX_PATH_SIZE - 1);
-      newobj->so_name[SO_NAME_MAX_PATH_SIZE - 1] = '\0';
-      strcpy (newobj->so_original_name, newobj->so_name);
+      so_list_up newobj (new so_list (li, file_path.get ()));
       li->lm_addr = load_addr;
 
       if (head == NULL)

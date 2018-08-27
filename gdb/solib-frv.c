@@ -394,7 +394,6 @@ frv_current_sos (void)
 	    }
 
 	  lm_info_frv *li = new lm_info_frv;
-	  so_list *sop = new so_list (li);
 	  li->map = loadmap;
 	  li->got_value = got_addr;
 	  li->lm_addr = lm_addr;
@@ -409,17 +408,14 @@ frv_current_sos (void)
 	    fprintf_unfiltered (gdb_stdlog, "current_sos: name = %s\n",
 	                        name_buf.get ());
 	  
+	  std::string name;
 	  if (errcode != 0)
 	    warning (_("Can't read pathname for link map entry: %s."),
 		     safe_strerror (errcode));
 	  else
-	    {
-	      strncpy (sop->so_name, name_buf.get (),
-		       SO_NAME_MAX_PATH_SIZE - 1);
-	      sop->so_name[SO_NAME_MAX_PATH_SIZE - 1] = '\0';
-	      strcpy (sop->so_original_name, sop->so_name);
-	    }
+	    name = name_buf.get ();
 
+	  so_list *sop = new so_list (li, std::move (name));
 	  *sos_next_ptr = sop;
 	  sos_next_ptr = &sop->next;
 	}

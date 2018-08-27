@@ -533,7 +533,7 @@ solib_map_sections (struct so_list *so)
   const struct target_so_ops *ops = solib_ops (target_gdbarch ());
   struct target_section *p;
 
-  gdb::unique_xmalloc_ptr<char> filename (tilde_expand (so->so_name));
+  gdb::unique_xmalloc_ptr<char> filename (tilde_expand (so->so_name.c_str ()));
   gdb_bfd_ref_ptr abfd (ops->bfd_open (filename.get ()));
 
   if (abfd == NULL)
@@ -550,7 +550,7 @@ solib_map_sections (struct so_list *so)
      GDB/MI will not provide the correct host-side path.  */
   if (strlen (bfd_get_filename (so->abfd)) >= SO_NAME_MAX_PATH_SIZE)
     error (_("Shared library file name is too long."));
-  strcpy (so->so_name, bfd_get_filename (so->abfd));
+  so->so_name = bfd_get_filename (so->abfd);
 
   if (build_section_table (so->abfd, &so->sections, &so->sections_end))
     {
@@ -616,7 +616,7 @@ clear_so (struct so_list *so)
 
   /* Restore the target-supplied file name.  SO_NAME may be the path
      of the symbol file.  */
-  strcpy (so->so_name, so->so_original_name);
+  so->so_name = so->so_original_name;
 
   /* Do the same for target-specific data.  */
   if (ops->clear_so != NULL)
@@ -675,7 +675,8 @@ solib_read_symbols (struct so_list *so, symfile_add_flags flags)
 	  /* Have we already loaded this shared object?  */
 	  ALL_OBJFILES (so->objfile)
 	    {
-	      if (filename_cmp (objfile_name (so->objfile), so->so_name) == 0
+	      if (filename_cmp (objfile_name (so->objfile),
+				so->so_name.c_str ()) == 0
 		  && so->objfile->addr_low == so->addr_low)
 		break;
 	    }
@@ -684,7 +685,8 @@ solib_read_symbols (struct so_list *so, symfile_add_flags flags)
 	      section_addr_info sap
 		= build_section_addr_info_from_section_table (so->sections,
 							      so->sections_end);
-	      so->objfile = symbol_file_add_from_bfd (so->abfd, so->so_name,
+	      so->objfile = symbol_file_add_from_bfd (so->abfd,
+						      so->so_name.c_str (),
 						      flags, &sap,
 						      OBJF_SHARED, NULL);
 	      so->objfile->addr_low = so->addr_low;
@@ -696,7 +698,7 @@ solib_read_symbols (struct so_list *so, symfile_add_flags flags)
 	{
 	  exception_fprintf (gdb_stderr, e, _("Error while reading shared"
 					      " library symbols for %s:\n"),
-			     so->so_name);
+			     so->so_name.c_str ());
 	}
       END_CATCH
 
@@ -796,7 +798,8 @@ update_solib_list (int from_tty)
 	    }
 	  else
 	    {
-	      if (! filename_cmp (gdb->so_original_name, i->so_original_name))
+	      if (! filename_cmp (gdb->so_original_name.c_str (),
+				  i->so_original_name.c_str ()))
 		break;	      
 	    }
 
@@ -867,7 +870,7 @@ update_solib_list (int from_tty)
 		{
 		  not_found++;
 		  if (not_found_filename == NULL)
-		    not_found_filename = i->so_original_name;
+		    not_found_filename = i->so_original_name.c_str ();
 		}
 	    }
 
@@ -923,7 +926,7 @@ libpthread_name_p (const char *name)
 static int
 libpthread_solib_p (struct so_list *so)
 {
-  return libpthread_name_p (so->so_name);
+  return libpthread_name_p (so->so_name.c_str ());
 }
 
 /* Read in symbolic information for any shared objects whose names
@@ -975,7 +978,7 @@ solib_add (const char *pattern, int from_tty, int readsyms)
         add_flags |= SYMFILE_VERBOSE;
 
     for (gdb = so_list_head; gdb; gdb = gdb->next)
-      if (! pattern || re_exec (gdb->so_name))
+      if (! pattern || re_exec (gdb->so_name.c_str ()))
 	{
           /* Normally, we would read the symbols from that library
              only if READSYMS is set.  However, we're making a small
@@ -994,7 +997,7 @@ solib_add (const char *pattern, int from_tty, int readsyms)
 		     libraries we have already loaded.  */
 		  if (pattern && (from_tty || info_verbose))
 		    printf_unfiltered (_("Symbols already loaded for %s\n"),
-				       gdb->so_name);
+				       gdb->so_name.c_str ());
 		}
 	      else if (solib_read_symbols (gdb, add_flags))
 		loaded_any_symbols = 1;
@@ -1052,7 +1055,7 @@ info_sharedlibrary_command (const char *pattern, int from_tty)
     {
       if (so->so_name[0])
 	{
-	  if (pattern && ! re_exec (so->so_name))
+	  if (pattern && ! re_exec (so->so_name.c_str ()))
 	    continue;
 	  ++nr_libs;
 	}
@@ -1073,7 +1076,7 @@ info_sharedlibrary_command (const char *pattern, int from_tty)
       {
 	if (! so->so_name[0])
 	  continue;
-	if (pattern && ! re_exec (so->so_name))
+	if (pattern && ! re_exec (so->so_name.c_str ()))
 	  continue;
 
 	ui_out_emit_tuple tuple_emitter (uiout, "lib");
@@ -1146,16 +1149,14 @@ solib_contains_address_p (const struct so_list *const solib,
    breakpoints which are in shared libraries that are not currently
    mapped in.  */
 
-char *
+const char *
 solib_name_from_address (struct program_space *pspace, CORE_ADDR address)
 {
-  struct so_list *so = NULL;
-
-  for (so = pspace->so_list; so; so = so->next)
+  for (so_list *so = pspace->so_list; so; so = so->next)
     if (solib_contains_address_p (so, address))
-      return (so->so_name);
+      return so->so_name.c_str ();
 
-  return (0);
+  return nullptr;
 }
 
 /* Return whether the data starting at VADDR, size SIZE, must be kept
@@ -1299,7 +1300,7 @@ reload_shared_libraries_1 (int from_tty)
 	add_flags |= SYMFILE_VERBOSE;
 
       gdb::unique_xmalloc_ptr<char> filename
-	(tilde_expand (so->so_original_name));
+	(tilde_expand (so->so_original_name.c_str ()));
       gdb_bfd_ref_ptr abfd (solib_bfd_open (filename.get ()));
       if (abfd != NULL)
 	found_pathname = bfd_get_filename (abfd.get ());
@@ -1308,7 +1309,7 @@ reload_shared_libraries_1 (int from_tty)
 	 symbol file, close that.  */
       if ((found_pathname == NULL && was_loaded)
 	  || (found_pathname != NULL
-	      && filename_cmp (found_pathname, so->so_name) != 0))
+	      && filename_cmp (found_pathname, so->so_name.c_str ()) != 0))
 	{
 	  if (so->objfile && ! (so->objfile->flags & OBJF_USERLOADED)
 	      && !solib_used (so))
@@ -1321,7 +1322,7 @@ reload_shared_libraries_1 (int from_tty)
 	 file, open it.  */
       if (found_pathname != NULL
 	  && (!was_loaded
-	      || filename_cmp (found_pathname, so->so_name) != 0))
+	      || filename_cmp (found_pathname, so->so_name.c_str ()) != 0))
 	{
 	  int got_error = 0;
 
