@@ -1,3 +1,9 @@
+2018-08-27  Jan Vrany  <jan.vrany@fit.cvut.cz>
+
+	* gdb.arch/amd64-invalid-stack-middle.exp: Update regexp to
+	accommodate new "arch" field in frame output.
+	* gdb.arch/amd64-invalid-stack-top.exp: Likewise.
+
 2018-08-23  Kevin Buettner  <kevinb@redhat.com>
 
 	* gdb.dwarf2/dw2-ranges-func.c: New file.
