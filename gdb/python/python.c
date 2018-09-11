@@ -1684,6 +1684,7 @@ do_start_initialization ()
       || gdbpy_initialize_instruction () < 0
       || gdbpy_initialize_record () < 0
       || gdbpy_initialize_btrace () < 0
+      || gdbpy_initialize_compunits () < 0
       || gdbpy_initialize_symbols () < 0
       || gdbpy_initialize_symtabs () < 0
       || gdbpy_initialize_blocks () < 0

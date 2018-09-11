@@ -446,6 +446,30 @@ objfpy_add_separate_debug_file (PyObject *self, PyObject *args, PyObject *kw)
   Py_RETURN_NONE;
 }
 
+static PyObject *
+objfpy_get_compunits (PyObject *self_, PyObject *unused)
+{
+  objfile_object *self = (objfile_object *) self_;
+  objfile *obj = self->objfile;
+
+  if (obj == nullptr)
+    Py_RETURN_NONE;
+
+  gdbpy_ref<> list (PyList_New (0));
+  if (list == NULL)
+    return NULL;
+
+  compunit_symtab *cu;
+  ALL_OBJFILE_COMPUNITS (obj, cu)
+    {
+      gdbpy_ref<> item = compunit_symtab_to_compunit_object (cu);
+      if (item == nullptr || PyList_Append (list.get (), item.get ()) == -1)
+	return NULL;
+    }
+
+  return list.release ();
+}
+
 /* Implement repr() for gdb.Objfile.  */
 
 static PyObject *
@@ -667,6 +691,10 @@ Return true if this object file is valid, false if not." },
     METH_VARARGS | METH_KEYWORDS,
     "add_separate_debug_file (file_name).\n\
 Add FILE_NAME to the list of files containing debug info for the objfile." },
+
+  { "compunits", objfpy_get_compunits, METH_NOARGS, "\
+Return a sequence of gdb.CompilationUnit objects associated to this objfile"
+  },
 
   { NULL }
 };

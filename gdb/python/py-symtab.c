@@ -218,6 +218,16 @@ stpy_get_linetable (PyObject *self, PyObject *args)
 }
 
 static PyObject *
+stpy_get_compunit (PyObject *self, void *data)
+{
+  symtab *s;
+
+  STPY_REQUIRE_VALID (self, s);
+
+  return compunit_symtab_to_compunit_object (s->compunit_symtab).release ();
+}
+
+static PyObject *
 salpy_str (PyObject *self)
 {
   char *s;
@@ -548,6 +558,7 @@ static gdb_PyGetSetDef symtab_object_getset[] = {
     NULL },
   { "producer", stpy_get_producer, NULL,
     "The name/version of the program that compiled this symtab.", NULL },
+  { "compunit", stpy_get_compunit, NULL, "" },
   {NULL}  /* Sentinel */
 };
 

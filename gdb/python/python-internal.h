@@ -519,6 +519,8 @@ PyObject *gdbpy_lookup_objfile (PyObject *self, PyObject *args, PyObject *kw);
 
 PyObject *gdbarch_to_arch_object (struct gdbarch *gdbarch);
 
+gdbpy_ref<> compunit_symtab_to_compunit_object (compunit_symtab *cu);
+
 thread_object *create_thread_object (struct thread_info *tp);
 gdbpy_ref<> thread_to_thread_object (thread_info *thr);;
 inferior_object *inferior_to_inferior_object (inferior *inf);
@@ -546,7 +548,7 @@ int gdbpy_initialize_btrace (void)
   CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
 int gdbpy_initialize_record (void)
   CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_symtabs (void)
+int gdbpy_initialize_compunits (void)
   CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
 int gdbpy_initialize_commands (void)
   CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
