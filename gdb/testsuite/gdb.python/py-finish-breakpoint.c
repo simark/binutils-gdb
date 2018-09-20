@@ -46,13 +46,13 @@ test (int i, int j)
   return test_1 (i, j);
 }
 
-int
+void
 call_longjmp_1 (jmp_buf *buf)
 {
   longjmp (*buf, 1);
 }
 
-int
+void
 call_longjmp (jmp_buf *buf)
 {
   call_longjmp_1 (buf);
