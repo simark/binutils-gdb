@@ -18,7 +18,7 @@
 
 load_lib gdb-python.exp
 
-standard_testfile
+standard_testfile {.cpp}
 
 set options {debug c++}
 
@@ -72,7 +72,7 @@ proc_with_prefix test_bkpt_basic { } {
 	"<gdb.Breakpoint object at $hex>" "Check obj exists @mult_line"
 
     gdb_test "python print (blist\[1\].location)" \
-	"py-breakpoint\.c:${mult_line}*" \
+	"py-breakpoint\.cpp:${mult_line}*" \
 	"check breakpoint location @mult_line"
 
     # Check hit and ignore counts.
@@ -229,10 +229,10 @@ proc_with_prefix test_bkpt_invisible { } {
     gdb_test "python print (ilist\[0\])" \
 	"<gdb.Breakpoint object at $hex>" "Check invisible bp obj exists 1"
     gdb_test "python print (ilist\[0\].location)" \
-	"py-breakpoint\.c:$ibp_location*" "Check breakpoint location 1"
+	"py-breakpoint\.cpp:$ibp_location*" "Check breakpoint location 1"
     gdb_test "python print (ilist\[0\].visible)" \
 	"True" "Check breakpoint visibility 1"
-    gdb_test "info breakpoints" "py-breakpoint\.c:$ibp_location.*" \
+    gdb_test "info breakpoints" "py-breakpoint\.cpp:$ibp_location.*" \
 	"Check info breakpoints shows visible breakpoints"
     delete_breakpoints
     gdb_py_test_silent_cmd  "python ibp = gdb.Breakpoint(\"$ibp_location\", internal=True)" \
@@ -242,13 +242,13 @@ proc_with_prefix test_bkpt_invisible { } {
     gdb_test "python print (ilist\[0\])" \
 	"<gdb.Breakpoint object at $hex>" "Check invisible bp obj exists 2"
     gdb_test "python print (ilist\[0\].location)" \
-	"py-breakpoint\.c:$ibp_location*" "Check breakpoint location 2"
+	"py-breakpoint\.cpp:$ibp_location*" "Check breakpoint location 2"
     gdb_test "python print (ilist\[0\].visible)" \
 	"False" "Check breakpoint visibility 2"
     gdb_test "info breakpoints" "No breakpoints or watchpoints.*" \
 	"Check info breakpoints does not show invisible breakpoints"
     gdb_test "maint info breakpoints" \
-	"py-breakpoint\.c:$ibp_location.*" \
+	"py-breakpoint\.cpp:$ibp_location.*" \
 	"Check maint info breakpoints shows invisible breakpoints"
 }
 
@@ -446,9 +446,9 @@ proc_with_prefix test_bkpt_temporary { } {
     gdb_py_test_silent_cmd "python ibp = temp_bp(\"$ibp_location\", temporary=True)" \
 	"Set temporary breakpoint" 0
     gdb_test "info breakpoints" \
-	"2.*breakpoint.*del.*py-breakpoint\.c:$ibp_location.*" \
+	"2.*breakpoint.*del.*py-breakpoint\.cpp:$ibp_location.*" \
 	"Check info breakpoints shows breakpoint with temporary status"
-    gdb_test "python print (ibp.location)" "py-breakpoint\.c:$ibp_location*" \
+    gdb_test "python print (ibp.location)" "py-breakpoint\.cpp:$ibp_location*" \
 	"Check temporary breakpoint location"
     gdb_test "python print (ibp.temporary)" "True" \
 	"Check breakpoint temporary status"
