@@ -126,7 +126,9 @@ gdb_test "python print (t\[0\].symtab)" "${py_symbol_c}" "get symtab"
 
 # C++ tests
 # Recompile binary.
-if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}-cxx" executable "debug c++"] != "" } {
+set cpp_source [standard_output_file ${srcfile}.cpp]
+file copy -force "${srcdir}/${subdir}/${srcfile}" "${cpp_source}"
+if { [gdb_compile "${cpp_source}" "${binfile}-cxx" executable "debug c++"] != "" } {
     untested "failed to compile in C++ mode"
     return -1
 }

@@ -329,7 +329,9 @@ mi_gdb_test "-var-update c" \
 
 # C++ MI tests
 gdb_exit
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}-cxx" \
+set cpp_source [standard_output_file ${srcfile}.cpp]
+file copy -force "${srcdir}/${subdir}/${srcfile}" "${cpp_source}"
+if  { [gdb_compile "${cpp_source}" "${binfile}-cxx" \
 	   executable {debug c++ additional_flags=-DMI}] != "" } {
     untested "failed to compile in C++ mode"
     return -1

@@ -32,12 +32,19 @@ proc build_inferior {exefile lang} {
   # for example, a C++ compile to clobber the dwo of a C compile.
   # ref: http://gcc.gnu.org/wiki/DebugFission
   switch ${lang} {
-      "c" { set filename ${testfile}.o }
-      "c++" { set filename ${testfile}-cxx.o }
+	"c" {
+	    set src "${srcdir}/${subdir}/${srcfile}"
+	    set filename ${testfile}.o
+	}
+	"c++" {
+	    set src [standard_output_file "${srcfile}.cpp"]
+	    file copy -force "${srcdir}/${subdir}/${srcfile}" "${src}"
+	    set filename ${testfile}-cxx.o
+	}
   }
   set objfile [standard_output_file $filename]
 
-  if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${objfile}" object "debug $lang"] != ""
+  if { [gdb_compile "${src}" "${objfile}" object "debug $lang"] != ""
        || [gdb_compile "${objfile}" "${exefile}" executable "debug $lang"] != "" } {
       untested "failed to compile in $lang mode"
       return -1

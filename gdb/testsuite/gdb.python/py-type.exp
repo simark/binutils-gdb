@@ -28,7 +28,14 @@ if [get_compiler_info c++] {
 proc build_inferior {exefile lang} {
   global srcdir subdir srcfile testfile hex
 
-  if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${exefile}" executable "debug $lang"] != "" } {
+  if { $lang == "c++" } {
+    set src [standard_output_file "${srcfile}.cpp"]
+    file copy -force "${srcdir}/${subdir}/${srcfile}" "${src}"
+  } else {
+    set src "${srcdir}/${subdir}/${srcfile}"
+  }
+
+  if { [gdb_compile "${src}" "${exefile}" executable "debug $lang"] != "" } {
       untested "failed to compile in $lang mode"
       return -1
   }
