@@ -27,9 +27,11 @@
 
 static unsigned int global_serial_debug_p;
 
+serial_ops::~serial_ops () = default;
+
 /* Serial I/O handlers.  */
 
-static std::vector<const struct serial_ops *> serial_ops_list;
+static std::vector<struct serial_ops *> serial_ops_list;
 
 /* Pointer to list of scb's.  */
 
@@ -41,7 +43,7 @@ static struct serial *scb_base;
 static char *serial_logfile = NULL;
 static struct ui_file *serial_logfp = NULL;
 
-static const struct serial_ops *serial_interface_lookup (const char *);
+static struct serial_ops *serial_interface_lookup (const char *);
 static void serial_logchar (struct ui_file *stream,
 			    int ch_type, int ch, int timeout);
 static const char logbase_hex[] = "hex";
@@ -140,10 +142,10 @@ serial_log_command (struct target_ops *self, const char *cmd)
 }
 
 
-static const struct serial_ops *
+static struct serial_ops *
 serial_interface_lookup (const char *name)
 {
-  for (const serial_ops *ops : serial_ops_list)
+  for (serial_ops *ops : serial_ops_list)
     if (strcmp (name, ops->name) == 0)
       return ops;
 
@@ -151,7 +153,7 @@ serial_interface_lookup (const char *name)
 }
 
 void
-serial_add_interface (const struct serial_ops *optable)
+serial_add_interface (struct serial_ops *optable)
 {
   serial_ops_list.push_back (optable);
 }
@@ -174,7 +176,7 @@ serial_for_fd (int fd)
 /* Create a new serial for OPS.  */
 
 static struct serial *
-new_serial (const struct serial_ops *ops)
+new_serial (struct serial_ops *ops)
 {
   struct serial *scb;
 
@@ -189,7 +191,7 @@ new_serial (const struct serial_ops *ops)
   return scb;
 }
 
-static struct serial *serial_open_ops_1 (const struct serial_ops *ops,
+static struct serial *serial_open_ops_1 (struct serial_ops *ops,
 					 const char *open_name);
 
 /* Open up a device or a network socket, depending upon the syntax of NAME.  */
@@ -197,7 +199,7 @@ static struct serial *serial_open_ops_1 (const struct serial_ops *ops,
 struct serial *
 serial_open (const char *name)
 {
-  const struct serial_ops *ops;
+  struct serial_ops *ops;
   const char *open_name = name;
 
   if (startswith (name, "|"))
@@ -235,14 +237,14 @@ serial_open (const char *name)
 /* Open up a serial for OPS, passing OPEN_NAME to the open method.  */
 
 static struct serial *
-serial_open_ops_1 (const struct serial_ops *ops, const char *open_name)
+serial_open_ops_1 (struct serial_ops *ops, const char *open_name)
 {
   struct serial *scb;
 
   scb = new_serial (ops);
 
   /* `...->open (...)' would get expanded by the open(2) syscall macro.  */
-  if ((*scb->ops->open) (scb, open_name))
+  if (scb->ops->open (scb, open_name))
     {
       xfree (scb);
       return NULL;
@@ -267,7 +269,7 @@ serial_open_ops_1 (const struct serial_ops *ops, const char *open_name)
 /* See serial.h.  */
 
 struct serial *
-serial_open_ops (const struct serial_ops *ops)
+serial_open_ops (struct serial_ops *ops)
 {
   return serial_open_ops_1 (ops, NULL);
 }
@@ -276,7 +278,7 @@ serial_open_ops (const struct serial_ops *ops)
    interface ops OPS.  */
 
 static struct serial *
-serial_fdopen_ops (const int fd, const struct serial_ops *ops)
+serial_fdopen_ops (const int fd, struct serial_ops *ops)
 {
   struct serial *scb;
 
@@ -295,10 +297,7 @@ serial_fdopen_ops (const int fd, const struct serial_ops *ops)
   scb->next = scb_base;
   scb_base = scb;
 
-  if ((ops->fdopen) != NULL)
-    (*ops->fdopen) (scb, fd);
-  else
-    scb->fd = fd;
+  ops->fdopen (scb, fd);
 
   return scb;
 }
@@ -538,13 +537,13 @@ serial_setparity (struct serial *scb, int parity)
 int
 serial_can_async_p (struct serial *scb)
 {
-  return (scb->ops->async != NULL);
+  return scb->ops->can_async_p (scb);
 }
 
 int
 serial_is_async_p (struct serial *scb)
 {
-  return (scb->ops->async != NULL) && (scb->async_handler != NULL);
+  return scb->ops->can_async_p (scb) && scb->ops->is_async_p (scb);
 }
 
 void
@@ -597,7 +596,7 @@ serial_done_wait_handle (struct serial *scb)
 int
 serial_pipe (struct serial *scbs[2])
 {
-  const struct serial_ops *ops;
+  struct serial_ops *ops;
   int fildes[2];
 
   ops = serial_interface_lookup ("pipe");

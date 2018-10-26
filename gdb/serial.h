@@ -49,7 +49,7 @@ extern struct serial *serial_open (const char *name);
 
 /* Open a new serial stream using OPS.  */
 
-extern struct serial *serial_open_ops (const struct serial_ops *ops);
+extern struct serial *serial_open_ops (struct serial_ops *ops);
 
 /* Returns true if SCB is open.  */
 
@@ -233,7 +233,7 @@ struct serial
        If != -1, this descriptor should be non-blocking or
        ops->avail should be non-NULL.  */
     int error_fd;               
-    const struct serial_ops *ops; /* Function vector */
+    struct serial_ops *ops; /* Function vector */
     void *state;       		/* Local context info for open FD */
     serial_ttystate ttystate;	/* Not used (yet) */
     int bufcnt;			/* Amount of data remaining in receive
@@ -248,59 +248,78 @@ struct serial
   };
 
 struct serial_ops
+{
+  serial_ops (const char *name)
+  : name (name)
+  {}
+  const char *name;
+
+  virtual ~serial_ops ();
+  virtual int open (struct serial *, const char *name) = 0;
+  virtual void close (struct serial *) = 0;
+  virtual void fdopen (struct serial *scb, int fd)
+  { scb->fd = fd; }
+  virtual int readchar (struct serial *, int timeout);
+  virtual int write (struct serial *, const void *buf, size_t count);
+  /* Discard pending output */
+  virtual int flush_output (struct serial *);
+  /* Discard pending input */
+  virtual int flush_input (struct serial *);
+  virtual int send_break (struct serial *);
+  virtual void go_raw (struct serial *);
+  virtual serial_ttystate get_tty_state (struct serial *);
+  virtual serial_ttystate copy_tty_state (struct serial *, serial_ttystate);
+  virtual int set_tty_state (struct serial *, serial_ttystate);
+  virtual void print_tty_state (struct serial *, serial_ttystate,
+			struct ui_file *);
+  virtual int setbaudrate (struct serial *, int rate);
+  virtual int setstopbits (struct serial *, int num);
+  /* Set the value PARITY as parity setting for serial object.
+     Return 0 in the case of success.  */
+  virtual int setparity (struct serial *, int parity);
+  /* Wait for output to drain.  */
+  virtual int drain_output (struct serial *);
+  virtual bool can_async_p (struct serial *scb)
+  { return false; }
+  virtual bool is_async_p (struct serial *scb)
+  { return false; }
+  /* Change the serial device into/out of asynchronous mode, call
+     the specified function when ever there is something
+     interesting.  */
+  virtual void async (struct serial *scb, int async_p);
+  /* Perform a low-level read operation, reading (at most) COUNT
+     bytes into SCB->BUF.  Return zero at end of file.  */
+  virtual int read_prim (struct serial *scb, size_t count)
   {
-    const char *name;
-    int (*open) (struct serial *, const char *name);
-    void (*close) (struct serial *);
-    int (*fdopen) (struct serial *, int fd);
-    int (*readchar) (struct serial *, int timeout);
-    int (*write) (struct serial *, const void *buf, size_t count);
-    /* Discard pending output */
-    int (*flush_output) (struct serial *);
-    /* Discard pending input */
-    int (*flush_input) (struct serial *);
-    int (*send_break) (struct serial *);
-    void (*go_raw) (struct serial *);
-    serial_ttystate (*get_tty_state) (struct serial *);
-    serial_ttystate (*copy_tty_state) (struct serial *, serial_ttystate);
-    int (*set_tty_state) (struct serial *, serial_ttystate);
-    void (*print_tty_state) (struct serial *, serial_ttystate,
-			     struct ui_file *);
-    int (*setbaudrate) (struct serial *, int rate);
-    int (*setstopbits) (struct serial *, int num);
-    /* Set the value PARITY as parity setting for serial object.
-       Return 0 in the case of success.  */
-    int (*setparity) (struct serial *, int parity);
-    /* Wait for output to drain.  */
-    int (*drain_output) (struct serial *);
-    /* Change the serial device into/out of asynchronous mode, call
-       the specified function when ever there is something
-       interesting.  */
-    void (*async) (struct serial *scb, int async_p);
-    /* Perform a low-level read operation, reading (at most) COUNT
-       bytes into SCB->BUF.  Return zero at end of file.  */
-    int (*read_prim)(struct serial *scb, size_t count);
-    /* Perform a low-level write operation, writing (at most) COUNT
-       bytes from BUF.  */
-    int (*write_prim)(struct serial *scb, const void *buf, size_t count);
-    /* Return that number of bytes that can be read from FD
-       without blocking.  Return value of -1 means that the
-       read will not block even if less that requested bytes
-       are available.  */
-    int (*avail)(struct serial *scb, int fd);
+    errno = ENOTSUP;
+    return -1;
+  }
+  /* Perform a low-level write operation, writing (at most) COUNT
+     bytes from BUF.  */
+  virtual int write_prim (struct serial *scb, const void *buf, size_t count)
+  {
+    errno = ENOTSUP;
+    return -1;
+  }
+  /* Return that number of bytes that can be read from FD
+     without blocking.  Return value of -1 means that the
+     read will not block even if less that requested bytes
+     are available.  */
+  virtual int avail (struct serial *scb, int fd)
+  { return -1; }
 
 #ifdef USE_WIN32API
-    /* Return a handle to wait on, indicating available data from SCB
-       when signaled, in *READ.  Return a handle indicating errors
-       in *EXCEPT.  */
-    void (*wait_handle) (struct serial *scb, HANDLE *read, HANDLE *except);
-    void (*done_wait_handle) (struct serial *scb);
+  /* Return a handle to wait on, indicating available data from SCB
+     when signaled, in *READ.  Return a handle indicating errors
+     in *EXCEPT.  */
+  virtual void wait_handle (struct serial *scb, HANDLE *read, HANDLE *except);
+  virtual void done_wait_handle (struct serial *scb);
 #endif /* USE_WIN32API */
-  };
+};
 
 /* Add a new serial interface to the interface list.  */
 
-extern void serial_add_interface (const struct serial_ops * optable);
+extern void serial_add_interface (struct serial_ops * optable);
 
 /* File in which to record the remote debugging session.  */
 

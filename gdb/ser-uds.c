@@ -30,10 +30,28 @@
 #define UNIX_PATH_MAX sizeof(((struct sockaddr_un *) NULL)->sun_path)
 #endif
 
+struct serial_uds_ops : public serial_ops
+{
+  serial_uds_ops ()
+  : serial_ops ("local")
+  {}
+
+  virtual int open (struct serial *, const char *name) override;
+  virtual void close (struct serial *) override;
+
+  /* Perform a low-level read operation, reading (at most) COUNT
+     bytes into SCB->BUF.  Return zero at end of file.  */
+  virtual int read_prim (struct serial *scb, size_t count) override;
+  /* Perform a low-level write operation, writing (at most) COUNT
+     bytes from BUF.  */
+  virtual int write_prim (struct serial *scb, const void *buf, size_t count) override;
+};
+
+
 /* Open an AF_UNIX socket.  */
 
-static int
-uds_open (struct serial *scb, const char *name)
+int
+serial_uds_ops::open (struct serial *scb, const char *name)
 {
   struct addrinfo hint;
 
@@ -66,7 +84,7 @@ uds_open (struct serial *scb, const char *name)
   if (connect (sock, (struct sockaddr *) &addr,
 	       sizeof (struct sockaddr_un)) < 0)
     {
-      close (sock);
+      ::close (sock);
       scb->fd = -1;
       return -1;
     }
@@ -76,57 +94,32 @@ uds_open (struct serial *scb, const char *name)
   return 0;
 }
 
-static void
-uds_close (struct serial *scb)
+void
+serial_uds_ops::close (struct serial *scb)
 {
   if (scb->fd == -1)
     return;
 
-  close (scb->fd);
+  ::close (scb->fd);
   scb->fd = -1;
 }
 
-static int
-uds_read_prim (struct serial *scb, size_t count)
+int
+serial_uds_ops::read_prim (struct serial *scb, size_t count)
 {
   return recv (scb->fd, scb->buf, count, 0);
 }
 
-static int
-uds_write_prim (struct serial *scb, const void *buf, size_t count)
+int
+serial_uds_ops::write_prim (struct serial *scb, const void *buf, size_t count)
 {
   return send (scb->fd, buf, count, 0);
 }
 
-/* The local socket ops.  */
-
-static const struct serial_ops uds_ops =
-{
-  "local",
-  uds_open,
-  uds_close,
-  NULL,
-  ser_base_readchar,
-  ser_base_write,
-  ser_base_flush_output,
-  ser_base_flush_input,
-  ser_base_send_break,
-  ser_base_raw,
-  ser_base_get_tty_state,
-  ser_base_copy_tty_state,
-  ser_base_set_tty_state,
-  ser_base_print_tty_state,
-  ser_base_setbaudrate,
-  ser_base_setstopbits,
-  ser_base_setparity,
-  ser_base_drain_output,
-  ser_base_async,
-  uds_read_prim,
-  uds_write_prim
-};
+static struct serial_uds_ops serial_uds_ops;
 
 void
 _initialize_ser_socket (void)
 {
-  serial_add_interface (&uds_ops);
+  serial_add_interface (&serial_uds_ops);
 }

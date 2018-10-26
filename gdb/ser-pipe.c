@@ -33,8 +33,29 @@
 
 #include <signal.h>
 
-static int pipe_open (struct serial *scb, const char *name);
-static void pipe_close (struct serial *scb);
+struct serial_pipe_ops : public serial_ops
+{
+  serial_pipe_ops ()
+  : serial_ops ("pipe")
+  {}
+
+  virtual int open (struct serial *, const char *name) override;
+  virtual void close (struct serial *) override;
+
+  /* Perform a low-level read operation, reading (at most) COUNT
+     bytes into SCB->BUF.  Return zero at end of file.  */
+  virtual int read_prim (struct serial *scb, size_t count) override
+  {
+    return ser_unix_read_prim (scb, count);
+  }
+
+  /* Perform a low-level write operation, writing (at most) COUNT
+     bytes from BUF.  */
+  virtual int write_prim (struct serial *scb, const void *buf, size_t count) override
+  {
+    return ser_unix_write_prim (scb, buf, count);
+  }
+};
 
 struct pipe_state
   {
@@ -43,8 +64,8 @@ struct pipe_state
 
 /* Open up a raw pipe.  */
 
-static int
-pipe_open (struct serial *scb, const char *name)
+int
+serial_pipe_ops::open (struct serial *scb, const char *name)
 {
 #if !HAVE_SOCKETPAIR
   return -1;
@@ -65,8 +86,8 @@ pipe_open (struct serial *scb, const char *name)
     return -1;
   if (gdb_socketpair_cloexec (AF_UNIX, SOCK_STREAM, 0, err_pdes) < 0)
     {
-      close (pdes[0]);
-      close (pdes[1]);
+      ::close (pdes[0]);
+      ::close (pdes[1]);
       return -1;
     }
 
@@ -79,17 +100,17 @@ pipe_open (struct serial *scb, const char *name)
   /* Error.  */
   if (pid == -1)
     {
-      close (pdes[0]);
-      close (pdes[1]);
-      close (err_pdes[0]);
-      close (err_pdes[1]);
+      ::close (pdes[0]);
+      ::close (pdes[1]);
+      ::close (err_pdes[0]);
+      ::close (err_pdes[1]);
       return -1;
     }
 
   if (fcntl (err_pdes[0], F_SETFL, O_NONBLOCK) == -1)
     {
-      close (err_pdes[0]);
-      close (err_pdes[1]);
+      ::close (err_pdes[0]);
+      ::close (err_pdes[1]);
       err_pdes[0] = err_pdes[1] = -1;
     }
 
@@ -106,19 +127,19 @@ pipe_open (struct serial *scb, const char *name)
 #endif
 
       /* Re-wire pdes[1] to stdin/stdout.  */
-      close (pdes[0]);
+      ::close (pdes[0]);
       if (pdes[1] != STDOUT_FILENO)
 	{
 	  dup2 (pdes[1], STDOUT_FILENO);
-	  close (pdes[1]);
+	  ::close (pdes[1]);
 	}
       dup2 (STDOUT_FILENO, STDIN_FILENO);
 
       if (err_pdes[0] != -1)
 	{
-	  close (err_pdes[0]);
+	  ::close (err_pdes[0]);
 	  dup2 (err_pdes[1], STDERR_FILENO);
-	  close (err_pdes[1]);
+	  ::close (err_pdes[1]);
 	}
 
       close_most_fds ();
@@ -127,9 +148,9 @@ pipe_open (struct serial *scb, const char *name)
     }
 
   /* Parent.  */
-  close (pdes[1]);
+  ::close (pdes[1]);
   if (err_pdes[1] != -1)
-    close (err_pdes[1]);
+    ::close (err_pdes[1]);
   /* :end chunk */
   state = XNEW (struct pipe_state);
   state->pid = pid;
@@ -143,12 +164,12 @@ pipe_open (struct serial *scb, const char *name)
 #endif
 }
 
-static void
-pipe_close (struct serial *scb)
+void
+serial_pipe_ops::close (struct serial *scb)
 {
   struct pipe_state *state = (struct pipe_state *) scb->state;
 
-  close (scb->fd);
+  ::close (scb->fd);
   scb->fd = -1;
 
   if (state != NULL)
@@ -178,7 +199,7 @@ pipe_close (struct serial *scb)
 	}
 
       if (scb->error_fd != -1)
-	close (scb->error_fd);
+	::close (scb->error_fd);
       scb->error_fd = -1;
       xfree (state);
       scb->state = NULL;
@@ -203,33 +224,10 @@ gdb_pipe (int pdes[2])
 #endif
 }
 
-static const struct serial_ops pipe_ops =
-{
-  "pipe",
-  pipe_open,
-  pipe_close,
-  NULL,
-  ser_base_readchar,
-  ser_base_write,
-  ser_base_flush_output,
-  ser_base_flush_input,
-  ser_base_send_break,
-  ser_base_raw,
-  ser_base_get_tty_state,
-  ser_base_copy_tty_state,
-  ser_base_set_tty_state,
-  ser_base_print_tty_state,
-  ser_base_setbaudrate,
-  ser_base_setstopbits,
-  ser_base_setparity,
-  ser_base_drain_output,
-  ser_base_async,
-  ser_unix_read_prim,
-  ser_unix_write_prim
-};
+static struct serial_pipe_ops serial_pipe_ops;
 
 void
 _initialize_ser_pipe (void)
 {
-  serial_add_interface (&pipe_ops);
+  serial_add_interface (&serial_pipe_ops);
 }

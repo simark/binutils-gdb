@@ -83,6 +83,29 @@ static unsigned int tcp_retry_limit = 15;
 
 #define POLL_INTERVAL 5
 
+#ifndef USE_WIN32API
+
+/* The TCP ops.  */
+
+struct serial_tcp_ops : public serial_ops
+{
+  serial_tcp_ops ()
+  : serial_ops ("tcp")
+  {}
+
+  virtual int open (struct serial *, const char *name) override;
+  virtual void close (struct serial *) override;
+  virtual int send_break (struct serial *) override;
+  /* Perform a low-level read operation, reading (at most) COUNT
+     bytes into SCB->BUF.  Return zero at end of file.  */
+  virtual int read_prim (struct serial *scb, size_t count) override;
+  /* Perform a low-level write operation, writing (at most) COUNT
+     bytes from BUF.  */
+  virtual int write_prim (struct serial *scb, const void *buf, size_t count) override;
+};
+
+#endif /* USE_WIN32API */
+
 /* Helper function to wait a while.  If SOCK is not -1, wait on its
    file descriptor.  Otherwise just wait on a timeout, updating
    *POLLS.  Returns -1 on timeout or interrupt, otherwise the value of
@@ -274,7 +297,7 @@ try_connect (const struct addrinfo *ainfo, unsigned int *polls)
 /* Open a tcp socket.  */
 
 int
-net_open (struct serial *scb, const char *name)
+serial_tcp_ops::open (struct serial *scb, const char *name)
 {
   struct addrinfo hint;
   struct addrinfo *ainfo;
@@ -358,7 +381,7 @@ net_open (struct serial *scb, const char *name)
 
   if (success_ainfo == NULL)
     {
-      net_close (scb);
+      this->close (scb);
       return -1;
     }
 
@@ -390,17 +413,17 @@ net_open (struct serial *scb, const char *name)
 }
 
 void
-net_close (struct serial *scb)
+serial_tcp_ops::close (struct serial *scb)
 {
   if (scb->fd == -1)
     return;
 
-  close (scb->fd);
+  ::close (scb->fd);
   scb->fd = -1;
 }
 
 int
-net_read_prim (struct serial *scb, size_t count)
+serial_tcp_ops::read_prim (struct serial *scb, size_t count)
 {
   /* Need to cast to silence -Wpointer-sign on MinGW, as Winsock's
      'recv' takes 'char *' as second argument, while 'scb->buf' is
@@ -409,7 +432,7 @@ net_read_prim (struct serial *scb, size_t count)
 }
 
 int
-net_write_prim (struct serial *scb, const void *buf, size_t count)
+serial_tcp_ops::write_prim (struct serial *scb, const void *buf, size_t count)
 {
   /* On Windows, the second parameter to send is a "const char *"; on
      UNIX systems it is generally "const void *".  The cast to "const
@@ -419,7 +442,7 @@ net_write_prim (struct serial *scb, const void *buf, size_t count)
 }
 
 int
-ser_tcp_send_break (struct serial *scb)
+serial_tcp_ops::send_break (struct serial *scb)
 {
   /* Send telnet IAC and BREAK characters.  */
   return (serial_write (scb, "\377\363", 2));
@@ -440,35 +463,8 @@ show_tcp_cmd (const char *args, int from_tty)
 }
 
 #ifndef USE_WIN32API
-
-/* The TCP ops.  */
-
-static const struct serial_ops tcp_ops =
-{
-  "tcp",
-  net_open,
-  net_close,
-  NULL,
-  ser_base_readchar,
-  ser_base_write,
-  ser_base_flush_output,
-  ser_base_flush_input,
-  ser_tcp_send_break,
-  ser_base_raw,
-  ser_base_get_tty_state,
-  ser_base_copy_tty_state,
-  ser_base_set_tty_state,
-  ser_base_print_tty_state,
-  ser_base_setbaudrate,
-  ser_base_setstopbits,
-  ser_base_setparity,
-  ser_base_drain_output,
-  ser_base_async,
-  net_read_prim,
-  net_write_prim
-};
-
-#endif /* USE_WIN32API */
+static struct serial_tcp_ops serial_tcp_ops;
+#endif
 
 void
 _initialize_ser_tcp (void)
@@ -477,7 +473,7 @@ _initialize_ser_tcp (void)
   /* Do nothing; the TCP serial operations will be initialized in
      ser-mingw.c.  */
 #else
-  serial_add_interface (&tcp_ops);
+  serial_add_interface (&serial_tcp_ops);
 #endif /* USE_WIN32API */
 
   add_prefix_cmd ("tcp", class_maintenance, set_tcp_cmd, _("\

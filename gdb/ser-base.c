@@ -270,10 +270,7 @@ ser_base_read_error_fd (struct serial *scb, int close_fd)
 	  char *current;
 	  char *newline;
 	  int to_read = GDB_MI_MSG_WIDTH;
-	  int num_bytes = -1;
-
-	  if (scb->ops->avail)
-	    num_bytes = (scb->ops->avail)(scb, scb->error_fd);
+	  int num_bytes = scb->ops->avail (scb, scb->error_fd);
 
 	  if (num_bytes != -1)
 	    to_read = (num_bytes < to_read) ? num_bytes : to_read;
@@ -465,13 +462,13 @@ generic_readchar (struct serial *scb, int timeout,
 }
 
 int
-ser_base_readchar (struct serial *scb, int timeout)
+serial_ops::readchar (struct serial *scb, int timeout)
 {
   return generic_readchar (scb, timeout, do_ser_base_readchar);
 }
 
 int
-ser_base_write (struct serial *scb, const void *buf, size_t count)
+serial_ops::write (struct serial *scb, const void *buf, size_t count)
 {
   const char *str = (const char *) buf;
   int cc;
@@ -495,13 +492,13 @@ ser_base_write (struct serial *scb, const void *buf, size_t count)
 }
 
 int
-ser_base_flush_output (struct serial *scb)
+serial_ops::flush_output (struct serial *scb)
 {
   return 0;
 }
 
 int
-ser_base_flush_input (struct serial *scb)
+serial_ops::flush_input (struct serial *scb)
 {
   if (scb->bufcnt >= 0)
     {
@@ -514,60 +511,60 @@ ser_base_flush_input (struct serial *scb)
 }
 
 int
-ser_base_send_break (struct serial *scb)
+serial_ops::send_break (struct serial *scb)
 {
   return 0;
 }
 
 int
-ser_base_drain_output (struct serial *scb)
+serial_ops::drain_output (struct serial *scb)
 {
   return 0;
 }
 
 void
-ser_base_raw (struct serial *scb)
+serial_ops::go_raw (struct serial *scb)
 {
   return;			/* Always in raw mode.  */
 }
 
 serial_ttystate
-ser_base_get_tty_state (struct serial *scb)
+serial_ops::get_tty_state (struct serial *scb)
 {
   /* Allocate a dummy.  */
   return (serial_ttystate) XNEW (int);
 }
 
 serial_ttystate
-ser_base_copy_tty_state (struct serial *scb, serial_ttystate ttystate)
+serial_ops::copy_tty_state (struct serial *scb, serial_ttystate ttystate)
 {
   /* Allocate another dummy.  */
   return (serial_ttystate) XNEW (int);
 }
 
 int
-ser_base_set_tty_state (struct serial *scb, serial_ttystate ttystate)
+serial_ops::set_tty_state (struct serial *scb, serial_ttystate ttystate)
 {
   return 0;
 }
 
 void
-ser_base_print_tty_state (struct serial *scb, 
-			  serial_ttystate ttystate,
-			  struct ui_file *stream)
+serial_ops::print_tty_state (struct serial *scb,
+			     serial_ttystate ttystate,
+			     struct ui_file *stream)
 {
   /* Nothing to print.  */
   return;
 }
 
 int
-ser_base_setbaudrate (struct serial *scb, int rate)
+serial_ops::setbaudrate (struct serial *scb, int rate)
 {
   return 0;			/* Never fails!  */
 }
 
 int
-ser_base_setstopbits (struct serial *scb, int num)
+serial_ops::setstopbits (struct serial *scb, int num)
 {
   return 0;			/* Never fails!  */
 }
@@ -575,7 +572,7 @@ ser_base_setstopbits (struct serial *scb, int num)
 /* Implement the "setparity" serial_ops callback.  */
 
 int
-ser_base_setparity (struct serial *scb, int parity)
+serial_ops::setparity (struct serial *scb, int parity)
 {
   return 0;			/* Never fails!  */
 }
@@ -583,8 +580,7 @@ ser_base_setparity (struct serial *scb, int parity)
 /* Put the SERIAL device into/out-of ASYNC mode.  */
 
 void
-ser_base_async (struct serial *scb,
-		int async_p)
+serial_ops::async (struct serial *scb, int async_p)
 {
   if (async_p)
     {

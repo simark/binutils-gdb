@@ -34,6 +34,20 @@
    descriptors back to Windows handles by calling serial->wait_handle,
    nothing ever actually waits on that file descriptor.  */
 
+struct serial_event_ops : public serial_ops
+{
+  serial_event_ops ()
+  : serial_ops ("event")
+  {}
+
+  virtual int open (struct serial *, const char *name) override;
+  virtual void close (struct serial *) override;
+
+#ifdef USE_WIN32API
+  virtual void wait_handle (struct serial *scb, HANDLE *read, HANDLE *except);
+#endif
+};
+
 struct serial_event_state
   {
 #ifdef USE_WIN32API
@@ -48,8 +62,8 @@ struct serial_event_state
 
 /* Open a new serial event.  */
 
-static int
-serial_event_open (struct serial *scb, const char *name)
+int
+serial_event_ops::open (struct serial *scb, const char *name)
 {
   struct serial_event_state *state;
 
@@ -90,14 +104,14 @@ serial_event_open (struct serial *scb, const char *name)
   return 0;
 }
 
-static void
-serial_event_close (struct serial *scb)
+void
+serial_event_ops::close (struct serial *scb)
 {
   struct serial_event_state *state = (struct serial_event_state *) scb->state;
 
-  close (scb->fd);
+  ::close (scb->fd);
 #ifndef USE_WIN32API
-  close (state->write_fd);
+  ::close (state->write_fd);
 #else
   CloseHandle (state->event);
 #endif
@@ -128,34 +142,7 @@ serial_event_wait_handle (struct serial *scb, HANDLE *read, HANDLE *except)
    is internal implementation detail never to be used by remote
    targets for protocol transport.  */
 
-static const struct serial_ops serial_event_ops =
-{
-  "event",
-  serial_event_open,
-  serial_event_close,
-  NULL, /* fdopen */
-  NULL, /* readchar */
-  NULL, /* write */
-  NULL, /* flush_output */
-  NULL, /* flush_input */
-  NULL, /* send_break */
-  NULL, /* go_raw */
-  NULL, /* get_tty_state */
-  NULL, /* copy_tty_state */
-  NULL, /* set_tty_state */
-  NULL, /* print_tty_state */
-  NULL, /* setbaudrate */
-  NULL, /* setstopbits */
-  NULL, /* setparity */
-  NULL, /* drain_output */
-  NULL, /* async */
-  NULL, /* read_prim */
-  NULL, /* write_prim */
-  NULL, /* avail */
-#ifdef USE_WIN32API
-  serial_event_wait_handle,
-#endif
-};
+static struct serial_event_ops serial_event_ops;
 
 /* See ser-event.h.  */
 

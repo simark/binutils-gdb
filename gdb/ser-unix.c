@@ -33,6 +33,42 @@
 #include "filestuff.h"
 #include <termios.h>
 
+/* The hardwire ops.  */
+
+struct serial_hardwire_ops : public serial_ops
+{
+  serial_hardwire_ops ()
+  : serial_ops ("hardwire")
+  {}
+
+  virtual int open (struct serial *, const char *name) override;
+  virtual void close (struct serial *) override;
+  /* Discard pending output */
+  virtual int flush_output (struct serial *) override;
+  /* Discard pending input */
+  virtual int flush_input (struct serial *) override;
+  virtual int send_break (struct serial *) override;
+  virtual void go_raw (struct serial *) override;
+  virtual serial_ttystate get_tty_state (struct serial *) override;
+  virtual serial_ttystate copy_tty_state (struct serial *, serial_ttystate) override;
+  virtual int set_tty_state (struct serial *, serial_ttystate) override;
+  virtual void print_tty_state (struct serial *, serial_ttystate,
+				struct ui_file *) override;
+  virtual int setbaudrate (struct serial *, int rate) override;
+  virtual int setstopbits (struct serial *, int num) override;
+  /* Set the value PARITY as parity setting for serial object.
+     Return 0 in the case of success.  */
+  virtual int setparity (struct serial *, int parity) override;
+  /* Wait for output to drain.  */
+  virtual int drain_output (struct serial *) override;
+  /* Perform a low-level read operation, reading (at most) COUNT
+     bytes into SCB->BUF.  Return zero at end of file.  */
+  virtual int read_prim (struct serial *scb, size_t count) override;
+  /* Perform a low-level write operation, writing (at most) COUNT
+     bytes from BUF.  */
+  virtual int write_prim (struct serial *scb, const void *buf, size_t count) override;
+};
+
 struct hardwire_ttystate
   {
     struct termios termios;
@@ -49,30 +85,11 @@ show_serial_hwflow (struct ui_file *file, int from_tty,
 }
 #endif
 
-static int hardwire_open (struct serial *scb, const char *name);
-static void hardwire_raw (struct serial *scb);
-static int rate_to_code (int rate);
-static int hardwire_setbaudrate (struct serial *scb, int rate);
-static int hardwire_setparity (struct serial *scb, int parity);
-static void hardwire_close (struct serial *scb);
-static int get_tty_state (struct serial *scb,
-			  struct hardwire_ttystate * state);
-static int set_tty_state (struct serial *scb,
-			  struct hardwire_ttystate * state);
-static serial_ttystate hardwire_get_tty_state (struct serial *scb);
-static int hardwire_set_tty_state (struct serial *scb, serial_ttystate state);
-static void hardwire_print_tty_state (struct serial *, serial_ttystate,
-				      struct ui_file *);
-static int hardwire_drain_output (struct serial *);
-static int hardwire_flush_output (struct serial *);
-static int hardwire_flush_input (struct serial *);
-static int hardwire_send_break (struct serial *);
-static int hardwire_setstopbits (struct serial *, int);
 
 /* Open up a real live device for serial I/O.  */
 
-static int
-hardwire_open (struct serial *scb, const char *name)
+int
+serial_hardwire_ops::open (struct serial *scb, const char *name)
 {
   scb->fd = gdb_open_cloexec (name, O_RDWR, 0);
   if (scb->fd < 0)
@@ -99,12 +116,12 @@ set_tty_state (struct serial *scb, struct hardwire_ttystate *state)
   return 0;
 }
 
-static serial_ttystate
-hardwire_get_tty_state (struct serial *scb)
+serial_ttystate
+serial_hardwire_ops::get_tty_state (struct serial *scb)
 {
   struct hardwire_ttystate *state = XNEW (struct hardwire_ttystate);
 
-  if (get_tty_state (scb, state))
+  if (::get_tty_state (scb, state))
     {
       xfree (state);
       return NULL;
@@ -113,8 +130,8 @@ hardwire_get_tty_state (struct serial *scb)
   return (serial_ttystate) state;
 }
 
-static serial_ttystate
-hardwire_copy_tty_state (struct serial *scb, serial_ttystate ttystate)
+serial_ttystate
+serial_hardwire_ops::copy_tty_state (struct serial *scb, serial_ttystate ttystate)
 {
   struct hardwire_ttystate *state = XNEW (struct hardwire_ttystate);
 
@@ -123,20 +140,20 @@ hardwire_copy_tty_state (struct serial *scb, serial_ttystate ttystate)
   return (serial_ttystate) state;
 }
 
-static int
-hardwire_set_tty_state (struct serial *scb, serial_ttystate ttystate)
+int
+serial_hardwire_ops::set_tty_state (struct serial *scb, serial_ttystate ttystate)
 {
   struct hardwire_ttystate *state;
 
   state = (struct hardwire_ttystate *) ttystate;
 
-  return set_tty_state (scb, state);
+  return ::set_tty_state (scb, state);
 }
 
-static void
-hardwire_print_tty_state (struct serial *scb,
-			  serial_ttystate ttystate,
-			  struct ui_file *stream)
+void
+serial_hardwire_ops::print_tty_state (struct serial *scb,
+				      serial_ttystate ttystate,
+				      struct ui_file *stream)
 {
   struct hardwire_ttystate *state = (struct hardwire_ttystate *) ttystate;
   int i;
@@ -161,38 +178,38 @@ hardwire_print_tty_state (struct serial *scb,
 /* Wait for the output to drain away, as opposed to flushing
    (discarding) it.  */
 
-static int
-hardwire_drain_output (struct serial *scb)
+int
+serial_hardwire_ops::drain_output (struct serial *scb)
 {
   return tcdrain (scb->fd);
 }
 
-static int
-hardwire_flush_output (struct serial *scb)
+int
+serial_hardwire_ops::flush_output (struct serial *scb)
 {
   return tcflush (scb->fd, TCOFLUSH);
 }
 
-static int
-hardwire_flush_input (struct serial *scb)
+int
+serial_hardwire_ops::flush_input (struct serial *scb)
 {
-  ser_base_flush_input (scb);
+  serial_ops::flush_input (scb);
 
   return tcflush (scb->fd, TCIFLUSH);
 }
 
-static int
-hardwire_send_break (struct serial *scb)
+int
+serial_hardwire_ops::send_break (struct serial *scb)
 {
   return tcsendbreak (scb->fd, 0);
 }
 
-static void
-hardwire_raw (struct serial *scb)
+void
+serial_hardwire_ops::go_raw (struct serial *scb)
 {
   struct hardwire_ttystate state;
 
-  if (get_tty_state (scb, &state))
+  if (::get_tty_state (scb, &state))
     fprintf_unfiltered (gdb_stderr, "get_tty_state failed: %s\n",
 			safe_strerror (errno));
 
@@ -217,7 +234,7 @@ hardwire_raw (struct serial *scb)
   state.termios.c_cc[VMIN] = 0;
   state.termios.c_cc[VTIME] = 0;
 
-  if (set_tty_state (scb, &state))
+  if (::set_tty_state (scb, &state))
     fprintf_unfiltered (gdb_stderr, "set_tty_state failed: %s\n",
 			safe_strerror (errno));
 }
@@ -367,8 +384,8 @@ rate_to_code (int rate)
   return -1;
 }
 
-static int
-hardwire_setbaudrate (struct serial *scb, int rate)
+int
+serial_hardwire_ops::setbaudrate (struct serial *scb, int rate)
 {
   struct hardwire_ttystate state;
   int baud_code = rate_to_code (rate);
@@ -381,22 +398,22 @@ hardwire_setbaudrate (struct serial *scb, int rate)
       return -1;
     }
 
-  if (get_tty_state (scb, &state))
+  if (::get_tty_state (scb, &state))
     return -1;
 
   cfsetospeed (&state.termios, baud_code);
   cfsetispeed (&state.termios, baud_code);
 
-  return set_tty_state (scb, &state);
+  return ::set_tty_state (scb, &state);
 }
 
-static int
-hardwire_setstopbits (struct serial *scb, int num)
+int
+serial_hardwire_ops::setstopbits (struct serial *scb, int num)
 {
   struct hardwire_ttystate state;
   int newbit;
 
-  if (get_tty_state (scb, &state))
+  if (::get_tty_state (scb, &state))
     return -1;
 
   switch (num)
@@ -417,18 +434,18 @@ hardwire_setstopbits (struct serial *scb, int num)
   else
     state.termios.c_cflag |= CSTOPB;	/* two bits */
 
-  return set_tty_state (scb, &state);
+  return ::set_tty_state (scb, &state);
 }
 
 /* Implement the "setparity" serial_ops callback.  */
 
-static int
-hardwire_setparity (struct serial *scb, int parity)
+int
+serial_hardwire_ops::setparity (struct serial *scb, int parity)
 {
   struct hardwire_ttystate state;
   int newparity = 0;
 
-  if (get_tty_state (scb, &state))
+  if (::get_tty_state (scb, &state))
     return -1;
 
   switch (parity)
@@ -451,53 +468,26 @@ hardwire_setparity (struct serial *scb, int parity)
   state.termios.c_cflag &= ~(PARENB | PARODD);
   state.termios.c_cflag |= newparity;
 
-  return set_tty_state (scb, &state);
+  return ::set_tty_state (scb, &state);
 }
 
 
-static void
-hardwire_close (struct serial *scb)
+void
+serial_hardwire_ops::close (struct serial *scb)
 {
   if (scb->fd < 0)
     return;
 
-  close (scb->fd);
+  ::close (scb->fd);
   scb->fd = -1;
 }
-
-
 
-/* The hardwire ops.  */
-
-static const struct serial_ops hardwire_ops =
-{
-  "hardwire",
-  hardwire_open,
-  hardwire_close,
-  NULL,
-  ser_base_readchar,
-  ser_base_write,
-  hardwire_flush_output,
-  hardwire_flush_input,
-  hardwire_send_break,
-  hardwire_raw,
-  hardwire_get_tty_state,
-  hardwire_copy_tty_state,
-  hardwire_set_tty_state,
-  hardwire_print_tty_state,
-  hardwire_setbaudrate,
-  hardwire_setstopbits,
-  hardwire_setparity,
-  hardwire_drain_output,
-  ser_base_async,
-  ser_unix_read_prim,
-  ser_unix_write_prim
-};
+static struct serial_hardwire_ops serial_hardwire_ops;
 
 void
 _initialize_ser_hardwire (void)
 {
-  serial_add_interface (&hardwire_ops);
+  serial_add_interface (&serial_hardwire_ops);
 
 #ifdef CRTSCTS
   add_setshow_boolean_cmd ("remoteflow", no_class,
@@ -519,7 +509,19 @@ ser_unix_read_prim (struct serial *scb, size_t count)
 }
 
 int
+serial_hardwire_ops::read_prim (struct serial *scb, size_t count)
+{
+  return ser_unix_read_prim (scb, count);
+}
+
+int
 ser_unix_write_prim (struct serial *scb, const void *buf, size_t len)
 {
   return write (scb->fd, buf, len);
+}
+
+int
+serial_hardwire_ops::write_prim (struct serial *scb, const void *buf, size_t len)
+{
+  return ser_unix_write_prim (scb, buf, len);
 }
