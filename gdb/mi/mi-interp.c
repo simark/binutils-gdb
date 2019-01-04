@@ -129,10 +129,9 @@ mi_interp::init (bool top_level)
   mi->targ = new mi_console_file (mi->raw_stdout, "@", '"');
   mi->event_channel = new mi_console_file (mi->raw_stdout, "=", 0);
 
-  /* INTERP_MI selects the most recent released version.  "mi2" was
-     released as part of GDB 6.0.  */
+  /* INTERP_MI selects the most recent released version.  */
   if (strcmp (name (), INTERP_MI) == 0)
-    mi_version = 2;
+    mi_version = 3;
   else if (strcmp (name (), INTERP_MI1) == 0)
     mi_version = 1;
   else if (strcmp (name (), INTERP_MI2) == 0)
