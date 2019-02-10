@@ -2911,7 +2911,7 @@ efp_pseudo_register_read (struct gdbarch *gdbarch, readable_regcache *regcache,
 /* Write method for POWER7 Extended FP pseudo-registers.  */
 static void
 efp_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
-			    int reg_nr, const gdb_byte *buffer)
+			   int reg_nr, const gdb_byte *buffer)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   int reg_index, vr0;
@@ -2921,6 +2921,10 @@ efp_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
     {
       reg_index = reg_nr - tdep->ppc_efpr0_regnum;
       vr0 = PPC_VR0_REGNUM;
+
+      /* Write the portion that overlaps the VMX register.  */
+      regcache->raw_write_part (vr0 + reg_index, offset,
+    			    register_size (gdbarch, reg_nr), buffer);
     }
   else
     {
@@ -2929,18 +2933,12 @@ efp_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
       reg_index = reg_nr - tdep->ppc_cefpr0_regnum;
       vr0 = PPC_CVR0_REGNUM;
 
-      /* The call to raw_write_part fails silently if the initial read
-	 of the read-update-write sequence returns an invalid status,
-	 so we check this manually and throw an error if needed.  */
-      regcache->raw_update (vr0 + reg_index);
-      if (regcache->get_register_status (vr0 + reg_index) != REG_VALID)
+      /* Write the portion that overlaps the VMX register.  */
+      if (!regcache->raw_write_part (vr0 + reg_index, offset,
+				     register_size (gdbarch, reg_nr), buffer))
 	error (_("Cannot write to the checkpointed EFP register, "
 		 "the corresponding vector register is unavailable."));
     }
-
-  /* Write the portion that overlaps the VMX register.  */
-  regcache->raw_write_part (vr0 + reg_index, offset,
-			    register_size (gdbarch, reg_nr), buffer);
 }
 
 static enum register_status

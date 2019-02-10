@@ -910,12 +910,12 @@ readable_regcache::raw_read_part (int regnum, int offset, int len,
 
 /* See regcache.h.  */
 
-void
+bool
 regcache::raw_write_part (int regnum, int offset, int len,
 			  const gdb_byte *buf)
 {
   assert_regnum (regnum);
-  write_part (regnum, offset, len, buf, true);
+  return write_part (regnum, offset, len, buf, true) == REG_VALID;
 }
 
 /* See regcache.h.  */

@@ -354,8 +354,9 @@ public:
   void raw_update (int regnum) override;
 
   /* Partial transfer of raw registers.  Perform read, modify, write style
-     operations.  */
-  void raw_write_part (int regnum, int offset, int len, const gdb_byte *buf);
+     operations.  Return false if the initial read fails (the register value is
+     not available).  */
+  bool raw_write_part (int regnum, int offset, int len, const gdb_byte *buf);
 
   /* Partial transfer of a cooked register.  Perform read, modify, write style
      operations.  */
