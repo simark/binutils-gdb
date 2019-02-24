@@ -112,7 +112,7 @@ struct gdbsim_target final
 
   void kill () override;
 
-  void load (const char *, int) override;
+  void load (const char *) override;
 
   bool can_create_inferior () override { return true; }
   void create_inferior (const char *, const std::string &,
@@ -572,7 +572,7 @@ gdbsim_target::kill ()
    GDB's symbol tables to match.  */
 
 void
-gdbsim_target::load (const char *args, int fromtty)
+gdbsim_target::load (const char *args)
 {
   const char *prog;
   struct sim_inferior_data *sim_data
@@ -594,7 +594,7 @@ gdbsim_target::load (const char *args, int fromtty)
   /* FIXME: We will print two messages on error.
      Need error to either not print anything if passed NULL or need
      another routine that doesn't take any arguments.  */
-  if (sim_load (sim_data->gdbsim_desc, prog, NULL, fromtty) == SIM_RC_FAIL)
+  if (sim_load (sim_data->gdbsim_desc, prog, NULL) == SIM_RC_FAIL)
     error (_("unable to load program"));
 
   /* FIXME: If a load command should reset the targets registers then

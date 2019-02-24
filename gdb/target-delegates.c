@@ -50,7 +50,7 @@ struct dummy_target : public target_ops
   void terminal_ours () override;
   void terminal_info (const char *arg0, int arg1) override;
   void kill () override;
-  void load (const char *arg0, int arg1) override;
+  void load (const char *arg0) override;
   void post_startup_inferior (ptid_t arg0) override;
   int insert_fork_catchpoint (int arg0) override;
   int remove_fork_catchpoint (int arg0) override;
@@ -218,7 +218,7 @@ struct debug_target : public target_ops
   void terminal_ours () override;
   void terminal_info (const char *arg0, int arg1) override;
   void kill () override;
-  void load (const char *arg0, int arg1) override;
+  void load (const char *arg0) override;
   void post_startup_inferior (ptid_t arg0) override;
   int insert_fork_catchpoint (int arg0) override;
   int remove_fork_catchpoint (int arg0) override;
@@ -1356,26 +1356,24 @@ debug_target::kill ()
 }
 
 void
-target_ops::load (const char *arg0, int arg1)
+target_ops::load (const char *arg0)
 {
-  this->beneath ()->load (arg0, arg1);
+  this->beneath ()->load (arg0);
 }
 
 void
-dummy_target::load (const char *arg0, int arg1)
+dummy_target::load (const char *arg0)
 {
   tcomplain ();
 }
 
 void
-debug_target::load (const char *arg0, int arg1)
+debug_target::load (const char *arg0)
 {
   fprintf_unfiltered (gdb_stdlog, "-> %s->load (...)\n", this->beneath ()->shortname ());
-  this->beneath ()->load (arg0, arg1);
+  this->beneath ()->load (arg0);
   fprintf_unfiltered (gdb_stdlog, "<- %s->load (", this->beneath ()->shortname ());
   target_debug_print_const_char_p (arg0);
-  fputs_unfiltered (", ", gdb_stdlog);
-  target_debug_print_int (arg1);
   fputs_unfiltered (")\n", gdb_stdlog);
 }
 

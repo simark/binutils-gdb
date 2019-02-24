@@ -313,10 +313,10 @@ target_kill (void)
 }
 
 void
-target_load (const char *arg, int from_tty)
+target_load (const char *arg)
 {
   target_dcache_invalidate ();
-  current_top_target ()->load (arg, from_tty);
+  current_top_target ()->load (arg);
 }
 
 /* Define it.  */

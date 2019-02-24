@@ -1852,7 +1852,7 @@ load_command (const char *arg, int from_tty)
 	}
     }
 
-  target_load (arg, from_tty);
+  target_load (arg);
 
   /* After re-loading the executable, we don't really know which
      overlays are mapped any more.  */
@@ -2029,7 +2029,7 @@ static void print_transfer_performance (struct ui_file *stream,
 /* See symfile.h.  */
 
 void
-generic_load (const char *args, int from_tty)
+generic_load (const char *args)
 {
   struct load_progress_data total_progress;
   struct load_section_data cbdata (&total_progress);

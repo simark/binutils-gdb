@@ -4914,7 +4914,7 @@ sim_open (SIM_OPEN_KIND kind,
 /* Called by gdb to load a program into memory.  */
 
 SIM_RC
-sim_load (SIM_DESC sd, const char *prog, bfd *abfd, int from_tty)
+sim_load (SIM_DESC sd, const char *prog, bfd *abfd)
 {
   bfd *prog_bfd;
 

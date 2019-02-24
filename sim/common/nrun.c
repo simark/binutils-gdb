@@ -130,7 +130,7 @@ main (int argc, char **argv)
     printf ("%s %s\n", myname, name);
 
   /* Load the program into the simulator.  */
-  if (sim_load (sd, name, prog_bfd, 0) == SIM_RC_FAIL)
+  if (sim_load (sd, name, prog_bfd) == SIM_RC_FAIL)
     exit (1);
 
   /* Prepare the program for execution.  */

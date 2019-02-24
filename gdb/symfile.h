@@ -536,7 +536,7 @@ void map_symbol_filenames (symbol_filename_ftype *fun, void *data,
 
    ARGS should be in the form "EXECUTABLE [OFFSET]", where OFFSET is an
    optional offset to apply to each section.  */
-extern void generic_load (const char *args, int from_tty);
+extern void generic_load (const char *args);
 
 /* From dwarf2read.c */
 

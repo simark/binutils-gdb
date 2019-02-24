@@ -142,7 +142,7 @@ void sim_close (SIM_DESC sd, int quitting);
    Such manipulation should probably (?) occure in
    sim_create_inferior. */
 
-SIM_RC sim_load (SIM_DESC sd, const char *prog, struct bfd *abfd, int from_tty);
+SIM_RC sim_load (SIM_DESC sd, const char *prog, struct bfd *abfd);
 
 
 /* Prepare to run the simulated program.

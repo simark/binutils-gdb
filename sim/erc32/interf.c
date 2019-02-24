@@ -274,11 +274,10 @@ sim_close(sd, quitting)
 };
 
 SIM_RC
-sim_load(sd, prog, abfd, from_tty)
+sim_load(sd, prog, abfd)
      SIM_DESC sd;
      const char *prog;
      bfd *abfd;
-     int from_tty;
 {
     bfd_load (prog);
     return SIM_RC_OK;
