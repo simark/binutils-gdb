@@ -531,6 +531,21 @@ void expand_symtabs_matching
 void map_symbol_filenames (symbol_filename_ftype *fun, void *data,
 			   int need_fullname);
 
+/* Hook called while loading an executable in memory with the "load" command.
+
+   SECTION: Name of the section currently being loaded.
+   SECTION_SENT: Number of bytes sent of the section currently being loaded.
+   SECTION_SIZE: Total size of the section currently being loaded.
+   TOTAL_SENT: Number of bytes sent since the start of the load.
+   TOTAL_SIZE: Total number of bytes to send to complete the load.
+
+   If the hook returns true, the load is aborted.  */
+extern bool (*deprecated_load_progress_hook) (const char *section,
+					      unsigned long section_sent,
+					      unsigned long section_size,
+					      unsigned long total_sent,
+					      unsigned long total_size);
+
 /* Target-agnostic function to load the sections of an executable into memory.
 
    ARGS should be in the form "EXECUTABLE [OFFSET]", where OFFSET is an

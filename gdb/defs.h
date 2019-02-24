@@ -595,11 +595,6 @@ extern void (*deprecated_pre_add_symbol_hook) (const char *);
 extern void (*deprecated_post_add_symbol_hook) (void);
 extern void (*selected_frame_level_changed_hook) (int);
 extern int (*deprecated_ui_loop_hook) (int signo);
-extern void (*deprecated_show_load_progress) (const char *section,
-					      unsigned long section_sent, 
-					      unsigned long section_size, 
-					      unsigned long total_sent, 
-					      unsigned long total_size);
 extern void (*deprecated_print_frame_info_listing_hook) (struct symtab * s,
 							 int line,
 							 int stopline,
@@ -622,9 +617,6 @@ extern void (*deprecated_attach_hook) (void);
 extern void (*deprecated_detach_hook) (void);
 extern void (*deprecated_call_command_hook) (struct cmd_list_element * c,
 					     const char *cmd, int from_tty);
-
-extern int (*deprecated_ui_load_progress_hook) (const char *section,
-						unsigned long num);
 
 /* If this definition isn't overridden by the header files, assume
    that isatty and fileno exist on this system.  */

@@ -22,7 +22,7 @@
 
 struct ui_file;
 
-extern void mi_load_progress (const char *section_name,
+extern bool mi_load_progress (const char *section_name,
 			      unsigned long sent_so_far,
 			      unsigned long total_section,
 			      unsigned long total_sent,

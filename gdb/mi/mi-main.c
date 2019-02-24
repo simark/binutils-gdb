@@ -2156,7 +2156,7 @@ mi_execute_async_cli_command (const char *cli_command, char **argv, int argc)
   execute_command (run.c_str (), 0 /* from_tty */ );
 }
 
-void
+bool
 mi_load_progress (const char *section_name,
 		  unsigned long sent_so_far,
 		  unsigned long total_section,
@@ -2183,7 +2183,7 @@ mi_load_progress (const char *section_name,
   else if (current_interp_named_p (INTERP_MI3))
     uiout.reset (mi_out_new (3));
   else
-    return;
+    return false;
 
   scoped_restore save_uiout
     = make_scoped_restore (&current_uiout, uiout.get ());
@@ -2228,6 +2228,8 @@ mi_load_progress (const char *section_name,
       fputs_unfiltered ("\n", mi->raw_stdout);
       gdb_flush (mi->raw_stdout);
     }
+
+  return false;
 }
 
 static void

@@ -71,13 +71,13 @@
 
 #include "psymtab.h"
 
-int (*deprecated_ui_load_progress_hook) (const char *section,
-					 unsigned long num);
-void (*deprecated_show_load_progress) (const char *section,
-			    unsigned long section_sent,
-			    unsigned long section_size,
-			    unsigned long total_sent,
-			    unsigned long total_size);
+/* See symfile.h.  */
+
+bool (*deprecated_load_progress_hook) (const char *section,
+				       unsigned long section_sent,
+				       unsigned long section_size,
+				       unsigned long total_sent,
+				       unsigned long total_size);
 void (*deprecated_pre_add_symbol_hook) (const char *);
 void (*deprecated_post_add_symbol_hook) (void);
 
@@ -1956,17 +1956,13 @@ load_progress (ULONGEST bytes, void *untyped_arg)
   totals->write_count += 1;
   args->section_sent += bytes;
   if (check_quit_flag ()
-      || (deprecated_ui_load_progress_hook != NULL
-	  && deprecated_ui_load_progress_hook (args->section_name,
-					       args->section_sent)))
+      || (deprecated_load_progress_hook != NULL
+	  && deprecated_load_progress_hook (args->section_name,
+					    args->section_sent,
+					    args->section_size,
+					    totals->data_count,
+					    totals->total_size)))
     error (_("Canceled the download"));
-
-  if (deprecated_show_load_progress != NULL)
-    deprecated_show_load_progress (args->section_name,
-				   args->section_sent,
-				   args->section_size,
-				   totals->data_count,
-				   totals->total_size);
 }
 
 /* Callback service function for generic_load (bfd_map_over_sections).  */
