@@ -13951,7 +13951,7 @@ remote_target::augmented_libraries_svr4_read ()
 void
 remote_target::load (const char *args)
 {
-  generic_load (args);
+  generic_load (args, NULL);
 }
 
 /* Accepts an integer PID; returns a string representing a file that

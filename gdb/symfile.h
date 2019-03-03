@@ -540,17 +540,24 @@ void map_symbol_filenames (symbol_filename_ftype *fun, void *data,
    TOTAL_SIZE: Total number of bytes to send to complete the load.
 
    If the hook returns true, the load is aborted.  */
-extern bool (*deprecated_load_progress_hook) (const char *section,
-					      unsigned long section_sent,
-					      unsigned long section_size,
-					      unsigned long total_sent,
-					      unsigned long total_size);
+//extern bool (*deprecated_load_progress_hook) (const char *section,
+//					      unsigned long section_sent,
+//					      unsigned long section_size,
+//					      unsigned long total_sent,
+//					      unsigned long total_size);
+typedef gdb::function_view<bool(const char *section,
+				unsigned long section_sent,
+				unsigned long section_size,
+				unsigned long total_sent,
+				unsigned long total_size)>
+  generic_load_progress_callback_ftype;
 
 /* Target-agnostic function to load the sections of an executable into memory.
 
    ARGS should be in the form "EXECUTABLE [OFFSET]", where OFFSET is an
    optional offset to apply to each section.  */
-extern void generic_load (const char *args);
+extern void generic_load (const char *args,
+			  generic_load_progress_callback_ftype progress);
 
 /* From dwarf2read.c */
 

@@ -180,8 +180,6 @@ mi_interp::resume ()
   /* Replace all the hooks that we know about.  There really needs to
      be a better way of doing this... */
   clear_interpreter_hooks ();
-
-  deprecated_load_progress_hook = mi_load_progress;
 }
 
 void

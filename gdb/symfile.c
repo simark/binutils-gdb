@@ -73,11 +73,11 @@
 
 /* See symfile.h.  */
 
-bool (*deprecated_load_progress_hook) (const char *section,
-				       unsigned long section_sent,
-				       unsigned long section_size,
-				       unsigned long total_sent,
-				       unsigned long total_size);
+//bool (*deprecated_load_progress_hook) (const char *section,
+//				       unsigned long section_sent,
+//				       unsigned long section_size,
+//				       unsigned long total_sent,
+//				       unsigned long total_size);
 void (*deprecated_pre_add_symbol_hook) (const char *);
 void (*deprecated_post_add_symbol_hook) (void);
 
@@ -1862,6 +1862,8 @@ struct load_progress_data
   unsigned long write_count = 0;
   unsigned long data_count = 0;
   bfd_size_type total_size = 0;
+
+  generic_load_progress_callback_ftype progress;
 };
 
 /* Opaque data for load_progress for a single section.  */
@@ -1956,12 +1958,12 @@ load_progress (ULONGEST bytes, void *untyped_arg)
   totals->write_count += 1;
   args->section_sent += bytes;
   if (check_quit_flag ()
-      || (deprecated_load_progress_hook != NULL
-	  && deprecated_load_progress_hook (args->section_name,
-					    args->section_sent,
-					    args->section_size,
-					    totals->data_count,
-					    totals->total_size)))
+      || (totals->progress
+	  && totals->progress (args->section_name,
+			       args->section_sent,
+			       args->section_size,
+			       totals->data_count,
+			       totals->total_size)))
     error (_("Canceled the download"));
 }
 
@@ -2000,11 +2002,13 @@ static void print_transfer_performance (struct ui_file *stream,
 /* See symfile.h.  */
 
 void
-generic_load (const char *args)
+generic_load (const char *args, generic_load_progress_callback_ftype progress)
 {
   struct load_progress_data total_progress;
   struct load_section_data cbdata (&total_progress);
   struct ui_out *uiout = current_uiout;
+
+  total_progress.progress = progress;
 
   if (args == NULL)
     error_no_arg (_("file to load"));
