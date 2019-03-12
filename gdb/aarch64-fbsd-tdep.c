@@ -29,6 +29,9 @@
 #include "tramp-frame.h"
 #include "trad-frame.h"
 
+namespace gdb
+{
+
 /* Register maps.  */
 
 static const struct regcache_map_entry aarch64_fbsd_gregmap[] =

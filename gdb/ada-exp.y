@@ -55,6 +55,8 @@
 #define GDB_YY_REMAP_PREFIX ada_
 #include "yy-remap.h"
 
+namespace gdb {
+
 struct name_info {
   struct symbol *sym;
   struct minimal_symbol *msym;
@@ -721,10 +723,15 @@ primary	:	'*' primary		%prec '.'
 
 static struct obstack temp_parse_space;
 
+} /* namespace gdb */
+
 /* The following kludge was found necessary to prevent conflicts between */
 /* defs.h and non-standard stdlib.h files.  */
 #define qsort __qsort__dummy
 #include "ada-lex.c"
+
+namespace gdb
+{
 
 int
 ada_parse (struct parser_state *par_state)
@@ -1467,3 +1474,5 @@ _initialize_ada_exp (void)
 {
   obstack_init (&temp_parse_space);
 }
+
+} /* namespace gdb */
