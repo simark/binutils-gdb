@@ -21,11 +21,10 @@
 #ifndef AMD64_TDEP_H
 #define AMD64_TDEP_H
 
-struct gdbarch;
-struct frame_info;
-struct regcache;
-
 #include "i386-tdep.h"
+
+struct gdbarch;
+struct regcache;
 
 /* Register numbers of various important registers.  */
 
