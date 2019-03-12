@@ -20,6 +20,9 @@
 #include "main.h"
 #include "interps.h"
 
+namespace gdb
+{
+
 int
 main (int argc, char **argv)
 {
@@ -31,3 +34,5 @@ main (int argc, char **argv)
   args.interpreter_p = INTERP_CONSOLE;
   return gdb_main (&args);
 }
+
+} /* namespace gdb */

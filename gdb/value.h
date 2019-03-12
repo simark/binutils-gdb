@@ -24,6 +24,9 @@
 #include "extension.h"
 #include "common/gdb_ref_ptr.h"
 
+namespace gdb
+{
+
 struct block;
 struct expression;
 struct regcache;
@@ -623,11 +626,14 @@ extern void read_value_memory (struct value *val, LONGEST bit_offset,
 struct value *value_vector_widen (struct value *scalar_value,
 				  struct type *vector_type);
 
-
+} /* namespace gdb */
 
 #include "symtab.h"
 #include "gdbtypes.h"
 #include "expression.h"
+
+namespace gdb
+{
 
 struct frame_info;
 struct fn_field;
@@ -1188,5 +1194,7 @@ extern struct value *call_xmethod (struct value *method,
 
 extern int value_union_variant (struct type *union_type,
 				const gdb_byte *contents);
+
+} /* namespace gdb */
 
 #endif /* !defined (VALUE_H) */

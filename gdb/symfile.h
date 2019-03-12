@@ -28,11 +28,16 @@
 #include "gdb_bfd.h"
 #include "common/function-view.h"
 
+struct obstack;
+
+namespace gdb
+{
+
 /* Opaque declarations.  */
 struct target_section;
 struct objfile;
 struct obj_section;
-struct obstack;
+
 struct block;
 struct value;
 struct frame_info;
@@ -619,5 +624,7 @@ extern gdb_bfd_ref_ptr find_separate_debug_file_in_section (struct objfile *);
 /* True if we are printing debug output about separate debug info files.  */
 
 extern int separate_debug_file_debug;
+
+} /* namespace gdb */
 
 #endif /* !defined(SYMFILE_H) */

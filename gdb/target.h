@@ -22,6 +22,9 @@
 #if !defined (TARGET_H)
 #define TARGET_H
 
+namespace gdb
+{
+
 struct objfile;
 struct ui_file;
 struct mem_attrib;
@@ -39,6 +42,8 @@ struct traceframe_info;
 struct expression;
 struct dcache_struct;
 struct inferior;
+
+} /* namespace gdb */
 
 #include "infrun.h" /* For enum exec_direction_kind.  */
 #include "breakpoint.h" /* For enum bptype.  */
@@ -83,6 +88,9 @@ struct inferior;
 #include "tracepoint.h"
 
 #include "common/break-common.h" /* For enum target_hw_bp_type.  */
+
+namespace gdb
+{
 
 enum strata
   {
@@ -2564,5 +2572,7 @@ extern void target_prepare_to_generate_core (void);
 
 /* See to_done_generating_core.  */
 extern void target_done_generating_core (void);
+
+} /* namespace gdb */
 
 #endif /* !defined (TARGET_H) */

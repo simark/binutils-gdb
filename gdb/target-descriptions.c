@@ -1309,6 +1309,10 @@ public:
     printf_unfiltered ("#include \"target-descriptions.h\"\n");
     printf_unfiltered ("\n");
 
+    printf_unfiltered ("namespace gdb\n");
+    printf_unfiltered ("{\n");
+    printf_unfiltered ("\n");
+
     printf_unfiltered ("struct target_desc *tdesc_%s;\n", m_function);
     printf_unfiltered ("static void\n");
     printf_unfiltered ("initialize_tdesc_%s (void)\n", m_function);
@@ -1360,6 +1364,8 @@ public:
   {
     printf_unfiltered ("\n  tdesc_%s = result;\n", m_function);
     printf_unfiltered ("}\n");
+    printf_unfiltered ("\n");
+    printf_unfiltered ("} /* namespace gdb */\n");
   }
 
   void visit (const tdesc_type_builtin *type) override

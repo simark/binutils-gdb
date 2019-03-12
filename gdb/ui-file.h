@@ -22,6 +22,9 @@
 #include <string>
 #include "ui-style.h"
 
+namespace gdb
+{
+
 /* The abstract ui_file base class.  */
 
 class ui_file
@@ -263,5 +266,7 @@ private:
   ui_file *m_one, *m_two;
   bool m_close_one, m_close_two;
 };
+
+} /* namespace gdb */
 
 #endif

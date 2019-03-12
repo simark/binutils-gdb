@@ -21,6 +21,9 @@
 #include "target.h"
 #include "common/agent.h"
 
+namespace gdb
+{
+
 /* Enum strings for "set|show agent".  */
 
 static const char can_use_agent_on[] = "on";
@@ -51,8 +54,13 @@ set_can_use_agent (const char *args, int from_tty, struct cmd_list_element *c)
     can_use_agent = can_use_agent_off;
 }
 
+} /* namespace gdb */
+
 #include "observable.h"
 #include "objfiles.h"
+
+namespace gdb
+{
 
 static void
 agent_new_objfile (struct objfile *objfile)
@@ -82,3 +90,5 @@ target."),
 			show_can_use_agent,
 			&setlist, &showlist);
 }
+
+} /* namespace gdb */

@@ -22,12 +22,6 @@
 #ifndef IA64_LIBUNWIND_TDEP_H
 #define IA64_LIBUNWIND_TDEP_H 1
 
-struct frame_info;
-struct frame_id;
-struct regcache;
-struct gdbarch;
-struct frame_unwind;
-
 /* IA-64 is the only target that currently uses libunwind.  If some
    other target wants to use it, we will need to do some abstracting
    in order to make it possible to have more than one
@@ -36,7 +30,16 @@ struct frame_unwind;
    running on.  */
 #include "libunwind-ia64.h"
 
+namespace gdb
+{
+
+struct frame_info;
+struct frame_id;
+struct regcache;
+struct gdbarch;
+struct frame_unwind;
 struct libunwind_descr
+
 {
   int (*gdb2uw) (int);
   int (*uw2gdb) (int);
@@ -73,5 +76,7 @@ unw_word_t libunwind_find_dyn_list (unw_addr_space_t, unw_dyn_info_t *,
 int libunwind_get_reg_special (struct gdbarch *gdbarch,
 			       readable_regcache *regcache,
 			       int regnum, void *buf);
+
+} /* namespace gdb */
 
 #endif /* IA64_LIBUNWIND_TDEP_H */

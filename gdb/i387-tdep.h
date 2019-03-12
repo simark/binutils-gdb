@@ -20,6 +20,9 @@
 #ifndef I387_TDEP_H
 #define I387_TDEP_H
 
+namespace gdb
+{
+
 struct gdbarch;
 struct frame_info;
 struct regcache;
@@ -171,4 +174,7 @@ extern void i387_return_value (struct gdbarch *gdbarch,
    all memory range can be accessed.  */
 extern void i387_reset_bnd_regs (struct gdbarch *gdbarch,
 			         struct regcache *regcache);
+
+} /* namespace gdb */
+
 #endif /* i387-tdep.h */

@@ -26,6 +26,9 @@
 #include "common/vec.h"
 #include "expression.h"
 
+namespace gdb
+{
+
 struct block;
 struct language_defn;
 struct internalvar;
@@ -449,5 +452,6 @@ extern void mark_completion_tag (enum type_code, const char *ptr,
 
 extern void increase_expout_size (struct parser_state *ps, size_t lenelt);
 
-#endif /* PARSER_DEFS_H */
+} /* namespace gdb */
 
+#endif /* PARSER_DEFS_H */

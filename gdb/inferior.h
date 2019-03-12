@@ -21,6 +21,9 @@
 #if !defined (INFERIOR_H)
 #define INFERIOR_H 1
 
+namespace gdb
+{
+
 struct target_waitstatus;
 struct frame_info;
 struct ui_file;
@@ -33,6 +36,8 @@ struct target_desc_info;
 struct continuation;
 struct inferior;
 struct thread_info;
+
+} /* namespace gdb */
 
 /* For bpstat.  */
 #include "breakpoint.h"
@@ -55,6 +60,9 @@ struct thread_info;
 
 #include "common/common-inferior.h"
 #include "gdbthread.h"
+
+namespace gdb
+{
 
 struct infcall_suspend_state;
 struct infcall_control_state;
@@ -604,9 +612,14 @@ private:
 
 extern struct inferior *inferior_list;
 
+} /* namespace gdb */
+
 /* Pull in the internals of the inferiors ranges and iterators.  Must
    be done after struct inferior is defined.  */
 #include "inferior-iter.h"
+
+namespace gdb
+{
 
 /* Return a range that can be used to walk over all inferiors
    inferiors, with range-for, safely.  I.e., it is safe to delete the
@@ -656,5 +669,7 @@ extern struct inferior *add_inferior_with_spaces (void);
 
 /* Print the current selected inferior.  */
 extern void print_selected_inferior (struct ui_out *uiout);
+
+} /* namespace gdb */
 
 #endif /* !defined (INFERIOR_H) */

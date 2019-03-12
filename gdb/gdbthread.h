@@ -21,8 +21,6 @@
 #ifndef GDBTHREAD_H
 #define GDBTHREAD_H
 
-struct symtab;
-
 #include "breakpoint.h"
 #include "frame.h"
 #include "ui-out.h"
@@ -34,6 +32,10 @@ struct symtab;
 #include "common/common-gdbthread.h"
 #include "common/forward-scope-exit.h"
 
+namespace gdb
+{
+
+struct symtab;
 struct inferior;
 
 /* Frontend view of the thread state.  Possible extensions: stepping,
@@ -508,9 +510,14 @@ void thread_change_ptid (ptid_t old_ptid, ptid_t new_ptid);
 typedef int (*thread_callback_func) (struct thread_info *, void *);
 extern struct thread_info *iterate_over_threads (thread_callback_func, void *);
 
+} /* namespace gdb */
+
 /* Pull in the internals of the inferiors/threads ranges and
    iterators.  Must be done after struct thread_info is defined.  */
 #include "thread-iter.h"
+
+namespace gdb
+{
 
 /* Return a range that can be used to walk over all threads of all
    inferiors, with range-for.  Used like this:
@@ -761,5 +768,7 @@ extern void print_selected_thread_frame (struct ui_out *uiout,
    was parsed from.  This is used in the error message if THR is not
    alive anymore.  */
 extern void thread_select (const char *tidstr, class thread_info *thr);
+
+} /* namespace gdb */
 
 #endif /* GDBTHREAD_H */

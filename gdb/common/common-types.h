@@ -34,6 +34,9 @@ typedef unsigned long long ULONGEST;
 
 #include "bfd.h"
 
+namespace gdb
+{
+
 /* * A byte from the program being debugged.  */
 typedef bfd_byte gdb_byte;
 
@@ -62,5 +65,7 @@ typedef unsigned long long ULONGEST;
 #define ULONGEST_MAX (~(ULONGEST) 0)
 
 enum tribool { TRIBOOL_UNKNOWN = -1, TRIBOOL_FALSE = 0, TRIBOOL_TRUE = 1 };
+
+} /* namespace gdb */
 
 #endif /* COMMON_COMMON_TYPES_H */

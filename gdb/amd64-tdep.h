@@ -23,6 +23,9 @@
 
 #include "i386-tdep.h"
 
+namespace gdb
+{
+
 struct gdbarch;
 struct regcache;
 
@@ -147,5 +150,7 @@ extern int amd64obsd_r_reg_offset[];
 extern CORE_ADDR amd64fbsd_sigtramp_start_addr;
 extern CORE_ADDR amd64fbsd_sigtramp_end_addr;
 extern int amd64fbsd_sc_reg_offset[];
+
+} /* namespace gdb */
 
 #endif /* amd64-tdep.h */

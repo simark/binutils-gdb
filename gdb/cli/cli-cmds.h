@@ -20,6 +20,9 @@
 #include "common/filestuff.h"
 #include "common/gdb_optional.h"
 
+namespace gdb
+{
+
 /* Chain containing all defined commands.  */
 
 extern struct cmd_list_element *cmdlist;
@@ -141,5 +144,7 @@ extern gdb::optional<open_script>
 
 extern int source_verbose;
 extern int trace_commands;
+
+} /* namespace gdb */
 
 #endif /* CLI_CLI_CMDS_H */

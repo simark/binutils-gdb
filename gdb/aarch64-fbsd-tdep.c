@@ -179,3 +179,5 @@ _initialize_aarch64_fbsd_tdep (void)
   gdbarch_register_osabi (bfd_arch_aarch64, 0, GDB_OSABI_FREEBSD,
 			  aarch64_fbsd_init_abi);
 }
+
+} /* namespace gdb */

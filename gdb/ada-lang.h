@@ -20,15 +20,18 @@
 #if !defined (ADA_LANG_H)
 #define ADA_LANG_H 1
 
-struct frame_info;
-struct inferior;
-struct type_print_options;
-struct parser_state;
-
 #include "value.h"
 #include "gdbtypes.h"
 #include "breakpoint.h"
 #include "common/vec.h"
+
+namespace gdb
+{
+
+struct frame_info;
+struct inferior;
+struct type_print_options;
+struct parser_state;
 
 /* Names of specific files known to be part of the runtime
    system and that might consider (confusing) debugging information.
@@ -414,5 +417,7 @@ extern const char *ada_get_tcb_types_info (void);
 extern void print_ada_task_info (struct ui_out *uiout,
 				 char *taskno_str,
 				 struct inferior *inf);
+
+} /* namespace gdb */
 
 #endif

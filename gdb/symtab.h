@@ -32,11 +32,15 @@
 #include "common/next-iterator.h"
 #include "completer.h"
 
+struct obstack;
+
+namespace gdb
+{
+
 /* Opaque declarations.  */
 struct ui_file;
 struct frame_info;
 struct symbol;
-struct obstack;
 struct objfile;
 struct block;
 struct blockvector;
@@ -214,7 +218,8 @@ class lookup_name_info final
     if (!m_demangled_hashes_p[lang])
       {
 	m_demangled_hashes[lang]
-	  = ::search_name_hash (lang, language_lookup_name (lang).c_str ());
+	  = ::gdb::search_name_hash (lang,
+				     language_lookup_name (lang).c_str ());
 	m_demangled_hashes_p[lang] = true;
       }
     return m_demangled_hashes[lang];
@@ -746,9 +751,12 @@ struct minimal_symbol
   symbol_set_names (&(symbol)->mginfo, linkage_name, len, copy_name, \
 		    (objfile)->per_bfd)
 
+} /* namespace gdb */
+
 #include "minsyms.h"
 
-
+namespace gdb
+{
 
 /* Represent one symbol name; a variable, constant, function or typedef.  */
 
@@ -2219,5 +2227,7 @@ private:
   /* Matching non-debug symbols.  */
   std::vector<bound_minimal_symbol> m_minimal_symbols;
 };
+
+} /* namespace gdb */
 
 #endif /* !defined(SYMTAB_H) */

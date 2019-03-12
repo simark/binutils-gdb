@@ -22,7 +22,9 @@
 #include "gdb_obstack.h"
 #include "addrmap.h"
 
-
+namespace gdb
+{
+
 /* The "abstract class".  */
 
 /* Functions implementing the addrmap functions for a particular
@@ -598,3 +600,5 @@ _initialize_addrmap (void)
   gdb_assert (sizeof (splay_tree_key) >= sizeof (CORE_ADDR *));
   gdb_assert (sizeof (splay_tree_value) >= sizeof (void *));
 }
+
+} /* namespace gdb */

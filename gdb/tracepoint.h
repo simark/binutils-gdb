@@ -26,6 +26,9 @@
 #include <vector>
 #include <string>
 
+namespace gdb
+{
+
 /* An object describing the contents of a traceframe.  */
 
 struct traceframe_info
@@ -438,5 +441,7 @@ extern struct bp_location *get_traceframe_location (int *stepping_frame_p);
 
 /* Command element for the 'while-stepping' command.  */
 extern cmd_list_element *while_stepping_cmd_element;
+
+} /* namespace gdb */
 
 #endif	/* TRACEPOINT_H */

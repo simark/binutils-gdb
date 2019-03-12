@@ -22,13 +22,17 @@
 
 #include "dictionary.h"
 
+struct obstack;
+
+namespace gdb
+{
+
 /* Opaque declarations.  */
 
 struct symbol;
 struct compunit_symtab;
 struct block_namespace_info;
 struct using_direct;
-struct obstack;
 struct addrmap;
 
 /* Blocks can occupy non-contiguous address ranges.  When this occurs,
@@ -406,5 +410,7 @@ extern int block_find_non_opaque_type_preferred (struct symbol *sym,
    blockranges struct for a block.  */
 struct blockranges *make_blockranges (struct objfile *objfile,
                                       const std::vector<blockrange> &rangevec);
+
+} /* namespace gdb */
 
 #endif /* BLOCK_H */

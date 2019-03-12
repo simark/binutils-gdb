@@ -44,6 +44,9 @@
 #include "selftest-arch.h"
 #endif
 
+namespace gdb
+{
+
 struct comp_unit;
 
 /* Call Frame Information (CFI).  */
@@ -2438,3 +2441,5 @@ architecture that doesn't support them will have no effect."),
 					 selftests::execute_cfa_program_test);
 #endif
 }
+
+} /* namespace gdb */

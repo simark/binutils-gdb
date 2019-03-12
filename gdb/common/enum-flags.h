@@ -51,6 +51,9 @@
 
 #ifdef __cplusplus
 
+namespace gdb
+{
+
 /* Traits type used to prevent the global operator overloads from
    instantiating for non-flag enums.  */
 template<typename T> struct enum_flags_type {};
@@ -208,6 +211,8 @@ operator~ (enum_type e)
 {
   return ~enum_flags<enum_type> (e);
 }
+
+} /* namespace gdb */
 
 #else /* __cplusplus */
 

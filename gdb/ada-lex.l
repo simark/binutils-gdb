@@ -43,6 +43,13 @@ POSEXP  (e"+"?{NUM10})
 
 #include "diagnostics.h"
 
+#define xfree gdb::xfree
+
+#define fprintf gdb::fprintf
+
+namespace gdb
+{
+
 /* Some old versions of flex generate code that uses the "register" keyword,
    which clang warns about.  This was observed for example with flex 2.5.35,
    as shipped with macOS 10.12.  */
@@ -65,7 +72,7 @@ static int find_dot_all (const char *);
 static void rewind_to_char (int);
 
 #undef YY_DECL
-#define YY_DECL static int yylex ( void )
+#define YY_DECL static int gdb::yylex ( void )
 
 /* Flex generates a static function "input" which is not used.
    Defining YY_NO_INPUT comments it out.  */
@@ -73,16 +80,18 @@ static void rewind_to_char (int);
 
 #undef YY_INPUT
 #define YY_INPUT(BUF, RESULT, MAX_SIZE) \
-    if ( *lexptr == '\000' ) \
+    if ( *gdb::lexptr == '\000' ) \
       (RESULT) = YY_NULL; \
     else \
       { \
-        *(BUF) = *lexptr; \
+        *(BUF) = *gdb::lexptr; \
         (RESULT) = 1; \
-	lexptr += 1; \
+	gdb::lexptr += 1; \
       }
 
 static int find_dot_all (const char *);
+
+} /* namespace gdb */
 
 %}
 
@@ -97,43 +106,43 @@ static int find_dot_all (const char *);
 "--".*		 { yyterminate(); }
 
 {NUM10}{POSEXP}  {
-		   canonicalizeNumeral (numbuf, yytext);
-		   return processInt (pstate, NULL, numbuf,
-				      strrchr (numbuf, 'e') + 1);
+		   gdb::canonicalizeNumeral (gdb::numbuf, yytext);
+		   return gdb::processInt (gdb::pstate, NULL, gdb::numbuf,
+				      strrchr (gdb::numbuf, 'e') + 1);
 		 }
 
 {NUM10}          {
-		   canonicalizeNumeral (numbuf, yytext);
-		   return processInt (pstate, NULL, numbuf, NULL);
+		   gdb::canonicalizeNumeral (gdb::numbuf, yytext);
+		   return gdb::processInt (gdb::pstate, NULL, gdb::numbuf, NULL);
 		 }
 
 {NUM10}"#"{HEXDIG}({HEXDIG}|_)*"#"{POSEXP} {
-		   canonicalizeNumeral (numbuf, yytext);
-		   return processInt (pstate, numbuf,
-				      strchr (numbuf, '#') + 1,
-				      strrchr(numbuf, '#') + 1);
+		   gdb::canonicalizeNumeral (gdb::numbuf, yytext);
+		   return gdb::processInt (gdb::pstate, gdb::numbuf,
+				      strchr (gdb::numbuf, '#') + 1,
+				      strrchr(gdb::numbuf, '#') + 1);
 		 }
 
 {NUM10}"#"{HEXDIG}({HEXDIG}|_)*"#" {
-		   canonicalizeNumeral (numbuf, yytext);
-		   return processInt (pstate, numbuf, strchr (numbuf, '#') + 1,
+		   gdb::canonicalizeNumeral (gdb::numbuf, yytext);
+		   return gdb::processInt (gdb::pstate, gdb::numbuf, strchr (gdb::numbuf, '#') + 1,
 				      NULL);
 		 }
 
 "0x"{HEXDIG}+	{
-		  canonicalizeNumeral (numbuf, yytext+2);
-		  return processInt (pstate, "16#", numbuf, NULL);
+		  gdb::canonicalizeNumeral (gdb::numbuf, yytext+2);
+		  return gdb::processInt (gdb::pstate, "16#", gdb::numbuf, NULL);
 		}
 
 
 {NUM10}"."{NUM10}{EXP} {
-		   canonicalizeNumeral (numbuf, yytext);
-		   return processReal (pstate, numbuf);
+		   gdb::canonicalizeNumeral (gdb::numbuf, yytext);
+		   return gdb::processReal (gdb::pstate, gdb::numbuf);
 		}
 
 {NUM10}"."{NUM10} {
-		   canonicalizeNumeral (numbuf, yytext);
-		   return processReal (pstate, numbuf);
+		   gdb::canonicalizeNumeral (gdb::numbuf, yytext);
+		   return gdb::processReal (gdb::pstate, gdb::numbuf);
 		}
 
 {NUM10}"#"{NUM16}"."{NUM16}"#"{EXP} {
@@ -145,21 +154,21 @@ static int find_dot_all (const char *);
 		}
 
 <INITIAL>"'"({GRAPHIC}|\")"'" {
-		   yylval.typed_val.type = type_char (pstate);
-		   yylval.typed_val.val = yytext[1];
+		   gdb::yylval.typed_val.type = gdb::type_char (gdb::pstate);
+		   gdb::yylval.typed_val.val = yytext[1];
 		   return CHARLIT;
 		}
 
 <INITIAL>"'[\""{HEXDIG}{2}"\"]'"   {
                    int v;
-                   yylval.typed_val.type = type_char (pstate);
+                   gdb::yylval.typed_val.type = gdb::type_char (gdb::pstate);
 		   sscanf (yytext+3, "%2x", &v);
-		   yylval.typed_val.val = v;
+		   gdb::yylval.typed_val.val = v;
 		   return CHARLIT;
 		}
 
 \"({GRAPHIC}|"[\""({HEXDIG}{2}|\")"\"]")*\"   {
-	           yylval.sval = processString (yytext+1, yyleng-2);
+	           gdb::yylval.sval = gdb::processString (yytext+1, yyleng-2);
 		   return STRING;
 		}
 
@@ -169,19 +178,19 @@ static int find_dot_all (const char *);
 
 
 if		{
-                  rewind_to_char ('i');
+                  gdb::rewind_to_char ('i');
 		  return 0;
 		}
 
 task            {
-                  rewind_to_char ('t');
+                  gdb::rewind_to_char ('t');
 		  return 0;
 		}
 
 thread{WHITE}+{DIG} {
                   /* This keyword signals the end of the expression and
                      will be processed separately.  */
-                  rewind_to_char ('t');
+                  gdb::rewind_to_char ('t');
 		  return 0;
 		}
 
@@ -213,7 +222,7 @@ false		{ return FALSEKEYWORD; }
 
         /* ATTRIBUTES */
 
-{TICK}[a-zA-Z][a-zA-Z]+ { BEGIN INITIAL; return processAttribute (yytext+1); }
+{TICK}[a-zA-Z][a-zA-Z]+ { BEGIN INITIAL; return gdb::processAttribute (yytext+1); }
 
 	/* PUNCTUATION */
 
@@ -231,7 +240,7 @@ false		{ return FALSEKEYWORD; }
 
 ","		{ if (paren_depth == 0 && comma_terminates)
 		    {
-		      rewind_to_char (',');
+		      gdb::rewind_to_char (',');
 		      return 0;
 		    }
 		  else
@@ -241,7 +250,7 @@ false		{ return FALSEKEYWORD; }
 "("		{ paren_depth += 1; return '('; }
 ")"		{ if (paren_depth == 0)
 		    {
-		      rewind_to_char (')');
+		      gdb::rewind_to_char (')');
 		      return 0;
 		    }
 		  else
@@ -254,12 +263,12 @@ false		{ return FALSEKEYWORD; }
 "."{WHITE}*all  { return DOT_ALL; }
 
 "."{WHITE}*{ID} {
-	 	  yylval.sval = processId (yytext+1, yyleng-1);
+	 	  gdb::yylval.sval = gdb::processId (yytext+1, yyleng-1);
 	          return DOT_ID;
 		}
 
 {ID}({WHITE}*"."{WHITE}*({ID}|\"{OPER}\"))*(" "*"'")?  {
-                  int all_posn = find_dot_all (yytext);
+                  int all_posn = gdb::find_dot_all (yytext);
 
                   if (all_posn == -1 && yytext[yyleng-1] == '\'')
 		    {
@@ -268,7 +277,7 @@ false		{ return FALSEKEYWORD; }
 		    }
                   else if (all_posn >= 0)
 		    yyless (all_posn);
-                  yylval.sval = processId (yytext, yyleng);
+                  gdb::yylval.sval = gdb::processId (yytext, yyleng);
                   return NAME;
                }
 
@@ -277,7 +286,7 @@ false		{ return FALSEKEYWORD; }
 
 "'"[^']+"'"{WHITE}*:: {
                   yyless (yyleng - 2);
-		  yylval.sval = processId (yytext, yyleng);
+		  gdb::yylval.sval = gdb::processId (yytext, yyleng);
 		  return NAME;
 		}
 
@@ -288,8 +297,8 @@ false		{ return FALSEKEYWORD; }
 	/* REGISTERS AND GDB CONVENIENCE VARIABLES */
 
 "$"({LETTER}|{DIG}|"$")*  {
-		  yylval.sval.ptr = yytext;
-		  yylval.sval.length = yyleng;
+		  gdb::yylval.sval.ptr = yytext;
+		  gdb::yylval.sval.length = yyleng;
 		  return DOLLAR_VARIABLE;
 		}
 
@@ -299,6 +308,10 @@ false		{ return FALSEKEYWORD; }
 %%
 
 #include <ctype.h>
+
+namespace gdb
+{
+
 /* Initialize the lexer for processing new expression. */
 
 static void
@@ -644,3 +657,5 @@ dummy_function ada_flex_use[] =
 };
 
 DIAGNOSTIC_POP
+
+} /* namespace gdb */

@@ -22,6 +22,9 @@
 #include "dis-asm.h"
 #include "common/enum-flags.h"
 
+namespace gdb
+{
+
 enum gdb_disassembly_flag
   {
     DISASSEMBLY_SOURCE_DEPRECATED = (0x1 << 0),
@@ -155,5 +158,7 @@ extern char *get_disassembler_options (struct gdbarch *gdbarch);
 /* Sets the active gdbarch's disassembler options to OPTIONS.  */
 
 extern void set_disassembler_options (char *options);
+
+} /* namespace gdb */
 
 #endif

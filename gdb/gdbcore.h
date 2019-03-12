@@ -22,12 +22,15 @@
 #if !defined (GDBCORE_H)
 #define GDBCORE_H 1
 
-struct type;
-struct regcache;
-
 #include "bfd.h"
 #include "exec.h"
 #include "target.h"
+
+namespace gdb
+{
+
+struct type;
+struct regcache;
 
 /* Nonzero if there is a core file.  */
 
@@ -274,5 +277,7 @@ private:
 extern void deprecated_add_core_fns (struct core_fns *cf);
 extern int default_core_sniffer (struct core_fns *cf, bfd * abfd);
 extern int default_check_format (bfd * abfd);
+
+} /* namespace gdb */
 
 #endif /* !defined (GDBCORE_H) */

@@ -55,6 +55,9 @@
 #include "common/host-defs.h"
 #include "common/enum-flags.h"
 
+namespace gdb
+{
+
 /* Scope types enumerator.  List the types of scopes the compiler will
    accept.  */
 
@@ -106,7 +109,12 @@ using RequireLongest = gdb::Requires<gdb::Or<std::is_same<T, LONGEST>,
 #define O_BINARY 0
 #endif
 
+} /* namespace gdb */
+
 #include "hashtab.h"
+
+namespace gdb
+{
 
 /* * Enable dbx commands if set.  */
 extern int dbx_commands;
@@ -414,6 +422,8 @@ enum val_prettyformat
     Val_prettyformat_default
   };
 
+} /* namespace gdb */
+
 /* * Optional native machine support.  Non-native (and possibly pure
    multi-arch) targets do not need a "nm.h" file.  This will be a
    symlink to one of the nm-*.h files, built by the `configure'
@@ -434,6 +444,9 @@ enum val_prettyformat
 #ifndef FOPEN_RB
 # include "fopen-bin.h"
 #endif
+
+namespace gdb
+{
 
 /* Defaults for system-wide constants (if not defined by xm.h, we fake it).
    FIXME: Assumes 2's complement arithmetic.  */
@@ -522,8 +535,13 @@ enum symbol_needs_kind
   SYMBOL_NEEDS_FRAME
 };
 
+} /* namespace gdb */
+
 /* Dynamic target-system-dependent parameters for GDB.  */
 #include "gdbarch.h"
+
+namespace gdb
+{
 
 /* In findvar.c.  */
 
@@ -666,6 +684,8 @@ enum user_selected_what_flag
     USER_SELECTED_FRAME = 1 << 3
   };
 DEF_ENUM_FLAGS_TYPE (enum user_selected_what_flag, user_selected_what);
+
+} /* namespace gdb */
 
 #include "utils.h"
 

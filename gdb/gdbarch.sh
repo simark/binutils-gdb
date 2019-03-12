@@ -1277,6 +1277,12 @@ cat <<EOF
 #include "dis-asm.h"
 #include "gdb_obstack.h"
 
+struct disassemble_info;
+struct obstack;
+
+namespace gdb
+{
+
 struct floatformat;
 struct ui_file;
 struct value;
@@ -1286,9 +1292,7 @@ struct minimal_symbol;
 struct regcache;
 struct reggroup;
 struct regset;
-struct disassemble_info;
 struct target_ops;
-struct obstack;
 struct bp_target_info;
 struct target_desc;
 struct symbol;
@@ -1304,7 +1308,12 @@ struct syscalls_info;
 struct thread_info;
 struct ui_out;
 
+} /* namespace gdb */
+
 #include "regcache.h"
+
+namespace gdb
+{
 
 /* The architecture associated with the inferior through the
    connection to the target.
@@ -1670,6 +1679,8 @@ gdbarch_num_cooked_regs (gdbarch *arch)
 {
   return gdbarch_num_regs (arch) + gdbarch_num_pseudo_regs (arch);
 }
+
+} /* namespace gdb */
 
 #endif
 EOF

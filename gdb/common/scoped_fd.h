@@ -23,6 +23,9 @@
 #include <unistd.h>
 #include "filestuff.h"
 
+namespace gdb
+{
+
 /* A smart-pointer-like class to automatically close a file descriptor.  */
 
 class scoped_fd
@@ -83,5 +86,7 @@ public:
 private:
   int m_fd;
 };
+
+} /* namespace gdb */
 
 #endif /* COMMON_SCOPED_FD_H */

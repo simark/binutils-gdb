@@ -18,6 +18,9 @@
 #ifndef COMMON_TDESC_H
 #define COMMON_TDESC_H
 
+namespace gdb
+{
+
 struct tdesc_feature;
 struct tdesc_type;
 struct tdesc_type_builtin;
@@ -403,5 +406,7 @@ public:
 private:
   std::string *m_buffer;
 };
+
+} /* namespace gdb */
 
 #endif /* COMMON_TDESC_H */

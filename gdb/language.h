@@ -27,6 +27,9 @@
 #include "common/function-view.h"
 #include "expression.h"
 
+namespace gdb
+{
+
 /* Forward decls for prototypes.  */
 struct value;
 struct objfile;
@@ -746,5 +749,7 @@ private:
   bool m_switched;
   enum language m_lang;
 };
+
+} /* namespace gdb */
 
 #endif /* defined (LANGUAGE_H) */

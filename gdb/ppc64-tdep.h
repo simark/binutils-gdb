@@ -20,6 +20,9 @@
 #ifndef PPC64_TDEP_H
 #define PPC64_TDEP_H
 
+namespace gdb
+{
+
 struct gdbarch;
 struct frame_info;
 struct target_ops;
@@ -33,4 +36,7 @@ extern CORE_ADDR ppc64_convert_from_func_ptr_addr (struct gdbarch *gdbarch,
 
 extern void ppc64_elf_make_msymbol_special (asymbol *,
 					    struct minimal_symbol *);
+
+} /* namespace gdb */
+
 #endif /* PPC64_TDEP_H  */

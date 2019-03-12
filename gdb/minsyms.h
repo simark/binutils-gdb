@@ -20,6 +20,9 @@
 #ifndef MINSYMS_H
 #define MINSYMS_H
 
+namespace gdb
+{
+
 struct type;
 
 /* Several lookup functions return both a minimal symbol and the
@@ -297,5 +300,7 @@ CORE_ADDR minimal_symbol_upper_bound (struct bound_minimal_symbol minsym);
 
 type *find_minsym_type_and_address (minimal_symbol *msymbol, objfile *objf,
 				    CORE_ADDR *address_p);
+
+} /* namespace gdb */
 
 #endif /* MINSYMS_H */

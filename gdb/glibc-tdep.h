@@ -20,9 +20,14 @@
 #ifndef GLIBC_TDEP_H
 #define GLIBC_TDEP_H
 
+namespace gdb
+{
+
 struct gdbarch;
 
 extern CORE_ADDR glibc_skip_solib_resolver (struct gdbarch *gdbarch,
 					    CORE_ADDR);
+
+} /* namespace gdb */
 
 #endif /* glibc-tdep.h */

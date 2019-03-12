@@ -64,6 +64,9 @@
 #include "common/byte-vector.h"
 #include <algorithm>
 
+namespace gdb
+{
+
 /* Define whether or not the C operator '/' truncates towards zero for
    differently signed operands (truncation direction is undefined in C).
    Copied from valarith.c.  */
@@ -1455,8 +1458,8 @@ ada_decode_symbol (const struct general_symbol_info *arg)
 	     decode when needed, we hope this usually does not cause a
 	     significant memory leak (FIXME).  */
 
-          char **slot = (char **) htab_find_slot (decoded_names_store,
-                                                  decoded, INSERT);
+          char **slot = (char **) ::htab_find_slot (decoded_names_store,
+						    decoded, INSERT);
 
           if (*slot == NULL)
             *slot = xstrdup (decoded);
@@ -14579,3 +14582,5 @@ DWARF attribute."),
   ada_pspace_data_handle
     = register_program_space_data_with_cleanup (NULL, ada_pspace_data_cleanup);
 }
+
+} /* namespace gdb */

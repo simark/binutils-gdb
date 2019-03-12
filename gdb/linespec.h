@@ -17,9 +17,12 @@
 #if !defined (LINESPEC_H)
 #define LINESPEC_H 1
 
-struct symtab;
-
 #include "location.h"
+
+namespace gdb
+{
+
+struct symtab;
 
 /* Flags to pass to decode_line_1 and decode_line_full.  */
 
@@ -208,4 +211,7 @@ extern void linespec_complete_label (completion_tracker &tracker,
    advancing EXP_PTR past any parsed text.  */
 
 extern CORE_ADDR linespec_expression_to_pc (const char **exp_ptr);
+
+} /* namespace gdb */
+
 #endif /* defined (LINESPEC_H) */

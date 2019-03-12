@@ -22,6 +22,9 @@
 
 #include "common/gdb_signals.h"
 
+namespace gdb
+{
+
 /* Stuff for target_wait.  */
 
 /* Generally, what has the program done?  */
@@ -147,5 +150,7 @@ enum target_stop_reason
 
 /* Return a pretty printed form of target_waitstatus.  */
 std::string target_waitstatus_to_string (const struct target_waitstatus *);
+
+} /* namespace gdb */
 
 #endif /* TARGET_WAITSTATUS_H */

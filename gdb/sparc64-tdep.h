@@ -20,13 +20,16 @@
 #ifndef SPARC64_TDEP_H
 #define SPARC64_TDEP_H 1
 
+#include "sparc-tdep.h"
+
+namespace gdb
+{
+
 struct frame_info;
 struct gdbarch;
 struct regcache;
 struct sparc_gregmap;
 struct trad_frame_saved_reg;
-
-#include "sparc-tdep.h"
 
 /* The stack pointer is offset from the stack frame by a BIAS of 2047
    (0x7ff) for 64-bit code.  BIAS is likely to be defined on SPARC
@@ -139,5 +142,7 @@ extern struct trad_frame_saved_reg *
 extern const struct sparc_fpregmap sparc64_bsd_fpregmap;
 
 extern void sparc64_forget_process (pid_t pid);
+
+} /* namespace gdb */
 
 #endif /* sparc64-tdep.h */
