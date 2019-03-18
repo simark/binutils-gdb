@@ -2042,11 +2042,15 @@ generic_load (const char *args, int from_tty)
 
   gdb::unique_xmalloc_ptr<char> filename (tilde_expand (argv[0]));
 
+  printf("FILENAME = |%s|\n", filename.get());
+
   if (argv[1] != NULL)
     {
       const char *endptr;
 
       cbdata.load_offset = strtoulst (argv[1], &endptr, 0);
+
+      printf("OFFSET = %lx\n", cbdata.load_offset);
 
       /* If the last word was not a valid number then
          treat it as a file name with spaces in.  */
@@ -2056,6 +2060,8 @@ generic_load (const char *args, int from_tty)
       if (argv[2] != NULL)
 	error (_("Too many parameters."));
     }
+
+  return;
 
   /* Open the file for loading.  */
   gdb_bfd_ref_ptr loadfile_bfd (gdb_bfd_open (filename.get (), gnutarget, -1));

@@ -414,6 +414,8 @@ exec_file_command (const char *args, int from_tty)
         error (_("No executable file name was specified"));
 
       gdb::unique_xmalloc_ptr<char> filename (tilde_expand (*argv));
+      printf("filename: |%s|\n", filename.get());
+      return;
       exec_file_attach (filename.get (), from_tty);
     }
   else
@@ -427,9 +429,11 @@ exec_file_command (const char *args, int from_tty)
 static void
 file_command (const char *arg, int from_tty)
 {
+  printf("arg: |%s|\n", arg);
   /* FIXME, if we lose on reading the symbol file, we should revert
      the exec file, but that's rough.  */
   exec_file_command (arg, from_tty);
+  return;
   symbol_file_command (arg, from_tty);
   if (deprecated_file_changed_hook)
     deprecated_file_changed_hook (arg);
