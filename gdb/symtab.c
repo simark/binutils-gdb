@@ -4144,6 +4144,15 @@ operator_chars (const char *p, const char **end)
 
 struct output_source_filename_data
 {
+  /* Output only filenames matching REGEXP.  */
+  std::string regexp;
+  gdb::optional<compiled_regex> c_regexp;
+  /* Only match the dirname part.  */
+  bool dirname;
+  /* Only match the basename part.  */
+  bool basename;
+
+
   /* Cache of what we've seen so far.  */
   struct filename_seen_cache *filename_seen_cache;
 
@@ -4175,7 +4184,27 @@ output_source_filename (const char *name,
       return;
     }
 
-  /* No; print it and reset *FIRST.  */
+  /* Does it match data->regexp?  */
+  if (data->c_regexp.has_value ())
+    {
+      const char *to_match;
+      std::string dirname;
+
+      if (data->dirname)
+	{
+	  dirname = ldirname (name);
+	  to_match = dirname.c_str ();
+	}
+      else if (data->basename)
+	to_match = lbasename (name);
+      else
+	to_match = name;
+
+      if (data->c_regexp->exec (to_match, 0, NULL, 0) != 0)
+	return;
+    }
+
+  /* Print it and reset *FIRST.  */
   if (! data->first)
     printf_filtered (", ");
   data->first = 0;
@@ -4194,8 +4223,68 @@ output_partial_symbol_filename (const char *filename, const char *fullname,
 			  (struct output_source_filename_data *) data);
 }
 
+/* Extract from ARGS the arguments [-d | -b] [--] REGEXP.
+
+   The caller is responsible to initialize *DIRNAME, *BASENAME to false,
+   and *REGEXP to "".
+
+   Returns true and updates *ARGS and one of *DIRNAME, *BASENAME, *REGEXP if
+   it finds a valid argument.
+   Returns false if not valid argument is found at the beginning of ARGS.  */
+
+static bool
+extract_info_sources_args (const char **args,
+			   bool *dirname,
+			   bool *basename,
+			   std::string *regexp)
+{
+  /* Check for REGEXP or -- REGEXP.  */
+  if (**args != '-' || check_for_argument (args, "--", 2))
+    {
+      *args = skip_spaces (*args);
+      *regexp = *args;
+      *args = NULL;
+      return true;
+    }
+
+  if (check_for_argument (args, "-d", 2))
+    {
+      *dirname = true;
+      *args = skip_spaces (*args);
+      return true;
+    }
+
+  if (check_for_argument (args, "-b", 2))
+    {
+      *basename = true;
+      *args = skip_spaces (*args);
+      return true;
+    }
+
+  return false;
+}
+
 static void
-info_sources_command (const char *ignore, int from_tty)
+print_info_sources_header (const char *symbol_msg,
+			   const struct output_source_filename_data *data)
+{
+  printf_filtered ("Source files ");
+  if (!data->regexp.empty ())
+    {
+      if (data->dirname)
+	printf_filtered ("(dirname ");
+      else if (data->basename)
+	printf_filtered ("(basename ");
+      else
+	printf_filtered ("(filename ");
+      printf_filtered ("matching regular expression \"%s\") ",
+		       data->regexp.c_str ());
+    }
+  printf_filtered ("for which symbols %s:\n\n", symbol_msg);
+}
+
+static void
+info_sources_command (const char *args, int from_tty)
 {
   struct output_source_filename_data data;
 
@@ -4206,11 +4295,38 @@ info_sources_command (const char *ignore, int from_tty)
 
   filename_seen_cache filenames_seen;
 
+  data.dirname = false;
+  data.basename = false;
   data.filename_seen_cache = &filenames_seen;
-
-  printf_filtered ("Source files for which symbols have been read in:\n\n");
-
   data.first = 1;
+
+  while (args != NULL
+	 && extract_info_sources_args (&args, &data.dirname, &data.basename,
+				       &data.regexp))
+    ;
+
+  if (args != NULL)
+    report_unrecognized_option_error ("info sources", args);
+
+  if (data.dirname && data.basename)
+    error (_("You cannot give both -b and -d to 'info sources'."));
+  if ((data.dirname || data.basename) && data.regexp.empty ())
+     error (_("Missing REGEXP for 'info sources'."));
+
+  if (data.regexp.empty ())
+    data.c_regexp.reset ();
+  else
+    {
+      int cflags = REG_NOSUB;
+#ifdef HAVE_CASE_INSENSITIVE_FILE_SYSTEM
+      cflags |= REG_ICASE;
+#endif
+      data.c_regexp.emplace (data.regexp.c_str (), cflags,
+			     _("Invalid regexp"));
+    }
+
+  print_info_sources_header ("have been read in", &data);
+
   for (objfile *objfile : current_program_space->objfiles ())
     {
       for (compunit_symtab *cu : objfile->compunits ())
@@ -4225,8 +4341,7 @@ info_sources_command (const char *ignore, int from_tty)
     }
   printf_filtered ("\n\n");
 
-  printf_filtered ("Source files for which symbols "
-		   "will be read in on demand:\n\n");
+  print_info_sources_header ("will be read in on demand", &data);
 
   filenames_seen.clear ();
   data.first = 1;
@@ -6092,8 +6207,13 @@ Prints the functions.\n"),
   add_info ("types", info_types_command,
 	    _("All type names, or those matching REGEXP."));
 
-  add_info ("sources", info_sources_command,
-	    _("Source files in the program."));
+  add_info ("sources", info_sources_command, _("\
+All source files in the program or those matching REGEXP.\n\
+Usage: info sources [-d | -b] [--] [REGEXP]\n\
+By default, REGEXP is used to match anywhere in the filename.\n\
+If -d, only files having a dirname matching REGEXP are shown.\n\
+If -b, only files having a basename matching REGEXP are shown."));
+
 
   add_com ("rbreak", class_breakpoint, rbreak_command,
 	   _("Set a breakpoint for all functions matching REGEXP."));
