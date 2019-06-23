@@ -8572,6 +8572,26 @@ arm_record_special_symbol (struct gdbarch *gdbarch, struct objfile *objfile,
   VEC_safe_push (arm_mapping_symbol_s, *map_p, &new_map_sym);
 }
 
+void arm_yo(struct objfile *objfile)
+{
+  struct arm_per_objfile *data;
+
+  data = (struct arm_per_objfile *) objfile_data (objfile,
+						  arm_objfile_data_key);
+
+  FILE *f = fopen("yo", "w");
+  for (int i = 0; i < objfile->obfd->section_count; i++) {
+      VEC(arm_mapping_symbol_s) *map = data->section_maps[i];
+      fprintf(f, "Section %d\n", i);
+      for (int j = 0; map && j < map->num; j++) {
+	  arm_mapping_symbol_s *sym = &map->vec[j];
+	fprintf(f, "%lx %d\n", sym->value, sym->type);
+      }
+      fprintf(f, "\n");
+  }
+  fclose(f);
+}
+
 static void
 arm_write_pc (struct regcache *regcache, CORE_ADDR pc)
 {

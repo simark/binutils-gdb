@@ -230,7 +230,7 @@ record_minimal_symbol (minimal_symbol_reader &reader,
 using namespace std;
 using namespace std::chrono;
 
-
+void arm_yo(struct objfile *objfile);
 static void
 elf_symtab_read (minimal_symbol_reader &reader,
 		 struct objfile *objfile, int type,
@@ -538,6 +538,7 @@ elf_symtab_read (minimal_symbol_reader &reader,
   auto duration = duration_cast<microseconds>( t2 - t1 ).count();
   printf(">>> %ld\n", duration);
   printf("End\n");
+  arm_yo(objfile);
 }
 
 /* Build minimal symbols named `function@got.plt' (see SYMBOL_GOT_PLT_SUFFIX)
