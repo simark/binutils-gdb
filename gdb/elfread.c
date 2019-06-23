@@ -231,6 +231,7 @@ using namespace std;
 using namespace std::chrono;
 
 void arm_yo(struct objfile *objfile);
+void arm_sort_mappings(struct objfile *objfile);
 static void
 elf_symtab_read (minimal_symbol_reader &reader,
 		 struct objfile *objfile, int type,
@@ -534,6 +535,7 @@ elf_symtab_read (minimal_symbol_reader &reader,
 	    }
 	}
     }
+  arm_sort_mappings(objfile);
   high_resolution_clock::time_point t2 = high_resolution_clock::now();
   auto duration = duration_cast<microseconds>( t2 - t1 ).count();
   printf(">>> %ld\n", duration);

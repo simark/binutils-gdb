@@ -8553,11 +8553,22 @@ arm_record_special_symbol (struct gdbarch *gdbarch, struct objfile *objfile,
   new_map_sym.value = sym->value;
   new_map_sym.type = name[1];
 
-  /* Assume that most mapping symbols appear in order of increasing
-     value.  If they were randomly distributed, it would be faster to
-     always push here and then sort at first use.  */
-  arm_mapping_symbol_vec::iterator it = std::lower_bound (map_p.begin (), map_p.end (), new_map_sym);
-  map_p.insert(it, new_map_sym);
+  /* Insert at the end, the vector will be sorted once we are done parsing
+     minimal symbols.  */
+  map_p.push_back (new_map_sym);
+}
+
+void arm_sort_mappings(struct objfile *objfile)
+{
+  struct arm_per_objfile *data;
+
+  data = (struct arm_per_objfile *) objfile_data (objfile,
+						  arm_objfile_data_key);
+
+  for (int i = 0; i < objfile->obfd->section_count; i++) {
+      arm_mapping_symbol_vec &map = data->section_maps[i];
+      std::sort(map.begin(), map.end());
+  }
 }
 
 void arm_yo(struct objfile *objfile)
@@ -8566,10 +8577,10 @@ void arm_yo(struct objfile *objfile)
 
   data = (struct arm_per_objfile *) objfile_data (objfile,
 						  arm_objfile_data_key);
-
   FILE *f = fopen("yo", "w");
   for (int i = 0; i < objfile->obfd->section_count; i++) {
       const arm_mapping_symbol_vec &map = data->section_maps[i];
+      gdb_assert(std::is_sorted(map.begin(), map.end()));
       fprintf(f, "Section %d\n", i);
       for (const arm_mapping_symbol &sym : map) {
 	fprintf(f, "%lx %d\n", sym.value, sym.type);
