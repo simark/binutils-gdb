@@ -224,6 +224,12 @@ record_minimal_symbol (minimal_symbol_reader &reader,
 #define ST_REGULAR 0
 #define ST_DYNAMIC 1
 #define ST_SYNTHETIC 2
+#include <chrono>  // for high_resolution_clock
+#include <iostream>
+
+using namespace std;
+using namespace std::chrono;
+
 
 static void
 elf_symtab_read (minimal_symbol_reader &reader,
@@ -242,6 +248,9 @@ elf_symtab_read (minimal_symbol_reader &reader,
   int stripped = (bfd_get_symcount (objfile->obfd) == 0);
   int elf_make_msymbol_special_p
     = gdbarch_elf_make_msymbol_special_p (gdbarch);
+
+  printf("Start\n");
+  high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
   for (i = 0; i < number_of_symbols; i++)
     {
@@ -525,6 +534,10 @@ elf_symtab_read (minimal_symbol_reader &reader,
 	    }
 	}
     }
+  high_resolution_clock::time_point t2 = high_resolution_clock::now();
+  auto duration = duration_cast<microseconds>( t2 - t1 ).count();
+  printf(">>> %ld\n", duration);
+  printf("End\n");
 }
 
 /* Build minimal symbols named `function@got.plt' (see SYMBOL_GOT_PLT_SUFFIX)
