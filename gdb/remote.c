@@ -458,7 +458,7 @@ public:
 
   void kill () override;
 
-  void load (const char *) override;
+  void load (const char *filename, CORE_ADDR offset) override;
 
   void mourn_inferior () override;
 
@@ -13888,9 +13888,9 @@ remote_target::augmented_libraries_svr4_read ()
 /* Implementation of to_load.  */
 
 void
-remote_target::load (const char *args)
+remote_target::load (const char *filename, CORE_ADDR offset)
 {
-  generic_load (args);
+  generic_load (filename, offset);
 }
 
 /* Accepts an integer PID; returns a string representing a file that

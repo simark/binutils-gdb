@@ -1813,12 +1813,11 @@ find_sym_fns (bfd *abfd)
   error (_("I'm sorry, Dave, I can't do that.  Symbol format `%s' unknown."),
 	 bfd_get_target (abfd));
 }
-
 
 /* This function runs the load command of our current target.  */
 
 static void
-load_command (const char *arg, int from_tty)
+load_command (const char *args, int from_tty)
 {
   dont_repeat ();
 
@@ -1827,32 +1826,35 @@ load_command (const char *arg, int from_tty)
   reopen_exec_file ();
   reread_symbols ();
 
-  std::string temp;
-  if (arg == NULL)
+  gdb_argv argv (args);
+
+  if (argv.count () > 2)
+    error (_("Too many parameters."));
+
+  /* The first parameter, if present is the file to load.  If not present, use
+     the current exec file. */
+  const char *filename;
+
+  if (argv.count () > 0)
+    filename = argv[0];
+  else
+    filename = get_exec_file (1);
+
+  gdb_assert (filename != nullptr);
+
+  /* The second parameter, if present is an offset.  */
+  CORE_ADDR offset = 0;
+  if (argv.count () > 1)
     {
-      const char *parg, *prev;
+      const char *endptr;
 
-      arg = get_exec_file (1);
+      offset = strtoulst (argv[1], &endptr, 0);
 
-      /* We may need to quote this string so buildargv can pull it
-	 apart.  */
-      prev = parg = arg;
-      while ((parg = strpbrk (parg, "\\\"'\t ")))
-	{
-	  temp.append (prev, parg - prev);
-	  prev = parg++;
-	  temp.push_back ('\\');
-	}
-      /* If we have not copied anything yet, then we didn't see a
-	 character to quote, and we can just leave ARG unchanged.  */
-      if (!temp.empty ())
-	{
-	  temp.append (prev);
-	  arg = temp.c_str ();
-	}
+      if (argv[1] == endptr)
+        error (_("Invalid download offset:%s."), argv[1]);
     }
 
-  target_load (arg);
+  target_load (filename, offset);
 
   /* After re-loading the executable, we don't really know which
      overlays are mapped any more.  */
@@ -1986,6 +1988,7 @@ load_progress (ULONGEST bytes, void *untyped_arg)
 					       args->section_sent)))
     error (_("Canceled the download"));
 
+  printf("progress %ld / %ld\n", args->section_sent, args->section_size);
   if (deprecated_show_load_progress != NULL)
     deprecated_show_load_progress (args->section_name,
 				   args->section_sent,
@@ -2029,48 +2032,25 @@ static void print_transfer_performance (struct ui_file *stream,
 /* See symfile.h.  */
 
 void
-generic_load (const char *args)
+generic_load (const char *filename, CORE_ADDR offset)
 {
   struct load_progress_data total_progress;
   struct load_section_data cbdata (&total_progress);
   struct ui_out *uiout = current_uiout;
 
-  if (args == NULL)
-    error_no_arg (_("file to load"));
-
-  gdb_argv argv (args);
-
-  gdb::unique_xmalloc_ptr<char> filename (tilde_expand (argv[0]));
-
-  printf("FILENAME = |%s|\n", filename.get());
-
-  if (argv[1] != NULL)
-    {
-      const char *endptr;
-
-      cbdata.load_offset = strtoulst (argv[1], &endptr, 0);
-
-      printf("OFFSET = %lx\n", cbdata.load_offset);
-
-      /* If the last word was not a valid number then
-         treat it as a file name with spaces in.  */
-      if (argv[1] == endptr)
-        error (_("Invalid download offset:%s."), argv[1]);
-
-      if (argv[2] != NULL)
-	error (_("Too many parameters."));
-    }
+  printf("FILENAME = |%s|\n", filename);
+  cbdata.load_offset = offset;
 
   return;
 
   /* Open the file for loading.  */
-  gdb_bfd_ref_ptr loadfile_bfd (gdb_bfd_open (filename.get (), gnutarget, -1));
+  gdb_bfd_ref_ptr loadfile_bfd (gdb_bfd_open (filename, gnutarget, -1));
   if (loadfile_bfd == NULL)
-    perror_with_name (filename.get ());
+    perror_with_name (filename);
 
   if (!bfd_check_format (loadfile_bfd.get (), bfd_object))
     {
-      error (_("\"%s\" is not an object file: %s"), filename.get (),
+      error (_("\"%s\" is not an object file: %s"), filename,
 	     bfd_errmsg (bfd_get_error ()));
     }
 

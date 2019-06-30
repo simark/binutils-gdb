@@ -112,7 +112,7 @@ struct gdbsim_target final
 
   void kill () override;
 
-  void load (const char *) override;
+  void load (const char *filename, CORE_ADDR offset) override;
 
   bool can_create_inferior () override { return true; }
   void create_inferior (const char *, const std::string &,
@@ -572,29 +572,23 @@ gdbsim_target::kill ()
    GDB's symbol tables to match.  */
 
 void
-gdbsim_target::load (const char *args)
+gdbsim_target::load (const char *filename, CORE_ADDR offset)
 {
-  const char *prog;
   struct sim_inferior_data *sim_data
     = get_sim_inferior_data (current_inferior (), SIM_INSTANCE_NEEDED);
 
-  if (args == NULL)
-      error_no_arg (_("program to load"));
+  gdb_assert (filename != nullptr);
 
-  gdb_argv argv (args);
-
-  prog = tilde_expand (argv[0]);
-
-  if (argv[1] != NULL)
+  if (offset != 0)
     error (_("GDB sim does not yet support a load offset."));
 
   if (remote_debug)
-    fprintf_unfiltered (gdb_stdlog, "gdbsim_load: prog \"%s\"\n", prog);
+    fprintf_unfiltered (gdb_stdlog, "gdbsim_load: prog \"%s\"\n", filename);
 
   /* FIXME: We will print two messages on error.
      Need error to either not print anything if passed NULL or need
      another routine that doesn't take any arguments.  */
-  if (sim_load (sim_data->gdbsim_desc, prog, NULL) == SIM_RC_FAIL)
+  if (sim_load (sim_data->gdbsim_desc, filename, NULL) == SIM_RC_FAIL)
     error (_("unable to load program"));
 
   /* FIXME: If a load command should reset the targets registers then

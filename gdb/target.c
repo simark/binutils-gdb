@@ -49,6 +49,7 @@
 #include "gdbsupport/byte-vector.h"
 #include "terminal.h"
 #include <unordered_map>
+#include "readline/tilde.h"
 
 static void generic_tls_error (void) ATTRIBUTE_NORETURN;
 
@@ -313,10 +314,11 @@ target_kill (void)
 }
 
 void
-target_load (const char *arg)
+target_load (const char *filename, CORE_ADDR offset)
 {
+  gdb::unique_xmalloc_ptr<char> filename_expanded (tilde_expand (filename));
   target_dcache_invalidate ();
-  current_top_target ()->load (arg);
+  current_top_target ()->load (filename_expanded.get (), offset);
 }
 
 /* Define it.  */

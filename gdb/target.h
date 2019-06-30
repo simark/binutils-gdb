@@ -594,7 +594,7 @@ struct target_ops
       TARGET_DEFAULT_FUNC (default_terminal_info);
     virtual void kill ()
       TARGET_DEFAULT_NORETURN (noprocess ());
-    virtual void load (const char *)
+    virtual void load (const char *filename, CORE_ADDR offset)
       TARGET_DEFAULT_NORETURN (tcomplain ());
     /* Start an inferior process and set inferior_ptid to its pid.
        EXEC_FILE is the file to run.
@@ -1590,7 +1590,7 @@ extern void target_kill (void);
    sections.  The target may define switches, or other non-switch
    arguments, as it pleases.  */
 
-extern void target_load (const char *args);
+extern void target_load (const char *filename, CORE_ADDR offset);
 
 /* Some targets (such as ttrace-based HPUX) don't allow us to request
    notification of inferior events such as fork and vork immediately
