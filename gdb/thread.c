@@ -235,7 +235,7 @@ init_thread_list (void)
       else
 	set_thread_exited (tp, 1);
 
-      inf->thread_list = NULL;
+      inf->thread_map.clear();
     }
 }
 
@@ -247,16 +247,10 @@ new_thread (struct inferior *inf, ptid_t ptid)
 {
   thread_info *tp = new thread_info (inf, ptid);
 
-  if (inf->thread_list == NULL)
-    inf->thread_list = tp;
-  else
-    {
-      struct thread_info *last;
+  /* A thread with this ptid should not exist yet.  */
+  gdb_assert (inf->thread_map.find (ptid) == inf->thread_map.end ());
 
-      for (last = inf->thread_list; last->next != NULL; last = last->next)
-	;
-      last->next = tp;
-    }
+  inf->thread_map[ptid] = tp;
 
   return tp;
 }
@@ -450,33 +444,25 @@ thread_step_over_chain_remove (struct thread_info *tp)
    THR must not be NULL or a failed assertion will be raised.  */
 
 static void
-delete_thread_1 (thread_info *thr, bool silent)
+delete_thread_1 (thread_info *thr, bool silent, bool remove)
 {
   gdb_assert (thr != nullptr);
 
-  struct thread_info *tp, *tpprev = NULL;
+  set_thread_exited (thr, silent);
 
-  for (tp = thr->inf->thread_list; tp; tpprev = tp, tp = tp->next)
-    if (tp == thr)
-      break;
-
-  if (!tp)
-    return;
-
-  set_thread_exited (tp, silent);
-
-  if (!tp->deletable ())
+  if (!thr->deletable ())
     {
        /* Will be really deleted some other time.  */
        return;
      }
 
-  if (tpprev)
-    tpprev->next = tp->next;
-  else
-    tp->inf->thread_list = tp->next;
+  if (remove)
+    {
+      size_t nr_deleted = thr->inf->thread_map.erase(thr->ptid);
+      gdb_assert (nr_deleted == 1);
+    }
 
-  delete tp;
+  delete thr;
 }
 
 /* Delete thread THREAD and notify of thread exit.  If this is the
@@ -487,13 +473,25 @@ delete_thread_1 (thread_info *thr, bool silent)
 void
 delete_thread (thread_info *thread)
 {
-  delete_thread_1 (thread, false /* not silent */);
+  delete_thread_1 (thread, false /* not silent */, true /* remove */);
+}
+
+void
+delete_thread_noremove (thread_info *thread)
+{
+  delete_thread_1 (thread, false /* silent */, false /* don't remove */);
 }
 
 void
 delete_thread_silent (thread_info *thread)
 {
-  delete_thread_1 (thread, true /* silent */);
+  delete_thread_1 (thread, true /* silent */, true /* remove */);
+}
+
+void
+delete_thread_silent_noremove (thread_info *thread)
+{
+  delete_thread_1 (thread, true /* silent */, false /* don't remove */);
 }
 
 struct thread_info *
@@ -622,7 +620,8 @@ in_thread_list (ptid_t ptid)
 thread_info *
 first_thread_of_inferior (inferior *inf)
 {
-  return inf->thread_list;
+  gdb_assert (!inf->thread_map.empty ());
+  return inf->thread_map.begin ()->second;
 }
 
 thread_info *
@@ -772,7 +771,13 @@ thread_change_ptid (ptid_t old_ptid, ptid_t new_ptid)
   inf->pid = new_ptid.pid ();
 
   tp = find_thread_ptid (inf, old_ptid);
+  gdb_assert (tp != nullptr);
+
+  int num_erased = inf->thread_map.erase (old_ptid);
+  gdb_assert (num_erased == 1);
+
   tp->ptid = new_ptid;
+  inf->thread_map[new_ptid] = tp;
 
   gdb::observers::thread_ptid_changed.notify (old_ptid, new_ptid);
 }
@@ -1089,85 +1094,99 @@ print_thread_info_1 (struct ui_out *uiout, const char *requested_threads,
     scoped_restore_current_thread restore_thread;
 
     for (inferior *inf : all_inferiors ())
-      for (thread_info *tp : inf->threads ())
       {
-	int core;
 
-	any_thread = true;
-	if (tp == current_thread && tp->state == THREAD_EXITED)
-	  current_exited = true;
+	std::vector<thread_info *> threads_to_print;
 
-	if (!should_print_thread (requested_threads, default_inf_num,
-				  global_ids, pid, tp))
-	  continue;
+	for (thread_info *tp : inf->threads ())
+	  threads_to_print.push_back (tp);
 
-	ui_out_emit_tuple tuple_emitter (uiout, NULL);
-
-	if (!uiout->is_mi_like_p ())
+	std::sort (threads_to_print.begin (), threads_to_print.end (),
+		   [] (thread_info *a, thread_info *b)
 	  {
-	    if (tp == current_thread)
-	      uiout->field_string ("current", "*");
+	    return a->per_inf_num < b->per_inf_num;
+	  });
+
+	for (thread_info *tp : threads_to_print)
+	  {
+	    int core;
+
+	    any_thread = true;
+	    if (tp == current_thread && tp->state == THREAD_EXITED)
+	      current_exited = true;
+
+	    if (!should_print_thread (requested_threads, default_inf_num,
+				      global_ids, pid, tp))
+	      continue;
+
+	    ui_out_emit_tuple tuple_emitter (uiout, NULL);
+
+	    if (!uiout->is_mi_like_p ())
+	      {
+		if (tp == current_thread)
+		  uiout->field_string ("current", "*");
+		else
+		  uiout->field_skip ("current");
+
+		uiout->field_string ("id-in-tg", print_thread_id (tp));
+	      }
+
+	    if (show_global_ids || uiout->is_mi_like_p ())
+	      uiout->field_signed ("id", tp->global_num);
+
+	    /* For the CLI, we stuff everything into the target-id field.
+	       This is a gross hack to make the output come out looking
+	       correct.  The underlying problem here is that ui-out has no
+	       way to specify that a field's space allocation should be
+	       shared by several fields.  For MI, we do the right thing
+	       instead.  */
+
+	    if (uiout->is_mi_like_p ())
+	      {
+		uiout->field_string ("target-id", target_pid_to_str (tp->ptid));
+
+		const char *extra_info = target_extra_thread_info (tp);
+		if (extra_info != nullptr)
+		  uiout->field_string ("details", extra_info);
+
+		const char *name = (tp->name != nullptr
+				    ? tp->name
+				    : target_thread_name (tp));
+		if (name != NULL)
+		  uiout->field_string ("name", name);
+	      }
 	    else
-	      uiout->field_skip ("current");
-
-	    uiout->field_string ("id-in-tg", print_thread_id (tp));
-	  }
-
-	if (show_global_ids || uiout->is_mi_like_p ())
-	  uiout->field_signed ("id", tp->global_num);
-
-	/* For the CLI, we stuff everything into the target-id field.
-	   This is a gross hack to make the output come out looking
-	   correct.  The underlying problem here is that ui-out has no
-	   way to specify that a field's space allocation should be
-	   shared by several fields.  For MI, we do the right thing
-	   instead.  */
-
-	if (uiout->is_mi_like_p ())
-	  {
-	    uiout->field_string ("target-id", target_pid_to_str (tp->ptid));
-
-	    const char *extra_info = target_extra_thread_info (tp);
-	    if (extra_info != nullptr)
-	      uiout->field_string ("details", extra_info);
-
-	    const char *name = (tp->name != nullptr
-				? tp->name
-				: target_thread_name (tp));
-	    if (name != NULL)
-	      uiout->field_string ("name", name);
-	  }
-	else
-	  {
-	    uiout->field_string ("target-id",
-				 thread_target_id_str (tp).c_str ());
-	  }
-
-	if (tp->state == THREAD_RUNNING)
-	  uiout->text ("(running)\n");
-	else
-	  {
-	    /* The switch below puts us at the top of the stack (leaf
-	       frame).  */
-	    switch_to_thread (tp);
-	    print_stack_frame (get_selected_frame (NULL),
-			       /* For MI output, print frame level.  */
-			       uiout->is_mi_like_p (),
-			       LOCATION, 0);
-	  }
-
-	if (uiout->is_mi_like_p ())
-	  {
-	    const char *state = "stopped";
+	      {
+		uiout->field_string ("target-id",
+				     thread_target_id_str (tp).c_str ());
+	      }
 
 	    if (tp->state == THREAD_RUNNING)
-	      state = "running";
-	    uiout->field_string ("state", state);
-	  }
+	      uiout->text ("(running)\n");
+	    else
+	      {
+		/* The switch below puts us at the top of the stack (leaf
+		   frame).  */
+		switch_to_thread (tp);
+		print_stack_frame (get_selected_frame (NULL),
+				   /* For MI output, print frame level.  */
+				   uiout->is_mi_like_p (),
+				   LOCATION, 0);
+	      }
 
-	core = target_core_of_thread (tp->ptid);
-	if (uiout->is_mi_like_p () && core != -1)
-	  uiout->field_signed ("core", core);
+	    if (uiout->is_mi_like_p ())
+	      {
+		const char *state = "stopped";
+
+		if (tp->state == THREAD_RUNNING)
+		  state = "running";
+		uiout->field_string ("state", state);
+	      }
+
+	    core = target_core_of_thread (tp->ptid);
+	    if (uiout->is_mi_like_p () && core != -1)
+	      uiout->field_signed ("core", core);
+	  }
       }
 
     /* This end scope restores the current thread and the frame
