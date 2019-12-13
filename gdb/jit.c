@@ -460,12 +460,6 @@ struct gdb_symtab
     : file_name (file_name != nullptr ? file_name : "")
   {}
 
-  ~gdb_symtab ()
-  {
-    for (gdb_block *gdb_block_iter : this->blocks)
-      delete gdb_block_iter;
-  }
-
   /* The list of blocks in this symtab.  These will eventually be
      converted to real blocks.
 
@@ -473,7 +467,7 @@ struct gdb_symtab
      pointers are returned to the user's debug info reader, so it's important
      that the objects don't change location during their lifetime (which would
      happen with a vector of objects getting resized).  */
-  std::vector<gdb_block *> blocks;
+  std::vector<std::unique_ptr<gdb_block>> blocks;
 
   /* A mapping between line numbers to PC.  */
   gdb::unique_xmalloc_ptr<struct linetable> linetable;
@@ -552,8 +546,8 @@ jit_block_open_impl (struct gdb_symbol_callbacks *cb,
 {
   /* Place the block at the end of the vector, it will be sorted when the
      symtab is finalized.  */
-  symtab->blocks.push_back (new gdb_block (parent, begin, end, name));
-  return symtab->blocks.back ();
+  symtab->blocks.emplace_back (new gdb_block (parent, begin, end, name));
+  return symtab->blocks.back ().get ();
 }
 
 /* Readers call this to add a line mapping (from PC to line number) to
@@ -607,7 +601,8 @@ finalize_symtab (struct gdb_symtab *stab, struct objfile *objfile)
 
   /* Sort the blocks in the order they should appear in the blockvector. */
   std::sort (stab->blocks.begin (), stab->blocks.end (),
-	     [] (const gdb_block *a, const gdb_block *b)
+	     [] (const std::unique_ptr<gdb_block> &a,
+		 const std::unique_ptr<gdb_block> &b)
 	       {
 		 if (a->begin != b->begin)
 		   return a->begin < b->begin;
@@ -651,7 +646,7 @@ finalize_symtab (struct gdb_symtab *stab, struct objfile *objfile)
      object for each.  Simultaneously, keep setting the real_block
      fields.  */
   int block_idx = FIRST_LOCAL_BLOCK;
-  for (gdb_block *gdb_block_iter : stab->blocks)
+  for (const std::unique_ptr<gdb_block> &gdb_block_iter : stab->blocks)
     {
       struct block *new_block = allocate_block (&objfile->objfile_obstack);
       struct symbol *block_name = allocate_symbol (objfile);
@@ -714,7 +709,7 @@ finalize_symtab (struct gdb_symtab *stab, struct objfile *objfile)
 
   /* Fill up the superblock fields for the real blocks, using the
      real_block fields populated earlier.  */
-  for (gdb_block *gdb_block_iter : stab->blocks)
+  for (const std::unique_ptr<gdb_block> &gdb_block_iter : stab->blocks)
     {
       if (gdb_block_iter->parent != NULL)
 	{
