@@ -450,18 +450,37 @@ struct gdb_block
 
 struct gdb_symtab
 {
+  explicit gdb_symtab (const char *file_name)
+    : file_name (file_name != nullptr ? file_name : "")
+  {}
+
+  ~gdb_symtab ()
+  {
+    gdb_block *gdb_block_iter, *gdb_block_iter_tmp;
+
+    for ((gdb_block_iter = this->blocks,
+	  gdb_block_iter_tmp = gdb_block_iter->next);
+         gdb_block_iter;
+         gdb_block_iter = gdb_block_iter_tmp)
+      {
+        gdb_block_iter_tmp = gdb_block_iter->next;
+        xfree ((void *) gdb_block_iter->name);
+        xfree (gdb_block_iter);
+      }
+  }
+
   /* The list of blocks in this symtab.  These will eventually be
      converted to real blocks.  */
-  struct gdb_block *blocks;
+  struct gdb_block *blocks = nullptr;
 
   /* The number of blocks inserted.  */
-  int nblocks;
+  int nblocks = 0;
 
   /* A mapping between line numbers to PC.  */
-  struct linetable *linetable;
+  gdb::unique_xmalloc_ptr<struct linetable> linetable;
 
   /* The source file for this symtab.  */
-  const char *file_name;
+  std::string file_name;
 };
 
 /* Proxy object for building an object.  */
@@ -517,14 +536,11 @@ jit_symtab_open_impl (struct gdb_symbol_callbacks *cb,
 		      struct gdb_object *object,
 		      const char *file_name)
 {
-  struct gdb_symtab *ret;
-
   /* CB stays unused.  See comment in jit_object_open_impl.  */
 
-  ret = XCNEW (struct gdb_symtab);
-  ret->file_name = file_name ? xstrdup (file_name) : xstrdup ("");
-  object->symtabs.push_back (ret);
-  return ret;
+  gdb_symtab *symtab = new gdb_symtab (file_name);
+  object->symtabs.push_back (symtab);
+  return symtab;
 }
 
 /* Returns true if the block corresponding to old should be placed
@@ -609,7 +625,7 @@ jit_symtab_line_mapping_add_impl (struct gdb_symbol_callbacks *cb,
 
   alloc_len = sizeof (struct linetable)
 	      + (nlines - 1) * sizeof (struct linetable_entry);
-  stab->linetable = (struct linetable *) xmalloc (alloc_len);
+  stab->linetable.reset (XNEWVAR (struct linetable, alloc_len));
   stab->linetable->nitems = nlines;
   for (i = 0; i < nlines; i++)
     {
@@ -636,7 +652,7 @@ static void
 finalize_symtab (struct gdb_symtab *stab, struct objfile *objfile)
 {
   struct compunit_symtab *cust;
-  struct gdb_block *gdb_block_iter, *gdb_block_iter_tmp;
+  struct gdb_block *gdb_block_iter;
   struct block *block_iter;
   int actual_nblocks, i;
   size_t blockvector_size;
@@ -645,8 +661,8 @@ finalize_symtab (struct gdb_symtab *stab, struct objfile *objfile)
 
   actual_nblocks = FIRST_LOCAL_BLOCK + stab->nblocks;
 
-  cust = allocate_compunit_symtab (objfile, stab->file_name);
-  allocate_symtab (cust, stab->file_name);
+  cust = allocate_compunit_symtab (objfile, stab->file_name.c_str ());
+  allocate_symtab (cust, stab->file_name.c_str ());
   add_compunit_symtab_to_objfile (cust);
 
   /* JIT compilers compile in memory.  */
@@ -660,8 +676,8 @@ finalize_symtab (struct gdb_symtab *stab, struct objfile *objfile)
 		     + sizeof (struct linetable));
       SYMTAB_LINETABLE (COMPUNIT_FILETABS (cust))
 	= (struct linetable *) obstack_alloc (&objfile->objfile_obstack, size);
-      memcpy (SYMTAB_LINETABLE (COMPUNIT_FILETABS (cust)), stab->linetable,
-	      size);
+      memcpy (SYMTAB_LINETABLE (COMPUNIT_FILETABS (cust)),
+	      stab->linetable.get (), size);
     }
 
   blockvector_size = (sizeof (struct blockvector)
@@ -762,20 +778,7 @@ finalize_symtab (struct gdb_symtab *stab, struct objfile *objfile)
 	}
     }
 
-  /* Free memory.  */
-  gdb_block_iter = stab->blocks;
-
-  for (gdb_block_iter = stab->blocks, gdb_block_iter_tmp = gdb_block_iter->next;
-       gdb_block_iter;
-       gdb_block_iter = gdb_block_iter_tmp)
-    {
-      gdb_block_iter_tmp = gdb_block_iter->next;
-      xfree ((void *) gdb_block_iter->name);
-      xfree (gdb_block_iter);
-    }
-  xfree (stab->linetable);
-  xfree ((char *) stab->file_name);
-  xfree (stab);
+  delete stab;
 }
 
 /* Called when closing a gdb_objfile.  Converts OBJ to a proper
