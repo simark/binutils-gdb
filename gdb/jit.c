@@ -428,20 +428,28 @@ jit_read_code_entry (struct gdbarch *gdbarch,
 
 struct gdb_block
 {
+  gdb_block (gdb_block *parent, CORE_ADDR begin, CORE_ADDR end,
+	     const char *name)
+    : parent (parent),
+      begin (begin),
+      end (end),
+      name (name != nullptr ? xstrdup (name) : nullptr)
+  {}
+
   /* The parent of this block.  */
   struct gdb_block *parent;
 
   /* Points to the "real" block that is being built out of this
      instance.  This block will be added to a blockvector, which will
      then be added to a symtab.  */
-  struct block *real_block;
+  struct block *real_block = nullptr;
 
   /* The first and last code address corresponding to this block.  */
   CORE_ADDR begin, end;
 
   /* The name of this block (if any).  If this is non-NULL, the
      FUNCTION symbol symbol is set to this value.  */
-  const char *name;
+  gdb::unique_xmalloc_ptr<char> name;
 };
 
 /* Proxy object for building a symtab.  */
@@ -455,10 +463,7 @@ struct gdb_symtab
   ~gdb_symtab ()
   {
     for (gdb_block *gdb_block_iter : this->blocks)
-      {
-        xfree ((void *) gdb_block_iter->name);
-        xfree (gdb_block_iter);
-      }
+      delete gdb_block_iter;
   }
 
   /* The list of blocks in this symtab.  These will eventually be
@@ -545,16 +550,9 @@ jit_block_open_impl (struct gdb_symbol_callbacks *cb,
 		     struct gdb_symtab *symtab, struct gdb_block *parent,
 		     GDB_CORE_ADDR begin, GDB_CORE_ADDR end, const char *name)
 {
-  struct gdb_block *block = XCNEW (struct gdb_block);
-
-  block->begin = (CORE_ADDR) begin;
-  block->end = (CORE_ADDR) end;
-  block->name = name ? xstrdup (name) : NULL;
-  block->parent = parent;
-
   /* Place the block at the end of the vector, it will be sorted when the
      symtab is finalized.  */
-  symtab->blocks.push_back (block);
+  symtab->blocks.push_back (new gdb_block (parent, begin, end, name));
   return symtab->blocks.back ();
 }
 
@@ -676,7 +674,7 @@ finalize_symtab (struct gdb_symtab *stab, struct objfile *objfile)
       SYMBOL_BLOCK_VALUE (block_name) = new_block;
 
       block_name->name = obstack_strdup (&objfile->objfile_obstack,
-					 gdb_block_iter->name);
+					 gdb_block_iter->name.get ());
 
       BLOCK_FUNCTION (new_block) = block_name;
 
