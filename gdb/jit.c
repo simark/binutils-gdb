@@ -487,7 +487,7 @@ struct gdb_object
      pointers are returned to the user's debug info reader, so it's important
      that the objects don't change location during their lifetime (which would
      happen with a vector of objects getting resized).  */
-  std::vector<gdb_symtab *> symtabs;
+  std::vector<std::unique_ptr<gdb_symtab>> symtabs;
 };
 
 /* The type of the `private' data passed around by the callback
@@ -532,9 +532,8 @@ jit_symtab_open_impl (struct gdb_symbol_callbacks *cb,
 {
   /* CB stays unused.  See comment in jit_object_open_impl.  */
 
-  gdb_symtab *symtab = new gdb_symtab (file_name);
-  object->symtabs.push_back (symtab);
-  return symtab;
+  object->symtabs.emplace_back (new gdb_symtab (file_name));
+  return object->symtabs.back ().get ();
 }
 
 /* Called by readers to open a new gdb_block.  This function also
@@ -733,8 +732,6 @@ finalize_symtab (struct gdb_symtab *stab, struct objfile *objfile)
 	    BLOCKVECTOR_BLOCK (bv, STATIC_BLOCK);
 	}
     }
-
-  delete stab;
 }
 
 /* Called when closing a gdb_objfile.  Converts OBJ to a proper
@@ -753,8 +750,8 @@ jit_object_close_impl (struct gdb_symbol_callbacks *cb,
 			   OBJF_NOT_FILENAME);
   objfile->per_bfd->gdbarch = target_gdbarch ();
 
-  for (gdb_symtab *symtab : obj->symtabs)
-    finalize_symtab (symtab, objfile);
+  for (const std::unique_ptr<gdb_symtab> &symtab : obj->symtabs)
+    finalize_symtab (symtab.get (), objfile);
 
   add_objfile_entry (objfile, *priv_data);
 
