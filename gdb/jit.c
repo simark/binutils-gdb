@@ -462,14 +462,19 @@ struct gdb_symtab
 
   /* The source file for this symtab.  */
   const char *file_name;
-  struct gdb_symtab *next;
 };
 
 /* Proxy object for building an object.  */
 
 struct gdb_object
 {
-  struct gdb_symtab *symtabs;
+  /* Symtabs of this object.
+
+     This is a vector of pointers, rather than a vector of objects, because the
+     pointers are returned to the user's debug info reader, so it's important
+     that the objects don't change location during their lifetime (which would
+     happen with a vector of objects getting resized).  */
+  std::vector<gdb_symtab *> symtabs;
 };
 
 /* The type of the `private' data passed around by the callback
@@ -501,7 +506,7 @@ jit_object_open_impl (struct gdb_symbol_callbacks *cb)
   /* CB is not required right now, but sometime in the future we might
      need a handle to it, and we'd like to do that without breaking
      the ABI.  */
-  return XCNEW (struct gdb_object);
+  return new gdb_object;
 }
 
 /* Readers call into this function to open a new gdb_symtab, which,
@@ -518,8 +523,7 @@ jit_symtab_open_impl (struct gdb_symbol_callbacks *cb,
 
   ret = XCNEW (struct gdb_symtab);
   ret->file_name = file_name ? xstrdup (file_name) : xstrdup ("");
-  ret->next = object->symtabs;
-  object->symtabs = ret;
+  object->symtabs.push_back (ret);
   return ret;
 }
 
@@ -781,7 +785,6 @@ static void
 jit_object_close_impl (struct gdb_symbol_callbacks *cb,
 		       struct gdb_object *obj)
 {
-  struct gdb_symtab *i, *j;
   struct objfile *objfile;
   jit_dbg_reader_data *priv_data;
 
@@ -791,14 +794,12 @@ jit_object_close_impl (struct gdb_symbol_callbacks *cb,
 			   OBJF_NOT_FILENAME);
   objfile->per_bfd->gdbarch = target_gdbarch ();
 
-  j = NULL;
-  for (i = obj->symtabs; i; i = j)
-    {
-      j = i->next;
-      finalize_symtab (i, objfile);
-    }
+  for (gdb_symtab *symtab : obj->symtabs)
+    finalize_symtab (symtab, objfile);
+
   add_objfile_entry (objfile, *priv_data);
-  xfree (obj);
+
+  delete obj;
 }
 
 /* Try to read CODE_ENTRY using the loaded jit reader (if any).
