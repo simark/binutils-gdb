@@ -198,7 +198,7 @@ set_thread_exited (thread_info *tp, int silent)
 {
   /* Dead threads don't need to step-over.  Remove from queue.  */
   if (tp->step_over_next != NULL)
-    thread_step_over_chain_remove (tp);
+    global_thread_step_over_chain_remove (tp);
 
   if (tp->state != THREAD_EXITED)
     {
@@ -416,11 +416,11 @@ step_over_chain_remove (struct thread_info **list_p, struct thread_info *tp)
 /* See gdbthread.h.  */
 
 struct thread_info *
-thread_step_over_chain_next (struct thread_info *tp)
+global_thread_step_over_chain_next (struct thread_info *tp)
 {
   struct thread_info *next = tp->step_over_next;
 
-  return (next == step_over_queue_head ? NULL : next);
+  return (next == global_thread_step_over_chain_head ? NULL : next);
 }
 
 /* See gdbthread.h.  */
@@ -434,17 +434,17 @@ thread_is_in_step_over_chain (struct thread_info *tp)
 /* See gdbthread.h.  */
 
 void
-thread_step_over_chain_enqueue (struct thread_info *tp)
+global_thread_step_over_chain_enqueue (struct thread_info *tp)
 {
-  step_over_chain_enqueue (&step_over_queue_head, tp);
+  step_over_chain_enqueue (&global_thread_step_over_chain_head, tp);
 }
 
 /* See gdbthread.h.  */
 
 void
-thread_step_over_chain_remove (struct thread_info *tp)
+global_thread_step_over_chain_remove (struct thread_info *tp)
 {
-  step_over_chain_remove (&step_over_queue_head, tp);
+  step_over_chain_remove (&global_thread_step_over_chain_head, tp);
 }
 
 /* Delete the thread referenced by THR.  If SILENT, don't notify
@@ -838,7 +838,7 @@ set_running_thread (struct thread_info *tp, bool running)
 	 the step-over queue, so that we don't try to resume
 	 it until the user wants it to.  */
       if (tp->step_over_next != NULL)
-	thread_step_over_chain_remove (tp);
+	global_thread_step_over_chain_remove (tp);
     }
 
   return started;
