@@ -1120,6 +1120,9 @@ struct amd64_displaced_step_copy_insn_closure : public displaced_step_copy_insn_
   gdb::byte_vector insn_buf;
 };
 
+typedef std::unique_ptr<amd64_displaced_step_copy_insn_closure>
+  amd64_displaced_step_copy_insn_closure_up;
+
 /* WARNING: Keep onebyte_has_modrm, twobyte_has_modrm in sync with
    ../opcodes/i386-dis.c (until libopcodes exports them, or an alternative,
    at which point delete these in favor of libopcodes' versions).  */

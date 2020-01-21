@@ -21,6 +21,7 @@
 #include "defs.h"
 #include "arch-utils.h"
 #include "frame.h"
+#include "gdbarch.h"
 #include "gdbcore.h"
 #include "regcache.h"
 #include "osabi.h"
@@ -34,6 +35,7 @@
 #include "i386-linux-tdep.h"
 #include "linux-tdep.h"
 #include "gdbsupport/x86-xstate.h"
+#include "inferior.h"
 
 #include "amd64-tdep.h"
 #include "solib-svr4.h"
@@ -1794,6 +1796,59 @@ amd64_dtrace_parse_probe_argument (struct gdbarch *gdbarch,
     }
 }
 
+struct amd64_linux_per_inferior
+{
+  amd64_linux_per_inferior (CORE_ADDR disp_step_buffer_addr)
+    : disp_step_buf_mgr (disp_step_buffer_addr)
+  {}
+
+  single_displaced_buffer_manager disp_step_buf_mgr;
+};
+
+static const inferior_key<amd64_linux_per_inferior>
+  amd64_linux_per_inferior_data;
+
+/* Get the per-inferior AMD64/Linux data for INF.  */
+
+static amd64_linux_per_inferior *
+get_amd64_linux_per_inferior (inferior *inf, gdbarch *arch)
+{
+  amd64_linux_per_inferior *per_inf = amd64_linux_per_inferior_data.get (inf);
+
+  if (per_inf == nullptr)
+    {
+      /* Figure out where the displaced step buffer is.  */
+      CORE_ADDR disp_step_buffer_addr = linux_displaced_step_location (arch);
+
+      per_inf = amd64_linux_per_inferior_data.emplace (inf, disp_step_buffer_addr);
+    }
+
+  return per_inf;
+}
+
+/* Implementation of the gdbarch_displaced_step_prepare method. */
+
+static displaced_step_prepare_status
+amd64_linux_displaced_step_prepare (gdbarch *arch, thread_info *thread)
+{
+  amd64_linux_per_inferior *per_inferior
+    = get_amd64_linux_per_inferior (thread->inf, arch);
+
+  return per_inferior->disp_step_buf_mgr.prepare (thread);
+}
+
+/* Implementation of the gdbarch_displaced_step_finish method. */
+
+static displaced_step_finish_status
+amd64_linux_displaced_step_finish (gdbarch *arch, thread_info *thread,
+				   gdb_signal sig)
+{
+  amd64_linux_per_inferior *per_inferior
+    = get_amd64_linux_per_inferior (thread->inf, arch);
+
+  return per_inferior->disp_step_buf_mgr.finish (arch, thread, sig);
+}
+
 static void
 amd64_linux_init_abi_common(struct gdbarch_info info, struct gdbarch *gdbarch)
 {
@@ -1839,8 +1894,8 @@ amd64_linux_init_abi_common(struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_displaced_step_copy_insn (gdbarch,
                                         amd64_displaced_step_copy_insn);
   set_gdbarch_displaced_step_fixup (gdbarch, amd64_displaced_step_fixup);
-  set_gdbarch_displaced_step_location (gdbarch,
-                                       linux_displaced_step_location);
+  set_gdbarch_displaced_step_prepare (gdbarch, amd64_linux_displaced_step_prepare);
+  set_gdbarch_displaced_step_finish (gdbarch, amd64_linux_displaced_step_finish);
 
   set_gdbarch_process_record (gdbarch, i386_process_record);
   set_gdbarch_process_record_signal (gdbarch, amd64_linux_record_signal);
