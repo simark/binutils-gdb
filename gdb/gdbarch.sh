@@ -820,7 +820,10 @@ M;void;displaced_step_fixup;struct displaced_step_copy_insn_closure *closure, CO
 #
 # For a general explanation of displaced stepping and how GDB uses it,
 # see the comments in infrun.c.
-m;CORE_ADDR;displaced_step_location;void;;;NULL;;(! gdbarch->displaced_step_location) != (! gdbarch->displaced_step_copy_insn)
+#m;CORE_ADDR;displaced_step_location;thread_info *;thread;;NULL;;(! gdbarch->displaced_step_location) != (! gdbarch->displaced_step_copy_insn)
+#m;CORE_ADDR;displaced_step_release_location;CORE_ADDR;addr;;NULL;;(! gdbarch->displaced_step_location) != (! gdbarch->displaced_step_copy_insn)
+m;displaced_step_prepare_status;displaced_step_prepare;thread_info *thread;thread;;NULL;;(! gdbarch->displaced_step_prepare) != (! gdbarch->displaced_step_copy_insn)
+m;displaced_step_finish_status;displaced_step_finish;thread_info *thread, gdb_signal sig;thread, sig;;NULL;;(! gdbarch->displaced_step_finish) != (! gdbarch->displaced_step_copy_insn)
 
 # Relocate an instruction to execute at a different address.  OLDLOC
 # is the address in the inferior memory where the instruction to
@@ -1267,6 +1270,7 @@ cat <<EOF
 #include "gdb_obstack.h"
 #include "infrun.h"
 #include "osabi.h"
+#include "displaced-stepping.h"
 
 struct floatformat;
 struct ui_file;

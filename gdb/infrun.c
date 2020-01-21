@@ -19,6 +19,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
+#include "displaced-stepping.h"
 #include "gdbsupport/common-defs.h"
 #include "gdbsupport/common-utils.h"
 #include "infrun.h"
@@ -37,6 +38,7 @@
 #include "top.h"
 #include "inf-loop.h"
 #include "regcache.h"
+#include "utils.h"
 #include "value.h"
 #include "observable.h"
 #include "language.h"
@@ -1478,11 +1480,7 @@ step_over_info_valid_p (void)
    displaced step operation on it.  See displaced_step_prepare and
    displaced_step_fixup for details.  */
 
-/* Default destructor for displaced_step_copy_insn_closure.  */
-
-displaced_step_copy_insn_closure::~displaced_step_copy_insn_closure () = default;
-
-/* Get the displaced stepping state of process PID.  */
+/* Get the displaced stepping state of inferior INF.  */
 
 static displaced_step_inferior_state *
 get_displaced_stepping_state (inferior *inf)
@@ -1490,38 +1488,50 @@ get_displaced_stepping_state (inferior *inf)
   return &inf->displaced_step_state;
 }
 
-/* Returns true if any inferior has a thread doing a displaced
-   step.  */
+/* Get the displaced stepping state of thread THREAD.  */
+
+static displaced_step_thread_state *
+get_displaced_stepping_state (thread_info *thread)
+{
+  return &thread->displaced_step_state;
+}
+
+/* Return true if the given thread is doing a displaced step.  */
 
 static bool
-displaced_step_in_progress_any_inferior ()
+displaced_step_in_progress (thread_info *thread)
 {
-  for (inferior *i : all_inferiors ())
+  gdb_assert (thread != NULL);
+
+  return get_displaced_stepping_state (thread)->in_progress ();
+}
+
+/* Return true if any thread of this inferior is doing a displaced step.  */
+
+static bool
+displaced_step_in_progress (inferior *inf)
+{
+  for (thread_info *thread : inf->non_exited_threads ())
     {
-      if (i->displaced_step_state.step_thread != nullptr)
+      if (displaced_step_in_progress (thread))
 	return true;
     }
 
   return false;
 }
 
-/* Return true if thread represented by PTID is doing a displaced
-   step.  */
+/* Return true if any thread is doing a displaced step.  */
 
-static int
-displaced_step_in_progress_thread (thread_info *thread)
+static bool
+displaced_step_in_progress_any_thread ()
 {
-  gdb_assert (thread != NULL);
+  for (thread_info *thread : all_non_exited_threads ())
+    {
+      if (displaced_step_in_progress (thread))
+	return true;
+    }
 
-  return get_displaced_stepping_state (thread->inf)->step_thread == thread;
-}
-
-/* Return true if process PID has a thread doing a displaced step.  */
-
-static int
-displaced_step_in_progress (inferior *inf)
-{
-  return get_displaced_stepping_state (inf)->step_thread != nullptr;
+  return false;
 }
 
 /* If inferior is in displaced stepping, and ADDR equals to starting address
@@ -1531,14 +1541,15 @@ displaced_step_in_progress (inferior *inf)
 struct displaced_step_copy_insn_closure *
 get_displaced_step_copy_insn_closure_by_addr (CORE_ADDR addr)
 {
-  displaced_step_inferior_state *displaced
-    = get_displaced_stepping_state (current_inferior ());
-
-  /* If checking the mode of displaced instruction in copy area.  */
-  if (displaced->step_thread != nullptr
-      && displaced->step_copy == addr)
-    return displaced->step_closure.get ();
-
+// FIXME: implement me (only needed on ARM).
+//  displaced_step_inferior_state *displaced
+//    = get_displaced_stepping_state (current_inferior ());
+//
+//  /* If checking the mode of displaced instruction in copy area.  */
+//  if (displaced->step_thread != nullptr
+//      && displaced->step_copy == addr)
+//    return displaced->step_closure.get ();
+//
   return NULL;
 }
 
@@ -1579,8 +1590,9 @@ show_can_use_displaced_stepping (struct ui_file *file, int from_tty,
 static bool
 gdbarch_supports_displaced_stepping (gdbarch *arch)
 {
-  /* Only check for the presence of step_copy_insn.  Other required methods
-     are checked by the gdbarch validation.  */
+  /* Only check for the presence of copy_insn.  Other required methods
+     are checked by the gdbarch validation to be provided if copy_insn is
+     provided.  */
   return gdbarch_displaced_step_copy_insn_p (arch);
 }
 
@@ -1622,10 +1634,10 @@ use_displaced_stepping (thread_info *tp)
   return true;
 }
 
-/* Simple function wrapper around displaced_step_inferior_state::reset.  */
+/* Simple function wrapper around displaced_step_thread_state::reset.  */
 
 static void
-displaced_step_reset (displaced_step_inferior_state *displaced)
+displaced_step_reset (displaced_step_thread_state *displaced)
 {
   displaced->reset ();
 }
@@ -1664,15 +1676,13 @@ displaced_step_dump_bytes (struct ui_file *file,
    stepped now; 0 if displaced stepping this thread got queued; or -1
    if this instruction can't be displaced stepped.  */
 
-static int
+static displaced_step_prepare_status
 displaced_step_prepare_throw (thread_info *tp)
 {
   regcache *regcache = get_thread_regcache (tp);
   struct gdbarch *gdbarch = regcache->arch ();
-  const address_space *aspace = regcache->aspace ();
-  CORE_ADDR original, copy;
-  ULONGEST len;
-  int status;
+  displaced_step_thread_state *thread_disp_step_state
+    = get_displaced_stepping_state (tp);
 
   /* We should never reach this function if the architecture does not
      support displaced stepping.  */
@@ -1687,126 +1697,102 @@ displaced_step_prepare_throw (thread_info *tp)
      jump/branch).  */
   tp->control.may_range_step = 0;
 
-  /* We have to displaced step one thread at a time, as we only have
-     access to a single scratch space per inferior.  */
-
-  displaced_step_inferior_state *displaced
-    = get_displaced_stepping_state (tp->inf);
-
-  if (displaced->step_thread != nullptr)
-    {
-      /* Already waiting for a displaced step to finish.  Defer this
-	 request and place in queue.  */
-
-      if (debug_displaced)
-	fprintf_unfiltered (gdb_stdlog,
-			    "displaced: deferring step of %s\n",
-			    target_pid_to_str (tp->ptid).c_str ());
-
-      global_thread_step_over_chain_enqueue (tp);
-      return 0;
-    }
-  else
-    {
-      if (debug_displaced)
-	fprintf_unfiltered (gdb_stdlog,
-			    "displaced: stepping %s now\n",
-			    target_pid_to_str (tp->ptid).c_str ());
-    }
-
-  displaced_step_reset (displaced);
+  /* We are about to start a displaced step for this thread, if one is already
+     in progress, we goofed up somewhere.  */
+  gdb_assert (!thread_disp_step_state->in_progress ());
 
   scoped_restore_current_thread restore_thread;
 
   switch_to_thread (tp);
 
-  original = regcache_read_pc (regcache);
+  CORE_ADDR original_pc = regcache_read_pc (regcache);
 
-  copy = gdbarch_displaced_step_location (gdbarch);
-  len = gdbarch_max_insn_length (gdbarch);
+  displaced_step_prepare_status status =
+    gdbarch_displaced_step_prepare (gdbarch, tp);
 
-  if (breakpoint_in_range_p (aspace, copy, len))
+  if (status == DISPLACED_STEP_PREPARE_STATUS_ERROR)
     {
-      /* There's a breakpoint set in the scratch pad location range
-	 (which is usually around the entry point).  We'd either
-	 install it before resuming, which would overwrite/corrupt the
-	 scratch pad, or if it was already inserted, this displaced
-	 step would overwrite it.  The latter is OK in the sense that
-	 we already assume that no thread is going to execute the code
-	 in the scratch pad range (after initial startup) anyway, but
-	 the former is unacceptable.  Simply punt and fallback to
-	 stepping over this breakpoint in-line.  */
       if (debug_displaced)
-	{
-	  fprintf_unfiltered (gdb_stdlog,
-			      "displaced: breakpoint set in scratch pad.  "
-			      "Stepping over breakpoint in-line instead.\n");
-	}
+	fprintf_unfiltered (gdb_stdlog,
+			    "displaced: failed to prepare (%s)",
+			    target_pid_to_str (tp->ptid).c_str ());
 
-      return -1;
+      return DISPLACED_STEP_PREPARE_STATUS_ERROR;
+    }
+  else if (status == DISPLACED_STEP_PREPARE_STATUS_UNAVAILABLE)
+    {
+      /* Not enough displaced stepping resources available, defer this
+	 request by placing it the queue.  */
+
+      if (debug_displaced)
+	fprintf_unfiltered (gdb_stdlog,
+			    "displaced: not enough resources available, "
+			    "deferring step of %s\n",
+			    target_pid_to_str (tp->ptid).c_str ());
+
+      global_thread_step_over_chain_enqueue (tp);
+
+      return DISPLACED_STEP_PREPARE_STATUS_UNAVAILABLE;
     }
 
-  /* Save the original contents of the copy area.  */
-  displaced->step_saved_copy.resize (len);
-  status = target_read_memory (copy, displaced->step_saved_copy.data (), len);
-  if (status != 0)
-    throw_error (MEMORY_ERROR,
-		 _("Error accessing memory address %s (%s) for "
-		   "displaced-stepping scratch space."),
-		 paddress (gdbarch, copy), safe_strerror (status));
-  if (debug_displaced)
-    {
-      fprintf_unfiltered (gdb_stdlog, "displaced: saved %s: ",
-			  paddress (gdbarch, copy));
-      displaced_step_dump_bytes (gdb_stdlog,
-				 displaced->step_saved_copy.data (),
-				 len);
-    };
+  gdb_assert (status == DISPLACED_STEP_PREPARE_STATUS_OK);
 
-  displaced->step_closure
-    = gdbarch_displaced_step_copy_insn (gdbarch, original, copy, regcache);
-  if (displaced->step_closure == NULL)
-    {
-      /* The architecture doesn't know how or want to displaced step
-	 this instruction or instruction sequence.  Fallback to
-	 stepping over the breakpoint in-line.  */
-      return -1;
-    }
+// FIXME: Should probably replicated in the arch implementation now.
+//
+//  if (breakpoint_in_range_p (aspace, copy, len))
+//    {
+//      /* There's a breakpoint set in the scratch pad location range
+//	 (which is usually around the entry point).  We'd either
+//	 install it before resuming, which would overwrite/corrupt the
+//	 scratch pad, or if it was already inserted, this displaced
+//	 step would overwrite it.  The latter is OK in the sense that
+//	 we already assume that no thread is going to execute the code
+//	 in the scratch pad range (after initial startup) anyway, but
+//	 the former is unacceptable.  Simply punt and fallback to
+//	 stepping over this breakpoint in-line.  */
+//      if (debug_displaced)
+//	{
+//	  fprintf_unfiltered (gdb_stdlog,
+//			      "displaced: breakpoint set in scratch pad.  "
+//			      "Stepping over breakpoint in-line instead.\n");
+//	}
+//
+//      gdb_assert (false);
+//      gdbarch_displaced_step_release_location (gdbarch, copy);
+//
+//      return -1;
+//    }
 
   /* Save the information we need to fix things up if the step
      succeeds.  */
-  displaced->step_thread = tp;
-  displaced->step_gdbarch = gdbarch;
-  displaced->step_original = original;
-  displaced->step_copy = copy;
+  thread_disp_step_state->set (gdbarch);
 
-  {
-    displaced_step_reset_cleanup cleanup (displaced);
-
-    /* Resume execution at the copy.  */
-    regcache_write_pc (regcache, copy);
-
-    cleanup.release ();
-  }
+  // FIXME: get it from _prepare?
+  CORE_ADDR displaced_pc = 0;
 
   if (debug_displaced)
-    fprintf_unfiltered (gdb_stdlog, "displaced: displaced pc to %s\n",
-			paddress (gdbarch, copy));
+    fprintf_unfiltered (gdb_stdlog,
+			"displaced: prepared successfully thread=%s, "
+			"original_pc=%s, displaced_pc=%s\n",
+			target_pid_to_str (tp->ptid).c_str (),
+			paddress (gdbarch, original_pc),
+			paddress (gdbarch, displaced_pc));
 
-  return 1;
+  return DISPLACED_STEP_PREPARE_STATUS_OK;
 }
 
 /* Wrapper for displaced_step_prepare_throw that disabled further
    attempts at displaced stepping if we get a memory error.  */
 
-static int
+static displaced_step_prepare_status
 displaced_step_prepare (thread_info *thread)
 {
-  int prepared = -1;
+  displaced_step_prepare_status status
+    = DISPLACED_STEP_PREPARE_STATUS_ERROR;
 
   try
     {
-      prepared = displaced_step_prepare_throw (thread);
+      status = displaced_step_prepare_throw (thread);
     }
   catch (const gdb_exception_error &ex)
     {
@@ -1833,34 +1819,7 @@ displaced_step_prepare (thread_info *thread)
       displaced_state->failed_before = 1;
     }
 
-  return prepared;
-}
-
-static void
-write_memory_ptid (ptid_t ptid, CORE_ADDR memaddr,
-		   const gdb_byte *myaddr, int len)
-{
-  scoped_restore save_inferior_ptid = make_scoped_restore (&inferior_ptid);
-
-  inferior_ptid = ptid;
-  write_memory (memaddr, myaddr, len);
-}
-
-/* Restore the contents of the copy area for thread PTID.  */
-
-static void
-displaced_step_restore (struct displaced_step_inferior_state *displaced,
-			ptid_t ptid)
-{
-  ULONGEST len = gdbarch_max_insn_length (displaced->step_gdbarch);
-
-  write_memory_ptid (ptid, displaced->step_copy,
-		     displaced->step_saved_copy.data (), len);
-  if (debug_displaced)
-    fprintf_unfiltered (gdb_stdlog, "displaced: restored %s %s\n",
-			target_pid_to_str (ptid).c_str (),
-			paddress (displaced->step_gdbarch,
-				  displaced->step_copy));
+  return status;
 }
 
 /* If we displaced stepped an instruction successfully, adjust
@@ -1870,15 +1829,16 @@ displaced_step_restore (struct displaced_step_inferior_state *displaced,
    -1.  If the thread wasn't displaced stepping, return 0.  */
 
 static int
-displaced_step_fixup (thread_info *event_thread, enum gdb_signal signal)
+displaced_step_finish (thread_info *event_thread, enum gdb_signal signal)
 {
-  struct displaced_step_inferior_state *displaced
-    = get_displaced_stepping_state (event_thread->inf);
-  int ret;
+  displaced_step_thread_state *displaced
+    = get_displaced_stepping_state (event_thread);
 
-  /* Was this event for the thread we displaced?  */
-  if (displaced->step_thread != event_thread)
+  /* Was this thread performing a displaced step?  */
+  if (!displaced->in_progress ())
     return 0;
+
+  displaced_step_reset_cleanup cleanup (displaced);
 
   /* Fixup may need to read memory/registers.  Switch to the thread
      that we're fixing up.  Also, target_stopped_by_watchpoint checks
@@ -1886,37 +1846,16 @@ displaced_step_fixup (thread_info *event_thread, enum gdb_signal signal)
      memory accesses using current_inferior() and current_top_target().  */
   switch_to_thread (event_thread);
 
-  displaced_step_reset_cleanup cleanup (displaced);
+  /* Do the fixup, and release the resources acquired to do the displaced
+     step. */
+  displaced_step_finish_status finish_status =
+    gdbarch_displaced_step_finish (displaced->get_original_gdbarch (),
+				   event_thread, signal);
 
-  displaced_step_restore (displaced, displaced->step_thread->ptid);
-
-  /* Did the instruction complete successfully?  */
-  if (signal == GDB_SIGNAL_TRAP
-      && !(target_stopped_by_watchpoint ()
-	   && (gdbarch_have_nonsteppable_watchpoint (displaced->step_gdbarch)
-	       || target_have_steppable_watchpoint)))
-    {
-      /* Fix up the resulting state.  */
-      gdbarch_displaced_step_fixup (displaced->step_gdbarch,
-                                    displaced->step_closure.get (),
-                                    displaced->step_original,
-                                    displaced->step_copy,
-                                    get_thread_regcache (displaced->step_thread));
-      ret = 1;
-    }
+  if (finish_status == DISPLACED_STEP_FINISH_STATUS_OK)
+    return 1;
   else
-    {
-      /* Since the instruction didn't complete, all we can do is
-         relocate the PC.  */
-      struct regcache *regcache = get_thread_regcache (event_thread);
-      CORE_ADDR pc = regcache_read_pc (regcache);
-
-      pc = displaced->step_original + (pc - displaced->step_copy);
-      regcache_write_pc (regcache, pc);
-      ret = -1;
-    }
-
-  return ret;
+    return -1;
 }
 
 /* Data to be passed around while handling an event.  This data is
@@ -1965,13 +1904,23 @@ static int
 start_step_over (void)
 {
   struct thread_info *tp, *next;
+  int started = 0;
 
   /* Don't start a new step-over if we already have an in-line
      step-over operation ongoing.  */
   if (step_over_info_valid_p ())
-    return 0;
+    return started;
 
-  for (tp = global_thread_step_over_chain_head; tp != NULL; tp = next)
+  /* Steal the global thread step over chain.  */
+  thread_info *threads_to_step = global_thread_step_over_chain_head;
+  global_thread_step_over_chain_head = NULL;
+
+  if (debug_infrun)
+    fprintf_unfiltered (gdb_stdlog,
+			"infrun: stealing list of %d threads to step from global queue\n",
+			thread_step_over_chain_length (threads_to_step));
+
+  for (tp = threads_to_step; tp != NULL; tp = next)
     {
       struct execution_control_state ecss;
       struct execution_control_state *ecs = &ecss;
@@ -1980,12 +1929,7 @@ start_step_over (void)
 
       gdb_assert (!tp->stop_requested);
 
-      next = global_thread_step_over_chain_next (tp);
-
-      /* If this inferior already has a displaced step in process,
-	 don't start a new one.  */
-      if (displaced_step_in_progress (tp->inf))
-	continue;
+      next = thread_step_over_chain_next (threads_to_step, tp);
 
       step_what = thread_still_needs_step_over (tp);
       must_be_in_line = ((step_what & STEP_OVER_WATCHPOINT)
@@ -1995,13 +1939,10 @@ start_step_over (void)
       /* We currently stop all threads of all processes to step-over
 	 in-line.  If we need to start a new in-line step-over, let
 	 any pending displaced steps finish first.  */
-      if (must_be_in_line && displaced_step_in_progress_any_inferior ())
-	return 0;
+      if (must_be_in_line && displaced_step_in_progress_any_thread ())
+	continue;
 
-      global_thread_step_over_chain_remove (tp);
-
-      if (global_thread_step_over_chain_head == NULL)
-	infrun_log_debug ("step-over queue now empty");
+      thread_step_over_chain_remove (&threads_to_step, tp);
 
       if (tp->control.trap_expected
 	  || tp->resumed
@@ -2035,13 +1976,28 @@ start_step_over (void)
       if (!ecs->wait_some_more)
 	error (_("Command aborted."));
 
-      gdb_assert (tp->resumed);
+      /* If the thread's step over could not be initiated, it was re-added
+         to the global step over chain.  */
+      if (tp->resumed)
+	{
+	  infrun_log_debug ("start_step_over: [%s] was resumed.\n",
+			    target_pid_to_str (tp->ptid).c_str ());
+	  gdb_assert (!thread_is_in_step_over_chain (tp));
+	}
+      else
+	{
+	  infrun_log_debug ("infrun: start_step_over: [%s] was NOT resumed.\n",
+			    target_pid_to_str (tp->ptid).c_str ());
+	  gdb_assert (thread_is_in_step_over_chain (tp));
+
+	}
 
       /* If we started a new in-line step-over, we're done.  */
       if (step_over_info_valid_p ())
 	{
 	  gdb_assert (tp->control.trap_expected);
-	  return 1;
+	  started = 1;
+	  break;
 	}
 
       if (!target_is_non_stop_p ())
@@ -2054,7 +2010,8 @@ start_step_over (void)
 	  /* With remote targets (at least), in all-stop, we can't
 	     issue any further remote commands until the program stops
 	     again.  */
-	  return 1;
+	  started = 1;
+	  break;
 	}
 
       /* Either the thread no longer needed a step-over, or a new
@@ -2063,7 +2020,35 @@ start_step_over (void)
 	 displaced step on a thread of other process. */
     }
 
-  return 0;
+    /* If there are threads left in the THREADS_TO_STEP list, but we have
+       detected that we can't start anything more, put back these threads
+       in the global list.  */
+    if (threads_to_step == NULL)
+      {
+	if (debug_infrun)
+	  fprintf_unfiltered (gdb_stdlog,
+			      "infrun: step-over queue now empty\n");
+      }
+    else
+      {
+	if (debug_infrun)
+	  fprintf_unfiltered (gdb_stdlog,
+			      "infrun: putting back %d threads to step in global queue\n",
+			      thread_step_over_chain_length (threads_to_step));
+	while (threads_to_step != nullptr)
+	  {
+	    thread_info *thread = threads_to_step;
+
+	    /* Remove from that list.  */
+	    thread_step_over_chain_remove (&threads_to_step, thread);
+
+	    /* Add to global list.  */
+	    global_thread_step_over_chain_enqueue (thread);
+
+	  }
+      }
+
+  return started;
 }
 
 /* Update global variables holding ptids to hold NEW_PTID if they were
@@ -2438,16 +2423,17 @@ resume_1 (enum gdb_signal sig)
       && sig == GDB_SIGNAL_0
       && !current_inferior ()->waiting_for_vfork_done)
     {
-      int prepared = displaced_step_prepare (tp);
+      displaced_step_prepare_status prepare_status
+	= displaced_step_prepare (tp);
 
-      if (prepared == 0)
+      if (prepare_status == DISPLACED_STEP_PREPARE_STATUS_UNAVAILABLE)
 	{
 	  infrun_log_debug ("Got placed in step-over queue");
 
 	  tp->control.trap_expected = 0;
 	  return;
 	}
-      else if (prepared < 0)
+      else if (prepare_status == DISPLACED_STEP_PREPARE_STATUS_ERROR)
 	{
 	  /* Fallback to stepping over the breakpoint in-line.  */
 
@@ -2461,18 +2447,12 @@ resume_1 (enum gdb_signal sig)
 
 	  insert_breakpoints ();
 	}
-      else if (prepared > 0)
+      else if (prepare_status == DISPLACED_STEP_PREPARE_STATUS_OK)
 	{
-	  struct displaced_step_inferior_state *displaced;
-
-	  /* Update pc to reflect the new address from which we will
-	     execute instructions due to displaced stepping.  */
-	  pc = regcache_read_pc (get_thread_regcache (tp));
-
-	  displaced = get_displaced_stepping_state (tp->inf);
-	  step = gdbarch_displaced_step_hw_singlestep
-	    (gdbarch, displaced->step_closure.get ());
+	  step = gdbarch_displaced_step_hw_singlestep (gdbarch, NULL);
 	}
+      else
+	gdb_assert_not_reached ("invalid displaced_step_prepare_status value");
     }
 
   /* Do we need to do it the hard way, w/temp breakpoints?  */
@@ -3639,18 +3619,19 @@ prepare_for_detach (void)
   struct inferior *inf = current_inferior ();
   ptid_t pid_ptid = ptid_t (inf->pid);
 
-  displaced_step_inferior_state *displaced = get_displaced_stepping_state (inf);
+  // displaced_step_inferior_state *displaced = get_displaced_stepping_state (inf);
 
   /* Is any thread of this process displaced stepping?  If not,
      there's nothing else to do.  */
-  if (displaced->step_thread == nullptr)
+  if (displaced_step_in_progress (inf))
     return;
 
   infrun_log_debug ("displaced-stepping in-process while detaching");
 
   scoped_restore restore_detaching = make_scoped_restore (&inf->detaching, true);
 
-  while (displaced->step_thread != nullptr)
+  // FIXME
+  while (false)
     {
       struct execution_control_state ecss;
       struct execution_control_state *ecs;
@@ -4834,7 +4815,7 @@ stop_all_threads (void)
 		      t->suspend.waitstatus.kind = TARGET_WAITKIND_IGNORE;
 		      t->suspend.waitstatus_pending_p = 0;
 
-		      if (displaced_step_fixup (t, GDB_SIGNAL_0) < 0)
+		      if (displaced_step_finish (t, GDB_SIGNAL_0) < 0)
 			{
 			  /* Add it back to the step-over queue.  */
 			  infrun_log_debug ("displaced-step of %s "
@@ -4869,7 +4850,7 @@ stop_all_threads (void)
 		      sig = (event.ws.kind == TARGET_WAITKIND_STOPPED
 			     ? event.ws.value.sig : GDB_SIGNAL_0);
 
-		      if (displaced_step_fixup (t, sig) < 0)
+		      if (displaced_step_finish (t, sig) < 0)
 			{
 			  /* Add it back to the step-over queue.  */
 			  t->control.trap_expected = 0;
@@ -5316,7 +5297,7 @@ handle_inferior_event (struct execution_control_state *ecs)
 
 	/* If checking displaced stepping is supported, and thread
 	   ecs->ptid is displaced stepping.  */
-	if (displaced_step_in_progress_thread (ecs->event_thread))
+	if (displaced_step_in_progress (ecs->event_thread))
 	  {
 	    struct inferior *parent_inf
 	      = find_inferior_ptid (ecs->target, ecs->ptid);
@@ -5325,11 +5306,12 @@ handle_inferior_event (struct execution_control_state *ecs)
 
 	    if (ecs->ws.kind == TARGET_WAITKIND_FORKED)
 	      {
-		struct displaced_step_inferior_state *displaced
-		  = get_displaced_stepping_state (parent_inf);
+		// struct displaced_step_inferior_state *displaced
+		//  = get_displaced_stepping_state (parent_inf);
 
 		/* Restore scratch pad for child process.  */
-		displaced_step_restore (displaced, ecs->ws.value.related_pid);
+		//displaced_step_restore (displaced, ecs->ws.value.related_pid);
+		// FIXME: we should restore all the buffers that were currently in use
 	      }
 
 	    /* GDB has got TARGET_WAITKIND_FORKED or TARGET_WAITKIND_VFORKED,
@@ -5337,7 +5319,7 @@ handle_inferior_event (struct execution_control_state *ecs)
 	       has been done.  Perform cleanup for parent process here.  Note
 	       that this operation also cleans up the child process for vfork,
 	       because their pages are shared.  */
-	    displaced_step_fixup (ecs->event_thread, GDB_SIGNAL_TRAP);
+	    displaced_step_finish (ecs->event_thread, GDB_SIGNAL_TRAP);
 	    /* Start a new step-over in another thread if there's one
 	       that needs it.  */
 	    start_step_over ();
@@ -5684,8 +5666,8 @@ finish_step_over (struct execution_control_state *ecs)
 {
   int had_step_over_info;
 
-  displaced_step_fixup (ecs->event_thread,
-			ecs->event_thread->suspend.stop_signal);
+  displaced_step_finish (ecs->event_thread,
+			 ecs->event_thread->suspend.stop_signal);
 
   had_step_over_info = step_over_info_valid_p ();
 
