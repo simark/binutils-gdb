@@ -402,10 +402,16 @@ forget_cached_source_info_for_objfile (struct objfile *objfile)
     {
       for (symtab *s : compunit_filetabs (cu))
 	{
-	  if (s->fullname != NULL)
+	  if (s->abs_fullname != NULL)
 	    {
-	      xfree (s->fullname);
-	      s->fullname = NULL;
+	      xfree (s->abs_fullname);
+	      s->abs_fullname = NULL;
+	    }
+
+	  if (s->realpath_fullname != NULL)
+	    {
+	      xfree (s->realpath_fullname);
+	      s->realpath_fullname = NULL;
 	    }
 	}
     }
@@ -681,8 +687,8 @@ info_source_command (const char *ignore, int from_tty)
   printf_filtered (_("Current source file is %s\n"), s->filename);
   if (SYMTAB_DIRNAME (s) != NULL)
     printf_filtered (_("Compilation directory is %s\n"), SYMTAB_DIRNAME (s));
-  if (s->fullname)
-    printf_filtered (_("Located in %s\n"), s->fullname);
+  if (s->realpath_fullname)
+    printf_filtered (_("Located in %s\n"), s->realpath_fullname);
   const std::vector<off_t> *offsets;
   if (g_source_cache.get_line_charpos (s, &offsets))
     printf_filtered (_("Contains %d line%s.\n"), (int) offsets->size (),
@@ -764,8 +770,9 @@ prepare_path_for_appending (const char *path)
 /*  >>>> This should only allow files of certain types,
     >>>>  eg executable, non-directory.  */
 int
-openp (const char *path, openp_flags opts, const char *string,
-       int mode, gdb::unique_xmalloc_ptr<char> *filename_opened)
+openp (const char *path, openp_flags opts, const char *string, int mode,
+       gdb::unique_xmalloc_ptr<char> *abs_filename_opened,
+       gdb::unique_xmalloc_ptr<char> *realpath_filename_opened)
 {
   int fd;
   char *filename;
@@ -907,15 +914,21 @@ openp (const char *path, openp_flags opts, const char *string,
     }
 
 done:
-  if (filename_opened)
+  if (abs_filename_opened != nullptr)
     {
       /* If a file was opened, canonicalize its filename.  */
       if (fd < 0)
-	filename_opened->reset (NULL);
-      else if ((opts & OPF_RETURN_REALPATH) != 0)
-	*filename_opened = gdb_realpath (filename);
+	abs_filename_opened->reset ();
       else
-	*filename_opened = gdb_abspath (filename);
+	*abs_filename_opened = gdb_abspath (filename);
+    }
+
+  if (realpath_filename_opened != nullptr)
+    {
+      if (fd < 0)
+	realpath_filename_opened->reset ();
+      else
+	*realpath_filename_opened = gdb_realpath (filename);
     }
 
   errno = last_errno;
@@ -941,8 +954,8 @@ source_full_path_of (const char *filename,
   int fd;
 
   fd = openp (source_path,
-	      OPF_TRY_CWD_FIRST | OPF_SEARCH_IN_PATH | OPF_RETURN_REALPATH,
-	      filename, O_RDONLY, full_pathname);
+	      OPF_TRY_CWD_FIRST | OPF_SEARCH_IN_PATH,
+	      filename, O_RDONLY, nullptr, full_pathname);
   if (fd < 0)
     {
       full_pathname->reset (NULL);
@@ -1029,7 +1042,8 @@ rewrite_source_path (const char *path)
 scoped_fd
 find_and_open_source (const char *filename,
 		      const char *dirname,
-		      gdb::unique_xmalloc_ptr<char> *fullname)
+		      gdb::unique_xmalloc_ptr<char> *abs_fullname,
+		      gdb::unique_xmalloc_ptr<char> *realpath_fullname)
 {
   char *path = source_path;
   const char *p;
@@ -1037,29 +1051,28 @@ find_and_open_source (const char *filename,
 
   /* Quick way out if we already know its full name.  */
 
-  if (*fullname)
+  if (*abs_fullname != nullptr)
     {
       /* The user may have requested that source paths be rewritten
          according to substitution rules he provided.  If a substitution
          rule applies to this path, then apply it.  */
       gdb::unique_xmalloc_ptr<char> rewritten_fullname
-	= rewrite_source_path (fullname->get ());
+	= rewrite_source_path (abs_fullname->get ());
 
       if (rewritten_fullname != NULL)
-	*fullname = std::move (rewritten_fullname);
+	*abs_fullname = std::move (rewritten_fullname);
 
-      result = gdb_open_cloexec (fullname->get (), OPEN_MODE, 0);
+      result = gdb_open_cloexec (abs_fullname->get (), OPEN_MODE, 0);
       if (result >= 0)
 	{
-	  if (basenames_may_differ)
-	    *fullname = gdb_realpath (fullname->get ());
-	  else
-	    *fullname = gdb_abspath (fullname->get ());
+	  *abs_fullname = gdb_abspath (abs_fullname->get ());
+	  *realpath_fullname = gdb_realpath (abs_fullname->get ());
+
 	  return scoped_fd (result);
 	}
 
       /* Didn't work -- free old one, try again.  */
-      fullname->reset (NULL);
+      abs_fullname->reset ();
     }
 
   gdb::unique_xmalloc_ptr<char> rewritten_dirname;
@@ -1099,11 +1112,10 @@ find_and_open_source (const char *filename,
     filename = rewritten_filename.get ();
 
   openp_flags flags = OPF_SEARCH_IN_PATH;
-  if (basenames_may_differ)
-    flags |= OPF_RETURN_REALPATH;
 
   /* Try to locate file using filename.  */
-  result = openp (path, flags, filename, OPEN_MODE, fullname);
+  result = openp (path, flags, filename, OPEN_MODE, abs_fullname,
+		  realpath_fullname);
   if (result < 0 && dirname != NULL)
     {
       /* Remove characters from the start of PATH that we don't need when
@@ -1125,14 +1137,15 @@ find_and_open_source (const char *filename,
       cdir_filename.append (filename_start);
 
       result = openp (path, flags, cdir_filename.c_str (), OPEN_MODE,
-		      fullname);
+		      abs_fullname, realpath_fullname);
     }
   if (result < 0)
     {
       /* Didn't work.  Try using just the basename.  */
       p = lbasename (filename);
       if (p != filename)
-	result = openp (path, flags, p, OPEN_MODE, fullname);
+	result = openp (path, flags, p, OPEN_MODE, abs_fullname,
+			realpath_fullname);
     }
 
   return scoped_fd (result);
@@ -1149,12 +1162,41 @@ open_source_file (struct symtab *s)
   if (!s)
     return scoped_fd (-1);
 
-  gdb::unique_xmalloc_ptr<char> fullname (s->fullname);
-  s->fullname = NULL;
+  gdb::unique_xmalloc_ptr<char> abs_fullname (s->abs_fullname);
+  gdb::unique_xmalloc_ptr<char> realpath_fullname (s->realpath_fullname);
+  s->abs_fullname = NULL;
+  s->realpath_fullname = NULL;
   scoped_fd fd = find_and_open_source (s->filename, SYMTAB_DIRNAME (s),
-				       &fullname);
-  s->fullname = fullname.release ();
+				       &abs_fullname, &realpath_fullname);
+  s->abs_fullname = abs_fullname.release ();
+  s->realpath_fullname = realpath_fullname.release ();
   return fd;
+}
+
+static void
+symtab_compute_fullnames (struct symtab *s)
+{
+  scoped_fd fd = open_source_file (s);
+
+  if (fd.get () < 0)
+    {
+      gdb::unique_xmalloc_ptr<char> fullname;
+
+      /* rewrite_source_path would be applied by find_and_open_source, we
+	 should report the pathname where GDB tried to find the file.  */
+
+      if (SYMTAB_DIRNAME (s) == NULL || IS_ABSOLUTE_PATH (s->filename))
+	fullname.reset (xstrdup (s->filename));
+      else
+	fullname.reset (concat (SYMTAB_DIRNAME (s), SLASH_STRING,
+				s->filename, (char *) NULL));
+
+      s->abs_fullname = rewrite_source_path (fullname.get ()).release ();
+      if (s->abs_fullname == NULL)
+	s->abs_fullname = fullname.release ();
+
+      s->realpath_fullname = xstrdup (s->abs_fullname);
+    }
 }
 
 /* Finds the fullname that a symtab represents.
@@ -1167,35 +1209,27 @@ open_source_file (struct symtab *s)
    exist.  */
 
 const char *
-symtab_to_fullname (struct symtab *s)
+symtab_to_realpath_fullname (struct symtab *s)
 {
   /* Use cached copy if we have it.
      We rely on forget_cached_source_info being called appropriately
      to handle cases like the file being moved.  */
-  if (s->fullname == NULL)
-    {
-      scoped_fd fd = open_source_file (s);
+  if (s->realpath_fullname == NULL)
+    symtab_compute_fullnames (s);
 
-      if (fd.get () < 0)
-	{
-	  gdb::unique_xmalloc_ptr<char> fullname;
+  return s->realpath_fullname;
+}
 
-	  /* rewrite_source_path would be applied by find_and_open_source, we
-	     should report the pathname where GDB tried to find the file.  */
+const char *
+symtab_to_absolute_fullname (struct symtab *s)
+{
+  /* Use cached copy if we have it.
+     We rely on forget_cached_source_info being called appropriately
+     to handle cases like the file being moved.  */
+  if (s->abs_fullname == NULL)
+    symtab_compute_fullnames (s);
 
-	  if (SYMTAB_DIRNAME (s) == NULL || IS_ABSOLUTE_PATH (s->filename))
-	    fullname.reset (xstrdup (s->filename));
-	  else
-	    fullname.reset (concat (SYMTAB_DIRNAME (s), SLASH_STRING,
-				    s->filename, (char *) NULL));
-
-	  s->fullname = rewrite_source_path (fullname.get ()).release ();
-	  if (s->fullname == NULL)
-	    s->fullname = fullname.release ();
-	}
-    } 
-
-  return s->fullname;
+  return s->abs_fullname;
 }
 
 /* See commentary in source.h.  */
@@ -1206,7 +1240,7 @@ symtab_to_filename_for_display (struct symtab *symtab)
   if (filename_display_string == filename_display_basename)
     return lbasename (symtab->filename);
   else if (filename_display_string == filename_display_absolute)
-    return symtab_to_fullname (symtab);
+    return symtab_to_realpath_fullname (symtab);
   else if (filename_display_string == filename_display_relative)
     return symtab->filename;
   else
@@ -1287,7 +1321,7 @@ print_source_lines_base (struct symtab *s, int line, int stopline,
 				 file_name_style.style ());
 	  if (uiout->is_mi_like_p () || !uiout->test_flags (ui_source_list))
  	    {
-	      const char *s_fullname = symtab_to_fullname (s);
+	      const char *s_fullname = symtab_to_realpath_fullname (s);
 	      char *local_fullname;
 
 	      /* ui_out_field_string may free S_FULLNAME by calling

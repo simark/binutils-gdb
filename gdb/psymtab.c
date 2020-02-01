@@ -42,7 +42,8 @@ static struct partial_symbol *lookup_partial_symbol (struct objfile *,
 						     const char *, int,
 						     domain_enum);
 
-static const char *psymtab_to_fullname (struct partial_symtab *ps);
+static const char *psymtab_to_abs_fullname (struct partial_symtab *ps);
+static const char *psymtab_to_realpath_fullname (struct partial_symtab *ps);
 
 static struct partial_symbol *find_pc_sect_psymbol (struct objfile *,
 						    struct partial_symtab *,
@@ -179,7 +180,7 @@ psym_map_symtabs_matching_filename
 	  && FILENAME_CMP (name_basename, lbasename (pst->filename)) != 0)
 	continue;
 
-      if (compare_filenames_for_search (psymtab_to_fullname (pst), name))
+      if (compare_filenames_for_search (psymtab_to_realpath_fullname (pst), name))
 	{
 	  if (partial_map_expand_apply (objfile, name, real_path,
 					pst, callback))
@@ -193,7 +194,7 @@ psym_map_symtabs_matching_filename
 	{
 	  gdb_assert (IS_ABSOLUTE_PATH (real_path));
 	  gdb_assert (IS_ABSOLUTE_PATH (name));
-	  if (filename_cmp (psymtab_to_fullname (pst), real_path) == 0)
+	  if (filename_cmp (psymtab_to_realpath_fullname (pst), real_path) == 0)
 	    {
 	      if (partial_map_expand_apply (objfile, name, real_path,
 					    pst, callback))
@@ -821,11 +822,8 @@ psym_forget_cached_source_info (struct objfile *objfile)
 {
   for (partial_symtab *pst : require_partial_symbols (objfile, true))
     {
-      if (pst->fullname != NULL)
-	{
-	  xfree (pst->fullname);
-	  pst->fullname = NULL;
-	}
+      pst->abs_fullname.reset ();
+      pst->realpath_fullname.reset ();
     }
 }
 
@@ -1088,7 +1086,7 @@ psym_expand_symtabs_with_fullname (struct objfile *objfile,
 	 Don't call it if we know the basenames don't match.  */
       if ((basenames_may_differ
 	   || filename_cmp (lbasename (fullname), lbasename (p->filename)) == 0)
-	  && filename_cmp (fullname, psymtab_to_fullname (p)) == 0)
+	  && filename_cmp (fullname, psymtab_to_realpath_fullname (p)) == 0)
 	psymtab_to_symtab (objfile, p);
     }
 }
@@ -1119,10 +1117,39 @@ psym_map_symbol_filenames (struct objfile *objfile,
 
       QUIT;
       if (need_fullname)
-	fullname = psymtab_to_fullname (ps);
+	fullname = psymtab_to_abs_fullname (ps);
       else
 	fullname = NULL;
       (*fun) (ps->filename, fullname, data);
+    }
+}
+
+static void
+psymtab_compute_fullnames (partial_symtab *ps)
+{
+  gdb::unique_xmalloc_ptr<char> abs_fullname, realpath_fullname;
+  scoped_fd fd =
+    find_and_open_source (ps->filename, ps->dirname,
+			  &ps->abs_fullname, &ps->realpath_fullname);
+
+  if (fd.get () < 0)
+    {
+      gdb::unique_xmalloc_ptr<char> fullname;
+
+      /* rewrite_source_path would be applied by find_and_open_source, we
+	 should report the pathname where GDB tried to find the file.  */
+
+      if (ps->dirname == NULL || IS_ABSOLUTE_PATH (ps->filename))
+	fullname.reset (xstrdup (ps->filename));
+      else
+	fullname.reset (concat (ps->dirname, SLASH_STRING,
+				ps->filename, (char *) NULL));
+
+      ps->abs_fullname = rewrite_source_path (fullname.get ());
+      if (ps->abs_fullname == nullptr)
+	ps->abs_fullname = std::move (fullname);
+
+      ps->realpath_fullname.reset (xstrdup (ps->abs_fullname.get ()));
     }
 }
 
@@ -1135,38 +1162,31 @@ psym_map_symbol_filenames (struct objfile *objfile,
    NULL will be returned and ps->fullname will be set to NULL.  */
 
 static const char *
-psymtab_to_fullname (struct partial_symtab *ps)
+psymtab_to_abs_fullname (partial_symtab *ps)
 {
   gdb_assert (!ps->anonymous);
 
   /* Use cached copy if we have it.
      We rely on forget_cached_source_info being called appropriately
      to handle cases like the file being moved.  */
-  if (ps->fullname == NULL)
-    {
-      gdb::unique_xmalloc_ptr<char> fullname;
-      scoped_fd fd = find_and_open_source (ps->filename, ps->dirname,
-					   &fullname);
-      ps->fullname = fullname.release ();
+  if (ps->abs_fullname == nullptr)
+    psymtab_compute_fullnames (ps);
 
-      if (fd.get () < 0)
-	{
-	  /* rewrite_source_path would be applied by find_and_open_source, we
-	     should report the pathname where GDB tried to find the file.  */
+  return ps->abs_fullname.get ();
+}
 
-	  if (ps->dirname == NULL || IS_ABSOLUTE_PATH (ps->filename))
-	    fullname.reset (xstrdup (ps->filename));
-	  else
-	    fullname.reset (concat (ps->dirname, SLASH_STRING,
-				    ps->filename, (char *) NULL));
+static const char *
+psymtab_to_realpath_fullname (partial_symtab *ps)
+{
+  gdb_assert (!ps->anonymous);
 
-	  ps->fullname = rewrite_source_path (fullname.get ()).release ();
-	  if (ps->fullname == NULL)
-	    ps->fullname = fullname.release ();
-	}
-    }
+  /* Use cached copy if we have it.
+     We rely on forget_cached_source_info being called appropriately
+     to handle cases like the file being moved.  */
+  if (ps->realpath_fullname == nullptr)
+    psymtab_compute_fullnames (ps);
 
-  return ps->fullname;
+  return ps->realpath_fullname.get ();
 }
 
 /* Psymtab version of map_matching_symbols.  See its definition in
@@ -1342,7 +1362,7 @@ psym_expand_symtabs_matching
 		 files are involved, do a quick comparison of the basenames.  */
 	      if (basenames_may_differ
 		  || file_matcher (lbasename (ps->filename), true))
-		match = file_matcher (psymtab_to_fullname (ps), false);
+		match = file_matcher (psymtab_to_realpath_fullname (ps), false);
 	    }
 	  if (!match)
 	    continue;
@@ -2001,9 +2021,12 @@ maintenance_info_psymtabs (const char *regexp, int from_tty)
 
 		printf_filtered ("    readin %s\n",
 				 psymtab->readin_p () ? "yes" : "no");
-		printf_filtered ("    fullname %s\n",
-				 psymtab->fullname
-				 ? psymtab->fullname : "(null)");
+		printf_filtered ("    abs fullname %s\n",
+				 psymtab->abs_fullname != nullptr
+				 ? psymtab->abs_fullname.get () : "(null)");
+		printf_filtered ("    realpath fullname %s\n",
+				 psymtab->realpath_fullname != nullptr
+				 ? psymtab->realpath_fullname.get () : "(null)");
 		printf_filtered ("    text addresses ");
 		fputs_filtered (paddress (gdbarch,
 					  psymtab->text_low (objfile)),

@@ -1395,7 +1395,7 @@ print_frame (const frame_print_options &fp_opts,
 			     file_name_style.style ());
 	if (uiout->is_mi_like_p ())
 	  {
-	    const char *fullname = symtab_to_fullname (sal.symtab);
+	    const char *fullname = symtab_to_realpath_fullname (sal.symtab);
 
 	    uiout->field_string ("fullname", fullname);
 	  }

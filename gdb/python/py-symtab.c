@@ -150,7 +150,7 @@ stpy_fullname (PyObject *self, PyObject *args)
 
   STPY_REQUIRE_VALID (self, symtab);
 
-  fullname = symtab_to_fullname (symtab);
+  fullname = symtab_to_realpath_fullname (symtab);
 
   return host_string_to_python_string (fullname).release ();
 }

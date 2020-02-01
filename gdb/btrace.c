@@ -210,8 +210,8 @@ ftrace_function_switched (const struct btrace_function *bfun,
 	return 1;
 
       /* Check the location of those functions, as well.  */
-      bfname = symtab_to_fullname (symbol_symtab (sym));
-      fname = symtab_to_fullname (symbol_symtab (fun));
+      bfname = symtab_to_realpath_fullname (symbol_symtab (sym));
+      fname = symtab_to_realpath_fullname (symbol_symtab (fun));
       if (filename_cmp (fname, bfname) != 0)
 	return 1;
     }

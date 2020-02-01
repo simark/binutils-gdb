@@ -136,8 +136,8 @@ nto_find_and_open_solib (const char *solib, unsigned o_flags,
 	     arch_path);
 
   base = lbasename (solib);
-  ret = openp (buf, OPF_TRY_CWD_FIRST | OPF_RETURN_REALPATH, base, o_flags,
-	       temp_pathname);
+  ret = openp (buf, OPF_TRY_CWD_FIRST, base, o_flags,
+	       nullptr, temp_pathname);
   if (ret < 0 && base != solib)
     {
       xsnprintf (arch_path, arch_len, "/%s", solib);

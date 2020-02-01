@@ -489,7 +489,8 @@ iterate_over_some_symtabs (const char *name,
 	      && FILENAME_CMP (base_name, lbasename (s->filename)) != 0)
 	    continue;
 
-	  if (compare_filenames_for_search (symtab_to_fullname (s), name))
+	  if (compare_filenames_for_search (symtab_to_realpath_fullname (s),
+					    name))
 	    {
 	      if (callback (s))
 		return true;
@@ -500,7 +501,7 @@ iterate_over_some_symtabs (const char *name,
 	     this symtab and use its absolute path.  */
 	  if (real_path != NULL)
 	    {
-	      const char *fullname = symtab_to_fullname (s);
+	      const char *fullname = symtab_to_realpath_fullname (s);
 
 	      gdb_assert (IS_ABSOLUTE_PATH (real_path));
 	      gdb_assert (IS_ABSOLUTE_PATH (name));
@@ -3364,7 +3365,7 @@ find_line_symtab (struct symtab *sym_tab, int line,
 	{
 	  if (objfile->sf)
 	    objfile->sf->qf->expand_symtabs_with_fullname
-	      (objfile, symtab_to_fullname (sym_tab));
+	      (objfile, symtab_to_realpath_fullname (sym_tab));
 	}
 
       for (objfile *objfile : current_program_space->objfiles ())
@@ -3378,8 +3379,8 @@ find_line_symtab (struct symtab *sym_tab, int line,
 
 		  if (FILENAME_CMP (sym_tab->filename, s->filename) != 0)
 		    continue;
-		  if (FILENAME_CMP (symtab_to_fullname (sym_tab),
-				    symtab_to_fullname (s)) != 0)
+		  if (FILENAME_CMP (symtab_to_realpath_fullname (sym_tab),
+				    symtab_to_realpath_fullname (s)) != 0)
 		    continue;	
 		  l = SYMTAB_LINETABLE (s);
 		  ind = find_line_common (l, line, &exact, 0);
@@ -4349,7 +4350,7 @@ info_sources_command (const char *args, int from_tty)
 	{
 	  for (symtab *s : compunit_filetabs (cu))
 	    {
-	      const char *fullname = symtab_to_fullname (s);
+	      const char *fullname = symtab_to_realpath_fullname (s);
 
 	      output_source_filename (fullname, &data);
 	    }
@@ -4584,7 +4585,7 @@ global_symbol_searcher::add_matching_symbols
 		   || ((basenames_may_differ
 			|| file_matches (lbasename (real_symtab->filename),
 					 filenames, true))
-		       && file_matches (symtab_to_fullname (real_symtab),
+		       && file_matches (symtab_to_realpath_fullname (real_symtab),
 					filenames, false)))
 		  && ((!preg.has_value ()
 		       || preg->exec (sym->natural_name (), 0,
@@ -5183,7 +5184,7 @@ rbreak_command (const char *regexp, int from_tty)
       if (p.msymbol.minsym == NULL)
 	{
 	  struct symtab *symtab = symbol_symtab (p.symbol);
-	  const char *fullname = symtab_to_fullname (symtab);
+	  const char *fullname = symtab_to_realpath_fullname (symtab);
 
 	  string = string_printf ("%s:'%s'", fullname,
 				  p.symbol->linkage_name ());

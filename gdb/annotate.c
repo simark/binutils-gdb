@@ -449,7 +449,7 @@ annotate_source_line (struct symtab *s, int line, int mid_statement,
       if (line > offsets->size ())
 	return;
 
-      annotate_source (s->fullname, line, (int) (*offsets)[line - 1],
+      annotate_source (s->abs_fullname, line, (int) (*offsets)[line - 1],
 		       mid_statement, get_objfile_arch (SYMTAB_OBJFILE (s)),
 		       pc);
     }

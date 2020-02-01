@@ -181,7 +181,7 @@ skip_file_command (const char *arg, int from_tty)
 
       /* It is not a typo, symtab_to_filename_for_display would be needlessly
 	 ambiguous.  */
-      filename = symtab_to_fullname (symtab);
+      filename = symtab_to_realpath_fullname (symtab);
     }
   else
     filename = arg;
@@ -512,7 +512,7 @@ skiplist_entry::do_skip_file_p (const symtab_and_line &function_sal) const
   else
     {
       /* Note: symtab_to_fullname caches its result, thus we don't have to.  */
-      const char *fullname = symtab_to_fullname (function_sal.symtab);
+      const char *fullname = symtab_to_realpath_fullname (function_sal.symtab);
 
       result = compare_filenames_for_search (fullname, m_file.c_str ());
     }
@@ -552,7 +552,7 @@ skiplist_entry::do_skip_gfile_p (const symtab_and_line &function_sal) const
   else
     {
       /* Note: symtab_to_fullname caches its result, thus we don't have to.  */
-      const char *fullname = symtab_to_fullname (function_sal.symtab);
+      const char *fullname = symtab_to_realpath_fullname (function_sal.symtab);
 
       result = compare_glob_filenames_for_search (fullname, m_file.c_str ());
     }

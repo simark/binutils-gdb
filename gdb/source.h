@@ -29,13 +29,13 @@ enum openp_flag
 {
   OPF_TRY_CWD_FIRST = 0x01,
   OPF_SEARCH_IN_PATH = 0x02,
-  OPF_RETURN_REALPATH = 0x04,
 };
 
 DEF_ENUM_FLAGS_TYPE(openp_flag, openp_flags);
 
-extern int openp (const char *, openp_flags, const char *, int,
-		  gdb::unique_xmalloc_ptr<char> *);
+extern int openp (const char *path, openp_flags opts, const char *string,
+		  int mode, gdb::unique_xmalloc_ptr<char> *abs_filename_opened,
+		  gdb::unique_xmalloc_ptr<char> *realpath_filename_opened);
 
 extern int source_full_path_of (const char *, gdb::unique_xmalloc_ptr<char> *);
 
@@ -68,9 +68,10 @@ extern void init_source_path (void);
    On Failure
      An invalid file descriptor is returned (the return value is negative).
      FULLNAME is set to NULL.  */
-extern scoped_fd find_and_open_source (const char *filename,
-				       const char *dirname,
-				       gdb::unique_xmalloc_ptr<char> *fullname);
+extern scoped_fd find_and_open_source
+  (const char *filename, const char *dirname,
+   gdb::unique_xmalloc_ptr<char> *abs_fullname,
+   gdb::unique_xmalloc_ptr<char> *realpath_fullname);
 
 /* Open a source file given a symtab S.  Returns a file descriptor or
    negative number for error.  */
@@ -78,7 +79,9 @@ extern scoped_fd open_source_file (struct symtab *s);
 
 extern gdb::unique_xmalloc_ptr<char> rewrite_source_path (const char *path);
 
-extern const char *symtab_to_fullname (struct symtab *s);
+extern const char *symtab_to_absolute_fullname (struct symtab *s);
+
+extern const char *symtab_to_realpath_fullname (struct symtab *s);
 
 /* Returns filename without the compile directory part, basename or absolute
    filename.  It depends on 'set filename-display' value.  */

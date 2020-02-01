@@ -71,7 +71,7 @@ tui_source_window::set_contents (struct gdbarch *arch,
 
   title = s_filename;
 
-  m_fullname = make_unique_xstrdup (symtab_to_fullname (s));
+  m_fullname = make_unique_xstrdup (symtab_to_realpath_fullname (s));
 
   cur_line = 0;
   gdbarch = get_objfile_arch (SYMTAB_OBJFILE (s));
@@ -106,7 +106,7 @@ tui_source_window::set_contents (struct gdbarch *arch,
       element->line_or_addr.u.line_no = cur_line_no;
       element->is_exec_point
 	= (filename_cmp (locator->full_name.c_str (),
-			 symtab_to_fullname (s)) == 0
+			 symtab_to_realpath_fullname (s)) == 0
 	   && cur_line_no == locator->line_no);
 
       content[cur_line].line = std::move (text);
@@ -171,7 +171,7 @@ tui_source_window::location_matches_p (struct bp_location *loc, int line_no)
 	  && content[line_no].line_or_addr.u.line_no == loc->line_number
 	  && loc->symtab != NULL
 	  && filename_cmp (m_fullname.get (),
-			   symtab_to_fullname (loc->symtab)) == 0);
+			   symtab_to_realpath_fullname (loc->symtab)) == 0);
 }
 
 /* See tui-source.h.  */

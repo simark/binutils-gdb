@@ -197,7 +197,8 @@ struct partial_symtab
 
   /* Full path of the source file.  NULL if not known.  */
 
-  char *fullname = nullptr;
+  gdb::unique_xmalloc_ptr<char> abs_fullname;
+  gdb::unique_xmalloc_ptr<char> realpath_fullname;
 
   /* Directory in which it was compiled, or NULL if we don't know.  */
 

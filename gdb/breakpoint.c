@@ -5835,7 +5835,8 @@ print_breakpoint_location (struct breakpoint *b,
       uiout->text (":");
 
       if (uiout->is_mi_like_p ())
-	uiout->field_string ("fullname", symtab_to_fullname (loc->symtab));
+	uiout->field_string ("fullname",
+			     symtab_to_realpath_fullname (loc->symtab));
       
       uiout->field_signed ("line", loc->line_number);
     }
@@ -11321,7 +11322,7 @@ clear_command (const char *arg, int from_tty)
          1              0             <can't happen> */
 
       sal_fullname = (sal.symtab == NULL
-		      ? NULL : symtab_to_fullname (sal.symtab));
+		      ? NULL : symtab_to_realpath_fullname (sal.symtab));
 
       /* Find all matching breakpoints and add them to 'found'.  */
       ALL_BREAKPOINTS (b)
@@ -11348,7 +11349,7 @@ clear_command (const char *arg, int from_tty)
 		      && sal_fullname != NULL
 		      && sal.pspace == loc->pspace
 		      && loc->line_number == sal.line
-		      && filename_cmp (symtab_to_fullname (loc->symtab),
+		      && filename_cmp (symtab_to_realpath_fullname (loc->symtab),
 				       sal_fullname) == 0)
 		    line_match = 1;
 
@@ -13325,7 +13326,7 @@ update_static_tracepoint (struct breakpoint *b, struct symtab_and_line sal)
 
 	  if (uiout->is_mi_like_p ())
 	    {
-	      const char *fullname = symtab_to_fullname (sal2.symtab);
+	      const char *fullname = symtab_to_realpath_fullname (sal2.symtab);
 
 	      uiout->field_string ("fullname", fullname);
 	    }

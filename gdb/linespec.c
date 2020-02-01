@@ -1047,7 +1047,8 @@ add_sal_to_sals (struct linespec_state *self,
       canonical = &self->canonical_names[sals->size () - 1];
       if (!literal_canonical && sal->symtab)
 	{
-	  symtab_to_fullname (sal->symtab);
+	  // FIXME: is this useful?  For some side-effect?
+	  symtab_to_realpath_fullname (sal->symtab);
 
 	  /* Note that the filter doesn't have to be a valid linespec
 	     input.  We only apply the ":LINE" treatment to Ada for
@@ -1390,7 +1391,8 @@ canonical_to_fullform (const struct linespec_canonical_name *canonical)
   if (canonical->symtab == NULL)
     return canonical->suffix;
   else
-    return string_printf ("%s:%s", symtab_to_fullname (canonical->symtab),
+    return string_printf ("%s:%s",
+			  symtab_to_realpath_fullname (canonical->symtab),
 			  canonical->suffix);
 }
 
@@ -2342,7 +2344,8 @@ convert_linespec_to_sals (struct linespec_state *state, linespec_p ls)
 	/* Make sure we have a filename for canonicalization.  */
 	if (ls->explicit_loc.source_filename == NULL)
 	  {
-	    const char *fullname = symtab_to_fullname (state->default_symtab);
+	    const char *fullname =
+	      symtab_to_realpath_fullname (state->default_symtab);
 
 	    /* It may be more appropriate to keep DEFAULT_SYMTAB in its symtab
 	       form so that displaying SOURCE_FILENAME can follow the current

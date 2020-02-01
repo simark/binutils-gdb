@@ -1346,7 +1346,8 @@ struct symtab
   /* Full name of file as found by searching the source path.
      NULL if not yet known.  */
 
-  char *fullname;
+  char *abs_fullname;
+  char *realpath_fullname;
 };
 
 #define SYMTAB_COMPUNIT(symtab) ((symtab)->compunit_symtab)

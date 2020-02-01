@@ -154,7 +154,7 @@ get_language_name (enum language lang)
 bool
 source_cache::ensure (struct symtab *s)
 {
-  std::string fullname = symtab_to_fullname (s);
+  std::string fullname = symtab_to_realpath_fullname (s);
 
   size_t size = m_source_map.size ();
   for (int i = 0; i < size; ++i)
@@ -243,7 +243,7 @@ source_cache::get_line_charpos (struct symtab *s,
 {
   try
     {
-      std::string fullname = symtab_to_fullname (s);
+      std::string fullname = symtab_to_realpath_fullname (s);
 
       auto iter = m_offset_cache.find (fullname);
       if (iter == m_offset_cache.end ())

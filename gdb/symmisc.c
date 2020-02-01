@@ -819,9 +819,13 @@ maintenance_info_symtabs (const char *regexp, int from_tty)
 		    wrap_here ("    ");
 		    printf_filtered ("((struct symtab *) %s)\n",
 				     host_address_to_string (symtab));
-		    printf_filtered ("\t  fullname %s\n",
-				     symtab->fullname != NULL
-				     ? symtab->fullname
+		    printf_filtered ("\t  abs fullname %s\n",
+				     symtab->abs_fullname != NULL
+				     ? symtab->abs_fullname
+				     : "(null)");
+		    printf_filtered ("\t  realpath fullname %s\n",
+				     symtab->realpath_fullname != NULL
+				     ? symtab->realpath_fullname
 				     : "(null)");
 		    printf_filtered ("\t  "
 				     "linetable ((struct linetable *) %s)\n",
@@ -975,7 +979,7 @@ maintenance_print_one_line_table (struct symtab *symtab, void *data)
   printf_filtered (_("compunit_symtab: ((struct compunit_symtab *) %s)\n"),
 		   host_address_to_string (symtab->compunit_symtab));
   printf_filtered (_("symtab: %s ((struct symtab *) %s)\n"),
-		   symtab_to_fullname (symtab),
+		   symtab_to_realpath_fullname (symtab),
 		   host_address_to_string (symtab));
   linetable = SYMTAB_LINETABLE (symtab);
   printf_filtered (_("linetable: ((struct linetable *) %s):\n"),

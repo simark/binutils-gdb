@@ -267,7 +267,7 @@ tui_locator_window::set_locator_info (struct gdbarch *gdbarch_in,
 
   const char *fullname = (sal.symtab == nullptr
 			  ? "??"
-			  : symtab_to_fullname (sal.symtab));
+			  : symtab_to_realpath_fullname (sal.symtab));
 
   locator_changed_p |= proc_name != procname;
   locator_changed_p |= sal.line != line_no;
@@ -292,7 +292,7 @@ tui_update_locator_fullname (struct symtab *symtab)
 
   const char *fullname;
   if (symtab != nullptr)
-    fullname = symtab_to_fullname (symtab);
+    fullname = symtab_to_realpath_fullname (symtab);
   else
     fullname = "??";
   locator->set_locator_fullname (fullname);

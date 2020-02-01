@@ -336,7 +336,7 @@ gdbscm_symtab_fullname (SCM self)
     = stscm_get_valid_symtab_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
   struct symtab *symtab = st_smob->symtab;
 
-  return gdbscm_scm_from_c_string (symtab_to_fullname (symtab));
+  return gdbscm_scm_from_c_string (symtab_to_realpath_fullname (symtab));
 }
 
 /* (symtab-objfile <gdb:symtab>) -> <gdb:objfile> */

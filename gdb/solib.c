@@ -321,8 +321,9 @@ solib_find_1 (const char *in_pathname, int *fd, bool is_solib)
      solib_search_path (if any).  */
   if (is_solib && found_file < 0 && solib_search_path != NULL)
     found_file = openp (solib_search_path,
-			OPF_TRY_CWD_FIRST | OPF_RETURN_REALPATH,
-			in_pathname, O_RDONLY | O_BINARY, &temp_pathname);
+			OPF_TRY_CWD_FIRST,
+			in_pathname, O_RDONLY | O_BINARY, nullptr,
+			&temp_pathname);
 
   /* If not found, and we're looking for a solib, next search the
      solib_search_path (if any) for the basename only (ignoring the
@@ -330,9 +331,9 @@ solib_find_1 (const char *in_pathname, int *fd, bool is_solib)
      from the opened path.  */
   if (is_solib && found_file < 0 && solib_search_path != NULL)
     found_file = openp (solib_search_path,
-			OPF_TRY_CWD_FIRST | OPF_RETURN_REALPATH,
+			OPF_TRY_CWD_FIRST,
 			target_lbasename (fskind, in_pathname),
-			O_RDONLY | O_BINARY, &temp_pathname);
+			O_RDONLY | O_BINARY, nullptr, &temp_pathname);
 
   /* If not found, and we're looking for a solib, try to use target
      supplied solib search method.  */
@@ -343,16 +344,16 @@ solib_find_1 (const char *in_pathname, int *fd, bool is_solib)
   /* If not found, next search the inferior's $PATH environment variable.  */
   if (found_file < 0 && sysroot == NULL)
     found_file = openp (current_inferior ()->environment.get ("PATH"),
-			OPF_TRY_CWD_FIRST | OPF_RETURN_REALPATH, in_pathname,
-			O_RDONLY | O_BINARY, &temp_pathname);
+			OPF_TRY_CWD_FIRST, in_pathname,
+			O_RDONLY | O_BINARY, nullptr, &temp_pathname);
 
   /* If not found, and we're looking for a solib, next search the
      inferior's $LD_LIBRARY_PATH environment variable.  */
   if (is_solib && found_file < 0 && sysroot == NULL)
     found_file = openp (current_inferior ()->environment.get
 			("LD_LIBRARY_PATH"),
-			OPF_TRY_CWD_FIRST | OPF_RETURN_REALPATH, in_pathname,
-			O_RDONLY | O_BINARY, &temp_pathname);
+			OPF_TRY_CWD_FIRST, in_pathname,
+			O_RDONLY | O_BINARY, nullptr, &temp_pathname);
 
   if (fd == NULL)
     {

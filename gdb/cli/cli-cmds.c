@@ -588,8 +588,7 @@ show_script_ext_mode (struct ui_file *file, int from_tty,
 gdb::optional<open_script>
 find_and_open_script (const char *script_file, int search_path)
 {
-  int fd;
-  openp_flags search_flags = OPF_TRY_CWD_FIRST | OPF_RETURN_REALPATH;
+  openp_flags search_flags = OPF_TRY_CWD_FIRST;
   gdb::optional<open_script> opened;
 
   gdb::unique_xmalloc_ptr<char> file (tilde_expand (script_file));
@@ -600,8 +599,8 @@ find_and_open_script (const char *script_file, int search_path)
   /* Search for and open 'file' on the search path used for source
      files.  Put the full location in *FULL_PATHP.  */
   gdb::unique_xmalloc_ptr<char> full_path;
-  fd = openp (source_path, search_flags,
-	      file.get (), O_RDONLY, &full_path);
+  int fd = openp (source_path, search_flags, file.get (), O_RDONLY, nullptr,
+		  &full_path);
 
   if (fd == -1)
     return opened;
@@ -970,7 +969,7 @@ edit_command (const char *arg, int from_tty)
   if ((editor = getenv ("EDITOR")) == NULL)
     editor = "/bin/ex";
 
-  fn = symtab_to_fullname (sal.symtab);
+  fn = symtab_to_realpath_fullname (sal.symtab);
 
   /* Quote the file name, in case it has whitespace or other special
      characters.  */

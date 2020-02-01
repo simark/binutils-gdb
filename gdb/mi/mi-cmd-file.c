@@ -56,7 +56,7 @@ mi_cmd_file_list_exec_source_file (const char *command, char **argv, int argc)
   uiout->field_signed ("line", st.line);
   uiout->field_string ("file", symtab_to_filename_for_display (st.symtab));
 
-  uiout->field_string ("fullname", symtab_to_fullname (st.symtab));
+  uiout->field_string ("fullname", symtab_to_realpath_fullname (st.symtab));
 
   uiout->field_signed ("macro-info",
 		       COMPUNIT_MACRO_TABLE (SYMTAB_COMPUNIT (st.symtab)) != NULL);
@@ -101,7 +101,7 @@ mi_cmd_file_list_exec_source_files (const char *command, char **argv, int argc)
 	      uiout->begin (ui_out_type_tuple, NULL);
 
 	      uiout->field_string ("file", symtab_to_filename_for_display (s));
-	      uiout->field_string ("fullname", symtab_to_fullname (s));
+	      uiout->field_string ("fullname", symtab_to_realpath_fullname (s));
 
 	      uiout->end (ui_out_type_tuple);
 	    }

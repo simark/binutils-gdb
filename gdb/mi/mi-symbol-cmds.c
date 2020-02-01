@@ -137,7 +137,8 @@ mi_symbol_info (enum search_domain kind, const char *name_regexp,
 
 	  uiout->field_string ("filename",
 			       symtab_to_filename_for_display (symtab));
-	  uiout->field_string ("fullname", symtab_to_fullname (symtab));
+	  uiout->field_string ("fullname",
+			       symtab_to_realpath_fullname (symtab));
 
 	  ui_out_emit_list symbols_list_emitter (uiout, "symbols");
 
@@ -262,7 +263,7 @@ output_module_symbols_in_single_module_and_file
   ui_out_emit_tuple current_file (uiout, nullptr);
   uiout->field_string ("filename",
 		       symtab_to_filename_for_display (first_symbtab));
-  uiout->field_string ("fullname", symtab_to_fullname (first_symbtab));
+  uiout->field_string ("fullname", symtab_to_realpath_fullname (first_symbtab));
   ui_out_emit_list item_list (uiout, "symbols");
 
   /* Repeatedly output result symbols until either we run out of symbols,

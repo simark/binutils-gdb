@@ -12023,7 +12023,6 @@ is_known_support_routine (struct frame_info *frame)
 {
   enum language func_lang;
   int i;
-  const char *fullname;
 
   /* If this code does not have any debugging information (no symtab),
      This cannot be any user code.  */
@@ -12038,7 +12037,7 @@ is_known_support_routine (struct frame_info *frame)
      for the user.  This should also take care of case such as VxWorks
      where the kernel has some debugging info provided for a few units.  */
 
-  fullname = symtab_to_fullname (sal.symtab);
+  const char *fullname = symtab_to_realpath_fullname (sal.symtab);
   if (access (fullname, R_OK) != 0)
     return 1;
 

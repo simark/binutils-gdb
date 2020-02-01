@@ -12835,13 +12835,13 @@ try_open_dwop_file (struct dwarf2_per_objfile *dwarf2_per_objfile,
   else
     search_path = debug_file_directory;
 
-  openp_flags flags = OPF_RETURN_REALPATH;
+  openp_flags flags;
   if (is_dwp)
     flags |= OPF_SEARCH_IN_PATH;
 
   gdb::unique_xmalloc_ptr<char> absolute_name;
   desc = openp (search_path, flags, file_name,
-		O_RDONLY | O_BINARY, &absolute_name);
+		O_RDONLY | O_BINARY, nullptr, &absolute_name);
   if (desc < 0)
     return NULL;
 

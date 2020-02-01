@@ -781,7 +781,7 @@ gdbpy_rbreak (PyObject *self, PyObject *args, PyObject *kw)
       if (p.msymbol.minsym == NULL)
 	{
 	  struct symtab *symtab = symbol_symtab (p.symbol);
-	  const char *fullname = symtab_to_fullname (symtab);
+	  const char *fullname = symtab_to_realpath_fullname (symtab);
 
 	  symbol_name = fullname;
 	  symbol_name  += ":";
