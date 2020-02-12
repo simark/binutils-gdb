@@ -80,6 +80,7 @@
 #  unistd \
 #  unsetenv \
 #  update-copyright \
+#  vcs-to-changelog \
 #  wchar \
 #  wctype-h
 
@@ -1688,7 +1689,11 @@ EXTRA_DIST = m4/gnulib-cache.m4 alloca.c alloca.in.h arpa_inet.in.h \
 	sys_socket.in.h sys_stat.in.h sys_time.in.h sys_types.in.h \
 	sys_uio.in.h tempname.h time.in.h time_r.c unistd.in.h \
 	unistd--.h unistd-safer.h unsetenv.c \
-	$(top_srcdir)/import/extra/update-copyright verify.h \
+	$(top_srcdir)/import/extra/update-copyright \
+	$(top_srcdir)/import/extra/vcs_to_changelog.py \
+	$(top_srcdir)/import/extra/vcstocl/frontend_c.py \
+	$(top_srcdir)/import/extra/vcstocl/misc_util.py \
+	$(top_srcdir)/import/extra/vcstocl/vcs_git.py verify.h \
 	wchar.in.h wctype.in.h windows-initguard.h windows-mutex.c \
 	windows-mutex.h windows-once.c windows-once.h \
 	windows-initguard.h windows-recmutex.c windows-recmutex.h \

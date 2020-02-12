@@ -66,6 +66,7 @@
 #  unistd \
 #  unsetenv \
 #  update-copyright \
+#  vcs-to-changelog \
 #  wchar \
 #  wctype-h
 
@@ -2625,6 +2626,13 @@ EXTRA_libgnu_a_SOURCES += unsetenv.c
 EXTRA_DIST += $(top_srcdir)/import/extra/update-copyright
 
 ## end   gnulib module update-copyright
+
+## begin gnulib module vcs-to-changelog
+
+
+EXTRA_DIST += $(top_srcdir)/import/extra/vcs_to_changelog.py $(top_srcdir)/import/extra/vcstocl/frontend_c.py $(top_srcdir)/import/extra/vcstocl/misc_util.py $(top_srcdir)/import/extra/vcstocl/vcs_git.py
+
+## end   gnulib module vcs-to-changelog
 
 ## begin gnulib module verify
 

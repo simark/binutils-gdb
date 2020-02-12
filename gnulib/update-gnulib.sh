@@ -63,6 +63,7 @@ IMPORTED_GNULIB_MODULES="\
     unistd \
     unsetenv \
     update-copyright \
+    vcs-to-changelog \
     wchar \
     wctype-h \
 "

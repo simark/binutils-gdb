@@ -196,6 +196,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module unistd-safer:
   # Code from module unsetenv:
   # Code from module update-copyright:
+  # Code from module vcs-to-changelog:
   # Code from module verify:
   # Code from module wchar:
   # Code from module wctype-h:
@@ -852,6 +853,10 @@ AC_DEFUN([gltests_LIBSOURCES], [
 # gnulib-tool and may be removed by future gnulib-tool invocations.
 AC_DEFUN([gl_FILE_LIST], [
   build-aux/update-copyright
+  build-aux/vcs_to_changelog.py
+  build-aux/vcstocl/frontend_c.py
+  build-aux/vcstocl/misc_util.py
+  build-aux/vcstocl/vcs_git.py
   lib/_Noreturn.h
   lib/alloca.c
   lib/alloca.in.h

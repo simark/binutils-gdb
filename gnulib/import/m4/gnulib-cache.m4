@@ -71,6 +71,7 @@
 #  unistd \
 #  unsetenv \
 #  update-copyright \
+#  vcs-to-changelog \
 #  wchar \
 #  wctype-h
 
@@ -110,6 +111,7 @@ gl_MODULES([
   unistd
   unsetenv
   update-copyright
+  vcs-to-changelog
   wchar
   wctype-h
 ])

@@ -6484,6 +6484,7 @@ fi
   # Code from module unistd-safer:
   # Code from module unsetenv:
   # Code from module update-copyright:
+  # Code from module vcs-to-changelog:
   # Code from module verify:
   # Code from module wchar:
   # Code from module wctype-h:
