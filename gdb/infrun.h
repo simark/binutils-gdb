@@ -248,6 +248,8 @@ struct displaced_step_closure
   virtual ~displaced_step_closure () = 0;
 };
 
+using displaced_step_closure_up = std::unique_ptr<displaced_step_closure>;
+
 /* A simple displaced step closure that contains only a byte buffer.  */
 
 struct buf_displaced_step_closure : displaced_step_closure
@@ -293,7 +295,7 @@ struct displaced_step_inferior_state
 
   /* The closure provided gdbarch_displaced_step_copy_insn, to be used
      for post-step cleanup.  */
-  std::unique_ptr<displaced_step_closure> step_closure;
+  displaced_step_closure_up step_closure;
 
   /* The address of the original instruction, and the copy we
      made.  */
