@@ -1,3 +1,20 @@
+2020-02-14  Simon Marchi  <simon.marchi@efficios.com>
+
+	* infrun.c (get_displaced_step_closure_by_addr): Adjust to
+	std::unique_ptr.
+	(displaced_step_clear): Rename to...
+	(displaced_step_reset): ... this.  Just call displaced->reset ().
+	(displaced_step_clear_cleanup): Rename to...
+	(displaced_step_reset_cleanup): ... this.
+	(displaced_step_prepare_throw): Adjust to std::unique_ptr.
+	(displaced_step_fixup): Likewise.
+	(resume_1): Likewise.
+	(handle_inferior_event): Restore child's memory before calling
+	displaced_step_fixup on the parent.
+	* infrun.h (displaced_step_inferior_state) <reset>: Adjust
+	to std::unique_ptr.
+	<step_closure>: Change type to std::unique_ptr.
+
 2019-12-11  Tom Tromey  <tromey@adacore.com>
 
 	PR build/25268:
