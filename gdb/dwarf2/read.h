@@ -299,6 +299,11 @@ public:
   /* CUs that are queued to be read.  */
   std::queue<dwarf2_queue_item> queue;
 
+  /* We keep a separate reference to the partial symtabs, in case we
+     are sharing them between objfiles.  This is only set after
+     partial symbols have been read the first time.  */
+  std::shared_ptr<psymtab_storage> partial_symtabs;
+
   /* The total number of per_cu and signatured_type objects that have
      been created for this reader.  */
   size_t num_psymtabs = 0;
@@ -321,11 +326,7 @@ class dwarf2_enter_objfile
 {
 public:
 
-  dwarf2_enter_objfile (struct objfile *objfile)
-    : m_per_objfile (get_dwarf2_per_objfile (objfile)),
-      m_restore_objfile (&m_per_objfile->objfile, objfile)
-  {
-  }
+  dwarf2_enter_objfile (struct objfile *objfile);
 
   ~dwarf2_enter_objfile () = default;
 
@@ -335,6 +336,7 @@ private:
 
   dwarf2_per_objfile *m_per_objfile;
   scoped_restore_tmpl<struct objfile *> m_restore_objfile;
+  scoped_restore_tmpl<dwarf2_unshareable *> m_restore_unshared;
 };
 
 /* A partial symtab specialized for DWARF.  */
