@@ -82,6 +82,10 @@ struct dwarf2_unshareable
      This is NULL if not allocated yet.
      The mapping is done via (CU/TU + DIE offset) -> type.  */
   htab_up die_type_hash;
+
+  /* Hold the corresponding compunit_symtab for each CU or TU.  This
+     is indexed by dwarf2_per_cu_data::index.  */
+  std::vector<gdb::optional<compunit_symtab *>> symtabs;
 };
 
 /* Collection of data recorded per objfile.
@@ -281,21 +285,25 @@ public:
 dwarf2_per_objfile *get_dwarf2_per_objfile (struct objfile *objfile);
 
 /* A partial symtab specialized for DWARF.  */
-struct dwarf2_psymtab : public standard_psymtab
+struct dwarf2_psymtab : public partial_symtab
 {
   dwarf2_psymtab (const char *filename, struct objfile *objfile)
-    : standard_psymtab (filename, objfile)
+    : partial_symtab (filename, objfile)
   {
   }
 
   dwarf2_psymtab (const char *filename, struct objfile *objfile,
 		  CORE_ADDR addr)
-    : standard_psymtab (filename, objfile, addr)
+    : partial_symtab (filename, objfile, addr)
   {
   }
 
   void read_symtab (struct objfile *) override;
   void expand_psymtab (struct objfile *) override;
+
+  bool readin_p (struct objfile *) const override;
+  struct compunit_symtab *get_compunit_symtab (struct objfile *) const
+    override;
 
   struct dwarf2_per_cu_data *per_cu_data;
 };
