@@ -1544,6 +1544,9 @@ struct piece_closure
   /* Reference count.  */
   int refc = 0;
 
+  /* The objfile from which this closure's expression came.  */
+  struct objfile *objfile = nullptr;
+
   /* The CU from which this closure's expression came.  */
   struct dwarf2_per_cu_data *per_cu = NULL;
 
@@ -1566,6 +1569,8 @@ allocate_piece_closure (struct dwarf2_per_cu_data *per_cu,
   struct piece_closure *c = new piece_closure;
 
   c->refc = 1;
+  /* We must capture this here due to sharing of DWARF state.  */
+  c->objfile = per_cu->objfile ();
   c->per_cu = per_cu;
   c->pieces = std::move (pieces);
   if (frame == NULL)
