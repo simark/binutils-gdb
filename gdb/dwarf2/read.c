@@ -7732,7 +7732,9 @@ dwarf2_build_psymtabs_hard (struct dwarf2_per_objfile *dwarf2_per_objfile)
 			  objfile_name (objfile));
     }
 
-  dwarf2_per_objfile->reading_partial_symbols = 1;
+  scoped_restore restore_reading_psyms
+    = make_scoped_restore (&dwarf2_per_objfile->reading_partial_symbols,
+			   true);
 
   dwarf2_per_objfile->info.read (objfile);
 
@@ -8705,8 +8707,6 @@ dwarf2_psymtab::read_symtab (struct objfile *objfile)
       dwarf2_per_objfile->has_section_at_zero
 	= dpo_backlink->has_section_at_zero;
     }
-
-  dwarf2_per_objfile->reading_partial_symbols = 0;
 
   expand_psymtab (objfile);
 
