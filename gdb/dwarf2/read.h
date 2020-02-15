@@ -128,6 +128,17 @@ struct dwarf2_per_objfile
 
   /* Free all cached compilation units.  */
   void free_cached_comp_units ();
+
+  /* A convenience function to allocate a dwarf2_per_cu_data (or
+     object holding one, using C-style derivation).  The returned
+     object has its "index" field set properly.  The object is
+     allocated on the dwarf2_per_objfile obstack.  FIXME the index
+     here is weird since it may not (!?!?) be the same as the other
+     index  */
+  dwarf2_per_cu_data *allocate_per_cu ();
+
+  signatured_type *allocate_signatured_type ();
+
 private:
   /* This function is mapped across the sections and remembers the
      offset and size of each of the debugging sections we are
@@ -255,6 +266,10 @@ public:
   /* CUs that are queued to be read.  */
   std::queue<dwarf2_queue_item> queue;
 
+  /* The total number of per_cu and signatured_type objects that have
+     been created for this reader.  */
+  size_t num_psymtabs = 0;
+
   /* State that cannot be shared across objfiles.  This is normally
      nullptr and is temporarily set to the correct value at the entry
      points of the reader.  */
@@ -335,6 +350,9 @@ struct dwarf2_per_cu_data
      "midflight").
      This flag is only valid if is_debug_types is true.  */
   unsigned int tu_read : 1;
+
+  /* Our index in the unshared "all_cutus" vector.  */
+  unsigned index;
 
   /* The section this CU/TU lives in.
      If the DIE refers to a DWO file, this is always the original die,
