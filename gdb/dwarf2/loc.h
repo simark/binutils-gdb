@@ -26,6 +26,7 @@ struct symbol_computed_ops;
 struct objfile;
 struct dwarf2_per_cu_data;
 struct dwarf2_loclist_baton;
+struct dwarf2_per_objfile;
 struct agent_expr;
 struct axs_value;
 
@@ -42,22 +43,28 @@ const gdb_byte *dwarf2_find_location_expression
    CORE_ADDR pc);
 
 struct dwarf2_locexpr_baton dwarf2_fetch_die_loc_sect_off
-  (sect_offset offset_in_cu, struct dwarf2_per_cu_data *per_cu,
+  (sect_offset offset_in_cu, dwarf2_per_objfile *dwarf2_per_objfile,
+   struct dwarf2_per_cu_data *per_cu,
    CORE_ADDR (*get_frame_pc) (void *baton),
    void *baton, bool resolve_abstract_p = false);
 
 struct dwarf2_locexpr_baton dwarf2_fetch_die_loc_cu_off
-  (cu_offset offset_in_cu, struct dwarf2_per_cu_data *per_cu,
+  (cu_offset offset_in_cu, dwarf2_per_objfile *dwarf2_per_objfile,
+   struct dwarf2_per_cu_data *per_cu,
    CORE_ADDR (*get_frame_pc) (void *baton),
    void *baton);
 
-extern const gdb_byte *dwarf2_fetch_constant_bytes (sect_offset,
-						    struct dwarf2_per_cu_data *,
-						    struct obstack *,
-						    LONGEST *);
+extern const gdb_byte *dwarf2_fetch_constant_bytes
+  (sect_offset sec_off,
+   dwarf2_per_objfile *dwarf2_per_objfile,
+   struct dwarf2_per_cu_data *per_cu,
+   struct obstack *obstack,
+   LONGEST *len);
 
-struct type *dwarf2_fetch_die_type_sect_off (sect_offset,
-					     struct dwarf2_per_cu_data *);
+struct type *dwarf2_fetch_die_type_sect_off
+  (sect_offset sect_off,
+   dwarf2_per_objfile *dwarf2_per_objfile,
+   struct dwarf2_per_cu_data *per_cu);
 
 struct type *dwarf2_get_die_type (cu_offset die_offset,
 				  struct dwarf2_per_cu_data *per_cu);
@@ -82,7 +89,8 @@ struct value *dwarf2_evaluate_loc_desc (struct type *type,
 					struct frame_info *frame,
 					const gdb_byte *data,
 					size_t size,
-					struct dwarf2_per_cu_data *per_cu);
+					struct dwarf2_per_cu_data *per_cu,
+					dwarf2_per_objfile *dwarf2_per_objfile);
 
 /* A chain of addresses that might be needed to resolve a dynamic
    property.  */
@@ -167,7 +175,7 @@ struct dwarf2_locexpr_baton
   bool is_reference;
 
   /* The objfile that was used when creating this.  */
-  struct objfile *objfile;
+  struct dwarf2_per_objfile *dwarf2_per_objfile;
 
   /* The compilation unit containing the symbol whose location
      we're computing.  */
@@ -187,7 +195,7 @@ struct dwarf2_loclist_baton
   size_t size;
 
   /* The objfile that was used when creating this.  */
-  struct objfile *objfile;
+  struct dwarf2_per_objfile *dwarf2_per_objfile;
 
   /* The compilation unit containing the symbol whose location
      we're computing.  */

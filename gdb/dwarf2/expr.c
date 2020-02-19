@@ -295,11 +295,12 @@ dwarf_expr_context::add_piece (ULONGEST size, ULONGEST offset)
 /* Evaluate the expression at ADDR (LEN bytes long).  */
 
 void
-dwarf_expr_context::eval (const gdb_byte *addr, size_t len)
+dwarf_expr_context::eval (const gdb_byte *addr, size_t len,
+			  dwarf2_per_objfile *dwarf2_per_objfile)
 {
   int old_recursion_depth = this->recursion_depth;
 
-  execute_stack_op (addr, addr + len);
+  execute_stack_op (addr, addr + len, dwarf2_per_objfile);
 
   /* RECURSION_DEPTH becomes invalid if an exception was thrown here.  */
 
@@ -545,7 +546,8 @@ dwarf_block_to_sp_offset (struct gdbarch *gdbarch, const gdb_byte *buf,
 
 void
 dwarf_expr_context::execute_stack_op (const gdb_byte *op_ptr,
-				      const gdb_byte *op_end)
+				      const gdb_byte *op_end,
+				      dwarf2_per_objfile *dwarf2_per_objfile)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (this->gdbarch);
   /* Old-style "untyped" DWARF values need special treatment in a
@@ -861,7 +863,7 @@ dwarf_expr_context::execute_stack_op (const gdb_byte *op_ptr,
                get_frame_base_address(), and then implement a dwarf2
                specific this_base method.  */
 	    this->get_frame_base (&datastart, &datalen);
-	    eval (datastart, datalen);
+	    eval (datastart, datalen, dwarf2_per_objfile);
 	    if (this->location == DWARF_VALUE_MEMORY)
 	      result = fetch_address (0);
 	    else if (this->location == DWARF_VALUE_REGISTER)
@@ -1174,7 +1176,7 @@ dwarf_expr_context::execute_stack_op (const gdb_byte *op_ptr,
 	  returned.  */
 	  result = value_as_long (fetch (0));
 	  pop ();
-	  result = this->get_tls_address (result);
+	  result = this->get_tls_address (result, dwarf2_per_objfile);
 	  result_val = value_from_ulongest (address_type, result);
 	  break;
 
@@ -1249,7 +1251,7 @@ dwarf_expr_context::execute_stack_op (const gdb_byte *op_ptr,
 	    cu_offset cu_off
 	      = (cu_offset) extract_unsigned_integer (op_ptr, 2, byte_order);
 	    op_ptr += 2;
-	    this->dwarf_call (cu_off);
+	    this->dwarf_call (cu_off, dwarf2_per_objfile);
 	  }
 	  goto no_push;
 
@@ -1258,7 +1260,7 @@ dwarf_expr_context::execute_stack_op (const gdb_byte *op_ptr,
 	    cu_offset cu_off
 	      = (cu_offset) extract_unsigned_integer (op_ptr, 4, byte_order);
 	    op_ptr += 4;
-	    this->dwarf_call (cu_off);
+	    this->dwarf_call (cu_off, dwarf2_per_objfile);
 	  }
 	  goto no_push;
 
@@ -1269,7 +1271,8 @@ dwarf_expr_context::execute_stack_op (const gdb_byte *op_ptr,
 	                                                this->ref_addr_size,
 							byte_order);
 	    op_ptr += this->ref_addr_size;
-	    result_val = this->dwarf_variable_value (sect_off);
+	    result_val = this->dwarf_variable_value (sect_off,
+						     dwarf2_per_objfile);
 	  }
 	  break;
 	
@@ -1290,7 +1293,8 @@ dwarf_expr_context::execute_stack_op (const gdb_byte *op_ptr,
 		op_ptr += len;
 		this->push_dwarf_reg_entry_value (CALL_SITE_PARAMETER_DWARF_REG,
 						  kind_u,
-						  -1 /* deref_size */);
+						  -1 /* deref_size */,
+						  dwarf2_per_objfile);
 		goto no_push;
 	      }
 
@@ -1303,7 +1307,8 @@ dwarf_expr_context::execute_stack_op (const gdb_byte *op_ptr,
 		  deref_size = this->addr_size;
 		op_ptr += len;
 		this->push_dwarf_reg_entry_value (CALL_SITE_PARAMETER_DWARF_REG,
-						  kind_u, deref_size);
+						  kind_u, deref_size,
+						  dwarf2_per_objfile);
 		goto no_push;
 	      }
 
@@ -1321,7 +1326,8 @@ dwarf_expr_context::execute_stack_op (const gdb_byte *op_ptr,
 	    op_ptr += 4;
 	    this->push_dwarf_reg_entry_value (CALL_SITE_PARAMETER_PARAM_OFFSET,
 					      kind_u,
-					      -1 /* deref_size */);
+					      -1 /* deref_size */,
+					      dwarf2_per_objfile);
 	  }
 	  goto no_push;
 

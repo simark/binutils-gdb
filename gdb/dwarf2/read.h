@@ -47,6 +47,8 @@ struct dwarf2_per_cu_data;
 struct mapped_index;
 struct mapped_debug_names;
 struct signatured_type;
+struct objfile;
+struct bfd;
 
 /* One item on the queue of compilation units to read in full symbols
    for.  */
@@ -66,45 +68,23 @@ struct dwarf2_queue_item
   enum language pretend_language;
 };
 
-/* Some DWARF data cannot (currently) be shared across objfiles.  Such
-   data is stored in this object.
-
-   dwarf2_per_objfile holds a pointer to an instance of this object.
-   This pointer is temporarily set when expanding CUs.  This hackish
-   approach is due to the history of the DWARF reader.  In the past,
-   all objects were stored per-objfile, and this object was introduced
-   in the process of separating out the shareable and per-objfile
-   state.  */
-
-struct dwarf2_unshareable
-{
-  /* Table mapping type DIEs to their struct type *.
-     This is NULL if not allocated yet.
-     The mapping is done via (CU/TU + DIE offset) -> type.  */
-  htab_up die_type_hash;
-
-  /* Hold the corresponding compunit_symtab for each CU or TU.  This
-     is indexed by dwarf2_per_cu_data::index.  */
-  std::vector<gdb::optional<compunit_symtab *>> symtabs;
-};
-
 /* Collection of data recorded per objfile.
    This hangs off of dwarf2_objfile_data_key.  */
 
-struct dwarf2_per_objfile
+struct dwarf2_shared_between_objfiles
 {
   /* Construct a dwarf2_per_objfile for OBJFILE.  NAMES points to the
      dwarf2 section names, or is NULL if the standard ELF names are
      used.  CAN_COPY is true for formats where symbol
      interposition is possible and so symbol values must follow copy
      relocation rules.  */
-  dwarf2_per_objfile (struct objfile *objfile,
-		      const dwarf2_debug_sections *names,
-		      bool can_copy);
+  dwarf2_shared_between_objfiles (bfd *obfd,
+				  const dwarf2_debug_sections *names,
+				  bool can_copy);
 
-  ~dwarf2_per_objfile ();
+  ~dwarf2_shared_between_objfiles ();
 
-  DISABLE_COPY_AND_ASSIGN (dwarf2_per_objfile);
+  DISABLE_COPY_AND_ASSIGN (dwarf2_shared_between_objfiles);
 
   /* Return the CU/TU given its index.
 
@@ -176,9 +156,6 @@ public:
   dwarf2_section_info debug_aranges {};
 
   std::vector<dwarf2_section_info> types;
-
-  /* Back link.  */
-  struct objfile *objfile = NULL;
 
   /* Table of all the compilation units.  This is used to locate
      the target compilation unit of a particular reference.  */
@@ -273,11 +250,36 @@ public:
   /* The total number of per_cu and signatured_type objects that have
      been created for this reader.  */
   size_t num_psymtabs = 0;
+};
 
-  /* State that cannot be shared across objfiles.  This is normally
-     nullptr and is temporarily set to the correct value at the entry
-     points of the reader.  */
-  dwarf2_unshareable *unshareable = nullptr;
+/* Some DWARF data cannot (currently) be shared across objfiles.  Such
+   data is stored in this object.
+
+   dwarf2_per_objfile holds a pointer to an instance of this object.
+   This pointer is temporarily set when expanding CUs.  This hackish
+   approach is due to the history of the DWARF reader.  In the past,
+   all objects were stored per-objfile, and this object was introduced
+   in the process of separating out the shareable and per-objfile
+   state.  */
+
+struct dwarf2_per_objfile
+{
+  dwarf2_per_objfile (struct objfile *objfile,
+		      dwarf2_shared_between_objfiles *shared)
+    : objfile (objfile), shared (shared)
+  {}
+
+  struct objfile *objfile;
+  dwarf2_shared_between_objfiles *shared;
+
+  /* Table mapping type DIEs to their struct type *.
+     This is NULL if not allocated yet.
+     The mapping is done via (CU/TU + DIE offset) -> type.  */
+  htab_up die_type_hash;
+
+  /* Hold the corresponding compunit_symtab for each CU or TU.  This
+     is indexed by dwarf2_per_cu_data::index.  */
+  std::vector<gdb::optional<compunit_symtab *>> symtabs;
 };
 
 /* Get the dwarf2_per_objfile associated to OBJFILE.  */
@@ -359,7 +361,7 @@ struct dwarf2_per_cu_data
      This flag is only valid if is_debug_types is true.  */
   unsigned int tu_read : 1;
 
-  /* Our index in the unshared "all_cutus" vector.  */
+  /* Our index in the unshared "dwarf2_per_objfile::symtabs" vector.  */
   unsigned index;
 
   /* The section this CU/TU lives in.
@@ -372,8 +374,8 @@ struct dwarf2_per_cu_data
      dummy CUs (a CU header, but nothing else).  */
   struct dwarf2_cu *cu;
 
-  /* The corresponding dwarf2_per_objfile.  */
-  struct dwarf2_per_objfile *dwarf2_per_objfile;
+  /* The corresponding dwarf2_shared_between_objfiles.  */
+  struct dwarf2_shared_between_objfiles *shared;
 
   /* When dwarf2_per_objfile->using_index is true, the 'quick' field
      is active.  Otherwise, the 'psymtab' field is active.  */
@@ -444,11 +446,6 @@ struct dwarf2_per_cu_data
     imported_symtabs = nullptr;
   }
 
-  /* Return the OBJFILE associated with this compilation unit.  If
-     this compilation unit came from a separate debuginfo file, then
-     the master objfile is returned.  */
-  struct objfile *objfile () const;
-
   /* Return the address size given in the compilation unit header for
      this CU.  */
   int addr_size () const;
@@ -460,12 +457,6 @@ struct dwarf2_per_cu_data
   /* Return the DW_FORM_ref_addr size given in the compilation unit
      header for this CU.  */
   int ref_addr_size () const;
-
-  /* Return the text offset of the CU.  The returned offset comes from
-     this CU's objfile.  If this objfile came from a separate
-     debuginfo file, then the offset may be different from the
-     corresponding offset in the parent objfile.  */
-  CORE_ADDR text_offset () const;
 
   /* Return a type that is a generic pointer type, the size of which
      matches the address size given in the compilation unit header for

@@ -21,6 +21,7 @@
 struct ui_file;
 struct gdbarch;
 struct dwarf2_per_cu_data;
+struct dwarf2_per_objfile;
 struct symbol;
 struct dynamic_prop;
 
@@ -64,7 +65,8 @@ extern void compile_dwarf_expr_to_c (string_file *stream,
 				     unsigned int addr_size,
 				     const gdb_byte *op_ptr,
 				     const gdb_byte *op_end,
-				     struct dwarf2_per_cu_data *per_cu);
+				     struct dwarf2_per_cu_data *per_cu,
+				     dwarf2_per_objfile *dwarf2_per_objfile);
 
 /* Compile a DWARF bounds expression to C, suitable for use by the
    compiler.
@@ -99,7 +101,8 @@ extern void compile_dwarf_bounds_to_c (string_file *stream,
 				       unsigned int addr_size,
 				       const gdb_byte *op_ptr,
 				       const gdb_byte *op_end,
-				       struct dwarf2_per_cu_data *per_cu);
+				       struct dwarf2_per_cu_data *per_cu,
+				       dwarf2_per_objfile *dwarf2_per_objfile);
 
 extern void compile_print_value (struct value *val, void *data_voidp);
 

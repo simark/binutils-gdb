@@ -167,7 +167,7 @@ struct comp_unit
 };
 
 static struct dwarf2_fde *dwarf2_frame_find_fde (CORE_ADDR *pc,
-						 CORE_ADDR *out_offset);
+						 objfile **out_objfile);
 
 static int dwarf2_frame_adjust_regnum (struct gdbarch *gdbarch, int regnum,
 				       int eh_frame_p);
@@ -264,9 +264,11 @@ class dwarf_expr_executor : public dwarf_expr_context
     invalid ("DW_OP_fbreg");
   }
 
-  void push_dwarf_reg_entry_value (enum call_site_parameter_kind kind,
-				   union call_site_parameter_u kind_u,
-				   int deref_size) override
+  void push_dwarf_reg_entry_value
+    (enum call_site_parameter_kind kind,
+     union call_site_parameter_u kind_u,
+     int deref_size,
+     dwarf2_per_objfile *dwarf2_per_objfile) override
   {
     invalid ("DW_OP_entry_value");
   }
@@ -281,17 +283,20 @@ class dwarf_expr_executor : public dwarf_expr_context
     invalid ("DW_OP_call_frame_cfa");
   }
 
-  CORE_ADDR get_tls_address (CORE_ADDR offset) override
+  CORE_ADDR get_tls_address (CORE_ADDR offset,
+			     dwarf2_per_objfile *dwarf2_per_objfile) override
   {
     invalid ("DW_OP_form_tls_address");
   }
 
-  void dwarf_call (cu_offset die_offset) override
+  void dwarf_call (cu_offset die_offset,
+		   dwarf2_per_objfile *dwarf2_per_objfile) override
   {
     invalid ("DW_OP_call*");
   }
 
-  struct value *dwarf_variable_value (sect_offset sect_off) override
+  struct value *dwarf_variable_value
+    (sect_offset sect_off, dwarf2_per_objfile *dwarf2_per_objfile) override
   {
     invalid ("DW_OP_GNU_variable_value");
   }
@@ -312,7 +317,8 @@ class dwarf_expr_executor : public dwarf_expr_context
 static CORE_ADDR
 execute_stack_op (const gdb_byte *exp, ULONGEST len, int addr_size,
 		  CORE_ADDR offset, struct frame_info *this_frame,
-		  CORE_ADDR initial, int initial_in_stack_memory)
+		  CORE_ADDR initial, int initial_in_stack_memory,
+		  dwarf2_per_objfile *dwarf2_per_objfile)
 {
   CORE_ADDR result;
 
@@ -326,7 +332,7 @@ execute_stack_op (const gdb_byte *exp, ULONGEST len, int addr_size,
   ctx.offset = offset;
 
   ctx.push_address (initial, initial_in_stack_memory);
-  ctx.eval (exp, len);
+  ctx.eval (exp, len, dwarf2_per_objfile);
 
   if (ctx.location == DWARF_VALUE_MEMORY)
     result = ctx.fetch_address (0);
@@ -883,13 +889,16 @@ dwarf2_fetch_cfa_info (struct gdbarch *gdbarch, CORE_ADDR pc,
 		       const gdb_byte **cfa_end_out)
 {
   struct dwarf2_fde *fde;
-  CORE_ADDR text_offset;
+  //CORE_ADDR text_offset;
   CORE_ADDR pc1 = pc;
+  objfile *objfile;
 
   /* Find the correct FDE.  */
-  fde = dwarf2_frame_find_fde (&pc1, &text_offset);
+  fde = dwarf2_frame_find_fde (&pc1, &objfile);
   if (fde == NULL)
     error (_("Could not compute CFA; needed to translate this expression"));
+
+  gdb_assert (objfile != nullptr);
 
   dwarf2_frame_state fs (pc1, fde->cie);
 
@@ -898,14 +907,15 @@ dwarf2_fetch_cfa_info (struct gdbarch *gdbarch, CORE_ADDR pc,
 
   /* First decode all the insns in the CIE.  */
   execute_cfa_program (fde, fde->cie->initial_instructions,
-		       fde->cie->end, gdbarch, pc, &fs, text_offset);
+		       fde->cie->end, gdbarch, pc, &fs,
+		       objfile->text_section_offset ());
 
   /* Save the initialized register set.  */
   fs.initial = fs.regs;
 
   /* Then decode the insns in the FDE up to our target PC.  */
   execute_cfa_program (fde, fde->instructions, fde->end, gdbarch, pc, &fs,
-		       text_offset);
+		       objfile->text_section_offset ());
 
   /* Calculate the CFA.  */
   switch (fs.regs.cfa_how)
@@ -923,7 +933,7 @@ dwarf2_fetch_cfa_info (struct gdbarch *gdbarch, CORE_ADDR pc,
       }
 
     case CFA_EXP:
-      *text_offset_out = text_offset;
+      *text_offset_out = objfile->text_section_offset ();
       *cfa_start_out = fs.regs.cfa_exp;
       *cfa_end_out = fs.regs.cfa_exp + fs.regs.cfa_exp_len;
       return 0;
@@ -956,8 +966,8 @@ struct dwarf2_frame_cache
   /* Target address size in bytes.  */
   int addr_size;
 
-  /* The .text offset.  */
-  CORE_ADDR text_offset;
+  /* The objfile-specific DWARF data.  */
+  struct dwarf2_per_objfile *dwarf2_per_objfile;
 
   /* True if we already checked whether this frame is the bottom frame
      of a virtual tail call frame chain.  */
@@ -1013,8 +1023,13 @@ dwarf2_frame_cache (struct frame_info *this_frame, void **this_cache)
   CORE_ADDR pc1 = get_frame_address_in_block (this_frame);
 
   /* Find the correct FDE.  */
-  fde = dwarf2_frame_find_fde (&pc1, &cache->text_offset);
+  objfile *objfile;
+  fde = dwarf2_frame_find_fde (&pc1, &objfile);
   gdb_assert (fde != NULL);
+  gdb_assert (objfile != nullptr);
+
+  cache->dwarf2_per_objfile = get_dwarf2_per_objfile (objfile);
+  gdb_assert (cache->dwarf2_per_objfile != nullptr);
 
   /* Allocate and initialize the frame state.  */
   struct dwarf2_frame_state fs (pc1, fde->cie);
@@ -1028,7 +1043,7 @@ dwarf2_frame_cache (struct frame_info *this_frame, void **this_cache)
   execute_cfa_program (fde, fde->cie->initial_instructions,
 		       fde->cie->end, gdbarch,
 		       get_frame_address_in_block (this_frame), &fs,
-		       cache->text_offset);
+		       objfile->text_section_offset ());
 
   /* Save the initialized register set.  */
   fs.initial = fs.regs;
@@ -1043,7 +1058,8 @@ dwarf2_frame_cache (struct frame_info *this_frame, void **this_cache)
     {
       /* Decode the insns in the FDE up to the entry PC.  */
       instr = execute_cfa_program (fde, fde->instructions, fde->end, gdbarch,
-				   entry_pc, &fs, cache->text_offset);
+				   entry_pc, &fs,
+				   objfile->text_section_offset ());
 
       if (fs.regs.cfa_how == CFA_REG_OFFSET
 	  && (dwarf_reg_to_regnum (gdbarch, fs.regs.cfa_reg)
@@ -1059,7 +1075,7 @@ dwarf2_frame_cache (struct frame_info *this_frame, void **this_cache)
   /* Then decode the insns in the FDE up to our target PC.  */
   execute_cfa_program (fde, instr, fde->end, gdbarch,
 		       get_frame_address_in_block (this_frame), &fs,
-		       cache->text_offset);
+		       objfile->text_section_offset ());
 
   try
     {
@@ -1077,8 +1093,9 @@ dwarf2_frame_cache (struct frame_info *this_frame, void **this_cache)
 	case CFA_EXP:
 	  cache->cfa =
 	    execute_stack_op (fs.regs.cfa_exp, fs.regs.cfa_exp_len,
-			      cache->addr_size, cache->text_offset,
-			      this_frame, 0, 0);
+			      cache->addr_size, objfile->text_section_offset (),
+			      this_frame, 0, 0,
+			      cache->dwarf2_per_objfile);
 	  break;
 
 	default:
@@ -1284,8 +1301,9 @@ dwarf2_frame_prev_register (struct frame_info *this_frame, void **this_cache,
     case DWARF2_FRAME_REG_SAVED_EXP:
       addr = execute_stack_op (cache->reg[regnum].loc.exp.start,
 			       cache->reg[regnum].loc.exp.len,
-			       cache->addr_size, cache->text_offset,
-			       this_frame, cache->cfa, 1);
+			       cache->addr_size, cache->dwarf2_per_objfile->objfile->text_section_offset (), /* FIXME: no need to pass text offset, as we pass the objfile, we could get it from there. */
+			       this_frame, cache->cfa, 1,
+			       cache->dwarf2_per_objfile);
       return frame_unwind_got_memory (this_frame, regnum, addr);
 
     case DWARF2_FRAME_REG_SAVED_VAL_OFFSET:
@@ -1295,8 +1313,9 @@ dwarf2_frame_prev_register (struct frame_info *this_frame, void **this_cache,
     case DWARF2_FRAME_REG_SAVED_VAL_EXP:
       addr = execute_stack_op (cache->reg[regnum].loc.exp.start,
 			       cache->reg[regnum].loc.exp.len,
-			       cache->addr_size, cache->text_offset,
-			       this_frame, cache->cfa, 1);
+			       cache->addr_size, cache->dwarf2_per_objfile->objfile->text_section_offset (),
+			       this_frame, cache->cfa, 1,
+			       cache->dwarf2_per_objfile);
       return frame_unwind_got_constant (this_frame, regnum, addr);
 
     case DWARF2_FRAME_REG_UNSPECIFIED:
@@ -1668,7 +1687,7 @@ set_comp_unit (struct objfile *objfile, struct comp_unit *unit)
    initial location associated with it into *PC.  */
 
 static struct dwarf2_fde *
-dwarf2_frame_find_fde (CORE_ADDR *pc, CORE_ADDR *out_offset)
+dwarf2_frame_find_fde (CORE_ADDR *pc, objfile **out_objfile)
 {
   for (objfile *objfile : current_program_space->objfiles ())
     {
@@ -1700,8 +1719,9 @@ dwarf2_frame_find_fde (CORE_ADDR *pc, CORE_ADDR *out_offset)
       if (it != fde_table->end ())
         {
           *pc = (*it)->initial_location + offset;
-	  if (out_offset)
-	    *out_offset = offset;
+	  if (out_objfile)
+	    *out_objfile = objfile;
+
           return *it;
         }
     }

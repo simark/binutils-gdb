@@ -25,6 +25,8 @@
 #include "leb128.h"
 #include "gdbtypes.h"
 
+struct dwarf2_per_objfile;
+
 /* The location of a value.  */
 enum dwarf_value_location
 {
@@ -121,7 +123,8 @@ struct dwarf_expr_context
   virtual ~dwarf_expr_context () = default;
 
   void push_address (CORE_ADDR value, bool in_stack_memory);
-  void eval (const gdb_byte *addr, size_t len);
+  void eval (const gdb_byte *addr, size_t len,
+	     dwarf2_per_objfile *dwarf2_per_objfile);
   struct value *fetch (int n);
   CORE_ADDR fetch_address (int n);
   bool fetch_in_stack_memory (int n);
@@ -214,16 +217,19 @@ struct dwarf_expr_context
 
   /* Return the thread-local storage address for
      DW_OP_GNU_push_tls_address or DW_OP_form_tls_address.  */
-  virtual CORE_ADDR get_tls_address (CORE_ADDR offset) = 0;
+  virtual CORE_ADDR get_tls_address
+    (CORE_ADDR offset, dwarf2_per_objfile *dwarf2_per_objfile) = 0;
 
   /* Execute DW_AT_location expression for the DWARF expression
      subroutine in the DIE at DIE_CU_OFF in the CU.  Do not touch
      STACK while it being passed to and returned from the called DWARF
      subroutine.  */
-  virtual void dwarf_call (cu_offset die_cu_off) = 0;
+  virtual void dwarf_call
+    (cu_offset die_cu_off, dwarf2_per_objfile *dwarf2_per_objfile) = 0;
 
   /* Execute "variable value" operation on the DIE at SECT_OFF.  */
-  virtual struct value *dwarf_variable_value (sect_offset sect_off) = 0;
+  virtual struct value *dwarf_variable_value
+    (sect_offset sect_off, dwarf2_per_objfile *dwarf2_per_objfile) = 0;
 
   /* Return the base type given by the indicated DIE at DIE_CU_OFF.
      This can throw an exception if the DIE is invalid or does not
@@ -239,9 +245,11 @@ struct dwarf_expr_context
      parameter matching KIND and KIND_U at the caller of specified BATON.
      If DEREF_SIZE is not -1 then use DW_AT_call_data_value instead of
      DW_AT_call_value.  */
-  virtual void push_dwarf_reg_entry_value (enum call_site_parameter_kind kind,
-					   union call_site_parameter_u kind_u,
-					   int deref_size) = 0;
+  virtual void push_dwarf_reg_entry_value
+    (enum call_site_parameter_kind kind,
+     union call_site_parameter_u kind_u,
+     int deref_size,
+     dwarf2_per_objfile *dwarf2_per_objfile) = 0;
 
   /* Return the address indexed by DW_OP_addrx or DW_OP_GNU_addr_index.
      This can throw an exception if the index is out of range.  */
@@ -256,7 +264,8 @@ private:
   void push (struct value *value, bool in_stack_memory);
   bool stack_empty_p () const;
   void add_piece (ULONGEST size, ULONGEST offset);
-  void execute_stack_op (const gdb_byte *op_ptr, const gdb_byte *op_end);
+  void execute_stack_op (const gdb_byte *op_ptr, const gdb_byte *op_end,
+			 dwarf2_per_objfile *dwarf2_per_objfile);
   void pop ();
 };
 
