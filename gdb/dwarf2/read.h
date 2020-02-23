@@ -458,20 +458,6 @@ struct dwarf2_per_cu_data
      header for this CU.  */
   int ref_addr_size () const;
 
-  /* Return a type that is a generic pointer type, the size of which
-     matches the address size given in the compilation unit header for
-     this CU.  */
-  struct type *addr_type () const;
-
-  /* Find an integer type SIZE_IN_BYTES bytes in size and return it.
-     UNSIGNED_P controls if the integer is unsigned or not.  */
-  struct type *int_type (int size_in_bytes, bool unsigned_p) const;
-
-  /* Find an integer type the same size as the address size given in
-     the compilation unit header for this CU.  UNSIGNED_P controls if
-     the integer is unsigned or not.  */
-  struct type *addr_sized_int_type (bool unsigned_p) const;
-
   /* Return DWARF version number of this CU.  */
   short version () const
   {
