@@ -1174,7 +1174,8 @@ static void dwarf2_find_base_address (struct die_info *die,
 				      struct dwarf2_cu *cu);
 
 static dwarf2_psymtab *create_partial_symtab
-  (struct dwarf2_per_cu_data *per_cu, const char *name);
+  (dwarf2_per_cu_data *per_cu, dwarf2_per_objfile *per_objfile,
+   const char *name);
 
 static void build_type_psymtabs_reader (const struct die_reader_specs *reader,
 					const gdb_byte *info_ptr,
@@ -7221,7 +7222,7 @@ create_type_unit_group (struct dwarf2_cu *cu, sect_offset line_offset_struct)
       else
 	name = string_printf ("<type_units_at_0x%x>", line_offset);
 
-      pst = create_partial_symtab (per_cu, name.c_str ());
+      pst = create_partial_symtab (per_cu, dwarf2_per_objfile, name.c_str ());
       pst->anonymous = true;
     }
 
@@ -7295,9 +7296,11 @@ get_type_unit_group (struct dwarf2_cu *cu, const struct attribute *stmt_list)
    dirname, textlow, texthigh.  */
 
 static dwarf2_psymtab *
-create_partial_symtab (struct dwarf2_per_cu_data *per_cu, const char *name)
+create_partial_symtab (dwarf2_per_cu_data *per_cu,
+		       dwarf2_per_objfile *per_objfile,
+		       const char *name)
 {
-  struct objfile *objfile = per_cu->dwarf2_per_objfile->objfile;
+  struct objfile *objfile = per_objfile->objfile;
   dwarf2_psymtab *pst;
 
   pst = new dwarf2_psymtab (name, objfile, per_cu);
@@ -7319,7 +7322,8 @@ process_psymtab_comp_unit_reader (const struct die_reader_specs *reader,
 				  enum language pretend_language)
 {
   struct dwarf2_cu *cu = reader->cu;
-  struct objfile *objfile = cu->per_objfile->objfile;
+  dwarf2_per_objfile *per_objfile = cu->per_objfile;
+  struct objfile *objfile = per_objfile->objfile;
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
   struct dwarf2_per_cu_data *per_cu = cu->per_cu;
   CORE_ADDR baseaddr;
@@ -7346,7 +7350,7 @@ process_psymtab_comp_unit_reader (const struct die_reader_specs *reader,
       filename = debug_filename.get ();
     }
 
-  pst = create_partial_symtab (per_cu, filename);
+  pst = create_partial_symtab (per_cu, per_objfile, filename);
 
   /* This must be done before calling dwarf2_build_include_psymtabs.  */
   pst->dirname = dwarf2_string_attr (comp_unit_die, DW_AT_comp_dir, cu);
@@ -7527,7 +7531,7 @@ build_type_psymtabs_reader (const struct die_reader_specs *reader,
   tu_group->tus->push_back (sig_type);
 
   prepare_one_comp_unit (cu, type_unit_die, language_minimal);
-  pst = create_partial_symtab (per_cu, "");
+  pst = create_partial_symtab (per_cu, dwarf2_per_objfile, "");
   pst->anonymous = true;
 
   first_die = load_partial_dies (reader, info_ptr, 1);
