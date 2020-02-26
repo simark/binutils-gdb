@@ -23000,16 +23000,6 @@ dwarf2_per_cu_data::ref_addr_size () const
 
 /* See read.h.  */
 
-CORE_ADDR
-dwarf2_per_cu_data::text_offset () const
-{
-  struct objfile *objfile = dwarf2_per_objfile->objfile;
-
-  return objfile->text_section_offset ();
-}
-
-/* See read.h.  */
-
 struct type *
 dwarf2_cu::addr_type () const
 {
