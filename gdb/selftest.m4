@@ -27,6 +27,9 @@ AC_DEFUN([GDB_AC_SELFTEST],[
 # The default value of this option changes depending whether we're on
 # development mode (in which case it's "true") or not (in which case
 # it's "false").
+
+AS_IF([test "x$development" = x], [AC_MSG_ERROR([Internal error: \$development is unset or empty.])])
+
 AC_ARG_ENABLE(unit-tests,
 AS_HELP_STRING([--enable-unit-tests],
 [Enable the inclusion of unit tests when compiling GDB]),

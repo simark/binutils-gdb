@@ -25,6 +25,9 @@ AC_CONFIG_AUX_DIR(..)
 AM_INIT_AUTOMAKE
 AM_SILENT_RULES([yes])
 
+# Set the 'development' global.
+. $srcdir/../bfd/development.sh
+
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_RANLIB
