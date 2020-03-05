@@ -8060,6 +8060,9 @@ fi
 
 
 
+  # Set the 'development' global.
+  . $srcdir/../bfd/development.sh
+
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ANSI C header files" >&5
 $as_echo_n "checking for ANSI C header files... " >&6; }
 if ${ac_cv_header_stdc+:} false; then :

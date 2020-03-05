@@ -6073,9 +6073,6 @@ $as_echo "#define STDC_HEADERS 1" >>confdefs.h
 fi
 
 
-# Set the 'development' global.
-. $srcdir/../bfd/development.sh
-
 
 # Check whether we will enable the inclusion of unit tests when
 # compiling GDB.
@@ -6761,6 +6758,9 @@ else
 fi
 
 
+
+  # Set the 'development' global.
+  . $srcdir/../bfd/development.sh
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ANSI C header files" >&5
 $as_echo_n "checking for ANSI C header files... " >&6; }

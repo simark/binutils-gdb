@@ -43,9 +43,6 @@ AX_CXX_COMPILE_STDCXX(11, , mandatory)
 
 AC_HEADER_STDC
 
-# Set the 'development' global.
-. $srcdir/../bfd/development.sh
-
 GDB_AC_SELFTEST([
   srv_selftest_objs="gdbsupport/selftest.o"
 ])
