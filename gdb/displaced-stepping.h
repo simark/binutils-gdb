@@ -1,6 +1,7 @@
 #ifndef DISPLACED_STEPPING_H
 #define DISPLACED_STEPPING_H
 
+#include "gdbsupport/array-view.h"
 #include "gdbsupport/byte-vector.h"
 
 struct gdbarch;
@@ -98,14 +99,43 @@ private:
   gdbarch *m_original_gdbarch = nullptr;
 };
 
+struct displaced_step_buffer_state
+{
+  displaced_step_buffer_state (CORE_ADDR buffer_addr)
+    : m_buffer_addr (buffer_addr)
+  {}
+
+  const CORE_ADDR m_buffer_addr;
+
+  /* When a displaced step operation is using this buffer, this is the original
+     PC of the instruction currently begin stepped.  */
+  CORE_ADDR m_original_pc = 0;
+
+  /* If set, the thread currently using the buffer.  If unset, the buffer is not
+     used.  */
+  thread_info *m_current_thread = nullptr;
+
+  /* Saved copy of the bytes in the displaced buffer, to be restored once the
+     buffer is no longer used.  */
+  gdb::byte_vector m_saved_copy;
+
+  /* Closure obtained from gdbarch_displaced_step_copy_insn, to be passed to
+     gdbarch_displaced_step_fixup_insn.  */
+  displaced_step_copy_insn_closure_up m_copy_insn_closure;
+};
+
 /* Manage access to a single displaced stepping buffer, without any
    sharing.  */
 
-struct single_displaced_buffer_manager
+struct multiple_displaced_buffer_manager
 {
-  single_displaced_buffer_manager (CORE_ADDR buffer_addr)
-    : m_buffer_addr (buffer_addr)
-  {}
+  multiple_displaced_buffer_manager (gdb::array_view<CORE_ADDR> buffer_addrs)
+  {
+    gdb_assert (buffer_addrs.size () > 0);
+
+    for (CORE_ADDR buffer_addr : buffer_addrs)
+      m_buffers.emplace_back (buffer_addr);
+  }
 
   displaced_step_prepare_status prepare (thread_info *thread);
 
@@ -113,15 +143,7 @@ struct single_displaced_buffer_manager
 				       gdb_signal sig);
 
 private:
-
-  CORE_ADDR m_original_pc;
-  CORE_ADDR m_buffer_addr;
-
-  /* If set, the thread currently using the buffer.  */
-  thread_info *m_current_thread = nullptr;
-
-  gdb::byte_vector m_saved_copy;
-  displaced_step_copy_insn_closure_up m_copy_insn_closure;
+  std::vector<displaced_step_buffer_state> m_buffers;
 };
 
 
