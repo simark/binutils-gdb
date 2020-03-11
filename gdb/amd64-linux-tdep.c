@@ -20,6 +20,7 @@
 
 #include "defs.h"
 #include "arch-utils.h"
+#include "displaced-stepping.h"
 #include "frame.h"
 #include "gdbarch.h"
 #include "gdbcore.h"
@@ -1798,11 +1799,11 @@ amd64_dtrace_parse_probe_argument (struct gdbarch *gdbarch,
 
 struct amd64_linux_per_inferior
 {
-  amd64_linux_per_inferior (CORE_ADDR disp_step_buffer_addr)
-    : disp_step_buf_mgr (disp_step_buffer_addr)
+  amd64_linux_per_inferior (gdb::array_view<CORE_ADDR> disp_step_buffer_addrs)
+    : disp_step_buf_mgr (disp_step_buffer_addrs)
   {}
 
-  single_displaced_buffer_manager disp_step_buf_mgr;
+  multiple_displaced_buffer_manager disp_step_buf_mgr;
 };
 
 static const inferior_key<amd64_linux_per_inferior>
