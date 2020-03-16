@@ -184,6 +184,9 @@ extern observable<struct inferior */* inf */> inferior_exit;
    This method is called immediately before freeing INF.  */
 extern observable<struct inferior */* inf */> inferior_removed;
 
+/* The inferior INF has exec'ed a new executable file.  */
+extern observable<struct inferior */* inf */> inferior_execd;
+
 /* Bytes from DATA to DATA + LEN have been written to the inferior
    at ADDR.  */
 extern observable<struct inferior */* inferior */, CORE_ADDR /* addr */,

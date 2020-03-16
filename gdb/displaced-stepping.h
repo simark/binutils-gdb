@@ -142,6 +142,11 @@ struct multiple_displaced_buffer_manager
   displaced_step_finish_status finish (gdbarch *arch, thread_info *thread,
 				       gdb_signal sig);
 
+  CORE_ADDR first_buf_addr () const
+    {
+      return m_buffers[0].m_buffer_addr;
+    }
+
 private:
   std::vector<displaced_step_buffer_state> m_buffers;
 };
