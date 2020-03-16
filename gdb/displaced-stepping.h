@@ -67,6 +67,8 @@ struct displaced_step_inferior_state
   /* True if preparing a displaced step ever failed.  If so, we won't
      try displaced stepping for this inferior again.  */
   bool failed_before;
+
+  bool unavailable = false;
 };
 
 /* Per-thread displaced stepping state.  */
