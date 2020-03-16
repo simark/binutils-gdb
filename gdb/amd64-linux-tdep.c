@@ -44,6 +44,7 @@
 #include "glibc-tdep.h"
 #include "arch/amd64.h"
 #include "target-descriptions.h"
+#include "observable.h"
 
 /* The syscall's XML filename for i386.  */
 #define XML_SYSCALL_FILENAME_AMD64 "syscalls/amd64-linux.xml"
@@ -1818,11 +1819,28 @@ get_amd64_linux_per_inferior (inferior *inf, gdbarch *arch)
 
   if (per_inf == nullptr)
     {
-      /* Figure out where the displaced step buffer is.  */
-      CORE_ADDR disp_step_buffer_addr = linux_displaced_step_location (arch);
+      std::vector<CORE_ADDR> buffers;
+#if 0
+      /* Alternative implementation that maps some pages in the inferior,
+         allowing to have many buffers.  */
+      CORE_ADDR displaced_step_mmap = gdbarch_infcall_mmap (arch, 16384, GDB_MMAP_PROT_READ | GDB_MMAP_PROT_EXEC);
+      gdb_assert (displaced_step_mmap != 0);
 
-      per_inf = amd64_linux_per_inferior_data.emplace (inf, disp_step_buffer_addr);
+      for (int i = 0; i < 1024; i++)
+	buffers.push_back (displaced_step_mmap + 16 * i);
+
+#else
+      /* Figure out where the displaced step buffers are.  */
+      CORE_ADDR addr = linux_displaced_step_location (arch);
+      buffers.push_back (addr);
+      buffers.push_back (addr + gdbarch_max_insn_length (arch));
+#endif
+      per_inf = amd64_linux_per_inferior_data.emplace (inf, buffers);
     }
+
+  CORE_ADDR addr = per_inf->disp_step_buf_mgr.first_buf_addr ();
+  CORE_ADDR cur_addr = linux_displaced_step_location (arch);
+  gdb_assert (addr == cur_addr);
 
   return per_inf;
 }
@@ -1834,6 +1852,7 @@ amd64_linux_displaced_step_prepare (gdbarch *arch, thread_info *thread)
 {
   amd64_linux_per_inferior *per_inferior
     = get_amd64_linux_per_inferior (thread->inf, arch);
+
 
   return per_inferior->disp_step_buf_mgr.prepare (thread);
 }
@@ -2328,6 +2347,18 @@ amd64_x32_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
     (gdbarch, svr4_ilp32_fetch_link_map_offsets);
 }
 
+static void
+amd64_linux_inferior_appeared (inferior *inf)
+{
+  amd64_linux_per_inferior_data.clear (inf);
+}
+
+static void
+amd64_linux_inferior_execd (inferior *inf)
+{
+  amd64_linux_per_inferior_data.clear (inf);
+}
+
 void _initialize_amd64_linux_tdep ();
 void
 _initialize_amd64_linux_tdep ()
@@ -2336,4 +2367,7 @@ _initialize_amd64_linux_tdep ()
 			  GDB_OSABI_LINUX, amd64_linux_init_abi);
   gdbarch_register_osabi (bfd_arch_i386, bfd_mach_x64_32,
 			  GDB_OSABI_LINUX, amd64_x32_linux_init_abi);
+
+  gdb::observers::inferior_appeared.attach (amd64_linux_inferior_appeared);
+  gdb::observers::inferior_execd.attach (amd64_linux_inferior_execd);
 }

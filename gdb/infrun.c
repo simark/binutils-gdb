@@ -1252,6 +1252,8 @@ follow_exec (ptid_t ptid, const char *exec_file_target)
      to symbol_file_command...).  */
   insert_breakpoints ();
 
+  gdb::observers::inferior_execd.notify (inf);
+
   /* The next resume of this inferior should bring it to the shlib
      startup breakpoints.  (If the user had also set bp's on
      "main" from the old (parent) process, then they'll auto-
