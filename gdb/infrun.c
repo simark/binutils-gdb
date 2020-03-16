@@ -1716,6 +1716,7 @@ displaced_step_prepare_throw (thread_info *tp)
 			    target_pid_to_str (tp->ptid).c_str ());
 
       global_thread_step_over_chain_enqueue (tp);
+      tp->inf->displaced_step_state.unavailable = true;
 
       return DISPLACED_STEP_PREPARE_STATUS_UNAVAILABLE;
     }
@@ -1908,6 +1909,9 @@ start_step_over (void)
 			"infrun: stealing list of %d threads to step from global queue\n",
 			thread_step_over_chain_length (threads_to_step));
 
+  for (inferior *inf : all_inferiors ())
+    inf->displaced_step_state.unavailable = false;
+
   for (tp = threads_to_step; tp != NULL; tp = next)
     {
       struct execution_control_state ecss;
@@ -1958,6 +1962,12 @@ start_step_over (void)
 	 only TP, so it's OK to let the thread resume freely.  */
       if (!target_is_non_stop_p () && !step_what)
 	continue;
+
+      if (tp->inf->displaced_step_state.unavailable)
+	{
+	  global_thread_step_over_chain_enqueue (tp);
+	  continue;
+	}
 
       switch_to_thread (tp);
       reset_ecs (ecs, tp);
