@@ -176,3 +176,19 @@ multiple_displaced_buffer_manager::finish (gdbarch *arch, thread_info *thread,
 
   return status;
 }
+
+displaced_step_prepare_status
+  default_displaced_step_prepare (target_ops *target, thread_info *thread)
+{
+  gdbarch *arch = thread->arch ();
+  return gdbarch_displaced_step_prepare (arch, thread);
+}
+
+displaced_step_finish_status
+default_displaced_step_finish (target_ops *target,
+			       thread_info *thread,
+			       gdb_signal sig)
+{
+  gdbarch *arch = thread->arch ();
+  return gdbarch_displaced_step_finish (arch, thread, sig);
+}

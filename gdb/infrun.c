@@ -1695,7 +1695,7 @@ displaced_step_prepare_throw (thread_info *tp)
   CORE_ADDR original_pc = regcache_read_pc (regcache);
 
   displaced_step_prepare_status status =
-    gdbarch_displaced_step_prepare (gdbarch, tp);
+    current_top_target ()->displaced_step_prepare (tp);
 
   if (status == DISPLACED_STEP_PREPARE_STATUS_ERROR)
     {
@@ -1841,8 +1841,7 @@ displaced_step_finish (thread_info *event_thread, enum gdb_signal signal)
   /* Do the fixup, and release the resources acquired to do the displaced
      step. */
   displaced_step_finish_status finish_status =
-    gdbarch_displaced_step_finish (displaced->get_original_gdbarch (),
-				   event_thread, signal);
+    current_top_target ()->displaced_step_finish (event_thread, signal);
 
   if (finish_status == DISPLACED_STEP_FINISH_STATUS_OK)
     return 1;
