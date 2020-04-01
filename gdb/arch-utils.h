@@ -77,7 +77,7 @@ struct bp_manipulation_endian
 /* Default implementation of gdbarch_displaced_hw_singlestep.  */
 extern int
   default_displaced_step_hw_singlestep (struct gdbarch *,
-					struct displaced_step_closure *);
+					struct displaced_step_copy_insn_closure *);
 
 /* Possible value for gdbarch_displaced_step_location:
    Place displaced instructions at the program's entry point,
