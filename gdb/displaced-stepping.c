@@ -187,8 +187,17 @@ multiple_displaced_buffer_manager::finish (gdbarch *arch, thread_info *thread,
   return status;
 }
 
+bool
+default_supports_displaced_step (target_ops *target, thread_info *thread)
+{
+  /* Only check for the presence of `prepare`.  `finish` is required by the
+     gdbarch verification to be provided if `prepare` is.  */
+  gdbarch *arch = thread->arch ();
+  return gdbarch_displaced_step_prepare_p (arch);
+}
+
 displaced_step_prepare_status
-  default_displaced_step_prepare (target_ops *target, thread_info *thread)
+default_displaced_step_prepare (target_ops *target, thread_info *thread)
 {
   gdbarch *arch = thread->arch ();
   return gdbarch_displaced_step_prepare (arch, thread);

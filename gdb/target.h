@@ -1244,6 +1244,9 @@ struct target_ops
     virtual void done_generating_core ()
       TARGET_DEFAULT_IGNORE ();
 
+    virtual bool supports_displaced_step (thread_info *thread)
+      TARGET_DEFAULT_FUNC (default_supports_displaced_step);
+
     virtual displaced_step_prepare_status displaced_step_prepare (thread_info *thread)
       TARGET_DEFAULT_FUNC (default_displaced_step_prepare);
 
