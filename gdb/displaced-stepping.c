@@ -13,14 +13,25 @@ displaced_step_copy_insn_closure::~displaced_step_copy_insn_closure() = default;
 displaced_step_prepare_status
 multiple_displaced_buffer_manager::prepare (thread_info *thread)
 {
-  gdb_assert (!thread->displaced_step_state.in_progress ());
-  displaced_step_buffer_state *buffer = nullptr;
+  gdb_assert (thread != nullptr);
 
-  /* Sanity check.  */
+  gdbarch *arch = thread->arch ();
+
+  /* This class requires that the arch implements both copy_insn and fixup.  */
+  gdb_assert (gdbarch_displaced_step_copy_insn_p (arch));
+  gdb_assert (gdbarch_displaced_step_fixup_p (arch));
+
+  /* It's invalid to `prepare` a thread that already has a displaced step in
+     progress.  */
+  gdb_assert (!thread->displaced_step_state.in_progress ());
+
+  /* Sanity check: no buffer is currently assigned to this thread.  */
   for (displaced_step_buffer_state &buf : m_buffers)
     gdb_assert (buf.m_current_thread != thread);
 
   /* Search for an unused buffer.  */
+  displaced_step_buffer_state *buffer = nullptr;
+
   for (displaced_step_buffer_state &candidate : m_buffers)
     {
       if (candidate.m_current_thread == nullptr)
@@ -33,7 +44,6 @@ multiple_displaced_buffer_manager::prepare (thread_info *thread)
   if (buffer == nullptr)
     return DISPLACED_STEP_PREPARE_STATUS_UNAVAILABLE;
 
-  gdbarch *arch = thread->arch ();
 
   if (debug_displaced)
     fprintf_unfiltered (gdb_stdlog, "displaced: selected buffer at %s\n",

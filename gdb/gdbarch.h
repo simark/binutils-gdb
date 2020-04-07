@@ -1088,6 +1088,8 @@ extern void set_gdbarch_displaced_step_fixup (struct gdbarch *gdbarch, gdbarch_d
   m;CORE_ADDR;displaced_step_location;thread_info *;thread;;NULL;;(! gdbarch->displaced_step_location) != (! gdbarch->displaced_step_copy_insn)
   m;CORE_ADDR;displaced_step_release_location;CORE_ADDR;addr;;NULL;;(! gdbarch->displaced_step_location) != (! gdbarch->displaced_step_copy_insn) */
 
+extern int gdbarch_displaced_step_prepare_p (struct gdbarch *gdbarch);
+
 typedef displaced_step_prepare_status (gdbarch_displaced_step_prepare_ftype) (struct gdbarch *gdbarch, thread_info *thread);
 extern displaced_step_prepare_status gdbarch_displaced_step_prepare (struct gdbarch *gdbarch, thread_info *thread);
 extern void set_gdbarch_displaced_step_prepare (struct gdbarch *gdbarch, gdbarch_displaced_step_prepare_ftype *displaced_step_prepare);
