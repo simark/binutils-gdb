@@ -1592,10 +1592,9 @@ show_can_use_displaced_stepping (struct ui_file *file, int from_tty,
 static bool
 gdbarch_supports_displaced_stepping (gdbarch *arch)
 {
-  /* Only check for the presence of copy_insn.  Other required methods
-     are checked by the gdbarch validation to be provided if copy_insn is
-     provided.  */
-  return gdbarch_displaced_step_copy_insn_p (arch);
+  /* Only check for the presence of `prepare`.  `finish` is required by the
+     gdbarch verification to be provided if `prepare` is provided.  */
+  return gdbarch_displaced_step_prepare_p (arch);
 }
 
 /* Return non-zero if displaced stepping can/should be used to step

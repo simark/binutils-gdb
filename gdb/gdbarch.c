@@ -442,7 +442,6 @@ gdbarch_alloc (const struct gdbarch_info *info,
   gdbarch->skip_permanent_breakpoint = default_skip_permanent_breakpoint;
   gdbarch->displaced_step_hw_singlestep = default_displaced_step_hw_singlestep;
   gdbarch->displaced_step_fixup = NULL;
-  gdbarch->displaced_step_prepare = NULL;
   gdbarch->displaced_step_finish = NULL;
   gdbarch->relocate_instruction = NULL;
   gdbarch->has_shared_address_space = default_has_shared_address_space;
@@ -654,9 +653,8 @@ verify_gdbarch (struct gdbarch *gdbarch)
   /* Skip verify of displaced_step_copy_insn, has predicate.  */
   /* Skip verify of displaced_step_hw_singlestep, invalid_p == 0 */
   /* Skip verify of displaced_step_fixup, has predicate.  */
-  if ((! gdbarch->displaced_step_prepare) != (! gdbarch->displaced_step_copy_insn))
-    log.puts ("\n\tdisplaced_step_prepare");
-  if ((! gdbarch->displaced_step_finish) != (! gdbarch->displaced_step_copy_insn))
+  /* Skip verify of displaced_step_prepare, has predicate.  */
+  if ((! gdbarch->displaced_step_finish) != (! gdbarch->displaced_step_prepare))
     log.puts ("\n\tdisplaced_step_finish");
   /* Skip verify of relocate_instruction, has predicate.  */
   /* Skip verify of overlay_update, has predicate.  */
@@ -925,6 +923,9 @@ gdbarch_dump (struct gdbarch *gdbarch, struct ui_file *file)
   fprintf_unfiltered (file,
                       "gdbarch_dump: displaced_step_hw_singlestep = <%s>\n",
                       host_address_to_string (gdbarch->displaced_step_hw_singlestep));
+  fprintf_unfiltered (file,
+                      "gdbarch_dump: gdbarch_displaced_step_prepare_p() = %d\n",
+                      gdbarch_displaced_step_prepare_p (gdbarch));
   fprintf_unfiltered (file,
                       "gdbarch_dump: displaced_step_prepare = <%s>\n",
                       host_address_to_string (gdbarch->displaced_step_prepare));
@@ -3982,6 +3983,13 @@ set_gdbarch_displaced_step_fixup (struct gdbarch *gdbarch,
                                   gdbarch_displaced_step_fixup_ftype displaced_step_fixup)
 {
   gdbarch->displaced_step_fixup = displaced_step_fixup;
+}
+
+int
+gdbarch_displaced_step_prepare_p (struct gdbarch *gdbarch)
+{
+  gdb_assert (gdbarch != NULL);
+  return gdbarch->displaced_step_prepare != NULL;
 }
 
 displaced_step_prepare_status
