@@ -401,7 +401,6 @@ struct dwarf2_cu
 {
   explicit dwarf2_cu (dwarf2_per_cu_data *per_cu,
 		      dwarf2_per_objfile *per_objfile);
-  ~dwarf2_cu ();
 
   DISABLE_COPY_AND_ASSIGN (dwarf2_cu);
 
@@ -467,12 +466,6 @@ public:
   /* Storage for things with the same lifetime as this read-in compilation
      unit, including partial DIEs.  */
   auto_obstack comp_unit_obstack;
-
-  /* When multiple dwarf2_cu structures are living in memory, this field
-     chains them all together, so that they can be released efficiently.
-     We will probably also want a generation counter so that most-recently-used
-     compilation units are cached...  */
-  struct dwarf2_per_cu_data *read_in_chain = nullptr;
 
   /* Backlink to our per_cu entry.  */
   struct dwarf2_per_cu_data *per_cu;
@@ -1522,11 +1515,6 @@ static void prepare_one_comp_unit (struct dwarf2_cu *cu,
 				   struct die_info *comp_unit_die,
 				   enum language pretend_language);
 
-static void age_cached_comp_units (struct dwarf2_per_objfile *dwarf2_per_objfile);
-
-static void free_one_cached_comp_unit (dwarf2_per_cu_data *target_per_cu,
-				       dwarf2_per_objfile *per_objfile);
-
 static struct type *set_die_type (struct die_info *, struct type *,
 				  struct dwarf2_cu *);
 
@@ -1549,8 +1537,6 @@ static void dwarf2_add_dependence (struct dwarf2_cu *,
 				   struct dwarf2_per_cu_data *);
 
 static void dwarf2_mark (struct dwarf2_cu *);
-
-static void dwarf2_clear_marks (struct dwarf2_per_cu_data *);
 
 static struct type *get_die_type_at_offset (sect_offset,
 					    dwarf2_per_cu_data *per_cu,
@@ -1598,8 +1584,7 @@ dwarf2_queue_item::~dwarf2_queue_item ()
      inconsistent state, so discard it.  */
   if (per_cu->queued)
     {
-      if (per_cu->cu != NULL)
-	free_one_cached_comp_unit (per_cu, per_objfile);
+      per_objfile->remove_cu (per_cu);
       per_cu->queued = 0;
     }
 }
@@ -1741,9 +1726,6 @@ dwarf2_per_bfd::dwarf2_per_bfd (bfd *obfd, const dwarf2_debug_sections *names,
 
 dwarf2_per_bfd::~dwarf2_per_bfd ()
 {
-  /* Cached DIE trees use xmalloc and the comp_unit_obstack.  */
-  free_cached_comp_units ();
-
   for (dwarf2_per_cu_data *per_cu : all_comp_units)
     per_cu->imported_symtabs_free ();
 
@@ -1753,21 +1735,15 @@ dwarf2_per_bfd::~dwarf2_per_bfd ()
   /* Everything else should be on this->obstack.  */
 }
 
-/* See declaration.  */
+/* See read.h.  */
 
 void
-dwarf2_per_bfd::free_cached_comp_units ()
+dwarf2_per_objfile::remove_all_cus ()
 {
-  dwarf2_per_cu_data *per_cu = read_in_chain;
-  dwarf2_per_cu_data **last_chain = &read_in_chain;
-  while (per_cu != NULL)
-    {
-      dwarf2_per_cu_data *next_cu = per_cu->cu->read_in_chain;
+  for (auto pair : m_dwarf2_cus)
+    delete pair.second;
 
-      delete per_cu->cu;
-      *last_chain = next_cu;
-      per_cu = next_cu;
-    }
+  m_dwarf2_cus.clear ();
 }
 
 /* A helper class that calls free_cached_comp_units on
@@ -1784,7 +1760,7 @@ public:
 
   ~free_cached_comp_units ()
   {
-    m_per_objfile->per_bfd->free_cached_comp_units ();
+    m_per_objfile->remove_all_cus ();
   }
 
   DISABLE_COPY_AND_ASSIGN (free_cached_comp_units);
@@ -2313,12 +2289,13 @@ load_cu (dwarf2_per_cu_data *per_cu, dwarf2_per_objfile *per_objfile,
   else
     load_full_comp_unit (per_cu, per_objfile, skip_partial, language_minimal);
 
-  if (per_cu->cu == nullptr)
+  dwarf2_cu *cu = per_objfile->get_cu (per_cu);
+  if (cu == nullptr)
     return nullptr;  /* Dummy CU.  */
 
-  dwarf2_find_base_address (per_cu->cu->dies, per_cu->cu);
+  dwarf2_find_base_address (cu->dies, cu);
 
-  return per_cu->cu;
+  return cu;
 }
 
 /* Read in the symbols for PER_CU in the context of DWARF"_PER_OBJFILE.  */
@@ -2360,7 +2337,7 @@ dw2_do_instantiate_symtab (dwarf2_per_cu_data *per_cu,
 
   /* Age the cache, releasing compilation units that have not
      been used recently.  */
-  age_cached_comp_units (dwarf2_per_objfile);
+  dwarf2_per_objfile->age_comp_units ();
 }
 
 /* Ensure that the symbols for PER_CU have been read in.  DWARF2_PER_OBJFILE is
@@ -6359,7 +6336,7 @@ fill_in_sig_entry_from_dwo_entry (struct dwarf2_per_objfile *dwarf2_per_objfile,
 
   /* Make sure we're not clobbering something we don't expect to.  */
   gdb_assert (! sig_entry->per_cu.queued);
-  gdb_assert (sig_entry->per_cu.cu == NULL);
+  gdb_assert (dwarf2_per_objfile->get_cu (&sig_entry->per_cu) == NULL);
   if (per_bfd->using_index)
     {
       gdb_assert (sig_entry->per_cu.v.quick != NULL);
@@ -6817,8 +6794,9 @@ cutu_reader::init_tu_and_read_dwo_dies (dwarf2_per_cu_data *this_cu,
     }
   else
     {
-      /* If and existing_cu is provided, this_cu->cu must be NULL.  */
-      gdb_assert (this_cu->cu == NULL);
+      /* If an existing_cu is provided, a dwarf2_cu must not exist for this_cu
+         in per_objfile yet.  */
+      gdb_assert (per_objfile->get_cu (this_cu) == nullptr);
       m_new_cu.reset (new dwarf2_cu (this_cu, per_objfile));
       cu = m_new_cu.get ();
     }
@@ -6907,8 +6885,9 @@ cutu_reader::cutu_reader (dwarf2_per_cu_data *this_cu,
     }
   else
     {
-      /* If an existing_cu is provided, this_cu->cu must be NULL.  */
-      gdb_assert (this_cu->cu == NULL);
+      /* If an existing_cu is provided, a dwarf2_cu must not exist for this_cu
+         in per_objfile yet.  */
+      gdb_assert (dwarf2_per_objfile->get_cu (this_cu) == nullptr);
       m_new_cu.reset (new dwarf2_cu (this_cu, dwarf2_per_objfile));
       cu = m_new_cu.get ();
     }
@@ -7045,16 +7024,10 @@ cutu_reader::keep ()
   gdb_assert (!dummy_p);
   if (m_new_cu != NULL)
     {
-      /* We know that m_this_cu->cu is set, since we are in the process of
-         parsing the CU.  */
-      gdb_assert (m_this_cu->cu != nullptr);
-      dwarf2_per_objfile *dwarf2_per_objfile = m_this_cu->cu->per_objfile;
-
-      /* Link this CU into read_in_chain.  */
-      m_this_cu->cu->read_in_chain = dwarf2_per_objfile->per_bfd->read_in_chain;
-      dwarf2_per_objfile->per_bfd->read_in_chain = m_this_cu;
-      /* The chain owns it now.  */
-      m_new_cu.release ();
+      /* Save this dwarf2_cu in the per_objfile.  The per_objfile owns it
+         now.  */
+      dwarf2_per_objfile *per_objfile = m_new_cu->per_objfile;
+      per_objfile->set_cu (m_this_cu, m_new_cu.release ());
     }
 }
 
@@ -7092,7 +7065,7 @@ cutu_reader::cutu_reader (dwarf2_per_cu_data *this_cu,
 			this_cu->is_debug_types ? "type" : "comp",
 			sect_offset_str (this_cu->sect_off));
 
-  gdb_assert (this_cu->cu == NULL);
+  gdb_assert (dwarf2_per_objfile->get_cu (this_cu) == nullptr);
 
   abbrev_section = (dwo_file != NULL
 		    ? &dwo_file->sections.abbrev
@@ -7454,8 +7427,7 @@ process_psymtab_comp_unit (dwarf2_per_cu_data *this_cu,
      necessary because we skipped some symbols when we first
      read in the compilation unit (see load_partial_dies).
      This problem could be avoided, but the benefit is unclear.  */
-  if (this_cu->cu != NULL)
-    free_one_cached_comp_unit (this_cu, per_objfile);
+  per_objfile->remove_cu (this_cu);
 
   cutu_reader reader (this_cu, per_objfile, nullptr, nullptr, false);
 
@@ -7484,10 +7456,10 @@ process_psymtab_comp_unit (dwarf2_per_cu_data *this_cu,
 				      reader.comp_unit_die,
 				      pretend_language);
 
-  this_cu->lang = this_cu->cu->language;
+  this_cu->lang = reader.cu->language;
 
   /* Age out any secondary CUs.  */
-  age_cached_comp_units (per_objfile);
+  per_objfile->age_comp_units ();
 }
 
 /* Reader function for build_type_psymtabs.  */
@@ -8830,7 +8802,9 @@ maybe_queue_comp_unit (struct dwarf2_cu *dependent_cu,
      not queue PER_CU, just tell our caller to load its DIEs.  */
   if (per_cu->per_bfd->reading_partial_symbols)
     {
-      if (per_cu->cu == NULL || per_cu->cu->dies == NULL)
+      dwarf2_cu *cu = per_objfile->get_cu (per_cu);
+
+      if (cu == NULL || cu->dies == NULL)
 	return 1;
       return 0;
     }
@@ -8846,9 +8820,10 @@ maybe_queue_comp_unit (struct dwarf2_cu *dependent_cu,
 
   /* If the compilation unit is already loaded, just mark it as
      used.  */
-  if (per_cu->cu != NULL)
+  dwarf2_cu *cu = per_objfile->get_cu (per_cu);
+  if (cu != nullptr)
     {
-      per_cu->cu->last_used = 0;
+      cu->last_used = 0;
       return 0;
     }
 
@@ -8875,47 +8850,51 @@ process_queue (struct dwarf2_per_objfile *dwarf2_per_objfile)
   while (!dwarf2_per_objfile->per_bfd->queue.empty ())
     {
       dwarf2_queue_item &item = dwarf2_per_objfile->per_bfd->queue.front ();
+      dwarf2_per_cu_data *per_cu = item.per_cu;
 
-      if (!dwarf2_per_objfile->symtab_set_p (item.per_cu)
-	  /* Skip dummy CUs.  */
-	  && item.per_cu->cu != NULL)
+      if (!dwarf2_per_objfile->symtab_set_p (per_cu))
 	{
-	  struct dwarf2_per_cu_data *per_cu = item.per_cu;
-	  unsigned int debug_print_threshold;
-	  char buf[100];
+	  dwarf2_cu *cu = dwarf2_per_objfile->get_cu (per_cu);
 
-	  if (per_cu->is_debug_types)
+	  /* Skip dummy CUs.  */
+	  if (cu != nullptr)
 	    {
-	      struct signatured_type *sig_type =
-		(struct signatured_type *) per_cu;
+	      unsigned int debug_print_threshold;
+	      char buf[100];
 
-	      sprintf (buf, "TU %s at offset %s",
-		       hex_string (sig_type->signature),
-		       sect_offset_str (per_cu->sect_off));
-	      /* There can be 100s of TUs.
-		 Only print them in verbose mode.  */
-	      debug_print_threshold = 2;
+	      if (per_cu->is_debug_types)
+		{
+		  struct signatured_type *sig_type =
+		    (struct signatured_type *) per_cu;
+
+		  sprintf (buf, "TU %s at offset %s",
+			   hex_string (sig_type->signature),
+			   sect_offset_str (per_cu->sect_off));
+		  /* There can be 100s of TUs.
+		     Only print them in verbose mode.  */
+		  debug_print_threshold = 2;
+		}
+	      else
+		{
+		  sprintf (buf, "CU at offset %s",
+			   sect_offset_str (per_cu->sect_off));
+		  debug_print_threshold = 1;
+		}
+
+	      if (dwarf_read_debug >= debug_print_threshold)
+		fprintf_unfiltered (gdb_stdlog, "Expanding symtab of %s\n", buf);
+
+	      if (per_cu->is_debug_types)
+		process_full_type_unit (cu, item.pretend_language);
+	      else
+		process_full_comp_unit (cu, item.pretend_language);
+
+	      if (dwarf_read_debug >= debug_print_threshold)
+		fprintf_unfiltered (gdb_stdlog, "Done expanding %s\n", buf);
 	    }
-	  else
-	    {
-	      sprintf (buf, "CU at offset %s",
-		       sect_offset_str (per_cu->sect_off));
-	      debug_print_threshold = 1;
-	    }
-
-	  if (dwarf_read_debug >= debug_print_threshold)
-	    fprintf_unfiltered (gdb_stdlog, "Expanding symtab of %s\n", buf);
-
-	  if (per_cu->is_debug_types)
-	    process_full_type_unit (per_cu->cu, item.pretend_language);
-	  else
-	    process_full_comp_unit (per_cu->cu, item.pretend_language);
-
-	  if (dwarf_read_debug >= debug_print_threshold)
-	    fprintf_unfiltered (gdb_stdlog, "Done expanding %s\n", buf);
 	}
 
-      item.per_cu->queued = 0;
+      per_cu->queued = 0;
       dwarf2_per_objfile->per_bfd->queue.pop ();
     }
 
@@ -8991,7 +8970,8 @@ load_full_comp_unit (dwarf2_per_cu_data *this_cu,
 {
   gdb_assert (! this_cu->is_debug_types);
 
-  cutu_reader reader (this_cu, per_objfile, NULL, this_cu->cu, skip_partial);
+  dwarf2_cu *existing_cu = per_objfile->get_cu (this_cu);
+  cutu_reader reader (this_cu, per_objfile, NULL, existing_cu, skip_partial);
   if (reader.dummy_p)
     return;
 
@@ -18314,7 +18294,6 @@ find_partial_die (sect_offset sect_off, int offset_in_dwz, struct dwarf2_cu *cu)
 {
   struct dwarf2_per_objfile *dwarf2_per_objfile = cu->per_objfile;
   struct objfile *objfile = dwarf2_per_objfile->objfile;
-  struct dwarf2_per_cu_data *per_cu = NULL;
   struct partial_die_info *pd = NULL;
 
   if (offset_in_dwz == cu->per_cu->is_dwz
@@ -18325,7 +18304,6 @@ find_partial_die (sect_offset sect_off, int offset_in_dwz, struct dwarf2_cu *cu)
 	return { cu, pd };
       /* We missed recording what we needed.
 	 Load all dies and try again.  */
-      per_cu = cu->per_cu;
     }
   else
     {
@@ -18337,22 +18315,26 @@ find_partial_die (sect_offset sect_off, int offset_in_dwz, struct dwarf2_cu *cu)
 		 sect_offset_str (cu->header.sect_off), sect_offset_str (sect_off),
 		 bfd_get_filename (objfile->obfd));
 	}
-      per_cu = dwarf2_find_containing_comp_unit (sect_off, offset_in_dwz,
-						 dwarf2_per_objfile);
+      dwarf2_per_cu_data *per_cu
+	= dwarf2_find_containing_comp_unit (sect_off, offset_in_dwz,
+					    dwarf2_per_objfile);
 
-      if (per_cu->cu == NULL || per_cu->cu->partial_dies == NULL)
-	load_partial_comp_unit (per_cu, cu->per_objfile, nullptr);
+      cu = dwarf2_per_objfile->get_cu (per_cu);
+      if (cu == NULL || cu->partial_dies == NULL)
+	load_partial_comp_unit (per_cu, dwarf2_per_objfile, nullptr);
 
-      per_cu->cu->last_used = 0;
-      pd = per_cu->cu->find_partial_die (sect_off);
+      cu = dwarf2_per_objfile->get_cu (per_cu);
+
+      cu->last_used = 0;
+      pd = cu->find_partial_die (sect_off);
     }
 
   /* If we didn't find it, and not all dies have been loaded,
      load them all and try again.  */
 
-  if (pd == NULL && per_cu->load_all_dies == 0)
+  if (pd == NULL && cu->per_cu->load_all_dies == 0)
     {
-      per_cu->load_all_dies = 1;
+      cu->per_cu->load_all_dies = 1;
 
       /* This is nasty.  When we reread the DIEs, somewhere up the call chain
 	 THIS_CU->cu may already be in use.  So we can't just free it and
@@ -18360,9 +18342,9 @@ find_partial_die (sect_offset sect_off, int offset_in_dwz, struct dwarf2_cu *cu)
 	 DIEs alone (which can still be in use, e.g. in scan_partial_symbols),
 	 and clobber THIS_CU->cu->partial_dies with the hash table for the new
 	 set.  */
-      load_partial_comp_unit (per_cu, cu->per_objfile, cu);
+      load_partial_comp_unit (cu->per_cu, dwarf2_per_objfile, cu);
 
-      pd = per_cu->cu->find_partial_die (sect_off);
+      pd = cu->find_partial_die (sect_off);
     }
 
   if (pd == NULL)
@@ -18370,7 +18352,7 @@ find_partial_die (sect_offset sect_off, int offset_in_dwz, struct dwarf2_cu *cu)
 		    _("could not find partial DIE %s "
 		      "in cache [from module %s]\n"),
 		    sect_offset_str (sect_off), bfd_get_filename (objfile->obfd));
-  return { per_cu->cu, pd };
+  return { cu, pd };
 }
 
 /* See if we can figure out if the class lives in a namespace.  We do
@@ -19048,7 +19030,7 @@ dwarf2_read_addr_index (dwarf2_per_cu_data *per_cu,
 			dwarf2_per_objfile *dwarf2_per_objfile,
 			unsigned int addr_index)
 {
-  struct dwarf2_cu *cu = per_cu->cu;
+  struct dwarf2_cu *cu = dwarf2_per_objfile->get_cu (per_cu);
   gdb::optional<ULONGEST> addr_base;
   int addr_size;
 
@@ -21896,7 +21878,7 @@ follow_die_offset (sect_offset sect_off, int offset_in_dwz,
       if (maybe_queue_comp_unit (cu, per_cu, dwarf2_per_objfile, cu->language))
 	load_full_comp_unit (per_cu, dwarf2_per_objfile, false, cu->language);
 
-      target_cu = per_cu->cu;
+      target_cu = dwarf2_per_objfile->get_cu (per_cu);
     }
   else if (cu->dies == NULL)
     {
@@ -21956,7 +21938,7 @@ dwarf2_fetch_die_loc_sect_off (sect_offset sect_off,
   struct dwarf2_locexpr_baton retval;
   struct objfile *objfile = dwarf2_per_objfile->objfile;
 
-  dwarf2_cu *cu = per_cu->cu;
+  dwarf2_cu *cu = dwarf2_per_objfile->get_cu (per_cu);
   if (cu == nullptr)
     cu = load_cu (per_cu, dwarf2_per_objfile, false);
 
@@ -22041,7 +22023,7 @@ dwarf2_fetch_die_loc_sect_off (sect_offset sect_off,
   retval.per_objfile = dwarf2_per_objfile;
   retval.per_cu = cu->per_cu;
 
-  age_cached_comp_units (dwarf2_per_objfile);
+  dwarf2_per_objfile->age_comp_units ();
 
   return retval;
 }
@@ -22097,7 +22079,7 @@ dwarf2_fetch_constant_bytes (sect_offset sect_off,
   enum bfd_endian byte_order;
   struct objfile *objfile = per_objfile->objfile;
 
-  dwarf2_cu *cu = per_cu->cu;
+  dwarf2_cu *cu = per_objfile->get_cu (per_cu);
   if (cu == nullptr)
     cu = load_cu (per_cu, per_objfile, false);
 
@@ -22220,7 +22202,7 @@ dwarf2_fetch_die_type_sect_off (sect_offset sect_off,
 {
   struct die_info *die;
 
-  dwarf2_cu *cu = per_cu->cu;
+  dwarf2_cu *cu = per_objfile->get_cu (per_cu);
   if (cu == nullptr)
     cu = load_cu (per_cu, per_objfile, false);
 
@@ -22270,7 +22252,7 @@ follow_die_sig_1 (struct die_info *src_die, struct signatured_type *sig_type,
 			     language_minimal))
     read_signatured_type (sig_type, dwarf2_per_objfile);
 
-  sig_cu = sig_type->per_cu.cu;
+  sig_cu = dwarf2_per_objfile->get_cu (&sig_type->per_cu);
   gdb_assert (sig_cu != NULL);
   gdb_assert (to_underlying (sig_type->type_offset_in_section) != 0);
   temp_die.sect_off = sig_type->type_offset_in_section;
@@ -22444,11 +22426,11 @@ load_full_type_unit (dwarf2_per_cu_data *per_cu,
   gdb_assert (per_cu->is_debug_types);
   sig_type = (struct signatured_type *) per_cu;
 
-  gdb_assert (per_cu->cu == NULL);
+  gdb_assert (per_objfile->get_cu (per_cu) == nullptr);
 
   read_signatured_type (sig_type, per_objfile);
 
-  gdb_assert (per_cu->cu != NULL);
+  gdb_assert (per_objfile->get_cu (per_cu) != nullptr);
 }
 
 /* Read in a signatured type and build its CU and DIEs.
@@ -22462,7 +22444,7 @@ read_signatured_type (signatured_type *sig_type,
   struct dwarf2_per_cu_data *per_cu = &sig_type->per_cu;
 
   gdb_assert (per_cu->is_debug_types);
-  gdb_assert (per_cu->cu == NULL);
+  gdb_assert (per_objfile->get_cu (per_cu) == nullptr);
 
   cutu_reader reader (per_cu, per_objfile, nullptr, nullptr, false);
 
@@ -23152,14 +23134,6 @@ dwarf2_cu::dwarf2_cu (dwarf2_per_cu_data *per_cu,
     producer_is_codewarrior (false),
     processing_has_namespace_info (false)
 {
-  per_cu->cu = this;
-}
-
-/* Destroy a dwarf2_cu.  */
-
-dwarf2_cu::~dwarf2_cu ()
-{
-  per_cu->cu = NULL;
 }
 
 /* Initialize basic fields of dwarf_cu CU according to DIE COMP_UNIT_DIE.  */
@@ -23183,72 +23157,80 @@ prepare_one_comp_unit (struct dwarf2_cu *cu, struct die_info *comp_unit_die,
   cu->producer = dwarf2_string_attr (comp_unit_die, DW_AT_producer, cu);
 }
 
-/* Increase the age counter on each cached compilation unit, and free
-   any that are too old.  */
+/* See read.h.  */
 
-static void
-age_cached_comp_units (struct dwarf2_per_objfile *dwarf2_per_objfile)
+dwarf2_cu *
+dwarf2_per_objfile::get_cu (dwarf2_per_cu_data *per_cu)
 {
-  struct dwarf2_per_cu_data *per_cu, **last_chain;
+  auto it = m_dwarf2_cus.find (per_cu);
+  if (it == m_dwarf2_cus.end ())
+    return nullptr;
 
-  dwarf2_clear_marks (dwarf2_per_objfile->per_bfd->read_in_chain);
-  per_cu = dwarf2_per_objfile->per_bfd->read_in_chain;
-  while (per_cu != NULL)
+  return it->second;
+}
+
+/* See read.h.  */
+
+void
+dwarf2_per_objfile::set_cu (dwarf2_per_cu_data *per_cu, dwarf2_cu *cu)
+{
+  gdb_assert (this->get_cu (per_cu) == nullptr);
+
+  m_dwarf2_cus[per_cu] = cu;
+}
+
+/* See read.h.  */
+
+void
+dwarf2_per_objfile::age_comp_units ()
+{
+  /* Start by clearing all marks.  */
+  for (auto pair : m_dwarf2_cus)
+    pair.second->mark = false;
+
+  /* Traverse all CUs, mark them and their dependencies if used recently
+     enough.  */
+  for (auto pair : m_dwarf2_cus)
     {
-      per_cu->cu->last_used ++;
-      if (per_cu->cu->last_used <= dwarf_max_cache_age)
-	dwarf2_mark (per_cu->cu);
-      per_cu = per_cu->cu->read_in_chain;
+      dwarf2_cu *cu = pair.second;
+
+      cu->last_used++;
+      if (cu->last_used <= dwarf_max_cache_age)
+	dwarf2_mark (cu);
     }
 
-  per_cu = dwarf2_per_objfile->per_bfd->read_in_chain;
-  last_chain = &dwarf2_per_objfile->per_bfd->read_in_chain;
-  while (per_cu != NULL)
+  /* Delete all CUs still not marked.  */
+  for (auto it = m_dwarf2_cus.begin (); it != m_dwarf2_cus.end ();)
     {
-      struct dwarf2_per_cu_data *next_cu;
+      dwarf2_cu *cu = it->second;
 
-      next_cu = per_cu->cu->read_in_chain;
-
-      if (!per_cu->cu->mark)
+      if (!cu->mark)
 	{
-	  delete per_cu->cu;
-	  *last_chain = next_cu;
+	  delete cu;
+	  it = m_dwarf2_cus.erase (it);
 	}
       else
-	last_chain = &per_cu->cu->read_in_chain;
-
-      per_cu = next_cu;
+	it++;
     }
 }
 
-/* Remove a single compilation unit from the cache.  */
+/* See read.h.  */
 
-static void
-free_one_cached_comp_unit (dwarf2_per_cu_data *target_per_cu,
-			   dwarf2_per_objfile *dwarf2_per_objfile)
+void
+dwarf2_per_objfile::remove_cu (dwarf2_per_cu_data *per_cu)
 {
-  struct dwarf2_per_cu_data *per_cu, **last_chain;
+  auto it = m_dwarf2_cus.find (per_cu);
+  if (it == m_dwarf2_cus.end ())
+    return;
 
-  per_cu = dwarf2_per_objfile->per_bfd->read_in_chain;
-  last_chain = &dwarf2_per_objfile->per_bfd->read_in_chain;
-  while (per_cu != NULL)
-    {
-      struct dwarf2_per_cu_data *next_cu;
+  delete it->second;
 
-      next_cu = per_cu->cu->read_in_chain;
+  m_dwarf2_cus.erase (it);
+}
 
-      if (per_cu == target_per_cu)
-	{
-	  delete per_cu->cu;
-	  per_cu->cu = NULL;
-	  *last_chain = next_cu;
-	  break;
-	}
-      else
-	last_chain = &per_cu->cu->read_in_chain;
-
-      per_cu = next_cu;
-    }
+dwarf2_per_objfile::~dwarf2_per_objfile ()
+{
+  remove_all_cus ();
 }
 
 /* A set of CU "per_cu" pointer, DIE offset, and GDB type pointer.
@@ -23450,27 +23432,30 @@ dwarf2_add_dependence (struct dwarf2_cu *cu,
 
 /* Subroutine of dwarf2_mark to pass to htab_traverse.
    Set the mark field in every compilation unit in the
-   cache that we must keep because we are keeping CU.  */
+   cache that we must keep because we are keeping CU.
+
+   DATA is the dwarf2_per_objfile object in which to look up CUs.  */
 
 static int
 dwarf2_mark_helper (void **slot, void *data)
 {
-  struct dwarf2_per_cu_data *per_cu;
-
-  per_cu = (struct dwarf2_per_cu_data *) *slot;
+  dwarf2_per_cu_data *per_cu = (dwarf2_per_cu_data *) *slot;
+  dwarf2_per_objfile *per_objfile = (dwarf2_per_objfile *) data;
+  dwarf2_cu *cu = per_objfile->get_cu (per_cu);
 
   /* cu->dependencies references may not yet have been ever read if QUIT aborts
      reading of the chain.  As such dependencies remain valid it is not much
      useful to track and undo them during QUIT cleanups.  */
-  if (per_cu->cu == NULL)
+  if (cu == nullptr)
     return 1;
 
-  if (per_cu->cu->mark)
+  if (cu->mark)
     return 1;
-  per_cu->cu->mark = true;
 
-  if (per_cu->cu->dependencies != NULL)
-    htab_traverse (per_cu->cu->dependencies, dwarf2_mark_helper, NULL);
+  cu->mark = true;
+
+  if (cu->dependencies != nullptr)
+    htab_traverse (cu->dependencies, dwarf2_mark_helper, per_objfile);
 
   return 1;
 }
@@ -23483,19 +23468,11 @@ dwarf2_mark (struct dwarf2_cu *cu)
 {
   if (cu->mark)
     return;
-  cu->mark = true;
-  if (cu->dependencies != NULL)
-    htab_traverse (cu->dependencies, dwarf2_mark_helper, NULL);
-}
 
-static void
-dwarf2_clear_marks (struct dwarf2_per_cu_data *per_cu)
-{
-  while (per_cu)
-    {
-      per_cu->cu->mark = false;
-      per_cu = per_cu->cu->read_in_chain;
-    }
+  cu->mark = true;
+
+  if (cu->dependencies != nullptr)
+    htab_traverse (cu->dependencies, dwarf2_mark_helper, cu->per_objfile);
 }
 
 /* Trivial hash function for partial_die_info: the hash value of a DIE
