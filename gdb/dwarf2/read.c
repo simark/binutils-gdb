@@ -9284,7 +9284,7 @@ quirk_rust_enum (struct type *type, struct objfile *objfile)
 
       /* Smash this type to be a structure type.  We have to do this
 	 because the type has already been recorded.  */
-      TYPE_CODE (type) = TYPE_CODE_STRUCT;
+      type->set_code (TYPE_CODE_STRUCT);
       TYPE_NFIELDS (type) = 3;
       /* Save the field we care about.  */
       struct field saved_field = TYPE_FIELD (type, 0);
@@ -9327,7 +9327,7 @@ quirk_rust_enum (struct type *type, struct objfile *objfile)
     {
       /* Smash this type to be a structure type.  We have to do this
 	 because the type has already been recorded.  */
-      TYPE_CODE (type) = TYPE_CODE_STRUCT;
+      type->set_code (TYPE_CODE_STRUCT);
 
       struct type *field_type = TYPE_FIELD_TYPE (type, 0);
       const char *variant_name
@@ -9374,7 +9374,7 @@ quirk_rust_enum (struct type *type, struct objfile *objfile)
 
       /* Smash this type to be a structure type.  We have to do this
 	 because the type has already been recorded.  */
-      TYPE_CODE (type) = TYPE_CODE_STRUCT;
+      type->set_code (TYPE_CODE_STRUCT);
 
       /* Make space for the discriminant field.  */
       struct field *disr_field = &TYPE_FIELD (disr_type, 0);
@@ -15317,18 +15317,10 @@ read_structure_type (struct die_info *die, struct dwarf2_cu *cu)
 	}
     }
 
-  if (die->tag == DW_TAG_structure_type)
-    {
-      TYPE_CODE (type) = TYPE_CODE_STRUCT;
-    }
-  else if (die->tag == DW_TAG_union_type)
-    {
-      TYPE_CODE (type) = TYPE_CODE_UNION;
-    }
+  if (die->tag == DW_TAG_union_type)
+    type->set_code (TYPE_CODE_UNION);
   else
-    {
-      TYPE_CODE (type) = TYPE_CODE_STRUCT;
-    }
+    type->set_code (TYPE_CODE_STRUCT);
 
   if (cu->language == language_cplus && die->tag == DW_TAG_class_type)
     TYPE_DECLARED_CLASS (type) = 1;
@@ -15887,7 +15879,7 @@ read_enumeration_type (struct die_info *die, struct dwarf2_cu *cu)
 
   type = alloc_type (objfile);
 
-  TYPE_CODE (type) = TYPE_CODE_ENUM;
+  type->set_code (TYPE_CODE_ENUM);
   name = dwarf2_full_name (NULL, die, cu);
   if (name != NULL)
     TYPE_NAME (type) = name;
