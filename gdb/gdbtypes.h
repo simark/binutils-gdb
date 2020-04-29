@@ -740,6 +740,34 @@ struct range_bounds
     this->high.data.const_val = high;
   }
 
+  const dynamic_prop &stride () const
+  {
+    return this->m_stride;
+  }
+
+  unsigned int bit_stride_const () const
+  {
+    gdb_assert (this->m_stride.kind == PROP_CONST);
+
+    if (this->flag_is_byte_stride)
+      return this->m_stride.data.const_val * 8;
+    else
+      return this->m_stride.data.const_val;
+  }
+
+  void set_bit_stride_const (ULONGEST stride)
+  {
+    this->m_stride.data.const_val = stride;
+    this->m_stride.kind = PROP_CONST;
+    this->flag_is_byte_stride = false;
+  }
+
+  void set_stride (const dynamic_prop &stride, bool flag_is_byte_stride)
+  {
+    this->m_stride = stride;
+    this->flag_is_byte_stride = flag_is_byte_stride;
+  }
+
   /* * Low bound of range.  */
 
   struct dynamic_prop low;
@@ -753,7 +781,7 @@ struct range_bounds
      value, if this range has no stride value defined then this will be set
      to the constant zero.  */
 
-  struct dynamic_prop stride;
+  struct dynamic_prop m_stride;
 
   /* * The bias.  Sometimes a range value is biased before storage.
      The bias is added to the stored bits to form the true value.  */
@@ -1595,8 +1623,7 @@ extern bool set_type_align (struct type *, ULONGEST);
 #define TYPE_HIGH_BOUND_KIND(range_type) \
   ((range_type)->range_bounds ()->high_kind ())
 #define TYPE_BIT_STRIDE(range_type) \
-  (TYPE_RANGE_DATA(range_type)->stride.data.const_val \
-   * (TYPE_RANGE_DATA(range_type)->flag_is_byte_stride ? 8 : 1))
+  ((range_type)->range_bounds ()->bit_stride_const ())
 
 /* Property accessors for the type data location.  */
 #define TYPE_DATA_LOCATION(thistype) \

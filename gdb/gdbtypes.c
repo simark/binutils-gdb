@@ -943,7 +943,7 @@ create_range_type (struct type *result_type, struct type *index_type,
 
   /* Initialize the stride to be a constant, the value will already be zero
      thanks to the use of TYPE_ZALLOC above.  */
-  bounds->stride.kind = PROP_CONST;
+  bounds->set_bit_stride_const (0);
 
   result_type->set_range_bounds (bounds);
 
@@ -978,8 +978,7 @@ create_range_type_with_stride (struct type *result_type,
 				   high_bound, bias);
 
   gdb_assert (stride != nullptr);
-  TYPE_RANGE_DATA (result_type)->stride = *stride;
-  TYPE_RANGE_DATA (result_type)->flag_is_byte_stride = byte_stride_p;
+  result_type->range_bounds ()->set_stride (*stride, byte_stride_p);
 
   return result_type;
 }
@@ -1023,7 +1022,7 @@ has_static_range (const struct range_bounds *bounds)
      be initialized to the constant 0.  */
   return (bounds->low.kind == PROP_CONST
 	  && bounds->high.kind == PROP_CONST
-	  && bounds->stride.kind == PROP_CONST);
+	  && bounds->m_stride.kind == PROP_CONST);
 }
 
 
@@ -2119,7 +2118,7 @@ resolve_dynamic_range (struct type *dyn_range_type,
     }
 
   bool byte_stride_p = TYPE_RANGE_DATA (dyn_range_type)->flag_is_byte_stride;
-  prop = &TYPE_RANGE_DATA (dyn_range_type)->stride;
+  prop = &TYPE_RANGE_DATA (dyn_range_type)->stride ();
   if (dwarf2_evaluate_property (prop, NULL, addr_stack, &value))
     {
       stride.kind = PROP_CONST;
