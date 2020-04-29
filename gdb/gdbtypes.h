@@ -689,6 +689,32 @@ struct field
 
 struct range_bounds
 {
+  LONGEST low_const ()
+  {
+    gdb_assert (this->low.kind == PROP_CONST);
+    return this->low.data.const_val;
+  }
+
+  void set_low_const (LONGEST low)
+  {
+    gdb_assert (this->low.kind == PROP_UNDEFINED);
+    this->low.kind = PROP_CONST;
+    this->low.data.const_val = low;
+  }
+
+  LONGEST high_const ()
+  {
+    gdb_assert (this->high.kind = PROP_CONST);
+    return this->high.data.const_val;
+  }
+
+  void set_high_const (LONGEST high)
+  {
+    gdb_assert (this->high.kind == PROP_UNDEFINED);
+    this->high.kind = PROP_CONST;
+    this->high.data.const_val = high;
+  }
+
   /* * Low bound of range.  */
 
   struct dynamic_prop low;
@@ -1532,9 +1558,9 @@ extern bool set_type_align (struct type *, ULONGEST);
 #define TYPE_INDEX_TYPE(type) ((type)->index_type ())
 #define TYPE_RANGE_DATA(thistype) ((thistype)->range_bounds ())
 #define TYPE_LOW_BOUND(range_type) \
-  TYPE_RANGE_DATA(range_type)->low.data.const_val
+  ((range_type)->range_bounds ()->low_const ())
 #define TYPE_HIGH_BOUND(range_type) \
-  TYPE_RANGE_DATA(range_type)->high.data.const_val
+  ((range_type)->range_bounds ()->high_const ())
 #define TYPE_LOW_BOUND_UNDEFINED(range_type) \
   (TYPE_RANGE_DATA(range_type)->low.kind == PROP_UNDEFINED)
 #define TYPE_HIGH_BOUND_UNDEFINED(range_type) \

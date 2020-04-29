@@ -1734,13 +1734,16 @@ parse_type (int fd, union aux_ext *ax, unsigned int aux_index, int *bs,
   if (t->bt == btRange)
     {
       tp->set_num_fields (0);
-      tp->set_range_bounds
-	((struct range_bounds *)
-	 TYPE_ZALLOC (tp, sizeof (struct range_bounds)));
-      TYPE_LOW_BOUND (tp) = AUX_GET_DNLOW (bigend, ax);
+
+      range_bounds *bounds
+	= ((struct range_bounds *)
+	   TYPE_ZALLOC (tp, sizeof (struct range_bounds)));
+      bounds->set_low_const (AUX_GET_DNLOW (bigend, ax));
       ax++;
-      TYPE_HIGH_BOUND (tp) = AUX_GET_DNHIGH (bigend, ax);
+      bounds->set_high_const (AUX_GET_DNHIGH (bigend, ax));
       ax++;
+
+      tp->set_range_bounds (bounds);
     }
 
   /* Parse all the type qualifiers now.  If there are more

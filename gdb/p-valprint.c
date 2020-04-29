@@ -352,7 +352,7 @@ pascal_value_print_inner (struct value *val, struct ui_file *stream,
 	      maximum value.  */
 	      bound_info = 0;
 	      high_bound = TYPE_LENGTH (type) * TARGET_CHAR_BIT - 1;
-	      TYPE_HIGH_BOUND (range) = high_bound;
+	      range->range_bounds ()->set_high_const (high_bound);
 	    }
 	maybe_bad_bstring:
 	  if (bound_info < 0)
