@@ -633,6 +633,16 @@ union field_location
 
 struct field
 {
+  struct type *type () const
+  {
+    return this->m_type;
+  }
+
+  void set_type (struct type *type)
+  {
+    this->m_type = type;
+  }
+
   union field_location loc;
 
   /* * For a function or member type, this is 1 if the argument is
@@ -658,7 +668,7 @@ struct field
      - In a function or member type, type of this argument.
      - In an array type, the domain-type of the array.  */
 
-  struct type *type;
+  struct type *m_type;
 
   /* * Name of field, value or argument.
      NULL for range bounds, array domains, and member function
@@ -911,15 +921,33 @@ struct type
   }
 
   /* Get the fields array of this type.  */
-  field *fields () const
+  struct field *fields () const
   {
     return this->main_type->flds_bnds.fields;
   }
 
   /* Set the fields array of this type.  */
-  void set_fields (field *fields)
+  void set_fields (struct field *fields)
   {
     this->main_type->flds_bnds.fields = fields;
+  }
+
+  /* Get a reference to the field at index N.  */
+  struct field &field (unsigned int n) const
+  {
+    return this->main_type->flds_bnds.fields[n];
+  }
+
+  /* Get the index type of this type.  */
+  struct type *index_type () const
+  {
+    return this->field (0).type ();
+  }
+
+  /* Set the index type of this type.  */
+  void set_index_type (struct type *type)
+  {
+    this->field (0).set_type (type);
   }
 
   /* * Return the dynamic property of the requested KIND from this type's
@@ -1474,7 +1502,7 @@ extern bool set_type_align (struct type *, ULONGEST);
 #define TYPE_NFIELDS(thistype) ((thistype)->num_fields ())
 #define TYPE_FIELDS(thistype) (thistype)->fields ()
 
-#define TYPE_INDEX_TYPE(type) TYPE_FIELD_TYPE (type, 0)
+#define TYPE_INDEX_TYPE(type) ((type)->index_type ())
 #define TYPE_RANGE_DATA(thistype) TYPE_MAIN_TYPE(thistype)->flds_bnds.bounds
 #define TYPE_LOW_BOUND(range_type) \
   TYPE_RANGE_DATA(range_type)->low.data.const_val
@@ -1583,7 +1611,7 @@ extern void set_type_vptr_basetype (struct type *, struct type *);
   (TYPE_CPLUS_SPECIFIC(thistype)->virtual_field_bits == NULL ? 0 \
     : B_TST(TYPE_CPLUS_SPECIFIC(thistype)->virtual_field_bits, (index)))
 
-#define FIELD_TYPE(thisfld) ((thisfld).type)
+#define FIELD_TYPE(thisfld) ((thisfld).type ())
 #define FIELD_NAME(thisfld) ((thisfld).name)
 #define FIELD_LOC_KIND(thisfld) ((thisfld).loc_kind)
 #define FIELD_BITPOS_LVAL(thisfld) ((thisfld).loc.bitpos)
@@ -1611,7 +1639,7 @@ extern void set_type_vptr_basetype (struct type *, struct type *);
 #define FIELD_ARTIFICIAL(thisfld) ((thisfld).artificial)
 #define FIELD_BITSIZE(thisfld) ((thisfld).bitsize)
 
-#define TYPE_FIELD(thistype, n) TYPE_MAIN_TYPE(thistype)->flds_bnds.fields[n]
+#define TYPE_FIELD(thistype, n) ((thistype)->field (n))
 #define TYPE_FIELD_TYPE(thistype, n) FIELD_TYPE(TYPE_FIELD(thistype, n))
 #define TYPE_FIELD_NAME(thistype, n) FIELD_NAME(TYPE_FIELD(thistype, n))
 #define TYPE_FIELD_LOC_KIND(thistype, n) FIELD_LOC_KIND (TYPE_FIELD (thistype, n))
