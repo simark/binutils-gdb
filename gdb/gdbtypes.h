@@ -950,6 +950,11 @@ struct type
     this->field (0).set_type (type);
   }
 
+  struct type *baseclass (unsigned int n)
+  {
+    return this->field (n).type ();
+  }
+
   /* * Return the dynamic property of the requested KIND from this type's
      list of dynamic properties.  */
   dynamic_prop *get_dyn_prop (dynamic_prop_node_kind kind) const;
@@ -1599,7 +1604,7 @@ extern void set_type_vptr_basetype (struct type *, struct type *);
 #define TYPE_CALLING_CONVENTION(thistype) TYPE_MAIN_TYPE(thistype)->type_specific.func_stuff->calling_convention
 #define TYPE_NO_RETURN(thistype) TYPE_MAIN_TYPE(thistype)->type_specific.func_stuff->is_noreturn
 #define TYPE_TAIL_CALL_LIST(thistype) TYPE_MAIN_TYPE(thistype)->type_specific.func_stuff->tail_call_list
-#define TYPE_BASECLASS(thistype,index) TYPE_FIELD_TYPE(thistype, index)
+#define TYPE_BASECLASS(thistype,index) ((thistype)->baseclass (index))
 #define TYPE_N_BASECLASSES(thistype) TYPE_CPLUS_SPECIFIC(thistype)->n_baseclasses
 #define TYPE_BASECLASS_NAME(thistype,index) TYPE_FIELD_NAME(thistype, index)
 #define TYPE_BASECLASS_BITPOS(thistype,index) TYPE_FIELD_BITPOS(thistype,index)
