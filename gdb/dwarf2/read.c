@@ -17342,7 +17342,8 @@ read_base_type (struct die_info *die, struct dwarf2_cu *cu)
 
   maybe_set_alignment (cu, die, type);
 
-  TYPE_ENDIANITY_NOT_DEFAULT (type) = gdbarch_byte_order (arch) != byte_order;
+  type->set_endianity_is_not_default
+    (gdbarch_byte_order (arch) != byte_order);
 
   return set_die_type (die, type, cu);
 }
