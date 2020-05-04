@@ -371,7 +371,7 @@ make_pointer_type (struct type *type, struct type **typeptr)
   /* Mark pointers as unsigned.  The target converts between pointers
      and addresses (CORE_ADDRs) using gdbarch_pointer_to_address and
      gdbarch_address_to_pointer.  */
-  TYPE_UNSIGNED (ntype) = 1;
+  ntype->set_is_unsigned (true);
 
   /* Update the length of all the other variants of this type.  */
   chain = TYPE_CHAIN (ntype);
@@ -950,14 +950,14 @@ create_range_type (struct type *result_type, struct type *index_type,
   result_type->set_range_bounds (bounds);
 
   if (low_bound->kind == PROP_CONST && low_bound->data.const_val >= 0)
-    TYPE_UNSIGNED (result_type) = 1;
+    result_type->set_is_unsigned (true);
 
   /* Ada allows the declaration of range types whose upper bound is
      less than the lower bound, so checking the lower bound is not
      enough.  Make sure we do not mark a range type whose upper bound
      is negative as unsigned.  */
   if (high_bound->kind == PROP_CONST && high_bound->data.const_val < 0)
-    TYPE_UNSIGNED (result_type) = 0;
+    result_type->set_is_unsigned (false);
 
   TYPE_ENDIANITY_NOT_DEFAULT (result_type)
     = TYPE_ENDIANITY_NOT_DEFAULT (index_type);
@@ -1060,9 +1060,7 @@ get_discrete_bounds (struct type *type, LONGEST *lowp, LONGEST *highp)
 
 	  /* Set unsigned indicator if warranted.  */
 	  if (*lowp >= 0)
-	    {
-	      TYPE_UNSIGNED (type) = 1;
-	    }
+	    type->set_is_unsigned (true);
 	}
       else
 	{
@@ -1397,7 +1395,7 @@ create_set_type (struct type *result_type, struct type *domain_type)
       TYPE_LENGTH (result_type)
 	= (bit_length + TARGET_CHAR_BIT - 1) / TARGET_CHAR_BIT;
       if (low_bound >= 0)
-	TYPE_UNSIGNED (result_type) = 1;
+	result_type->set_is_unsigned (true);
     }
   result_type->field (0).set_type (domain_type);
 
@@ -3206,7 +3204,7 @@ init_integer_type (struct objfile *objfile,
 
   t = init_type (objfile, TYPE_CODE_INT, bit, name);
   if (unsigned_p)
-    TYPE_UNSIGNED (t) = 1;
+    t->set_is_unsigned (true);
 
   return t;
 }
@@ -3223,7 +3221,7 @@ init_character_type (struct objfile *objfile,
 
   t = init_type (objfile, TYPE_CODE_CHAR, bit, name);
   if (unsigned_p)
-    TYPE_UNSIGNED (t) = 1;
+    t->set_is_unsigned (true);
 
   return t;
 }
@@ -3240,7 +3238,7 @@ init_boolean_type (struct objfile *objfile,
 
   t = init_type (objfile, TYPE_CODE_BOOL, bit, name);
   if (unsigned_p)
-    TYPE_UNSIGNED (t) = 1;
+    t->set_is_unsigned (true);
 
   return t;
 }
@@ -3334,7 +3332,7 @@ init_pointer_type (struct objfile *objfile,
 
   t = init_type (objfile, TYPE_CODE_PTR, bit, name);
   TYPE_TARGET_TYPE (t) = target_type;
-  TYPE_UNSIGNED (t) = 1;
+  t->set_is_unsigned (true);
   return t;
 }
 
@@ -5470,7 +5468,7 @@ arch_integer_type (struct gdbarch *gdbarch,
 
   t = arch_type (gdbarch, TYPE_CODE_INT, bit, name);
   if (unsigned_p)
-    TYPE_UNSIGNED (t) = 1;
+    t->set_is_unsigned (true);
 
   return t;
 }
@@ -5487,7 +5485,7 @@ arch_character_type (struct gdbarch *gdbarch,
 
   t = arch_type (gdbarch, TYPE_CODE_CHAR, bit, name);
   if (unsigned_p)
-    TYPE_UNSIGNED (t) = 1;
+    t->set_is_unsigned (true);
 
   return t;
 }
@@ -5504,7 +5502,7 @@ arch_boolean_type (struct gdbarch *gdbarch,
 
   t = arch_type (gdbarch, TYPE_CODE_BOOL, bit, name);
   if (unsigned_p)
-    TYPE_UNSIGNED (t) = 1;
+    t->set_is_unsigned (true);
 
   return t;
 }
@@ -5554,7 +5552,7 @@ arch_pointer_type (struct gdbarch *gdbarch,
 
   t = arch_type (gdbarch, TYPE_CODE_PTR, bit, name);
   TYPE_TARGET_TYPE (t) = target_type;
-  TYPE_UNSIGNED (t) = 1;
+  t->set_is_unsigned (true);
   return t;
 }
 
@@ -5567,7 +5565,7 @@ arch_flags_type (struct gdbarch *gdbarch, const char *name, int bit)
   struct type *type;
 
   type = arch_type (gdbarch, TYPE_CODE_FLAGS, bit, name);
-  TYPE_UNSIGNED (type) = 1;
+  type->set_is_unsigned (true);
   type->set_num_fields (0);
   /* Pre-allocate enough space assuming every field is one bit.  */
   type->set_fields
