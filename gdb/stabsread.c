@@ -964,7 +964,7 @@ define_symbol (CORE_ADDR valu, const char *string, int desc, int type,
          than the "declared-as" type for unprototyped functions, so
          we treat all functions as if they were prototyped.  This is used
          primarily for promotion when calling the function from GDB.  */
-      TYPE_PROTOTYPED (SYMBOL_TYPE (sym)) = 1;
+      SYMBOL_TYPE (sym)->set_is_prototyped (true);
 
       /* fall into process_prototype_types.  */
 
@@ -1011,7 +1011,7 @@ define_symbol (CORE_ADDR valu, const char *string, int desc, int type,
 	      ftype->field (nparams).set_is_artificial (false);
 	    }
 	  ftype->set_num_fields (nparams);
-	  TYPE_PROTOTYPED (ftype) = 1;
+	  ftype->set_is_prototyped (true);
 	}
       break;
 
@@ -1852,7 +1852,7 @@ again:
 	    func_type->field (i).set_type (t->type);
         }
         func_type->set_num_fields (num_args);
-        TYPE_PROTOTYPED (func_type) = 1;
+	func_type->set_is_prototyped (true);
 
         type = func_type;
         break;
