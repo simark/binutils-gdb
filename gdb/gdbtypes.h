@@ -266,7 +266,7 @@ DEF_ENUM_FLAGS_TYPE (enum type_instance_flag_value, type_instance_flags);
    further interpretation.  Optionally marks ordinary, fixed-size GDB
    type.  */
 
-#define TYPE_FIXED_INSTANCE(t) (TYPE_MAIN_TYPE (t)->flag_fixed_instance)
+#define TYPE_FIXED_INSTANCE(t) ((t)->is_fixed_instance ())
 
 /* * This debug target supports TYPE_STUB(t).  In the unsupported case
    we have to rely on NFIELDS to be zero etc., see TYPE_IS_OPAQUE().
@@ -957,7 +957,7 @@ struct main_type
   unsigned int m_flag_vector : 1;
   unsigned int flag_stub_supported : 1;
   unsigned int flag_gnu_ifunc : 1;
-  unsigned int flag_fixed_instance : 1;
+  unsigned int m_flag_fixed_instance : 1;
   unsigned int flag_objfile_owned : 1;
   unsigned int m_flag_endianity_not_default : 1;
 
@@ -1234,6 +1234,16 @@ struct type
   void set_is_vector (bool is_vector)
   {
     this->main_type->m_flag_vector = is_vector;
+  }
+
+  bool is_fixed_instance () const
+  {
+    return this->main_type->m_flag_fixed_instance;
+  }
+
+  void set_is_fixed_instance (bool is_fixed_instance)
+  {
+    this->main_type->m_flag_fixed_instance = is_fixed_instance;
   }
 
   /* * Return the dynamic property of the requested KIND from this type's
