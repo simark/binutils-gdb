@@ -910,6 +910,18 @@ struct type
     this->main_type->m_nfields = num_fields;
   }
 
+  /* Get the fields array of this type.  */
+  field *fields () const
+  {
+    return this->main_type->flds_bnds.fields;
+  }
+
+  /* Set the fields array of this type.  */
+  void set_fields (field *fields)
+  {
+    this->main_type->flds_bnds.fields = fields;
+  }
+
   /* * Return the dynamic property of the requested KIND from this type's
      list of dynamic properties.  */
   dynamic_prop *get_dyn_prop (dynamic_prop_node_kind kind) const;
@@ -1460,7 +1472,7 @@ extern bool set_type_align (struct type *, ULONGEST);
    type, you need to do TYPE_CODE (check_type (this_type)).  */
 #define TYPE_CODE(thistype) ((thistype)->code ())
 #define TYPE_NFIELDS(thistype) ((thistype)->num_fields ())
-#define TYPE_FIELDS(thistype) TYPE_MAIN_TYPE(thistype)->flds_bnds.fields
+#define TYPE_FIELDS(thistype) (thistype)->fields ()
 
 #define TYPE_INDEX_TYPE(type) TYPE_FIELD_TYPE (type, 0)
 #define TYPE_RANGE_DATA(thistype) TYPE_MAIN_TYPE(thistype)->flds_bnds.bounds
