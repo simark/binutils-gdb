@@ -360,7 +360,7 @@ make_pointer_type (struct type *type, struct type **typeptr)
       TYPE_CHAIN (ntype) = chain;
     }
 
-  TYPE_TARGET_TYPE (ntype) = type;
+  ntype->set_target_type (type);
   TYPE_POINTER_TYPE (type) = ntype;
 
   /* FIXME!  Assumes the machine has only one representation for pointers!  */
@@ -439,7 +439,7 @@ make_reference_type (struct type *type, struct type **typeptr,
       TYPE_CHAIN (ntype) = chain;
     }
 
-  TYPE_TARGET_TYPE (ntype) = type;
+  ntype->set_target_type (type);
   reftype = (refcode == TYPE_CODE_REF ? &TYPE_REFERENCE_TYPE (type)
              : &TYPE_RVALUE_REFERENCE_TYPE (type));
 
@@ -513,7 +513,7 @@ make_function_type (struct type *type, struct type **typeptr)
       smash_type (ntype);
     }
 
-  TYPE_TARGET_TYPE (ntype) = type;
+  ntype->set_target_type (type);
 
   TYPE_LENGTH (ntype) = 1;
   ntype->set_code (TYPE_CODE_FUNC);
@@ -867,7 +867,7 @@ allocate_stub_method (struct type *type)
   mtype->set_code (TYPE_CODE_METHOD);
   TYPE_LENGTH (mtype) = 1;
   mtype->set_is_stub (true);
-  TYPE_TARGET_TYPE (mtype) = type;
+  mtype->set_target_type (type);
   /* TYPE_SELF_TYPE (mtype) = unknown yet */
   return mtype;
 }
@@ -932,7 +932,7 @@ create_range_type (struct type *result_type, struct type *index_type,
   if (result_type == NULL)
     result_type = alloc_type_copy (index_type);
   result_type->set_code (TYPE_CODE_RANGE);
-  TYPE_TARGET_TYPE (result_type) = index_type;
+  result_type->set_target_type (index_type);
   if (TYPE_STUB (index_type))
     result_type->set_target_is_stub (true);
   else
@@ -1281,7 +1281,7 @@ create_array_type_with_stride (struct type *result_type,
     result_type = alloc_type_copy (range_type);
 
   result_type->set_code (TYPE_CODE_ARRAY);
-  TYPE_TARGET_TYPE (result_type) = element_type;
+  result_type->set_target_type (element_type);
 
   result_type->set_num_fields (1);
   result_type->set_fields
@@ -1424,7 +1424,7 @@ make_vector_type (struct type *array_type)
       type_instance_flags flags
 	= TYPE_INSTANCE_FLAGS (elt_type) | TYPE_INSTANCE_FLAG_NOTTEXT;
       elt_type = make_qualified_type (elt_type, flags, NULL);
-      TYPE_TARGET_TYPE (inner_array) = elt_type;
+      inner_array->set_target_type (elt_type);
     }
 
   array_type->set_is_vector (true);
@@ -1512,7 +1512,7 @@ smash_to_memberptr_type (struct type *type, struct type *self_type,
 {
   smash_type (type);
   type->set_code (TYPE_CODE_MEMBERPTR);
-  TYPE_TARGET_TYPE (type) = to_type;
+  type->set_target_type (to_type);
   set_type_self_type (type, self_type);
   /* Assume that a data member pointer is the same size as a normal
      pointer.  */
@@ -1531,7 +1531,7 @@ smash_to_methodptr_type (struct type *type, struct type *to_type)
 {
   smash_type (type);
   type->set_code (TYPE_CODE_METHODPTR);
-  TYPE_TARGET_TYPE (type) = to_type;
+  type->set_target_type (to_type);
   set_type_self_type (type, TYPE_SELF_TYPE (to_type));
   TYPE_LENGTH (type) = cplus_method_ptr_size (to_type);
 }
@@ -1550,7 +1550,7 @@ smash_to_method_type (struct type *type, struct type *self_type,
 {
   smash_type (type);
   type->set_code (TYPE_CODE_METHOD);
-  TYPE_TARGET_TYPE (type) = to_type;
+  type->set_target_type (to_type);
   set_type_self_type (type, self_type);
   type->set_fields (args);
   type->set_num_fields (nargs);
@@ -2538,7 +2538,7 @@ resolve_dynamic_struct (struct type *type,
 
   /* The Ada language uses this field as a cache for static fixed types: reset
      it as RESOLVED_TYPE must have its own static fixed type.  */
-  TYPE_TARGET_TYPE (resolved_type) = NULL;
+  resolved_type->set_target_type (NULL);
 
   return resolved_type;
 }
@@ -2567,11 +2567,11 @@ resolve_dynamic_type_internal (struct type *type,
   if (TYPE_CODE (type) == TYPE_CODE_TYPEDEF)
     {
       resolved_type = copy_type (type);
-      TYPE_TARGET_TYPE (resolved_type)
-	= resolve_dynamic_type_internal (TYPE_TARGET_TYPE (type), addr_stack,
-					 top_level);
+      resolved_type->set_target_type
+	(resolve_dynamic_type_internal (type->target_type (), addr_stack,
+					top_level));
     }
-  else 
+  else
     {
       /* Before trying to resolve TYPE, make sure it is not a stub.  */
       type = real_type;
@@ -2592,9 +2592,9 @@ resolve_dynamic_type_internal (struct type *type,
 	    pinfo.next = addr_stack;
 
 	    resolved_type = copy_type (type);
-	    TYPE_TARGET_TYPE (resolved_type)
-	      = resolve_dynamic_type_internal (TYPE_TARGET_TYPE (type),
-					       &pinfo, top_level);
+	    resolved_type->set_target_type
+	      (resolve_dynamic_type_internal (TYPE_TARGET_TYPE (type),
+					      &pinfo, top_level));
 	    break;
 	  }
 
@@ -2778,9 +2778,9 @@ check_typedef (struct type *type)
 	    }
 	  sym = lookup_symbol (name, 0, STRUCT_DOMAIN, 0).symbol;
 	  if (sym)
-	    TYPE_TARGET_TYPE (type) = SYMBOL_TYPE (sym);
+	    type->set_target_type (SYMBOL_TYPE (sym));
 	  else					/* TYPE_CODE_UNDEF */
-	    TYPE_TARGET_TYPE (type) = alloc_type_arch (get_type_arch (type));
+	    type->set_target_type (alloc_type_arch (get_type_arch (type)));
 	}
       type = TYPE_TARGET_TYPE (type);
 
@@ -3314,7 +3314,7 @@ init_complex_type (const char *name, struct type *target_type)
       TYPE_LENGTH (t) = 2 * TYPE_LENGTH (target_type);
       t->set_name (name);
 
-      TYPE_TARGET_TYPE (t) = target_type;
+      t->set_target_type (target_type);
       TYPE_MAIN_TYPE (target_type)->m_flds_bnds.complex_type = t;
     }
 
@@ -3333,7 +3333,7 @@ init_pointer_type (struct objfile *objfile,
   struct type *t;
 
   t = init_type (objfile, TYPE_CODE_PTR, bit, name);
-  TYPE_TARGET_TYPE (t) = target_type;
+  t->set_target_type (target_type);
   t->set_is_unsigned (true);
   return t;
 }
@@ -5368,10 +5368,8 @@ copy_type_recursive (struct objfile *objfile,
 
   /* Copy pointers to other types.  */
   if (TYPE_TARGET_TYPE (type))
-    TYPE_TARGET_TYPE (new_type) = 
-      copy_type_recursive (objfile, 
-			   TYPE_TARGET_TYPE (type),
-			   copied_types);
+    new_type->set_target_type
+      (copy_type_recursive (objfile, type->target_type (), copied_types));
 
   /* Maybe copy the type_specific bits.
 
@@ -5553,7 +5551,7 @@ arch_pointer_type (struct gdbarch *gdbarch,
   struct type *t;
 
   t = arch_type (gdbarch, TYPE_CODE_PTR, bit, name);
-  TYPE_TARGET_TYPE (t) = target_type;
+  t->set_target_type (target_type);
   t->set_is_unsigned (true);
   return t;
 }

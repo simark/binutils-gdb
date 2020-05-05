@@ -659,7 +659,7 @@ read_func_kind_type (struct ctf_context *ccp, ctf_id_t tid)
   type->set_code (TYPE_CODE_FUNC);
   ctf_func_type_info (fp, tid, &cfi);
   rettype = get_tid_type (of, cfi.ctc_return);
-  TYPE_TARGET_TYPE (type) = rettype;
+  type->set_target_type (rettype);
   set_type_align (type, ctf_type_align (fp, tid));
 
   return set_tid_type (of, tid, type);
@@ -686,7 +686,7 @@ read_enum_type (struct ctf_context *ccp, ctf_id_t tid)
   TYPE_LENGTH (type) = ctf_type_size (fp, tid);
   ctf_func_type_info (fp, tid, &fi);
   target_type = get_tid_type (of, fi.ctc_return);
-  TYPE_TARGET_TYPE (type) = target_type;
+  type->set_target_type (target_type);
   set_type_align (type, ctf_type_align (fp, tid));
 
   return set_tid_type (of, tid, type);
@@ -728,15 +728,14 @@ add_array_cv_type (struct ctf_context *ccp,
 
   while (TYPE_CODE (TYPE_TARGET_TYPE (inner_array)) == TYPE_CODE_ARRAY)
     {
-      TYPE_TARGET_TYPE (inner_array)
-	= copy_type (TYPE_TARGET_TYPE (inner_array));
+      inner_array->set_target_type (copy_type (TYPE_TARGET_TYPE (inner_array)));
       inner_array = TYPE_TARGET_TYPE (inner_array);
     }
 
   el_type = TYPE_TARGET_TYPE (inner_array);
   cnst |= TYPE_CONST (el_type);
   voltl |= TYPE_VOLATILE (el_type);
-  TYPE_TARGET_TYPE (inner_array) = make_cv_type (cnst, voltl, el_type, NULL);
+  inner_array->set_target_type (make_cv_type (cnst, voltl, el_type, NULL));
 
   return set_tid_type (ccp->of, tid, base_type);
 }
@@ -870,9 +869,9 @@ read_typedef_type (struct ctf_context *ccp, ctf_id_t tid,
   set_tid_type (objfile, tid, this_type);
   target_type = get_tid_type (objfile, btid);
   if (target_type != this_type)
-    TYPE_TARGET_TYPE (this_type) = target_type;
+    this_type->set_target_type (target_type);
   else
-    TYPE_TARGET_TYPE (this_type) = NULL;
+    this_type->set_target_type (nullptr);
 
   this_type->set_target_is_stub (TYPE_TARGET_TYPE (this_type) != nullptr);
 
