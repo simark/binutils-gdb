@@ -9294,14 +9294,14 @@ quirk_rust_enum (struct type *type, struct objfile *objfile)
       /* Put the discriminant at index 0.  */
       type->field (0).set_type (field_type);
       TYPE_FIELD_ARTIFICIAL (type, 0) = 1;
-      TYPE_FIELD_NAME (type, 0) = "<<discriminant>>";
+      type->field (0).set_name ("<<discriminant>>");
       SET_FIELD_BITPOS (TYPE_FIELD (type, 0), bit_offset);
 
       /* The order of fields doesn't really matter, so put the real
 	 field at index 1 and the data-less field at index 2.  */
       TYPE_FIELD (type, 1) = saved_field;
-      TYPE_FIELD_NAME (type, 1)
-	= rust_last_path_segment (TYPE_NAME (TYPE_FIELD_TYPE (type, 1)));
+      type->field (1).set_name
+	(rust_last_path_segment (TYPE_NAME (TYPE_FIELD_TYPE (type, 1))));
       TYPE_FIELD_TYPE (type, 1)->set_name
 	(rust_fully_qualify (&objfile->objfile_obstack, TYPE_NAME (type),
 			     TYPE_FIELD_NAME (type, 1)));
@@ -9314,7 +9314,7 @@ quirk_rust_enum (struct type *type, struct objfile *objfile)
       type->field (2).set_type (dataless_type);
       /* NAME points into the original discriminant name, which
 	 already has the correct lifetime.  */
-      TYPE_FIELD_NAME (type, 2) = name;
+      type->field (2).set_name (name);
       SET_FIELD_BITPOS (TYPE_FIELD (type, 2), 0);
 
       /* Indicate that this is a variant type.  */
@@ -9332,7 +9332,7 @@ quirk_rust_enum (struct type *type, struct objfile *objfile)
       struct type *field_type = TYPE_FIELD_TYPE (type, 0);
       const char *variant_name
 	= rust_last_path_segment (TYPE_NAME (field_type));
-      TYPE_FIELD_NAME (type, 0) = variant_name;
+      type->field (0).set_name (variant_name);
       field_type->set_name
 	(rust_fully_qualify (&objfile->objfile_obstack,
 			     TYPE_NAME (type), variant_name));
@@ -9389,7 +9389,7 @@ quirk_rust_enum (struct type *type, struct objfile *objfile)
       /* Install the discriminant at index 0 in the union.  */
       TYPE_FIELD (type, 0) = *disr_field;
       TYPE_FIELD_ARTIFICIAL (type, 0) = 1;
-      TYPE_FIELD_NAME (type, 0) = "<<discriminant>>";
+      type->field (0).set_name ("<<discriminant>>");
 
       /* We need a way to find the correct discriminant given a
 	 variant name.  For convenience we build a map here.  */
@@ -9435,7 +9435,7 @@ quirk_rust_enum (struct type *type, struct objfile *objfile)
 	      sub_type->set_num_fields (sub_type->num_fields () - 1);
 	      sub_type->set_fields (sub_type->fields () + 1);
 	    }
-	  TYPE_FIELD_NAME (type, i) = variant_name;
+	  type->field (i).set_name (variant_name);
 	  sub_type->set_name
 	    (rust_fully_qualify (&objfile->objfile_obstack,
 				 TYPE_NAME (type), variant_name));
@@ -14390,7 +14390,7 @@ dwarf2_add_field (struct field_info *fip, struct die_info *die,
 
       /* The name is already allocated along with this objfile, so we don't
 	 need to duplicate it for the type.  */
-      fp->name = fieldname;
+      fp->set_name (fieldname);
 
       /* Change accessibility for artificial fields (e.g. virtual table
          pointer or virtual base class pointer) to private.  */
@@ -14437,7 +14437,7 @@ dwarf2_add_field (struct field_info *fip, struct die_info *die,
 	 need to duplicate it for the type.  */
       SET_FIELD_PHYSNAME (*fp, physname ? physname : "");
       fp->set_type (die_type (die, cu));
-      FIELD_NAME (*fp) = fieldname;
+      fp->set_name (fieldname);
     }
   else if (die->tag == DW_TAG_inheritance)
     {
@@ -14445,7 +14445,7 @@ dwarf2_add_field (struct field_info *fip, struct die_info *die,
       handle_data_member_location (die, cu, fp);
       FIELD_BITSIZE (*fp) = 0;
       fp->set_type (die_type (die, cu));
-      FIELD_NAME (*fp) = TYPE_NAME (fp->type ());
+      fp->set_name (TYPE_NAME (fp->type ()));
     }
   else
     gdb_assert_not_reached ("missing case in dwarf2_add_field");
@@ -15834,7 +15834,7 @@ update_enumeration_type_from_children (struct die_info *die,
 
       fields.emplace_back ();
       struct field &field = fields.back ();
-      FIELD_NAME (field) = dwarf2_physname (name, child_die, cu);
+      field.set_name (dwarf2_physname (name, child_die, cu));
       SET_FIELD_ENUMVAL (field, value);
     }
 

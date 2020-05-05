@@ -4701,8 +4701,10 @@ print_args (struct field *args, int nargs, int spaces)
 
       for (i = 0; i < nargs; i++)
 	{
+	  const char *name = args[i].name ();
+
 	  printfi_filtered (spaces, "[%d] name '%s'\n", i,
-			    args[i].name != NULL ? args[i].name : "<NULL>");
+			    name != nullptr ? name : "<NULL>");
 	  recursive_dump_type (args[i].type (), spaces + 2);
 	}
     }
@@ -5315,8 +5317,7 @@ copy_type_recursive (struct objfile *objfile,
 	      (copy_type_recursive (objfile, TYPE_FIELD_TYPE (type, i),
 				    copied_types));
 	  if (TYPE_FIELD_NAME (type, i))
-	    TYPE_FIELD_NAME (new_type, i) = 
-	      xstrdup (TYPE_FIELD_NAME (type, i));
+	    new_type->field (i).set_name (xstrdup (type->field (i).name ()));
 	  switch (TYPE_FIELD_LOC_KIND (type, i))
 	    {
 	    case FIELD_LOC_KIND_BITPOS:
@@ -5585,7 +5586,7 @@ append_flags_type_field (struct type *type, int start_bitpos, int nr_bits,
   gdb_assert (nr_bits >= 1 && nr_bits <= type_bitsize);
   gdb_assert (name != NULL);
 
-  TYPE_FIELD_NAME (type, field_nr) = xstrdup (name);
+  type->field (field_nr).set_name (xstrdup (name));
   type->field (field_nr).set_type (field_type);
   SET_FIELD_BITPOS (TYPE_FIELD (type, field_nr), start_bitpos);
   TYPE_FIELD_BITSIZE (type, field_nr) = nr_bits;
@@ -5638,7 +5639,7 @@ append_composite_type_field_raw (struct type *t, const char *name,
   f = &(TYPE_FIELDS (t)[TYPE_NFIELDS (t) - 1]);
   memset (f, 0, sizeof f[0]);
   f->set_type (field);
-  FIELD_NAME (f[0]) = name;
+  f->set_name (name);
   return f;
 }
 
