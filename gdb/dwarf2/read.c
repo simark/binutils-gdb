@@ -17697,7 +17697,7 @@ read_subrange_type (struct die_info *die, struct dwarf2_cu *cu)
 
   /* Ada expects an empty array on no boundary attributes.  */
   if (attr == NULL && cu->language != language_ada)
-    TYPE_HIGH_BOUND_KIND (range_type) = PROP_UNDEFINED;
+    range_type->range_bounds ()->set_high_undefined ();
 
   name = dwarf2_name (die, cu);
   if (name)

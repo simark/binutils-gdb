@@ -689,7 +689,17 @@ struct field
 
 struct range_bounds
 {
-  LONGEST low_const ()
+  dynamic_prop_kind low_kind () const
+  {
+    return this->low.kind;
+  }
+
+  bool low_is_undefined () const
+  {
+    return this->low_kind () == PROP_UNDEFINED;
+  }
+
+  LONGEST low_const () const
   {
     gdb_assert (this->low.kind == PROP_CONST);
     return this->low.data.const_val;
@@ -702,9 +712,24 @@ struct range_bounds
     this->low.data.const_val = low;
   }
 
-  LONGEST high_const ()
+  dynamic_prop_kind high_kind () const
   {
-    gdb_assert (this->high.kind = PROP_CONST);
+    return this->high.kind;
+  }
+
+  bool high_is_undefined () const
+  {
+    return this->high_kind () == PROP_UNDEFINED;
+  }
+
+  void set_high_undefined ()
+  {
+    this->high.kind = PROP_UNDEFINED;
+  }
+
+  LONGEST high_const () const
+  {
+    gdb_assert (this->high.kind == PROP_CONST);
     return this->high.data.const_val;
   }
 
@@ -1562,13 +1587,13 @@ extern bool set_type_align (struct type *, ULONGEST);
 #define TYPE_HIGH_BOUND(range_type) \
   ((range_type)->range_bounds ()->high_const ())
 #define TYPE_LOW_BOUND_UNDEFINED(range_type) \
-  (TYPE_RANGE_DATA(range_type)->low.kind == PROP_UNDEFINED)
+  ((range_type)->range_bounds ()->low_is_undefined ())
 #define TYPE_HIGH_BOUND_UNDEFINED(range_type) \
-  (TYPE_RANGE_DATA(range_type)->high.kind == PROP_UNDEFINED)
-#define TYPE_HIGH_BOUND_KIND(range_type) \
-  TYPE_RANGE_DATA(range_type)->high.kind
+  ((range_type)->range_bounds ()->high_is_undefined ())
 #define TYPE_LOW_BOUND_KIND(range_type) \
-  TYPE_RANGE_DATA(range_type)->low.kind
+  ((range_type)->range_bounds ()->low_kind ())
+#define TYPE_HIGH_BOUND_KIND(range_type) \
+  ((range_type)->range_bounds ()->high_kind ())
 #define TYPE_BIT_STRIDE(range_type) \
   (TYPE_RANGE_DATA(range_type)->stride.data.const_val \
    * (TYPE_RANGE_DATA(range_type)->flag_is_byte_stride ? 8 : 1))
