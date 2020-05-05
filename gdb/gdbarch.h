@@ -859,8 +859,8 @@ extern void set_gdbarch_have_nonsteppable_watchpoint (struct gdbarch *gdbarch, i
 
 extern int gdbarch_address_class_type_flags_p (struct gdbarch *gdbarch);
 
-typedef int (gdbarch_address_class_type_flags_ftype) (int byte_size, int dwarf2_addr_class);
-extern int gdbarch_address_class_type_flags (struct gdbarch *gdbarch, int byte_size, int dwarf2_addr_class);
+typedef type_instance_flags (gdbarch_address_class_type_flags_ftype) (int byte_size, int dwarf2_addr_class);
+extern type_instance_flags gdbarch_address_class_type_flags (struct gdbarch *gdbarch, int byte_size, int dwarf2_addr_class);
 extern void set_gdbarch_address_class_type_flags (struct gdbarch *gdbarch, gdbarch_address_class_type_flags_ftype *address_class_type_flags);
 
 extern int gdbarch_address_class_type_flags_to_name_p (struct gdbarch *gdbarch);

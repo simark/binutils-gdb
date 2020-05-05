@@ -3513,7 +3513,7 @@ gdbarch_address_class_type_flags_p (struct gdbarch *gdbarch)
   return gdbarch->address_class_type_flags != NULL;
 }
 
-int
+type_instance_flags
 gdbarch_address_class_type_flags (struct gdbarch *gdbarch, int byte_size, int dwarf2_addr_class)
 {
   gdb_assert (gdbarch != NULL);

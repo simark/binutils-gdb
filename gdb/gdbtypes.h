@@ -1146,6 +1146,17 @@ struct type
     this->main_type->m_flds_bnds.bounds = bounds;
   }
 
+  type_instance_flags instance_flags () const
+  {
+    return (type_instance_flag_value) this->m_instance_flags;
+  }
+
+  void set_instance_flags (type_instance_flags instance_flags)
+  {
+    this->m_instance_flags = instance_flags;
+  }
+
+
   /* * Return the dynamic property of the requested KIND from this type's
      list of dynamic properties.  */
   dynamic_prop *get_dyn_prop (dynamic_prop_node_kind kind) const;
@@ -1201,7 +1212,7 @@ struct type
      instance flags are completely inherited from the target type.  No
      qualifiers can be cleared by the typedef.  See also
      check_typedef.  */
-  unsigned instance_flags : 9;
+  unsigned m_instance_flags : 9;
 
   /* * Length of storage for a value of this type.  The value is the
      expression in host bytes of what sizeof(type) would return.  This
@@ -1700,7 +1711,7 @@ extern void allocate_gnat_aux_type (struct type *);
      TYPE_ZALLOC (type,							       \
 		  sizeof (*TYPE_MAIN_TYPE (type)->type_specific.func_stuff)))
 
-#define TYPE_INSTANCE_FLAGS(thistype) (thistype)->instance_flags
+#define TYPE_INSTANCE_FLAGS(thistype) ((thistype)->instance_flags ())
 #define TYPE_MAIN_TYPE(thistype) (thistype)->main_type
 #define TYPE_NAME(thistype) ((thistype)->name ())
 #define TYPE_TARGET_TYPE(thistype) TYPE_MAIN_TYPE(thistype)->target_type
@@ -2282,8 +2293,8 @@ extern int address_space_name_to_int (struct gdbarch *, const char *);
 
 extern const char *address_space_int_to_name (struct gdbarch *, int);
 
-extern struct type *make_type_with_address_space (struct type *type, 
-						  int space_identifier);
+extern struct type *make_type_with_address_space
+  (struct type *type, type_instance_flags space_identifier);
 
 extern struct type *lookup_memberptr_type (struct type *, struct type *);
 

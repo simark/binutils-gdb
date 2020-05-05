@@ -706,7 +706,7 @@ v;int;cannot_step_breakpoint;;;0;0;;0
 # See comment in target.h about continuable, steppable and
 # non-steppable watchpoints.
 v;int;have_nonsteppable_watchpoint;;;0;0;;0
-F;int;address_class_type_flags;int byte_size, int dwarf2_addr_class;byte_size, dwarf2_addr_class
+F;type_instance_flags;address_class_type_flags;int byte_size, int dwarf2_addr_class;byte_size, dwarf2_addr_class
 M;const char *;address_class_type_flags_to_name;int type_flags;type_flags
 # Execute vendor-specific DWARF Call Frame Instruction.  OP is the instruction.
 # FS are passed from the generic execute_cfa_program function.

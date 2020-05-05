@@ -617,7 +617,7 @@ address_space_int_to_name (struct gdbarch *gdbarch, int space_flag)
    STORAGE must be in the same obstack as TYPE.  */
 
 static struct type *
-make_qualified_type (struct type *type, int new_flags,
+make_qualified_type (struct type *type, type_instance_flags new_flags,
 		     struct type *storage)
 {
   struct type *ntype;
@@ -657,7 +657,7 @@ make_qualified_type (struct type *type, int new_flags,
   TYPE_CHAIN (type) = ntype;
 
   /* Now set the instance flags and return the new type.  */
-  TYPE_INSTANCE_FLAGS (ntype) = new_flags;
+  ntype->set_instance_flags (new_flags);
 
   /* Set length of new type to that of the original type.  */
   TYPE_LENGTH (ntype) = TYPE_LENGTH (type);
@@ -675,13 +675,14 @@ make_qualified_type (struct type *type, int new_flags,
    representations.  */
 
 struct type *
-make_type_with_address_space (struct type *type, int space_flag)
+make_type_with_address_space (struct type *type, type_instance_flags space_flag)
 {
-  int new_flags = ((TYPE_INSTANCE_FLAGS (type)
-		    & ~(TYPE_INSTANCE_FLAG_CODE_SPACE
-			| TYPE_INSTANCE_FLAG_DATA_SPACE
-		        | TYPE_INSTANCE_FLAG_ADDRESS_CLASS_ALL))
-		   | space_flag);
+  type_instance_flags new_flags
+    = ((TYPE_INSTANCE_FLAGS (type)
+	& ~(TYPE_INSTANCE_FLAG_CODE_SPACE
+	    | TYPE_INSTANCE_FLAG_DATA_SPACE
+	    | TYPE_INSTANCE_FLAG_ADDRESS_CLASS_ALL))
+       | space_flag);
 
   return make_qualified_type (type, new_flags, NULL);
 }
@@ -705,9 +706,10 @@ make_cv_type (int cnst, int voltl,
 {
   struct type *ntype;	/* New type */
 
-  int new_flags = (TYPE_INSTANCE_FLAGS (type)
-		   & ~(TYPE_INSTANCE_FLAG_CONST 
-		       | TYPE_INSTANCE_FLAG_VOLATILE));
+  type_instance_flags new_flags
+    = (TYPE_INSTANCE_FLAGS (type)
+       & ~(TYPE_INSTANCE_FLAG_CONST 
+	   | TYPE_INSTANCE_FLAG_VOLATILE));
 
   if (cnst)
     new_flags |= TYPE_INSTANCE_FLAG_CONST;
@@ -732,7 +734,7 @@ make_cv_type (int cnst, int voltl,
       gdb_assert (TYPE_OBJFILE (*typeptr) == TYPE_OBJFILE (type));
     }
   
-  ntype = make_qualified_type (type, new_flags, 
+  ntype = make_qualified_type (type, new_flags,
 			       typeptr ? *typeptr : NULL);
 
   if (typeptr != NULL)
@@ -1409,7 +1411,6 @@ void
 make_vector_type (struct type *array_type)
 {
   struct type *inner_array, *elt_type;
-  int flags;
 
   /* Find the innermost array type, in case the array is
      multi-dimensional.  */
@@ -1420,7 +1421,8 @@ make_vector_type (struct type *array_type)
   elt_type = TYPE_TARGET_TYPE (inner_array);
   if (TYPE_CODE (elt_type) == TYPE_CODE_INT)
     {
-      flags = TYPE_INSTANCE_FLAGS (elt_type) | TYPE_INSTANCE_FLAG_NOTTEXT;
+      type_instance_flags flags
+	= TYPE_INSTANCE_FLAGS (elt_type) | TYPE_INSTANCE_FLAG_NOTTEXT;
       elt_type = make_qualified_type (elt_type, flags, NULL);
       TYPE_TARGET_TYPE (inner_array) = elt_type;
     }
@@ -2750,7 +2752,7 @@ check_typedef (struct type *type)
   struct type *orig_type = type;
   /* While we're removing typedefs, we don't want to lose qualifiers.
      E.g., const/volatile.  */
-  int instance_flags = TYPE_INSTANCE_FLAGS (type);
+  type_instance_flags instance_flags = TYPE_INSTANCE_FLAGS (type);
 
   gdb_assert (type);
 
@@ -2794,10 +2796,11 @@ check_typedef (struct type *type)
 	 outer cast in a chain of casting win), instead of assuming
 	 "it can't happen".  */
       {
-	const int ALL_SPACES = (TYPE_INSTANCE_FLAG_CODE_SPACE
-				| TYPE_INSTANCE_FLAG_DATA_SPACE);
-	const int ALL_CLASSES = TYPE_INSTANCE_FLAG_ADDRESS_CLASS_ALL;
-	int new_instance_flags = TYPE_INSTANCE_FLAGS (type);
+	const type_instance_flags ALL_SPACES = (TYPE_INSTANCE_FLAG_CODE_SPACE
+						| TYPE_INSTANCE_FLAG_DATA_SPACE);
+	const type_instance_flags ALL_CLASSES
+	  = TYPE_INSTANCE_FLAG_ADDRESS_CLASS_ALL;
+	type_instance_flags new_instance_flags = TYPE_INSTANCE_FLAGS (type);
 
 	/* Treat code vs data spaces and address classes separately.  */
 	if ((instance_flags & ALL_SPACES) != 0)
@@ -5020,8 +5023,8 @@ recursive_dump_type (struct type *type, int spaces)
   printfi_filtered (spaces, "type_chain ");
   gdb_print_host_address (TYPE_CHAIN (type), gdb_stdout);
   printf_filtered ("\n");
-  printfi_filtered (spaces, "instance_flags 0x%x", 
-		    TYPE_INSTANCE_FLAGS (type));
+  printfi_filtered (spaces, "instance_flags 0x%x",
+		    (unsigned int) TYPE_INSTANCE_FLAGS (type));
   if (TYPE_CONST (type))
     {
       puts_filtered (" TYPE_CONST");

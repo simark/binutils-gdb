@@ -154,8 +154,8 @@ type_stack::follow_types (struct type *follow_type)
 				      make_volatile,
 				      follow_type, 0);
 	if (make_addr_space)
-	  follow_type = make_type_with_address_space (follow_type,
-						      make_addr_space);
+	  follow_type = make_type_with_address_space
+	    (follow_type, (type_instance_flag_value)  make_addr_space);
 	if (make_restrict)
 	  follow_type = make_restrict_type (follow_type);
 	if (make_atomic)

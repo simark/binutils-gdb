@@ -296,7 +296,7 @@ cp_type_print_method_args (struct type *mtype, const char *prefix,
     {
       while (i < nargs)
 	{
-	  struct field arg = args[i++];
+	  struct field &arg = args[i++];
 
 	  /* Skip any artificial arguments.  */
 	  if (FIELD_ARTIFICIAL (arg))
