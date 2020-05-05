@@ -1455,7 +1455,7 @@ patch_type (struct type *type, struct type *real_type)
   int field_size = TYPE_NFIELDS (real_target) * sizeof (struct field);
 
   TYPE_LENGTH (target) = TYPE_LENGTH (real_target);
-  TYPE_NFIELDS (target) = TYPE_NFIELDS (real_target);
+  target->set_num_fields (TYPE_NFIELDS (real_target));
   TYPE_FIELDS (target) = (struct field *) TYPE_ALLOC (target,
 						      field_size);
 
@@ -1884,7 +1884,7 @@ decode_base_type (struct coff_symbol *cs,
 	  INIT_CPLUS_SPECIFIC (type);
 	  TYPE_LENGTH (type) = 0;
 	  TYPE_FIELDS (type) = 0;
-	  TYPE_NFIELDS (type) = 0;
+	  type->set_num_fields (0);
 	}
       else
 	{
@@ -1904,7 +1904,7 @@ decode_base_type (struct coff_symbol *cs,
 	  INIT_CPLUS_SPECIFIC (type);
 	  TYPE_LENGTH (type) = 0;
 	  TYPE_FIELDS (type) = 0;
-	  TYPE_NFIELDS (type) = 0;
+	  type->set_num_fields (0);
 	}
       else
 	{
@@ -1925,7 +1925,7 @@ decode_base_type (struct coff_symbol *cs,
 	  type->set_name (NULL);
 	  TYPE_LENGTH (type) = 0;
 	  TYPE_FIELDS (type) = 0;
-	  TYPE_NFIELDS (type) = 0;
+	  type->set_num_fields (0);
 	}
       else
 	{
@@ -2041,7 +2041,7 @@ coff_read_struct_type (int index, int length, int lastsym,
     }
   /* Now create the vector of fields, and record how big it is.  */
 
-  TYPE_NFIELDS (type) = nfields;
+  type->set_num_fields (nfields);
   TYPE_FIELDS (type) = (struct field *)
     TYPE_ALLOC (type, sizeof (struct field) * nfields);
 
@@ -2121,7 +2121,7 @@ coff_read_enum_type (int index, int length, int lastsym,
   else /* Assume ints.  */
     TYPE_LENGTH (type) = gdbarch_int_bit (gdbarch) / TARGET_CHAR_BIT;
   type->set_code (TYPE_CODE_ENUM);
-  TYPE_NFIELDS (type) = nsyms;
+  type->set_num_fields (nsyms);
   TYPE_FIELDS (type) = (struct field *)
     TYPE_ALLOC (type, sizeof (struct field) * nsyms);
 
