@@ -273,7 +273,7 @@ DEF_ENUM_FLAGS_TYPE (enum type_instance_flag_value, type_instance_flags);
    TYPE_STUB(t) with !TYPE_STUB_SUPPORTED(t) may exist if we only
    guessed the TYPE_STUB(t) value (see dwarfread.c).  */
 
-#define TYPE_STUB_SUPPORTED(t)   (TYPE_MAIN_TYPE (t)->flag_stub_supported)
+#define TYPE_STUB_SUPPORTED(t)   ((t)->stub_is_supported ())
 
 /* * Not textual.  By default, GDB treats all single byte integers as
    characters (or elements of strings) unless this flag is set.  */
@@ -955,7 +955,7 @@ struct main_type
   unsigned int m_flag_prototyped : 1;
   unsigned int m_flag_varargs : 1;
   unsigned int m_flag_vector : 1;
-  unsigned int flag_stub_supported : 1;
+  unsigned int m_flag_stub_supported : 1;
   unsigned int flag_gnu_ifunc : 1;
   unsigned int m_flag_fixed_instance : 1;
   unsigned int flag_objfile_owned : 1;
@@ -1244,6 +1244,16 @@ struct type
   void set_is_fixed_instance (bool is_fixed_instance)
   {
     this->main_type->m_flag_fixed_instance = is_fixed_instance;
+  }
+
+  bool stub_is_supported () const
+  {
+    return this->main_type->m_flag_stub_supported;
+  }
+
+  void set_stub_is_supported (bool stub_is_supported) const
+  {
+    this->main_type->m_flag_stub_supported = stub_is_supported;
   }
 
   /* * Return the dynamic property of the requested KIND from this type's
