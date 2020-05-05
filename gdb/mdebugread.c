@@ -1199,7 +1199,7 @@ parse_symbol (SYMR *sh, union aux_ext *ax, char *ext_sh, int bigend,
 		      if (SYMBOL_IS_ARGUMENT (sym))
 			{
 			  ftype->field (iparams).set_type (SYMBOL_TYPE (sym));
-			  TYPE_FIELD_ARTIFICIAL (ftype, iparams) = 0;
+			  ftype->field (iparams).set_is_artificial (false);
 			  iparams++;
 			}
 		    }

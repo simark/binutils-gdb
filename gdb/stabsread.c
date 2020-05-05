@@ -1008,7 +1008,7 @@ define_symbol (CORE_ADDR valu, const char *string, int desc, int type,
 	      if (TYPE_CODE (ptype) == TYPE_CODE_VOID)
 		ptype = objfile_type (objfile)->builtin_int;
 	      ftype->field (nparams).set_type (ptype);
-	      TYPE_FIELD_ARTIFICIAL (ftype, nparams++) = 0;
+	      ftype->field (nparams).set_is_artificial (false);
 	    }
 	  ftype->set_num_fields (nparams);
 	  TYPE_PROTOTYPED (ftype) = 1;
