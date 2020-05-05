@@ -1289,7 +1289,7 @@ create_array_type_with_stride (struct type *result_type,
   if (byte_stride_prop != NULL)
     result_type->add_dyn_prop (DYN_PROP_BYTE_STRIDE, *byte_stride_prop);
   else if (bit_stride > 0)
-    TYPE_FIELD_BITSIZE (result_type, 0) = bit_stride;
+    result_type->field (0).set_bitsize (bit_stride);
 
   if (!update_static_array_size (result_type))
     {
@@ -5312,7 +5312,7 @@ copy_type_recursive (struct objfile *objfile,
 	{
 	  new_type->field (i).set_is_artificial
 	    (TYPE_FIELD_ARTIFICIAL (type, i));
-	  TYPE_FIELD_BITSIZE (new_type, i) = TYPE_FIELD_BITSIZE (type, i);
+	  new_type->field (i).set_bitsize (type->field (i).bitsize ());
 	  if (TYPE_FIELD_TYPE (type, i))
 	    new_type->field (i).set_type
 	      (copy_type_recursive (objfile, TYPE_FIELD_TYPE (type, i),
@@ -5593,7 +5593,7 @@ append_flags_type_field (struct type *type, int start_bitpos, int nr_bits,
   type->field (field_nr).set_name (xstrdup (name));
   type->field (field_nr).set_type (field_type);
   SET_FIELD_BITPOS (TYPE_FIELD (type, field_nr), start_bitpos);
-  TYPE_FIELD_BITSIZE (type, field_nr) = nr_bits;
+  type->field (field_nr).set_bitsize (nr_bits);
   type->set_num_fields (type->num_fields () + 1);
 }
 

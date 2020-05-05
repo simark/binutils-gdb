@@ -1053,7 +1053,7 @@ parse_symbol (SYMR *sh, union aux_ext *ax, char *ext_sh, int bigend,
 		SET_FIELD_ENUMVAL (*f, tsym.value);
 		f->set_type (t);
 		f->set_name (debug_info->ss + cur_fdr->issBase + tsym.iss);
-		FIELD_BITSIZE (*f) = 0;
+		f->set_bitsize (0);
 
 		enum_sym = allocate_symbol (mdebugread_objfile);
 		enum_sym->set_linkage_name
@@ -1240,7 +1240,7 @@ parse_symbol (SYMR *sh, union aux_ext *ax, char *ext_sh, int bigend,
 	bitsize = 0;
 	f->set_type (parse_type (cur_fd, ax, sh->index, &bitsize, bigend,
 				 name));
-	FIELD_BITSIZE (*f) = bitsize;
+	f->set_bitsize (bitsize);
       }
       break;
 

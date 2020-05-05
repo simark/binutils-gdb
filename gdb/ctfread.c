@@ -381,7 +381,7 @@ ctf_add_member_cb (const char *name,
 
   fp->set_type (t);
   SET_FIELD_BITPOS (*fp, offset / TARGET_CHAR_BIT);
-  FIELD_BITSIZE (*fp) = get_bitsize (ccp->fp, tid, kind);
+  fp->set_bitsize (get_bitsize (ccp->fp, tid, kind));
 
   fip->fields.emplace_back (new_field);
 
@@ -403,7 +403,7 @@ ctf_add_enum_member_cb (const char *name, int enum_value, void *arg)
   fp->set_name (name);
   fp->set_type (nullptr);
   SET_FIELD_ENUMVAL (*fp, enum_value);
-  FIELD_BITSIZE (*fp) = 0;
+  fp->set_bitsize (0);
 
   if (name != NULL)
     {

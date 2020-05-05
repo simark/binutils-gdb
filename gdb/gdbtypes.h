@@ -728,6 +728,16 @@ struct field
     this->m_artificial = is_artificial;
   }
 
+  unsigned int bitsize () const
+  {
+    return this->m_bitsize;
+  }
+
+  void set_bitsize (unsigned int bitsize)
+  {
+    this->m_bitsize = bitsize;
+  }
+
   union field_location m_loc;
 
   /* * For a function or member type, this is 1 if the argument is
@@ -747,7 +757,7 @@ struct field
      For an unpacked field, the field's type's length
      says how many bytes the field occupies.  */
 
-  unsigned int bitsize : 28;
+  unsigned int m_bitsize : 28;
 
   /* * In a struct or union type, type of this field.
      - In a function or member type, type of this argument.
@@ -1851,7 +1861,7 @@ extern void set_type_vptr_basetype (struct type *, struct type *);
 #define SET_FIELD_DWARF_BLOCK(thisfld, addr)			\
   ((thisfld).set_loc_dwarf_block (addr))
 #define FIELD_ARTIFICIAL(thisfld) ((thisfld).is_artificial ())
-#define FIELD_BITSIZE(thisfld) ((thisfld).bitsize)
+#define FIELD_BITSIZE(thisfld) ((thisfld).bitsize ())
 
 #define TYPE_FIELD(thistype, n) ((thistype)->field (n))
 #define TYPE_FIELD_TYPE(thistype, n) FIELD_TYPE(TYPE_FIELD(thistype, n))

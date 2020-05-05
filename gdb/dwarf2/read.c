@@ -14323,13 +14323,9 @@ dwarf2_add_field (struct field_info *fip, struct die_info *die,
       /* Get bit size of field (zero if none).  */
       attr = dwarf2_attr (die, DW_AT_bit_size, cu);
       if (attr != nullptr)
-	{
-	  FIELD_BITSIZE (*fp) = DW_UNSND (attr);
-	}
+	fp->set_bitsize (DW_UNSND (attr));
       else
-	{
-	  FIELD_BITSIZE (*fp) = 0;
-	}
+	fp->set_bitsize (0);
 
       /* Get bit offset of field.  */
       handle_data_member_location (die, cu, fp);
@@ -14443,7 +14439,7 @@ dwarf2_add_field (struct field_info *fip, struct die_info *die,
     {
       /* C++ base class field.  */
       handle_data_member_location (die, cu, fp);
-      FIELD_BITSIZE (*fp) = 0;
+      fp->set_bitsize (0);
       fp->set_type (die_type (die, cu));
       fp->set_name (TYPE_NAME (fp->type ()));
     }

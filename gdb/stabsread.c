@@ -2803,7 +2803,7 @@ read_cpp_abbrev (struct stab_field_info *fip, const char **pp,
 	  return 0;
       }
       /* This field is unpacked.  */
-      FIELD_BITSIZE (fip->list->field) = 0;
+      fip->list->field.set_bitsize (0);
       fip->list->visibility = VISIBILITY_PRIVATE;
     }
   else
@@ -2882,7 +2882,7 @@ read_one_struct_field (struct stab_field_info *fip, const char **pp,
 	stabs_general_complaint ("bad structure-type format");
 	return;
       }
-    FIELD_BITSIZE (fip->list->field) = read_huge_number (pp, ';', &nbits, 0);
+    fip->list->field.set_bitsize (read_huge_number (pp, ';', &nbits, 0));
     if (nbits != 0)
       {
 	stabs_general_complaint ("bad structure-type format");
@@ -2923,9 +2923,7 @@ read_one_struct_field (struct stab_field_info *fip, const char **pp,
 	  && TYPE_CODE (field_type) != TYPE_CODE_RANGE
 	  && TYPE_CODE (field_type) != TYPE_CODE_BOOL
 	  && TYPE_CODE (field_type) != TYPE_CODE_ENUM)
-	{
-	  FIELD_BITSIZE (fip->list->field) = 0;
-	}
+	fip->list->field.set_bitsize (0);
       if ((FIELD_BITSIZE (fip->list->field)
 	   == TARGET_CHAR_BIT * TYPE_LENGTH (field_type)
 	   || (TYPE_CODE (field_type) == TYPE_CODE_ENUM
@@ -2934,9 +2932,7 @@ read_one_struct_field (struct stab_field_info *fip, const char **pp,
 	  )
 	  &&
 	  FIELD_BITPOS (fip->list->field) % 8 == 0)
-	{
-	  FIELD_BITSIZE (fip->list->field) = 0;
-	}
+	fip->list->field.set_bitsize (0);
     }
 }
 
@@ -3107,8 +3103,9 @@ read_baseclasses (struct stab_field_info *fip, const char **pp,
 
       newobj->next = fip->list;
       fip->list = newobj;
-      FIELD_BITSIZE (newobj->field) = 0;	/* This should be an unpacked
-					   field!  */
+
+      /* This should be an unpacked field!  */
+      newobj->field.set_bitsize (0);
 
       STABS_CONTINUE (pp, objfile);
       switch (**pp)
@@ -3682,7 +3679,7 @@ read_enum_type (const char **pp, struct type *type,
 	  SYMBOL_TYPE (xsym) = type;
 	  type->field (n).set_name (xsym->linkage_name ());
 	  SET_FIELD_ENUMVAL (TYPE_FIELD (type, n), SYMBOL_VALUE (xsym));
-	  TYPE_FIELD_BITSIZE (type, n) = 0;
+	  type->field (n).set_bitsize (0);
 	}
       if (syms == osyms)
 	break;
