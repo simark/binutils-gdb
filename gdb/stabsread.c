@@ -3162,7 +3162,7 @@ read_baseclasses (struct stab_field_info *fip, const char **pp,
          field's name.  */
 
       newobj->field.set_type (read_type (pp, objfile));
-      newobj->field.set_name (TYPE_NAME (newobj->field.type ()));
+      newobj->field.set_name (newobj->field.type ()->name ());
 
       /* Skip trailing ';' and bump count of number of fields seen.  */
       if (**pp == ';')

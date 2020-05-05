@@ -862,7 +862,7 @@ struct main_type
      because we can allocate the space for a type before
      we know what to put in it.  */
 
-  union 
+  union
   {
     struct field *fields;
 
@@ -874,7 +874,7 @@ struct main_type
        complex type.  */
     struct type *complex_type;
 
-  } flds_bnds;
+  } m_flds_bnds;
 
   /* * Slot to point to additional language-specific fields of this
      type.  */
@@ -933,19 +933,19 @@ struct type
   /* Get the fields array of this type.  */
   struct field *fields () const
   {
-    return this->main_type->flds_bnds.fields;
+    return this->main_type->m_flds_bnds.fields;
   }
 
   /* Set the fields array of this type.  */
   void set_fields (struct field *fields)
   {
-    this->main_type->flds_bnds.fields = fields;
+    this->main_type->m_flds_bnds.fields = fields;
   }
 
   /* Get a reference to the field at index N.  */
   struct field &field (unsigned int n) const
   {
-    return this->main_type->flds_bnds.fields[n];
+    return this->main_type->m_flds_bnds.fields[n];
   }
 
   /* Get the index type of this type.  */
@@ -963,6 +963,18 @@ struct type
   struct type *baseclass (unsigned int n)
   {
     return this->field (n).type ();
+  }
+
+  /* Get the range bounds of this type.  */
+  struct range_bounds *range_bounds () const
+  {
+    return this->main_type->m_flds_bnds.bounds;
+  }
+
+  /* Set the range bounds of this type.  */
+  void set_range_bounds (struct range_bounds *bounds)
+  {
+    this->main_type->m_flds_bnds.bounds = bounds;
   }
 
   /* * Return the dynamic property of the requested KIND from this type's
@@ -1518,7 +1530,7 @@ extern bool set_type_align (struct type *, ULONGEST);
 #define TYPE_FIELDS(thistype) (thistype)->fields ()
 
 #define TYPE_INDEX_TYPE(type) ((type)->index_type ())
-#define TYPE_RANGE_DATA(thistype) TYPE_MAIN_TYPE(thistype)->flds_bnds.bounds
+#define TYPE_RANGE_DATA(thistype) ((thistype)->range_bounds ())
 #define TYPE_LOW_BOUND(range_type) \
   TYPE_RANGE_DATA(range_type)->low.data.const_val
 #define TYPE_HIGH_BOUND(range_type) \

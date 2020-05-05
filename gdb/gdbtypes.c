@@ -935,15 +935,17 @@ create_range_type (struct type *result_type, struct type *index_type,
   else
     TYPE_LENGTH (result_type) = TYPE_LENGTH (check_typedef (index_type));
 
-  TYPE_RANGE_DATA (result_type) = (struct range_bounds *)
-    TYPE_ZALLOC (result_type, sizeof (struct range_bounds));
-  TYPE_RANGE_DATA (result_type)->low = *low_bound;
-  TYPE_RANGE_DATA (result_type)->high = *high_bound;
-  TYPE_RANGE_DATA (result_type)->bias = bias;
+  range_bounds *bounds
+    = (struct range_bounds *) TYPE_ZALLOC (result_type, sizeof (range_bounds));
+  bounds->low = *low_bound;
+  bounds->high = *high_bound;
+  bounds->bias = bias;
 
   /* Initialize the stride to be a constant, the value will already be zero
      thanks to the use of TYPE_ZALLOC above.  */
-  TYPE_RANGE_DATA (result_type)->stride.kind = PROP_CONST;
+  bounds->stride.kind = PROP_CONST;
+
+  result_type->set_range_bounds (bounds);
 
   if (low_bound->kind == PROP_CONST && low_bound->data.const_val >= 0)
     TYPE_UNSIGNED (result_type) = 1;
@@ -3292,7 +3294,7 @@ init_complex_type (const char *name, struct type *target_type)
   gdb_assert (TYPE_CODE (target_type) == TYPE_CODE_INT
 	      || TYPE_CODE (target_type) == TYPE_CODE_FLT);
 
-  if (TYPE_MAIN_TYPE (target_type)->flds_bnds.complex_type == nullptr)
+  if (TYPE_MAIN_TYPE (target_type)->m_flds_bnds.complex_type == nullptr)
     {
       if (name == nullptr)
 	{
@@ -3311,10 +3313,10 @@ init_complex_type (const char *name, struct type *target_type)
       t->set_name (name);
 
       TYPE_TARGET_TYPE (t) = target_type;
-      TYPE_MAIN_TYPE (target_type)->flds_bnds.complex_type = t;
+      TYPE_MAIN_TYPE (target_type)->m_flds_bnds.complex_type = t;
     }
 
-  return TYPE_MAIN_TYPE (target_type)->flds_bnds.complex_type;
+  return TYPE_MAIN_TYPE (target_type)->m_flds_bnds.complex_type;
 }
 
 /* Allocate a TYPE_CODE_PTR type structure associated with OBJFILE.
@@ -5348,9 +5350,12 @@ copy_type_recursive (struct objfile *objfile,
   /* For range types, copy the bounds information.  */
   if (TYPE_CODE (type) == TYPE_CODE_RANGE)
     {
-      TYPE_RANGE_DATA (new_type) = (struct range_bounds *)
-        TYPE_ALLOC (new_type, sizeof (struct range_bounds));
-      *TYPE_RANGE_DATA (new_type) = *TYPE_RANGE_DATA (type);
+      range_bounds *bounds
+        = ((struct range_bounds *) TYPE_ALLOC
+	   (new_type, sizeof (struct range_bounds)));
+
+      *bounds = *type->range_bounds ();
+      new_type->set_range_bounds (bounds);
     }
 
   if (type->main_type->dyn_prop_list != NULL)
