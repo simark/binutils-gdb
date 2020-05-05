@@ -1126,6 +1126,36 @@ struct type
     this->main_type->m_target_type = target_type;
   }
 
+  struct type *pointer_type () const
+  {
+    return this->m_pointer_type;
+  }
+
+  void set_pointer_type (struct type *pointer_type)
+  {
+    this->m_pointer_type = pointer_type;
+  }
+
+  struct type *reference_type () const
+  {
+    return this->m_reference_type;
+  }
+
+  void set_reference_type (struct type *reference_type)
+  {
+    this->m_reference_type = reference_type;
+  }
+
+  struct type *rvalue_reference_type () const
+  {
+    return this->m_rvalue_reference_type;
+  }
+
+  void set_rvalue_reference_type (struct type *rvalue_reference_type)
+  {
+    this->m_rvalue_reference_type = rvalue_reference_type;
+  }
+
   /* Get the index type of this type.  */
   struct type *index_type () const
   {
@@ -1346,15 +1376,15 @@ struct type
      The debugger may add the address of such a type
      if it has to construct one later.  */
 
-  struct type *pointer_type;
+  struct type *m_pointer_type;
 
   /* * C++: also need a reference type.  */
 
-  struct type *reference_type;
+  struct type *m_reference_type;
 
   /* * A C++ rvalue reference type added in C++11. */
 
-  struct type *rvalue_reference_type;
+  struct type *m_rvalue_reference_type;
 
   /* * Variant chain.  This points to a type that differs from this
      one only in qualifiers and length.  Currently, the possible
@@ -1886,9 +1916,9 @@ extern void allocate_gnat_aux_type (struct type *);
 #define TYPE_MAIN_TYPE(thistype) (thistype)->main_type
 #define TYPE_NAME(thistype) ((thistype)->name ())
 #define TYPE_TARGET_TYPE(thistype) ((thistype)->target_type ())
-#define TYPE_POINTER_TYPE(thistype) (thistype)->pointer_type
-#define TYPE_REFERENCE_TYPE(thistype) (thistype)->reference_type
-#define TYPE_RVALUE_REFERENCE_TYPE(thistype) (thistype)->rvalue_reference_type
+#define TYPE_POINTER_TYPE(thistype) ((thistype)->pointer_type ())
+#define TYPE_REFERENCE_TYPE(thistype) ((thistype)->reference_type ())
+#define TYPE_RVALUE_REFERENCE_TYPE(thistype) ((thistype)->rvalue_reference_type ())
 #define TYPE_CHAIN(thistype) (thistype)->chain
 /* * Note that if thistype is a TYPEDEF type, you have to call check_typedef.
    But check_typedef does set the TYPE_LENGTH of the TYPEDEF type,

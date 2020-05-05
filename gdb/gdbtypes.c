@@ -361,7 +361,7 @@ make_pointer_type (struct type *type, struct type **typeptr)
     }
 
   ntype->set_target_type (type);
-  TYPE_POINTER_TYPE (type) = ntype;
+  type->set_pointer_type (ntype);
 
   /* FIXME!  Assumes the machine has only one representation for pointers!  */
 
@@ -405,7 +405,6 @@ make_reference_type (struct type *type, struct type **typeptr,
                       enum type_code refcode)
 {
   struct type *ntype;	/* New type */
-  struct type **reftype;
   struct type *chain;
 
   gdb_assert (refcode == TYPE_CODE_REF || refcode == TYPE_CODE_RVALUE_REF);
@@ -440,10 +439,11 @@ make_reference_type (struct type *type, struct type **typeptr,
     }
 
   ntype->set_target_type (type);
-  reftype = (refcode == TYPE_CODE_REF ? &TYPE_REFERENCE_TYPE (type)
-             : &TYPE_RVALUE_REFERENCE_TYPE (type));
 
-  *reftype = ntype;
+  if (refcode == TYPE_CODE_REF)
+    type->set_reference_type (ntype);
+  else
+    type->set_rvalue_reference_type (ntype);
 
   /* FIXME!  Assume the machine has only one representation for
      references, and that it matches the (only) representation for
@@ -452,8 +452,6 @@ make_reference_type (struct type *type, struct type **typeptr,
   TYPE_LENGTH (ntype) =
     gdbarch_ptr_bit (get_type_arch (type)) / TARGET_CHAR_BIT;
   ntype->set_code (refcode);
-
-  *reftype = ntype;
 
   /* Update the length of all the other variants of this type.  */
   chain = TYPE_CHAIN (ntype);
@@ -650,8 +648,8 @@ make_qualified_type (struct type *type, type_instance_flags new_flags,
 
   /* Pointers or references to the original type are not relevant to
      the new type.  */
-  TYPE_POINTER_TYPE (ntype) = (struct type *) 0;
-  TYPE_REFERENCE_TYPE (ntype) = (struct type *) 0;
+  ntype->set_pointer_type (nullptr);
+  ntype->set_reference_type (nullptr);
 
   /* Chain the new qualified type to the old type.  */
   TYPE_CHAIN (ntype) = TYPE_CHAIN (type);
