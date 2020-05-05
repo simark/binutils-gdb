@@ -738,6 +738,11 @@ struct field
     this->m_bitsize = bitsize;
   }
 
+  bool is_packed () const
+  {
+    return this->bitsize () != 0;
+  }
+
   union field_location m_loc;
 
   /* * For a function or member type, this is 1 if the argument is
@@ -1874,7 +1879,7 @@ extern void set_type_vptr_basetype (struct type *, struct type *);
 #define TYPE_FIELD_DWARF_BLOCK(thistype, n) FIELD_DWARF_BLOCK (TYPE_FIELD (thistype, n))
 #define TYPE_FIELD_ARTIFICIAL(thistype, n) FIELD_ARTIFICIAL(TYPE_FIELD(thistype,n))
 #define TYPE_FIELD_BITSIZE(thistype, n) FIELD_BITSIZE(TYPE_FIELD(thistype,n))
-#define TYPE_FIELD_PACKED(thistype, n) (FIELD_BITSIZE(TYPE_FIELD(thistype,n))!=0)
+#define TYPE_FIELD_PACKED(thistype, n) ((thistype)->field (n).is_packed ())
 
 #define TYPE_FIELD_PRIVATE_BITS(thistype) \
   TYPE_CPLUS_SPECIFIC(thistype)->private_field_bits
