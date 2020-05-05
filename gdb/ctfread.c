@@ -604,7 +604,7 @@ read_structure_type (struct ctf_context *ccp, ctf_id_t tid)
   else
     type->set_code (TYPE_CODE_STRUCT);
 
-  TYPE_LENGTH (type) = ctf_type_size (fp, tid);
+  type->set_length (ctf_type_size (fp, tid));
   set_type_align (type, ctf_type_align (fp, tid));
 
   return set_tid_type (ccp->of, tid, type);
@@ -683,7 +683,7 @@ read_enum_type (struct ctf_context *ccp, ctf_id_t tid)
     type->set_name (obstack_strdup (&of->objfile_obstack, name.get ()));
 
   type->set_code (TYPE_CODE_ENUM);
-  TYPE_LENGTH (type) = ctf_type_size (fp, tid);
+  type->set_length (ctf_type_size (fp, tid));
   ctf_func_type_info (fp, tid, &fi);
   target_type = get_tid_type (of, fi.ctc_return);
   type->set_target_type (target_type);
@@ -771,11 +771,11 @@ read_array_type (struct ctf_context *ccp, ctf_id_t tid)
   if (ar.ctr_nelems <= 1)	/* Check if undefined upper bound.  */
     {
       range_type->range_bounds ()->set_high_undefined ();
-      TYPE_LENGTH (type) = 0;
+      type->set_length (0);
       type->set_target_is_stub (true);
     }
   else
-    TYPE_LENGTH (type) = ctf_type_size (fp, tid);
+    type->set_length (ctf_type_size (fp, tid));
 
   set_type_align (type, ctf_type_align (fp, tid));
 

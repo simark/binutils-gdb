@@ -1023,9 +1023,9 @@ rust_composite_type (struct type *original,
     }
 
   if (i > 0)
-    TYPE_LENGTH (result)
-      = (TYPE_FIELD_BITPOS (result, i - 1) / TARGET_CHAR_BIT +
-	 TYPE_LENGTH (TYPE_FIELD_TYPE (result, i - 1)));
+    result->set_length
+      ((TYPE_FIELD_BITPOS (result, i - 1) / TARGET_CHAR_BIT +
+	TYPE_LENGTH (TYPE_FIELD_TYPE (result, i - 1))));
   return result;
 }
 

@@ -15337,19 +15337,19 @@ read_structure_type (struct die_info *die, struct dwarf2_cu *cu)
   if (attr != nullptr)
     {
       if (attr->form_is_constant ())
-        TYPE_LENGTH (type) = DW_UNSND (attr);
+        type->set_length (DW_UNSND (attr));
       else
 	{
 	  struct dynamic_prop prop;
 	  if (attr_to_dynamic_prop (attr, die, cu, &prop,
 				    cu->per_cu->addr_type ()))
 	    type->add_dyn_prop (DYN_PROP_BYTE_SIZE, prop);
-          TYPE_LENGTH (type) = 0;
+          type->set_length (0);
 	}
     }
   else
     {
-      TYPE_LENGTH (type) = 0;
+      type->set_length (0);
     }
 
   maybe_set_alignment (cu, die, type);
@@ -15893,11 +15893,11 @@ read_enumeration_type (struct die_info *die, struct dwarf2_cu *cu)
   attr = dwarf2_attr (die, DW_AT_byte_size, cu);
   if (attr != nullptr)
     {
-      TYPE_LENGTH (type) = DW_UNSND (attr);
+      type->set_length (DW_UNSND (attr));
     }
   else
     {
-      TYPE_LENGTH (type) = 0;
+      type->set_length (0);
     }
 
   maybe_set_alignment (cu, die, type);
@@ -15925,7 +15925,7 @@ read_enumeration_type (struct die_info *die, struct dwarf2_cu *cu)
       type->set_is_unsigned (underlying_type->is_unsigned ());
 
       if (TYPE_LENGTH (type) == 0)
-	TYPE_LENGTH (type) = TYPE_LENGTH (underlying_type);
+	type->set_length (TYPE_LENGTH (underlying_type));
 
       if (TYPE_RAW_ALIGN (type) == 0
 	  && TYPE_RAW_ALIGN (underlying_type) != 0)
@@ -16122,7 +16122,7 @@ read_array_type (struct die_info *die, struct dwarf2_cu *cu)
   if (attr != nullptr)
     {
       if (DW_UNSND (attr) >= TYPE_LENGTH (type))
-	TYPE_LENGTH (type) = DW_UNSND (attr);
+	type->set_length (DW_UNSND (attr));
       else
 	complaint (_("DW_AT_byte_size for array type smaller "
 		     "than the total size of elements"));
@@ -16196,7 +16196,7 @@ read_set_type (struct die_info *die, struct dwarf2_cu *cu)
 
   attr = dwarf2_attr (die, DW_AT_byte_size, cu);
   if (attr != nullptr)
-    TYPE_LENGTH (set_type) = DW_UNSND (attr);
+    set_type->set_length (DW_UNSND (attr));
 
   maybe_set_alignment (cu, die, set_type);
 
@@ -16599,7 +16599,7 @@ read_tag_pointer_type (struct die_info *die, struct dwarf2_cu *cu)
 	}
     }
 
-  TYPE_LENGTH (type) = byte_size;
+  type->set_length (byte_size);
   set_type_align (type, alignment);
   return set_die_type (die, type, cu);
 }
@@ -16664,11 +16664,11 @@ read_tag_reference_type (struct die_info *die, struct dwarf2_cu *cu,
   attr = dwarf2_attr (die, DW_AT_byte_size, cu);
   if (attr != nullptr)
     {
-      TYPE_LENGTH (type) = DW_UNSND (attr);
+      type->set_length (DW_UNSND (attr));
     }
   else
     {
-      TYPE_LENGTH (type) = cu_header->addr_size;
+      type->set_length (cu_header->addr_size);
     }
   maybe_set_alignment (cu, die, type);
   return set_die_type (die, type, cu);
@@ -17706,7 +17706,7 @@ read_subrange_type (struct die_info *die, struct dwarf2_cu *cu)
 
   attr = dwarf2_attr (die, DW_AT_byte_size, cu);
   if (attr != nullptr)
-    TYPE_LENGTH (range_type) = DW_UNSND (attr);
+    range_type->set_length (DW_UNSND (attr));
 
   maybe_set_alignment (cu, die, range_type);
 

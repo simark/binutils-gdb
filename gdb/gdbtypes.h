@@ -1086,6 +1086,16 @@ struct type
     this->main_type->m_name = name;
   }
 
+  ULONGEST length () const
+  {
+    return this->m_length;
+  }
+
+  void set_length (ULONGEST length)
+  {
+    this->m_length = length;
+  }
+
   /* Get the number of fields of this type.  */
   int num_fields () const
   {
@@ -1431,7 +1441,7 @@ struct type
      type_length_units function should be used in order to get the length
      expressed in target addressable memory units.  */
 
-  ULONGEST length;
+  ULONGEST m_length;
 
   /* * Core type, shared by a group of qualified types.  */
 
@@ -1924,7 +1934,7 @@ extern void allocate_gnat_aux_type (struct type *);
    But check_typedef does set the TYPE_LENGTH of the TYPEDEF type,
    so you only have to call check_typedef once.  Since allocate_value
    calls check_typedef, TYPE_LENGTH (VALUE_TYPE (X)) is safe.  */
-#define TYPE_LENGTH(thistype) (thistype)->length
+#define TYPE_LENGTH(thistype) ((thistype)->length ())
 
 /* * Return the alignment of the type in target addressable memory
    units, or 0 if no alignment was specified.  */

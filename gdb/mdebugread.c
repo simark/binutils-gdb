@@ -1016,7 +1016,7 @@ parse_symbol (SYMR *sh, union aux_ext *ax, char *ext_sh, int bigend,
 				 name, (char *) NULL));
 
 	t->set_code (type_code);
-	TYPE_LENGTH (t) = sh->value;
+	t->set_length (sh->value);
 	t->set_num_fields (nfields);
 	f = ((struct field *) TYPE_ALLOC (t, nfields * sizeof (struct field)));
 	t->set_fields (f);
@@ -1037,7 +1037,7 @@ parse_symbol (SYMR *sh, union aux_ext *ax, char *ext_sh, int bigend,
 	       that too.  */
 	    if (TYPE_LENGTH (t) == TYPE_NFIELDS (t)
 		|| TYPE_LENGTH (t) == 0)
-	      TYPE_LENGTH (t) = gdbarch_int_bit (gdbarch) / HOST_CHAR_BIT;
+	      t->set_length (gdbarch_int_bit (gdbarch) / HOST_CHAR_BIT);
 	    for (ext_tsym = ext_sh + external_sym_size;
 		 ;
 		 ext_tsym += external_sym_size)

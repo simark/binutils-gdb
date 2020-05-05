@@ -1109,8 +1109,8 @@ build_opencl_types (struct gdbarch *gdbarch)
   types[opencl_primitive_type_##TYPE##3] \
     = init_vector_type (types[opencl_primitive_type_##TYPE], 3); \
   types[opencl_primitive_type_##TYPE##3]->set_name (OCL_STRING(TYPE ## 3)); \
-  TYPE_LENGTH (types[opencl_primitive_type_##TYPE##3]) \
-    = 4 * TYPE_LENGTH (types[opencl_primitive_type_##TYPE]); \
+  types[opencl_primitive_type_##TYPE##3]->set_length \
+    (4 * TYPE_LENGTH (types[opencl_primitive_type_##TYPE])); \
   types[opencl_primitive_type_##TYPE##4] \
     = init_vector_type (types[opencl_primitive_type_##TYPE], 4); \
   types[opencl_primitive_type_##TYPE##4]->set_name (OCL_STRING(TYPE ## 4)); \

@@ -365,8 +365,8 @@ make_pointer_type (struct type *type, struct type **typeptr)
 
   /* FIXME!  Assumes the machine has only one representation for pointers!  */
 
-  TYPE_LENGTH (ntype)
-    = gdbarch_ptr_bit (get_type_arch (type)) / TARGET_CHAR_BIT;
+  ntype->set_length
+    (gdbarch_ptr_bit (get_type_arch (type)) / TARGET_CHAR_BIT);
   ntype->set_code (TYPE_CODE_PTR);
 
   /* Mark pointers as unsigned.  The target converts between pointers
@@ -378,7 +378,7 @@ make_pointer_type (struct type *type, struct type **typeptr)
   chain = TYPE_CHAIN (ntype);
   while (chain != ntype)
     {
-      TYPE_LENGTH (chain) = TYPE_LENGTH (ntype);
+      chain->set_length (TYPE_LENGTH (ntype));
       chain = TYPE_CHAIN (chain);
     }
 
@@ -449,15 +449,15 @@ make_reference_type (struct type *type, struct type **typeptr,
      references, and that it matches the (only) representation for
      pointers!  */
 
-  TYPE_LENGTH (ntype) =
-    gdbarch_ptr_bit (get_type_arch (type)) / TARGET_CHAR_BIT;
+  ntype->set_length
+    (gdbarch_ptr_bit (get_type_arch (type)) / TARGET_CHAR_BIT);
   ntype->set_code (refcode);
 
   /* Update the length of all the other variants of this type.  */
   chain = TYPE_CHAIN (ntype);
   while (chain != ntype)
     {
-      TYPE_LENGTH (chain) = TYPE_LENGTH (ntype);
+      chain->set_length (TYPE_LENGTH (ntype));
       chain = TYPE_CHAIN (chain);
     }
 
@@ -513,7 +513,7 @@ make_function_type (struct type *type, struct type **typeptr)
 
   ntype->set_target_type (type);
 
-  TYPE_LENGTH (ntype) = 1;
+  ntype->set_length (1);
   ntype->set_code (TYPE_CODE_FUNC);
 
   INIT_FUNC_SPECIFIC (ntype);
@@ -659,7 +659,7 @@ make_qualified_type (struct type *type, type_instance_flags new_flags,
   ntype->set_instance_flags (new_flags);
 
   /* Set length of new type to that of the original type.  */
-  TYPE_LENGTH (ntype) = TYPE_LENGTH (type);
+  ntype->set_length (TYPE_LENGTH (type));
 
   return ntype;
 }
@@ -813,7 +813,7 @@ replace_type (struct type *ntype, struct type *type)
 	 call replace_type().  */
       gdb_assert (TYPE_ADDRESS_CLASS_ALL (chain) == 0);
 
-      TYPE_LENGTH (chain) = TYPE_LENGTH (type);
+      chain->set_length (TYPE_LENGTH (type));
       chain = TYPE_CHAIN (chain);
     }
   while (ntype != chain);
@@ -863,7 +863,7 @@ allocate_stub_method (struct type *type)
 
   mtype = alloc_type_copy (type);
   mtype->set_code (TYPE_CODE_METHOD);
-  TYPE_LENGTH (mtype) = 1;
+  mtype->set_length (1);
   mtype->set_is_stub (true);
   mtype->set_target_type (type);
   /* TYPE_SELF_TYPE (mtype) = unknown yet */
@@ -934,7 +934,7 @@ create_range_type (struct type *result_type, struct type *index_type,
   if (TYPE_STUB (index_type))
     result_type->set_target_is_stub (true);
   else
-    TYPE_LENGTH (result_type) = TYPE_LENGTH (check_typedef (index_type));
+    result_type->set_length (TYPE_LENGTH (check_typedef (index_type)));
 
   range_bounds *bounds
     = (struct range_bounds *) TYPE_ZALLOC (result_type, sizeof (range_bounds));
@@ -1212,7 +1212,7 @@ update_static_array_size (struct type *type)
 	 empty arrays with the high_bound being smaller than the low_bound.
 	 In such cases, the array length should be zero.  */
       if (high_bound < low_bound)
-	TYPE_LENGTH (type) = 0;
+	type->set_length (0);
       else if (stride != 0)
 	{
 	  /* Ensure that the type length is always positive, even in the
@@ -1222,12 +1222,12 @@ update_static_array_size (struct type *type)
 	     special, it's still just a single element array) so do
 	     consider that case when touching this code.  */
 	  LONGEST element_count = std::abs (high_bound - low_bound + 1);
-	  TYPE_LENGTH (type)
-	    = ((std::abs (stride) * element_count) + 7) / 8;
+	  type->set_length
+	    (((std::abs (stride) * element_count) + 7) / 8);
 	}
       else
-	TYPE_LENGTH (type) =
-	  TYPE_LENGTH (element_type) * (high_bound - low_bound + 1);
+	type->set_length
+	  (TYPE_LENGTH (element_type) * (high_bound - low_bound + 1));
 
       return true;
     }
@@ -1298,7 +1298,7 @@ create_array_type_with_stride (struct type *result_type,
          to trust TYPE_LENGTH in this case, setting the size to zero
          allows us to avoid allocating objects of random sizes in case
          we accidently do.  */
-      TYPE_LENGTH (result_type) = 0;
+      result_type->set_length (0);
     }
 
   /* TYPE_TARGET_STUB will take care of zero length arrays.  */
@@ -1391,9 +1391,11 @@ create_set_type (struct type *result_type, struct type *domain_type)
 
       if (get_discrete_bounds (domain_type, &low_bound, &high_bound) < 0)
 	low_bound = high_bound = 0;
+
       bit_length = high_bound - low_bound + 1;
-      TYPE_LENGTH (result_type)
-	= (bit_length + TARGET_CHAR_BIT - 1) / TARGET_CHAR_BIT;
+      result_type->set_length
+	((bit_length + TARGET_CHAR_BIT - 1) / TARGET_CHAR_BIT);
+
       if (low_bound >= 0)
 	result_type->set_is_unsigned (true);
     }
@@ -1514,8 +1516,8 @@ smash_to_memberptr_type (struct type *type, struct type *self_type,
   set_type_self_type (type, self_type);
   /* Assume that a data member pointer is the same size as a normal
      pointer.  */
-  TYPE_LENGTH (type)
-    = gdbarch_ptr_bit (get_type_arch (to_type)) / TARGET_CHAR_BIT;
+  type->set_length
+    (gdbarch_ptr_bit (get_type_arch (to_type)) / TARGET_CHAR_BIT);
 }
 
 /* Smash TYPE to be a type of pointer to methods type TO_TYPE.
@@ -1531,7 +1533,7 @@ smash_to_methodptr_type (struct type *type, struct type *to_type)
   type->set_code (TYPE_CODE_METHODPTR);
   type->set_target_type (to_type);
   set_type_self_type (type, TYPE_SELF_TYPE (to_type));
-  TYPE_LENGTH (type) = cplus_method_ptr_size (to_type);
+  type->set_length (cplus_method_ptr_size (to_type));
 }
 
 /* Smash TYPE to be a type of method of SELF_TYPE with type TO_TYPE.
@@ -1554,7 +1556,7 @@ smash_to_method_type (struct type *type, struct type *self_type,
   type->set_num_fields (nargs);
   if (varargs)
     type->set_has_varargs (true);
-  TYPE_LENGTH (type) = 1;	/* In practice, this is never needed.  */
+  type->set_length (1);	/* In practice, this is never needed.  */
 }
 
 /* A wrapper of TYPE_NAME which calls error if the type is anonymous.
@@ -2260,7 +2262,7 @@ resolve_dynamic_union (struct type *type,
 	max_len = TYPE_LENGTH (t);
     }
 
-  TYPE_LENGTH (resolved_type) = max_len;
+  resolved_type->set_length (max_len);
   return resolved_type;
 }
 
@@ -2531,8 +2533,8 @@ resolve_dynamic_struct (struct type *type,
      type length of the structure.  If we adapt it, we run into problems
      when calculating the element offset for arrays of structs.  */
   if (current_language->la_language != language_fortran)
-    TYPE_LENGTH (resolved_type)
-      = (resolved_type_bit_length + TARGET_CHAR_BIT - 1) / TARGET_CHAR_BIT;
+    resolved_type->set_length
+      ((resolved_type_bit_length + TARGET_CHAR_BIT - 1) / TARGET_CHAR_BIT);
 
   /* The Ada language uses this field as a cache for static fixed types: reset
      it as RESOLVED_TYPE must have its own static fixed type.  */
@@ -2622,7 +2624,7 @@ resolve_dynamic_type_internal (struct type *type,
 
   if (type_length.has_value ())
     {
-      TYPE_LENGTH (resolved_type) = *type_length;
+      resolved_type->set_length (*type_length);
       resolved_type->remove_dyn_prop (DYN_PROP_BYTE_SIZE);
     }
 
@@ -2889,7 +2891,7 @@ check_typedef (struct type *type)
 	}
       else if (TYPE_CODE (type) == TYPE_CODE_RANGE)
 	{
-	  TYPE_LENGTH (type) = TYPE_LENGTH (target_type);
+	  type->set_length (TYPE_LENGTH (target_type));
 	  type->set_target_is_stub (false);
 	}
       else if (TYPE_CODE (type) == TYPE_CODE_ARRAY
@@ -2900,7 +2902,7 @@ check_typedef (struct type *type)
   type = make_qualified_type (type, instance_flags, NULL);
 
   /* Cache TYPE_LENGTH for future use.  */
-  TYPE_LENGTH (orig_type) = TYPE_LENGTH (type);
+  orig_type->set_length (TYPE_LENGTH (type));
 
   return type;
 }
@@ -3176,7 +3178,7 @@ init_type (struct objfile *objfile, enum type_code code, int bit,
   type = alloc_type (objfile);
   set_type_code (type, code);
   gdb_assert ((bit % TARGET_CHAR_BIT) == 0);
-  TYPE_LENGTH (type) = bit / TARGET_CHAR_BIT;
+  type->set_length (bit / TARGET_CHAR_BIT);
   type->set_name (name);
 
   return type;
@@ -3309,7 +3311,7 @@ init_complex_type (const char *name, struct type *target_type)
 
       t = alloc_type_copy (target_type);
       set_type_code (t, TYPE_CODE_COMPLEX);
-      TYPE_LENGTH (t) = 2 * TYPE_LENGTH (target_type);
+      t->set_length (2 * TYPE_LENGTH (target_type));
       t->set_name (name);
 
       t->set_target_type (target_type);
@@ -5298,7 +5300,7 @@ copy_type_recursive (struct objfile *objfile,
     new_type->set_name (xstrdup (TYPE_NAME (type)));
 
   TYPE_INSTANCE_FLAGS (new_type) = TYPE_INSTANCE_FLAGS (type);
-  TYPE_LENGTH (new_type) = TYPE_LENGTH (type);
+  new_type->set_length (TYPE_LENGTH (type));
 
   /* Copy the fields.  */
   if (TYPE_NFIELDS (type))
@@ -5421,7 +5423,7 @@ copy_type (const struct type *type)
 
   new_type = alloc_type_copy (type);
   TYPE_INSTANCE_FLAGS (new_type) = TYPE_INSTANCE_FLAGS (type);
-  TYPE_LENGTH (new_type) = TYPE_LENGTH (type);
+  new_type->set_length (TYPE_LENGTH (type));
   memcpy (TYPE_MAIN_TYPE (new_type), TYPE_MAIN_TYPE (type),
 	  sizeof (struct main_type));
   if (type->main_type->dyn_prop_list != NULL)
@@ -5446,7 +5448,7 @@ arch_type (struct gdbarch *gdbarch,
   type = alloc_type_arch (gdbarch);
   set_type_code (type, code);
   gdb_assert ((bit % TARGET_CHAR_BIT) == 0);
-  TYPE_LENGTH (type) = bit / TARGET_CHAR_BIT;
+  type->set_length (bit / TARGET_CHAR_BIT);
 
   if (name)
     type->set_name (gdbarch_obstack_strdup (gdbarch, name));
@@ -5658,11 +5660,11 @@ append_composite_type_field_aligned (struct type *t, const char *name,
   if (TYPE_CODE (t) == TYPE_CODE_UNION)
     {
       if (TYPE_LENGTH (t) < TYPE_LENGTH (field))
-	TYPE_LENGTH (t) = TYPE_LENGTH (field);
+	t->set_length (TYPE_LENGTH (field));
     }
   else if (TYPE_CODE (t) == TYPE_CODE_STRUCT)
     {
-      TYPE_LENGTH (t) = TYPE_LENGTH (t) + TYPE_LENGTH (field);
+      t->set_length (TYPE_LENGTH (t) + TYPE_LENGTH (field));
       if (TYPE_NFIELDS (t) > 1)
 	{
 	  SET_FIELD_BITPOS (f[0],
@@ -5680,7 +5682,8 @@ append_composite_type_field_aligned (struct type *t, const char *name,
 	      if (left)
 		{
 		  SET_FIELD_BITPOS (f[0], FIELD_BITPOS (f[0]) + (alignment - left));
-		  TYPE_LENGTH (t) += (alignment - left) / TARGET_CHAR_BIT;
+		  t->set_length
+		    (t->length () + (alignment - left) / TARGET_CHAR_BIT);
 		}
 	    }
 	}
