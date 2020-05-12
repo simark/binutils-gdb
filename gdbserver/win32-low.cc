@@ -693,7 +693,8 @@ win32_process_target::create_inferior (const char *program,
   DWORD flags;
   PROCESS_INFORMATION pi;
   DWORD err;
-  std::string str_program_args = stringify_argv (program_args);
+  std::string str_program_args
+    = construct_inferior_arguments (program_args.size (), program_args.data ());
   char *args = (char *) str_program_args.c_str ();
 
   /* win32_wait needs to know we're not attaching.  */

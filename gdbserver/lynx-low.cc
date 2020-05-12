@@ -253,7 +253,8 @@ lynx_process_target::create_inferior (const char *program,
 				      const std::vector<char *> &program_args)
 {
   int pid;
-  std::string str_program_args = stringify_argv (program_args);
+  std::string str_program_args
+    = construct_inferior_arguments (program_args.size (), program_args.data ());
 
   lynx_debug ("create_inferior ()");
 
