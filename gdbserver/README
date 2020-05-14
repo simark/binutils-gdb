@@ -79,10 +79,8 @@ command, otherwise you may get an error that looks something like
 
 Building GDBserver:
 
-The supported targets as of November 2006 are:
+The supported targets are:
 	arm-*-linux*
-	bfin-*-uclinux
-	bfin-*-linux-uclibc
 	crisv32-*-linux*
 	cris-*-linux*
 	i[34567]86-*-cygwin*
