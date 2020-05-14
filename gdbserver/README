@@ -85,7 +85,6 @@ The supported targets are:
 	i[34567]86-*-linux*
 	i[34567]86-*-mingw*
 	ia64-*-linux*
-	m32r*-*-linux*
 	m68*-*-linux*
 	m68*-*-uclinux*
 	mips*64*-*-linux*
