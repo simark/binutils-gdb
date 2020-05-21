@@ -2123,8 +2123,12 @@ void
 target_commit_resume (void)
 {
   if (defer_target_commit_resume)
-    return;
+    {
+      current_top_target ()->pending_commit_resume = true;
+      return;
+    }
 
+  current_top_target ()->pending_commit_resume = false;
   current_top_target ()->commit_resume ();
 }
 

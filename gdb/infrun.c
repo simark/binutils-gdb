@@ -90,7 +90,7 @@ static void insert_longjmp_resume_breakpoint (struct gdbarch *, CORE_ADDR);
 
 static int maybe_software_singlestep (struct gdbarch *gdbarch, CORE_ADDR pc);
 
-static void resume (gdb_signal sig);
+static void resume (gdb_signal sig, bool commit = true);
 
 /* Asynchronous signal handler registered as event loop source for
    when we have pending events ready to be passed to the core.  */
@@ -1875,7 +1875,8 @@ reset_ecs (struct execution_control_state *ecs, struct thread_info *tp)
   ecs->ptid = tp->ptid;
 }
 
-static void keep_going_pass_signal (struct execution_control_state *ecs);
+static void keep_going_pass_signal (struct execution_control_state *ecs,
+				    bool commit = true);
 static void prepare_to_wait (struct execution_control_state *ecs);
 static int keep_going_stepped_thread (struct thread_info *tp);
 static step_over_what thread_still_needs_step_over (struct thread_info *tp);
@@ -2178,7 +2179,8 @@ internal_resume_ptid (int user_step)
    bookkeeping.  */
 
 static void
-do_target_resume (ptid_t resume_ptid, int step, enum gdb_signal sig)
+do_target_resume (ptid_t resume_ptid, int step, enum gdb_signal sig,
+		  bool commit)
 {
   struct thread_info *tp = inferior_thread ();
 
@@ -2218,7 +2220,10 @@ do_target_resume (ptid_t resume_ptid, int step, enum gdb_signal sig)
 
   target_resume (resume_ptid, step, sig);
 
-  target_commit_resume ();
+  if (commit)
+    target_commit_resume ();
+  else
+    current_top_target ()->pending_commit_resume = true;
 }
 
 /* Resume the inferior.  SIG is the signal to give the inferior
@@ -2226,7 +2231,7 @@ do_target_resume (ptid_t resume_ptid, int step, enum gdb_signal sig)
    call 'resume', which handles exceptions.  */
 
 static void
-resume_1 (enum gdb_signal sig)
+resume_1 (enum gdb_signal sig, bool commit)
 {
   struct regcache *regcache = get_current_regcache ();
   struct gdbarch *gdbarch = regcache->arch ();
@@ -2389,7 +2394,7 @@ resume_1 (enum gdb_signal sig)
 	      insert_breakpoints ();
 
 	      resume_ptid = internal_resume_ptid (user_step);
-	      do_target_resume (resume_ptid, 0, GDB_SIGNAL_0);
+	      do_target_resume (resume_ptid, 0, GDB_SIGNAL_0, commit);
 	      tp->resumed = 1;
 	      return;
 	    }
@@ -2596,7 +2601,7 @@ resume_1 (enum gdb_signal sig)
       gdb_assert (pc_in_thread_step_range (pc, tp));
     }
 
-  do_target_resume (resume_ptid, step, sig);
+  do_target_resume (resume_ptid, step, sig, commit);
   tp->resumed = 1;
 }
 
@@ -2605,11 +2610,11 @@ resume_1 (enum gdb_signal sig)
    rolls back state on error.  */
 
 static void
-resume (gdb_signal sig)
+resume (gdb_signal sig, bool commit)
 {
   try
     {
-      resume_1 (sig);
+      resume_1 (sig, commit);
     }
   catch (const gdb_exception &ex)
     {
@@ -3119,7 +3124,8 @@ static void check_exception_resume (struct execution_control_state *,
 
 static void end_stepping_range (struct execution_control_state *ecs);
 static void stop_waiting (struct execution_control_state *ecs);
-static void keep_going (struct execution_control_state *ecs);
+static void keep_going (struct execution_control_state *ecs,
+			bool commit = true);
 static void process_event_stop_test (struct execution_control_state *ecs);
 static int switch_back_to_stepped_thread (struct execution_control_state *ecs);
 
@@ -3680,8 +3686,6 @@ fetch_inferior_event (void *client_data)
   int cmd_done = 0;
   ptid_t waiton_ptid = minus_one_ptid;
 
-  memset (ecs, 0, sizeof (*ecs));
-
   /* Events are always processed with the main UI as current UI.  This
      way, warnings, debug output, etc. are always consistently sent to
      the main console.  */
@@ -3722,78 +3726,89 @@ fetch_inferior_event (void *client_data)
       = make_scoped_restore (&execution_direction,
 			     target_execution_direction ());
 
-    ecs->ptid = do_target_wait (waiton_ptid, &ecs->ws,
-				target_can_async_p () ? TARGET_WNOHANG : 0);
-
-    if (debug_infrun)
-      print_target_wait_results (waiton_ptid, ecs->ptid, &ecs->ws);
-
-    /* If an error happens while handling the event, propagate GDB's
-       knowledge of the executing state to the frontend/user running
-       state.  */
-    ptid_t finish_ptid = !target_is_non_stop_p () ? minus_one_ptid : ecs->ptid;
-    scoped_finish_thread_state finish_state (finish_ptid);
-
-    /* Get executed before scoped_restore_current_thread above to apply
-       still for the thread which has thrown the exception.  */
-    auto defer_bpstat_clear
-      = make_scope_exit (bpstat_clear_actions);
-    auto defer_delete_threads
-      = make_scope_exit (delete_just_stopped_threads_infrun_breakpoints);
-
-    /* Now figure out what to do with the result of the result.  */
-    handle_inferior_event (ecs);
-
-    if (!ecs->wait_some_more)
+    int iter = 0;
+    while (true)
       {
-	struct inferior *inf = find_inferior_ptid (ecs->ptid);
-	int should_stop = 1;
-	struct thread_info *thr = ecs->event_thread;
+	memset (ecs, 0, sizeof (*ecs));
 
-	delete_just_stopped_threads_infrun_breakpoints ();
+	ecs->ptid = do_target_wait (waiton_ptid, &ecs->ws,
+				    target_can_async_p () ? TARGET_WNOHANG : 0);
 
-	if (thr != NULL)
+	if (debug_infrun)
+	  print_target_wait_results (waiton_ptid, ecs->ptid, &ecs->ws);
+
+	/* If an error happens while handling the event, propagate GDB's
+	   knowledge of the executing state to the frontend/user running
+	   state.  */
+	ptid_t finish_ptid = !target_is_non_stop_p () ? minus_one_ptid : ecs->ptid;
+	scoped_finish_thread_state finish_state (finish_ptid);
+
+	/* Get executed before scoped_restore_current_thread above to apply
+	   still for the thread which has thrown the exception.  */
+	auto defer_bpstat_clear
+	  = make_scope_exit (bpstat_clear_actions);
+	auto defer_delete_threads
+	  = make_scope_exit (delete_just_stopped_threads_infrun_breakpoints);
+
+	/* Now figure out what to do with the result of the result.  */
+	handle_inferior_event (ecs);
+
+	if (!ecs->wait_some_more)
 	  {
-	    struct thread_fsm *thread_fsm = thr->thread_fsm;
+	    struct inferior *inf = find_inferior_ptid (ecs->ptid);
+	    int should_stop = 1;
+	    struct thread_info *thr = ecs->event_thread;
 
-	    if (thread_fsm != NULL)
-	      should_stop = thread_fsm->should_stop (thr);
-	  }
+	    delete_just_stopped_threads_infrun_breakpoints ();
 
-	if (!should_stop)
-	  {
-	    keep_going (ecs);
-	  }
-	else
-	  {
-	    bool should_notify_stop = true;
-	    int proceeded = 0;
-
-	    clean_up_just_stopped_threads_fsms (ecs);
-
-	    if (thr != NULL && thr->thread_fsm != NULL)
-	      should_notify_stop = thr->thread_fsm->should_notify_stop ();
-
-	    if (should_notify_stop)
+	    if (thr != NULL)
 	      {
-		/* We may not find an inferior if this was a process exit.  */
-		if (inf == NULL || inf->control.stop_soon == NO_STOP_QUIETLY)
-		  proceeded = normal_stop ();
+		struct thread_fsm *thread_fsm = thr->thread_fsm;
+
+		if (thread_fsm != NULL)
+		  should_stop = thread_fsm->should_stop (thr);
 	      }
 
-	    if (!proceeded)
+	    if (!should_stop)
 	      {
-		inferior_event_handler (INF_EXEC_COMPLETE, NULL);
-		cmd_done = 1;
+		keep_going (ecs);
+	      }
+	    else
+	      {
+		bool should_notify_stop = true;
+		int proceeded = 0;
+
+		clean_up_just_stopped_threads_fsms (ecs);
+
+		if (thr != NULL && thr->thread_fsm != NULL)
+		  should_notify_stop = thr->thread_fsm->should_notify_stop ();
+
+		if (should_notify_stop)
+		  {
+		    /* We may not find an inferior if this was a process exit.  */
+		    if (inf == NULL || inf->control.stop_soon == NO_STOP_QUIETLY)
+		      proceeded = normal_stop ();
+		  }
+
+		if (!proceeded)
+		  {
+		    inferior_event_handler (INF_EXEC_COMPLETE, NULL);
+		    cmd_done = 1;
+		  }
 	      }
 	  }
+
+	defer_delete_threads.release ();
+	defer_bpstat_clear.release ();
+
+	/* No error, don't finish the thread states yet.  */
+	finish_state.release ();
+
+	iter++;
       }
 
-    defer_delete_threads.release ();
-    defer_bpstat_clear.release ();
-
-    /* No error, don't finish the thread states yet.  */
-    finish_state.release ();
+    if (current_top_target ()->pending_commit_resume)
+      current_top_target ()->commit_resume ();
 
     /* This scope is used to ensure that readline callbacks are
        reinstalled here.  */
@@ -6238,7 +6253,7 @@ process_event_stop_test (struct execution_control_state *ecs)
       if (debug_infrun)
 	 fprintf_unfiltered (gdb_stdlog, "infrun: no stepping, continue\n");
       /* Likewise if we aren't even stepping.  */
-      keep_going (ecs);
+      keep_going (ecs, false /* don't commit */);
       return;
     }
 
@@ -7016,7 +7031,7 @@ keep_going_stepped_thread (struct thread_info *tp)
 
       tp->resumed = 1;
       resume_ptid = internal_resume_ptid (tp->control.stepping_command);
-      do_target_resume (resume_ptid, 0, GDB_SIGNAL_0);
+      do_target_resume (resume_ptid, 0, GDB_SIGNAL_0, true);
     }
   else
     {
@@ -7437,7 +7452,7 @@ stop_waiting (struct execution_control_state *ecs)
    signal is set to nopass.  */
 
 static void
-keep_going_pass_signal (struct execution_control_state *ecs)
+keep_going_pass_signal (struct execution_control_state *ecs, bool commit)
 {
   gdb_assert (ecs->event_thread->ptid == inferior_ptid);
   gdb_assert (!ecs->event_thread->resumed);
@@ -7556,7 +7571,7 @@ keep_going_pass_signal (struct execution_control_state *ecs)
 
       ecs->event_thread->control.trap_expected = (remove_bp || remove_wps);
 
-      resume (ecs->event_thread->suspend.stop_signal);
+      resume (ecs->event_thread->suspend.stop_signal, commit);
     }
 
   prepare_to_wait (ecs);
@@ -7567,7 +7582,7 @@ keep_going_pass_signal (struct execution_control_state *ecs)
    resuming part; waiting for the next event is done elsewhere.  */
 
 static void
-keep_going (struct execution_control_state *ecs)
+keep_going (struct execution_control_state *ecs, bool commit)
 {
   if (ecs->event_thread->control.trap_expected
       && ecs->event_thread->suspend.stop_signal == GDB_SIGNAL_TRAP)
@@ -7575,7 +7590,7 @@ keep_going (struct execution_control_state *ecs)
 
   if (!signal_program[ecs->event_thread->suspend.stop_signal])
     ecs->event_thread->suspend.stop_signal = GDB_SIGNAL_0;
-  keep_going_pass_signal (ecs);
+  keep_going_pass_signal (ecs, commit);
 }
 
 /* This function normally comes after a resume, before

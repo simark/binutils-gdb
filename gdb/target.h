@@ -429,6 +429,8 @@ struct target_info
 
 struct target_ops
   {
+    bool pending_commit_resume = false;
+
     /* Return this target's stratum.  */
     virtual strata stratum () const = 0;
 
