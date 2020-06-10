@@ -18,6 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
+#include "displaced-stepping.h"
 #include "gdbcore.h"
 #include "frame.h"
 #include "value.h"
@@ -820,6 +821,20 @@ i386_linux_displaced_step_copy_insn (struct gdbarch *gdbarch,
   return closure_;
 }
 
+static displaced_step_prepare_status
+i386_displaced_step_prepare (gdbarch *arch, thread_info *thread)
+{
+  gdb_assert (false);
+  return DISPLACED_STEP_PREPARE_STATUS_OK;
+}
+
+static displaced_step_finish_status
+i386_displaced_step_finish (gdbarch *arch, thread_info *thread, gdb_signal sig)
+{
+  gdb_assert (false);
+  return DISPLACED_STEP_FINISH_STATUS_OK;
+}
+
 static void
 i386_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
@@ -1064,8 +1079,8 @@ i386_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_displaced_step_copy_insn (gdbarch,
                                         i386_linux_displaced_step_copy_insn);
   set_gdbarch_displaced_step_fixup (gdbarch, i386_displaced_step_fixup);
-  set_gdbarch_displaced_step_location (gdbarch,
-                                       linux_displaced_step_location);
+  set_gdbarch_displaced_step_prepare (gdbarch, i386_displaced_step_prepare);
+  set_gdbarch_displaced_step_finish (gdbarch, i386_displaced_step_finish);
 
   /* Functions for 'catch syscall'.  */
   set_xml_syscall_file_name (gdbarch, XML_SYSCALL_FILENAME_I386);

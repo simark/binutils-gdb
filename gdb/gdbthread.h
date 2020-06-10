@@ -32,6 +32,7 @@ struct symtab;
 #include "gdbsupport/refcounted-object.h"
 #include "gdbsupport/common-gdbthread.h"
 #include "gdbsupport/forward-scope-exit.h"
+#include "displaced-stepping.h"
 
 struct inferior;
 
@@ -251,6 +252,9 @@ public:
   /* Mark this thread as running and notify observers.  */
   void set_running (bool running);
 
+  struct regcache *regcache ();
+  struct gdbarch *arch ();
+
   struct thread_info *next = NULL;
   ptid_t ptid;			/* "Actual process id";
 				    In fact, this may be overloaded with 
@@ -405,6 +409,8 @@ public:
      fields point to self.  */
   struct thread_info *step_over_prev = NULL;
   struct thread_info *step_over_next = NULL;
+
+  displaced_step_thread_state displaced_step_state;
 };
 
 /* A gdb::ref_ptr pointer to a thread_info.  */
@@ -721,18 +727,33 @@ extern bool value_in_thread_stack_temporaries (struct value *,
 
 extern void global_thread_step_over_chain_enqueue (struct thread_info *tp);
 
+/* Remove TP from step-over chain LIST_P.  */
+
+extern void thread_step_over_chain_remove (thread_info **list_p,
+					   thread_info *tp);
+
 /* Remove TP from the global pending step-over chain.  */
 
-extern void global_thread_step_over_chain_remove (struct thread_info *tp);
+extern void global_thread_step_over_chain_remove (thread_info *tp);
 
-/* Return the next thread in the global step-over chain.  NULL
-   if TP is the last entry in the chain.  */
+/* Return the next thread in the step-over chain whose head is CHAIN_HEAD.
+   Return NULL if TP is the last entry in the chain.  */
 
-extern struct thread_info *global_thread_step_over_chain_next (struct thread_info *tp);
+extern thread_info *thread_step_over_chain_next (thread_info *chain_head,
+						 thread_info *tp);
+
+/* Return the next thread in the global step-over chain.  Return NULL if TP is
+   the last entry in the chain.  */
+
+extern thread_info *global_thread_step_over_chain_next (thread_info *tp);
 
 /* Return true if TP is in any step-over chain.  */
 
 extern int thread_is_in_step_over_chain (struct thread_info *tp);
+
+/* Return the length of the the step over chain TP is in.  */
+
+extern int thread_step_over_chain_length (thread_info *tp);
 
 /* Cancel any ongoing execution command.  */
 

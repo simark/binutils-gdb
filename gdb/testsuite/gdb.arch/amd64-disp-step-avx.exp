@@ -93,7 +93,7 @@ proc disp_step_func { func } {
     set_regs $value
 
     gdb_test "continue" \
-	"Continuing.*Breakpoint.*, ${test_end_label} ().*" \
+	"Continuing.*displaced: prepared successfully.*Breakpoint.*, ${test_end_label} ().*" \
 	"continue to ${test_end_label}"
 
     verify_regs $value

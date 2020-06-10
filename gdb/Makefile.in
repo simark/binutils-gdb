@@ -1019,6 +1019,7 @@ COMMON_SFILES = \
 	dictionary.c \
 	disasm.c \
 	disasm-selftests.c \
+	displaced-stepping.c \
 	dummy-frame.c \
 	dwarf-index-cache.c \
 	dwarf-index-common.c \
