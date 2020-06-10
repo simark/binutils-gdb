@@ -1246,7 +1246,7 @@ follow_exec (ptid_t ptid, const char *exec_file_target)
    to avoid starvation, otherwise, we could e.g., find ourselves
    constantly stepping the same couple threads past their breakpoints
    over and over, if the single-step finish fast enough.  */
-struct thread_info *step_over_queue_head;
+struct thread_info *global_thread_step_over_chain_head;
 
 /* Bit flags indicating what the thread needs to step over.  */
 
@@ -1688,7 +1688,7 @@ displaced_step_prepare_throw (thread_info *tp)
 			    "displaced: deferring step of %s\n",
 			    target_pid_to_str (tp->ptid).c_str ());
 
-      thread_step_over_chain_enqueue (tp);
+      global_thread_step_over_chain_enqueue (tp);
       return 0;
     }
   else
@@ -1958,7 +1958,7 @@ start_step_over (void)
   if (step_over_info_valid_p ())
     return 0;
 
-  for (tp = step_over_queue_head; tp != NULL; tp = next)
+  for (tp = global_thread_step_over_chain_head; tp != NULL; tp = next)
     {
       struct execution_control_state ecss;
       struct execution_control_state *ecs = &ecss;
@@ -1967,7 +1967,7 @@ start_step_over (void)
 
       gdb_assert (!tp->stop_requested);
 
-      next = thread_step_over_chain_next (tp);
+      next = global_thread_step_over_chain_next (tp);
 
       /* If this inferior already has a displaced step in process,
 	 don't start a new one.  */
@@ -1985,9 +1985,9 @@ start_step_over (void)
       if (must_be_in_line && displaced_step_in_progress_any_inferior ())
 	return 0;
 
-      thread_step_over_chain_remove (tp);
+      global_thread_step_over_chain_remove (tp);
 
-      if (step_over_queue_head == NULL)
+      if (global_thread_step_over_chain_head == NULL)
 	{
 	  if (debug_infrun)
 	    fprintf_unfiltered (gdb_stdlog,
@@ -2980,14 +2980,14 @@ proceed (CORE_ADDR addr, enum gdb_signal siggnal)
 				"infrun: need to step-over [%s] first\n",
 				target_pid_to_str (tp->ptid).c_str ());
 
-	  thread_step_over_chain_enqueue (tp);
+	  global_thread_step_over_chain_enqueue (tp);
 	}
     }
 
   /* Enqueue the current thread last, so that we move all other
      threads over their breakpoints first.  */
   if (cur_thr->stepping_over_breakpoint)
-    thread_step_over_chain_enqueue (cur_thr);
+    global_thread_step_over_chain_enqueue (cur_thr);
 
   /* If the thread isn't started, we'll still need to set its prev_pc,
      so that switch_back_to_stepped_thread knows the thread hasn't
@@ -3162,7 +3162,7 @@ infrun_thread_stop_requested (ptid_t ptid)
 	 start_step_over doesn't try to resume them
 	 automatically.  */
       if (thread_is_in_step_over_chain (tp))
-	thread_step_over_chain_remove (tp);
+	global_thread_step_over_chain_remove (tp);
 
       /* If the thread is stopped, but the user/frontend doesn't
 	 know about that yet, queue a pending event, as if the
@@ -4442,7 +4442,7 @@ stop_all_threads (void)
 					      target_pid_to_str (t->ptid).c_str ());
 			}
 		      t->control.trap_expected = 0;
-		      thread_step_over_chain_enqueue (t);
+		      global_thread_step_over_chain_enqueue (t);
 		    }
 		}
 	      else
@@ -4473,7 +4473,7 @@ stop_all_threads (void)
 		    {
 		      /* Add it back to the step-over queue.  */
 		      t->control.trap_expected = 0;
-		      thread_step_over_chain_enqueue (t);
+		      global_thread_step_over_chain_enqueue (t);
 		    }
 
 		  regcache = get_thread_regcache (t);
@@ -7492,7 +7492,7 @@ keep_going_pass_signal (struct execution_control_state *ecs)
 				"infrun: step-over already in progress: "
 				"step-over for %s deferred\n",
 				target_pid_to_str (tp->ptid).c_str ());
-	  thread_step_over_chain_enqueue (tp);
+	  global_thread_step_over_chain_enqueue (tp);
 	}
       else
 	{
