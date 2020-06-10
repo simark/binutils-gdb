@@ -426,13 +426,13 @@ extern void
 				     void *cb_data,
 				     const struct regcache *regcache);
 
-typedef buf_displaced_step_closure i386_displaced_step_closure;
+typedef buf_displaced_step_copy_insn_closure i386_displaced_step_copy_insn_closure;
 
-extern displaced_step_closure_up i386_displaced_step_copy_insn
+extern displaced_step_copy_insn_closure_up i386_displaced_step_copy_insn
   (struct gdbarch *gdbarch, CORE_ADDR from, CORE_ADDR to,
    struct regcache *regs);
 extern void i386_displaced_step_fixup (struct gdbarch *gdbarch,
-				       struct displaced_step_closure *closure,
+				       struct displaced_step_copy_insn_closure *closure,
 				       CORE_ADDR from, CORE_ADDR to,
 				       struct regcache *regs);
 

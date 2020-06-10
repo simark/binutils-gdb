@@ -40,7 +40,7 @@
 
 int
 default_displaced_step_hw_singlestep (struct gdbarch *gdbarch,
-				      struct displaced_step_closure *closure)
+				      struct displaced_step_copy_insn_closure *closure)
 {
   return !gdbarch_software_single_step_p (gdbarch);
 }
