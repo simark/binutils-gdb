@@ -263,19 +263,16 @@ struct jit_program_space_data
 
 static program_space_key<jit_program_space_data> jit_program_space_key;
 
-/* Per-objfile structure recording the addresses in the program space.
-   This object serves two purposes: for ordinary objfiles, it may
-   cache some symbols related to the JIT interface; and for
-   JIT-created objfiles, it holds some information about the
-   jit_code_entry.  */
+/* An objfile that defines the required symbols of the JIT interface has an
+   instance of this type attached to it.  */
 
-struct jit_objfile_data
+struct jiter_objfile_data
 {
-  jit_objfile_data (struct objfile *objfile)
+  jiter_objfile_data (struct objfile *objfile)
     : objfile (objfile)
   {}
 
-  ~jit_objfile_data ()
+  ~jiter_objfile_data ()
   {
     /* Free the data allocated in the jit_program_space_data slot.  */
     if (this->register_code != NULL)
@@ -301,24 +298,36 @@ struct jit_objfile_data
 
   /* Symbol for __jit_debug_descriptor.  */
   struct minimal_symbol *descriptor = nullptr;
-
-  /* Address of struct jit_code_entry in this objfile.  This is only
-     non-zero for objfiles that represent code created by the JIT.  */
-  CORE_ADDR addr = 0;
 };
 
-static const struct objfile_key<jit_objfile_data> jit_per_objfile;
+static const struct objfile_key<jiter_objfile_data> jit_per_jiter_objfile;
 
-/* Fetch the jit_objfile_data associated with OBJF.  If no data exists
+/* An objfile that is the product of JIT compilation and was registered using
+   the JIT interface has an instance of this type attached to it.  */
+
+struct jited_objfile_data
+{
+  jited_objfile_data (CORE_ADDR addr)
+    : addr (addr)
+  {}
+
+  /* Address of struct jit_code_entry for this objfile.  This is only
+     non-zero for objfiles that represent code created by the JIT.  */
+  CORE_ADDR addr;
+};
+
+static const struct objfile_key<jited_objfile_data> jit_per_jited_objfile;
+
+/* Fetch the jiter_objfile_data associated with OBJF.  If no data exists
    yet, make a new structure and attach it.  */
 
-static struct jit_objfile_data *
-get_jit_objfile_data (struct objfile *objf)
+static jiter_objfile_data *
+get_jiter_objfile_data (struct objfile *objf)
 {
-  jit_objfile_data *data = jit_per_objfile.get (objf);
+  jiter_objfile_data *data = jit_per_jiter_objfile.get (objf);
 
   if (data == nullptr)
-    data = jit_per_objfile.emplace (objf, objf);
+    data = jit_per_jiter_objfile.emplace (objf, objf);
 
   return data;
 }
@@ -329,10 +338,9 @@ get_jit_objfile_data (struct objfile *objf)
 static void
 add_objfile_entry (struct objfile *objfile, CORE_ADDR entry)
 {
-  struct jit_objfile_data *objf_data;
+  gdb_assert (jit_per_jited_objfile.get (objfile) == nullptr);
 
-  objf_data = get_jit_objfile_data (objfile);
-  objf_data->addr = entry;
+  jit_per_jited_objfile.emplace (objfile, jited_objfile_data (entry));
 }
 
 /* Return jit_program_space_data for current program space.  Allocate
@@ -363,11 +371,11 @@ jit_read_descriptor (struct gdbarch *gdbarch,
   int desc_size;
   gdb_byte *desc_buf;
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  struct jit_objfile_data *objf_data;
 
   if (ps_data->objfile == NULL)
     return 0;
-  objf_data = get_jit_objfile_data (ps_data->objfile);
+
+  jiter_objfile_data *objf_data = get_jiter_objfile_data (ps_data->objfile);
   if (objf_data->descriptor == NULL)
     return 0;
 
@@ -936,7 +944,7 @@ jit_find_objf_with_entry_addr (CORE_ADDR entry_addr)
 {
   for (objfile *objf : current_program_space->objfiles ())
     {
-      jit_objfile_data *objf_data = jit_per_objfile.get (objf);
+      jited_objfile_data *objf_data = jit_per_jited_objfile.get (objf);
 
       if (objf_data != NULL && objf_data->addr == entry_addr)
 	return objf;
@@ -977,7 +985,7 @@ jit_breakpoint_re_set_internal (struct gdbarch *gdbarch,
 {
   struct bound_minimal_symbol reg_symbol;
   struct bound_minimal_symbol desc_symbol;
-  struct jit_objfile_data *objf_data;
+  jiter_objfile_data *objf_data;
   CORE_ADDR addr;
 
   if (ps_data->objfile == NULL)
@@ -995,14 +1003,14 @@ jit_breakpoint_re_set_internal (struct gdbarch *gdbarch,
 	  || BMSYMBOL_VALUE_ADDRESS (desc_symbol) == 0)
 	return 1;
 
-      objf_data = get_jit_objfile_data (reg_symbol.objfile);
+      objf_data = get_jiter_objfile_data (reg_symbol.objfile);
       objf_data->register_code = reg_symbol.minsym;
       objf_data->descriptor = desc_symbol.minsym;
 
       ps_data->objfile = reg_symbol.objfile;
     }
   else
-    objf_data = get_jit_objfile_data (ps_data->objfile);
+    objf_data = get_jiter_objfile_data (ps_data->objfile);
 
   addr = MSYMBOL_VALUE_ADDRESS (ps_data->objfile, objf_data->register_code);
 
@@ -1340,7 +1348,7 @@ jit_inferior_exit_hook (struct inferior *inf)
 {
   for (objfile *objf : current_program_space->objfiles_safe ())
     {
-      jit_objfile_data *objf_data = jit_per_objfile.get (objf);
+      jited_objfile_data *objf_data = jit_per_jited_objfile.get (objf);
 
       if (objf_data != NULL && objf_data->addr != 0)
 	objf->unlink ();
