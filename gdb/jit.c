@@ -274,20 +274,17 @@ struct jiter_objfile_data
 
   ~jiter_objfile_data ()
   {
-    /* Free the data allocated in the jit_program_space_data slot.  */
-    if (this->register_code != NULL)
-      {
-	struct jit_program_space_data *ps_data;
+      jit_program_space_data *ps_data
+	= jit_program_space_key.get (this->objfile->pspace);
 
-	ps_data = jit_program_space_key.get (this->objfile->pspace);
-	if (ps_data != NULL && ps_data->objfile == this->objfile)
-	  {
-	    ps_data->objfile = NULL;
-	    if (ps_data->jit_breakpoint != NULL)
-	      delete_breakpoint (ps_data->jit_breakpoint);
-	    ps_data->cached_code_address = 0;
-	  }
-      }
+      gdb_assert (ps_data != nullptr);
+      gdb_assert (ps_data->objfile == this->objfile);
+
+      ps_data->objfile = NULL;
+      if (ps_data->jit_breakpoint != NULL)
+	delete_breakpoint (ps_data->jit_breakpoint);
+
+      ps_data->cached_code_address = 0;
   }
 
   /* Back-link to the objfile. */
@@ -374,10 +371,8 @@ jit_read_descriptor (gdbarch *gdbarch,
 
   gdb_assert (jiter != nullptr);
 
-  jiter_objfile_data *objf_data = get_jiter_objfile_data (jiter);
-
-  if (objf_data->descriptor == NULL)
-    return false;
+  jiter_objfile_data *objf_data = jit_per_jiter_objfile.get (jiter);
+  gdb_assert (objf_data != nullptr);
 
   if (jit_debug)
     fprintf_unfiltered (gdb_stdlog,
