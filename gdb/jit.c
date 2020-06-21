@@ -244,18 +244,11 @@ jit_reader_unload_command (const char *args, int from_tty)
 
 struct jiter_objfile_data
 {
-  jiter_objfile_data (struct objfile *objfile)
-    : objfile (objfile)
-  {}
-
   ~jiter_objfile_data ()
   {
     if (this->jit_breakpoint != nullptr)
       delete_breakpoint (this->jit_breakpoint);
   }
-
-  /* Back-link to the objfile. */
-  struct objfile *objfile;
 
   /* Symbol for __jit_debug_register_code.  */
   struct minimal_symbol *register_code = nullptr;
@@ -299,7 +292,7 @@ get_jiter_objfile_data (struct objfile *objf)
   jiter_objfile_data *data = jit_per_jiter_objfile.get (objf);
 
   if (data == nullptr)
-    data = jit_per_jiter_objfile.emplace (objf, objf);
+    data = jit_per_jiter_objfile.emplace (objf);
 
   return data;
 }
