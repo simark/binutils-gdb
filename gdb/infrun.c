@@ -3963,7 +3963,15 @@ fetch_inferior_event ()
 			     target_execution_direction ());
 
     if (!do_target_wait (minus_one_ptid, ecs, TARGET_WNOHANG))
-      return;
+      {
+	if (debug_infrun)
+	  fprintf_unfiltered (gdb_stdlog, "do_target_wait returned false\n");
+
+	return;
+      }
+
+    if (debug_infrun)
+      fprintf_unfiltered (gdb_stdlog, "do_target_wait returned true\n");
 
     gdb_assert (ecs->ws.kind != TARGET_WAITKIND_IGNORE);
 
