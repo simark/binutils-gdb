@@ -3846,6 +3846,13 @@ all_uis_on_sync_execution_starting (void)
 void
 fetch_inferior_event ()
 {
+  static FILE *f = nullptr;
+
+  if (!f) {
+      f = fopen ("/tmp/log", "w");
+      gdb_assert (f);
+  }
+
   struct execution_control_state ecss;
   struct execution_control_state *ecs = &ecss;
   int cmd_done = 0;
@@ -3890,7 +3897,13 @@ fetch_inferior_event ()
 			     target_execution_direction ());
 
     if (!do_target_wait (minus_one_ptid, ecs, TARGET_WNOHANG))
-      return;
+      {
+	fprintf (f, ">>> do_target_wait returned false\n");
+	return;
+      }
+
+    fprintf (f, ">>> do_target_wait returned true: %s\n",
+	     target_waitstatus_to_string (&ecs->ws).c_str ());
 
     gdb_assert (ecs->ws.kind != TARGET_WAITKIND_IGNORE);
 
