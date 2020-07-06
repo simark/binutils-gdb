@@ -3962,11 +3962,20 @@ fetch_inferior_event ()
       = make_scoped_restore (&execution_direction,
 			     target_execution_direction ());
 
+    /* Hold the resume commands until we are done consuming all immediately
+       available target events.  */
+    static gdb::optional<scoped_restore_tmpl<int>> restore_defer_commit_resume;
+    if (!restore_defer_commit_resume.has_value ())
+      restore_defer_commit_resume.emplace (make_scoped_defer_target_commit_resume ());
+
     if (!do_target_wait (minus_one_ptid, ecs, TARGET_WNOHANG))
       {
 	if (debug_infrun)
 	  fprintf_unfiltered (gdb_stdlog, "do_target_wait returned false\n");
 
+	/* No more events to process, let the resume commands free.  */
+	restore_defer_commit_resume.reset ();
+	commit_resume_all_targets();
 	return;
       }
 
@@ -4066,6 +4075,8 @@ fetch_inferior_event ()
 
     /* No error, don't finish the thread states yet.  */
     finish_state.release ();
+
+    mark_infrun_async_event_handler ();
 
     /* This scope is used to ensure that readline callbacks are
        reinstalled here.  */
