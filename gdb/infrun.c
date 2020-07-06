@@ -3896,17 +3896,19 @@ fetch_inferior_event ()
       = make_scoped_restore (&execution_direction,
 			     target_execution_direction ());
 
-    //static gdb::optional<scoped_restore_tmpl<int>> restore_defer_commit_resume;
-    //if (!restore_defer_commit_resume.has_value ())
-    //  restore_defer_commit_resume.emplace (make_scoped_defer_target_commit_resume ());
+    static gdb::optional<scoped_restore_tmpl<int>> restore_defer_commit_resume;
+    if (!restore_defer_commit_resume.has_value ())
+      restore_defer_commit_resume.emplace (make_scoped_defer_target_commit_resume ());
 
     if (!do_target_wait (minus_one_ptid, ecs, TARGET_WNOHANG))
       {
-	fprintf (f, ">>> do_target_wait returned false\n");
+	fprintf_unfiltered (gdb_stdlog, ">>> do_target_wait returned false\n");
+	restore_defer_commit_resume.reset ();
+	commit_resume_all_targets();
 	return;
       }
 
-    fprintf (f, ">>> do_target_wait returned true: %s\n",
+    fprintf_unfiltered (gdb_stdlog, ">>> do_target_wait returned true: %s\n",
 	     target_waitstatus_to_string (&ecs->ws).c_str ());
 
     gdb_assert (ecs->ws.kind != TARGET_WAITKIND_IGNORE);
