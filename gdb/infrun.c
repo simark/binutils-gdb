@@ -3601,6 +3601,16 @@ do_target_wait_1 (inferior *inf, ptid_t ptid,
   return event_ptid;
 }
 
+static bool
+threads_are_resumed_pending_p (inferior *inf)
+{
+  for (thread_info *tp : inf->non_exited_threads ())
+    if (tp->resumed && tp->suspend.waitstatus_pending_p)
+      return true;
+
+  return false;
+}
+
 /* Wrapper for target_wait that first checks whether threads have
    pending statuses to report before actually asking the target for
    more events.  Polls for events from all inferiors/targets.  */
@@ -3619,6 +3629,7 @@ do_target_wait (ptid_t wait_ptid, execution_control_state *ecs, int options)
   auto inferior_matches = [&wait_ptid] (inferior *inf)
     {
       return (inf->process_target () != NULL
+	      && (inf->process_target ()->is_async_p () || threads_are_resumed_pending_p (inf))
 	      && ptid_t (inf->pid).matches (wait_ptid));
     };
 
@@ -4843,8 +4854,14 @@ stop_all_threads (void)
 	  if (pass > 0)
 	    pass = -1;
 
+	  if (debug_infrun)
+	    fprintf_unfiltered (gdb_stdlog, "infrun: stop_all_threads %d waits needed\n", waits_needed);
+
 	  for (int i = 0; i < waits_needed; i++)
 	    {
+	      if (debug_infrun)
+		fprintf_unfiltered (gdb_stdlog, "infrun: stop_all_threads wait #%d\n", i);
+
 	      wait_one_event event = wait_one ();
 
 	      if (debug_infrun)

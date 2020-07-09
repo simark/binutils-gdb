@@ -6650,7 +6650,35 @@ remote_target::commit_resume ()
   vcont_builder.flush ();
 }
 
-
+struct stop_reply : public notif_event
+{
+  ~stop_reply ();
+
+  /* The identifier of the thread about this event  */
+  ptid_t ptid;
+
+  /* The remote state this event is associated with.  When the remote
+     connection, represented by a remote_state object, is closed,
+     all the associated stop_reply events should be released.  */
+  struct remote_state *rs;
+
+  struct target_waitstatus ws;
+
+  /* The architecture associated with the expedited registers.  */
+  gdbarch *arch;
+
+  /* Expedited registers.  This makes remote debugging a bit more
+     efficient for those targets that provide critical registers as
+     part of their normal status mechanism (as another roundtrip to
+     fetch them is avoided).  */
+  std::vector<cached_reg_t> regcache;
+
+  enum target_stop_reason stop_reason;
+
+  CORE_ADDR watch_data_address;
+
+  int core;
+};
 
 /* Non-stop version of target_stop.  Uses `vCont;t' to stop a remote
    thread, all threads of a remote process, or all threads of all
@@ -6662,6 +6690,42 @@ remote_target::remote_stop_ns (ptid_t ptid)
   struct remote_state *rs = get_remote_state ();
   char *p = rs->buf.data ();
   char *endp = p + get_remote_packet_size ();
+
+  /* If any threads were resumed but not commit-resumed, generate events
+     as if they stopped.  */
+  for (thread_info *tp : all_non_exited_threads (this))
+    {
+      if (!tp->ptid.matches (ptid))
+	continue;
+
+      remote_thread_info *remote_thr = get_remote_thread_info (tp);
+
+      if (tp->executing && !remote_thr->vcont_resumed)
+	{
+	  /* This means the core resumed the thread, but we did not send a vcont
+	     to commit it yet.  */
+
+	  if (remote_debug)
+	    {
+	      fprintf_unfiltered (gdb_stdlog,
+				  "remote_stop_ns: Enqueueing phony stop reply for resumed but not commit-resumed thread (%d, %ld, %ld)\n",
+				  tp->ptid.pid(), tp->ptid.lwp (), tp->ptid.tid ());
+	    }
+
+	  stop_reply *sr = new stop_reply ();
+
+	  sr->ptid = tp->ptid;
+	  sr->rs = rs;
+	  sr->ws.kind = TARGET_WAITKIND_STOPPED;
+	  sr->ws.value.sig = GDB_SIGNAL_0;
+	  sr->arch = tp->inf->gdbarch;
+	  sr->stop_reason = TARGET_STOPPED_BY_NO_REASON;
+	  sr->watch_data_address = 0;
+	  sr->core = 0;
+
+	  this->push_stop_reply (sr);
+	}
+    }
 
   /* FIXME: This supports_vCont_probed check is a workaround until
      packet_support is per-connection.  */
@@ -6869,36 +6933,6 @@ remote_console_output (const char *msg)
     }
   gdb_stdtarg->flush ();
 }
-
-struct stop_reply : public notif_event
-{
-  ~stop_reply ();
-
-  /* The identifier of the thread about this event  */
-  ptid_t ptid;
-
-  /* The remote state this event is associated with.  When the remote
-     connection, represented by a remote_state object, is closed,
-     all the associated stop_reply events should be released.  */
-  struct remote_state *rs;
-
-  struct target_waitstatus ws;
-
-  /* The architecture associated with the expedited registers.  */
-  gdbarch *arch;
-
-  /* Expedited registers.  This makes remote debugging a bit more
-     efficient for those targets that provide critical registers as
-     part of their normal status mechanism (as another roundtrip to
-     fetch them is avoided).  */
-  std::vector<cached_reg_t> regcache;
-
-  enum target_stop_reason stop_reason;
-
-  CORE_ADDR watch_data_address;
-
-  int core;
-};
 
 /* Return the length of the stop reply queue.  */
 
