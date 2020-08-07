@@ -3857,12 +3857,13 @@ linux_proc_xfer_partial (enum target_object object,
 			 ULONGEST offset, LONGEST len, ULONGEST *xfered_len);
 
 enum target_xfer_status
-linux_nat_target::xfer_partial (enum target_object object,
+linux_nat_target::xfer_partial (const xfer_partial_ctx &ctx,
 				const char *annex, gdb_byte *readbuf,
 				const gdb_byte *writebuf,
 				ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
   enum target_xfer_status xfer;
+  target_object object = ctx.object ();
 
   if (object == TARGET_OBJECT_SIGNAL_INFO)
     return linux_xfer_siginfo (object, annex, readbuf, writebuf,
@@ -3875,7 +3876,7 @@ linux_nat_target::xfer_partial (enum target_object object,
     return TARGET_XFER_EOF;
 
   if (object == TARGET_OBJECT_AUXV)
-    return memory_xfer_auxv (this, object, annex, readbuf, writebuf,
+    return memory_xfer_auxv (this, ctx, annex, readbuf, writebuf,
 			     offset, len, xfered_len);
 
   if (object == TARGET_OBJECT_OSDATA)
@@ -3902,7 +3903,7 @@ linux_nat_target::xfer_partial (enum target_object object,
   if (xfer != TARGET_XFER_EOF)
     return xfer;
 
-  return inf_ptrace_target::xfer_partial (object, annex, readbuf, writebuf,
+  return inf_ptrace_target::xfer_partial (ctx, annex, readbuf, writebuf,
 					  offset, len, xfered_len);
 }
 

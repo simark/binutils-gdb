@@ -9053,7 +9053,8 @@ siginfo_value_read (struct value *v)
   validate_registers_access ();
 
   transferred =
-    target_read (current_top_target (), TARGET_OBJECT_SIGNAL_INFO,
+    target_read (current_top_target (),
+		 xfer_partial_ctx::make_signal_info (),
 		 NULL,
 		 value_contents_all_raw (v),
 		 value_offset (v),
@@ -9075,8 +9076,9 @@ siginfo_value_write (struct value *v, struct value *fromval)
      vice versa.  */
   validate_registers_access ();
 
+  auto ctx = xfer_partial_ctx::make_signal_info ();
   transferred = target_write (current_top_target (),
-			      TARGET_OBJECT_SIGNAL_INFO,
+			      ctx,
 			      NULL,
 			      value_contents_all_raw (fromval),
 			      value_offset (v),
@@ -9139,8 +9141,9 @@ public:
 
         siginfo_data.reset ((gdb_byte *) xmalloc (len));
 
-        if (target_read (current_top_target (), TARGET_OBJECT_SIGNAL_INFO, NULL,
-                         siginfo_data.get (), 0, len) != len)
+        if (target_read (current_top_target (),
+			 xfer_partial_ctx::make_signal_info (),
+			 NULL, siginfo_data.get (), 0, len) != len)
           {
             /* Errors ignored.  */
             siginfo_data.reset (nullptr);
@@ -9174,7 +9177,8 @@ public:
         struct type *type = gdbarch_get_siginfo_type (gdbarch);
 
         /* Errors ignored.  */
-        target_write (current_top_target (), TARGET_OBJECT_SIGNAL_INFO, NULL,
+        auto ctx = xfer_partial_ctx::make_signal_info ();
+        target_write (current_top_target (), ctx, NULL,
                       m_siginfo_data.get (), 0, TYPE_LENGTH (type));
       }
 

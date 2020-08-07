@@ -95,7 +95,7 @@ public:
   bool record_will_replay (ptid_t ptid, int dir) override;
   void record_stop_replaying () override;
 
-  enum target_xfer_status xfer_partial (enum target_object object,
+  enum target_xfer_status xfer_partial (const xfer_partial_ctx &ctx,
 					const char *annex,
 					gdb_byte *readbuf,
 					const gdb_byte *writebuf,
@@ -1426,7 +1426,7 @@ record_btrace_target::record_will_replay (ptid_t ptid, int dir)
 /* The xfer_partial method of target record-btrace.  */
 
 enum target_xfer_status
-record_btrace_target::xfer_partial (enum target_object object,
+record_btrace_target::xfer_partial (const xfer_partial_ctx &ctx,
 				    const char *annex, gdb_byte *readbuf,
 				    const gdb_byte *writebuf, ULONGEST offset,
 				    ULONGEST len, ULONGEST *xfered_len)
@@ -1436,7 +1436,7 @@ record_btrace_target::xfer_partial (enum target_object object,
       && !record_btrace_generating_corefile
       && record_is_replaying (inferior_ptid))
     {
-      switch (object)
+      switch (ctx.object ())
 	{
 	case TARGET_OBJECT_MEMORY:
 	  {
@@ -1470,7 +1470,7 @@ record_btrace_target::xfer_partial (enum target_object object,
     }
 
   /* Forward the request.  */
-  return this->beneath ()->xfer_partial (object, annex, readbuf, writebuf,
+  return this->beneath ()->xfer_partial (ctx, annex, readbuf, writebuf,
 					 offset, len, xfered_len);
 }
 

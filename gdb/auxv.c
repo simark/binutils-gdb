@@ -219,14 +219,14 @@ ld_so_xfer_auxv (gdb_byte *readbuf,
 
 enum target_xfer_status
 memory_xfer_auxv (struct target_ops *ops,
-		  enum target_object object,
+		  const xfer_partial_ctx &ctx,
 		  const char *annex,
 		  gdb_byte *readbuf,
 		  const gdb_byte *writebuf,
 		  ULONGEST offset,
 		  ULONGEST len, ULONGEST *xfered_len)
 {
-  gdb_assert (object == TARGET_OBJECT_AUXV);
+  gdb_assert (ctx.object () == TARGET_OBJECT_AUXV);
   gdb_assert (readbuf || writebuf);
 
    /* ld_so_xfer_auxv is the only function safe for virtual
@@ -365,7 +365,9 @@ get_auxv_inferior_data (struct target_ops *ops)
   if (info == NULL)
     {
       info = auxv_inferior_data.emplace (inf);
-      info->data = target_read_alloc (ops, TARGET_OBJECT_AUXV, NULL);
+
+      auto ctx = xfer_partial_ctx::make_auxv ();
+      info->data = target_read_alloc (ops, ctx, NULL);
     }
 
   return info;

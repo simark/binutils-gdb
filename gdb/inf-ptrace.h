@@ -50,7 +50,7 @@ struct inf_ptrace_target : public inf_child_target
 
   std::string pid_to_str (ptid_t) override;
 
-  enum target_xfer_status xfer_partial (enum target_object object,
+  enum target_xfer_status xfer_partial (const xfer_partial_ctx &ctx,
 					const char *annex,
 					gdb_byte *readbuf,
 					const gdb_byte *writebuf,

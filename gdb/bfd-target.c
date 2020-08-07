@@ -45,7 +45,7 @@ public:
   void close () override;
 
   target_xfer_status
-    xfer_partial (target_object object,
+    xfer_partial (const xfer_partial_ctx &ctx,
 		  const char *annex, gdb_byte *readbuf,
 		  const gdb_byte *writebuf,
 		  ULONGEST offset, ULONGEST len,
@@ -64,13 +64,13 @@ private:
 };
 
 target_xfer_status
-target_bfd::xfer_partial (target_object object,
+target_bfd::xfer_partial (const xfer_partial_ctx &ctx,
 			  const char *annex, gdb_byte *readbuf,
 			  const gdb_byte *writebuf,
 			  ULONGEST offset, ULONGEST len,
 			  ULONGEST *xfered_len)
 {
-  switch (object)
+  switch (ctx.object ())
     {
     case TARGET_OBJECT_MEMORY:
       {

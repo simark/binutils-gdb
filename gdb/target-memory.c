@@ -19,6 +19,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
+#include "inferior.h"
 #include "target.h"
 #include "memory-map.h"
 
@@ -331,12 +332,13 @@ target_write_memory_blocks (const std::vector<memory_write_request> &requests,
      have the opportunity to batch flash requests.  */
 
   /* Write regular blocks.  */
+  auto ctx = xfer_partial_ctx::make_memory (inferior_ptid);
   for (const memory_write_request &iter : regular)
     {
       LONGEST len;
 
       len = target_write_with_progress (current_top_target (),
-					TARGET_OBJECT_MEMORY, NULL,
+					ctx, NULL,
 					iter.data, iter.begin,
 					iter.end - iter.begin,
 					progress_cb, iter.baton);
@@ -354,12 +356,13 @@ target_write_memory_blocks (const std::vector<memory_write_request> &requests,
 	target_flash_erase (iter.begin, iter.end - iter.begin);
 
       /* Write flash data.  */
+      auto flash_ctx = xfer_partial_ctx::make_flash ();
       for (const memory_write_request &iter : flash)
 	{
 	  LONGEST len;
 
 	  len = target_write_with_progress (current_top_target (),
-					    TARGET_OBJECT_FLASH, NULL,
+					    flash_ctx, NULL,
 					    iter.data, iter.begin,
 					    iter.end - iter.begin,
 					    progress_cb, iter.baton);

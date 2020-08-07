@@ -1558,8 +1558,9 @@ avr_io_reg_read_command (const char *args, int from_tty)
   unsigned int val;
 
   /* Find out how many io registers the target has.  */
+  auto ctx = xfer_partial_ctx::make_avr ();
   gdb::optional<gdb::byte_vector> buf
-    = target_read_alloc (current_top_target (), TARGET_OBJECT_AVR, "avr.io_reg");
+    = target_read_alloc (current_top_target (), ctx, "avr.io_reg");
 
   if (!buf)
     {
@@ -1593,7 +1594,7 @@ avr_io_reg_read_command (const char *args, int from_tty)
         j = nreg - i;           /* last block is less than 8 registers */
 
       snprintf (query, sizeof (query) - 1, "avr.io_reg:%x,%x", i, j);
-      buf = target_read_alloc (current_top_target (), TARGET_OBJECT_AVR, query);
+      buf = target_read_alloc (current_top_target (), ctx, query);
 
       if (!buf)
         {

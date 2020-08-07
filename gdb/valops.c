@@ -944,9 +944,9 @@ read_value_memory (struct value *val, LONGEST bit_offset,
   ULONGEST xfered_total = 0;
   struct gdbarch *arch = get_value_arch (val);
   int unit_size = gdbarch_addressable_memory_unit_size (arch);
-  enum target_object object;
-
-  object = stack ? TARGET_OBJECT_STACK_MEMORY : TARGET_OBJECT_MEMORY;
+  auto ctx = (stack
+	      ? xfer_partial_ctx::make_stack_memory (inferior_ptid)
+	      : xfer_partial_ctx::make_code_memory (inferior_ptid));
 
   while (xfered_total < length)
     {
@@ -954,7 +954,7 @@ read_value_memory (struct value *val, LONGEST bit_offset,
       ULONGEST xfered_partial;
 
       status = target_xfer_partial (current_top_target (),
-				    object, NULL,
+				    ctx, NULL,
 				    buffer + xfered_total * unit_size, NULL,
 				    memaddr + xfered_total,
 				    length - xfered_total,

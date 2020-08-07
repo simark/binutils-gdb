@@ -69,7 +69,7 @@ struct exec_target final : public target_ops
   strata stratum () const override { return file_stratum; }
 
   void close () override;
-  enum target_xfer_status xfer_partial (enum target_object object,
+  enum target_xfer_status xfer_partial (const xfer_partial_ctx &ctx,
 					const char *annex,
 					gdb_byte *readbuf,
 					const gdb_byte *writebuf,
@@ -1033,14 +1033,14 @@ exec_target::get_section_table ()
 }
 
 enum target_xfer_status
-exec_target::xfer_partial (enum target_object object,
+exec_target::xfer_partial (const xfer_partial_ctx &ctx,
 			   const char *annex, gdb_byte *readbuf,
 			   const gdb_byte *writebuf,
 			   ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
   struct target_section_table *table = get_section_table ();
 
-  if (object == TARGET_OBJECT_MEMORY)
+  if (ctx.object () == TARGET_OBJECT_MEMORY)
     return section_table_xfer_memory_partial (readbuf, writebuf,
 					      offset, len, xfered_len,
 					      table->sections,

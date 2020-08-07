@@ -233,9 +233,207 @@ enum target_xfer_status
 extern const char *
   target_xfer_status_to_string (enum target_xfer_status status);
 
+/* Data structure passed along with xfer_partial requests.  The field(s) used
+   for a particular request depends on the object.  */
+struct xfer_partial_ctx
+{
+private:
+  /* The constructor is private, this object is constructed through one of the
+     static make_* functions.  */
+  explicit xfer_partial_ctx (target_object object)
+    : m_object (object)
+  {}
+
+  struct memory_ctx
+  {
+    ptid_t ptid;
+  };
+
+public:
+  target_object object () const
+  { return m_object; }
+
+  static const xfer_partial_ctx make_memory (ptid_t ptid)
+  {
+    xfer_partial_ctx ctx (TARGET_OBJECT_MEMORY);
+
+    ctx.m_data.memory.ptid = ptid;
+
+    return ctx;
+  }
+
+  const memory_ctx &memory () const
+  {
+    gdb_assert (m_object == TARGET_OBJECT_MEMORY);
+
+    return m_data.memory;
+  }
+
+  static const xfer_partial_ctx make_raw_memory (ptid_t ptid)
+  {
+    xfer_partial_ctx ctx (TARGET_OBJECT_RAW_MEMORY);
+
+    ctx.m_data.memory.ptid = ptid;
+
+    return ctx;
+  }
+
+  const memory_ctx &raw_memory () const
+  {
+    gdb_assert (m_object == TARGET_OBJECT_RAW_MEMORY);
+
+    return m_data.memory;
+  }
+
+  static const xfer_partial_ctx make_stack_memory (ptid_t ptid)
+  {
+    xfer_partial_ctx ctx (TARGET_OBJECT_STACK_MEMORY);
+
+    ctx.m_data.memory.ptid = ptid;
+
+    return ctx;
+  }
+
+  const memory_ctx &stack_memory () const
+  {
+    gdb_assert (m_object == TARGET_OBJECT_STACK_MEMORY);
+
+    return m_data.memory;
+  }
+
+  static const xfer_partial_ctx make_code_memory (ptid_t ptid)
+  {
+    xfer_partial_ctx ctx (TARGET_OBJECT_CODE_MEMORY);
+
+    ctx.m_data.memory.ptid = ptid;
+
+    return ctx;
+  }
+
+  const memory_ctx &code_memory () const
+  {
+    gdb_assert (m_object == TARGET_OBJECT_CODE_MEMORY);
+
+    return m_data.memory;
+  }
+
+  static const xfer_partial_ctx make_signal_info ()
+  {
+    return xfer_partial_ctx (TARGET_OBJECT_SIGNAL_INFO);
+  }
+
+  static const xfer_partial_ctx make_darwin_dyld_info ()
+  {
+    return xfer_partial_ctx (TARGET_OBJECT_DARWIN_DYLD_INFO);
+  }
+
+  static const xfer_partial_ctx make_wcookie ()
+  {
+    return xfer_partial_ctx (TARGET_OBJECT_DARWIN_DYLD_INFO);
+  }
+
+  static const xfer_partial_ctx make_osdata ()
+  {
+    return xfer_partial_ctx (TARGET_OBJECT_OSDATA);
+  }
+
+  static const xfer_partial_ctx make_auxv ()
+  {
+    return xfer_partial_ctx (TARGET_OBJECT_AUXV);
+  }
+
+  static const xfer_partial_ctx make_avr ()
+  {
+    return xfer_partial_ctx (TARGET_OBJECT_AVR);
+  }
+
+  static const xfer_partial_ctx make_freebsd_vmmap ()
+  {
+    return xfer_partial_ctx (TARGET_OBJECT_FREEBSD_VMMAP);
+  }
+
+  static const xfer_partial_ctx make_freebsd_ps_strings ()
+  {
+    return xfer_partial_ctx (TARGET_OBJECT_FREEBSD_PS_STRINGS);
+  }
+
+  static const xfer_partial_ctx make_threads ()
+  {
+    return xfer_partial_ctx (TARGET_OBJECT_THREADS);
+  }
+
+  static const xfer_partial_ctx make_memory_map ()
+  {
+    return xfer_partial_ctx (TARGET_OBJECT_MEMORY_MAP);
+  }
+
+  static const xfer_partial_ctx make_traceframe_info ()
+  {
+    return xfer_partial_ctx (TARGET_OBJECT_TRACEFRAME_INFO);
+  }
+
+  static const xfer_partial_ctx make_btrace_conf ()
+  {
+    return xfer_partial_ctx (TARGET_OBJECT_BTRACE_CONF);
+  }
+
+  static const xfer_partial_ctx make_btrace ()
+  {
+    return xfer_partial_ctx (TARGET_OBJECT_BTRACE);
+  }
+
+  static const xfer_partial_ctx make_exec_file ()
+  {
+    return xfer_partial_ctx (TARGET_OBJECT_EXEC_FILE);
+  }
+
+  static const xfer_partial_ctx make_libraries_aix ()
+  {
+    return xfer_partial_ctx (TARGET_OBJECT_LIBRARIES_AIX);
+  }
+
+  static const xfer_partial_ctx make_libraries_svr4 ()
+  {
+    return xfer_partial_ctx (TARGET_OBJECT_LIBRARIES_SVR4);
+  }
+
+  static const xfer_partial_ctx make_libraries ()
+  {
+    return xfer_partial_ctx (TARGET_OBJECT_LIBRARIES);
+  }
+
+  static const xfer_partial_ctx make_fdpic ()
+  {
+    return xfer_partial_ctx (TARGET_OBJECT_FDPIC);
+  }
+
+  static const xfer_partial_ctx make_flash ()
+  {
+    return xfer_partial_ctx (TARGET_OBJECT_FLASH);
+  }
+
+  static const xfer_partial_ctx make_available_features ()
+  {
+    return xfer_partial_ctx (TARGET_OBJECT_AVAILABLE_FEATURES);
+  }
+
+  static const xfer_partial_ctx make_static_trace_data ()
+  {
+    return xfer_partial_ctx (TARGET_OBJECT_STATIC_TRACE_DATA);
+  }
+
+private:
+  target_object m_object;
+ 
+  union
+  {
+    struct memory_ctx memory;
+  } m_data;
+};
+
 typedef enum target_xfer_status
   target_xfer_partial_ftype (struct target_ops *ops,
-			     enum target_object object,
+			     const xfer_partial_ctx &ctx,
 			     const char *annex,
 			     gdb_byte *readbuf,
 			     const gdb_byte *writebuf,
@@ -265,7 +463,7 @@ enum target_xfer_status
    to retry partial transfers.  */
 
 extern LONGEST target_read (struct target_ops *ops,
-			    enum target_object object,
+			    const xfer_partial_ctx &ctx,
 			    const char *annex, gdb_byte *buf,
 			    ULONGEST offset, LONGEST len);
 
@@ -312,7 +510,7 @@ extern std::vector<memory_read_result> read_memory_robust
    retry partial transfers.  */
 
 extern LONGEST target_write (struct target_ops *ops,
-			     enum target_object object,
+			     const xfer_partial_ctx &ctx,
 			     const char *annex, const gdb_byte *buf,
 			     ULONGEST offset, LONGEST len);
 
@@ -324,7 +522,7 @@ extern LONGEST target_write (struct target_ops *ops,
    exception.  */
 
 LONGEST target_write_with_progress (struct target_ops *ops,
-				    enum target_object object,
+				    const xfer_partial_ctx &ctx,
 				    const char *annex, const gdb_byte *buf,
 				    ULONGEST offset, LONGEST len,
 				    void (*progress) (ULONGEST, void *),
@@ -340,7 +538,7 @@ LONGEST target_write_with_progress (struct target_ops *ops,
    through this function.  */
 
 extern gdb::optional<gdb::byte_vector> target_read_alloc
-    (struct target_ops *ops, enum target_object object, const char *annex);
+    (struct target_ops *ops, const xfer_partial_ctx &ctx, const char *annex);
 
 /* Read OBJECT/ANNEX using OPS.  The result is a NUL-terminated character vector
    (therefore usable as a NUL-terminated string).  If an error occurs or the
@@ -350,7 +548,7 @@ extern gdb::optional<gdb::byte_vector> target_read_alloc
    issued if the result contains any embedded NUL bytes.  */
 
 extern gdb::optional<gdb::char_vector> target_read_stralloc
-    (struct target_ops *ops, enum target_object object, const char *annex);
+    (struct target_ops *ops, const xfer_partial_ctx &ctx, const char *annex);
 
 /* See target_ops->to_xfer_partial.  */
 extern target_xfer_partial_ftype target_xfer_partial;
@@ -770,7 +968,7 @@ struct target_ops
        See target_read and target_write for more information.  One,
        and only one, of readbuf or writebuf must be non-NULL.  */
 
-    virtual enum target_xfer_status xfer_partial (enum target_object object,
+    virtual enum target_xfer_status xfer_partial (const xfer_partial_ctx &ctx,
 						  const char *annex,
 						  gdb_byte *readbuf,
 						  const gdb_byte *writebuf,

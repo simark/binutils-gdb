@@ -1584,7 +1584,7 @@ public:
   void fetch_registers (regcache *regs, int regno) override;
   void store_registers (regcache *regs, int regno) override;
 
-  enum target_xfer_status xfer_partial (enum target_object object,
+  enum target_xfer_status xfer_partial (const xfer_partial_ctx &ctx,
 					const char *annex, gdb_byte *readbuf,
 					const gdb_byte *writebuf,
 					ULONGEST offset, ULONGEST len,
@@ -1610,7 +1610,7 @@ target_ops_no_register::store_registers (regcache *regs, int regno)
 }
 
 enum target_xfer_status
-target_ops_no_register::xfer_partial (enum target_object object,
+target_ops_no_register::xfer_partial (const xfer_partial_ctx &ctx,
 				      const char *annex, gdb_byte *readbuf,
 				      const gdb_byte *writebuf,
 				      ULONGEST offset, ULONGEST len,

@@ -1328,7 +1328,8 @@ mi_cmd_data_read_memory (const char *command, char **argv, int argc)
 
   gdb::byte_vector mbuf (total_bytes);
 
-  nr_bytes = target_read (current_top_target (), TARGET_OBJECT_MEMORY, NULL,
+  const xfer_partial_ctx ctx = xfer_partial_ctx::make_memory (inferior_ptid);
+  nr_bytes = target_read (current_top_target (), ctx, NULL,
 			  mbuf.data (), addr, total_bytes);
   if (nr_bytes <= 0)
     error (_("Unable to read memory."));

@@ -3794,9 +3794,9 @@ sdata_make_value (struct gdbarch *gdbarch, struct internalvar *var,
 		  void *ignore)
 {
   /* We need to read the whole object before we know its size.  */
+  auto ctx = xfer_partial_ctx::make_static_trace_data ();
   gdb::optional<gdb::byte_vector> buf
-    = target_read_alloc (current_top_target (), TARGET_OBJECT_STATIC_TRACE_DATA,
-			 NULL);
+    = target_read_alloc (current_top_target (), ctx, NULL);
   if (buf)
     {
       struct value *v;

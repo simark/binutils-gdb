@@ -275,7 +275,7 @@ public:
   void mourn_inferior () override;
   void kill () override;
   void store_registers (struct regcache *, int) override;
-  enum target_xfer_status xfer_partial (enum target_object object,
+  enum target_xfer_status xfer_partial (const xfer_partial_ctx &ctx,
 					const char *annex,
 					gdb_byte *readbuf,
 					const gdb_byte *writebuf,
@@ -308,7 +308,7 @@ public:
   void fetch_registers (struct regcache *regcache, int regno) override;
   void prepare_to_store (struct regcache *regcache) override;
   void store_registers (struct regcache *, int) override;
-  enum target_xfer_status xfer_partial (enum target_object object,
+  enum target_xfer_status xfer_partial (const xfer_partial_ctx &ctx,
 					const char *annex,
 					gdb_byte *readbuf,
 					const gdb_byte *writebuf,
@@ -1642,14 +1642,14 @@ record_full_target::store_registers (struct regcache *regcache, int regno)
    invalidate the record/replay log from this point forward.  */
 
 enum target_xfer_status
-record_full_target::xfer_partial (enum target_object object,
+record_full_target::xfer_partial (const xfer_partial_ctx &ctx,
 				  const char *annex, gdb_byte *readbuf,
 				  const gdb_byte *writebuf, ULONGEST offset,
 				  ULONGEST len, ULONGEST *xfered_len)
 {
   if (!record_full_gdb_operation_disable
-      && (object == TARGET_OBJECT_MEMORY
-	  || object == TARGET_OBJECT_RAW_MEMORY) && writebuf)
+      && (ctx.object () == TARGET_OBJECT_MEMORY
+	  || ctx.object () == TARGET_OBJECT_RAW_MEMORY) && writebuf)
     {
       if (RECORD_FULL_IS_REPLAY)
 	{
@@ -1698,7 +1698,7 @@ record_full_target::xfer_partial (enum target_object object,
 	record_full_insn_num++;
     }
 
-  return this->beneath ()->xfer_partial (object, annex, readbuf, writebuf,
+  return this->beneath ()->xfer_partial (ctx, annex, readbuf, writebuf,
 					 offset, len, xfered_len);
 }
 
@@ -2138,12 +2138,12 @@ record_full_core_target::store_registers (struct regcache *regcache,
 /* "xfer_partial" method for prec over corefile.  */
 
 enum target_xfer_status
-record_full_core_target::xfer_partial (enum target_object object,
+record_full_core_target::xfer_partial (const xfer_partial_ctx &ctx,
 				       const char *annex, gdb_byte *readbuf,
 				       const gdb_byte *writebuf, ULONGEST offset,
 				       ULONGEST len, ULONGEST *xfered_len)
 {
-  if (object == TARGET_OBJECT_MEMORY)
+  if (ctx.object () == TARGET_OBJECT_MEMORY)
     {
       if (record_full_gdb_operation_disable || !writebuf)
 	{
@@ -2205,7 +2205,7 @@ record_full_core_target::xfer_partial (enum target_object object,
 		  else
 		    {
 		      if (!entry)
-			return this->beneath ()->xfer_partial (object, annex,
+			return this->beneath ()->xfer_partial (ctx, annex,
 							       readbuf, writebuf,
 							       offset, len,
 							       xfered_len);
@@ -2225,7 +2225,7 @@ record_full_core_target::xfer_partial (enum target_object object,
 	error (_("You can't do that without a process to debug."));
     }
 
-  return this->beneath ()->xfer_partial (object, annex,
+  return this->beneath ()->xfer_partial (ctx, annex,
 					 readbuf, writebuf, offset, len,
 					 xfered_len);
 }

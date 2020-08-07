@@ -425,14 +425,14 @@ inf_ptrace_peek_poke (ptid_t ptid, gdb_byte *readbuf,
 /* Implement the to_xfer_partial target_ops method.  */
 
 enum target_xfer_status
-inf_ptrace_target::xfer_partial (enum target_object object,
+inf_ptrace_target::xfer_partial (const xfer_partial_ctx &ctx,
 				 const char *annex, gdb_byte *readbuf,
 				 const gdb_byte *writebuf,
 				 ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
   ptid_t ptid = inferior_ptid;
 
-  switch (object)
+  switch (ctx.object ())
     {
     case TARGET_OBJECT_MEMORY:
 #ifdef PT_IO

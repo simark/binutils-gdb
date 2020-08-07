@@ -50,7 +50,7 @@ public:
 
   void pass_signals (gdb::array_view<const unsigned char>) override;
 
-  enum target_xfer_status xfer_partial (enum target_object object,
+  enum target_xfer_status xfer_partial (const xfer_partial_ctx &ctx,
 					const char *annex,
 					gdb_byte *readbuf,
 					const gdb_byte *writebuf,

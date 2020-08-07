@@ -690,10 +690,10 @@ fbsd_corefile_thread (struct thread_info *info,
    used in FreeBSD NT_PROCSTAT_* notes.  */
 
 static gdb::optional<gdb::byte_vector>
-fbsd_make_note_desc (enum target_object object, uint32_t structsize)
+fbsd_make_note_desc (const xfer_partial_ctx &ctx, uint32_t structsize)
 {
   gdb::optional<gdb::byte_vector> buf =
-    target_read_alloc (current_top_target (), object, NULL);
+    target_read_alloc (current_top_target (), ctx, NULL);
   if (!buf || buf->empty ())
     return {};
 
@@ -779,8 +779,9 @@ fbsd_make_corefile_notes (struct gdbarch *gdbarch, bfd *obfd, int *note_size)
 
   /* Auxiliary vector.  */
   uint32_t structsize = gdbarch_ptr_bit (gdbarch) / 4; /* Elf_Auxinfo  */
+  auto auxv_ctx = xfer_partial_ctx::make_auxv ();
   gdb::optional<gdb::byte_vector> note_desc =
-    fbsd_make_note_desc (TARGET_OBJECT_AUXV, structsize);
+    fbsd_make_note_desc (auxv_ctx, structsize);
   if (note_desc && !note_desc->empty ())
     {
       note_data = elfcore_write_note (obfd, note_data, note_size, "FreeBSD",
@@ -791,7 +792,8 @@ fbsd_make_corefile_notes (struct gdbarch *gdbarch, bfd *obfd, int *note_size)
     }
 
   /* Virtual memory mappings.  */
-  note_desc = fbsd_make_note_desc (TARGET_OBJECT_FREEBSD_VMMAP, 0);
+  auto vmmap_ctx = xfer_partial_ctx::make_freebsd_vmmap ();
+  note_desc = fbsd_make_note_desc (vmmap_ctx, 0);
   if (note_desc && !note_desc->empty ())
     {
       note_data = elfcore_write_note (obfd, note_data, note_size, "FreeBSD",
@@ -801,7 +803,8 @@ fbsd_make_corefile_notes (struct gdbarch *gdbarch, bfd *obfd, int *note_size)
 	return NULL;
     }
 
-  note_desc = fbsd_make_note_desc (TARGET_OBJECT_FREEBSD_PS_STRINGS, 0);
+  auto ps_strings_ctx = xfer_partial_ctx::make_freebsd_ps_strings ();
+  note_desc = fbsd_make_note_desc (ps_strings_ctx, 0);
   if (note_desc && !note_desc->empty ())
     {
       note_data = elfcore_write_note (obfd, note_data, note_size, "FreeBSD",

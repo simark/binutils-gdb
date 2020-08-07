@@ -51,12 +51,12 @@ public:
 
   void close () override;
   void fetch_registers (struct regcache *, int) override;
-  enum target_xfer_status xfer_partial (enum target_object object,
-						const char *annex,
-						gdb_byte *readbuf,
-						const gdb_byte *writebuf,
-						ULONGEST offset, ULONGEST len,
-						ULONGEST *xfered_len) override;
+  enum target_xfer_status xfer_partial (const xfer_partial_ctx &ctx,
+					const char *annex,
+					gdb_byte *readbuf,
+					const gdb_byte *writebuf,
+					ULONGEST offset, ULONGEST len,
+					ULONGEST *xfered_len) override;
   void files_info () override;
   int trace_find (enum trace_find_type type, int num,
 			  CORE_ADDR addr1, CORE_ADDR addr2, int *tpp) override;
@@ -1294,13 +1294,13 @@ ctf_target::fetch_registers (struct regcache *regcache, int regno)
    READBUF.  */
 
 enum target_xfer_status
-ctf_target::xfer_partial (enum target_object object,
+ctf_target::xfer_partial (const xfer_partial_ctx &ctx,
 			  const char *annex, gdb_byte *readbuf,
 			  const gdb_byte *writebuf, ULONGEST offset,
 			  ULONGEST len, ULONGEST *xfered_len)
 {
   /* We're only doing regular memory for now.  */
-  if (object != TARGET_OBJECT_MEMORY)
+  if (ctx.object () != TARGET_OBJECT_MEMORY)
     return TARGET_XFER_E_IO;
 
   if (readbuf == NULL)

@@ -103,7 +103,7 @@ struct ravenscar_thread_target final : public target_ops
 
   bool stopped_data_address (CORE_ADDR *) override;
 
-  enum target_xfer_status xfer_partial (enum target_object object,
+  enum target_xfer_status xfer_partial (const xfer_partial_ctx &ctx,
 					const char *annex,
 					gdb_byte *readbuf,
 					const gdb_byte *writebuf,
@@ -637,7 +637,7 @@ ravenscar_thread_target::core_of_thread (ptid_t ptid)
 /* Implement the target xfer_partial method.  */
 
 enum target_xfer_status
-ravenscar_thread_target::xfer_partial (enum target_object object,
+ravenscar_thread_target::xfer_partial (const xfer_partial_ctx &ctx,
 				       const char *annex,
 				       gdb_byte *readbuf,
 				       const gdb_byte *writebuf,
@@ -650,7 +650,7 @@ ravenscar_thread_target::xfer_partial (enum target_object object,
      internal map, so it should not result in recursive calls in
      practice.  */
   inferior_ptid = get_base_thread_from_ravenscar_task (inferior_ptid);
-  return beneath ()->xfer_partial (object, annex, readbuf, writebuf,
+  return beneath ()->xfer_partial (ctx, annex, readbuf, writebuf,
 				   offset, len, xfered_len);
 }
 

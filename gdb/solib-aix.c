@@ -240,9 +240,9 @@ solib_aix_get_library_list (struct inferior *inf, const char *warning_msg)
   if (data->library_list.has_value ())
     return data->library_list;
 
+  auto ctx = xfer_partial_ctx::make_libraries_aix ();
   gdb::optional<gdb::char_vector> library_document
-    = target_read_stralloc (current_top_target (), TARGET_OBJECT_LIBRARIES_AIX,
-			    NULL);
+    = target_read_stralloc (current_top_target (), ctx, NULL);
   if (!library_document && warning_msg != NULL)
     {
       warning (_("%s (failed to read TARGET_OBJECT_LIBRARIES_AIX)"),

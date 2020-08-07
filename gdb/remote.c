@@ -501,7 +501,7 @@ public:
 
   void pass_ctrlc () override;
 
-  enum target_xfer_status xfer_partial (enum target_object object,
+  enum target_xfer_status xfer_partial (const xfer_partial_ctx &ctx,
 					const char *annex,
 					gdb_byte *readbuf,
 					const gdb_byte *writebuf,
@@ -3729,8 +3729,9 @@ remote_target::remote_get_threads_with_qxfer (threads_listing_context *context)
 #if defined(HAVE_LIBEXPAT)
   if (packet_support (PACKET_qXfer_threads) == PACKET_ENABLE)
     {
+      auto ctx = xfer_partial_ctx::make_threads ();
       gdb::optional<gdb::char_vector> xml
-	= target_read_stralloc (this, TARGET_OBJECT_THREADS, NULL);
+	= target_read_stralloc (this, ctx, NULL);
 
       if (xml && (*xml)[0] != '\0')
 	{
@@ -10955,7 +10956,7 @@ remote_target::remote_read_qxfer (const char *object_name,
 }
 
 enum target_xfer_status
-remote_target::xfer_partial (enum target_object object,
+remote_target::xfer_partial (const xfer_partial_ctx &ctx,
 			     const char *annex, gdb_byte *readbuf,
 			     const gdb_byte *writebuf, ULONGEST offset, ULONGEST len,
 			     ULONGEST *xfered_len)
@@ -10972,7 +10973,7 @@ remote_target::xfer_partial (enum target_object object,
   rs = get_remote_state ();
 
   /* Handle memory using the standard memory routines.  */
-  if (object == TARGET_OBJECT_MEMORY)
+  if (ctx.object () == TARGET_OBJECT_MEMORY)
     {
       /* If the remote target is connected but not running, we should
 	 pass this request down to a lower stratum (e.g. the executable
@@ -10989,7 +10990,7 @@ remote_target::xfer_partial (enum target_object object,
     }
 
   /* Handle extra signal info using qxfer packets.  */
-  if (object == TARGET_OBJECT_SIGNAL_INFO)
+  if (ctx.object () == TARGET_OBJECT_SIGNAL_INFO)
     {
       if (readbuf)
 	return remote_read_qxfer ("siginfo", annex, readbuf, offset, len,
@@ -11002,7 +11003,7 @@ remote_target::xfer_partial (enum target_object object,
 				   [PACKET_qXfer_siginfo_write]);
     }
 
-  if (object == TARGET_OBJECT_STATIC_TRACE_DATA)
+  if (ctx.object () == TARGET_OBJECT_STATIC_TRACE_DATA)
     {
       if (readbuf)
 	return remote_read_qxfer ("statictrace", annex,
@@ -11016,7 +11017,7 @@ remote_target::xfer_partial (enum target_object object,
   /* Only handle flash writes.  */
   if (writebuf != NULL)
     {
-      switch (object)
+      switch (ctx.object ())
 	{
 	case TARGET_OBJECT_FLASH:
 	  return remote_flash_write (offset, len, xfered_len,
@@ -11029,7 +11030,7 @@ remote_target::xfer_partial (enum target_object object,
 
   /* Map pre-existing objects onto letters.  DO NOT do this for new
      objects!!!  Instead specify new query packets.  */
-  switch (object)
+  switch (ctx.object ())
     {
     case TARGET_OBJECT_AVR:
       query_type = 'R';
@@ -11327,8 +11328,9 @@ std::vector<mem_region>
 remote_target::memory_map ()
 {
   std::vector<mem_region> result;
+  auto ctx = xfer_partial_ctx::make_memory_map ();
   gdb::optional<gdb::char_vector> text
-    = target_read_stralloc (current_top_target (), TARGET_OBJECT_MEMORY_MAP, NULL);
+    = target_read_stralloc (current_top_target (), ctx, NULL);
 
   if (text)
     result = parse_memory_map (text->data ());
@@ -13559,8 +13561,9 @@ remote_target::set_circular_trace_buffer (int val)
 traceframe_info_up
 remote_target::traceframe_info ()
 {
+  auto ctx = xfer_partial_ctx::make_traceframe_info ();
   gdb::optional<gdb::char_vector> text
-    = target_read_stralloc (current_top_target (), TARGET_OBJECT_TRACEFRAME_INFO,
+    = target_read_stralloc (current_top_target (), ctx,
 			    NULL);
   if (text)
     return parse_traceframe_info (text->data ());
@@ -13788,8 +13791,9 @@ remote_target::btrace_sync_conf (const btrace_config *conf)
 static void
 btrace_read_config (struct btrace_config *conf)
 {
+  auto ctx = xfer_partial_ctx::make_btrace_conf ();
   gdb::optional<gdb::char_vector> xml
-    = target_read_stralloc (current_top_target (), TARGET_OBJECT_BTRACE_CONF, "");
+    = target_read_stralloc (current_top_target (), ctx, "");
   if (xml)
     parse_xml_btrace_conf (conf, xml->data ());
 }
@@ -13989,8 +13993,9 @@ remote_target::read_btrace (struct btrace_data *btrace,
 		      (unsigned int) type);
     }
 
+  auto ctx = xfer_partial_ctx::make_btrace ();
   gdb::optional<gdb::char_vector> xml
-    = target_read_stralloc (current_top_target (), TARGET_OBJECT_BTRACE, annex);
+    = target_read_stralloc (current_top_target (), ctx, annex);
   if (!xml)
     return BTRACE_ERR_UNKNOWN;
 
@@ -14046,8 +14051,8 @@ remote_target::pid_to_exec_file (int pid)
       xsnprintf (annex, annex_size, "%x", pid);
     }
 
-  filename = target_read_stralloc (current_top_target (),
-				   TARGET_OBJECT_EXEC_FILE, annex);
+  auto ctx = xfer_partial_ctx::make_exec_file ();
+  filename = target_read_stralloc (current_top_target (), ctx, annex);
 
   return filename ? filename->data () : nullptr;
 }

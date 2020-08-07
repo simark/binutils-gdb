@@ -75,7 +75,7 @@ public:
   void detach (inferior *, int) override;
   void fetch_registers (struct regcache *, int) override;
 
-  enum target_xfer_status xfer_partial (enum target_object object,
+  enum target_xfer_status xfer_partial (const xfer_partial_ctx &ctx,
 					const char *annex,
 					gdb_byte *readbuf,
 					const gdb_byte *writebuf,
@@ -729,11 +729,11 @@ core_target::files_info ()
 }
 
 enum target_xfer_status
-core_target::xfer_partial (enum target_object object, const char *annex,
+core_target::xfer_partial (const xfer_partial_ctx &ctx, const char *annex,
 			   gdb_byte *readbuf, const gdb_byte *writebuf,
 			   ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
-  switch (object)
+  switch (ctx.object ())
     {
     case TARGET_OBJECT_MEMORY:
       {
@@ -767,8 +767,9 @@ core_target::xfer_partial (enum target_object object, const char *annex,
 			   m_core_file_mappings.sections,
 			   m_core_file_mappings.sections_end);
 	else
-	  xfer_status = this->beneath ()->xfer_partial (object, annex, readbuf,
-							writebuf, offset, len,
+	  xfer_status = this->beneath ()->xfer_partial (ctx, annex,
+							readbuf, writebuf,
+							offset, len,
 							xfered_len);
 	if (xfer_status == TARGET_XFER_OK)
 	  return TARGET_XFER_OK;
@@ -921,7 +922,7 @@ core_target::xfer_partial (enum target_object object, const char *annex,
       return TARGET_XFER_E_IO;
 
     default:
-      return this->beneath ()->xfer_partial (object, annex, readbuf,
+      return this->beneath ()->xfer_partial (ctx, annex, readbuf,
 					     writebuf, offset, len,
 					     xfered_len);
     }

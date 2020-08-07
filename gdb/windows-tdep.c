@@ -483,8 +483,9 @@ display_one_tib (ptid_t ptid)
       return -1;
     }
 
-  if (target_read (current_top_target (), TARGET_OBJECT_MEMORY,
-		   NULL, tib, thread_local_base, tib_size) != tib_size)
+  auto ctx = xfer_partial_ctx::make_memory (inferior_ptid);
+  if (target_read (current_top_target (), ctx, NULL, tib, thread_local_base,
+		   tib_size) != tib_size)
     {
       printf_filtered (_("Unable to read thread information "
 			 "block for %s at address %s\n"),

@@ -1232,9 +1232,9 @@ svr4_current_sos_via_xfer_libraries (struct svr4_library_list *list,
   gdb_assert (annex == NULL || target_augmented_libraries_svr4_read ());
 
   /* Fetch the list of shared libraries.  */
+  auto ctx = xfer_partial_ctx::make_libraries_svr4 ();
   gdb::optional<gdb::char_vector> svr4_library_document
-    = target_read_stralloc (current_top_target (), TARGET_OBJECT_LIBRARIES_SVR4,
-			    annex);
+    = target_read_stralloc (current_top_target (), ctx, annex);
   if (!svr4_library_document)
     return 0;
 
