@@ -61,12 +61,13 @@ public:
 private:
   struct observer
   {
-    observer (const struct token *token, func_type func)
-      : token (token), func (func)
+    observer (const struct token *token, func_type func, const char *name)
+      : token (token), func (func), name (name)
     {}
 
     const struct token *token;
     func_type func;
+    const char *name;
   };
 
 public:
@@ -79,16 +80,16 @@ public:
 
   /* Attach F as an observer to this observable.  F cannot be
      detached.  */
-  void attach (const func_type &f)
+  void attach (const func_type &f, const char *name)
   {
-    m_observers.emplace_back (nullptr, f);
+    m_observers.emplace_back (nullptr, f, name);
   }
 
   /* Attach F as an observer to this observable.  T is a reference to
      a token that can be used to later remove F.  */
-  void attach (const func_type &f, const token &t)
+  void attach (const func_type &f, const token &t, const char *name)
   {
-    m_observers.emplace_back (&t, f);
+    m_observers.emplace_back (&t, f, name);
   }
 
   /* Remove observers associated with T from this observable.  T is
