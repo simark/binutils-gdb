@@ -28,7 +28,7 @@ namespace gdb
 namespace observers
 {
 
-bool observer_debug = false;
+bool observer_debug = true;
 
 #define DEFINE_OBSERVABLE(name) decltype (name) name (# name)
 
