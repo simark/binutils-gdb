@@ -20,6 +20,8 @@
 #ifndef AUTO_LOAD_H
 #define AUTO_LOAD_H 1
 
+#include "gdbsupport/observable.h"
+
 struct objfile;
 struct program_space;
 struct auto_load_pspace_info;
@@ -39,6 +41,10 @@ extern bool global_auto_load;
 extern bool auto_load_local_gdbinit;
 extern char *auto_load_local_gdbinit_pathname;
 extern bool auto_load_local_gdbinit_loaded;
+
+/* Key used for the auto_load_new_objfile observer, so other observers can
+ * specify it as a dependency. */
+extern gdb::observers::token auto_load_new_objfile_observer_token;
 
 extern struct auto_load_pspace_info *
   get_auto_load_pspace_data_for_loading (struct program_space *pspace);

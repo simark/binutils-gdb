@@ -1494,6 +1494,8 @@ found and/or loaded."),
   return &retval;
 }
 
+gdb::observers::token auto_load_new_objfile_observer_token;
+
 void _initialize_auto_load ();
 void
 _initialize_auto_load ()
@@ -1503,7 +1505,9 @@ _initialize_auto_load ()
   char *guile_name_help;
   const char *suffix;
 
-  gdb::observers::new_objfile.attach (auto_load_new_objfile, "auto-load");
+  gdb::observers::new_objfile.attach (auto_load_new_objfile,
+				      auto_load_new_objfile_observer_token,
+				      "auto-load");
 
   add_setshow_boolean_cmd ("gdb-scripts", class_support,
 			   &auto_load_gdb_scripts, _("\
