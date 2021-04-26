@@ -3074,6 +3074,7 @@ dwarf_expr_context::execute_stack_op (const gdb_byte *op_ptr,
 	case DW_OP_reg30:
 	case DW_OP_reg31:
 	  dwarf_expr_require_composition (op_ptr, op_end, "DW_OP_reg");
+	  ensure_have_frame (this->frame, "DW_OP_reg");
 
 	  result = op - DW_OP_reg0;
 	  result_entry
@@ -3083,6 +3084,7 @@ dwarf_expr_context::execute_stack_op (const gdb_byte *op_ptr,
 	case DW_OP_regx:
 	  op_ptr = safe_read_uleb128 (op_ptr, op_end, &reg);
 	  dwarf_expr_require_composition (op_ptr, op_end, "DW_OP_regx");
+	  ensure_have_frame (this->frame, "DW_OP_regx");
 
 	  result = reg;
 	  result_entry = std::make_shared<dwarf_register> (this->gdbarch, reg);
