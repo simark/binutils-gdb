@@ -1079,6 +1079,7 @@ dwarf_memory::to_gdb_value (struct frame_info *frame, struct type *type,
   address = value_as_address (value_from_pointer (ptr_type, address));
   struct value *retval = value_at_lazy (subobj_type, address + subobj_offset);
   set_value_stack (retval, m_stack);
+  set_value_bitpos (retval, m_bit_suboffset);
   return retval;
 }
 
@@ -1223,6 +1224,8 @@ dwarf_register::to_gdb_value (struct frame_info *frame, struct type *type,
   else
     set_value_offset (retval, retval_offset + m_offset);
 
+  set_value_bitpos (retval, m_bit_suboffset);
+
   /* Get the data.  */
   read_frame_register_value (retval, frame);
 
@@ -1234,7 +1237,7 @@ dwarf_register::to_gdb_value (struct frame_info *frame, struct type *type,
 	 return a generic optimized out value instead, so that we show
 	 <optimized out> instead of <not saved>.  */
       struct value *temp = allocate_value (subobj_type);
-      value_contents_copy (temp, 0, retval, 0, TYPE_LENGTH (subobj_type));
+      value_contents_copy (temp, 0, retval, 0, 0, TYPE_LENGTH (subobj_type));
       retval = temp;
     }
 
@@ -3792,6 +3795,49 @@ dwarf_expr_context::execute_stack_op (const gdb_byte *op_ptr,
 	  result_entry
 	    = std::make_shared<dwarf_memory> (this->gdbarch,
 					      this->addr_info->addr);
+	  break;
+
+	case DW_OP_LLVM_offset:
+	  {
+	    auto value = fetch (0)->to_value (address_type);
+	    pop ();
+
+	    dwarf_require_integral (value->get_type ());
+
+	    auto location = fetch (0)->to_location (this->gdbarch);
+	    pop ();
+
+	    location->add_bit_offset (value->to_long () * HOST_CHAR_BIT);
+	    result_entry = location;
+	  }
+	  break;
+
+	case DW_OP_LLVM_offset_constu:
+	  {
+	    op_ptr = safe_read_uleb128 (op_ptr, op_end, &uoffset);
+	    result = uoffset;
+
+	    auto location = fetch (0)->to_location (this->gdbarch);
+	    pop ();
+
+	    location->add_bit_offset (result * HOST_CHAR_BIT);
+	    result_entry = location;
+	  }
+	  break;
+
+	case DW_OP_LLVM_bit_offset:
+	  {
+	    auto value = fetch (0)->to_value (address_type);
+	    pop ();
+
+	    dwarf_require_integral (value->get_type ());
+
+	    auto location = fetch (0)->to_location (this->gdbarch);
+	    pop ();
+
+	    location->add_bit_offset (value->to_long ());
+	    result_entry = location;
+	  }
 	  break;
 
 	default:
