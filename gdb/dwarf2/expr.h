@@ -25,6 +25,7 @@
 #include "leb128.h"
 #include "gdbtypes.h"
 
+class dwarf_entry;
 struct dwarf2_per_objfile;
 
 /* The location of a value.  */
@@ -98,22 +99,6 @@ struct dwarf_expr_piece
   ULONGEST offset;
 };
 
-/* The dwarf expression stack.  */
-
-struct dwarf_stack_value
-{
-  dwarf_stack_value (struct value *value_, int in_stack_memory_)
-  : value (value_), in_stack_memory (in_stack_memory_)
-  {}
-
-  struct value *value;
-
-  /* True if the piece is in memory and is known to be on the program's stack.
-     It is always ok to set this to zero.  This is used, for example, to
-     optimize memory access from the target.  It can vastly speed up backtraces
-     on long latency connections when "set stack-cache on".  */
-  bool in_stack_memory;
-};
 
 /* The expression evaluator works with a dwarf_expr_context, describing
    its current state and its callbacks.  */
@@ -127,7 +112,7 @@ struct dwarf_expr_context
 		      int addr_size);
   virtual ~dwarf_expr_context () = default;
 
-  void push_address (CORE_ADDR value, bool in_stack_memory);
+  void push_address (CORE_ADDR addr, bool in_stack_memory);
 
   /* Evaluate the expression at ADDR (LEN bytes long) in a given PER_CU
      FRAME context.  AS_LVAL defines if the returned struct value is
@@ -145,8 +130,8 @@ struct dwarf_expr_context
 			  LONGEST subobj_offset = 0);
 
 private:
-  /* The stack of values.  */
-  std::vector<dwarf_stack_value> stack;
+  /* The stack of DWARF entries.  */
+  std::vector<std::shared_ptr<dwarf_entry>> stack;
 
   /* Target architecture to use for address operations.  */
   struct gdbarch *gdbarch = nullptr;
@@ -163,43 +148,6 @@ private:
      depth we'll tolerate before raising an error.  */
   int recursion_depth = 0, max_recursion_depth = 0x100;
 
-  /* Location of the value.  */
-  enum dwarf_value_location location = DWARF_VALUE_MEMORY;
-
-  /* For DWARF_VALUE_LITERAL, the current literal value's length and
-     data.  For DWARF_VALUE_IMPLICIT_POINTER, LEN is the offset of the
-     target DIE of sect_offset kind.  */
-  ULONGEST len = 0;
-  const gdb_byte *data = nullptr;
-
-  /* Initialization status of variable: Non-zero if variable has been
-     initialized; zero otherwise.  */
-  int initialized = 0;
-
-  /* A vector of pieces.
-
-     Each time DW_OP_piece is executed, we add a new element to the
-     end of this array, recording the current top of the stack, the
-     current location, and the size given as the operand to
-     DW_OP_piece.  We then pop the top value from the stack, reset the
-     location, and resume evaluation.
-
-     The Dwarf spec doesn't say whether DW_OP_piece pops the top value
-     from the stack.  We do, ensuring that clients of this interface
-     expecting to see a value left on the top of the stack (say, code
-     evaluating frame base expressions or CFA's specified with
-     DW_CFA_def_cfa_expression) will get an error if the expression
-     actually marks all the values it computes as pieces.
-
-     If an expression never uses DW_OP_piece, num_pieces will be zero.
-     (It would be nice to present these cases as expressions yielding
-     a single piece, so that callers need not distinguish between the
-     no-DW_OP_piece and one-DW_OP_piece cases.  But expressions with
-     no DW_OP_piece operations have no value to place in a piece's
-     'size' field; the size comes from the surrounding data.  So the
-     two cases need to be handled separately.)  */
-  std::vector<dwarf_expr_piece> pieces;
-
   /* We evaluate the expression in the context of this objfile.  */
   dwarf2_per_objfile *per_objfile;
 
@@ -214,14 +162,13 @@ private:
 
   void eval (const gdb_byte *addr, size_t len);
   struct type *address_type () const;
-  void push (struct value *value, bool in_stack_memory);
+  void push (std::shared_ptr<dwarf_entry> value);
   bool stack_empty_p () const;
-  void add_piece (ULONGEST size, ULONGEST offset);
+  std::shared_ptr<dwarf_entry> add_piece (ULONGEST bit_size,
+					  ULONGEST bit_offset);
   void execute_stack_op (const gdb_byte *op_ptr, const gdb_byte *op_end);
   void pop ();
-  struct value *fetch (int n);
-  CORE_ADDR fetch_address (int n);
-  bool fetch_in_stack_memory (int n);
+  std::shared_ptr<dwarf_entry> fetch (int n);
 
   /* Fetch the result of the expression evaluation in a form of
      a struct value, where TYPE, SUBOBJ_TYPE and SUBOBJ_OFFSET
@@ -257,7 +204,6 @@ private:
   void push_dwarf_reg_entry_value (enum call_site_parameter_kind kind,
 				   union call_site_parameter_u kind_u,
 				   int deref_size);
-  void read_mem (gdb_byte *buf, CORE_ADDR addr, size_t length);
 };
 
 /* Return the value of register number REG (a DWARF register number),
