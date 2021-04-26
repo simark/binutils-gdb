@@ -402,6 +402,9 @@ public:
 
   virtual ~dwarf_entry () = 0;
 
+  /* Clones entry.  */
+  virtual std::shared_ptr<dwarf_entry> clone () const = 0;
+
   /* Convert DWARF entry into a DWARF location description.  ARCH
      defines an architecture of the location described.   */
   virtual std::shared_ptr<dwarf_location> to_location
@@ -445,6 +448,13 @@ public:
     m_offset += bit_suboffset / HOST_CHAR_BIT;
     m_bit_suboffset = bit_suboffset % HOST_CHAR_BIT;
   }
+
+  dwarf_location (const dwarf_location &location)
+    : m_arch (location.m_arch),
+      m_offset (location.m_offset),
+      m_bit_suboffset (location.m_bit_suboffset),
+      m_initialised (location.m_initialised)
+  {}
 
   virtual ~dwarf_location () = default;
 
@@ -725,6 +735,22 @@ public:
     m_type = type;
   }
 
+  dwarf_value (const dwarf_value &value)
+  {
+    struct type *type = value.m_type;
+    size_t type_len = TYPE_LENGTH (type);
+
+    m_contents.reset ((gdb_byte *) xzalloc (type_len));
+
+    memcpy (m_contents.get (), value.m_contents.get (), type_len);
+    m_type = type;
+  }
+
+  std::shared_ptr<dwarf_entry> clone () const override
+  {
+    return std::make_shared<dwarf_value> (*this);
+  }
+
   const gdb_byte* get_contents () const
   {
     return m_contents.get ();
@@ -822,6 +848,15 @@ public:
     : dwarf_location (arch, offset, bit_suboffset)
   {}
 
+  dwarf_undefined (const dwarf_undefined &undefined)
+    : dwarf_location (undefined)
+  {}
+
+  std::shared_ptr<dwarf_entry> clone () const override
+  {
+    return std::make_shared<dwarf_undefined> (*this);
+  }
+
   void read (struct frame_info *frame, gdb_byte *buf, int buf_bit_offset,
 	     size_t bit_size, LONGEST bits_to_skip, size_t location_bit_limit,
 	     bool big_endian, int *optimized, int *unavailable) const override
@@ -862,6 +897,16 @@ public:
     : dwarf_location (arch, offset, bit_suboffset),
       m_stack (stack)
   {}
+
+  dwarf_memory (const dwarf_memory &memory)
+    : dwarf_location (memory),
+      m_stack (memory.m_stack)
+  {}
+
+  std::shared_ptr<dwarf_entry> clone () const override
+  {
+    return std::make_shared<dwarf_memory> (*this);
+  }
 
   void set_stack (bool stack)
   {
@@ -1094,6 +1139,16 @@ public:
       m_regnum (regnum)
   {}
 
+  dwarf_register (const dwarf_register &registr)
+    : dwarf_location (registr),
+      m_regnum (registr.m_regnum)
+  {}
+
+  std::shared_ptr<dwarf_entry> clone () const override
+  {
+    return std::make_shared<dwarf_register> (*this);
+  }
+
   void read (struct frame_info *frame, gdb_byte *buf, int buf_bit_offset,
 	     size_t bit_size, LONGEST bits_to_skip, size_t location_bit_limit,
 	     bool big_endian, int *optimized, int *unavailable) const override;
@@ -1263,6 +1318,22 @@ public:
     m_byte_order = byte_order;
   }
 
+  dwarf_implicit (const dwarf_implicit &implicit)
+    : dwarf_location (implicit)
+  {
+    size_t size = implicit.m_size;
+    m_contents.reset ((gdb_byte *) xzalloc (size));
+
+    memcpy (m_contents.get (), implicit.m_contents.get (), size);
+    m_size = size;
+    m_byte_order = implicit.m_byte_order;
+  }
+
+  std::shared_ptr<dwarf_entry> clone () const override
+  {
+    return std::make_shared<dwarf_implicit> (*this);
+  }
+
   void read (struct frame_info *frame, gdb_byte *buf, int buf_bit_offset,
 	     size_t bit_size, LONGEST bits_to_skip, size_t location_bit_limit,
 	     bool big_endian, int *optimized, int *unavailable) const override;
@@ -1375,7 +1446,18 @@ public:
       m_addr_size (addr_size), m_die_offset (die_offset)
   {}
 
-  dwarf_implicit_pointer (const dwarf_implicit_pointer &) = default;
+  dwarf_implicit_pointer (const dwarf_implicit_pointer &implicit_ptr)
+    : dwarf_location (implicit_ptr),
+      m_per_objfile (implicit_ptr.m_per_objfile),
+      m_per_cu (implicit_ptr.m_per_cu),
+      m_addr_size (implicit_ptr.m_addr_size),
+      m_die_offset (implicit_ptr.m_die_offset)
+  {}
+
+  std::shared_ptr<dwarf_entry> clone () const override
+  {
+    return std::make_shared<dwarf_implicit_pointer> (*this);
+  }
 
   void read (struct frame_info *frame, gdb_byte *buf, int buf_bit_offset,
 	     size_t bit_size, LONGEST bits_to_skip, size_t location_bit_limit,
@@ -1520,11 +1602,38 @@ public:
     : dwarf_location (arch, offset, bit_suboffset), m_per_cu (per_cu)
   {}
 
+  dwarf_composite (const dwarf_composite &composite)
+    : dwarf_location (composite), m_per_cu (composite.m_per_cu)
+  {
+    /* We do a shallow copy of the pieces because they are not
+       expected to be modified after they are already formed.  */
+    for (unsigned int i = 0; i < composite.m_pieces.size (); i++)
+      m_pieces.emplace_back (composite.m_pieces[i].m_location,
+			     composite.m_pieces[i].m_size);
+
+    m_completed = composite.m_completed;
+  }
+
+  std::shared_ptr<dwarf_entry> clone () const override
+  {
+    return std::make_shared<dwarf_composite> (*this);
+  }
+
   void add_piece (std::shared_ptr<dwarf_location> location, ULONGEST bit_size)
   {
     gdb_assert (location != nullptr);
     m_pieces.emplace_back (location, bit_size);
   }
+
+  void set_completed (bool completed)
+  {
+    m_completed = completed;
+  };
+
+  bool is_completed () const
+  {
+    return m_completed;
+  };
 
   void read (struct frame_info *frame, gdb_byte *buf, int buf_bit_offset,
 	     size_t bit_size, LONGEST bits_to_skip, size_t location_bit_limit,
@@ -1577,6 +1686,9 @@ private:
 
   /* Vector of composite pieces.  */
   std::vector<struct piece> m_pieces;
+
+  /* True if location description is completed.  */
+  bool m_completed = false;
 };
 
 void
@@ -1588,6 +1700,9 @@ dwarf_composite::read (struct frame_info *frame, gdb_byte *buf,
   unsigned int pieces_num = m_pieces.size ();
   LONGEST total_bits_to_skip = bits_to_skip;
   unsigned int i;
+
+  if (!m_completed)
+    ill_formed_expression ();
 
   total_bits_to_skip += m_offset * HOST_CHAR_BIT + m_bit_suboffset;
 
@@ -1633,6 +1748,9 @@ dwarf_composite::write (struct frame_info *frame, const gdb_byte *buf,
   LONGEST total_bits_to_skip = bits_to_skip;
   unsigned int pieces_num = m_pieces.size ();
   unsigned int i;
+
+  if (!m_completed)
+    ill_formed_expression ();
 
   total_bits_to_skip += m_offset * HOST_CHAR_BIT + m_bit_suboffset;
 
@@ -2289,11 +2407,34 @@ private:
   bool stack_empty_p () const;
 
   /* Pop a top element of the stack and add as a composite piece.
+     The action is based on the context:
 
-     If the fallowing top element of the stack is a composite
-     location description, the piece will be added to it.  Otherwise
-     a new composite location description will be created and
-     the piece will be added to that composite.  */
+      - If the stack is empty, then an incomplete composite location
+	description (comprised of one undefined location description),
+	is pushed on the stack.
+
+      - Otherwise, if the top stack entry is an incomplete composite
+	location description, then it is updated to append a new piece
+	comprised of one undefined location description.  The
+	incomplete composite location description is then left on the
+	stack.
+
+      - Otherwise, if the top stack entry is a location description or
+	can be converted to one, it is popped. Then:
+
+	 - If the top stack entry (after popping) is a location
+	   description comprised of one incomplete composite location
+	   description, then it is updated to append a new piece
+	   specified by the previously popped location description.
+	   The incomplete composite location description is then left
+	   on the stack.
+
+	 - Otherwise, a new location description comprised of one
+	   incomplete composite location description, with a new piece
+	   specified by the previously popped location description, is
+	   pushed on the stack.
+
+      - Otherwise, the DWARF expression is ill-formed  */
   std::shared_ptr<dwarf_entry> add_piece (ULONGEST bit_size,
 					  ULONGEST bit_offset);
 
@@ -2617,19 +2758,28 @@ dwarf_expr_context::add_piece (ULONGEST bit_size, ULONGEST bit_offset)
   std::shared_ptr<dwarf_location> piece;
   std::shared_ptr<dwarf_composite> composite;
 
-  if (!stack_empty_p ()
-      && std::dynamic_pointer_cast<dwarf_composite> (fetch (0)) == nullptr)
+  if (stack_empty_p ())
+    piece = std::make_shared<dwarf_undefined> (this->gdbarch);
+  else
     {
       piece = fetch (0)->to_location (this->gdbarch);
+
+      if (auto old_composite
+	    = std::dynamic_pointer_cast<dwarf_composite> (piece))
+	{
+	  if (!old_composite->is_completed ())
+	    piece = std::make_shared<dwarf_undefined> (this->gdbarch);
+	}
+      else if (std::dynamic_pointer_cast<dwarf_undefined> (piece) != nullptr)
+	pop ();
+    }
+
+  if (std::dynamic_pointer_cast<dwarf_undefined> (piece) == nullptr)
+    {
+      piece->add_bit_offset (bit_offset);
       pop ();
     }
-  else
-    piece = std::make_shared<dwarf_undefined> (this->gdbarch);
 
-  piece->add_bit_offset (bit_offset);
-
-  /* If stack is empty then it is a start of a new composite.  In the
-     future this will check if the composite is finished or not.  */
   if (stack_empty_p ()
       || std::dynamic_pointer_cast<dwarf_composite> (fetch (0)) == nullptr)
     composite = std::make_shared<dwarf_composite> (this->gdbarch,
@@ -2637,7 +2787,12 @@ dwarf_expr_context::add_piece (ULONGEST bit_size, ULONGEST bit_offset)
   else
     {
       composite = std::dynamic_pointer_cast<dwarf_composite> (fetch (0));
-      pop ();
+
+      if (composite->is_completed ())
+	composite = std::make_shared<dwarf_composite> (this->gdbarch,
+						       this->per_cu);
+      else
+	pop ();
     }
 
   composite->add_piece (piece, bit_size);
@@ -3257,7 +3412,7 @@ dwarf_expr_context::execute_stack_op (const gdb_byte *op_ptr,
 	  break;
 
 	case DW_OP_dup:
-	  result_entry = fetch (0);
+	  result_entry = fetch (0)->clone ();
 	  break;
 
 	case DW_OP_drop:
@@ -3283,7 +3438,7 @@ dwarf_expr_context::execute_stack_op (const gdb_byte *op_ptr,
 	  }
 
 	case DW_OP_over:
-	  result_entry = fetch (1);
+	  result_entry = fetch (1)->clone ();
 	  break;
 
 	case DW_OP_rot:
@@ -3843,6 +3998,23 @@ dwarf_expr_context::execute_stack_op (const gdb_byte *op_ptr,
 	case DW_OP_LLVM_undefined:
 	  result_entry = std::make_shared<dwarf_undefined> (this->gdbarch);
 	  break;
+
+	case DW_OP_LLVM_piece_end:
+	  {
+	    auto entry = fetch (0);
+
+	    auto composite
+	      = std::dynamic_pointer_cast<dwarf_composite> (entry);
+
+	    if (composite == nullptr)
+	      ill_formed_expression ();
+
+	    if (composite->is_completed ())
+	      ill_formed_expression ();
+
+	    composite->set_completed (true);
+	    goto no_push;
+	  }
 
 	default:
 	  error (_("Unhandled dwarf expression opcode 0x%x"), op);
