@@ -486,6 +486,14 @@ public:
 				   LONGEST bits_to_skip, size_t bit_size,
 				   size_t location_bit_limit);
 
+  /* Check if a given DWARF location description contains an implicit
+     pointer location description of a BIT_LENGTH size on a given
+     BIT_OFFSET offset.  */
+  virtual bool is_implicit_ptr_at (LONGEST bit_offset, int bit_length) const
+  {
+     return false;
+  }
+
 protected:
   /* Architecture of the location.  */
   struct gdbarch *m_arch;
@@ -1134,6 +1142,11 @@ public:
 			   size_t location_bit_limit) override
   {}
 
+  bool is_implicit_ptr_at (LONGEST bit_offset, int bit_length) const override
+  {
+     return true;
+  }
+
 private:
   /* Per object file data of the implicit pointer.  */
   dwarf2_per_objfile *m_per_objfile;
@@ -1220,6 +1233,8 @@ public:
 			   struct value *value, int value_bit_offset,
 			   LONGEST bits_to_skip, size_t bit_size,
 			   size_t location_bit_limit) override;
+
+  bool is_implicit_ptr_at (LONGEST bit_offset, int bit_length) const override;
 
 private:
   /* Composite piece that contains a piece location
@@ -1417,6 +1432,42 @@ dwarf_composite::write_to_gdb_value (struct frame_info *frame,
       remaining_bit_size -= this_bit_size;
       total_bits_to_skip = 0;
     }
+}
+
+bool
+dwarf_composite::is_implicit_ptr_at (LONGEST bit_offset, int bit_length) const
+{
+  /* Advance to the first non-skipped piece.  */
+  unsigned int pieces_num = m_pieces.size ();
+  LONGEST total_bit_offset = bit_offset;
+  LONGEST total_bit_length = bit_length;
+
+  total_bit_offset += HOST_CHAR_BIT * m_offset + m_bit_suboffset;
+
+  for (unsigned int i = 0; i < pieces_num && total_bit_length != 0; i++)
+    {
+      ULONGEST read_bit_length = m_pieces[i].m_size;
+
+      if (total_bit_offset >= read_bit_length)
+	{
+	  total_bit_offset -= read_bit_length;
+	  continue;
+	}
+
+      read_bit_length -= total_bit_offset;
+
+      if (total_bit_length < read_bit_length)
+	read_bit_length = total_bit_length;
+
+      if (!m_pieces[i].m_location->is_implicit_ptr_at (total_bit_offset,
+						       read_bit_length))
+	return false;
+
+      total_bit_offset = 0;
+      total_bit_length -= read_bit_length;
+    }
+
+    return true;
 }
 
 struct piece_closure
