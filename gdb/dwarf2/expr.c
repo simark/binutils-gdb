@@ -3840,6 +3840,10 @@ dwarf_expr_context::execute_stack_op (const gdb_byte *op_ptr,
 	  }
 	  break;
 
+	case DW_OP_LLVM_undefined:
+	  result_entry = std::make_shared<dwarf_undefined> (this->gdbarch);
+	  break;
+
 	default:
 	  error (_("Unhandled dwarf expression opcode 0x%x"), op);
 	}
