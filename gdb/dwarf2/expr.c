@@ -97,6 +97,14 @@ bits_to_bytes (ULONGEST start, ULONGEST n_bits)
   return (start % HOST_CHAR_BIT + n_bits + HOST_CHAR_BIT - 1) / HOST_CHAR_BIT;
 }
 
+/* Throw an exception about the invalid DWARF expression.  */
+
+static void
+ill_formed_expression ()
+{
+  error (_("Ill-formed DWARF expression"));
+}
+
 /* See expr.h.  */
 
 CORE_ADDR
@@ -279,6 +287,7 @@ write_to_memory (CORE_ADDR address, const gdb_byte *buffer,
 
 class dwarf_location;
 class dwarf_memory;
+class dwarf_value;
 
 /* Base class that describes entries found on a DWARF expression
    evaluation stack.  */
@@ -292,6 +301,11 @@ public:
      defines an architecture of the location described.   */
   virtual std::shared_ptr<dwarf_location> to_location
     (struct gdbarch *arch) = 0;
+
+  /* Convert DWARF entry into a DWARF value.  TYPE defines a
+     desired type of the returned DWARF value if it already
+     doesnt have one.  */
+  virtual std::shared_ptr<dwarf_value> to_value (struct type *type) = 0;
 };
 
 dwarf_entry::~dwarf_entry () = default;
@@ -340,6 +354,16 @@ public:
   std::shared_ptr<dwarf_location> to_location (struct gdbarch *arch) override
   {
     return std::dynamic_pointer_cast<dwarf_location> (shared_from_this ());
+  }
+
+  /* Convert DWARF entry into a DWARF value.  If the conversion
+     from that location description kind to a value is not supported
+     the result is an empty pointer.  TYPE defines a desired type of
+     the returned DWARF value if it already doesnt have one.  */
+  virtual std::shared_ptr<dwarf_value> to_value (struct type *type) override
+  {
+    ill_formed_expression ();
+    return std::shared_ptr<dwarf_value> (nullptr);
   }
 
 protected:
@@ -406,6 +430,14 @@ public:
      ARCH defines an architecture of the location described.  */
   std::shared_ptr<dwarf_location> to_location (struct gdbarch *arch) override;
 
+  /* Convert DWARF entry into a DWARF value.  If the entry
+     is already a value, it is just returned and the TYPE type
+     information is ignored.  */
+  std::shared_ptr<dwarf_value> to_value (struct type *type) override
+  {
+    return std::dynamic_pointer_cast<dwarf_value> (shared_from_this ());
+  }
+
 private:
   /* Value contents as a stream of bytes in target byte order.  */
   gdb::unique_xmalloc_ptr<gdb_byte> m_contents;
@@ -456,10 +488,18 @@ public:
     m_stack = stack;
   };
 
+  std::shared_ptr<dwarf_value> to_value (struct type *type) override;
+
 private:
   /* True if the location belongs to a stack memory region.  */
   bool m_stack;
 };
+
+std::shared_ptr<dwarf_value>
+dwarf_memory::to_value (struct type *type)
+{
+  return std::make_shared<dwarf_value> (m_offset, type);
+}
 
 /* Register location description entry.  */
 
