@@ -277,6 +277,9 @@ write_to_memory (CORE_ADDR address, const gdb_byte *buffer,
 					 length, buffer);
 }
 
+class dwarf_location;
+class dwarf_memory;
+
 /* Base class that describes entries found on a DWARF expression
    evaluation stack.  */
 
@@ -284,6 +287,11 @@ class dwarf_entry : public std::enable_shared_from_this<dwarf_entry>
 {
 public:
   virtual ~dwarf_entry () = 0;
+
+  /* Convert DWARF entry into a DWARF location description.  ARCH
+     defines an architecture of the location described.   */
+  virtual std::shared_ptr<dwarf_location> to_location
+    (struct gdbarch *arch) = 0;
 };
 
 dwarf_entry::~dwarf_entry () = default;
@@ -324,6 +332,15 @@ public:
   {
     m_initialised = initialised;
   };
+
+  /* Convert DWARF entry into a DWARF location description.  If the
+     entry is already a location description, it will be returned as a
+     result and no conversion will be applied to it.  ARCH defines an
+     architecture of the location described.  */
+  std::shared_ptr<dwarf_location> to_location (struct gdbarch *arch) override
+  {
+    return std::dynamic_pointer_cast<dwarf_location> (shared_from_this ());
+  }
 
 protected:
   /* Architecture of the location.  */
@@ -385,6 +402,10 @@ public:
     return unpack_long (m_type, m_contents.get ());
   }
 
+  /* Convert DWARF value into a DWARF memory location description.
+     ARCH defines an architecture of the location described.  */
+  std::shared_ptr<dwarf_location> to_location (struct gdbarch *arch) override;
+
 private:
   /* Value contents as a stream of bytes in target byte order.  */
   gdb::unique_xmalloc_ptr<gdb_byte> m_contents;
@@ -392,6 +413,21 @@ private:
   /* Type of the value held by the entry.  */
   struct type *m_type;
 };
+
+std::shared_ptr<dwarf_location>
+dwarf_value::to_location (struct gdbarch *arch)
+{
+  LONGEST offset;
+
+  if (gdbarch_integer_to_address_p (arch))
+    offset = gdbarch_integer_to_address (arch, m_type, m_contents.get ());
+  else
+    offset = extract_unsigned_integer (m_contents.get (), TYPE_LENGTH (m_type),
+				       type_byte_order (m_type));
+
+  auto memory = std::make_shared<dwarf_memory> (arch, offset);
+  return std::dynamic_pointer_cast<dwarf_location> (memory);
+}
 
 /* Undefined location description entry.  This is a special location
    description type that describes the location description that is
