@@ -3073,7 +3073,6 @@ dwarf_expr_context::execute_stack_op (const gdb_byte *op_ptr,
 	case DW_OP_reg29:
 	case DW_OP_reg30:
 	case DW_OP_reg31:
-	  dwarf_expr_require_composition (op_ptr, op_end, "DW_OP_reg");
 	  ensure_have_frame (this->frame, "DW_OP_reg");
 
 	  result = op - DW_OP_reg0;
@@ -3083,7 +3082,6 @@ dwarf_expr_context::execute_stack_op (const gdb_byte *op_ptr,
 
 	case DW_OP_regx:
 	  op_ptr = safe_read_uleb128 (op_ptr, op_end, &reg);
-	  dwarf_expr_require_composition (op_ptr, op_end, "DW_OP_regx");
 	  ensure_have_frame (this->frame, "DW_OP_regx");
 
 	  result = reg;
@@ -3101,8 +3099,6 @@ dwarf_expr_context::execute_stack_op (const gdb_byte *op_ptr,
 	      = std::make_shared<dwarf_implicit> (this->gdbarch, op_ptr, len,
 						  BFD_ENDIAN_UNKNOWN);
 	    op_ptr += len;
-	    dwarf_expr_require_composition (op_ptr, op_end,
-					    "DW_OP_implicit_value");
 	  }
 	  break;
 
@@ -3118,9 +3114,6 @@ dwarf_expr_context::execute_stack_op (const gdb_byte *op_ptr,
 						  value->get_contents (),
 						  TYPE_LENGTH (type),
 						  type_byte_order (type));
-
-	    dwarf_expr_require_composition (op_ptr, op_end,
-					    "DW_OP_stack_value");
 	  }
 	  break;
 
@@ -3145,8 +3138,6 @@ dwarf_expr_context::execute_stack_op (const gdb_byte *op_ptr,
 							  this->per_cu,
 							  this->addr_size,
 							  die_offset, len);
-	    dwarf_expr_require_composition (op_ptr, op_end,
-					    "DW_OP_implicit_pointer");
 	  }
 	  break;
 
