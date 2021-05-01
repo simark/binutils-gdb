@@ -736,7 +736,7 @@ fortran_array_shape (struct gdbarch *gdbarch, const language_defn *lang,
       gdb_assert (dst_offset + TYPE_LENGTH (value_type (v))
 		  <= TYPE_LENGTH (value_type (result)));
       gdb_assert (TYPE_LENGTH (value_type (v)) == elm_len);
-      value_contents_copy (result, dst_offset, v, 0, elm_len);
+      value_contents_copy (result, dst_offset, v, 0, 0, elm_len);
 
       /* Peel another dimension of the array.  */
       val_type = TYPE_TARGET_TYPE (val_type);
