@@ -411,6 +411,9 @@ private:
 class dwarf_entry : public std::enable_shared_from_this<dwarf_entry>
 {
 public:
+  dwarf_entry () = default;
+  dwarf_entry (const dwarf_entry &) = default;
+
   virtual ~dwarf_entry () = 0;
 
   /* Convert DWARF entry into a DWARF location description.  ARCH
@@ -1382,6 +1385,8 @@ public:
       m_per_objfile (per_objfile), m_per_cu (per_cu),
       m_addr_size (addr_size), m_die_offset (die_offset)
   {}
+
+  dwarf_implicit_pointer (const dwarf_implicit_pointer &) = default;
 
   void read (struct frame_info *frame, gdb_byte *buf, int buf_bit_offset,
 	     size_t bit_size, LONGEST bits_to_skip, size_t location_bit_limit,
