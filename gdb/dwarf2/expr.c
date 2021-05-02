@@ -34,6 +34,26 @@
 #include "gdbarch.h"
 #include "inferior.h"
 #include "observable.h"
+#include "cli/cli-cmds.h"
+
+/* True if we are debugging DWARF expression evaluation.  */
+static bool debug_dwarf_expr;
+
+/* Print an "dwarf-expr" debug statement.  */
+
+#define dwarf_expr_debug_printf(fmt, ...) \
+  debug_prefixed_printf_cond (debug_dwarf_expr, "dwarf-expr", fmt, \
+			      ##__VA_ARGS__)
+
+/* Print "dwarf-expr" start/end debug statements.  */
+
+#define DWARF_EXPR_SCOPED_DEBUG_START_END(fmt, ...) \
+  scoped_debug_start_end (debug_dwarf_expr, "dwarf-expr", fmt, 	##__VA_ARGS__)
+
+/* Print "dwarf-expr" enter/exit debug statements.  */
+
+#define DWARF_EXPR_DEBUG_ENTER_EXIT \
+  scoped_debug_enter_exit (debug_dwarf_expr, "dwarf-expr")
 
 /* Cookie for gdbarch data.  */
 
@@ -491,7 +511,7 @@ public:
     return std::shared_ptr<dwarf_value> (nullptr);
   }
 
-  /* Read contents from the descripbed location.
+  /* Read contents from the descriped location.
 
      The read operation is performed in the context of a FRAME.
      BIT_SIZE is the number of bits to read.  The data read is copied
@@ -695,14 +715,23 @@ dwarf_location::write_to_gdb_value (struct frame_info *frame,
   int optimized, unavailable;
   bool big_endian = type_byte_order (value_type (value)) == BFD_ENDIAN_BIG;
 
+  DWARF_EXPR_SCOPED_DEBUG_START_END ("write location to gdb value");
+
   this->read (frame, value_contents_raw (value), value_bit_offset,
 	      bit_size, bits_to_skip, location_bit_limit,
 	      big_endian, &optimized, &unavailable);
 
   if (optimized)
-    mark_value_bits_optimized_out (value, value_bit_offset, bit_size);
+    {
+      dwarf_expr_debug_printf ("got optimized out");
+      mark_value_bits_optimized_out (value, value_bit_offset, bit_size);
+    }
+
   if (unavailable)
-    mark_value_bits_unavailable (value, value_bit_offset, bit_size);
+    {
+      dwarf_expr_debug_printf ("got unavailable");
+      mark_value_bits_unavailable (value, value_bit_offset, bit_size);
+    }
 }
 
 /* Value entry found on a DWARF expression evaluation stack.  */
@@ -861,6 +890,12 @@ public:
 	     size_t bit_size, LONGEST bits_to_skip, size_t location_bit_limit,
 	     bool big_endian, int *optimized, int *unavailable) const override
   {
+    dwarf_expr_debug_printf ("read undefined location to buffer: "
+			   "buf_bit_offset=%d, bit_size=%zu, bits_to_skip=%s, "
+			   "location_bit_limit=%zu",
+			   buf_bit_offset, bit_size, plongest (bits_to_skip),
+			   location_bit_limit);
+
     *unavailable = 0;
     *optimized = 1;
   }
@@ -954,6 +989,12 @@ dwarf_memory::read (struct frame_info *frame, gdb_byte *buf,
   CORE_ADDR start_address
     = m_offset + (m_bit_suboffset + total_bits_to_skip) / HOST_CHAR_BIT;
   gdb::byte_vector temp_buf;
+
+  dwarf_expr_debug_printf ("read memory location to buffer: "
+			   "buf_bit_offset=%d, bit_size=%zu, bits_to_skip=%s, "
+			   "location_bit_limit=%zu",
+			   buf_bit_offset, bit_size, plongest (bits_to_skip),
+			   location_bit_limit);
 
   *optimized = 0;
   total_bits_to_skip += m_bit_suboffset;
@@ -1179,6 +1220,12 @@ dwarf_register::read (struct frame_info *frame, gdb_byte *buf,
   ULONGEST reg_bits = HOST_CHAR_BIT * register_size (m_arch, reg);
   gdb::byte_vector temp_buf;
 
+  dwarf_expr_debug_printf ("read register location to buffer: "
+			   "buf_bit_offset=%d, bit_size=%zu, bits_to_skip=%s, "
+			   "location_bit_limit=%zu",
+			   buf_bit_offset, bit_size, plongest (bits_to_skip),
+			   location_bit_limit);
+
   if (big_endian)
     {
       if (!read_bit_limit || reg_bits <= read_bit_limit)
@@ -1372,6 +1419,12 @@ dwarf_implicit::read (struct frame_info *frame, gdb_byte *buf,
   LONGEST total_bits_to_skip = bits_to_skip;
   size_t read_bit_limit = location_bit_limit;
 
+  dwarf_expr_debug_printf ("read implicit location to buffer: "
+			   "buf_bit_offset=%d, bit_size=%zu, bits_to_skip=%s, "
+			   "location_bit_limit=%zu",
+			   buf_bit_offset, bit_size, plongest (bits_to_skip),
+			   location_bit_limit);
+
   *optimized = 0;
   *unavailable = 0;
 
@@ -1486,7 +1539,9 @@ public:
 			   struct value *value, int value_bit_offset,
 			   LONGEST bits_to_skip, size_t bit_size,
 			   size_t location_bit_limit) override
-  {}
+  {
+    dwarf_expr_debug_printf ("write implicit pointer to gdb value (no-op)");
+  }
 
   bool is_implicit_ptr_at (LONGEST bit_offset, int bit_length) const override
   {
@@ -1520,12 +1575,18 @@ private:
 void
 dwarf_implicit_pointer::read (struct frame_info *frame, gdb_byte *buf,
 			      int buf_bit_offset, size_t bit_size,
-                              LONGEST bits_to_skip, size_t location_bit_limit,
+			      LONGEST bits_to_skip, size_t location_bit_limit,
 			      bool big_endian, int *optimized,
 			      int *unavailable) const
 {
   struct frame_info *actual_frame = frame;
   LONGEST total_bits_to_skip = bits_to_skip + m_bit_suboffset;
+
+  dwarf_expr_debug_printf ("read implicit pointer location to buffer: "
+			   "buf_bit_offset=%d, bit_size=%zu, bits_to_skip=%s, "
+			   "location_bit_limit=%zu",
+			   buf_bit_offset, bit_size, plongest (bits_to_skip),
+			   location_bit_limit);
 
   if (actual_frame == nullptr)
     actual_frame = get_selected_frame (_("No frame selected."));
@@ -1701,6 +1762,12 @@ dwarf_composite::read (struct frame_info *frame, gdb_byte *buf,
   LONGEST total_bits_to_skip = bits_to_skip;
   unsigned int i;
 
+  dwarf_expr_debug_printf ("read composite location to buffer: "
+			   "buf_bit_offset=%d, bit_size=%zu, bits_to_skip=%s, "
+			   "location_bit_limit=%zu",
+			   buf_bit_offset, bit_size, plongest (bits_to_skip),
+			   location_bit_limit);
+
   if (!m_completed)
     ill_formed_expression ();
 
@@ -1843,6 +1910,10 @@ dwarf_composite::write_to_gdb_value (struct frame_info *frame,
   unsigned int pieces_num = m_pieces.size ();
   unsigned int i;
 
+  DWARF_EXPR_SCOPED_DEBUG_START_END ("composite location to gdb value: bit_size=%zu, "
+				     "total_bits_to_skip=%s",
+				     bit_size, pulongest (total_bits_to_skip));
+
   /* Advance to the first non-skipped piece.  */
   for (i = 0; i < pieces_num; i++)
     {
@@ -1851,11 +1922,15 @@ dwarf_composite::write_to_gdb_value (struct frame_info *frame,
       if (total_bits_to_skip < piece_bit_size)
 	break;
 
+      dwarf_expr_debug_printf ("skipping piece %d", i);
+
       total_bits_to_skip -= piece_bit_size;
     }
 
   for (; i < pieces_num; i++)
     {
+      DWARF_EXPR_SCOPED_DEBUG_START_END ("piece %d", i);
+
       auto location = m_pieces[i].m_location;
       ULONGEST piece_bit_size = m_pieces[i].m_size;
       size_t this_bit_size = piece_bit_size - total_bits_to_skip;
@@ -2156,12 +2231,16 @@ rw_closure_value (struct value *v, struct value *from)
 static void
 read_closure_value (struct value *v)
 {
+  DWARF_EXPR_DEBUG_ENTER_EXIT;
+
   rw_closure_value (v, NULL);
 }
 
 static void
 write_closure_value (struct value *to, struct value *from)
 {
+  DWARF_EXPR_DEBUG_ENTER_EXIT;
+
   rw_closure_value (to, from);
 }
 
@@ -2758,8 +2837,14 @@ dwarf_expr_context::add_piece (ULONGEST bit_size, ULONGEST bit_offset)
   std::shared_ptr<dwarf_location> piece;
   std::shared_ptr<dwarf_composite> composite;
 
+  dwarf_expr_debug_printf ("bit_size=%s, bit_offset=%s",
+			   pulongest (bit_size), pulongest (bit_offset));
+
   if (stack_empty_p ())
-    piece = std::make_shared<dwarf_undefined> (this->gdbarch);
+    {
+      dwarf_expr_debug_printf ("stack empty: creating new undefined piece");
+      piece = std::make_shared<dwarf_undefined> (this->gdbarch);
+    }
   else
     {
       piece = fetch (0)->to_location (this->gdbarch);
@@ -2768,10 +2853,24 @@ dwarf_expr_context::add_piece (ULONGEST bit_size, ULONGEST bit_offset)
 	    = std::dynamic_pointer_cast<dwarf_composite> (piece))
 	{
 	  if (!old_composite->is_completed ())
-	    piece = std::make_shared<dwarf_undefined> (this->gdbarch);
+	    {
+	      dwarf_expr_debug_printf ("top-most stack entry is an incomplete "
+				       "composite, creating new undefined "
+				       "piece");
+	      piece = std::make_shared<dwarf_undefined> (this->gdbarch);
+	    }
+	  else
+	    dwarf_expr_debug_printf ("top-most stack entry is a complete"
+				     "composite, using it as a piece");
 	}
       else if (std::dynamic_pointer_cast<dwarf_undefined> (piece) != nullptr)
-	pop ();
+	{
+	  dwarf_expr_debug_printf ("top-most stack entry is an undefined, "
+				   "using it as a piece");
+	  pop ();
+	}
+      else
+	dwarf_expr_debug_printf ("using top-most stack entry as piece");
     }
 
   if (std::dynamic_pointer_cast<dwarf_undefined> (piece) == nullptr)
@@ -2782,17 +2881,29 @@ dwarf_expr_context::add_piece (ULONGEST bit_size, ULONGEST bit_offset)
 
   if (stack_empty_p ()
       || std::dynamic_pointer_cast<dwarf_composite> (fetch (0)) == nullptr)
-    composite = std::make_shared<dwarf_composite> (this->gdbarch,
-						   this->per_cu);
+    {
+      dwarf_expr_debug_printf ("stack empty or top-most stack entry is not a "
+			       "composite, creating new composite");
+      composite = std::make_shared<dwarf_composite> (this->gdbarch,
+						     this->per_cu);
+    }
   else
     {
       composite = std::dynamic_pointer_cast<dwarf_composite> (fetch (0));
 
       if (composite->is_completed ())
-	composite = std::make_shared<dwarf_composite> (this->gdbarch,
-						       this->per_cu);
+	{
+	  dwarf_expr_debug_printf ("top-most stack entry is a composite but is "
+				   "complete, creating new composite");
+	  composite = std::make_shared<dwarf_composite> (this->gdbarch,
+							 this->per_cu);
+	}
       else
-	pop ();
+	{
+	  dwarf_expr_debug_printf ("top-most stack entry is an incomplete "
+				   "composite, using it");
+	  pop ();
+	}
     }
 
   composite->add_piece (piece, bit_size);
@@ -3037,6 +3148,20 @@ dwarf_block_to_sp_offset (struct gdbarch *gdbarch, const gdb_byte *buf,
   return 1;
 }
 
+static void
+debug_dump_stack (const std::vector<std::shared_ptr<dwarf_entry>> &stack)
+{
+  std::string out;
+
+  for (const std::shared_ptr<dwarf_entry> &entry __attribute__((unused)): stack)
+    {
+      // TODO: output something more meaningful.
+      out += string_printf ("Entry() ");
+    }
+
+  dwarf_expr_debug_printf ("%s", out.c_str ());
+}
+
 void
 dwarf_expr_context::execute_stack_op (const gdb_byte *op_ptr,
 				      const gdb_byte *op_end)
@@ -3056,9 +3181,18 @@ dwarf_expr_context::execute_stack_op (const gdb_byte *op_ptr,
 	   this->recursion_depth);
   this->recursion_depth++;
 
+  const gdb_byte *const op_start = op_ptr;
+
   while (op_ptr < op_end)
     {
-      enum dwarf_location_atom op = (enum dwarf_location_atom) *op_ptr++;
+      enum dwarf_location_atom op = (enum dwarf_location_atom) *op_ptr;
+
+      DWARF_EXPR_SCOPED_DEBUG_START_END ("executing %s at 0x%lx",
+					 get_DW_OP_name (op),
+					 op_ptr - op_start);
+
+      op_ptr++;
+
       ULONGEST result;
       uint64_t uoffset, reg;
       int64_t offset;
@@ -4025,6 +4159,9 @@ dwarf_expr_context::execute_stack_op (const gdb_byte *op_ptr,
       push (result_entry);
     no_push:
       ;
+
+      if (debug_dwarf_expr)
+	debug_dump_stack (this->stack);
     }
 
   this->recursion_depth--;
@@ -4056,4 +4193,11 @@ _initialize_dwarf2expr ()
 {
   dwarf_arch_cookie
     = gdbarch_data_register_post_init (dwarf_gdbarch_types_init);
+
+  add_setshow_boolean_cmd
+    ("dwarf-expr", class_maintenance, &debug_dwarf_expr,
+     _("Set debugging of DWARF expression evaluation."),
+     _("Set debugging of DWARF expression evaluation."),
+     _("When non-zero, DWARF expression evaluation debugging is enabled."),
+     NULL, NULL, &setdebuglist, &showdebuglist);
 }
