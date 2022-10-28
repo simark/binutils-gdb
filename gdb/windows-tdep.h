@@ -25,31 +25,31 @@ extern struct cmd_list_element *info_w32_cmdlist;
 
 extern void init_w32_command_list (void);
 
-extern void windows_xfer_shared_library (const char* so_name,
-					 CORE_ADDR load_addr,
-					 CORE_ADDR *text_offset_cached,
-					 struct gdbarch *gdbarch,
-					 struct obstack *obstack);
+extern void windows_xfer_shared_library (const char *so_name,
+                                         CORE_ADDR load_addr,
+                                         CORE_ADDR *text_offset_cached,
+                                         struct gdbarch *gdbarch,
+                                         struct obstack *obstack);
 
 extern ULONGEST windows_core_xfer_shared_libraries (struct gdbarch *gdbarch,
-						    gdb_byte *readbuf,
-						    ULONGEST offset,
-						    ULONGEST len);
+                                                    gdb_byte *readbuf,
+                                                    ULONGEST offset,
+                                                    ULONGEST len);
 
 extern std::string windows_core_pid_to_str (struct gdbarch *gdbarch,
-					    ptid_t ptid);
+                                            ptid_t ptid);
 
 /* To be called from the various GDB_OSABI_WINDOWS handlers for the
    various Windows architectures and machine types.  */
 
 extern void windows_init_abi (struct gdbarch_info info,
-			      struct gdbarch *gdbarch);
+                              struct gdbarch *gdbarch);
 
 /* To be called from the various GDB_OSABI_CYGWIN handlers for the
    various Windows architectures and machine types.  */
 
 extern void cygwin_init_abi (struct gdbarch_info info,
-			     struct gdbarch *gdbarch);
+                             struct gdbarch *gdbarch);
 
 /* Return true if the Portable Executable behind ABFD uses the Cygwin dll
    (cygwin1.dll).  */

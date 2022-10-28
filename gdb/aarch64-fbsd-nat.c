@@ -38,7 +38,7 @@
 #include "inf-ptrace.h"
 
 #if __FreeBSD_version >= 1400005
-#define	HAVE_DBREG
+#define HAVE_DBREG
 
 #include <unordered_set>
 #endif
@@ -82,31 +82,26 @@ static aarch64_fbsd_nat_target the_aarch64_fbsd_nat_target;
 
 void
 aarch64_fbsd_nat_target::fetch_registers (struct regcache *regcache,
-					  int regnum)
+                                          int regnum)
 {
   fetch_register_set<struct reg> (regcache, regnum, PT_GETREGS,
-				  &aarch64_fbsd_gregset);
+                                  &aarch64_fbsd_gregset);
   fetch_register_set<struct fpreg> (regcache, regnum, PT_GETFPREGS,
-				    &aarch64_fbsd_fpregset);
+                                    &aarch64_fbsd_fpregset);
 
   gdbarch *gdbarch = regcache->arch ();
   aarch64_gdbarch_tdep *tdep = gdbarch_tdep<aarch64_gdbarch_tdep> (gdbarch);
   if (tdep->has_tls ())
     {
-      const struct regcache_map_entry aarch64_fbsd_tls_regmap[] =
-	{
-	  { 1, tdep->tls_regnum, 8 },
-	  { 0 }
-	};
+      const struct regcache_map_entry aarch64_fbsd_tls_regmap[]
+        = { { 1, tdep->tls_regnum, 8 }, { 0 } };
 
-      const struct regset aarch64_fbsd_tls_regset =
-	{
-	  aarch64_fbsd_tls_regmap,
-	  regcache_supply_regset, regcache_collect_regset
-	};
+      const struct regset aarch64_fbsd_tls_regset
+        = { aarch64_fbsd_tls_regmap, regcache_supply_regset,
+            regcache_collect_regset };
 
       fetch_regset<uint64_t> (regcache, regnum, NT_ARM_TLS,
-			      &aarch64_fbsd_tls_regset);
+                              &aarch64_fbsd_tls_regset);
     }
 }
 
@@ -115,31 +110,26 @@ aarch64_fbsd_nat_target::fetch_registers (struct regcache *regcache,
 
 void
 aarch64_fbsd_nat_target::store_registers (struct regcache *regcache,
-					  int regnum)
+                                          int regnum)
 {
   store_register_set<struct reg> (regcache, regnum, PT_GETREGS, PT_SETREGS,
-				  &aarch64_fbsd_gregset);
+                                  &aarch64_fbsd_gregset);
   store_register_set<struct fpreg> (regcache, regnum, PT_GETFPREGS,
-				    PT_SETFPREGS, &aarch64_fbsd_fpregset);
+                                    PT_SETFPREGS, &aarch64_fbsd_fpregset);
 
   gdbarch *gdbarch = regcache->arch ();
   aarch64_gdbarch_tdep *tdep = gdbarch_tdep<aarch64_gdbarch_tdep> (gdbarch);
   if (tdep->has_tls ())
     {
-      const struct regcache_map_entry aarch64_fbsd_tls_regmap[] =
-	{
-	  { 1, tdep->tls_regnum, 8 },
-	  { 0 }
-	};
+      const struct regcache_map_entry aarch64_fbsd_tls_regmap[]
+        = { { 1, tdep->tls_regnum, 8 }, { 0 } };
 
-      const struct regset aarch64_fbsd_tls_regset =
-	{
-	  aarch64_fbsd_tls_regmap,
-	  regcache_supply_regset, regcache_collect_regset
-	};
+      const struct regset aarch64_fbsd_tls_regset
+        = { aarch64_fbsd_tls_regmap, regcache_supply_regset,
+            regcache_collect_regset };
 
       store_regset<uint64_t> (regcache, regnum, NT_ARM_TLS,
-			      &aarch64_fbsd_tls_regset);
+                              &aarch64_fbsd_tls_regset);
     }
 }
 
@@ -172,8 +162,7 @@ aarch64_fbsd_nat_target::stopped_data_address (CORE_ADDR *addr_p)
     return false;
 
   /* This must be a hardware breakpoint.  */
-  if (siginfo.si_signo != SIGTRAP
-      || siginfo.si_code != TRAP_TRACE
+  if (siginfo.si_signo != SIGTRAP || siginfo.si_code != TRAP_TRACE
       || siginfo.si_trapno != EXCP_WATCHPT_EL0)
     return false;
 
@@ -206,12 +195,11 @@ aarch64_fbsd_nat_target::stopped_by_hw_breakpoint ()
     return false;
 
   /* This must be a hardware breakpoint.  */
-  if (siginfo.si_signo != SIGTRAP
-      || siginfo.si_code != TRAP_TRACE
+  if (siginfo.si_signo != SIGTRAP || siginfo.si_code != TRAP_TRACE
       || siginfo.si_trapno != EXCP_WATCHPT_EL0)
     return false;
 
-  return !stopped_by_watchpoint();
+  return !stopped_by_watchpoint ();
 }
 
 /* Implement the "supports_stopped_by_hw_breakpoint" target_ops method.  */
@@ -235,36 +223,36 @@ aarch64_fbsd_nat_target::probe_debug_regs (int pid)
       aarch64_num_bp_regs = 0;
       aarch64_num_wp_regs = 0;
 
-      if (ptrace(PT_GETDBREGS, pid, (PTRACE_TYPE_ARG3) &reg, 0) == 0)
-	{
-	  switch (reg.db_debug_ver)
-	    {
-	    case AARCH64_DEBUG_ARCH_V8:
-	    case AARCH64_DEBUG_ARCH_V8_1:
-	    case AARCH64_DEBUG_ARCH_V8_2:
-	    case AARCH64_DEBUG_ARCH_V8_4:
-	      break;
-	    default:
-	      return;
-	    }
+      if (ptrace (PT_GETDBREGS, pid, (PTRACE_TYPE_ARG3) &reg, 0) == 0)
+        {
+          switch (reg.db_debug_ver)
+            {
+            case AARCH64_DEBUG_ARCH_V8:
+            case AARCH64_DEBUG_ARCH_V8_1:
+            case AARCH64_DEBUG_ARCH_V8_2:
+            case AARCH64_DEBUG_ARCH_V8_4:
+              break;
+            default:
+              return;
+            }
 
-	  aarch64_num_bp_regs = reg.db_nbkpts;
-	  if (aarch64_num_bp_regs > AARCH64_HBP_MAX_NUM)
-	    {
-	      warning (_("Unexpected number of hardware breakpoint registers"
-			 " reported by ptrace, got %d, expected %d."),
-		       aarch64_num_bp_regs, AARCH64_HBP_MAX_NUM);
-	      aarch64_num_bp_regs = AARCH64_HBP_MAX_NUM;
-	    }
-	  aarch64_num_wp_regs = reg.db_nwtpts;
-	  if (aarch64_num_wp_regs > AARCH64_HWP_MAX_NUM)
-	    {
-	      warning (_("Unexpected number of hardware watchpoint registers"
-			 " reported by ptrace, got %d, expected %d."),
-		       aarch64_num_wp_regs, AARCH64_HWP_MAX_NUM);
-	      aarch64_num_wp_regs = AARCH64_HWP_MAX_NUM;
-	    }
-	}
+          aarch64_num_bp_regs = reg.db_nbkpts;
+          if (aarch64_num_bp_regs > AARCH64_HBP_MAX_NUM)
+            {
+              warning (_ ("Unexpected number of hardware breakpoint registers"
+                          " reported by ptrace, got %d, expected %d."),
+                       aarch64_num_bp_regs, AARCH64_HBP_MAX_NUM);
+              aarch64_num_bp_regs = AARCH64_HBP_MAX_NUM;
+            }
+          aarch64_num_wp_regs = reg.db_nwtpts;
+          if (aarch64_num_wp_regs > AARCH64_HWP_MAX_NUM)
+            {
+              warning (_ ("Unexpected number of hardware watchpoint registers"
+                          " reported by ptrace, got %d, expected %d."),
+                       aarch64_num_wp_regs, AARCH64_HWP_MAX_NUM);
+              aarch64_num_wp_regs = AARCH64_HWP_MAX_NUM;
+            }
+        }
     }
 }
 
@@ -316,13 +304,13 @@ aarch64_fbsd_nat_target::low_new_fork (ptid_t parent, pid_t child)
    current inferior.  */
 
 void
-aarch64_notify_debug_reg_change (ptid_t ptid,
-				 int is_watchpoint, unsigned int idx)
+aarch64_notify_debug_reg_change (ptid_t ptid, int is_watchpoint,
+                                 unsigned int idx)
 {
   for (thread_info *tp : current_inferior ()->non_exited_threads ())
     {
       if (tp->ptid.lwp_p ())
-	aarch64_debug_pending_threads.emplace (tp->ptid.lwp ());
+        aarch64_debug_pending_threads.emplace (tp->ptid.lwp ());
     }
 }
 
@@ -331,7 +319,7 @@ aarch64_notify_debug_reg_change (ptid_t ptid,
 void
 aarch64_fbsd_nat_target::low_delete_thread (thread_info *tp)
 {
-  gdb_assert(tp->ptid.lwp_p ());
+  gdb_assert (tp->ptid.lwp_p ());
   aarch64_debug_pending_threads.erase (tp->ptid.lwp ());
 }
 
@@ -340,17 +328,17 @@ aarch64_fbsd_nat_target::low_delete_thread (thread_info *tp)
 void
 aarch64_fbsd_nat_target::low_prepare_to_resume (thread_info *tp)
 {
-  gdb_assert(tp->ptid.lwp_p ());
+  gdb_assert (tp->ptid.lwp_p ());
 
   if (aarch64_debug_pending_threads.erase (tp->ptid.lwp ()) == 0)
     return;
 
-  struct aarch64_debug_reg_state *state =
-    aarch64_lookup_debug_reg_state (tp->ptid.pid ());
-  gdb_assert(state != nullptr);
+  struct aarch64_debug_reg_state *state
+    = aarch64_lookup_debug_reg_state (tp->ptid.pid ());
+  gdb_assert (state != nullptr);
 
   struct dbreg reg;
-  memset (&reg, 0, sizeof(reg));
+  memset (&reg, 0, sizeof (reg));
   for (int i = 0; i < aarch64_num_bp_regs; i++)
     {
       reg.db_breakregs[i].dbr_addr = state->dr_addr_bp[i];
@@ -361,14 +349,14 @@ aarch64_fbsd_nat_target::low_prepare_to_resume (thread_info *tp)
       reg.db_watchregs[i].dbw_addr = state->dr_addr_wp[i];
       reg.db_watchregs[i].dbw_ctrl = state->dr_ctrl_wp[i];
     }
-  if (ptrace(PT_SETDBREGS, tp->ptid.lwp (), (PTRACE_TYPE_ARG3) &reg, 0) != 0)
-    error (_("Failed to set hardware debug registers"));
+  if (ptrace (PT_SETDBREGS, tp->ptid.lwp (), (PTRACE_TYPE_ARG3) &reg, 0) != 0)
+    error (_ ("Failed to set hardware debug registers"));
 }
 #else
 /* A stub that should never be called.  */
 void
-aarch64_notify_debug_reg_change (ptid_t ptid,
-				 int is_watchpoint, unsigned int idx)
+aarch64_notify_debug_reg_change (ptid_t ptid, int is_watchpoint,
+                                 unsigned int idx)
 {
   gdb_assert (true);
 }

@@ -33,27 +33,25 @@
    from the Linux kernel tree.  */
 
 enum
-  {
-    XTENSA_LINUX_SIGRTMIN = 32,
-    XTENSA_LINUX_SIGRTMAX = 63,
-  };
+{
+  XTENSA_LINUX_SIGRTMIN = 32,
+  XTENSA_LINUX_SIGRTMAX = 63,
+};
 
 /* Implementation of `gdbarch_gdb_signal_from_target', as defined in
    gdbarch.h.  */
 
 static enum gdb_signal
-xtensa_linux_gdb_signal_from_target (struct gdbarch *gdbarch,
-				   int signal)
+xtensa_linux_gdb_signal_from_target (struct gdbarch *gdbarch, int signal)
 {
   if (signal >= XTENSA_LINUX_SIGRTMIN && signal <= XTENSA_LINUX_SIGRTMAX)
     {
       int offset = signal - XTENSA_LINUX_SIGRTMIN;
 
       if (offset == 0)
-	return GDB_SIGNAL_REALTIME_32;
+        return GDB_SIGNAL_REALTIME_32;
       else
-	return (enum gdb_signal) (offset - 1
-				  + (int) GDB_SIGNAL_REALTIME_33);
+        return (enum gdb_signal) (offset - 1 + (int) GDB_SIGNAL_REALTIME_33);
     }
   else if (signal > XTENSA_LINUX_SIGRTMAX)
     return GDB_SIGNAL_UNKNOWN;
@@ -66,7 +64,7 @@ xtensa_linux_gdb_signal_from_target (struct gdbarch *gdbarch,
 
 static int
 xtensa_linux_gdb_signal_to_target (struct gdbarch *gdbarch,
-				   enum gdb_signal signal)
+                                   enum gdb_signal signal)
 {
   switch (signal)
     {
@@ -83,8 +81,7 @@ xtensa_linux_gdb_signal_to_target (struct gdbarch *gdbarch,
   /* GDB_SIGNAL_REALTIME_33 to _63 are continuous.
 
      Xtensa does not have _64.  */
-  if (signal >= GDB_SIGNAL_REALTIME_33
-      && signal <= GDB_SIGNAL_REALTIME_63)
+  if (signal >= GDB_SIGNAL_REALTIME_33 && signal <= GDB_SIGNAL_REALTIME_63)
     {
       int offset = signal - GDB_SIGNAL_REALTIME_33;
 
@@ -112,17 +109,17 @@ xtensa_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   linux_init_abi (info, gdbarch, 0);
 
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, linux_ilp32_fetch_link_map_offsets);
+  set_solib_svr4_fetch_link_map_offsets (gdbarch,
+                                         linux_ilp32_fetch_link_map_offsets);
 
   set_gdbarch_gdb_signal_from_target (gdbarch,
-				      xtensa_linux_gdb_signal_from_target);
+                                      xtensa_linux_gdb_signal_from_target);
   set_gdbarch_gdb_signal_to_target (gdbarch,
-				    xtensa_linux_gdb_signal_to_target);
+                                    xtensa_linux_gdb_signal_to_target);
 
   /* Enable TLS support.  */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
-					     svr4_fetch_objfile_link_map);
+                                             svr4_fetch_objfile_link_map);
 }
 
 void _initialize_xtensa_linux_tdep ();
@@ -130,5 +127,5 @@ void
 _initialize_xtensa_linux_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_xtensa, bfd_mach_xtensa, GDB_OSABI_LINUX,
-			  xtensa_linux_init_abi);
+                          xtensa_linux_init_abi);
 }

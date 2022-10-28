@@ -41,5 +41,5 @@ void
 _initialize_aarch64_newlib_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_aarch64, 0, GDB_OSABI_NEWLIB,
-			  aarch64_newlib_init_abi);
+                          aarch64_newlib_init_abi);
 }

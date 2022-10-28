@@ -24,9 +24,9 @@
 
 /* Helper functions.  See definitions.  */
 extern void i386bsd_fetch_inferior_registers (struct regcache *regcache,
-					      int regnum);
+                                              int regnum);
 extern void i386bsd_store_inferior_registers (struct regcache *regcache,
-					      int regnum);
+                                              int regnum);
 
 /* A prototype *BSD/i386 target.  */
 
@@ -35,10 +35,14 @@ class i386_bsd_nat_target : public x86bsd_nat_target<BaseTarget>
 {
 public:
   void fetch_registers (struct regcache *regcache, int regnum) override
-  { i386bsd_fetch_inferior_registers (regcache, regnum); }
+  {
+    i386bsd_fetch_inferior_registers (regcache, regnum);
+  }
 
   void store_registers (struct regcache *regcache, int regnum) override
-  { i386bsd_store_inferior_registers (regcache, regnum); }
+  {
+    i386bsd_store_inferior_registers (regcache, regnum);
+  }
 };
 
 #endif /* i386-bsd-nat.h */

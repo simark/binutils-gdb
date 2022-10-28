@@ -36,29 +36,28 @@ void *xzalloc (size_t);
 /* Like asprintf and vasprintf, but return the string, throw an error
    if no memory.  */
 gdb::unique_xmalloc_ptr<char> xstrprintf (const char *format, ...)
-     ATTRIBUTE_PRINTF (1, 2);
+  ATTRIBUTE_PRINTF (1, 2);
 gdb::unique_xmalloc_ptr<char> xstrvprintf (const char *format, va_list ap)
-     ATTRIBUTE_PRINTF (1, 0);
+  ATTRIBUTE_PRINTF (1, 0);
 
 /* Like snprintf, but throw an error if the output buffer is too small.  */
 int xsnprintf (char *str, size_t size, const char *format, ...)
-     ATTRIBUTE_PRINTF (3, 4);
+  ATTRIBUTE_PRINTF (3, 4);
 
 /* Returns a std::string built from a printf-style format string.  */
-std::string string_printf (const char* fmt, ...)
-  ATTRIBUTE_PRINTF (1, 2);
+std::string string_printf (const char *fmt, ...) ATTRIBUTE_PRINTF (1, 2);
 
 /* Like string_printf, but takes a va_list.  */
-std::string string_vprintf (const char* fmt, va_list args)
+std::string string_vprintf (const char *fmt, va_list args)
   ATTRIBUTE_PRINTF (1, 0);
 
 /* Like string_printf, but appends to DEST instead of returning a new
    std::string.  */
-std::string &string_appendf (std::string &dest, const char* fmt, ...)
+std::string &string_appendf (std::string &dest, const char *fmt, ...)
   ATTRIBUTE_PRINTF (2, 3);
 
 /* Like string_appendf, but takes a va_list.  */
-std::string &string_vappendf (std::string &dest, const char* fmt, va_list args)
+std::string &string_vappendf (std::string &dest, const char *fmt, va_list args)
   ATTRIBUTE_PRINTF (2, 0);
 
 /* Make a copy of the string at PTR with LEN characters
@@ -90,7 +89,8 @@ static inline bool
 startswith (gdb::string_view string, gdb::string_view pattern)
 {
   return (string.length () >= pattern.length ()
-	  && strncmp (string.data (), pattern.data (), pattern.length ()) == 0);
+          && strncmp (string.data (), pattern.data (), pattern.length ())
+               == 0);
 }
 
 ULONGEST strtoulst (const char *num, const char **trailer, int base);
@@ -119,7 +119,7 @@ extern void free_vector_argv (std::vector<char *> &v);
 
 /* Return true if VALUE is in [LOW, HIGH].  */
 
-template <typename T>
+template<typename T>
 static bool
 in_inclusive_range (T value, T low, T high)
 {

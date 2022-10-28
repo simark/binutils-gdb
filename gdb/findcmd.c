@@ -54,8 +54,8 @@ put_bits (uint64_t data, gdb::byte_vector &buf, int bits, bfd_boolean big_p)
 
 static gdb::byte_vector
 parse_find_args (const char *args, ULONGEST *max_countp,
-		 CORE_ADDR *start_addrp, ULONGEST *search_space_lenp,
-		 bfd_boolean big_p)
+                 CORE_ADDR *start_addrp, ULONGEST *search_space_lenp,
+                 bfd_boolean big_p)
 {
   /* Default to using the specified type.  */
   char size = '\0';
@@ -68,7 +68,7 @@ parse_find_args (const char *args, ULONGEST *max_countp,
   struct value *v;
 
   if (args == NULL)
-    error (_("Missing search parameters."));
+    error (_ ("Missing search parameters."));
 
   /* Get search granularity and/or max count if specified.
      They may be specified in either order, together or separately.  */
@@ -78,27 +78,27 @@ parse_find_args (const char *args, ULONGEST *max_countp,
       ++s;
 
       while (*s != '\0' && *s != '/' && !isspace (*s))
-	{
-	  if (isdigit (*s))
-	    {
-	      max_count = atoi (s);
-	      while (isdigit (*s))
-		++s;
-	      continue;
-	    }
+        {
+          if (isdigit (*s))
+            {
+              max_count = atoi (s);
+              while (isdigit (*s))
+                ++s;
+              continue;
+            }
 
-	  switch (*s)
-	    {
-	    case 'b':
-	    case 'h':
-	    case 'w':
-	    case 'g':
-	      size = *s++;
-	      break;
-	    default:
-	      error (_("Invalid size granularity."));
-	    }
-	}
+          switch (*s)
+            {
+            case 'b':
+            case 'h':
+            case 'w':
+            case 'g':
+              size = *s++;
+              break;
+            default:
+              error (_ ("Invalid size granularity."));
+            }
+        }
 
       s = skip_spaces (s);
     }
@@ -120,16 +120,15 @@ parse_find_args (const char *args, ULONGEST *max_countp,
       v = parse_to_comma_and_eval (&s);
       len = value_as_long (v);
       if (len == 0)
-	{
-	  gdb_printf (_("Empty search range.\n"));
-	  return pattern_buf;
-	}
+        {
+          gdb_printf (_ ("Empty search range.\n"));
+          return pattern_buf;
+        }
       if (len < 0)
-	error (_("Invalid length."));
+        error (_ ("Invalid length."));
       /* Watch for overflows.  */
-      if (len > CORE_ADDR_MAX
-	  || (start_addr + len - 1) < start_addr)
-	error (_("Search space too large."));
+      if (len > CORE_ADDR_MAX || (start_addr + len - 1) < start_addr)
+        error (_ ("Search space too large."));
       search_space_len = len;
     }
   else
@@ -139,14 +138,14 @@ parse_find_args (const char *args, ULONGEST *max_countp,
       v = parse_to_comma_and_eval (&s);
       end_addr = value_as_address (v);
       if (start_addr > end_addr)
-	error (_("Invalid search space, end precedes start."));
+        error (_ ("Invalid search space, end precedes start."));
       search_space_len = end_addr - start_addr + 1;
       /* We don't support searching all of memory
 	 (i.e. start=0, end = 0xff..ff).
 	 Bail to avoid overflows later on.  */
       if (search_space_len == 0)
-	error (_("Overflow in address range "
-		 "computation, choose smaller range."));
+        error (_ ("Overflow in address range "
+                  "computation, choose smaller range."));
     }
 
   if (*s == ',')
@@ -165,41 +164,41 @@ parse_find_args (const char *args, ULONGEST *max_countp,
       t = value_type (v);
 
       if (size != '\0')
-	{
-	  x = value_as_long (v);
-	  switch (size)
-	    {
-	    case 'b':
-	      pattern_buf.push_back (x);
-	      break;
-	    case 'h':
-	      put_bits (x, pattern_buf, 16, big_p);
-	      break;
-	    case 'w':
-	      put_bits (x, pattern_buf, 32, big_p);
-	      break;
-	    case 'g':
-	      put_bits (x, pattern_buf, 64, big_p);
-	      break;
-	    }
-	}
+        {
+          x = value_as_long (v);
+          switch (size)
+            {
+            case 'b':
+              pattern_buf.push_back (x);
+              break;
+            case 'h':
+              put_bits (x, pattern_buf, 16, big_p);
+              break;
+            case 'w':
+              put_bits (x, pattern_buf, 32, big_p);
+              break;
+            case 'g':
+              put_bits (x, pattern_buf, 64, big_p);
+              break;
+            }
+        }
       else
-	{
-	  const gdb_byte *contents = value_contents (v).data ();
-	  pattern_buf.insert (pattern_buf.end (), contents,
-			      contents + t->length ());
-	}
+        {
+          const gdb_byte *contents = value_contents (v).data ();
+          pattern_buf.insert (pattern_buf.end (), contents,
+                              contents + t->length ());
+        }
 
       if (*s == ',')
-	++s;
+        ++s;
       s = skip_spaces (s);
     }
 
   if (pattern_buf.empty ())
-    error (_("Missing search pattern."));
+    error (_ ("Missing search pattern."));
 
   if (search_space_len < pattern_buf.size ())
-    error (_("Search space too small to contain pattern."));
+    error (_ ("Search space too small to contain pattern."));
 
   *max_countp = max_count;
   *start_addrp = start_addr;
@@ -222,29 +221,26 @@ find_command (const char *args, int from_tty)
   unsigned int found_count;
   CORE_ADDR last_found_addr;
 
-  gdb::byte_vector pattern_buf = parse_find_args (args, &max_count,
-						  &start_addr,
-						  &search_space_len,
-						  big_p);
+  gdb::byte_vector pattern_buf
+    = parse_find_args (args, &max_count, &start_addr, &search_space_len,
+                       big_p);
 
   /* Perform the search.  */
 
   found_count = 0;
   last_found_addr = 0;
 
-  while (search_space_len >= pattern_buf.size ()
-	 && found_count < max_count)
+  while (search_space_len >= pattern_buf.size () && found_count < max_count)
     {
       /* Offset from start of this iteration to the next iteration.  */
       ULONGEST next_iter_incr;
       CORE_ADDR found_addr;
       int found = target_search_memory (start_addr, search_space_len,
-					pattern_buf.data (),
-					pattern_buf.size (),
-					&found_addr);
+                                        pattern_buf.data (),
+                                        pattern_buf.size (), &found_addr);
 
       if (found <= 0)
-	break;
+        break;
 
       print_address (gdbarch, found_addr, gdb_stdout);
       gdb_printf ("\n");
@@ -256,9 +252,9 @@ find_command (const char *args, int from_tty)
 
       /* For robustness, we don't let search_space_len go -ve here.  */
       if (search_space_len >= next_iter_incr)
-	search_space_len -= next_iter_incr;
+        search_space_len -= next_iter_incr;
       else
-	search_space_len = 0;
+        search_space_len = 0;
       start_addr += next_iter_incr;
     }
 
@@ -270,21 +266,21 @@ find_command (const char *args, int from_tty)
       struct type *ptr_type = builtin_type (gdbarch)->builtin_data_ptr;
 
       set_internalvar (lookup_internalvar ("_"),
-		       value_from_pointer (ptr_type, last_found_addr));
+                       value_from_pointer (ptr_type, last_found_addr));
     }
 
   if (found_count == 0)
     gdb_printf ("Pattern not found.\n");
   else
     gdb_printf ("%d pattern%s found.\n", found_count,
-		found_count > 1 ? "s" : "");
+                found_count > 1 ? "s" : "");
 }
 
 void _initialize_mem_search ();
 void
 _initialize_mem_search ()
 {
-  add_cmd ("find", class_vars, find_command, _("\
+  add_cmd ("find", class_vars, find_command, _ ("\
 Search memory for a sequence of bytes.\n\
 Usage:\nfind \
 [/SIZE-CHAR] [/MAX-COUNT] START-ADDRESS, END-ADDRESS, EXPR1 [, EXPR2 ...]\n\
@@ -301,5 +297,5 @@ searching by using casts, e.g.: {char[5]}\"hello\".\n\
 \n\
 The address of the last match is stored as the value of \"$_\".\n\
 Convenience variable \"$numfound\" is set to the number of matches."),
-	   &cmdlist);
+           &cmdlist);
 }

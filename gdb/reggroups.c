@@ -25,7 +25,7 @@
 #include "gdbtypes.h"
 #include "regcache.h"
 #include "command.h"
-#include "gdbcmd.h"		/* For maintenanceprintlist.  */
+#include "gdbcmd.h" /* For maintenanceprintlist.  */
 #include "gdbsupport/gdb_obstack.h"
 
 /* See reggroups.h.  */
@@ -40,11 +40,10 @@ reggroup_new (const char *name, enum reggroup_type type)
 
 const reggroup *
 reggroup_gdbarch_new (struct gdbarch *gdbarch, const char *name,
-		      enum reggroup_type type)
+                      enum reggroup_type type)
 {
   name = gdbarch_obstack_strdup (gdbarch, name);
-  return obstack_new<struct reggroup> (gdbarch_obstack (gdbarch),
-				       name, type);
+  return obstack_new<struct reggroup> (gdbarch_obstack (gdbarch), name, type);
 }
 
 /* A container holding all the register groups for a particular
@@ -72,28 +71,25 @@ struct reggroups
   {
     gdb_assert (group != nullptr);
 
-    auto find_by_name = [group] (const reggroup *g)
-      {
-	return streq (group->name (), g->name ());
-      };
+    auto find_by_name = [group] (const reggroup *g) {
+      return streq (group->name (), g->name ());
+    };
     gdb_assert (std::find_if (m_groups.begin (), m_groups.end (), find_by_name)
-		== m_groups.end ());
+                == m_groups.end ());
 
     m_groups.push_back (group);
   }
 
   /* The number of register groups.  */
 
-  std::vector<struct reggroup *>::size_type
-  size () const
+  std::vector<struct reggroup *>::size_type size () const
   {
     return m_groups.size ();
   }
 
   /* Return a reference to the list of all groups.  */
 
-  const std::vector<const struct reggroup *> &
-  groups () const
+  const std::vector<const struct reggroup *> &groups () const
   {
     return m_groups;
   }
@@ -145,7 +141,7 @@ gdbarch_reggroups (struct gdbarch *gdbarch)
 
 int
 default_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
-			     const struct reggroup *group)
+                             const struct reggroup *group)
 {
   int vector_p;
   int float_p;
@@ -156,9 +152,9 @@ default_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
   if (group == all_reggroup)
     return 1;
   vector_p = register_type (gdbarch, regnum)->is_vector ();
-  float_p = (register_type (gdbarch, regnum)->code () == TYPE_CODE_FLT
-	     || (register_type (gdbarch, regnum)->code ()
-		 == TYPE_CODE_DECFLOAT));
+  float_p
+    = (register_type (gdbarch, regnum)->code () == TYPE_CODE_FLT
+       || (register_type (gdbarch, regnum)->code () == TYPE_CODE_DECFLOAT));
   raw_p = regnum < gdbarch_num_regs (gdbarch);
   if (group == float_reggroup)
     return float_p;
@@ -179,7 +175,7 @@ reggroup_find (struct gdbarch *gdbarch, const char *name)
   for (const struct reggroup *group : gdbarch_reggroups (gdbarch))
     {
       if (strcmp (name, group->name ()) == 0)
-	return group;
+        return group;
     }
   return NULL;
 }
@@ -202,16 +198,16 @@ reggroups_dump (struct gdbarch *gdbarch, struct ui_file *file)
       const char *type;
 
       switch (group->type ())
-	{
-	case USER_REGGROUP:
-	  type = "user";
-	  break;
-	case INTERNAL_REGGROUP:
-	  type = "internal";
-	  break;
-	default:
-	  internal_error (_("bad switch"));
-	}
+        {
+        case USER_REGGROUP:
+          type = "user";
+          break;
+        case INTERNAL_REGGROUP:
+          type = "internal";
+          break;
+        default:
+          internal_error (_ ("bad switch"));
+        }
 
       /* Note: If you change this, be sure to also update the
 	 documentation.  */
@@ -234,7 +230,7 @@ maintenance_print_reggroups (const char *args, int from_tty)
       stdio_file file;
 
       if (!file.open (args, "w"))
-	perror_with_name (_("maintenance print reggroups"));
+        perror_with_name (_ ("maintenance print reggroups"));
       reggroups_dump (gdbarch, &file);
     }
 }
@@ -260,10 +256,8 @@ void _initialize_reggroup ();
 void
 _initialize_reggroup ()
 {
-  add_cmd ("reggroups", class_maintenance,
-	   maintenance_print_reggroups, _("\
+  add_cmd ("reggroups", class_maintenance, maintenance_print_reggroups, _ ("\
 Print the internal register group names.\n\
 Takes an optional file parameter."),
-	   &maintenanceprintlist);
-
+           &maintenanceprintlist);
 }

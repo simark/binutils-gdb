@@ -44,24 +44,24 @@ riscv_ravenscar_ops::riscv_ravenscar_ops (struct gdbarch *arch)
     {
       int offset;
       if (regnum == RISCV_RA_REGNUM || regnum == RISCV_PC_REGNUM)
-	offset = 0;
+        offset = 0;
       else if (regnum == RISCV_SP_REGNUM)
-	offset = 1;
+        offset = 1;
       else if (regnum == RISCV_ZERO_REGNUM + 8) /* S0 */
-	offset = 2;
+        offset = 2;
       else if (regnum == RISCV_ZERO_REGNUM + 9) /* S1 */
-	offset = 3;
+        offset = 3;
       else if (regnum >= RISCV_ZERO_REGNUM + 19
-	       && regnum <= RISCV_ZERO_REGNUM + 27) /* S2..S11 */
-	offset = regnum - (RISCV_ZERO_REGNUM + 19) + 4;
+               && regnum <= RISCV_ZERO_REGNUM + 27) /* S2..S11 */
+        offset = regnum - (RISCV_ZERO_REGNUM + 19) + 4;
       else if (regnum >= RISCV_FIRST_FP_REGNUM
-	       && regnum <= RISCV_FIRST_FP_REGNUM + 11)
-	offset = regnum - RISCV_FIRST_FP_REGNUM + 14; /* FS0..FS11 */
+               && regnum <= RISCV_FIRST_FP_REGNUM + 11)
+        offset = regnum - RISCV_FIRST_FP_REGNUM + 14; /* FS0..FS11 */
       else
-	offset = -1;
+        offset = -1;
 
       if (offset != -1)
-	offset *= reg_size;
+        offset *= reg_size;
 
       reg_offsets[regnum] = offset;
     }

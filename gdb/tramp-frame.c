@@ -40,8 +40,7 @@ struct tramp_frame_cache
 };
 
 static struct trad_frame_cache *
-tramp_frame_cache (frame_info_ptr this_frame,
-		   void **this_cache)
+tramp_frame_cache (frame_info_ptr this_frame, void **this_cache)
 {
   struct tramp_frame_cache *tramp_cache
     = (struct tramp_frame_cache *) *this_cache;
@@ -49,18 +48,16 @@ tramp_frame_cache (frame_info_ptr this_frame,
   if (tramp_cache->trad_cache == NULL)
     {
       tramp_cache->trad_cache = trad_frame_cache_zalloc (this_frame);
-      tramp_cache->tramp_frame->init (tramp_cache->tramp_frame,
-				      this_frame,
-				      tramp_cache->trad_cache,
-				      tramp_cache->func);
+      tramp_cache->tramp_frame->init (tramp_cache->tramp_frame, this_frame,
+                                      tramp_cache->trad_cache,
+                                      tramp_cache->func);
     }
   return tramp_cache->trad_cache;
 }
 
 static void
-tramp_frame_this_id (frame_info_ptr this_frame,
-		     void **this_cache,
-		     struct frame_id *this_id)
+tramp_frame_this_id (frame_info_ptr this_frame, void **this_cache,
+                     struct frame_id *this_id)
 {
   struct trad_frame_cache *trad_cache
     = tramp_frame_cache (this_frame, this_cache);
@@ -69,9 +66,8 @@ tramp_frame_this_id (frame_info_ptr this_frame,
 }
 
 static struct value *
-tramp_frame_prev_register (frame_info_ptr this_frame,
-			   void **this_cache,
-			   int prev_regnum)
+tramp_frame_prev_register (frame_info_ptr this_frame, void **this_cache,
+                           int prev_regnum)
 {
   struct trad_frame_cache *trad_cache
     = tramp_frame_cache (this_frame, this_cache);
@@ -80,8 +76,8 @@ tramp_frame_prev_register (frame_info_ptr this_frame,
 }
 
 static CORE_ADDR
-tramp_frame_start (const struct tramp_frame *tramp,
-		   frame_info_ptr this_frame, CORE_ADDR pc)
+tramp_frame_start (const struct tramp_frame *tramp, frame_info_ptr this_frame,
+                   CORE_ADDR pc)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -99,21 +95,20 @@ tramp_frame_start (const struct tramp_frame *tramp,
       int i;
 
       for (i = 0; 1; i++)
-	{
-	  gdb_byte buf[sizeof (tramp->insn[0])];
-	  ULONGEST insn;
-	  size_t insn_size = tramp->insn_size;
+        {
+          gdb_byte buf[sizeof (tramp->insn[0])];
+          ULONGEST insn;
+          size_t insn_size = tramp->insn_size;
 
-	  if (tramp->insn[i].bytes == TRAMP_SENTINEL_INSN)
-	    return func;
-	  if (!safe_frame_unwind_memory (this_frame,
-					 func + i * insn_size,
-					 {buf, insn_size}))
-	    break;
-	  insn = extract_unsigned_integer (buf, insn_size, byte_order);
-	  if (tramp->insn[i].bytes != (insn & tramp->insn[i].mask))
-	    break;
-	}
+          if (tramp->insn[i].bytes == TRAMP_SENTINEL_INSN)
+            return func;
+          if (!safe_frame_unwind_memory (this_frame, func + i * insn_size,
+                                         { buf, insn_size }))
+            break;
+          insn = extract_unsigned_integer (buf, insn_size, byte_order);
+          if (tramp->insn[i].bytes != (insn & tramp->insn[i].mask))
+            break;
+        }
     }
   /* Trampoline doesn't match.  */
   return 0;
@@ -121,8 +116,7 @@ tramp_frame_start (const struct tramp_frame *tramp,
 
 static int
 tramp_frame_sniffer (const struct frame_unwind *self,
-		     frame_info_ptr this_frame,
-		     void **this_cache)
+                     frame_info_ptr this_frame, void **this_cache)
 {
   const struct tramp_frame *tramp = self->unwind_data->tramp_frame;
   CORE_ADDR pc = get_frame_pc (this_frame);
@@ -145,7 +139,7 @@ tramp_frame_sniffer (const struct frame_unwind *self,
 
 void
 tramp_frame_prepend_unwinder (struct gdbarch *gdbarch,
-			      const struct tramp_frame *tramp_frame)
+                              const struct tramp_frame *tramp_frame)
 {
   struct frame_data *data;
   struct frame_unwind *unwinder;
@@ -155,7 +149,7 @@ tramp_frame_prepend_unwinder (struct gdbarch *gdbarch,
   for (i = 0; i < ARRAY_SIZE (tramp_frame->insn); i++)
     {
       if (tramp_frame->insn[i].bytes == TRAMP_SENTINEL_INSN)
-	break;
+        break;
     }
   gdb_assert (i < ARRAY_SIZE (tramp_frame->insn));
   gdb_assert (tramp_frame->insn_size <= sizeof (tramp_frame->insn[0].bytes));

@@ -50,7 +50,7 @@ trad_frame_cache_zalloc (frame_info_ptr this_frame)
 
 void
 trad_frame_reset_saved_regs (struct gdbarch *gdbarch,
-			     trad_frame_saved_reg *regs)
+                             trad_frame_saved_reg *regs)
 {
   int numregs = gdbarch_num_cooked_regs (gdbarch);
 
@@ -62,7 +62,8 @@ trad_frame_saved_reg *
 trad_frame_alloc_saved_regs (struct gdbarch *gdbarch)
 {
 #ifdef HAVE_IS_TRIVIALLY_CONSTRUCTIBLE
-  gdb_static_assert (std::is_trivially_constructible<trad_frame_saved_reg>::value);
+  gdb_static_assert (
+    std::is_trivially_constructible<trad_frame_saved_reg>::value);
 #endif
 
   int numregs = gdbarch_num_cooked_regs (gdbarch);
@@ -91,8 +92,8 @@ trad_frame_alloc_saved_regs (frame_info_ptr this_frame)
 }
 
 void
-trad_frame_set_reg_value (struct trad_frame_cache *this_trad_cache,
-			  int regnum, LONGEST val)
+trad_frame_set_reg_value (struct trad_frame_cache *this_trad_cache, int regnum,
+                          LONGEST val)
 {
   /* External interface for users of trad_frame_cache
      (who cannot access the prev_regs object directly).  */
@@ -101,22 +102,22 @@ trad_frame_set_reg_value (struct trad_frame_cache *this_trad_cache,
 
 void
 trad_frame_set_reg_realreg (struct trad_frame_cache *this_trad_cache,
-			    int regnum, int realreg)
+                            int regnum, int realreg)
 {
   this_trad_cache->prev_regs[regnum].set_realreg (realreg);
 }
 
 void
-trad_frame_set_reg_addr (struct trad_frame_cache *this_trad_cache,
-			 int regnum, CORE_ADDR addr)
+trad_frame_set_reg_addr (struct trad_frame_cache *this_trad_cache, int regnum,
+                         CORE_ADDR addr)
 {
   this_trad_cache->prev_regs[regnum].set_addr (addr);
 }
 
 void
 trad_frame_set_reg_regmap (struct trad_frame_cache *this_trad_cache,
-			   const struct regcache_map_entry *regmap,
-			   CORE_ADDR addr, size_t size)
+                           const struct regcache_map_entry *regmap,
+                           CORE_ADDR addr, size_t size)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_trad_cache->this_frame);
   int offs = 0, count;
@@ -127,17 +128,17 @@ trad_frame_set_reg_regmap (struct trad_frame_cache *this_trad_cache,
       int slot_size = regmap->size;
 
       if (slot_size == 0 && regno != REGCACHE_MAP_SKIP)
-	slot_size = register_size (gdbarch, regno);
+        slot_size = register_size (gdbarch, regno);
 
       if (offs + slot_size > size)
-	break;
+        break;
 
       if (regno == REGCACHE_MAP_SKIP)
-	offs += count * slot_size;
+        offs += count * slot_size;
       else
-	for (; count--; regno++, offs += slot_size)
-	  {
-	    /* Mimic the semantics of regcache::transfer_regset if a
+        for (; count--; regno++, offs += slot_size)
+          {
+            /* Mimic the semantics of regcache::transfer_regset if a
 	       register slot's size does not match the size of a
 	       register.
 
@@ -151,21 +152,21 @@ trad_frame_set_reg_regmap (struct trad_frame_cache *this_trad_cache,
 	       registers stored by address are sized according to the
 	       register, read the low N bytes and zero-extend them to
 	       generate a register value.  */
-	    if (slot_size >= register_size (gdbarch, regno))
-	      trad_frame_set_reg_addr (this_trad_cache, regno, addr + offs);
-	    else
-	      {
-		enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-		gdb_byte buf[slot_size];
+            if (slot_size >= register_size (gdbarch, regno))
+              trad_frame_set_reg_addr (this_trad_cache, regno, addr + offs);
+            else
+              {
+                enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+                gdb_byte buf[slot_size];
 
-		if (target_read_memory (addr + offs, buf, sizeof buf) == 0)
-		  {
-		    LONGEST val
-		      = extract_unsigned_integer (buf, sizeof buf, byte_order);
-		    trad_frame_set_reg_value (this_trad_cache, regno, val);
-		  }
-	      }
-	  }
+                if (target_read_memory (addr + offs, buf, sizeof buf) == 0)
+                  {
+                    LONGEST val
+                      = extract_unsigned_integer (buf, sizeof buf, byte_order);
+                    trad_frame_set_reg_value (this_trad_cache, regno, val);
+                  }
+              }
+          }
     }
 }
 
@@ -173,66 +174,63 @@ trad_frame_set_reg_regmap (struct trad_frame_cache *this_trad_cache,
 
 void
 trad_frame_set_reg_value_bytes (struct trad_frame_cache *this_trad_cache,
-				int regnum,
-				gdb::array_view<const gdb_byte> bytes)
+                                int regnum,
+                                gdb::array_view<const gdb_byte> bytes)
 {
   /* External interface for users of trad_frame_cache
      (who cannot access the prev_regs object directly).  */
   this_trad_cache->prev_regs[regnum].set_value_bytes (bytes);
 }
 
-
-
 struct value *
 trad_frame_get_prev_register (frame_info_ptr this_frame,
-			      trad_frame_saved_reg this_saved_regs[],
-			      int regnum)
+                              trad_frame_saved_reg this_saved_regs[],
+                              int regnum)
 {
   if (this_saved_regs[regnum].is_addr ())
     /* The register was saved in memory.  */
     return frame_unwind_got_memory (this_frame, regnum,
-				    this_saved_regs[regnum].addr ());
+                                    this_saved_regs[regnum].addr ());
   else if (this_saved_regs[regnum].is_realreg ())
     return frame_unwind_got_register (this_frame, regnum,
-				      this_saved_regs[regnum].realreg ());
+                                      this_saved_regs[regnum].realreg ());
   else if (this_saved_regs[regnum].is_value ())
     /* The register's value is available.  */
     return frame_unwind_got_constant (this_frame, regnum,
-				      this_saved_regs[regnum].value ());
+                                      this_saved_regs[regnum].value ());
   else if (this_saved_regs[regnum].is_value_bytes ())
     /* The register's value is available as a sequence of bytes.  */
     return frame_unwind_got_bytes (this_frame, regnum,
-				   this_saved_regs[regnum].value_bytes ());
+                                   this_saved_regs[regnum].value_bytes ());
   else
     return frame_unwind_got_optimized (this_frame, regnum);
 }
 
 struct value *
 trad_frame_get_register (struct trad_frame_cache *this_trad_cache,
-			 frame_info_ptr this_frame,
-			 int regnum)
+                         frame_info_ptr this_frame, int regnum)
 {
   return trad_frame_get_prev_register (this_frame, this_trad_cache->prev_regs,
-				       regnum);
+                                       regnum);
 }
 
 void
 trad_frame_set_id (struct trad_frame_cache *this_trad_cache,
-		   struct frame_id this_id)
+                   struct frame_id this_id)
 {
   this_trad_cache->this_id = this_id;
 }
 
 void
 trad_frame_get_id (struct trad_frame_cache *this_trad_cache,
-		   struct frame_id *this_id)
+                   struct frame_id *this_id)
 {
   (*this_id) = this_trad_cache->this_id;
 }
 
 void
 trad_frame_set_this_base (struct trad_frame_cache *this_trad_cache,
-			  CORE_ADDR this_base)
+                          CORE_ADDR this_base)
 {
   this_trad_cache->this_base = this_base;
 }

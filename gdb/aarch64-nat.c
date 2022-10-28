@@ -31,7 +31,7 @@
    (e.g., fork children, checkpoints).  */
 
 static std::unordered_map<pid_t, aarch64_debug_reg_state>
-aarch64_debug_process_state;
+  aarch64_debug_process_state;
 
 /* See aarch64-nat.h.  */
 
@@ -78,12 +78,12 @@ aarch64_can_use_hw_breakpoint (enum bptype type, int cnt, int othertype)
       || type == bp_access_watchpoint || type == bp_watchpoint)
     {
       if (aarch64_num_wp_regs == 0)
-	return 0;
+        return 0;
     }
   else if (type == bp_hardware_breakpoint)
     {
       if (aarch64_num_bp_regs == 0)
-	return 0;
+        return 0;
     }
   else
     gdb_assert_not_reached ("unexpected breakpoint type");
@@ -102,7 +102,7 @@ aarch64_can_use_hw_breakpoint (enum bptype type, int cnt, int othertype)
 
 int
 aarch64_insert_hw_breakpoint (struct gdbarch *gdbarch,
-			      struct bp_target_info *bp_tgt)
+                              struct bp_target_info *bp_tgt)
 {
   int ret;
   CORE_ADDR addr = bp_tgt->placed_address = bp_tgt->reqstd_address;
@@ -115,16 +115,16 @@ aarch64_insert_hw_breakpoint (struct gdbarch *gdbarch,
 
   if (show_debug_regs)
     gdb_printf (gdb_stdlog,
-		"insert_hw_breakpoint on entry (addr=0x%08lx, len=%d))\n",
-		(unsigned long) addr, len);
+                "insert_hw_breakpoint on entry (addr=0x%08lx, len=%d))\n",
+                (unsigned long) addr, len);
 
   ret = aarch64_handle_breakpoint (type, addr, len, 1 /* is_insert */,
-				   inferior_ptid, state);
+                                   inferior_ptid, state);
 
   if (show_debug_regs)
     {
-      aarch64_show_debug_reg_state (state,
-				    "insert_hw_breakpoint", addr, len, type);
+      aarch64_show_debug_reg_state (state, "insert_hw_breakpoint", addr, len,
+                                    type);
     }
 
   return ret;
@@ -135,7 +135,7 @@ aarch64_insert_hw_breakpoint (struct gdbarch *gdbarch,
 
 int
 aarch64_remove_hw_breakpoint (struct gdbarch *gdbarch,
-			      struct bp_target_info *bp_tgt)
+                              struct bp_target_info *bp_tgt)
 {
   int ret;
   CORE_ADDR addr = bp_tgt->placed_address;
@@ -148,16 +148,16 @@ aarch64_remove_hw_breakpoint (struct gdbarch *gdbarch,
 
   if (show_debug_regs)
     gdb_printf (gdb_stdlog,
-		"remove_hw_breakpoint on entry (addr=0x%08lx, len=%d))\n",
-		(unsigned long) addr, len);
+                "remove_hw_breakpoint on entry (addr=0x%08lx, len=%d))\n",
+                (unsigned long) addr, len);
 
   ret = aarch64_handle_breakpoint (type, addr, len, 0 /* is_insert */,
-				   inferior_ptid, state);
+                                   inferior_ptid, state);
 
   if (show_debug_regs)
     {
-      aarch64_show_debug_reg_state (state,
-				    "remove_hw_watchpoint", addr, len, type);
+      aarch64_show_debug_reg_state (state, "remove_hw_watchpoint", addr, len,
+                                    type);
     }
 
   return ret;
@@ -168,8 +168,9 @@ aarch64_remove_hw_breakpoint (struct gdbarch *gdbarch,
    of the type TYPE.  Return 0 on success, -1 on failure.  */
 
 int
-aarch64_insert_watchpoint (CORE_ADDR addr, int len, enum target_hw_bp_type type,
-			   struct expression *cond)
+aarch64_insert_watchpoint (CORE_ADDR addr, int len,
+                           enum target_hw_bp_type type,
+                           struct expression *cond)
 {
   int ret;
   struct aarch64_debug_reg_state *state
@@ -177,18 +178,18 @@ aarch64_insert_watchpoint (CORE_ADDR addr, int len, enum target_hw_bp_type type,
 
   if (show_debug_regs)
     gdb_printf (gdb_stdlog,
-		"insert_watchpoint on entry (addr=0x%08lx, len=%d)\n",
-		(unsigned long) addr, len);
+                "insert_watchpoint on entry (addr=0x%08lx, len=%d)\n",
+                (unsigned long) addr, len);
 
   gdb_assert (type != hw_execute);
 
   ret = aarch64_handle_watchpoint (type, addr, len, 1 /* is_insert */,
-				   inferior_ptid, state);
+                                   inferior_ptid, state);
 
   if (show_debug_regs)
     {
-      aarch64_show_debug_reg_state (state,
-				    "insert_watchpoint", addr, len, type);
+      aarch64_show_debug_reg_state (state, "insert_watchpoint", addr, len,
+                                    type);
     }
 
   return ret;
@@ -199,8 +200,9 @@ aarch64_insert_watchpoint (CORE_ADDR addr, int len, enum target_hw_bp_type type,
    type TYPE.  Return 0 on success, -1 on failure.  */
 
 int
-aarch64_remove_watchpoint (CORE_ADDR addr, int len, enum target_hw_bp_type type,
-			   struct expression *cond)
+aarch64_remove_watchpoint (CORE_ADDR addr, int len,
+                           enum target_hw_bp_type type,
+                           struct expression *cond)
 {
   int ret;
   struct aarch64_debug_reg_state *state
@@ -208,18 +210,18 @@ aarch64_remove_watchpoint (CORE_ADDR addr, int len, enum target_hw_bp_type type,
 
   if (show_debug_regs)
     gdb_printf (gdb_stdlog,
-		"remove_watchpoint on entry (addr=0x%08lx, len=%d)\n",
-		(unsigned long) addr, len);
+                "remove_watchpoint on entry (addr=0x%08lx, len=%d)\n",
+                (unsigned long) addr, len);
 
   gdb_assert (type != hw_execute);
 
   ret = aarch64_handle_watchpoint (type, addr, len, 0 /* is_insert */,
-				   inferior_ptid, state);
+                                   inferior_ptid, state);
 
   if (show_debug_regs)
     {
-      aarch64_show_debug_reg_state (state,
-				    "remove_watchpoint", addr, len, type);
+      aarch64_show_debug_reg_state (state, "remove_watchpoint", addr, len,
+                                    type);
     }
 
   return ret;
@@ -229,25 +231,26 @@ aarch64_remove_watchpoint (CORE_ADDR addr, int len, enum target_hw_bp_type type,
 
 bool
 aarch64_stopped_data_address (const struct aarch64_debug_reg_state *state,
-			      CORE_ADDR addr_trap, CORE_ADDR *addr_p)
+                              CORE_ADDR addr_trap, CORE_ADDR *addr_p)
 {
   int i;
 
   for (i = aarch64_num_wp_regs - 1; i >= 0; --i)
     {
       const unsigned int offset
-	= aarch64_watchpoint_offset (state->dr_ctrl_wp[i]);
-      const unsigned int len = aarch64_watchpoint_length (state->dr_ctrl_wp[i]);
+        = aarch64_watchpoint_offset (state->dr_ctrl_wp[i]);
+      const unsigned int len
+        = aarch64_watchpoint_length (state->dr_ctrl_wp[i]);
       const CORE_ADDR addr_watch = state->dr_addr_wp[i] + offset;
-      const CORE_ADDR addr_watch_aligned = align_down (state->dr_addr_wp[i], 8);
+      const CORE_ADDR addr_watch_aligned
+        = align_down (state->dr_addr_wp[i], 8);
       const CORE_ADDR addr_orig = state->dr_addr_orig_wp[i];
 
       if (state->dr_ref_count_wp[i]
-	  && DR_CONTROL_ENABLED (state->dr_ctrl_wp[i])
-	  && addr_trap >= addr_watch_aligned
-	  && addr_trap < addr_watch + len)
-	{
-	  /* ADDR_TRAP reports the first address of the memory range
+          && DR_CONTROL_ENABLED (state->dr_ctrl_wp[i])
+          && addr_trap >= addr_watch_aligned && addr_trap < addr_watch + len)
+        {
+          /* ADDR_TRAP reports the first address of the memory range
 	     accessed by the CPU, regardless of what was the memory
 	     range watched.  Thus, a large CPU access that straddles
 	     the ADDR_WATCH..ADDR_WATCH+LEN range may result in an
@@ -265,9 +268,9 @@ aarch64_stopped_data_address (const struct aarch64_debug_reg_state *state,
 	     range.  ADDR_WATCH <= ADDR_TRAP < ADDR_ORIG is a false
 	     positive on kernels older than 4.10.  See PR
 	     external/20207.  */
-	  *addr_p = addr_orig;
-	  return true;
-	}
+          *addr_p = addr_orig;
+          return true;
+        }
     }
 
   return false;
@@ -281,17 +284,17 @@ add_show_debug_regs_command (void)
   /* A maintenance command to enable printing the internal DRi mirror
      variables.  */
   add_setshow_boolean_cmd ("show-debug-regs", class_maintenance,
-			   &show_debug_regs, _("\
-Set whether to show variables that mirror the AArch64 debug registers."), _("\
-Show whether to show variables that mirror the AArch64 debug registers."), _("\
+                           &show_debug_regs, _ ("\
+Set whether to show variables that mirror the AArch64 debug registers."),
+                           _ ("\
+Show whether to show variables that mirror the AArch64 debug registers."),
+                           _ ("\
 Use \"on\" to enable, \"off\" to disable.\n\
 If enabled, the debug registers values are shown when GDB inserts\n\
 or removes a hardware breakpoint or watchpoint, and when the inferior\n\
 triggers a breakpoint or watchpoint."),
-			   NULL,
-			   NULL,
-			   &maintenance_set_cmdlist,
-			   &maintenance_show_cmdlist);
+                           NULL, NULL, &maintenance_set_cmdlist,
+                           &maintenance_show_cmdlist);
 }
 
 void

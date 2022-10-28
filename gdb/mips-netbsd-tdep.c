@@ -34,17 +34,17 @@
 #include "solib-svr4.h"
 
 /* Shorthand for some register numbers used below.  */
-#define MIPS_PC_REGNUM  MIPS_EMBED_PC_REGNUM
+#define MIPS_PC_REGNUM MIPS_EMBED_PC_REGNUM
 #define MIPS_FP0_REGNUM MIPS_EMBED_FP0_REGNUM
 #define MIPS_FSR_REGNUM MIPS_EMBED_FP0_REGNUM + 32
 
 /* Core file support.  */
 
 /* Number of registers in `struct reg' from <machine/reg.h>.  */
-#define MIPSNBSD_NUM_GREGS	38
+#define MIPSNBSD_NUM_GREGS 38
 
 /* Number of registers in `struct fpreg' from <machine/reg.h>.  */
-#define MIPSNBSD_NUM_FPREGS	33
+#define MIPSNBSD_NUM_FPREGS 33
 
 /* Supply register REGNUM from the buffer specified by FPREGS and LEN
    in the floating-point register set REGSET to register cache
@@ -52,8 +52,8 @@
 
 static void
 mipsnbsd_supply_fpregset (const struct regset *regset,
-			  struct regcache *regcache,
-			  int regnum, const void *fpregs, size_t len)
+                          struct regcache *regcache, int regnum,
+                          const void *fpregs, size_t len)
 {
   size_t regsize = mips_isa_regsize (regcache->arch ());
   const char *regs = (const char *) fpregs;
@@ -64,7 +64,7 @@ mipsnbsd_supply_fpregset (const struct regset *regset,
   for (i = MIPS_FP0_REGNUM; i <= MIPS_FSR_REGNUM; i++)
     {
       if (regnum == i || regnum == -1)
-	regcache->raw_supply (i, regs + (i - MIPS_FP0_REGNUM) * regsize);
+        regcache->raw_supply (i, regs + (i - MIPS_FP0_REGNUM) * regsize);
     }
 }
 
@@ -74,8 +74,8 @@ mipsnbsd_supply_fpregset (const struct regset *regset,
 
 static void
 mipsnbsd_supply_gregset (const struct regset *regset,
-			 struct regcache *regcache, int regnum,
-			 const void *gregs, size_t len)
+                         struct regcache *regcache, int regnum,
+                         const void *gregs, size_t len)
 {
   size_t regsize = mips_isa_regsize (regcache->arch ());
   const char *regs = (const char *) gregs;
@@ -86,7 +86,7 @@ mipsnbsd_supply_gregset (const struct regset *regset,
   for (i = 0; i <= MIPS_PC_REGNUM; i++)
     {
       if (regnum == i || regnum == -1)
-	regcache->raw_supply (i, regs + i * regsize);
+        regcache->raw_supply (i, regs + i * regsize);
     }
 
   if (len >= (MIPSNBSD_NUM_GREGS + MIPSNBSD_NUM_FPREGS) * regsize)
@@ -99,27 +99,19 @@ mipsnbsd_supply_gregset (const struct regset *regset,
 
 /* NetBSD/mips register sets.  */
 
-static const struct regset mipsnbsd_gregset =
-{
-  NULL,
-  mipsnbsd_supply_gregset,
-  NULL,
-  REGSET_VARIABLE_SIZE
-};
+static const struct regset mipsnbsd_gregset
+  = { NULL, mipsnbsd_supply_gregset, NULL, REGSET_VARIABLE_SIZE };
 
-static const struct regset mipsnbsd_fpregset =
-{
-  NULL,
-  mipsnbsd_supply_fpregset
-};
+static const struct regset mipsnbsd_fpregset
+  = { NULL, mipsnbsd_supply_fpregset };
 
 /* Iterate over core file register note sections.  */
 
 static void
 mipsnbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
-				       iterate_over_regset_sections_cb *cb,
-				       void *cb_data,
-				       const struct regcache *regcache)
+                                       iterate_over_regset_sections_cb *cb,
+                                       void *cb_data,
+                                       const struct regcache *regcache)
 {
   size_t regsize = mips_isa_regsize (gdbarch);
 
@@ -128,7 +120,6 @@ mipsnbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
   cb (".reg2", MIPSNBSD_NUM_FPREGS * regsize, MIPSNBSD_NUM_FPREGS * regsize,
       &mipsnbsd_fpregset, NULL, cb_data);
 }
-
 
 /* Conveniently, GDB uses the same register numbering as the
    ptrace register structure used by NetBSD/mips.  */
@@ -142,13 +133,12 @@ mipsnbsd_supply_reg (struct regcache *regcache, const char *regs, int regno)
   for (i = 0; i <= gdbarch_pc_regnum (gdbarch); i++)
     {
       if (regno == i || regno == -1)
-	{
-	  if (gdbarch_cannot_fetch_register (gdbarch, i))
-	    regcache->raw_supply (i, NULL);
-	  else
-	    regcache->raw_supply
-	      (i, regs + (i * mips_isa_regsize (gdbarch)));
-	}
+        {
+          if (gdbarch_cannot_fetch_register (gdbarch, i))
+            regcache->raw_supply (i, NULL);
+          else
+            regcache->raw_supply (i, regs + (i * mips_isa_regsize (gdbarch)));
+        }
     }
 }
 
@@ -160,31 +150,29 @@ mipsnbsd_fill_reg (const struct regcache *regcache, char *regs, int regno)
 
   for (i = 0; i <= gdbarch_pc_regnum (gdbarch); i++)
     if ((regno == i || regno == -1)
-	&& ! gdbarch_cannot_store_register (gdbarch, i))
+        && !gdbarch_cannot_store_register (gdbarch, i))
       regcache->raw_collect (i, regs + (i * mips_isa_regsize (gdbarch)));
 }
 
 void
-mipsnbsd_supply_fpreg (struct regcache *regcache,
-		       const char *fpregs, int regno)
+mipsnbsd_supply_fpreg (struct regcache *regcache, const char *fpregs,
+                       int regno)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   int i;
 
   for (i = gdbarch_fp0_regnum (gdbarch);
-       i <= mips_regnum (gdbarch)->fp_implementation_revision;
-       i++)
+       i <= mips_regnum (gdbarch)->fp_implementation_revision; i++)
     {
       if (regno == i || regno == -1)
-	{
-	  if (gdbarch_cannot_fetch_register (gdbarch, i))
-	    regcache->raw_supply (i, NULL);
-	  else
-	    regcache->raw_supply (i,
-				 fpregs
-				 + ((i - gdbarch_fp0_regnum (gdbarch))
-				    * mips_isa_regsize (gdbarch)));
-	}
+        {
+          if (gdbarch_cannot_fetch_register (gdbarch, i))
+            regcache->raw_supply (i, NULL);
+          else
+            regcache->raw_supply (i, fpregs
+                                       + ((i - gdbarch_fp0_regnum (gdbarch))
+                                          * mips_isa_regsize (gdbarch)));
+        }
     }
 }
 
@@ -195,13 +183,12 @@ mipsnbsd_fill_fpreg (const struct regcache *regcache, char *fpregs, int regno)
   int i;
 
   for (i = gdbarch_fp0_regnum (gdbarch);
-       i <= mips_regnum (gdbarch)->fp_control_status;
-       i++)
-    if ((regno == i || regno == -1) 
-	&& ! gdbarch_cannot_store_register (gdbarch, i))
-      regcache->raw_collect
-	(i, (fpregs + ((i - gdbarch_fp0_regnum (gdbarch))
-	     * mips_isa_regsize (gdbarch))));
+       i <= mips_regnum (gdbarch)->fp_control_status; i++)
+    if ((regno == i || regno == -1)
+        && !gdbarch_cannot_store_register (gdbarch, i))
+      regcache->raw_collect (i, (fpregs
+                                 + ((i - gdbarch_fp0_regnum (gdbarch))
+                                    * mips_isa_regsize (gdbarch))));
 }
 
 #if 0
@@ -222,8 +209,8 @@ mipsnbsd_fill_fpreg (const struct regcache *regcache, char *fpregs, int regno)
    signal trampoline.  If not, -1 is returned, otherwise the offset from the
    start of the return sequence is returned.  */
 
-#define RETCODE_NWORDS	3
-#define RETCODE_SIZE	(RETCODE_NWORDS * 4)
+#define RETCODE_NWORDS 3
+#define RETCODE_SIZE (RETCODE_NWORDS * 4)
 
 static const unsigned char sigtramp_retcode_mipsel[RETCODE_SIZE] =
 {
@@ -248,10 +235,10 @@ static const unsigned char sigtramp_retcode_mipseb[RETCODE_SIZE] =
    at.  The PC is copied into *pc.  This routine returns true on
    success.  */
 
-#define NBSD_MIPS_JB_PC			(2 * 4)
-#define NBSD_MIPS_JB_ELEMENT_SIZE(gdbarch)	mips_isa_regsize (gdbarch)
-#define NBSD_MIPS_JB_OFFSET(gdbarch)		(NBSD_MIPS_JB_PC * \
-					 NBSD_MIPS_JB_ELEMENT_SIZE (gdbarch))
+#define NBSD_MIPS_JB_PC (2 * 4)
+#define NBSD_MIPS_JB_ELEMENT_SIZE(gdbarch) mips_isa_regsize (gdbarch)
+#define NBSD_MIPS_JB_OFFSET(gdbarch) \
+  (NBSD_MIPS_JB_PC * NBSD_MIPS_JB_ELEMENT_SIZE (gdbarch))
 
 static int
 mipsnbsd_get_longjmp_target (frame_info_ptr frame, CORE_ADDR *pc)
@@ -266,11 +253,11 @@ mipsnbsd_get_longjmp_target (frame_info_ptr frame, CORE_ADDR *pc)
   jb_addr = get_frame_register_unsigned (frame, MIPS_A0_REGNUM);
 
   if (target_read_memory (jb_addr + NBSD_MIPS_JB_OFFSET (gdbarch), buf,
-			  NBSD_MIPS_JB_ELEMENT_SIZE (gdbarch)))
+                          NBSD_MIPS_JB_ELEMENT_SIZE (gdbarch)))
     return 0;
 
   *pc = extract_unsigned_integer (buf, NBSD_MIPS_JB_ELEMENT_SIZE (gdbarch),
-				  byte_order);
+                                  byte_order);
   return 1;
 }
 
@@ -278,14 +265,14 @@ static int
 mipsnbsd_cannot_fetch_register (struct gdbarch *gdbarch, int regno)
 {
   return (regno == MIPS_ZERO_REGNUM
-	  || regno == mips_regnum (gdbarch)->fp_implementation_revision);
+          || regno == mips_regnum (gdbarch)->fp_implementation_revision);
 }
 
 static int
 mipsnbsd_cannot_store_register (struct gdbarch *gdbarch, int regno)
 {
   return (regno == MIPS_ZERO_REGNUM
-	  || regno == mips_regnum (gdbarch)->fp_implementation_revision);
+          || regno == mips_regnum (gdbarch)->fp_implementation_revision);
 }
 
 /* Shared library support.  */
@@ -299,7 +286,7 @@ mipsnbsd_ilp32_fetch_link_map_offsets (void)
   static struct link_map_offsets lmo;
   static struct link_map_offsets *lmp = NULL;
 
-  if (lmp == NULL) 
+  if (lmp == NULL)
     {
       lmp = &lmo;
 
@@ -342,7 +329,7 @@ mipsnbsd_lp64_fetch_link_map_offsets (void)
       /* Everything we need is in the first 40 bytes.  */
       lmo.link_map_size = 48;
       lmo.l_addr_offset = 0;
-      lmo.l_name_offset = 16; 
+      lmo.l_name_offset = 16;
       lmo.l_ld_offset = 24;
       lmo.l_next_offset = 32;
       lmo.l_prev_offset = 40;
@@ -350,16 +337,14 @@ mipsnbsd_lp64_fetch_link_map_offsets (void)
 
   return lmp;
 }
-
 
 static void
-mipsnbsd_init_abi (struct gdbarch_info info,
-		   struct gdbarch *gdbarch)
+mipsnbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   nbsd_init_abi (info, gdbarch);
 
-  set_gdbarch_iterate_over_regset_sections
-    (gdbarch, mipsnbsd_iterate_over_regset_sections);
+  set_gdbarch_iterate_over_regset_sections (
+    gdbarch, mipsnbsd_iterate_over_regset_sections);
 
   set_gdbarch_get_longjmp_target (gdbarch, mipsnbsd_get_longjmp_target);
 
@@ -369,10 +354,10 @@ mipsnbsd_init_abi (struct gdbarch_info info,
   set_gdbarch_software_single_step (gdbarch, mips_software_single_step);
 
   /* NetBSD/mips has SVR4-style shared libraries.  */
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, (gdbarch_ptr_bit (gdbarch) == 32 ?
-	       mipsnbsd_ilp32_fetch_link_map_offsets :
-	       mipsnbsd_lp64_fetch_link_map_offsets));
+  set_solib_svr4_fetch_link_map_offsets (
+    gdbarch,
+    (gdbarch_ptr_bit (gdbarch) == 32 ? mipsnbsd_ilp32_fetch_link_map_offsets
+                                     : mipsnbsd_lp64_fetch_link_map_offsets));
 }
 
 void _initialize_mipsnbsd_tdep ();
@@ -380,5 +365,5 @@ void
 _initialize_mipsnbsd_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_mips, 0, GDB_OSABI_NETBSD,
-			  mipsnbsd_init_abi);
+                          mipsnbsd_init_abi);
 }

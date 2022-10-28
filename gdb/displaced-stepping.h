@@ -33,7 +33,7 @@ extern bool debug_displaced;
 /* Print a "displaced" debug statement.  */
 
 #define displaced_debug_printf(fmt, ...) \
-  debug_prefixed_printf_cond (debug_displaced, "displaced",fmt, ##__VA_ARGS__)
+  debug_prefixed_printf_cond (debug_displaced, "displaced", fmt, ##__VA_ARGS__)
 
 enum displaced_step_prepare_status
 {
@@ -74,9 +74,7 @@ using displaced_step_copy_insn_closure_up
 
 struct buf_displaced_step_copy_insn_closure : displaced_step_copy_insn_closure
 {
-  buf_displaced_step_copy_insn_closure (int buf_size)
-  : buf (buf_size)
-  {}
+  buf_displaced_step_copy_insn_closure (int buf_size) : buf (buf_size) {}
 
   /* The content of this buffer is up to the user of the class, but typically
      original instruction bytes, used during fixup to determine what needs to
@@ -88,10 +86,7 @@ struct buf_displaced_step_copy_insn_closure : displaced_step_copy_insn_closure
 
 struct displaced_step_inferior_state
 {
-  displaced_step_inferior_state ()
-  {
-    reset ();
-  }
+  displaced_step_inferior_state () { reset (); }
 
   /* Put this object back in its original state.  */
   void reset ()
@@ -120,16 +115,10 @@ struct displaced_step_inferior_state
 struct displaced_step_thread_state
 {
   /* Return true if this thread is currently executing a displaced step.  */
-  bool in_progress () const
-  {
-    return m_original_gdbarch != nullptr;
-  }
+  bool in_progress () const { return m_original_gdbarch != nullptr; }
 
   /* Return the gdbarch of the thread prior to the step.  */
-  gdbarch *get_original_gdbarch () const
-  {
-    return m_original_gdbarch;
-  }
+  gdbarch *get_original_gdbarch () const { return m_original_gdbarch; }
 
   /* Mark this thread as currently executing a displaced step.
 
@@ -141,10 +130,7 @@ struct displaced_step_thread_state
   }
 
   /* Mark this thread as no longer executing a displaced step.  */
-  void reset ()
-  {
-    m_original_gdbarch = nullptr;
-  }
+  void reset () { m_original_gdbarch = nullptr; }
 
 private:
   gdbarch *m_original_gdbarch = nullptr;
@@ -165,25 +151,22 @@ struct displaced_step_buffers
   }
 
   displaced_step_prepare_status prepare (thread_info *thread,
-					 CORE_ADDR &displaced_pc);
+                                         CORE_ADDR &displaced_pc);
 
   displaced_step_finish_status finish (gdbarch *arch, thread_info *thread,
-				       gdb_signal sig);
+                                       gdb_signal sig);
 
   const displaced_step_copy_insn_closure *
-    copy_insn_closure_by_addr (CORE_ADDR addr);
+  copy_insn_closure_by_addr (CORE_ADDR addr);
 
   void restore_in_ptid (ptid_t ptid);
 
 private:
-
   /* State of a single buffer.  */
 
   struct displaced_step_buffer
   {
-    explicit displaced_step_buffer (CORE_ADDR addr)
-      : addr (addr)
-    {}
+    explicit displaced_step_buffer (CORE_ADDR addr) : addr (addr) {}
 
     /* Address of the buffer.  */
     const CORE_ADDR addr;

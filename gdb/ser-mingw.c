@@ -55,8 +55,8 @@ ser_windows_open (struct serial *scb, const char *name)
   struct ser_windows_state *state;
   COMMTIMEOUTS timeouts;
 
-  h = CreateFile (name, GENERIC_READ | GENERIC_WRITE, 0, NULL,
-		  OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+  h = CreateFile (name, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
+                  FILE_FLAG_OVERLAPPED, NULL);
   if (h == INVALID_HANDLE_VALUE)
     {
       errno = ENOENT;
@@ -163,7 +163,7 @@ ser_windows_raw (struct serial *scb)
   state.ByteSize = 8;
 
   if (SetCommState (h, &state) == 0)
-    warning (_("SetCommState failed"));
+    warning (_ ("SetCommState failed"));
 }
 
 static int
@@ -289,10 +289,10 @@ ser_windows_wait_handle (struct serial *scb, HANDLE *read, HANDLE *except)
      cleared, and we get a duplicated event, if the last batch
      of characters included at least two arriving close together.  */
   if (!SetCommMask (h, 0))
-    warning (_("ser_windows_wait_handle: reseting mask failed"));
+    warning (_ ("ser_windows_wait_handle: reseting mask failed"));
 
   if (!SetCommMask (h, EV_RXCHAR))
-    warning (_("ser_windows_wait_handle: reseting mask failed (2)"));
+    warning (_ ("ser_windows_wait_handle: reseting mask failed (2)"));
 
   /* There's a potential race condition here; we must check cbInQue
      and not wait if that's nonzero.  */
@@ -339,8 +339,8 @@ ser_windows_read_prim (struct serial *scb, size_t count)
   if (!ReadFile (h, scb->buf, /* count */ 1, &bytes_read, &ov))
     {
       if (GetLastError () != ERROR_IO_PENDING
-	  || !GetOverlappedResult (h, &ov, &bytes_read, TRUE))
-	bytes_read = -1;
+          || !GetOverlappedResult (h, &ov, &bytes_read, TRUE))
+        bytes_read = -1;
     }
 
   CloseHandle (ov.hEvent);
@@ -360,8 +360,8 @@ ser_windows_write_prim (struct serial *scb, const void *buf, size_t len)
   if (!WriteFile (h, buf, len, &bytes_written, &ov))
     {
       if (GetLastError () != ERROR_IO_PENDING
-	  || !GetOverlappedResult (h, &ov, &bytes_written, TRUE))
-	bytes_written = -1;
+          || !GetOverlappedResult (h, &ov, &bytes_written, TRUE))
+        bytes_written = -1;
     }
 
   CloseHandle (ov.hEvent);
@@ -384,7 +384,8 @@ ser_windows_write_prim (struct serial *scb, const void *buf, size_t len)
    wait_handle_done functions, which return the threads to the stopped
    state.  */
 
-enum select_thread_state {
+enum select_thread_state
+{
   STS_STARTED,
   STS_STOPPED
 };
@@ -436,25 +437,24 @@ select_thread_wait (struct ser_console_state *state)
      the started state, or that we exit this thread.  */
   wait_events[0] = state->start_select;
   wait_events[1] = state->exit_select;
-  if (WaitForMultipleObjects (2, wait_events, FALSE, INFINITE) 
+  if (WaitForMultipleObjects (2, wait_events, FALSE, INFINITE)
       != WAIT_OBJECT_0)
     /* Either the EXIT_SELECT event was signaled (requesting that the
        thread exit) or an error has occurred.  In either case, we exit
        the thread.  */
     ExitThread (0);
-  
+
   /* We are now in the started state.  */
   SetEvent (state->have_started);
 }
 
-typedef DWORD WINAPI (*thread_fn_type)(void *);
+typedef DWORD WINAPI (*thread_fn_type) (void *);
 
 /* Create a new select thread for SCB executing THREAD_FN.  The STATE
    will be filled in by this function before return.  */
 static void
-create_select_thread (thread_fn_type thread_fn,
-		      struct serial *scb,
-		      struct ser_console_state *state)
+create_select_thread (thread_fn_type thread_fn, struct serial *scb,
+                      struct ser_console_state *state)
 {
   DWORD threadId;
 
@@ -544,72 +544,67 @@ console_select_thread (void *arg)
       select_thread_wait (state);
 
       while (1)
-	{
-	  wait_events[0] = state->stop_select;
-	  wait_events[1] = h;
+        {
+          wait_events[0] = state->stop_select;
+          wait_events[1] = h;
 
-	  event_index = WaitForMultipleObjects (2, wait_events,
-						FALSE, INFINITE);
+          event_index
+            = WaitForMultipleObjects (2, wait_events, FALSE, INFINITE);
 
-	  if (event_index == WAIT_OBJECT_0
-	      || WaitForSingleObject (state->stop_select, 0) == WAIT_OBJECT_0)
-	    break;
+          if (event_index == WAIT_OBJECT_0
+              || WaitForSingleObject (state->stop_select, 0) == WAIT_OBJECT_0)
+            break;
 
-	  if (event_index != WAIT_OBJECT_0 + 1)
-	    {
-	      /* Wait must have failed; assume an error has occured, e.g.
+          if (event_index != WAIT_OBJECT_0 + 1)
+            {
+              /* Wait must have failed; assume an error has occured, e.g.
 		 the handle has been closed.  */
-	      SetEvent (state->except_event);
-	      break;
-	    }
+              SetEvent (state->except_event);
+              break;
+            }
 
-	  /* We've got a pending event on the console.  See if it's
+          /* We've got a pending event on the console.  See if it's
 	     of interest.  */
-	  if (!PeekConsoleInput (h, &record, 1, &n_records) || n_records != 1)
-	    {
-	      /* Something went wrong.  Maybe the console is gone.  */
-	      SetEvent (state->except_event);
-	      break;
-	    }
+          if (!PeekConsoleInput (h, &record, 1, &n_records) || n_records != 1)
+            {
+              /* Something went wrong.  Maybe the console is gone.  */
+              SetEvent (state->except_event);
+              break;
+            }
 
-	  if (record.EventType == KEY_EVENT && record.Event.KeyEvent.bKeyDown)
-	    {
-	      WORD keycode = record.Event.KeyEvent.wVirtualKeyCode;
+          if (record.EventType == KEY_EVENT && record.Event.KeyEvent.bKeyDown)
+            {
+              WORD keycode = record.Event.KeyEvent.wVirtualKeyCode;
 
-	      /* Ignore events containing only control keys.  We must
+              /* Ignore events containing only control keys.  We must
 		 recognize "enhanced" keys which we are interested in
 		 reading via getch, if they do not map to ASCII.  But we
 		 do not want to report input available for e.g. the
 		 control key alone.  */
 
-	      if (record.Event.KeyEvent.uChar.AsciiChar != 0
-		  || keycode == VK_PRIOR
-		  || keycode == VK_NEXT
-		  || keycode == VK_END
-		  || keycode == VK_HOME
-		  || keycode == VK_LEFT
-		  || keycode == VK_UP
-		  || keycode == VK_RIGHT
-		  || keycode == VK_DOWN
-		  || keycode == VK_INSERT
-		  || keycode == VK_DELETE)
-		{
-		  /* This is really a keypress.  */
-		  SetEvent (state->read_event);
-		  break;
-		}
-	    }
-	  else if (record.EventType == MOUSE_EVENT)
-	    {
-	      SetEvent (state->read_event);
-	      break;
-	    }
+              if (record.Event.KeyEvent.uChar.AsciiChar != 0
+                  || keycode == VK_PRIOR || keycode == VK_NEXT
+                  || keycode == VK_END || keycode == VK_HOME
+                  || keycode == VK_LEFT || keycode == VK_UP
+                  || keycode == VK_RIGHT || keycode == VK_DOWN
+                  || keycode == VK_INSERT || keycode == VK_DELETE)
+                {
+                  /* This is really a keypress.  */
+                  SetEvent (state->read_event);
+                  break;
+                }
+            }
+          else if (record.EventType == MOUSE_EVENT)
+            {
+              SetEvent (state->read_event);
+              break;
+            }
 
-	  /* Otherwise discard it and wait again.  */
-	  ReadConsoleInput (h, &record, 1, &n_records);
-	}
+          /* Otherwise discard it and wait again.  */
+          ReadConsoleInput (h, &record, 1, &n_records);
+        }
 
-      SetEvent(state->have_stopped);
+      SetEvent (state->have_stopped);
     }
   return 0;
 }
@@ -650,24 +645,24 @@ pipe_select_thread (void *arg)
 
       /* Wait for something to happen on the pipe.  */
       while (1)
-	{
-	  if (!PeekNamedPipe (h, NULL, 0, NULL, &n_avail, NULL))
-	    {
-	      SetEvent (state->except_event);
-	      break;
-	    }
+        {
+          if (!PeekNamedPipe (h, NULL, 0, NULL, &n_avail, NULL))
+            {
+              SetEvent (state->except_event);
+              break;
+            }
 
-	  if (n_avail > 0)
-	    {
-	      SetEvent (state->read_event);
-	      break;
-	    }
+          if (n_avail > 0)
+            {
+              SetEvent (state->read_event);
+              break;
+            }
 
-	  /* Delay 10ms before checking again, but allow the stop
+          /* Delay 10ms before checking again, but allow the stop
 	     event to wake us.  */
-	  if (WaitForSingleObject (state->stop_select, 10) == WAIT_OBJECT_0)
-	    break;
-	}
+          if (WaitForSingleObject (state->stop_select, 10) == WAIT_OBJECT_0)
+            break;
+        }
 
       SetEvent (state->have_stopped);
     }
@@ -689,10 +684,10 @@ file_select_thread (void *arg)
       select_thread_wait (state);
 
       if (SetFilePointer (h, 0, NULL, FILE_CURRENT)
-	  == INVALID_SET_FILE_POINTER)
-	SetEvent (state->except_event);
+          == INVALID_SET_FILE_POINTER)
+        SetEvent (state->except_event);
       else
-	SetEvent (state->read_event);
+        SetEvent (state->read_event);
 
       SetEvent (state->have_stopped);
     }
@@ -711,21 +706,21 @@ ser_console_wait_handle (struct serial *scb, HANDLE *read, HANDLE *except)
 
       is_tty = isatty (scb->fd);
       if (!is_tty && !fd_is_file (scb->fd) && !fd_is_pipe (scb->fd))
-	{
-	  *read = NULL;
-	  *except = NULL;
-	  return;
-	}
+        {
+          *read = NULL;
+          *except = NULL;
+          return;
+        }
 
       state = XCNEW (struct ser_console_state);
       scb->state = state;
 
       if (is_tty)
-	thread_fn = console_select_thread;
+        thread_fn = console_select_thread;
       else if (fd_is_pipe (scb->fd))
-	thread_fn = pipe_select_thread;
+        thread_fn = pipe_select_thread;
       else
-	thread_fn = file_select_thread;
+        thread_fn = file_select_thread;
 
       create_select_thread (thread_fn, scb, state);
     }
@@ -851,10 +846,7 @@ free_pipe_state (struct pipe_state *ps)
 
 struct pipe_state_destroyer
 {
-  void operator() (pipe_state *ps) const
-  {
-    free_pipe_state (ps);
-  }
+  void operator() (pipe_state *ps) const { free_pipe_state (ps); }
 };
 
 typedef std::unique_ptr<pipe_state, pipe_state_destroyer> pipe_state_up;
@@ -865,52 +857,50 @@ pipe_windows_open (struct serial *scb, const char *name)
   FILE *pex_stderr;
 
   if (name == NULL)
-    error_no_arg (_("child command"));
+    error_no_arg (_ ("child command"));
 
   gdb_argv argv (name);
 
-  if (! argv[0] || argv[0][0] == '\0')
-    error (_("missing child command"));
+  if (!argv[0] || argv[0][0] == '\0')
+    error (_ ("missing child command"));
 
   pipe_state_up ps (make_pipe_state ());
 
   ps->pex = pex_init (PEX_USE_PIPES, "target remote pipe", NULL);
-  if (! ps->pex)
+  if (!ps->pex)
     return -1;
   ps->input = pex_input_pipe (ps->pex, 1);
-  if (! ps->input)
+  if (!ps->input)
     return -1;
 
   {
     int err;
-    const char *err_msg
-      = pex_run (ps->pex, PEX_SEARCH | PEX_BINARY_INPUT | PEX_BINARY_OUTPUT
-		 | PEX_STDERR_TO_PIPE,
-		 argv[0], argv.get (), NULL, NULL,
-		 &err);
+    const char *err_msg = pex_run (ps->pex,
+                                   PEX_SEARCH | PEX_BINARY_INPUT
+                                     | PEX_BINARY_OUTPUT | PEX_STDERR_TO_PIPE,
+                                   argv[0], argv.get (), NULL, NULL, &err);
 
     if (err_msg)
       {
-	/* Our caller expects us to return -1, but all they'll do with
+        /* Our caller expects us to return -1, but all they'll do with
 	   it generally is print the message based on errno.  We have
 	   all the same information here, plus err_msg provided by
 	   pex_run, so we just raise the error here.  */
-	if (err)
-	  error (_("error starting child process '%s': %s: %s"),
-		 name, err_msg, safe_strerror (err));
-	else
-	  error (_("error starting child process '%s': %s"),
-		 name, err_msg);
+        if (err)
+          error (_ ("error starting child process '%s': %s: %s"), name,
+                 err_msg, safe_strerror (err));
+        else
+          error (_ ("error starting child process '%s': %s"), name, err_msg);
       }
   }
 
   ps->output = pex_read_output (ps->pex, 1);
-  if (! ps->output)
+  if (!ps->output)
     return -1;
   scb->fd = fileno (ps->output);
 
   pex_stderr = pex_read_err (ps->pex, 1);
-  if (! pex_stderr)
+  if (!pex_stderr)
     return -1;
   scb->error_fd = fileno (pex_stderr);
 
@@ -927,11 +917,11 @@ pipe_windows_fdopen (struct serial *scb, int fd)
   ps = make_pipe_state ();
 
   ps->input = fdopen (fd, "r+");
-  if (! ps->input)
+  if (!ps->input)
     goto fail;
 
   ps->output = fdopen (fd, "r+");
-  if (! ps->output)
+  if (!ps->output)
     goto fail;
 
   scb->fd = fd;
@@ -939,7 +929,7 @@ pipe_windows_fdopen (struct serial *scb, int fd)
 
   return 0;
 
- fail:
+fail:
   free_pipe_state (ps);
   return -1;
 }
@@ -956,7 +946,6 @@ pipe_windows_close (struct serial *scb)
   free_pipe_state (ps);
 }
 
-
 static int
 pipe_windows_read (struct serial *scb, size_t count)
 {
@@ -967,18 +956,17 @@ pipe_windows_read (struct serial *scb, size_t count)
   if (pipeline_out == INVALID_HANDLE_VALUE)
     return -1;
 
-  if (! PeekNamedPipe (pipeline_out, NULL, 0, NULL, &available, NULL))
+  if (!PeekNamedPipe (pipeline_out, NULL, 0, NULL, &available, NULL))
     return -1;
 
   if (count > available)
     count = available;
 
-  if (! ReadFile (pipeline_out, scb->buf, count, &bytes_read, NULL))
+  if (!ReadFile (pipeline_out, scb->buf, count, &bytes_read, NULL))
     return -1;
 
   return bytes_read;
 }
-
 
 static int
 pipe_windows_write (struct serial *scb, const void *buf, size_t count)
@@ -995,12 +983,11 @@ pipe_windows_write (struct serial *scb, const void *buf, size_t count)
   if (pipeline_in == INVALID_HANDLE_VALUE)
     return -1;
 
-  if (! WriteFile (pipeline_in, buf, count, &written, NULL))
+  if (!WriteFile (pipeline_in, buf, count, &written, NULL))
     return -1;
 
   return written;
 }
-
 
 static void
 pipe_wait_handle (struct serial *scb, HANDLE *read, HANDLE *except)
@@ -1058,7 +1045,7 @@ gdb_pipe (int pdes[2])
 struct net_windows_state
 {
   struct ser_console_state base;
-  
+
   HANDLE sock_event;
 };
 
@@ -1109,48 +1096,50 @@ net_windows_select_thread (void *arg)
 
       /* Wait for something to happen on the socket.  */
       while (1)
-	{
-	  event_index = WaitForMultipleObjects (2, wait_events, FALSE, INFINITE);
+        {
+          event_index
+            = WaitForMultipleObjects (2, wait_events, FALSE, INFINITE);
 
-	  if (event_index == WAIT_OBJECT_0
-	      || WaitForSingleObject (state->base.stop_select, 0) == WAIT_OBJECT_0)
-	    {
-	      /* We have been requested to stop.  */
-	      break;
-	    }
+          if (event_index == WAIT_OBJECT_0
+              || WaitForSingleObject (state->base.stop_select, 0)
+                   == WAIT_OBJECT_0)
+            {
+              /* We have been requested to stop.  */
+              break;
+            }
 
-	  if (event_index != WAIT_OBJECT_0 + 1)
-	    {
-	      /* Some error has occured.  Assume that this is an error
+          if (event_index != WAIT_OBJECT_0 + 1)
+            {
+              /* Some error has occured.  Assume that this is an error
 		 condition.  */
-	      SetEvent (state->base.except_event);
-	      break;
-	    }
+              SetEvent (state->base.except_event);
+              break;
+            }
 
-	  /* Enumerate the internal network events, and reset the
+          /* Enumerate the internal network events, and reset the
 	     object that signalled us to catch the next event.  */
-	  if (WSAEnumNetworkEvents (scb->fd, state->sock_event, &events) != 0)
-	    {
-	      /* Something went wrong.  Maybe the socket is gone.  */
-	      SetEvent (state->base.except_event);
-	      break;
-	    }
+          if (WSAEnumNetworkEvents (scb->fd, state->sock_event, &events) != 0)
+            {
+              /* Something went wrong.  Maybe the socket is gone.  */
+              SetEvent (state->base.except_event);
+              break;
+            }
 
-	  if (events.lNetworkEvents & FD_READ)
-	    {
-	      if (net_windows_socket_check_pending (scb))
-		break;
+          if (events.lNetworkEvents & FD_READ)
+            {
+              if (net_windows_socket_check_pending (scb))
+                break;
 
-	      /* Spurious wakeup.  That is, the socket's event was
+              /* Spurious wakeup.  That is, the socket's event was
 		 signalled before we last called recv.  */
-	    }
+            }
 
-	  if (events.lNetworkEvents & FD_CLOSE)
-	    {
-	      SetEvent (state->base.except_event);
-	      break;
-	    }
-	}
+          if (events.lNetworkEvents & FD_CLOSE)
+            {
+              SetEvent (state->base.except_event);
+              break;
+            }
+        }
 
       SetEvent (state->base.have_stopped);
     }
@@ -1207,7 +1196,6 @@ net_windows_open (struct serial *scb, const char *name)
   return 0;
 }
 
-
 static void
 net_windows_close (struct serial *scb)
 {
@@ -1223,125 +1211,99 @@ net_windows_close (struct serial *scb)
 
 /* The serial port driver.  */
 
-static const struct serial_ops hardwire_ops =
-{
-  "hardwire",
-  ser_windows_open,
-  ser_windows_close,
-  NULL,
-  ser_base_readchar,
-  ser_base_write,
-  ser_windows_flush_output,
-  ser_windows_flush_input,
-  ser_windows_send_break,
-  ser_windows_raw,
-  /* These are only used for stdin; we do not need them for serial
+static const struct serial_ops hardwire_ops
+  = { "hardwire", ser_windows_open, ser_windows_close, NULL, ser_base_readchar,
+      ser_base_write, ser_windows_flush_output, ser_windows_flush_input,
+      ser_windows_send_break, ser_windows_raw,
+      /* These are only used for stdin; we do not need them for serial
      ports, so supply the standard dummies.  */
-  ser_base_get_tty_state,
-  ser_base_copy_tty_state,
-  ser_base_set_tty_state,
-  ser_base_print_tty_state,
-  ser_windows_setbaudrate,
-  ser_windows_setstopbits,
-  ser_windows_setparity,
-  ser_windows_drain_output,
-  ser_base_async,
-  ser_windows_read_prim,
-  ser_windows_write_prim,
-  NULL,
-  ser_windows_wait_handle
-};
+      ser_base_get_tty_state, ser_base_copy_tty_state, ser_base_set_tty_state,
+      ser_base_print_tty_state, ser_windows_setbaudrate,
+      ser_windows_setstopbits, ser_windows_setparity, ser_windows_drain_output,
+      ser_base_async, ser_windows_read_prim, ser_windows_write_prim, NULL,
+      ser_windows_wait_handle };
 
 /* The dummy serial driver used for terminals.  We only provide the
    TTY-related methods.  */
 
-static const struct serial_ops tty_ops =
-{
-  "terminal",
-  NULL,
-  ser_console_close,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  ser_console_get_tty_state,
-  ser_base_copy_tty_state,
-  ser_base_set_tty_state,
-  ser_base_print_tty_state,
-  NULL,
-  NULL,
-  NULL,
-  ser_base_drain_output,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  ser_console_wait_handle,
-  ser_console_done_wait_handle
-};
+static const struct serial_ops tty_ops = { "terminal",
+                                           NULL,
+                                           ser_console_close,
+                                           NULL,
+                                           NULL,
+                                           NULL,
+                                           NULL,
+                                           NULL,
+                                           NULL,
+                                           NULL,
+                                           ser_console_get_tty_state,
+                                           ser_base_copy_tty_state,
+                                           ser_base_set_tty_state,
+                                           ser_base_print_tty_state,
+                                           NULL,
+                                           NULL,
+                                           NULL,
+                                           ser_base_drain_output,
+                                           NULL,
+                                           NULL,
+                                           NULL,
+                                           NULL,
+                                           ser_console_wait_handle,
+                                           ser_console_done_wait_handle };
 
 /* The pipe interface.  */
 
-static const struct serial_ops pipe_ops =
-{
-  "pipe",
-  pipe_windows_open,
-  pipe_windows_close,
-  pipe_windows_fdopen,
-  ser_base_readchar,
-  ser_base_write,
-  ser_base_flush_output,
-  ser_base_flush_input,
-  ser_base_send_break,
-  ser_base_raw,
-  ser_base_get_tty_state,
-  ser_base_copy_tty_state,
-  ser_base_set_tty_state,
-  ser_base_print_tty_state,
-  ser_base_setbaudrate,
-  ser_base_setstopbits,
-  ser_base_setparity,
-  ser_base_drain_output,
-  ser_base_async,
-  pipe_windows_read,
-  pipe_windows_write,
-  pipe_avail,
-  pipe_wait_handle,
-  pipe_done_wait_handle
-};
+static const struct serial_ops pipe_ops = { "pipe",
+                                            pipe_windows_open,
+                                            pipe_windows_close,
+                                            pipe_windows_fdopen,
+                                            ser_base_readchar,
+                                            ser_base_write,
+                                            ser_base_flush_output,
+                                            ser_base_flush_input,
+                                            ser_base_send_break,
+                                            ser_base_raw,
+                                            ser_base_get_tty_state,
+                                            ser_base_copy_tty_state,
+                                            ser_base_set_tty_state,
+                                            ser_base_print_tty_state,
+                                            ser_base_setbaudrate,
+                                            ser_base_setstopbits,
+                                            ser_base_setparity,
+                                            ser_base_drain_output,
+                                            ser_base_async,
+                                            pipe_windows_read,
+                                            pipe_windows_write,
+                                            pipe_avail,
+                                            pipe_wait_handle,
+                                            pipe_done_wait_handle };
 
 /* The TCP/UDP socket driver.  */
 
-static const struct serial_ops tcp_ops =
-{
-  "tcp",
-  net_windows_open,
-  net_windows_close,
-  NULL,
-  ser_base_readchar,
-  ser_base_write,
-  ser_base_flush_output,
-  ser_base_flush_input,
-  ser_tcp_send_break,
-  ser_base_raw,
-  ser_base_get_tty_state,
-  ser_base_copy_tty_state,
-  ser_base_set_tty_state,
-  ser_base_print_tty_state,
-  ser_base_setbaudrate,
-  ser_base_setstopbits,
-  ser_base_setparity,
-  ser_base_drain_output,
-  ser_base_async,
-  net_read_prim,
-  net_write_prim,
-  NULL,
-  net_windows_wait_handle,
-  net_windows_done_wait_handle
-};
+static const struct serial_ops tcp_ops = { "tcp",
+                                           net_windows_open,
+                                           net_windows_close,
+                                           NULL,
+                                           ser_base_readchar,
+                                           ser_base_write,
+                                           ser_base_flush_output,
+                                           ser_base_flush_input,
+                                           ser_tcp_send_break,
+                                           ser_base_raw,
+                                           ser_base_get_tty_state,
+                                           ser_base_copy_tty_state,
+                                           ser_base_set_tty_state,
+                                           ser_base_print_tty_state,
+                                           ser_base_setbaudrate,
+                                           ser_base_setstopbits,
+                                           ser_base_setparity,
+                                           ser_base_drain_output,
+                                           ser_base_async,
+                                           net_read_prim,
+                                           net_write_prim,
+                                           NULL,
+                                           net_windows_wait_handle,
+                                           net_windows_done_wait_handle };
 
 void _initialize_ser_windows ();
 void

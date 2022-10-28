@@ -28,15 +28,13 @@
 
 /* Helper macros.  */
 
-#define TRACE_WRITE_R_BLOCK(writer, buf, size)	\
+#define TRACE_WRITE_R_BLOCK(writer, buf, size) \
   writer->ops->frame_ops->write_r_block ((writer), (buf), (size))
-#define TRACE_WRITE_M_BLOCK_HEADER(writer, addr, size)		  \
-  writer->ops->frame_ops->write_m_block_header ((writer), (addr), \
-						(size))
-#define TRACE_WRITE_M_BLOCK_MEMORY(writer, buf, size)	  \
-  writer->ops->frame_ops->write_m_block_memory ((writer), (buf), \
-						(size))
-#define TRACE_WRITE_V_BLOCK(writer, num, val)	\
+#define TRACE_WRITE_M_BLOCK_HEADER(writer, addr, size) \
+  writer->ops->frame_ops->write_m_block_header ((writer), (addr), (size))
+#define TRACE_WRITE_M_BLOCK_MEMORY(writer, buf, size) \
+  writer->ops->frame_ops->write_m_block_memory ((writer), (buf), (size))
+#define TRACE_WRITE_V_BLOCK(writer, num, val) \
   writer->ops->frame_ops->write_v_block ((writer), (num), (val))
 
 /* A unique pointer policy class for trace_file_writer.  */
@@ -53,7 +51,7 @@ struct trace_file_writer_deleter
 /* A unique_ptr specialization for trace_file_writer.  */
 
 typedef std::unique_ptr<trace_file_writer, trace_file_writer_deleter>
-    trace_file_writer_up;
+  trace_file_writer_up;
 
 /* Save tracepoint data to file named FILENAME through WRITER.  WRITER
    determines the trace file format.  If TARGET_DOES_SAVE is non-zero,
@@ -62,7 +60,7 @@ typedef std::unique_ptr<trace_file_writer, trace_file_writer_deleter>
 
 static void
 trace_save (const char *filename, struct trace_file_writer *writer,
-	    int target_does_save)
+            int target_does_save)
 {
   struct trace_status *ts = current_trace_status ();
   struct uploaded_tp *uploaded_tps = NULL, *utp;
@@ -78,8 +76,7 @@ trace_save (const char *filename, struct trace_file_writer *writer,
   if (target_does_save)
     {
       if (!writer->ops->target_save (writer, filename))
-	error (_("Target failed to save trace data to '%s'."),
-	       filename);
+        error (_ ("Target failed to save trace data to '%s'."), filename);
       return;
     }
 
@@ -143,174 +140,168 @@ trace_save (const char *filename, struct trace_file_writer *writer,
 	  directly to trace file.  Don't parse the contents of trace
 	  buffer.  */
       if (writer->ops->write_trace_buffer != NULL)
-	{
-	  /* We ask for big blocks, in the hopes of efficiency, but
+        {
+          /* We ask for big blocks, in the hopes of efficiency, but
 	     will take less if the target has packet size limitations
 	     or some such.  */
-	  gotten = target_get_raw_trace_data (buf.data (), offset,
-					      MAX_TRACE_UPLOAD);
-	  if (gotten < 0)
-	    error (_("Failure to get requested trace buffer data"));
-	  /* No more data is forthcoming, we're done.  */
-	  if (gotten == 0)
-	    break;
+          gotten = target_get_raw_trace_data (buf.data (), offset,
+                                              MAX_TRACE_UPLOAD);
+          if (gotten < 0)
+            error (_ ("Failure to get requested trace buffer data"));
+          /* No more data is forthcoming, we're done.  */
+          if (gotten == 0)
+            break;
 
-	  writer->ops->write_trace_buffer (writer, buf.data (), gotten);
+          writer->ops->write_trace_buffer (writer, buf.data (), gotten);
 
-	  offset += gotten;
-	}
+          offset += gotten;
+        }
       else
-	{
-	  uint16_t tp_num;
-	  uint32_t tf_size;
-	  /* Parse the trace buffers according to how data are stored
+        {
+          uint16_t tp_num;
+          uint32_t tf_size;
+          /* Parse the trace buffers according to how data are stored
 	     in trace buffer in GDBserver.  */
 
-	  gotten = target_get_raw_trace_data (buf.data (), offset, 6);
+          gotten = target_get_raw_trace_data (buf.data (), offset, 6);
 
-	  if (gotten == 0)
-	    break;
+          if (gotten == 0)
+            break;
 
-	  /* Read the first six bytes in, which is the tracepoint
+          /* Read the first six bytes in, which is the tracepoint
 	     number and trace frame size.  */
-	  tp_num = (uint16_t)
-	    extract_unsigned_integer (&((buf.data ())[0]), 2, byte_order);
+          tp_num = (uint16_t) extract_unsigned_integer (&((buf.data ())[0]), 2,
+                                                        byte_order);
 
-	  tf_size = (uint32_t)
-	    extract_unsigned_integer (&((buf.data ())[2]), 4, byte_order);
+          tf_size = (uint32_t) extract_unsigned_integer (&((buf.data ())[2]),
+                                                         4, byte_order);
 
-	  writer->ops->frame_ops->start (writer, tp_num);
-	  gotten = 6;
+          writer->ops->frame_ops->start (writer, tp_num);
+          gotten = 6;
 
-	  if (tf_size > 0)
-	    {
-	      unsigned int block;
+          if (tf_size > 0)
+            {
+              unsigned int block;
 
-	      offset += 6;
+              offset += 6;
 
-	      for (block = 0; block < tf_size; )
-		{
-		  gdb_byte block_type;
+              for (block = 0; block < tf_size;)
+                {
+                  gdb_byte block_type;
 
-		  /* We'll fetch one block each time, in order to
+                  /* We'll fetch one block each time, in order to
 		     handle the extremely large 'M' block.  We first
 		     fetch one byte to get the type of the block.  */
-		  gotten = target_get_raw_trace_data (buf.data (),
-						      offset, 1);
-		  if (gotten < 1)
-		    error (_("Failure to get requested trace buffer data"));
+                  gotten = target_get_raw_trace_data (buf.data (), offset, 1);
+                  if (gotten < 1)
+                    error (_ ("Failure to get requested trace buffer data"));
 
-		  gotten = 1;
-		  block += 1;
-		  offset += 1;
+                  gotten = 1;
+                  block += 1;
+                  offset += 1;
 
-		  block_type = buf[0];
-		  switch (block_type)
-		    {
-		    case 'R':
-		      gotten
-			= target_get_raw_trace_data (buf.data (), offset,
-						     trace_regblock_size);
-		      if (gotten < trace_regblock_size)
-			error (_("Failure to get requested trace"
-				 " buffer data"));
+                  block_type = buf[0];
+                  switch (block_type)
+                    {
+                    case 'R':
+                      gotten = target_get_raw_trace_data (buf.data (), offset,
+                                                          trace_regblock_size);
+                      if (gotten < trace_regblock_size)
+                        error (_ ("Failure to get requested trace"
+                                  " buffer data"));
 
-		      TRACE_WRITE_R_BLOCK (writer, buf.data (),
-					   trace_regblock_size);
-		      break;
-		    case 'M':
-		      {
-			unsigned short mlen;
-			ULONGEST addr;
-			LONGEST t;
-			int j;
+                      TRACE_WRITE_R_BLOCK (writer, buf.data (),
+                                           trace_regblock_size);
+                      break;
+                    case 'M':
+                      {
+                        unsigned short mlen;
+                        ULONGEST addr;
+                        LONGEST t;
+                        int j;
 
-			t = target_get_raw_trace_data (buf.data (),
-						       offset, 10);
-			if (t < 10)
-			  error (_("Failure to get requested trace"
-				   " buffer data"));
+                        t = target_get_raw_trace_data (buf.data (), offset,
+                                                       10);
+                        if (t < 10)
+                          error (_ ("Failure to get requested trace"
+                                    " buffer data"));
 
-			offset += 10;
-			block += 10;
+                        offset += 10;
+                        block += 10;
 
-			gotten = 0;
-			addr = (ULONGEST)
-			  extract_unsigned_integer (buf.data (), 8,
-						    byte_order);
-			mlen = (unsigned short)
-			  extract_unsigned_integer (&((buf.data ())[8]), 2,
-						    byte_order);
+                        gotten = 0;
+                        addr
+                          = (ULONGEST) extract_unsigned_integer (buf.data (),
+                                                                 8,
+                                                                 byte_order);
+                        mlen = (unsigned short)
+                          extract_unsigned_integer (&((buf.data ())[8]), 2,
+                                                    byte_order);
 
-			TRACE_WRITE_M_BLOCK_HEADER (writer, addr,
-						    mlen);
+                        TRACE_WRITE_M_BLOCK_HEADER (writer, addr, mlen);
 
-			/* The memory contents in 'M' block may be
+                        /* The memory contents in 'M' block may be
 			   very large.  Fetch the data from the target
 			   and write them into file one by one.  */
-			for (j = 0; j < mlen; )
-			  {
-			    unsigned int read_length;
+                        for (j = 0; j < mlen;)
+                          {
+                            unsigned int read_length;
 
-			    if (mlen - j > MAX_TRACE_UPLOAD)
-			      read_length = MAX_TRACE_UPLOAD;
-			    else
-			      read_length = mlen - j;
+                            if (mlen - j > MAX_TRACE_UPLOAD)
+                              read_length = MAX_TRACE_UPLOAD;
+                            else
+                              read_length = mlen - j;
 
-			    t = target_get_raw_trace_data (buf.data (),
-							   offset + j,
-							   read_length);
-			    if (t < read_length)
-			      error (_("Failure to get requested"
-				       " trace buffer data"));
+                            t = target_get_raw_trace_data (buf.data (),
+                                                           offset + j,
+                                                           read_length);
+                            if (t < read_length)
+                              error (_ ("Failure to get requested"
+                                        " trace buffer data"));
 
-			    TRACE_WRITE_M_BLOCK_MEMORY (writer,
-							buf.data (),
-							read_length);
+                            TRACE_WRITE_M_BLOCK_MEMORY (writer, buf.data (),
+                                                        read_length);
 
-			    j += read_length;
-			    gotten += read_length;
-			  }
+                            j += read_length;
+                            gotten += read_length;
+                          }
 
-			break;
-		      }
-		    case 'V':
-		      {
-			int vnum;
-			LONGEST val;
+                        break;
+                      }
+                    case 'V':
+                      {
+                        int vnum;
+                        LONGEST val;
 
-			gotten
-			  = target_get_raw_trace_data (buf.data (),
-						       offset, 12);
-			if (gotten < 12)
-			  error (_("Failure to get requested"
-				   " trace buffer data"));
+                        gotten = target_get_raw_trace_data (buf.data (),
+                                                            offset, 12);
+                        if (gotten < 12)
+                          error (_ ("Failure to get requested"
+                                    " trace buffer data"));
 
-			vnum  = (int) extract_signed_integer (buf.data (),
-							      4,
-							      byte_order);
-			val
-			  = extract_signed_integer (&((buf.data ())[4]),
-						    8, byte_order);
+                        vnum = (int) extract_signed_integer (buf.data (), 4,
+                                                             byte_order);
+                        val = extract_signed_integer (&((buf.data ())[4]), 8,
+                                                      byte_order);
 
-			TRACE_WRITE_V_BLOCK (writer, vnum, val);
-		      }
-		      break;
-		    default:
-		      error (_("Unknown block type '%c' (0x%x) in"
-			       " trace frame"),
-			     block_type, block_type);
-		    }
+                        TRACE_WRITE_V_BLOCK (writer, vnum, val);
+                      }
+                      break;
+                    default:
+                      error (_ ("Unknown block type '%c' (0x%x) in"
+                                " trace frame"),
+                             block_type, block_type);
+                    }
 
-		  block += gotten;
-		  offset += gotten;
-		}
-	    }
-	  else
-	    offset += gotten;
+                  block += gotten;
+                  offset += gotten;
+                }
+            }
+          else
+            offset += gotten;
 
-	  writer->ops->frame_ops->end (writer);
-	}
+          writer->ops->frame_ops->end (writer);
+        }
     }
 
   writer->ops->end (writer);
@@ -325,7 +316,7 @@ tsave_command (const char *args, int from_tty)
   int generate_ctf = 0;
 
   if (args == NULL)
-    error_no_arg (_("file in which to save trace data"));
+    error_no_arg (_ ("file in which to save trace data"));
 
   gdb_argv built_argv (args);
   argv = built_argv.get ();
@@ -333,17 +324,17 @@ tsave_command (const char *args, int from_tty)
   for (; *argv; ++argv)
     {
       if (strcmp (*argv, "-r") == 0)
-	target_does_save = 1;
+        target_does_save = 1;
       else if (strcmp (*argv, "-ctf") == 0)
-	generate_ctf = 1;
+        generate_ctf = 1;
       else if (**argv == '-')
-	error (_("unknown option `%s'"), *argv);
+        error (_ ("unknown option `%s'"), *argv);
       else
-	filename = *argv;
+        filename = *argv;
     }
 
   if (!filename)
-    error_no_arg (_("file in which to save trace data"));
+    error_no_arg (_ ("file in which to save trace data"));
 
   if (generate_ctf)
     trace_save_ctf (filename, target_does_save);
@@ -351,8 +342,8 @@ tsave_command (const char *args, int from_tty)
     trace_save_tfile (filename, target_does_save);
 
   if (from_tty)
-    gdb_printf (_("Trace data saved to %s '%s'.\n"),
-		generate_ctf ? "directory" : "file", filename);
+    gdb_printf (_ ("Trace data saved to %s '%s'.\n"),
+                generate_ctf ? "directory" : "file", filename);
 }
 
 /* Save the trace data to file FILENAME of tfile format.  */
@@ -396,23 +387,22 @@ tracefile_fetch_registers (struct regcache *regcache, int regno)
   /* But don't try to guess if tracepoint is multi-location...  */
   if (tp->loc->next)
     {
-      warning (_("Tracepoint %d has multiple "
-		 "locations, cannot infer $pc"),
-	       tp->number);
+      warning (_ ("Tracepoint %d has multiple "
+                  "locations, cannot infer $pc"),
+               tp->number);
       return;
     }
   /* ... or does while-stepping.  */
   else if (tp->step_count > 0)
     {
-      warning (_("Tracepoint %d does while-stepping, "
-		 "cannot infer $pc"),
-	       tp->number);
+      warning (_ ("Tracepoint %d does while-stepping, "
+                  "cannot infer $pc"),
+               tp->number);
       return;
     }
 
   /* Guess what we can from the tracepoint location.  */
-  gdbarch_guess_tracepoint_registers (gdbarch, regcache,
-				      tp->loc->address);
+  gdbarch_guess_tracepoint_registers (gdbarch, regcache, tp->loc->address);
 }
 
 /* This is the implementation of target_ops method to_has_all_memory.  */
@@ -476,7 +466,7 @@ void _initialize_tracefile ();
 void
 _initialize_tracefile ()
 {
-  add_com ("tsave", class_trace, tsave_command, _("\
+  add_com ("tsave", class_trace, tsave_command, _ ("\
 Save the trace data to a file.\n\
 Use the '-ctf' option to save the data to CTF format.\n\
 Use the '-r' option to direct the target to save directly to the file,\n\

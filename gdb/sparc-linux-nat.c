@@ -33,10 +33,14 @@ class sparc_linux_nat_target final : public linux_nat_target
 public:
   /* Add our register access methods.  */
   void fetch_registers (struct regcache *regcache, int regnum) override
-  { sparc_fetch_inferior_registers (this, regcache, regnum); }
+  {
+    sparc_fetch_inferior_registers (this, regcache, regnum);
+  }
 
   void store_registers (struct regcache *regcache, int regnum) override
-  { sparc_store_inferior_registers (this, regcache, regnum); }
+  {
+    sparc_store_inferior_registers (this, regcache, regnum);
+  }
 };
 
 static sparc_linux_nat_target the_sparc_linux_nat_target;
@@ -60,8 +64,8 @@ fill_gregset (const struct regcache *regcache, prgregset_t *gregs, int regnum)
 }
 
 void
-fill_fpregset (const struct regcache *regcache,
-	       prfpregset_t *fpregs, int regnum)
+fill_fpregset (const struct regcache *regcache, prfpregset_t *fpregs,
+               int regnum)
 {
   sparc32_collect_fpregset (sparc_fpregmap, regcache, regnum, fpregs);
 }

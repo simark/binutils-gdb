@@ -45,16 +45,16 @@ public:
   typedef int difference_type;
 
   /* Tag type.  */
-  struct begin_t {};
+  struct begin_t
+  {
+  };
 
   /* Create an iterator that points to the first thread of the first
      inferior.  */
   explicit all_threads_iterator (begin_t);
 
   /* Create a one-past-end iterator.  */
-  all_threads_iterator ()
-    : m_thr (nullptr)
-  {}
+  all_threads_iterator () : m_thr (nullptr) {}
 
   thread_info *operator* () const { return m_thr; }
 
@@ -65,10 +65,14 @@ public:
   }
 
   bool operator== (const all_threads_iterator &other) const
-  { return m_thr == other.m_thr; }
+  {
+    return m_thr == other.m_thr;
+  }
 
   bool operator!= (const all_threads_iterator &other) const
-  { return m_thr != other.m_thr; }
+  {
+    return m_thr != other.m_thr;
+  }
 
 private:
   /* Advance to the next thread.  */
@@ -96,7 +100,7 @@ public:
   /* Creates an iterator that iterates over all threads that match
      FILTER_PTID.  */
   all_matching_threads_iterator (process_stratum_target *filter_target,
-				 ptid_t filter_ptid);
+                                 ptid_t filter_ptid);
 
   /* Create a one-past-end iterator.  */
   all_matching_threads_iterator () = default;
@@ -110,10 +114,14 @@ public:
   }
 
   bool operator== (const all_matching_threads_iterator &other) const
-  { return m_thr == other.m_thr; }
+  {
+    return m_thr == other.m_thr;
+  }
 
   bool operator!= (const all_matching_threads_iterator &other) const
-  { return m_thr != other.m_thr; }
+  {
+    return m_thr != other.m_thr;
+  }
 
 private:
   /* Advance to next thread, skipping filtered threads.  */
@@ -167,13 +175,11 @@ using inf_non_exited_threads_iterator
 
 /* Iterate over all threads of all inferiors, safely.  */
 
-using all_threads_safe_iterator
-  = basic_safe_iterator<all_threads_iterator>;
+using all_threads_safe_iterator = basic_safe_iterator<all_threads_iterator>;
 
 /* Iterate over all threads of an inferior, safely.  */
 
-using safe_inf_threads_iterator
-  = basic_safe_iterator<inf_threads_iterator>;
+using safe_inf_threads_iterator = basic_safe_iterator<inf_threads_iterator>;
 
 /* A range adapter that makes it possible to iterate over all threads
    of an inferior with range-for.  */
@@ -204,17 +210,25 @@ struct all_matching_threads_range
 {
 public:
   all_matching_threads_range (process_stratum_target *filter_target,
-			      ptid_t filter_ptid)
-    : m_filter_target (filter_target), m_filter_ptid (filter_ptid)
-  {}
+                              ptid_t filter_ptid)
+    : m_filter_target (filter_target),
+      m_filter_ptid (filter_ptid)
+  {
+  }
   all_matching_threads_range ()
-    : m_filter_target (nullptr), m_filter_ptid (minus_one_ptid)
-  {}
+    : m_filter_target (nullptr),
+      m_filter_ptid (minus_one_ptid)
+  {
+  }
 
   all_matching_threads_iterator begin () const
-  { return all_matching_threads_iterator (m_filter_target, m_filter_ptid); }
+  {
+    return all_matching_threads_iterator (m_filter_target, m_filter_ptid);
+  }
   all_matching_threads_iterator end () const
-  { return all_matching_threads_iterator (); }
+  {
+    return all_matching_threads_iterator ();
+  }
 
 private:
   /* The filter.  */
@@ -231,18 +245,26 @@ class all_non_exited_threads_range
 {
 public:
   all_non_exited_threads_range (process_stratum_target *filter_target,
-				ptid_t filter_ptid)
-    : m_filter_target (filter_target), m_filter_ptid (filter_ptid)
-  {}
+                                ptid_t filter_ptid)
+    : m_filter_target (filter_target),
+      m_filter_ptid (filter_ptid)
+  {
+  }
 
   all_non_exited_threads_range ()
-    : m_filter_target (nullptr), m_filter_ptid (minus_one_ptid)
-  {}
+    : m_filter_target (nullptr),
+      m_filter_ptid (minus_one_ptid)
+  {
+  }
 
   all_non_exited_threads_iterator begin () const
-  { return all_non_exited_threads_iterator (m_filter_target, m_filter_ptid); }
+  {
+    return all_non_exited_threads_iterator (m_filter_target, m_filter_ptid);
+  }
   all_non_exited_threads_iterator end () const
-  { return all_non_exited_threads_iterator (); }
+  {
+    return all_non_exited_threads_iterator ();
+  }
 
 private:
   process_stratum_target *m_filter_target;

@@ -56,15 +56,15 @@ public:
   void pass_ctrlc () override;
 
   void follow_exec (inferior *follow_inf, ptid_t ptid,
-		    const char *execd_pathname) override;
+                    const char *execd_pathname) override;
 
   void mourn_inferior () override;
 
   bool can_run () override;
 
   bool can_create_inferior () override;
-  void create_inferior (const char *, const std::string &,
-			char **, int) override = 0;
+  void create_inferior (const char *, const std::string &, char **,
+                        int) override = 0;
 
   bool can_attach () override;
   void attach (const char *, int) override = 0;
@@ -73,21 +73,21 @@ public:
 
   const char *pid_to_exec_file (int pid) override;
 
-  int fileio_open (struct inferior *inf, const char *filename,
-		   int flags, int mode, int warn_if_slow,
-		   fileio_error *target_errno) override;
+  int fileio_open (struct inferior *inf, const char *filename, int flags,
+                   int mode, int warn_if_slow,
+                   fileio_error *target_errno) override;
   int fileio_pwrite (int fd, const gdb_byte *write_buf, int len,
-		     ULONGEST offset, fileio_error *target_errno) override;
-  int fileio_pread (int fd, gdb_byte *read_buf, int len,
-		    ULONGEST offset, fileio_error *target_errno) override;
-  int fileio_fstat (int fd, struct stat *sb, fileio_error *target_errno) override;
+                     ULONGEST offset, fileio_error *target_errno) override;
+  int fileio_pread (int fd, gdb_byte *read_buf, int len, ULONGEST offset,
+                    fileio_error *target_errno) override;
+  int fileio_fstat (int fd, struct stat *sb,
+                    fileio_error *target_errno) override;
   int fileio_close (int fd, fileio_error *target_errno) override;
-  int fileio_unlink (struct inferior *inf,
-		     const char *filename,
-		     fileio_error *target_errno) override;
-  gdb::optional<std::string> fileio_readlink (struct inferior *inf,
-					      const char *filename,
-					      fileio_error *target_errno) override;
+  int fileio_unlink (struct inferior *inf, const char *filename,
+                     fileio_error *target_errno) override;
+  gdb::optional<std::string>
+  fileio_readlink (struct inferior *inf, const char *filename,
+                   fileio_error *target_errno) override;
   bool use_agent (bool use) override;
 
   bool can_use_agent () override;

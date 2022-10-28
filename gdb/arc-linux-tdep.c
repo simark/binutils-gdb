@@ -50,9 +50,8 @@
    here as well.  */
 static const int arc_linux_sc_reg_offsets[] = {
   /* R0 - R12.  */
-  REGOFF (22), REGOFF (21), REGOFF (20), REGOFF (19),
-  REGOFF (18), REGOFF (17), REGOFF (16), REGOFF (15),
-  REGOFF (14), REGOFF (13), REGOFF (12), REGOFF (11),
+  REGOFF (22), REGOFF (21), REGOFF (20), REGOFF (19), REGOFF (18), REGOFF (17),
+  REGOFF (16), REGOFF (15), REGOFF (14), REGOFF (13), REGOFF (12), REGOFF (11),
   REGOFF (10),
 
   /* R13 - R25.  */
@@ -62,12 +61,12 @@ static const int arc_linux_sc_reg_offsets[] = {
   ARC_OFFSET_NO_REGISTER, ARC_OFFSET_NO_REGISTER, ARC_OFFSET_NO_REGISTER,
   ARC_OFFSET_NO_REGISTER,
 
-  REGOFF (9),			/* R26 (GP) */
-  REGOFF (8),			/* FP */
-  REGOFF (23),			/* SP */
-  ARC_OFFSET_NO_REGISTER,	/* ILINK */
-  ARC_OFFSET_NO_REGISTER,	/* R30 */
-  REGOFF (7),			/* BLINK */
+  REGOFF (9),             /* R26 (GP) */
+  REGOFF (8),             /* FP */
+  REGOFF (23),            /* SP */
+  ARC_OFFSET_NO_REGISTER, /* ILINK */
+  ARC_OFFSET_NO_REGISTER, /* R30 */
+  REGOFF (7),             /* BLINK */
 
   /* R32 - R59.  */
   ARC_OFFSET_NO_REGISTER, ARC_OFFSET_NO_REGISTER, ARC_OFFSET_NO_REGISTER,
@@ -81,16 +80,16 @@ static const int arc_linux_sc_reg_offsets[] = {
   ARC_OFFSET_NO_REGISTER, ARC_OFFSET_NO_REGISTER, ARC_OFFSET_NO_REGISTER,
   ARC_OFFSET_NO_REGISTER,
 
-  REGOFF (4),			/* LP_COUNT */
-  ARC_OFFSET_NO_REGISTER,	/* RESERVED */
-  ARC_OFFSET_NO_REGISTER,	/* LIMM */
-  ARC_OFFSET_NO_REGISTER,	/* PCL */
+  REGOFF (4),             /* LP_COUNT */
+  ARC_OFFSET_NO_REGISTER, /* RESERVED */
+  ARC_OFFSET_NO_REGISTER, /* LIMM */
+  ARC_OFFSET_NO_REGISTER, /* PCL */
 
-  REGOFF (6),			/* PC  */
-  REGOFF (5),			/* STATUS32 */
-  REGOFF (2),			/* LP_START */
-  REGOFF (3),			/* LP_END */
-  REGOFF (1),			/* BTA */
+  REGOFF (6), /* PC  */
+  REGOFF (5), /* STATUS32 */
+  REGOFF (2), /* LP_START */
+  REGOFF (3), /* LP_END */
+  REGOFF (1), /* BTA */
 };
 
 /* arc_linux_core_reg_offsets[i] is the offset in the .reg section of GDB
@@ -104,23 +103,21 @@ static const int arc_linux_sc_reg_offsets[] = {
    here as well.  */
 static const int arc_linux_core_reg_offsets[] = {
   /* R0 - R12.  */
-  REGOFF (22), REGOFF (21), REGOFF (20), REGOFF (19),
-  REGOFF (18), REGOFF (17), REGOFF (16), REGOFF (15),
-  REGOFF (14), REGOFF (13), REGOFF (12), REGOFF (11),
+  REGOFF (22), REGOFF (21), REGOFF (20), REGOFF (19), REGOFF (18), REGOFF (17),
+  REGOFF (16), REGOFF (15), REGOFF (14), REGOFF (13), REGOFF (12), REGOFF (11),
   REGOFF (10),
 
   /* R13 - R25.  */
-  REGOFF (37), REGOFF (36), REGOFF (35), REGOFF (34),
-  REGOFF (33), REGOFF (32), REGOFF (31), REGOFF (30),
-  REGOFF (29), REGOFF (28), REGOFF (27), REGOFF (26),
+  REGOFF (37), REGOFF (36), REGOFF (35), REGOFF (34), REGOFF (33), REGOFF (32),
+  REGOFF (31), REGOFF (30), REGOFF (29), REGOFF (28), REGOFF (27), REGOFF (26),
   REGOFF (25),
 
-  REGOFF (9),			/* R26 (GP) */
-  REGOFF (8),			/* FP */
-  REGOFF (23),			/* SP */
-  ARC_OFFSET_NO_REGISTER,	/* ILINK */
-  ARC_OFFSET_NO_REGISTER,	/* R30 */
-  REGOFF (7),			/* BLINK */
+  REGOFF (9),             /* R26 (GP) */
+  REGOFF (8),             /* FP */
+  REGOFF (23),            /* SP */
+  ARC_OFFSET_NO_REGISTER, /* ILINK */
+  ARC_OFFSET_NO_REGISTER, /* R30 */
+  REGOFF (7),             /* BLINK */
 
   /* R32 - R59.  */
   ARC_OFFSET_NO_REGISTER, ARC_OFFSET_NO_REGISTER, ARC_OFFSET_NO_REGISTER,
@@ -134,17 +131,17 @@ static const int arc_linux_core_reg_offsets[] = {
   ARC_OFFSET_NO_REGISTER, ARC_OFFSET_NO_REGISTER, ARC_OFFSET_NO_REGISTER,
   ARC_OFFSET_NO_REGISTER,
 
-  REGOFF (4),			/* LP_COUNT */
-  ARC_OFFSET_NO_REGISTER,	/* RESERVED */
-  ARC_OFFSET_NO_REGISTER,	/* LIMM */
-  ARC_OFFSET_NO_REGISTER,	/* PCL */
+  REGOFF (4),             /* LP_COUNT */
+  ARC_OFFSET_NO_REGISTER, /* RESERVED */
+  ARC_OFFSET_NO_REGISTER, /* LIMM */
+  ARC_OFFSET_NO_REGISTER, /* PCL */
 
-  REGOFF (39),			/* PC  */
-  REGOFF (5),			/* STATUS32 */
-  REGOFF (2),			/* LP_START */
-  REGOFF (3),			/* LP_END */
-  REGOFF (1),			/* BTA */
-  REGOFF (6)			/* ERET */
+  REGOFF (39), /* PC  */
+  REGOFF (5),  /* STATUS32 */
+  REGOFF (2),  /* LP_START */
+  REGOFF (3),  /* LP_END */
+  REGOFF (1),  /* BTA */
+  REGOFF (6)   /* ERET */
 };
 
 /* Is THIS_FRAME a sigtramp function - the function that returns from
@@ -164,15 +161,15 @@ arc_linux_is_sigtramp (frame_info_ptr this_frame)
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   CORE_ADDR pc = get_frame_pc (this_frame);
 
-  arc_linux_debug_printf ("pc=%s", paddress(gdbarch, pc));
+  arc_linux_debug_printf ("pc=%s", paddress (gdbarch, pc));
 
   static const gdb_byte insns_be_hs[] = {
-    0x20, 0x8a, 0x12, 0xc2,	/* mov  r8,nr_rt_sigreturn */
-    0x78, 0x1e			/* trap_s 0 */
+    0x20, 0x8a, 0x12, 0xc2, /* mov  r8,nr_rt_sigreturn */
+    0x78, 0x1e              /* trap_s 0 */
   };
   static const gdb_byte insns_be_700[] = {
-    0x20, 0x8a, 0x12, 0xc2,	/* mov  r8,nr_rt_sigreturn */
-    0x22, 0x6f, 0x00, 0x3f	/* swi */
+    0x20, 0x8a, 0x12, 0xc2, /* mov  r8,nr_rt_sigreturn */
+    0x22, 0x6f, 0x00, 0x3f  /* swi */
   };
 
   gdb_byte arc_sigtramp_insns[sizeof (insns_be_700)];
@@ -198,14 +195,14 @@ arc_linux_is_sigtramp (frame_info_ptr this_frame)
 	 4-byte instruction or 2-byte.  */
       gdb_assert ((insns_sz % 2) == 0);
       for (int i = 0; i < insns_sz; i += 2)
-	std::swap (arc_sigtramp_insns[i], arc_sigtramp_insns[i+1]);
+        std::swap (arc_sigtramp_insns[i], arc_sigtramp_insns[i + 1]);
     }
 
   gdb_byte buf[insns_sz];
 
   /* Read the memory at the PC.  Since we are stopped, any breakpoint must
      have been removed.  */
-  if (!safe_frame_unwind_memory (this_frame, pc, {buf, insns_sz}))
+  if (!safe_frame_unwind_memory (this_frame, pc, { buf, insns_sz }))
     {
       /* Failed to unwind frame.  */
       return FALSE;
@@ -216,7 +213,7 @@ arc_linux_is_sigtramp (frame_info_ptr this_frame)
     return TRUE;
 
   /* No - look one instruction earlier in the code...  */
-  if (!safe_frame_unwind_memory (this_frame, pc - 4, {buf, insns_sz}))
+  if (!safe_frame_unwind_memory (this_frame, pc - 4, { buf, insns_sz }))
     {
       /* Failed to unwind frame.  */
       return FALSE;
@@ -310,7 +307,7 @@ arc_linux_cannot_store_register (struct gdbarch *gdbarch, int regnum)
 
 static const gdb_byte arc_linux_trap_s_be[] = { 0x78, 0x3e };
 static const gdb_byte arc_linux_trap_s_le[] = { 0x3e, 0x78 };
-static const int trap_size = 2;   /* Number of bytes to insert "trap".  */
+static const int trap_size = 2; /* Number of bytes to insert "trap".  */
 
 /* Implement the "breakpoint_kind_from_pc" gdbarch method.  */
 
@@ -323,14 +320,14 @@ arc_linux_breakpoint_kind_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr)
 /* Implement the "sw_breakpoint_from_kind" gdbarch method.  */
 
 static const gdb_byte *
-arc_linux_sw_breakpoint_from_kind (struct gdbarch *gdbarch,
-				   int kind, int *size)
+arc_linux_sw_breakpoint_from_kind (struct gdbarch *gdbarch, int kind,
+                                   int *size)
 {
   gdb_assert (kind == trap_size);
   *size = kind;
   return ((gdbarch_byte_order (gdbarch) == BFD_ENDIAN_BIG)
-	  ? arc_linux_trap_s_be
-	  : arc_linux_trap_s_le);
+            ? arc_linux_trap_s_be
+            : arc_linux_trap_s_le);
 }
 
 /* Check for an atomic sequence of instructions beginning with an
@@ -358,7 +355,7 @@ arc_linux_sw_breakpoint_from_kind (struct gdbarch *gdbarch,
 static std::vector<CORE_ADDR>
 handle_atomic_sequence (arc_instruction insn, disassemble_info *di)
 {
-  const int atomic_seq_len = 24;    /* Instruction sequence length.  */
+  const int atomic_seq_len = 24; /* Instruction sequence length.  */
   std::vector<CORE_ADDR> next_pcs;
 
   /* Sanity check.  */
@@ -373,26 +370,26 @@ handle_atomic_sequence (arc_instruction insn, disassemble_info *di)
 
   for (int insn_count = 0; insn_count < atomic_seq_len; ++insn_count)
     {
-      arc_insn_decode (arc_insn_get_linear_next_pc (insn),
-		       di, arc_delayed_print_insn, &insn);
+      arc_insn_decode (arc_insn_get_linear_next_pc (insn), di,
+                       arc_delayed_print_insn, &insn);
 
       if (insn.insn_class == BRCC)
         {
           /* If more than one conditional branch is found, this is not
              the pattern we are interested in.  */
           if (found_bc)
-	    break;
-	  found_bc = true;
-	  continue;
+            break;
+          found_bc = true;
+          continue;
         }
 
       /* This is almost a happy ending.  */
       if (insn.insn_class == SCOND)
         {
-	  /* SCOND should match the LLOCK's data size.  */
-	  if (insn.data_size_mode == llock_data_size_mode)
-	    is_pattern_valid = true;
-	  break;
+          /* SCOND should match the LLOCK's data size.  */
+          if (insn.data_size_mode == llock_data_size_mode)
+            is_pattern_valid = true;
+          break;
         }
     }
 
@@ -417,7 +414,7 @@ arc_linux_software_single_step (struct regcache *regcache)
   /* Read current instruction.  */
   struct arc_instruction curr_insn;
   arc_insn_decode (regcache_read_pc (regcache), dis.disasm_info (),
-		   arc_delayed_print_insn, &curr_insn);
+                   arc_delayed_print_insn, &curr_insn);
 
   if (curr_insn.insn_class == LLOCK)
     return handle_atomic_sequence (curr_insn, dis.disasm_info ());
@@ -432,7 +429,7 @@ arc_linux_software_single_step (struct regcache *regcache)
     {
       struct arc_instruction next_insn;
       arc_insn_decode (next_pc, dis.disasm_info (), arc_delayed_print_insn,
-		       &next_insn);
+                       &next_insn);
       next_pcs.push_back (arc_insn_get_linear_next_pc (next_insn));
     }
   else
@@ -440,41 +437,41 @@ arc_linux_software_single_step (struct regcache *regcache)
 
   ULONGEST status32;
   regcache_cooked_read_unsigned (regcache, gdbarch_ps_regnum (gdbarch),
-				 &status32);
+                                 &status32);
 
   if (curr_insn.is_control_flow)
     {
       CORE_ADDR branch_pc = arc_insn_get_branch_target (curr_insn);
       if (branch_pc != next_pc)
-	next_pcs.push_back (branch_pc);
+        next_pcs.push_back (branch_pc);
     }
   /* Is current instruction the last in a loop body?  */
   else if (tdep->has_hw_loops)
     {
       /* If STATUS32.L is 1, then ZD-loops are disabled.  */
       if ((status32 & ARC_STATUS32_L_MASK) == 0)
-	{
-	  ULONGEST lp_end, lp_start, lp_count;
-	  regcache_cooked_read_unsigned (regcache, ARC_LP_START_REGNUM,
-					 &lp_start);
-	  regcache_cooked_read_unsigned (regcache, ARC_LP_END_REGNUM, &lp_end);
-	  regcache_cooked_read_unsigned (regcache, ARC_LP_COUNT_REGNUM,
-					 &lp_count);
+        {
+          ULONGEST lp_end, lp_start, lp_count;
+          regcache_cooked_read_unsigned (regcache, ARC_LP_START_REGNUM,
+                                         &lp_start);
+          regcache_cooked_read_unsigned (regcache, ARC_LP_END_REGNUM, &lp_end);
+          regcache_cooked_read_unsigned (regcache, ARC_LP_COUNT_REGNUM,
+                                         &lp_count);
 
-	  arc_linux_debug_printf ("lp_start = %s, lp_end = %s, "
-				  "lp_count = %s, next_pc = %s",
-				  paddress (gdbarch, lp_start),
-				  paddress (gdbarch, lp_end),
-				  pulongest (lp_count),
-				  paddress (gdbarch, next_pc));
+          arc_linux_debug_printf ("lp_start = %s, lp_end = %s, "
+                                  "lp_count = %s, next_pc = %s",
+                                  paddress (gdbarch, lp_start),
+                                  paddress (gdbarch, lp_end),
+                                  pulongest (lp_count),
+                                  paddress (gdbarch, next_pc));
 
-	  if (next_pc == lp_end && lp_count > 1)
-	    {
-	      /* The instruction is in effect a jump back to the start of
+          if (next_pc == lp_end && lp_count > 1)
+            {
+              /* The instruction is in effect a jump back to the start of
 		 the loop.  */
-	      next_pcs.push_back (lp_start);
-	    }
-	}
+              next_pcs.push_back (lp_start);
+            }
+        }
     }
 
   /* Is this a delay slot?  Then next PC is in BTA register.  */
@@ -509,15 +506,15 @@ arc_linux_skip_solib_resolver (struct gdbarch *gdbarch, CORE_ADDR pc)
   if (arc_debug)
     {
       if (resolver.minsym != nullptr)
-	{
-	  CORE_ADDR res_addr = resolver.value_address ();
-	  arc_linux_debug_printf ("pc = %s, resolver at %s",
-				  print_core_address (gdbarch, pc),
-				  print_core_address (gdbarch, res_addr));
-	}
+        {
+          CORE_ADDR res_addr = resolver.value_address ();
+          arc_linux_debug_printf ("pc = %s, resolver at %s",
+                                  print_core_address (gdbarch, pc),
+                                  print_core_address (gdbarch, res_addr));
+        }
       else
-	arc_linux_debug_printf ("pc = %s, no resolver found",
-				print_core_address (gdbarch, pc));
+        arc_linux_debug_printf ("pc = %s, no resolver found",
+                                print_core_address (gdbarch, pc));
     }
 
   if (resolver.minsym != nullptr && resolver.value_address () == pc)
@@ -546,11 +543,11 @@ supply_register (struct regcache *regcache, int regnum, const gdb_byte *buf)
 
 void
 arc_linux_supply_gregset (const struct regset *regset,
-			  struct regcache *regcache,
-			  int regnum, const void *gregs, size_t size)
+                          struct regcache *regcache, int regnum,
+                          const void *gregs, size_t size)
 {
   gdb_static_assert (ARC_LAST_REGNUM
-		     < ARRAY_SIZE (arc_linux_core_reg_offsets));
+                     < ARRAY_SIZE (arc_linux_core_reg_offsets));
 
   const bfd_byte *buf = (const bfd_byte *) gregs;
 
@@ -566,8 +563,8 @@ arc_linux_supply_gregset (const struct regset *regset,
 
 void
 arc_linux_supply_v2_regset (const struct regset *regset,
-			    struct regcache *regcache, int regnum,
-			    const void *v2_regs, size_t size)
+                            struct regcache *regcache, int regnum,
+                            const void *v2_regs, size_t size)
 {
   const bfd_byte *buf = (const bfd_byte *) v2_regs;
 
@@ -584,7 +581,7 @@ arc_linux_supply_v2_regset (const struct regset *regset,
 
 static void
 collect_register (const struct regcache *regcache, struct gdbarch *gdbarch,
-		  int regnum, gdb_byte *buf)
+                  int regnum, gdb_byte *buf)
 {
   int offset;
 
@@ -609,11 +606,11 @@ collect_register (const struct regcache *regcache, struct gdbarch *gdbarch,
 
 void
 arc_linux_collect_gregset (const struct regset *regset,
-			   const struct regcache *regcache,
-			   int regnum, void *gregs, size_t size)
+                           const struct regcache *regcache, int regnum,
+                           void *gregs, size_t size)
 {
   gdb_static_assert (ARC_LAST_REGNUM
-		     < ARRAY_SIZE (arc_linux_core_reg_offsets));
+                     < ARRAY_SIZE (arc_linux_core_reg_offsets));
 
   gdb_byte *buf = (gdb_byte *) gregs;
   struct gdbarch *gdbarch = regcache->arch ();
@@ -630,8 +627,8 @@ arc_linux_collect_gregset (const struct regset *regset,
 
 void
 arc_linux_collect_v2_regset (const struct regset *regset,
-			     const struct regcache *regcache, int regnum,
-			     void *v2_regs, size_t size)
+                             const struct regcache *regcache, int regnum,
+                             void *v2_regs, size_t size)
 {
   bfd_byte *buf = (bfd_byte *) v2_regs;
 
@@ -661,9 +658,9 @@ static const struct regset arc_linux_v2_regset = {
 
 static void
 arc_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
-					iterate_over_regset_sections_cb *cb,
-					void *cb_data,
-					const struct regcache *regcache)
+                                        iterate_over_regset_sections_cb *cb,
+                                        void *cb_data,
+                                        const struct regcache *regcache)
 {
   /* There are 40 registers in Linux user_regs_struct, although some of
      them are now just a mere paddings, kept to maintain binary
@@ -680,12 +677,10 @@ arc_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
 
 static const struct target_desc *
 arc_linux_core_read_description (struct gdbarch *gdbarch,
-				 struct target_ops *target,
-				 bfd *abfd)
+                                 struct target_ops *target, bfd *abfd)
 {
   arc_arch_features features
-    = arc_arch_features_create (abfd,
-				gdbarch_bfd_arch_info (gdbarch)->mach);
+    = arc_arch_features_create (abfd, gdbarch_bfd_arch_info (gdbarch)->mach);
   return arc_lookup_target_description (features);
 }
 
@@ -719,22 +714,22 @@ arc_linux_init_osabi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_cannot_fetch_register (gdbarch, arc_linux_cannot_fetch_register);
   set_gdbarch_cannot_store_register (gdbarch, arc_linux_cannot_store_register);
   set_gdbarch_breakpoint_kind_from_pc (gdbarch,
-				       arc_linux_breakpoint_kind_from_pc);
+                                       arc_linux_breakpoint_kind_from_pc);
   set_gdbarch_sw_breakpoint_from_kind (gdbarch,
-				       arc_linux_sw_breakpoint_from_kind);
+                                       arc_linux_sw_breakpoint_from_kind);
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
-					     svr4_fetch_objfile_link_map);
+                                             svr4_fetch_objfile_link_map);
   set_gdbarch_software_single_step (gdbarch, arc_linux_software_single_step);
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
   set_gdbarch_skip_solib_resolver (gdbarch, arc_linux_skip_solib_resolver);
-  set_gdbarch_iterate_over_regset_sections
-    (gdbarch, arc_linux_iterate_over_regset_sections);
+  set_gdbarch_iterate_over_regset_sections (
+    gdbarch, arc_linux_iterate_over_regset_sections);
   set_gdbarch_core_read_description (gdbarch, arc_linux_core_read_description);
 
   /* GNU/Linux uses SVR4-style shared libraries, with 32-bit ints, longs
      and pointers (ILP32).  */
   set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					 linux_ilp32_fetch_link_map_offsets);
+                                         linux_ilp32_fetch_link_map_offsets);
 }
 
 /* Suppress warning from -Wmissing-prototypes.  */
@@ -744,5 +739,5 @@ void
 _initialize_arc_linux_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_arc, 0, GDB_OSABI_LINUX,
-			  arc_linux_init_osabi);
+                          arc_linux_init_osabi);
 }

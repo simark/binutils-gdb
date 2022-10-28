@@ -23,32 +23,32 @@
 
 /* Enumeration for the format types */
 enum varobj_display_formats
-  {
-    FORMAT_NATURAL,		/* What gdb actually calls 'natural' */
-    FORMAT_BINARY,		/* Binary display                    */
-    FORMAT_DECIMAL,		/* Decimal display                   */
-    FORMAT_HEXADECIMAL,		/* Hex display                       */
-    FORMAT_OCTAL,		/* Octal display                     */
-    FORMAT_ZHEXADECIMAL		/* Zero padded hexadecimal	     */
-  };
+{
+  FORMAT_NATURAL,     /* What gdb actually calls 'natural' */
+  FORMAT_BINARY,      /* Binary display                    */
+  FORMAT_DECIMAL,     /* Decimal display                   */
+  FORMAT_HEXADECIMAL, /* Hex display                       */
+  FORMAT_OCTAL,       /* Octal display                     */
+  FORMAT_ZHEXADECIMAL /* Zero padded hexadecimal	     */
+};
 
 enum varobj_type
-  {
-    USE_SPECIFIED_FRAME,        /* Use the frame passed to varobj_create.  */
-    USE_CURRENT_FRAME,          /* Use the current frame.  */
-    USE_SELECTED_FRAME          /* Always reevaluate in selected frame.  */
-  };
+{
+  USE_SPECIFIED_FRAME, /* Use the frame passed to varobj_create.  */
+  USE_CURRENT_FRAME,   /* Use the current frame.  */
+  USE_SELECTED_FRAME   /* Always reevaluate in selected frame.  */
+};
 
 /* Enumerator describing if a variable object is in scope.  */
 enum varobj_scope_status
-  {
-    VAROBJ_IN_SCOPE = 0,        /* Varobj is scope, value available.  */
-    VAROBJ_NOT_IN_SCOPE = 1,    /* Varobj is not in scope, value not
+{
+  VAROBJ_IN_SCOPE = 0,     /* Varobj is scope, value available.  */
+  VAROBJ_NOT_IN_SCOPE = 1, /* Varobj is not in scope, value not
 				   available, but varobj can become in
 				   scope later.  */
-    VAROBJ_INVALID = 2,         /* Varobj no longer has any value, and never
+  VAROBJ_INVALID = 2,      /* Varobj no longer has any value, and never
 				   will.  */
-  };
+};
 
 /* String representations of gdb's format codes (defined in varobj.c).  */
 extern const char *varobj_format_string[];
@@ -60,9 +60,11 @@ struct varobj;
 struct varobj_update_result
 {
   varobj_update_result (struct varobj *varobj_,
-			varobj_scope_status status_ = VAROBJ_IN_SCOPE)
-  : varobj (varobj_), status (status_)
-  {}
+                        varobj_scope_status status_ = VAROBJ_IN_SCOPE)
+    : varobj (varobj_),
+      status (status_)
+  {
+  }
 
   varobj_update_result (varobj_update_result &&other) = default;
 
@@ -168,7 +170,7 @@ struct varobj
 
 /* Is the variable X one of our "fake" children?  */
 #define CPLUS_FAKE_CHILD(x) \
-((x) != NULL && (x)->type == NULL && (x)->value == NULL)
+  ((x) != NULL && (x)->type == NULL && (x)->value == NULL)
 
 /* The language specific vector */
 
@@ -195,7 +197,7 @@ struct lang_varobj_ops
 
   /* The current value of VAR.  */
   std::string (*value_of_variable) (const struct varobj *var,
-				    enum varobj_display_formats format);
+                                    enum varobj_display_formats format);
 
   /* Return true if changes in value of VAR must be detected and
      reported by -var-update.  Return false if -var-update should never
@@ -220,7 +222,7 @@ struct lang_varobj_ops
 
      Languages where types do not mutate can set this to NULL.  */
   bool (*value_has_mutated) (const struct varobj *var, struct value *new_value,
-			     struct type *new_type);
+                             struct type *new_type);
 
   /* Return true if VAR is a suitable path expression parent.
 
@@ -240,8 +242,8 @@ extern unsigned int varobjdebug;
 /* API functions */
 
 extern struct varobj *varobj_create (const char *objname,
-				     const char *expression, CORE_ADDR frame,
-				     enum varobj_type type);
+                                     const char *expression, CORE_ADDR frame,
+                                     enum varobj_type type);
 
 extern std::string varobj_gen_name (void);
 
@@ -256,12 +258,12 @@ extern std::string varobj_get_expression (const struct varobj *var);
 
 extern int varobj_delete (struct varobj *var, bool only_children);
 
-extern enum varobj_display_formats varobj_set_display_format (
-							 struct varobj *var,
-					enum varobj_display_formats format);
+extern enum varobj_display_formats
+varobj_set_display_format (struct varobj *var,
+                           enum varobj_display_formats format);
 
-extern enum varobj_display_formats varobj_get_display_format (
-						const struct varobj *var);
+extern enum varobj_display_formats
+varobj_get_display_format (const struct varobj *var);
 
 extern int varobj_get_thread_id (const struct varobj *var);
 
@@ -270,12 +272,12 @@ extern void varobj_set_frozen (struct varobj *var, bool frozen);
 extern bool varobj_get_frozen (const struct varobj *var);
 
 extern void varobj_get_child_range (const struct varobj *var, int *from,
-				    int *to);
+                                    int *to);
 
 extern void varobj_set_child_range (struct varobj *var, int from, int to);
 
 extern gdb::unique_xmalloc_ptr<char>
-     varobj_get_display_hint (const struct varobj *var);
+varobj_get_display_hint (const struct varobj *var);
 
 extern int varobj_get_num_children (struct varobj *var);
 
@@ -287,8 +289,8 @@ extern int varobj_get_num_children (struct varobj *var);
    that was returned.  The resulting vector will contain at least the
    children from *FROM to just before *TO; it might contain more
    children, depending on whether any more were available.  */
-extern const std::vector<varobj *> &
-  varobj_list_children (struct varobj *var, int *from, int *to);
+extern const std::vector<varobj *> &varobj_list_children (struct varobj *var,
+                                                          int *from, int *to);
 
 extern std::string varobj_get_type (struct varobj *var);
 
@@ -297,13 +299,13 @@ extern struct type *varobj_get_gdb_type (const struct varobj *var);
 extern const char *varobj_get_path_expr (const struct varobj *var);
 
 extern const struct language_defn *
-  varobj_get_language (const struct varobj *var);
+varobj_get_language (const struct varobj *var);
 
 extern int varobj_get_attributes (const struct varobj *var);
 
 extern std::string
-  varobj_get_formatted_value (struct varobj *var,
-			      enum varobj_display_formats format);
+varobj_get_formatted_value (struct varobj *var,
+                            enum varobj_display_formats format);
 
 extern std::string varobj_get_value (struct varobj *var);
 
@@ -311,8 +313,8 @@ extern bool varobj_set_value (struct varobj *var, const char *expression);
 
 extern void all_root_varobjs (gdb::function_view<void (struct varobj *var)>);
 
-extern std::vector<varobj_update_result>
-  varobj_update (struct varobj **varp, bool is_explicit);
+extern std::vector<varobj_update_result> varobj_update (struct varobj **varp,
+                                                        bool is_explicit);
 
 /* Try to recreate any global or floating varobj.  This is called after
    changing symbol files.  */
@@ -323,8 +325,7 @@ extern bool varobj_editable_p (const struct varobj *var);
 
 extern bool varobj_floating_p (const struct varobj *var);
 
-extern void varobj_set_visualizer (struct varobj *var,
-				   const char *visualizer);
+extern void varobj_set_visualizer (struct varobj *var, const char *visualizer);
 
 extern void varobj_enable_pretty_printing (void);
 
@@ -340,18 +341,19 @@ extern struct type *varobj_get_value_type (const struct varobj *var);
 extern bool varobj_is_anonymous_child (const struct varobj *child);
 
 extern const struct varobj *
-  varobj_get_path_expr_parent (const struct varobj *var);
+varobj_get_path_expr_parent (const struct varobj *var);
 
 extern std::string
-  varobj_value_get_print_value (struct value *value,
-				enum varobj_display_formats format,
-				const struct varobj *var);
+varobj_value_get_print_value (struct value *value,
+                              enum varobj_display_formats format,
+                              const struct varobj *var);
 
-extern void varobj_formatted_print_options (struct value_print_options *opts,
-					    enum varobj_display_formats format);
+extern void
+varobj_formatted_print_options (struct value_print_options *opts,
+                                enum varobj_display_formats format);
 
 extern void varobj_restrict_range (const std::vector<varobj *> &children,
-				   int *from, int *to);
+                                   int *from, int *to);
 
 extern bool varobj_default_is_path_expr_parent (const struct varobj *var);
 

@@ -35,7 +35,6 @@
 /* Register offsets from <machine/reg.h>.  */
 struct ppc_reg_offsets ppcobsd_reg_offsets;
 struct ppc_reg_offsets ppcobsd_fpreg_offsets;
-
 
 /* Core file support.  */
 
@@ -44,9 +43,8 @@ struct ppc_reg_offsets ppcobsd_fpreg_offsets;
    REGCACHE.  If REGNUM is -1, do this for all registers in REGSET.  */
 
 void
-ppcobsd_supply_gregset (const struct regset *regset,
-			struct regcache *regcache, int regnum,
-			const void *gregs, size_t len)
+ppcobsd_supply_gregset (const struct regset *regset, struct regcache *regcache,
+                        int regnum, const void *gregs, size_t len)
 {
   ppc_supply_gregset (regset, regcache, regnum, gregs, len);
   ppc_supply_fpregset (regset, regcache, regnum, gregs, len);
@@ -59,8 +57,8 @@ ppcobsd_supply_gregset (const struct regset *regset,
 
 void
 ppcobsd_collect_gregset (const struct regset *regset,
-			 const struct regcache *regcache, int regnum,
-			 void *gregs, size_t len)
+                         const struct regcache *regcache, int regnum,
+                         void *gregs, size_t len)
 {
   ppc_collect_gregset (regset, regcache, regnum, gregs, len);
   ppc_collect_fpregset (regset, regcache, regnum, gregs, len);
@@ -68,29 +66,22 @@ ppcobsd_collect_gregset (const struct regset *regset,
 
 /* OpenBSD/powerpc register set.  */
 
-const struct regset ppcobsd_gregset =
-{
-  &ppcobsd_reg_offsets,
-  ppcobsd_supply_gregset
-};
+const struct regset ppcobsd_gregset
+  = { &ppcobsd_reg_offsets, ppcobsd_supply_gregset };
 
-const struct regset ppcobsd_fpregset =
-{
-  &ppcobsd_fpreg_offsets,
-  ppc_supply_fpregset
-};
+const struct regset ppcobsd_fpregset
+  = { &ppcobsd_fpreg_offsets, ppc_supply_fpregset };
 
 /* Iterate over core file register note sections.  */
 
 static void
 ppcobsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
-				      iterate_over_regset_sections_cb *cb,
-				      void *cb_data,
-				      const struct regcache *regcache)
+                                      iterate_over_regset_sections_cb *cb,
+                                      void *cb_data,
+                                      const struct regcache *regcache)
 {
   cb (".reg", 412, 412, &ppcobsd_gregset, NULL, cb_data);
 }
-
 
 /* Signal trampolines.  */
 
@@ -109,16 +100,13 @@ ppcobsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
 static const int ppcobsd_page_size = 4096;
 
 /* Offset for sigreturn(2).  */
-static const int ppcobsd_sigreturn_offset[] = {
-  0x98,				/* OpenBSD 3.8 */
-  0x0c,				/* OpenBSD 3.2 */
-  -1
-};
+static const int ppcobsd_sigreturn_offset[] = { 0x98, /* OpenBSD 3.8 */
+                                                0x0c, /* OpenBSD 3.2 */
+                                                -1 };
 
 static int
 ppcobsd_sigtramp_frame_sniffer (const struct frame_unwind *self,
-				frame_info_ptr this_frame,
-				void **this_cache)
+                                frame_info_ptr this_frame, void **this_cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -137,19 +125,19 @@ ppcobsd_sigtramp_frame_sniffer (const struct frame_unwind *self,
       unsigned long insn;
 
       if (!safe_frame_unwind_memory (this_frame, start_pc + *offset,
-				     {buf, sizeof buf}))
-	continue;
+                                     { buf, sizeof buf }))
+        continue;
 
       /* Check for "li r0,SYS_sigreturn".  */
       insn = extract_unsigned_integer (buf, PPC_INSN_SIZE, byte_order);
       if (insn != 0x38000067)
-	continue;
+        continue;
 
       /* Check for "sc".  */
-      insn = extract_unsigned_integer (buf + PPC_INSN_SIZE,
-				       PPC_INSN_SIZE, byte_order);
+      insn = extract_unsigned_integer (buf + PPC_INSN_SIZE, PPC_INSN_SIZE,
+                                       byte_order);
       if (insn != 0x44000002)
-	continue;
+        continue;
 
       return 1;
     }
@@ -177,7 +165,7 @@ ppcobsd_sigtramp_frame_cache (frame_info_ptr this_frame, void **this_cache)
 
   func = get_frame_pc (this_frame);
   func &= ~(ppcobsd_page_size - 1);
-  if (!safe_frame_unwind_memory (this_frame, func, {buf, sizeof buf}))
+  if (!safe_frame_unwind_memory (this_frame, func, { buf, sizeof buf }))
     return cache;
 
   /* Calculate the offset where we can find `struct sigcontext'.  We
@@ -212,35 +200,33 @@ ppcobsd_sigtramp_frame_cache (frame_info_ptr this_frame, void **this_cache)
 }
 
 static void
-ppcobsd_sigtramp_frame_this_id (frame_info_ptr this_frame,
-				void **this_cache, struct frame_id *this_id)
+ppcobsd_sigtramp_frame_this_id (frame_info_ptr this_frame, void **this_cache,
+                                struct frame_id *this_id)
 {
-  struct trad_frame_cache *cache =
-    ppcobsd_sigtramp_frame_cache (this_frame, this_cache);
+  struct trad_frame_cache *cache
+    = ppcobsd_sigtramp_frame_cache (this_frame, this_cache);
 
   trad_frame_get_id (cache, this_id);
 }
 
 static struct value *
 ppcobsd_sigtramp_frame_prev_register (frame_info_ptr this_frame,
-				      void **this_cache, int regnum)
+                                      void **this_cache, int regnum)
 {
-  struct trad_frame_cache *cache =
-    ppcobsd_sigtramp_frame_cache (this_frame, this_cache);
+  struct trad_frame_cache *cache
+    = ppcobsd_sigtramp_frame_cache (this_frame, this_cache);
 
   return trad_frame_get_register (cache, this_frame, regnum);
 }
 
-static const struct frame_unwind ppcobsd_sigtramp_frame_unwind = {
-  "ppc openbsd sigtramp",
-  SIGTRAMP_FRAME,
-  default_frame_unwind_stop_reason,
-  ppcobsd_sigtramp_frame_this_id,
-  ppcobsd_sigtramp_frame_prev_register,
-  NULL,
-  ppcobsd_sigtramp_frame_sniffer
-};
-
+static const struct frame_unwind ppcobsd_sigtramp_frame_unwind
+  = { "ppc openbsd sigtramp",
+      SIGTRAMP_FRAME,
+      default_frame_unwind_stop_reason,
+      ppcobsd_sigtramp_frame_this_id,
+      ppcobsd_sigtramp_frame_prev_register,
+      NULL,
+      ppcobsd_sigtramp_frame_sniffer };
 
 static void
 ppcobsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
@@ -253,11 +239,11 @@ ppcobsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_return_value (gdbarch, ppc_sysv_abi_broken_return_value);
 
   /* OpenBSD uses SVR4-style shared libraries.  */
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, svr4_ilp32_fetch_link_map_offsets);
+  set_solib_svr4_fetch_link_map_offsets (gdbarch,
+                                         svr4_ilp32_fetch_link_map_offsets);
 
-  set_gdbarch_iterate_over_regset_sections
-    (gdbarch, ppcobsd_iterate_over_regset_sections);
+  set_gdbarch_iterate_over_regset_sections (
+    gdbarch, ppcobsd_iterate_over_regset_sections);
 
   frame_unwind_append_unwinder (gdbarch, &ppcobsd_sigtramp_frame_unwind);
 }
@@ -267,9 +253,9 @@ void
 _initialize_ppcobsd_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_rs6000, 0, GDB_OSABI_OPENBSD,
-			  ppcobsd_init_abi);
+                          ppcobsd_init_abi);
   gdbarch_register_osabi (bfd_arch_powerpc, 0, GDB_OSABI_OPENBSD,
-			  ppcobsd_init_abi);
+                          ppcobsd_init_abi);
 
   /* Avoid initializing the register offsets again if they were
      already initialized by ppcobsd-nat.c.  */
@@ -290,7 +276,6 @@ _initialize_ppcobsd_tdep ()
       /* Floating-point registers.  */
       ppcobsd_reg_offsets.f0_offset = 128;
       ppcobsd_reg_offsets.fpscr_offset = -1;
-
     }
 
   if (ppcobsd_fpreg_offsets.fpscr_offset == 0)

@@ -46,7 +46,7 @@ static int
 getregs_supplies (int regno)
 {
   return ((regno >= ALPHA_V0_REGNUM && regno <= ALPHA_ZERO_REGNUM)
-	  || regno >= ALPHA_PC_REGNUM);
+          || regno >= ALPHA_PC_REGNUM);
 }
 
 /* Fetch register REGNO from the inferior.  If REGNO is -1, do this
@@ -62,22 +62,23 @@ alpha_bsd_nat_target::fetch_registers (struct regcache *regcache, int regno)
       struct reg gregs;
 
       if (ptrace (PT_GETREGS, regcache->ptid ().pid (),
-		  (PTRACE_TYPE_ARG3) &gregs, lwp) == -1)
-	perror_with_name (_("Couldn't get registers"));
+                  (PTRACE_TYPE_ARG3) &gregs, lwp)
+          == -1)
+        perror_with_name (_ ("Couldn't get registers"));
 
       alphabsd_supply_reg (regcache, (char *) &gregs, regno);
       if (regno != -1)
-	return;
+        return;
     }
 
-  if (regno == -1
-      || regno >= gdbarch_fp0_regnum (regcache->arch ()))
+  if (regno == -1 || regno >= gdbarch_fp0_regnum (regcache->arch ()))
     {
       struct fpreg fpregs;
 
       if (ptrace (PT_GETFPREGS, regcache->ptid ().pid (),
-		  (PTRACE_TYPE_ARG3) &fpregs, lwp) == -1)
-	perror_with_name (_("Couldn't get floating point status"));
+                  (PTRACE_TYPE_ARG3) &fpregs, lwp)
+          == -1)
+        perror_with_name (_ ("Couldn't get floating point status"));
 
       alphabsd_supply_fpreg (regcache, (char *) &fpregs, regno);
     }
@@ -95,36 +96,38 @@ alpha_bsd_nat_target::store_registers (struct regcache *regcache, int regno)
     {
       struct reg gregs;
       if (ptrace (PT_GETREGS, regcache->ptid ().pid (),
-		  (PTRACE_TYPE_ARG3) &gregs, lwp) == -1)
-	perror_with_name (_("Couldn't get registers"));
+                  (PTRACE_TYPE_ARG3) &gregs, lwp)
+          == -1)
+        perror_with_name (_ ("Couldn't get registers"));
 
       alphabsd_fill_reg (regcache, (char *) &gregs, regno);
 
       if (ptrace (PT_SETREGS, regcache->ptid ().pid (),
-		  (PTRACE_TYPE_ARG3) &gregs, lwp) == -1)
-	perror_with_name (_("Couldn't write registers"));
+                  (PTRACE_TYPE_ARG3) &gregs, lwp)
+          == -1)
+        perror_with_name (_ ("Couldn't write registers"));
 
       if (regno != -1)
-	return;
+        return;
     }
 
-  if (regno == -1
-      || regno >= gdbarch_fp0_regnum (regcache->arch ()))
+  if (regno == -1 || regno >= gdbarch_fp0_regnum (regcache->arch ()))
     {
       struct fpreg fpregs;
 
       if (ptrace (PT_GETFPREGS, regcache->ptid ().pid (),
-		  (PTRACE_TYPE_ARG3) &fpregs, lwp) == -1)
-	perror_with_name (_("Couldn't get floating point status"));
+                  (PTRACE_TYPE_ARG3) &fpregs, lwp)
+          == -1)
+        perror_with_name (_ ("Couldn't get floating point status"));
 
       alphabsd_fill_fpreg (regcache, (char *) &fpregs, regno);
 
       if (ptrace (PT_SETFPREGS, regcache->ptid ().pid (),
-		  (PTRACE_TYPE_ARG3) &fpregs, lwp) == -1)
-	perror_with_name (_("Couldn't write floating point status"));
+                  (PTRACE_TYPE_ARG3) &fpregs, lwp)
+          == -1)
+        perror_with_name (_ ("Couldn't write floating point status"));
     }
 }
-
 
 /* Support for debugging kernel virtual memory images.  */
 
@@ -155,7 +158,6 @@ alphabsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 
   return 1;
 }
-
 
 void _initialize_alphabsd_nat ();
 void

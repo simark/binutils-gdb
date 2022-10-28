@@ -37,8 +37,6 @@ record_producer (const char *producer)
   buildsym_compunit->record_producer (producer);
 }
 
-
-
 /* See buildsym.h.  */
 
 void
@@ -196,12 +194,12 @@ pop_context ()
 
 struct block *
 finish_block (struct symbol *symbol, struct pending_block *old_blocks,
-	      const struct dynamic_prop *static_link,
-	      CORE_ADDR start, CORE_ADDR end)
+              const struct dynamic_prop *static_link, CORE_ADDR start,
+              CORE_ADDR end)
 {
   gdb_assert (buildsym_compunit != nullptr);
   return buildsym_compunit->finish_block (symbol, old_blocks, static_link,
-					  start, end);
+                                          start, end);
 }
 
 void
@@ -227,15 +225,15 @@ record_line (struct subfile *subfile, int line, CORE_ADDR pc)
 
 struct compunit_symtab *
 start_compunit_symtab (struct objfile *objfile, const char *name,
-		       const char *comp_dir, CORE_ADDR start_addr,
-		       enum language language)
+                       const char *comp_dir, CORE_ADDR start_addr,
+                       enum language language)
 {
   /* These should have been reset either by successful completion of building
      a symtab, or by the scoped_free_pendings destructor.  */
   gdb_assert (buildsym_compunit == nullptr);
 
   buildsym_compunit = new struct buildsym_compunit (objfile, name, comp_dir,
-						    language, start_addr);
+                                                    language, start_addr);
 
   return buildsym_compunit->get_compunit_symtab ();
 }

@@ -28,7 +28,6 @@
 #include <winsock2.h>
 #endif
 
-
 static timer_handler_func push_event;
 static handler_func fd_event;
 
@@ -42,7 +41,8 @@ static handler_func fd_event;
    is told to go away.  */
 
 /* Value of scb->async_state: */
-enum {
+enum
+{
   /* When >= 0, this contains the ID of the currently scheduled timer event.
      This state is rarely encountered.  Timer events are one-off so as soon as
      the event is delivered the state is changed to NOTHING_SCHEDULED.  */
@@ -70,54 +70,52 @@ reschedule (struct serial *scb)
       int next_state;
 
       switch (scb->async_state)
-	{
-	case FD_SCHEDULED:
-	  if (scb->bufcnt == 0)
-	    next_state = FD_SCHEDULED;
-	  else
-	    {
-	      delete_file_handler (scb->fd);
-	      next_state = create_timer (0, push_event, scb);
-	    }
-	  break;
-	case NOTHING_SCHEDULED:
-	  if (scb->bufcnt == 0)
-	    {
-	      add_file_handler (scb->fd, fd_event, scb, "serial");
-	      next_state = FD_SCHEDULED;
-	    }
-	  else
-	    {
-	      next_state = create_timer (0, push_event, scb);
-	    }
-	  break;
-	default: /* TIMER SCHEDULED */
-	  if (scb->bufcnt == 0)
-	    {
-	      delete_timer (scb->async_state);
-	      add_file_handler (scb->fd, fd_event, scb, "serial");
-	      next_state = FD_SCHEDULED;
-	    }
-	  else
-	    next_state = scb->async_state;
-	  break;
-	}
+        {
+        case FD_SCHEDULED:
+          if (scb->bufcnt == 0)
+            next_state = FD_SCHEDULED;
+          else
+            {
+              delete_file_handler (scb->fd);
+              next_state = create_timer (0, push_event, scb);
+            }
+          break;
+        case NOTHING_SCHEDULED:
+          if (scb->bufcnt == 0)
+            {
+              add_file_handler (scb->fd, fd_event, scb, "serial");
+              next_state = FD_SCHEDULED;
+            }
+          else
+            {
+              next_state = create_timer (0, push_event, scb);
+            }
+          break;
+        default: /* TIMER SCHEDULED */
+          if (scb->bufcnt == 0)
+            {
+              delete_timer (scb->async_state);
+              add_file_handler (scb->fd, fd_event, scb, "serial");
+              next_state = FD_SCHEDULED;
+            }
+          else
+            next_state = scb->async_state;
+          break;
+        }
       if (serial_debug_p (scb))
-	{
-	  switch (next_state)
-	    {
-	    case FD_SCHEDULED:
-	      if (scb->async_state != FD_SCHEDULED)
-		gdb_printf (gdb_stdlog, "[fd%d->fd-scheduled]\n",
-			    scb->fd);
-	      break;
-	    default: /* TIMER SCHEDULED */
-	      if (scb->async_state == FD_SCHEDULED)
-		gdb_printf (gdb_stdlog, "[fd%d->timer-scheduled]\n",
-			    scb->fd);
-	      break;
-	    }
-	}
+        {
+          switch (next_state)
+            {
+            case FD_SCHEDULED:
+              if (scb->async_state != FD_SCHEDULED)
+                gdb_printf (gdb_stdlog, "[fd%d->fd-scheduled]\n", scb->fd);
+              break;
+            default: /* TIMER SCHEDULED */
+              if (scb->async_state == FD_SCHEDULED)
+                gdb_printf (gdb_stdlog, "[fd%d->timer-scheduled]\n", scb->fd);
+              break;
+            }
+        }
       scb->async_state = next_state;
     }
 }
@@ -167,24 +165,24 @@ fd_event (int error, void *context)
       int nr;
 
       do
-	{
-	  nr = scb->ops->read_prim (scb, BUFSIZ);
-	}
+        {
+          nr = scb->ops->read_prim (scb, BUFSIZ);
+        }
       while (nr < 0 && errno == EINTR);
 
       if (nr == 0)
-	{
-	  scb->bufcnt = SERIAL_EOF;
-	}
+        {
+          scb->bufcnt = SERIAL_EOF;
+        }
       else if (nr > 0)
-	{
-	  scb->bufcnt = nr;
-	  scb->bufp = scb->buf;
-	}
+        {
+          scb->bufcnt = nr;
+          scb->bufp = scb->buf;
+        }
       else
-	{
-	  scb->bufcnt = SERIAL_ERROR;
-	}
+        {
+          scb->bufcnt = SERIAL_ERROR;
+        }
     }
   run_async_handler_and_reschedule (scb);
 }
@@ -237,20 +235,20 @@ ser_base_wait_for (struct serial *scb, int timeout)
 
       nfds = scb->fd + 1;
       if (timeout >= 0)
-	numfds = interruptible_select (nfds, &readfds, 0, &exceptfds, &tv);
+        numfds = interruptible_select (nfds, &readfds, 0, &exceptfds, &tv);
       else
-	numfds = interruptible_select (nfds, &readfds, 0, &exceptfds, 0);
+        numfds = interruptible_select (nfds, &readfds, 0, &exceptfds, 0);
 
       if (numfds <= 0)
-	{
-	  if (numfds == 0)
-	    return SERIAL_TIMEOUT;
-	  else if (errno == EINTR)
-	    continue;
-	  else
-	    return SERIAL_ERROR;	/* Got an error from select or
+        {
+          if (numfds == 0)
+            return SERIAL_TIMEOUT;
+          else if (errno == EINTR)
+            continue;
+          else
+            return SERIAL_ERROR; /* Got an error from select or
 					   poll.  */
-	}
+        }
 
       return 0;
     }
@@ -267,52 +265,52 @@ ser_base_read_error_fd (struct serial *scb, int close_fd)
       char buf[GDB_MI_MSG_WIDTH + 1];
 
       for (;;)
-	{
-	  char *current;
-	  char *newline;
-	  int to_read = GDB_MI_MSG_WIDTH;
-	  int num_bytes = -1;
+        {
+          char *current;
+          char *newline;
+          int to_read = GDB_MI_MSG_WIDTH;
+          int num_bytes = -1;
 
-	  if (scb->ops->avail)
-	    num_bytes = (scb->ops->avail)(scb, scb->error_fd);
+          if (scb->ops->avail)
+            num_bytes = (scb->ops->avail) (scb, scb->error_fd);
 
-	  if (num_bytes != -1)
-	    to_read = (num_bytes < to_read) ? num_bytes : to_read;
+          if (num_bytes != -1)
+            to_read = (num_bytes < to_read) ? num_bytes : to_read;
 
-	  if (to_read == 0)
-	    break;
+          if (to_read == 0)
+            break;
 
-	  s = read (scb->error_fd, &buf, to_read);
-	  if ((s == -1) || (s == 0 && !close_fd))
-	    break;
+          s = read (scb->error_fd, &buf, to_read);
+          if ((s == -1) || (s == 0 && !close_fd))
+            break;
 
-	  if (s == 0 && close_fd)
-	    {
-	      /* End of file.  */
-	      if (serial_is_async_p (scb))
-		delete_file_handler (scb->error_fd);
-	      close (scb->error_fd);
-	      scb->error_fd = -1;
-	      break;
-	    }
+          if (s == 0 && close_fd)
+            {
+              /* End of file.  */
+              if (serial_is_async_p (scb))
+                delete_file_handler (scb->error_fd);
+              close (scb->error_fd);
+              scb->error_fd = -1;
+              break;
+            }
 
-	  /* In theory, embedded newlines are not a problem.
+          /* In theory, embedded newlines are not a problem.
 	     But for MI, we want each output line to have just
 	     one newline for legibility.  So output things
 	     in newline chunks.  */
-	  gdb_assert (s > 0 && s <= GDB_MI_MSG_WIDTH);
-	  buf[s] = '\0';
-	  current = buf;
-	  while ((newline = strstr (current, "\n")) != NULL)
-	    {
-	      *newline = '\0';
-	      gdb_puts (current, gdb_stderr);
-	      gdb_puts ("\n", gdb_stderr);
-	      current = newline + 1;
-	    }
+          gdb_assert (s > 0 && s <= GDB_MI_MSG_WIDTH);
+          buf[s] = '\0';
+          current = buf;
+          while ((newline = strstr (current, "\n")) != NULL)
+            {
+              *newline = '\0';
+              gdb_puts (current, gdb_stderr);
+              gdb_puts ("\n", gdb_stderr);
+              current = newline + 1;
+            }
 
-	  gdb_puts (current, gdb_stderr);
-       }
+          gdb_puts (current, gdb_stderr);
+        }
     }
 }
 
@@ -357,27 +355,27 @@ do_ser_base_readchar (struct serial *scb, int timeout)
 	 returning 1.  */
 
       if (deprecated_ui_loop_hook)
-	{
-	  if (deprecated_ui_loop_hook (0))
-	    return SERIAL_TIMEOUT;
-	}
+        {
+          if (deprecated_ui_loop_hook (0))
+            return SERIAL_TIMEOUT;
+        }
 
       status = ser_base_wait_for (scb, delta);
       if (timeout > 0)
-	timeout -= delta;
+        timeout -= delta;
 
       /* If we got a character or an error back from wait_for, then we can 
 	 break from the loop before the timeout is completed.  */
       if (status != SERIAL_TIMEOUT)
-	break;
+        break;
 
       /* If we have exhausted the original timeout, then generate
 	 a SERIAL_TIMEOUT, and pass it out of the loop.  */
       else if (timeout == 0)
-	{
-	  status = SERIAL_TIMEOUT;
-	  break;
-	}
+        {
+          status = SERIAL_TIMEOUT;
+          break;
+        }
 
       /* We also need to check and consume the stderr because it could
 	 come before the stdout for some stubs.  If we just sit and wait
@@ -397,10 +395,10 @@ do_ser_base_readchar (struct serial *scb, int timeout)
   if (status <= 0)
     {
       if (status == 0)
-	return SERIAL_EOF;
+        return SERIAL_EOF;
       else
-	/* Got an error from read.  */
-	return SERIAL_ERROR;	
+        /* Got an error from read.  */
+        return SERIAL_ERROR;
     }
 
   scb->bufcnt = status;
@@ -425,7 +423,7 @@ do_ser_base_readchar (struct serial *scb, int timeout)
 
 int
 generic_readchar (struct serial *scb, int timeout,
-		  int (do_readchar) (struct serial *scb, int timeout))
+                  int (do_readchar) (struct serial *scb, int timeout))
 {
   int ch;
   if (scb->bufcnt > 0)
@@ -443,19 +441,19 @@ generic_readchar (struct serial *scb, int timeout,
     {
       ch = do_readchar (scb, timeout);
       if (ch < 0)
-	{
-	  switch ((enum serial_rc) ch)
-	    {
-	    case SERIAL_EOF:
-	    case SERIAL_ERROR:
-	      /* Make the error/eof stick.  */
-	      scb->bufcnt = ch;
-	      break;
-	    case SERIAL_TIMEOUT:
-	      scb->bufcnt = 0;
-	      break;
-	    }
-	}
+        {
+          switch ((enum serial_rc) ch)
+            {
+            case SERIAL_EOF:
+            case SERIAL_ERROR:
+              /* Make the error/eof stick.  */
+              scb->bufcnt = ch;
+              break;
+            case SERIAL_TIMEOUT:
+              scb->bufcnt = 0;
+              break;
+            }
+        }
     }
 
   /* Read any error output we might have.  */
@@ -484,11 +482,11 @@ ser_base_write (struct serial *scb, const void *buf, size_t count)
       cc = scb->ops->write_prim (scb, str, count);
 
       if (cc < 0)
-	{
-	  if (errno == EINTR)
-	    continue;
-	  return 1;
-	}
+        {
+          if (errno == EINTR)
+            continue;
+          return 1;
+        }
       count -= cc;
       str += cc;
     }
@@ -529,7 +527,7 @@ ser_base_drain_output (struct serial *scb)
 void
 ser_base_raw (struct serial *scb)
 {
-  return;			/* Always in raw mode.  */
+  return; /* Always in raw mode.  */
 }
 
 serial_ttystate
@@ -553,9 +551,8 @@ ser_base_set_tty_state (struct serial *scb, serial_ttystate ttystate)
 }
 
 void
-ser_base_print_tty_state (struct serial *scb, 
-			  serial_ttystate ttystate,
-			  struct ui_file *stream)
+ser_base_print_tty_state (struct serial *scb, serial_ttystate ttystate,
+                          struct ui_file *stream)
 {
   /* Nothing to print.  */
   return;
@@ -564,13 +561,13 @@ ser_base_print_tty_state (struct serial *scb,
 int
 ser_base_setbaudrate (struct serial *scb, int rate)
 {
-  return 0;			/* Never fails!  */
+  return 0; /* Never fails!  */
 }
 
 int
 ser_base_setstopbits (struct serial *scb, int num)
 {
-  return 0;			/* Never fails!  */
+  return 0; /* Never fails!  */
 }
 
 /* Implement the "setparity" serial_ops callback.  */
@@ -578,46 +575,43 @@ ser_base_setstopbits (struct serial *scb, int num)
 int
 ser_base_setparity (struct serial *scb, int parity)
 {
-  return 0;			/* Never fails!  */
+  return 0; /* Never fails!  */
 }
 
 /* Put the SERIAL device into/out-of ASYNC mode.  */
 
 void
-ser_base_async (struct serial *scb,
-		int async_p)
+ser_base_async (struct serial *scb, int async_p)
 {
   if (async_p)
     {
       /* Force a re-schedule.  */
       scb->async_state = NOTHING_SCHEDULED;
       if (serial_debug_p (scb))
-	gdb_printf (gdb_stdlog, "[fd%d->asynchronous]\n",
-		    scb->fd);
+        gdb_printf (gdb_stdlog, "[fd%d->asynchronous]\n", scb->fd);
       reschedule (scb);
 
       if (scb->error_fd != -1)
-	add_file_handler (scb->error_fd, handle_error_fd, scb, "serial-error");
+        add_file_handler (scb->error_fd, handle_error_fd, scb, "serial-error");
     }
   else
     {
       if (serial_debug_p (scb))
-	gdb_printf (gdb_stdlog, "[fd%d->synchronous]\n",
-		    scb->fd);
+        gdb_printf (gdb_stdlog, "[fd%d->synchronous]\n", scb->fd);
       /* De-schedule whatever tasks are currently scheduled.  */
       switch (scb->async_state)
-	{
-	case FD_SCHEDULED:
-	  delete_file_handler (scb->fd);
-	  break;
-	case NOTHING_SCHEDULED:
-	  break;
-	default: /* TIMER SCHEDULED */
-	  delete_timer (scb->async_state);
-	  break;
-	}
+        {
+        case FD_SCHEDULED:
+          delete_file_handler (scb->fd);
+          break;
+        case NOTHING_SCHEDULED:
+          break;
+        default: /* TIMER SCHEDULED */
+          delete_timer (scb->async_state);
+          break;
+        }
 
       if (scb->error_fd != -1)
-	delete_file_handler (scb->error_fd);
+        delete_file_handler (scb->error_fd);
     }
 }

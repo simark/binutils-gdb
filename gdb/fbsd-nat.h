@@ -32,11 +32,11 @@
    older kernels without TRAP_BRKPT support did not report valid
    values on any architecture.  */
 #if (__FreeBSD_kernel_version >= 1102502) || (__FreeBSD_version >= 1102502)
-# define USE_SIGTRAP_SIGINFO
+#define USE_SIGTRAP_SIGINFO
 #elif defined(TRAP_BRKPT)
-# if !defined(__mips__) && !defined(__sparc64__)
-#  define USE_SIGTRAP_SIGINFO
-# endif
+#if !defined(__mips__) && !defined(__sparc64__)
+#define USE_SIGTRAP_SIGINFO
+#endif
 #endif
 
 /* A prototype FreeBSD target.  */
@@ -51,11 +51,10 @@ public:
   bool info_proc (const char *, enum info_proc_what) override;
 
   enum target_xfer_status xfer_partial (enum target_object object,
-					const char *annex,
-					gdb_byte *readbuf,
-					const gdb_byte *writebuf,
-					ULONGEST offset, ULONGEST len,
-					ULONGEST *xfered_len) override;
+                                        const char *annex, gdb_byte *readbuf,
+                                        const gdb_byte *writebuf,
+                                        ULONGEST offset, ULONGEST len,
+                                        ULONGEST *xfered_len) override;
 
   bool thread_alive (ptid_t ptid) override;
   std::string pid_to_str (ptid_t) override;
@@ -71,10 +70,12 @@ public:
   void async (bool) override;
 
   thread_control_capabilities get_thread_control_capabilities () override
-  { return tc_schedlock; }
+  {
+    return tc_schedlock;
+  }
 
-  void create_inferior (const char *, const std::string &,
-			char **, int) override;
+  void create_inferior (const char *, const std::string &, char **,
+                        int) override;
 
   void resume (ptid_t, int, enum gdb_signal) override;
 
@@ -101,8 +102,8 @@ public:
   int remove_exec_catchpoint (int) override;
 
 #ifdef HAVE_STRUCT_PTRACE_LWPINFO_PL_SYSCALL_CODE
-  int set_syscall_catchpoint (int, bool, int, gdb::array_view<const int>)
-    override;
+  int set_syscall_catchpoint (int, bool, int,
+                              gdb::array_view<const int>) override;
 #endif
 
   bool supports_multi_process () override;
@@ -112,19 +113,15 @@ public:
   /* Methods meant to be overridden by arch-specific target
      classes.  */
 
-  virtual void low_new_fork (ptid_t parent, pid_t child)
-  {}
+  virtual void low_new_fork (ptid_t parent, pid_t child) {}
 
   /* The method to call, if any, when a thread is destroyed.  */
-  virtual void low_delete_thread (thread_info *)
-  {}
+  virtual void low_delete_thread (thread_info *) {}
 
   /* Hook to call prior to resuming a thread.  */
-  virtual void low_prepare_to_resume (thread_info *)
-  {}
+  virtual void low_prepare_to_resume (thread_info *) {}
 
 protected:
-
   void post_startup_inferior (ptid_t) override;
 
 private:
@@ -146,42 +143,43 @@ private:
      matching REGNUM.*/
 
   bool fetch_register_set (struct regcache *regcache, int regnum, int fetch_op,
-			   const struct regset *regset, void *regs, size_t size);
+                           const struct regset *regset, void *regs,
+                           size_t size);
 
   bool store_register_set (struct regcache *regcache, int regnum, int fetch_op,
-			   int store_op, const struct regset *regset,
-			   void *regs, size_t size);
+                           int store_op, const struct regset *regset,
+                           void *regs, size_t size);
 
   /* Helper routines which use PT_GETREGSET and PT_SETREGSET for the
      specified NOTE instead of regset-specific fetch and store
      ops.  */
 
   bool fetch_regset (struct regcache *regcache, int regnum, int note,
-		     const struct regset *regset, void *regs, size_t size);
+                     const struct regset *regset, void *regs, size_t size);
 
   bool store_regset (struct regcache *regcache, int regnum, int note,
-		     const struct regset *regset, void *regs, size_t size);
+                     const struct regset *regset, void *regs, size_t size);
 
 protected:
   /* Wrapper versions of the above helpers which accept a register set
      type such as 'struct reg' or 'struct fpreg'.  */
 
-  template <class Regset>
+  template<class Regset>
   bool fetch_register_set (struct regcache *regcache, int regnum, int fetch_op,
-			   const struct regset *regset)
+                           const struct regset *regset)
   {
     Regset regs;
     return fetch_register_set (regcache, regnum, fetch_op, regset, &regs,
-			       sizeof (regs));
+                               sizeof (regs));
   }
 
-  template <class Regset>
+  template<class Regset>
   bool store_register_set (struct regcache *regcache, int regnum, int fetch_op,
-			   int store_op, const struct regset *regset)
+                           int store_op, const struct regset *regset)
   {
     Regset regs;
     return store_register_set (regcache, regnum, fetch_op, store_op, regset,
-			       &regs, sizeof (regs));
+                               &regs, sizeof (regs));
   }
 
   /* Helper routine for use in read_description in subclasses.  This
@@ -195,17 +193,17 @@ protected:
   /* Wrapper versions of the PT_GETREGSET and PT_REGSET helpers which
      accept a register set type.  */
 
-  template <class Regset>
+  template<class Regset>
   bool fetch_regset (struct regcache *regcache, int regnum, int note,
-		     const struct regset *regset)
+                     const struct regset *regset)
   {
     Regset regs;
     return fetch_regset (regcache, regnum, note, regset, &regs, sizeof (regs));
   }
 
-  template <class Regset>
+  template<class Regset>
   bool store_regset (struct regcache *regcache, int regnum, int note,
-		     const struct regset *regset)
+                     const struct regset *regset)
   {
     Regset regs;
     return store_regset (regcache, regnum, note, regset, &regs, sizeof (regs));

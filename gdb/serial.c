@@ -42,15 +42,14 @@ static std::string serial_logfile;
 static struct ui_file *serial_logfp = NULL;
 
 static const struct serial_ops *serial_interface_lookup (const char *);
-static void serial_logchar (struct ui_file *stream,
-			    int ch_type, int ch, int timeout);
+static void serial_logchar (struct ui_file *stream, int ch_type, int ch,
+                            int timeout);
 static const char logbase_hex[] = "hex";
 static const char logbase_octal[] = "octal";
 static const char logbase_ascii[] = "ascii";
-static const char *const logbase_enums[] =
-{logbase_hex, logbase_octal, logbase_ascii, NULL};
+static const char *const logbase_enums[]
+  = { logbase_hex, logbase_octal, logbase_ascii, NULL };
 static const char *serial_logbase = logbase_ascii;
-
 
 static int serial_current_type = 0;
 
@@ -88,38 +87,37 @@ serial_logchar (struct ui_file *stream, int ch_type, int ch, int timeout)
       return;
     default:
       if (serial_logbase == logbase_hex)
-	gdb_printf (stream, "%02x", ch & 0xff);
+        gdb_printf (stream, "%02x", ch & 0xff);
       else if (serial_logbase == logbase_octal)
-	gdb_printf (stream, "%03o", ch & 0xff);
+        gdb_printf (stream, "%03o", ch & 0xff);
       else
-	switch (ch)
-	  {
-	  case '\\':
-	    gdb_puts ("\\\\", stream);
-	    break;
-	  case '\b':
-	    gdb_puts ("\\b", stream);
-	    break;
-	  case '\f':
-	    gdb_puts ("\\f", stream);
-	    break;
-	  case '\n':
-	    gdb_puts ("\\n", stream);
-	    break;
-	  case '\r':
-	    gdb_puts ("\\r", stream);
-	    break;
-	  case '\t':
-	    gdb_puts ("\\t", stream);
-	    break;
-	  case '\v':
-	    gdb_puts ("\\v", stream);
-	    break;
-	  default:
-	    gdb_printf (stream,
-			isprint (ch) ? "%c" : "\\x%02x", ch & 0xFF);
-	    break;
-	  }
+        switch (ch)
+          {
+          case '\\':
+            gdb_puts ("\\\\", stream);
+            break;
+          case '\b':
+            gdb_puts ("\\b", stream);
+            break;
+          case '\f':
+            gdb_puts ("\\f", stream);
+            break;
+          case '\n':
+            gdb_puts ("\\n", stream);
+            break;
+          case '\r':
+            gdb_puts ("\\r", stream);
+            break;
+          case '\t':
+            gdb_puts ("\\t", stream);
+            break;
+          case '\v':
+            gdb_puts ("\\v", stream);
+            break;
+          default:
+            gdb_printf (stream, isprint (ch) ? "%c" : "\\x%02x", ch & 0xFF);
+            break;
+          }
     }
 }
 
@@ -139,7 +137,6 @@ serial_log_command (struct target_ops *self, const char *cmd)
   gdb_flush (serial_logfp);
 }
 
-
 static const struct serial_ops *
 serial_interface_lookup (const char *name)
 {
@@ -190,7 +187,7 @@ new_serial (const struct serial_ops *ops)
 }
 
 static struct serial *serial_open_ops_1 (const struct serial_ops *ops,
-					 const char *open_name);
+                                         const char *open_name);
 
 /* Open up a device or a network socket, depending upon the syntax of NAME.  */
 
@@ -214,10 +211,10 @@ serial_open (const char *name)
 	 as such.  Otherwise assume that it's a character device.  */
       struct stat sb;
       if (stat (name, &sb) == 0 && (sb.st_mode & S_IFMT) == S_IFSOCK)
-	ops = serial_interface_lookup ("local");
+        ops = serial_interface_lookup ("local");
       else
 #endif
-	ops = serial_interface_lookup ("hardwire");
+        ops = serial_interface_lookup ("hardwire");
     }
 
   if (!ops)
@@ -251,7 +248,7 @@ serial_open_ops_1 (const struct serial_ops *ops, const char *open_name)
       stdio_file_up file (new stdio_file ());
 
       if (!file->open (serial_logfile.c_str (), "w"))
-	perror_with_name (serial_logfile.c_str ());
+        perror_with_name (serial_logfile.c_str ());
 
       serial_logfp = file.release ();
     }
@@ -279,7 +276,7 @@ serial_fdopen_ops (const int fd, const struct serial_ops *ops)
     {
       ops = serial_interface_lookup ("terminal");
       if (!ops)
-	ops = serial_interface_lookup ("hardwire");
+        ops = serial_interface_lookup ("hardwire");
     }
 
   if (!ops)
@@ -337,11 +334,11 @@ do_serial_close (struct serial *scb, int really_close)
   else
     for (tmp_scb = scb_base; tmp_scb; tmp_scb = tmp_scb->next)
       {
-	if (tmp_scb->next != scb)
-	  continue;
+        if (tmp_scb->next != scb)
+          continue;
 
-	tmp_scb->next = tmp_scb->next->next;
-	break;
+        tmp_scb->next = tmp_scb->next->next;
+        break;
       }
 
   serial_unref (scb);
@@ -387,7 +384,7 @@ serial_readchar (struct serial *scb, int timeout)
   /* FIXME: cagney/1999-10-11: Don't enable this check until the ASYNC
      code is finished.  */
   if (0 && serial_is_async_p (scb) && timeout < 0)
-    internal_error (_("serial_readchar: blocking read in async mode"));
+    internal_error (_ ("serial_readchar: blocking read in async mode"));
 
   ch = scb->ops->readchar (scb, timeout);
   if (serial_logfp != NULL)
@@ -418,7 +415,7 @@ serial_write (struct serial *scb, const void *buf, size_t count)
       size_t c;
 
       for (c = 0; c < count; c++)
-	serial_logchar (serial_logfp, 'w', str[c] & 0xff, 0);
+        serial_logchar (serial_logfp, 'w', str[c] & 0xff, 0);
 
       /* Make sure that the log file is as up-to-date as possible,
 	 in case we are getting ready to dump core or something.  */
@@ -430,11 +427,11 @@ serial_write (struct serial *scb, const void *buf, size_t count)
       size_t c;
 
       for (c = 0; c < count; c++)
-	{
-	  gdb_printf (gdb_stdlog, "[");
-	  serial_logchar (gdb_stdlog, 'w', str[c] & 0xff, 0);
-	  gdb_printf (gdb_stdlog, "]");
-	}
+        {
+          gdb_printf (gdb_stdlog, "[");
+          serial_logchar (gdb_stdlog, 'w', str[c] & 0xff, 0);
+          gdb_printf (gdb_stdlog, "]");
+        }
       gdb_flush (gdb_stdlog);
     }
 
@@ -505,9 +502,8 @@ serial_set_tty_state (struct serial *scb, serial_ttystate ttystate)
 }
 
 void
-serial_print_tty_state (struct serial *scb,
-			serial_ttystate ttystate,
-			struct ui_file *stream)
+serial_print_tty_state (struct serial *scb, serial_ttystate ttystate,
+                        struct ui_file *stream)
 {
   scb->ops->print_tty_state (scb, ttystate, stream);
 }
@@ -545,9 +541,7 @@ serial_is_async_p (struct serial *scb)
 }
 
 void
-serial_async (struct serial *scb,
-	      serial_event_ftype *handler,
-	      void *context)
+serial_async (struct serial *scb, serial_event_ftype *handler, void *context)
 {
   int changed = ((scb->async_handler == NULL) != (handler == NULL));
 
@@ -623,10 +617,9 @@ int baud_rate = -1;
 
 static void
 serial_baud_show_cmd (struct ui_file *file, int from_tty,
-		      struct cmd_list_element *c, const char *value)
+                      struct cmd_list_element *c, const char *value)
 {
-  gdb_printf (file, _("Baud rate for remote serial I/O is %s.\n"),
-	      value);
+  gdb_printf (file, _ ("Baud rate for remote serial I/O is %s.\n"), value);
 }
 
 /* See serial.h.  */
@@ -636,8 +629,8 @@ int serial_parity = GDBPARITY_NONE;
 static const char parity_none[] = "none";
 static const char parity_odd[] = "odd";
 static const char parity_even[] = "even";
-static const char *const parity_enums[] =
-  {parity_none, parity_odd, parity_even,  NULL};
+static const char *const parity_enums[]
+  = { parity_none, parity_odd, parity_even, NULL };
 static const char *parity = parity_none;
 
 /* Set serial_parity value.  */
@@ -663,54 +656,56 @@ Connect the terminal directly up to the command monitor.\n\
 Use <CR>~. or <CR>~^D to break out."));
 #endif /* 0 */
 
-  add_setshow_prefix_cmd ("serial", class_maintenance,
-			  _("Set default serial/parallel port configuration."),
-			  _("Show default serial/parallel port configuration."),
-			  &serial_set_cmdlist, &serial_show_cmdlist,
-			  &setlist, &showlist);
+  add_setshow_prefix_cmd (
+    "serial", class_maintenance,
+    _ ("Set default serial/parallel port configuration."),
+    _ ("Show default serial/parallel port configuration."),
+    &serial_set_cmdlist, &serial_show_cmdlist, &setlist, &showlist);
 
   /* If target is open when baud changes, it doesn't take effect until
      the next open (I think, not sure).  */
-  add_setshow_zinteger_cmd ("baud", no_class, &baud_rate, _("\
-Set baud rate for remote serial I/O."), _("\
-Show baud rate for remote serial I/O."), _("\
+  add_setshow_zinteger_cmd ("baud", no_class, &baud_rate, _ ("\
+Set baud rate for remote serial I/O."),
+                            _ ("\
+Show baud rate for remote serial I/O."),
+                            _ ("\
 This value is used to set the speed of the serial port when debugging\n\
 using remote targets."),
-			    NULL,
-			    serial_baud_show_cmd,
-			    &serial_set_cmdlist, &serial_show_cmdlist);
+                            NULL, serial_baud_show_cmd, &serial_set_cmdlist,
+                            &serial_show_cmdlist);
 
-  add_setshow_enum_cmd ("parity", no_class, parity_enums,
-			&parity, _("\
-Set parity for remote serial I/O."), _("\
-Show parity for remote serial I/O."), NULL,
-			set_parity,
-			NULL, /* FIXME: i18n: */
-			&serial_set_cmdlist, &serial_show_cmdlist);
+  add_setshow_enum_cmd ("parity", no_class, parity_enums, &parity, _ ("\
+Set parity for remote serial I/O."),
+                        _ ("\
+Show parity for remote serial I/O."),
+                        NULL, set_parity, NULL, /* FIXME: i18n: */
+                        &serial_set_cmdlist, &serial_show_cmdlist);
 
-  add_setshow_filename_cmd ("remotelogfile", no_class, &serial_logfile, _("\
-Set filename for remote session recording."), _("\
-Show filename for remote session recording."), _("\
+  add_setshow_filename_cmd ("remotelogfile", no_class, &serial_logfile, _ ("\
+Set filename for remote session recording."),
+                            _ ("\
+Show filename for remote session recording."),
+                            _ ("\
 This file is used to record the remote session for future playback\n\
 by gdbserver."),
-			    NULL,
-			    NULL, /* FIXME: i18n: */
-			    &setlist, &showlist);
+                            NULL, NULL, /* FIXME: i18n: */
+                            &setlist, &showlist);
 
   add_setshow_enum_cmd ("remotelogbase", no_class, logbase_enums,
-			&serial_logbase, _("\
-Set numerical base for remote session logging."), _("\
-Show numerical base for remote session logging."), NULL,
-			NULL,
-			NULL, /* FIXME: i18n: */
-			&setlist, &showlist);
+                        &serial_logbase, _ ("\
+Set numerical base for remote session logging."),
+                        _ ("\
+Show numerical base for remote session logging."),
+                        NULL, NULL, NULL, /* FIXME: i18n: */
+                        &setlist, &showlist);
 
   add_setshow_zuinteger_cmd ("serial", class_maintenance,
-			     &global_serial_debug_p, _("\
-Set serial debugging."), _("\
-Show serial debugging."), _("\
+                             &global_serial_debug_p, _ ("\
+Set serial debugging."),
+                             _ ("\
+Show serial debugging."),
+                             _ ("\
 When non-zero, serial port debugging is enabled."),
-			     NULL,
-			     NULL, /* FIXME: i18n: */
-			     &setdebuglist, &showdebuglist);
+                             NULL, NULL, /* FIXME: i18n: */
+                             &setdebuglist, &showdebuglist);
 }

@@ -72,13 +72,13 @@ run_events (int error, gdb_client_data client_data)
   for (auto &item : local)
     {
       try
-	{
-	  item ();
-	}
+        {
+          item ();
+        }
       catch (...)
-	{
-	  /* Ignore exceptions in the callback.  */
-	}
+        {
+          /* Ignore exceptions in the callback.  */
+        }
     }
 }
 
@@ -115,5 +115,5 @@ _initialize_run_on_main_thread ()
 #endif
   runnable_event = make_serial_event ();
   add_file_handler (serial_event_fd (runnable_event), run_events, nullptr,
-		    "run-on-main-thread");
+                    "run-on-main-thread");
 }

@@ -54,16 +54,14 @@
    group.  Put the LINUX_ORIG_EAX register in the system group.  */
 static int
 i386_linux_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
-				const struct reggroup *group)
+                                const struct reggroup *group)
 {
   if (regnum == I386_LINUX_ORIG_EAX_REGNUM)
-    return (group == system_reggroup
-	    || group == save_reggroup
-	    || group == restore_reggroup);
+    return (group == system_reggroup || group == save_reggroup
+            || group == restore_reggroup);
   return i386_register_reggroup_p (gdbarch, regnum, group);
 }
 
-
 /* Recognizing signal handler frames.  */
 
 /* GNU/Linux has two flavors of signals.  Normal signal handlers, and
@@ -102,18 +100,17 @@ i386_linux_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
    to the ones used by the kernel.  Therefore, these trampolines are
    supported too.  */
 
-#define LINUX_SIGTRAMP_INSN0	0x58	/* pop %eax */
-#define LINUX_SIGTRAMP_OFFSET0	0
-#define LINUX_SIGTRAMP_INSN1	0xb8	/* mov $NNNN, %eax */
-#define LINUX_SIGTRAMP_OFFSET1	1
-#define LINUX_SIGTRAMP_INSN2	0xcd	/* int */
-#define LINUX_SIGTRAMP_OFFSET2	6
+#define LINUX_SIGTRAMP_INSN0 0x58 /* pop %eax */
+#define LINUX_SIGTRAMP_OFFSET0 0
+#define LINUX_SIGTRAMP_INSN1 0xb8 /* mov $NNNN, %eax */
+#define LINUX_SIGTRAMP_OFFSET1 1
+#define LINUX_SIGTRAMP_INSN2 0xcd /* int */
+#define LINUX_SIGTRAMP_OFFSET2 6
 
-static const gdb_byte linux_sigtramp_code[] =
-{
-  LINUX_SIGTRAMP_INSN0,					/* pop %eax */
-  LINUX_SIGTRAMP_INSN1, 0x77, 0x00, 0x00, 0x00,		/* mov $0x77, %eax */
-  LINUX_SIGTRAMP_INSN2, 0x80				/* int $0x80 */
+static const gdb_byte linux_sigtramp_code[] = {
+  LINUX_SIGTRAMP_INSN0,                         /* pop %eax */
+  LINUX_SIGTRAMP_INSN1, 0x77, 0x00, 0x00, 0x00, /* mov $0x77, %eax */
+  LINUX_SIGTRAMP_INSN2, 0x80                    /* int $0x80 */
 };
 
 #define LINUX_SIGTRAMP_LEN (sizeof linux_sigtramp_code)
@@ -142,21 +139,21 @@ i386_linux_sigtramp_start (frame_info_ptr this_frame)
       int adjust;
 
       switch (buf[0])
-	{
-	case LINUX_SIGTRAMP_INSN1:
-	  adjust = LINUX_SIGTRAMP_OFFSET1;
-	  break;
-	case LINUX_SIGTRAMP_INSN2:
-	  adjust = LINUX_SIGTRAMP_OFFSET2;
-	  break;
-	default:
-	  return 0;
-	}
+        {
+        case LINUX_SIGTRAMP_INSN1:
+          adjust = LINUX_SIGTRAMP_OFFSET1;
+          break;
+        case LINUX_SIGTRAMP_INSN2:
+          adjust = LINUX_SIGTRAMP_OFFSET2;
+          break;
+        default:
+          return 0;
+        }
 
       pc -= adjust;
 
       if (!safe_frame_unwind_memory (this_frame, pc, buf))
-	return 0;
+        return 0;
     }
 
   if (memcmp (buf, linux_sigtramp_code, LINUX_SIGTRAMP_LEN) != 0)
@@ -173,15 +170,14 @@ i386_linux_sigtramp_start (frame_info_ptr this_frame)
 
    The effect is to call the system call rt_sigreturn.  */
 
-#define LINUX_RT_SIGTRAMP_INSN0		0xb8 /* mov $NNNN, %eax */
-#define LINUX_RT_SIGTRAMP_OFFSET0	0
-#define LINUX_RT_SIGTRAMP_INSN1		0xcd /* int */
-#define LINUX_RT_SIGTRAMP_OFFSET1	5
+#define LINUX_RT_SIGTRAMP_INSN0 0xb8 /* mov $NNNN, %eax */
+#define LINUX_RT_SIGTRAMP_OFFSET0 0
+#define LINUX_RT_SIGTRAMP_INSN1 0xcd /* int */
+#define LINUX_RT_SIGTRAMP_OFFSET1 5
 
-static const gdb_byte linux_rt_sigtramp_code[] =
-{
-  LINUX_RT_SIGTRAMP_INSN0, 0xad, 0x00, 0x00, 0x00,	/* mov $0xad, %eax */
-  LINUX_RT_SIGTRAMP_INSN1, 0x80				/* int $0x80 */
+static const gdb_byte linux_rt_sigtramp_code[] = {
+  LINUX_RT_SIGTRAMP_INSN0, 0xad, 0x00, 0x00, 0x00, /* mov $0xad, %eax */
+  LINUX_RT_SIGTRAMP_INSN1, 0x80                    /* int $0x80 */
 };
 
 #define LINUX_RT_SIGTRAMP_LEN (sizeof linux_rt_sigtramp_code)
@@ -208,13 +204,12 @@ i386_linux_rt_sigtramp_start (frame_info_ptr this_frame)
   if (buf[0] != LINUX_RT_SIGTRAMP_INSN0)
     {
       if (buf[0] != LINUX_RT_SIGTRAMP_INSN1)
-	return 0;
+        return 0;
 
       pc -= LINUX_RT_SIGTRAMP_OFFSET1;
 
-      if (!safe_frame_unwind_memory (this_frame, pc,
-				     buf))
-	return 0;
+      if (!safe_frame_unwind_memory (this_frame, pc, buf))
+        return 0;
     }
 
   if (memcmp (buf, linux_rt_sigtramp_code, LINUX_RT_SIGTRAMP_LEN) != 0)
@@ -241,10 +236,10 @@ i386_linux_sigtramp_p (frame_info_ptr this_frame)
      __sigaction, or __libc_sigaction (all aliases to the same function).  */
   if (name == NULL || strstr (name, "sigaction") != NULL)
     return (i386_linux_sigtramp_start (this_frame) != 0
-	    || i386_linux_rt_sigtramp_start (this_frame) != 0);
+            || i386_linux_rt_sigtramp_start (this_frame) != 0);
 
   return (strcmp ("__restore", name) == 0
-	  || strcmp ("__restore_rt", name) == 0);
+          || strcmp ("__restore_rt", name) == 0);
 }
 
 /* Return one if the PC of THIS_FRAME is in a signal trampoline which
@@ -252,7 +247,7 @@ i386_linux_sigtramp_p (frame_info_ptr this_frame)
 
 static int
 i386_linux_dwarf_signal_frame_p (struct gdbarch *gdbarch,
-				 frame_info_ptr this_frame)
+                                 frame_info_ptr this_frame)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
   const char *name;
@@ -261,8 +256,9 @@ i386_linux_dwarf_signal_frame_p (struct gdbarch *gdbarch,
 
   /* If a vsyscall DSO is in use, the signal trampolines may have these
      names.  */
-  if (name && (strcmp (name, "__kernel_sigreturn") == 0
-	       || strcmp (name, "__kernel_rt_sigreturn") == 0))
+  if (name
+      && (strcmp (name, "__kernel_sigreturn") == 0
+          || strcmp (name, "__kernel_rt_sigreturn") == 0))
     return 1;
 
   return 0;
@@ -296,7 +292,7 @@ i386_linux_sigcontext_addr (frame_info_ptr this_frame)
 	 sigtramp code is "pop %eax".  If the PC is after this
 	 instruction, adjust the returned value accordingly.  */
       if (pc == get_frame_pc (this_frame))
-	return sp + 4;
+        return sp + 4;
       return sp;
     }
 
@@ -313,7 +309,7 @@ i386_linux_sigcontext_addr (frame_info_ptr this_frame)
       return ucontext_addr + I386_LINUX_UCONTEXT_SIGCONTEXT_OFFSET;
     }
 
-  error (_("Couldn't recognize signal trampoline."));
+  error (_ ("Couldn't recognize signal trampoline."));
   return 0;
 }
 
@@ -376,7 +372,10 @@ i386_all_but_ip_registers_record (struct regcache *regcache)
 static enum gdb_syscall
 i386_canonicalize_syscall (int syscall)
 {
-  enum { i386_syscall_max = 499 };
+  enum
+  {
+    i386_syscall_max = 499
+  };
 
   if (syscall <= i386_syscall_max)
     return (enum gdb_syscall) syscall;
@@ -393,7 +392,7 @@ i386_canonicalize_syscall (int syscall)
    violations.  */
 void
 i386_linux_report_signal_info (struct gdbarch *gdbarch, struct ui_out *uiout,
-			       enum gdb_signal siggnal)
+                               enum gdb_signal siggnal)
 {
   /* -Wmaybe-uninitialized  */
   CORE_ADDR lower_bound = 0, upper_bound = 0, access = 0;
@@ -408,12 +407,11 @@ i386_linux_report_signal_info (struct gdbarch *gdbarch, struct ui_out *uiout,
       /* Sigcode evaluates if the actual segfault is a boundary violation.  */
       sig_code = parse_and_eval_long ("$_siginfo.si_code\n");
 
-      lower_bound
-	= parse_and_eval_long ("$_siginfo._sifields._sigfault._addr_bnd._lower");
-      upper_bound
-	= parse_and_eval_long ("$_siginfo._sifields._sigfault._addr_bnd._upper");
-      access
-	= parse_and_eval_long ("$_siginfo._sifields._sigfault.si_addr");
+      lower_bound = parse_and_eval_long (
+        "$_siginfo._sifields._sigfault._addr_bnd._lower");
+      upper_bound = parse_and_eval_long (
+        "$_siginfo._sifields._sigfault._addr_bnd._upper");
+      access = parse_and_eval_long ("$_siginfo._sifields._sigfault.si_addr");
     }
   catch (const gdb_exception &exception)
     {
@@ -428,20 +426,20 @@ i386_linux_report_signal_info (struct gdbarch *gdbarch, struct ui_out *uiout,
 
   uiout->text ("\n");
   if (is_upper)
-    uiout->field_string ("sigcode-meaning", _("Upper bound violation"));
+    uiout->field_string ("sigcode-meaning", _ ("Upper bound violation"));
   else
-    uiout->field_string ("sigcode-meaning", _("Lower bound violation"));
+    uiout->field_string ("sigcode-meaning", _ ("Lower bound violation"));
 
-  uiout->text (_(" while accessing address "));
+  uiout->text (_ (" while accessing address "));
   uiout->field_core_addr ("bound-access", gdbarch, access);
 
-  uiout->text (_("\nBounds: [lower = "));
+  uiout->text (_ ("\nBounds: [lower = "));
   uiout->field_core_addr ("lower-bound", gdbarch, lower_bound);
 
-  uiout->text (_(", upper = "));
+  uiout->text (_ (", upper = "));
   uiout->field_core_addr ("upper-bound", gdbarch, upper_bound);
 
-  uiout->text (_("]"));
+  uiout->text (_ ("]"));
 }
 
 /* Parse the arguments of current system call instruction and record
@@ -467,22 +465,21 @@ i386_linux_intx80_sysenter_syscall_record (struct regcache *regcache)
   if (syscall_gdb < 0)
     {
       gdb_printf (gdb_stderr,
-		  _("Process record and replay target doesn't "
-		    "support syscall number %s\n"), 
-		  plongest (syscall_native));
+                  _ ("Process record and replay target doesn't "
+                     "support syscall number %s\n"),
+                  plongest (syscall_native));
       return -1;
     }
 
-  if (syscall_gdb == gdb_sys_sigreturn
-      || syscall_gdb == gdb_sys_rt_sigreturn)
-   {
-     if (i386_all_but_ip_registers_record (regcache))
-       return -1;
-     return 0;
-   }
+  if (syscall_gdb == gdb_sys_sigreturn || syscall_gdb == gdb_sys_rt_sigreturn)
+    {
+      if (i386_all_but_ip_registers_record (regcache))
+        return -1;
+      return 0;
+    }
 
   ret = record_linux_system_call (syscall_gdb, regcache,
-				  &i386_linux_record_tdep);
+                                  &i386_linux_record_tdep);
   if (ret)
     return ret;
 
@@ -493,13 +490,12 @@ i386_linux_intx80_sysenter_syscall_record (struct regcache *regcache)
   return 0;
 }
 
-#define I386_LINUX_xstate	270
-#define I386_LINUX_frame_size	732
+#define I386_LINUX_xstate 270
+#define I386_LINUX_frame_size 732
 
 static int
-i386_linux_record_signal (struct gdbarch *gdbarch,
-			  struct regcache *regcache,
-			  enum gdb_signal signal)
+i386_linux_record_signal (struct gdbarch *gdbarch, struct regcache *regcache,
+                          enum gdb_signal signal)
 {
   ULONGEST esp;
 
@@ -517,8 +513,8 @@ i386_linux_record_signal (struct gdbarch *gdbarch,
   /* This is for frame_size.
      sp -= sizeof (struct rt_sigframe);  */
   esp -= I386_LINUX_frame_size;
-  if (record_full_arch_list_add_mem (esp,
-				     I386_LINUX_xstate + I386_LINUX_frame_size))
+  if (record_full_arch_list_add_mem (esp, I386_LINUX_xstate
+                                            + I386_LINUX_frame_size))
     return -1;
 
   if (record_full_arch_list_add_end ())
@@ -526,7 +522,6 @@ i386_linux_record_signal (struct gdbarch *gdbarch,
 
   return 0;
 }
-
 
 /* Core of the implementation for gdbarch get_syscall_number.  Get pending
    syscall number from REGCACHE.  If there is no pending syscall -1 will be
@@ -559,8 +554,7 @@ i386_linux_get_syscall_number_from_regcache (struct regcache *regcache)
    compatible with gdbarch get_syscall_number method prototype.  */
 
 static LONGEST
-i386_linux_get_syscall_number (struct gdbarch *gdbarch,
-			       thread_info *thread)
+i386_linux_get_syscall_number (struct gdbarch *gdbarch, thread_info *thread)
 {
   struct regcache *regcache = get_thread_regcache (thread);
 
@@ -583,59 +577,54 @@ i386_linux_get_syscall_number (struct gdbarch *gdbarch,
    format and GDB's register cache layout.  */
 
 /* From <sys/reg.h>.  */
-int i386_linux_gregset_reg_offset[] =
-{
-  6 * 4,			/* %eax */
-  1 * 4,			/* %ecx */
-  2 * 4,			/* %edx */
-  0 * 4,			/* %ebx */
-  15 * 4,			/* %esp */
-  5 * 4,			/* %ebp */
-  3 * 4,			/* %esi */
-  4 * 4,			/* %edi */
-  12 * 4,			/* %eip */
-  14 * 4,			/* %eflags */
-  13 * 4,			/* %cs */
-  16 * 4,			/* %ss */
-  7 * 4,			/* %ds */
-  8 * 4,			/* %es */
-  9 * 4,			/* %fs */
-  10 * 4,			/* %gs */
-  -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1,
-  -1,
-  -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1,		  /* MPX registers BND0 ... BND3.  */
-  -1, -1,			  /* MPX registers BNDCFGU, BNDSTATUS.  */
-  -1, -1, -1, -1, -1, -1, -1, -1, /* k0 ... k7 (AVX512)  */
-  -1, -1, -1, -1, -1, -1, -1, -1, /* zmm0 ... zmm7 (AVX512)  */
-  -1,				  /* PKRU register  */
-  11 * 4,			  /* "orig_eax"  */
+int i386_linux_gregset_reg_offset[] = {
+  6 * 4,  /* %eax */
+  1 * 4,  /* %ecx */
+  2 * 4,  /* %edx */
+  0 * 4,  /* %ebx */
+  15 * 4, /* %esp */
+  5 * 4,  /* %ebp */
+  3 * 4,  /* %esi */
+  4 * 4,  /* %edi */
+  12 * 4, /* %eip */
+  14 * 4, /* %eflags */
+  13 * 4, /* %cs */
+  16 * 4, /* %ss */
+  7 * 4,  /* %ds */
+  8 * 4,  /* %es */
+  9 * 4,  /* %fs */
+  10 * 4, /* %gs */
+  -1,     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  -1,     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  -1,     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /* MPX registers BND0 ... BND3.  */
+  -1,     -1,                         /* MPX registers BNDCFGU, BNDSTATUS.  */
+  -1,     -1, -1, -1, -1, -1, -1, -1, /* k0 ... k7 (AVX512)  */
+  -1,     -1, -1, -1, -1, -1, -1, -1, /* zmm0 ... zmm7 (AVX512)  */
+  -1,                                 /* PKRU register  */
+  11 * 4,                             /* "orig_eax"  */
 };
 
 /* Mapping between the general-purpose registers in `struct
    sigcontext' format and GDB's register cache layout.  */
 
 /* From <asm/sigcontext.h>.  */
-static int i386_linux_sc_reg_offset[] =
-{
-  11 * 4,			/* %eax */
-  10 * 4,			/* %ecx */
-  9 * 4,			/* %edx */
-  8 * 4,			/* %ebx */
-  7 * 4,			/* %esp */
-  6 * 4,			/* %ebp */
-  5 * 4,			/* %esi */
-  4 * 4,			/* %edi */
-  14 * 4,			/* %eip */
-  16 * 4,			/* %eflags */
-  15 * 4,			/* %cs */
-  18 * 4,			/* %ss */
-  3 * 4,			/* %ds */
-  2 * 4,			/* %es */
-  1 * 4,			/* %fs */
-  0 * 4				/* %gs */
+static int i386_linux_sc_reg_offset[] = {
+  11 * 4, /* %eax */
+  10 * 4, /* %ecx */
+  9 * 4,  /* %edx */
+  8 * 4,  /* %ebx */
+  7 * 4,  /* %esp */
+  6 * 4,  /* %ebp */
+  5 * 4,  /* %esi */
+  4 * 4,  /* %edi */
+  14 * 4, /* %eip */
+  16 * 4, /* %eflags */
+  15 * 4, /* %cs */
+  18 * 4, /* %ss */
+  3 * 4,  /* %ds */
+  2 * 4,  /* %es */
+  1 * 4,  /* %fs */
+  0 * 4   /* %gs */
 };
 
 /* Get XSAVE extended state xcr0 from core dump.  */
@@ -652,22 +641,21 @@ i386_linux_core_read_xcr0 (bfd *abfd)
 
       /* Check extended state size.  */
       if (size < X86_XSTATE_AVX_SIZE)
-	xcr0 = X86_XSTATE_SSE_MASK;
+        xcr0 = X86_XSTATE_SSE_MASK;
       else
-	{
-	  char contents[8];
+        {
+          char contents[8];
 
-	  if (! bfd_get_section_contents (abfd, xstate, contents,
-					  I386_LINUX_XSAVE_XCR0_OFFSET,
-					  8))
-	    {
-	      warning (_("Couldn't read `xcr0' bytes from "
-			 "`.reg-xstate' section in core file."));
-	      return 0;
-	    }
+          if (!bfd_get_section_contents (abfd, xstate, contents,
+                                         I386_LINUX_XSAVE_XCR0_OFFSET, 8))
+            {
+              warning (_ ("Couldn't read `xcr0' bytes from "
+                          "`.reg-xstate' section in core file."));
+              return 0;
+            }
 
-	  xcr0 = bfd_get_64 (abfd, contents);
-	}
+          xcr0 = bfd_get_64 (abfd, contents);
+        }
     }
   else
     xcr0 = 0;
@@ -683,16 +671,17 @@ i386_linux_read_description (uint64_t xcr0)
   if (xcr0 == 0)
     return NULL;
 
-  static struct target_desc *i386_linux_tdescs \
-    [2/*X87*/][2/*SSE*/][2/*AVX*/][2/*MPX*/][2/*AVX512*/][2/*PKRU*/] = {};
+  static struct target_desc
+    *i386_linux_tdescs[2 /*X87*/][2 /*SSE*/][2 /*AVX*/][2 /*MPX*/]
+                      [2 /*AVX512*/][2 /*PKRU*/]
+    = {};
   struct target_desc **tdesc;
 
-  tdesc = &i386_linux_tdescs[(xcr0 & X86_XSTATE_X87) ? 1 : 0]
-    [(xcr0 & X86_XSTATE_SSE) ? 1 : 0]
-    [(xcr0 & X86_XSTATE_AVX) ? 1 : 0]
-    [(xcr0 & X86_XSTATE_MPX) ? 1 : 0]
-    [(xcr0 & X86_XSTATE_AVX512) ? 1 : 0]
-    [(xcr0 & X86_XSTATE_PKRU) ? 1 : 0];
+  tdesc
+    = &i386_linux_tdescs
+        [(xcr0 & X86_XSTATE_X87) ? 1 : 0][(xcr0 & X86_XSTATE_SSE) ? 1 : 0]
+        [(xcr0 & X86_XSTATE_AVX) ? 1 : 0][(xcr0 & X86_XSTATE_MPX) ? 1 : 0]
+        [(xcr0 & X86_XSTATE_AVX512) ? 1 : 0][(xcr0 & X86_XSTATE_PKRU) ? 1 : 0];
 
   if (*tdesc == NULL)
     *tdesc = i386_create_target_description (xcr0, true, false);
@@ -704,8 +693,7 @@ i386_linux_read_description (uint64_t xcr0)
 
 static const struct target_desc *
 i386_linux_core_read_description (struct gdbarch *gdbarch,
-				  struct target_ops *target,
-				  bfd *abfd)
+                                  struct target_ops *target, bfd *abfd)
 {
   /* Linux/i386.  */
   uint64_t xcr0 = i386_linux_core_read_xcr0 (abfd);
@@ -724,8 +712,8 @@ i386_linux_core_read_description (struct gdbarch *gdbarch,
 
 static void
 i386_linux_supply_xstateregset (const struct regset *regset,
-				struct regcache *regcache, int regnum,
-				const void *xstateregs, size_t len)
+                                struct regcache *regcache, int regnum,
+                                const void *xstateregs, size_t len)
 {
   i387_supply_xsave (regcache, regnum, xstateregs);
 }
@@ -733,35 +721,32 @@ i386_linux_supply_xstateregset (const struct regset *regset,
 struct type *
 x86_linux_get_siginfo_type (struct gdbarch *gdbarch)
 {
-  return linux_get_siginfo_type_with_fields (gdbarch, LINUX_SIGINFO_FIELD_ADDR_BND);
+  return linux_get_siginfo_type_with_fields (gdbarch,
+                                             LINUX_SIGINFO_FIELD_ADDR_BND);
 }
 
 /* Similar to i386_collect_fpregset, but use XSAVE extended state.  */
 
 static void
 i386_linux_collect_xstateregset (const struct regset *regset,
-				 const struct regcache *regcache,
-				 int regnum, void *xstateregs, size_t len)
+                                 const struct regcache *regcache, int regnum,
+                                 void *xstateregs, size_t len)
 {
   i387_collect_xsave (regcache, regnum, xstateregs, 1);
 }
 
 /* Register set definitions.  */
 
-static const struct regset i386_linux_xstateregset =
-  {
-    NULL,
-    i386_linux_supply_xstateregset,
-    i386_linux_collect_xstateregset
-  };
+static const struct regset i386_linux_xstateregset
+  = { NULL, i386_linux_supply_xstateregset, i386_linux_collect_xstateregset };
 
 /* Iterate over core file register note sections.  */
 
 static void
 i386_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
-					 iterate_over_regset_sections_cb *cb,
-					 void *cb_data,
-					 const struct regcache *regcache)
+                                         iterate_over_regset_sections_cb *cb,
+                                         void *cb_data,
+                                         const struct regcache *regcache)
 {
   i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
 
@@ -769,11 +754,11 @@ i386_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
 
   if (tdep->xcr0 & X86_XSTATE_AVX)
     cb (".reg-xstate", X86_XSTATE_SIZE (tdep->xcr0),
-	X86_XSTATE_SIZE (tdep->xcr0), &i386_linux_xstateregset,
-	"XSAVE extended state", cb_data);
+        X86_XSTATE_SIZE (tdep->xcr0), &i386_linux_xstateregset,
+        "XSAVE extended state", cb_data);
   else if (tdep->xcr0 & X86_XSTATE_SSE)
     cb (".reg-xfp", 512, 512, &i386_fpregset, "extended floating-point",
-	cb_data);
+        cb_data);
   else
     cb (".reg2", 108, 108, &i386_fpregset, NULL, cb_data);
 }
@@ -801,19 +786,18 @@ i386_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
    there instead.  */
 
 static displaced_step_copy_insn_closure_up
-i386_linux_displaced_step_copy_insn (struct gdbarch *gdbarch,
-				     CORE_ADDR from, CORE_ADDR to,
-				     struct regcache *regs)
+i386_linux_displaced_step_copy_insn (struct gdbarch *gdbarch, CORE_ADDR from,
+                                     CORE_ADDR to, struct regcache *regs)
 {
   displaced_step_copy_insn_closure_up closure_
-    =  i386_displaced_step_copy_insn (gdbarch, from, to, regs);
+    = i386_displaced_step_copy_insn (gdbarch, from, to, regs);
 
   if (i386_linux_get_syscall_number_from_regcache (regs) != -1)
     {
       /* The closure returned by i386_displaced_step_copy_insn is simply a
 	 buffer with a copy of the instruction. */
       i386_displaced_step_copy_insn_closure *closure
-	= (i386_displaced_step_copy_insn_closure *) closure_.get ();
+        = (i386_displaced_step_copy_insn_closure *) closure_.get ();
 
       /* Fake nop.  */
       closure->buf[0] = 0x90;
@@ -841,7 +825,7 @@ i386_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* Reserve a number for orig_eax.  */
   set_gdbarch_num_regs (gdbarch, I386_LINUX_NUM_REGS);
 
-  if (! tdesc_has_registers (tdesc))
+  if (!tdesc_has_registers (tdesc))
     tdesc = i386_linux_read_description (X86_XSTATE_SSE_MASK);
   tdep->tdesc = tdesc;
 
@@ -850,8 +834,7 @@ i386_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
     return;
 
   valid_p = tdesc_numbered_register (feature, tdesc_data,
-				     I386_LINUX_ORIG_EAX_REGNUM,
-				     "orig_eax");
+                                     I386_LINUX_ORIG_EAX_REGNUM, "orig_eax");
   if (!valid_p)
     return;
 
@@ -864,7 +847,7 @@ i386_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tdep->gregset_num_regs = ARRAY_SIZE (i386_linux_gregset_reg_offset);
   tdep->sizeof_gregset = 17 * 4;
 
-  tdep->jb_pc_offset = 20;	/* From <bits/setjmp.h>.  */
+  tdep->jb_pc_offset = 20; /* From <bits/setjmp.h>.  */
 
   tdep->sigtramp_p = i386_linux_sigtramp_p;
   tdep->sigcontext_addr = i386_linux_sigcontext_addr;
@@ -1044,8 +1027,8 @@ i386_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   /* GNU/Linux uses SVR4-style shared libraries.  */
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, linux_ilp32_fetch_link_map_offsets);
+  set_solib_svr4_fetch_link_map_offsets (gdbarch,
+                                         linux_ilp32_fetch_link_map_offsets);
 
   /* GNU/Linux uses the dynamic linker included in the GNU C Library.  */
   set_gdbarch_skip_solib_resolver (gdbarch, glibc_skip_solib_resolver);
@@ -1054,23 +1037,22 @@ i386_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   /* Enable TLS support.  */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
-					     svr4_fetch_objfile_link_map);
+                                             svr4_fetch_objfile_link_map);
 
   /* Core file support.  */
-  set_gdbarch_iterate_over_regset_sections
-    (gdbarch, i386_linux_iterate_over_regset_sections);
+  set_gdbarch_iterate_over_regset_sections (
+    gdbarch, i386_linux_iterate_over_regset_sections);
   set_gdbarch_core_read_description (gdbarch,
-				     i386_linux_core_read_description);
+                                     i386_linux_core_read_description);
 
   /* Displaced stepping.  */
   set_gdbarch_displaced_step_copy_insn (gdbarch,
-					i386_linux_displaced_step_copy_insn);
+                                        i386_linux_displaced_step_copy_insn);
   set_gdbarch_displaced_step_fixup (gdbarch, i386_displaced_step_fixup);
 
   /* Functions for 'catch syscall'.  */
   set_xml_syscall_file_name (gdbarch, XML_SYSCALL_FILENAME_I386);
-  set_gdbarch_get_syscall_number (gdbarch,
-				  i386_linux_get_syscall_number);
+  set_gdbarch_get_syscall_number (gdbarch, i386_linux_get_syscall_number);
 
   set_gdbarch_get_siginfo_type (gdbarch, x86_linux_get_siginfo_type);
   set_gdbarch_report_signal_info (gdbarch, i386_linux_report_signal_info);
@@ -1081,5 +1063,5 @@ void
 _initialize_i386_linux_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_i386, 0, GDB_OSABI_LINUX,
-			  i386_linux_init_abi);
+                          i386_linux_init_abi);
 }

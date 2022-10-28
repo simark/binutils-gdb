@@ -66,15 +66,13 @@ infrun_debug_show_threads (const char *title, ThreadRange threads)
 
       infrun_debug_printf ("%s:", title);
       for (thread_info *thread : threads)
-	infrun_debug_printf ("  thread %s, executing = %d, resumed = %d, "
-			     "state = %s",
-			     thread->ptid.to_string ().c_str (),
-			     thread->executing (),
-			     thread->resumed (),
-			     thread_state_string (thread->state));
+        infrun_debug_printf ("  thread %s, executing = %d, resumed = %d, "
+                             "state = %s",
+                             thread->ptid.to_string ().c_str (),
+                             thread->executing (), thread->resumed (),
+                             thread_state_string (thread->state));
     }
 }
-
 
 /* Nonzero if we want to give control to the user when we're notified
    of shared library events by the dynamic linker.  */
@@ -109,10 +107,10 @@ extern ULONGEST get_stop_id (void);
 
 /* Reverse execution.  */
 enum exec_direction_kind
-  {
-    EXEC_FORWARD,
-    EXEC_REVERSE
-  };
+{
+  EXEC_FORWARD,
+  EXEC_REVERSE
+};
 
 /* The current execution direction.  */
 extern enum exec_direction_kind execution_direction;
@@ -155,12 +153,13 @@ extern int normal_stop (void);
    by target_wait().  The data is actually cached by handle_inferior_event(),
    which gets called immediately after target_wait().  */
 extern void get_last_target_status (process_stratum_target **target,
-				    ptid_t *ptid,
-				    struct target_waitstatus *status);
+                                    ptid_t *ptid,
+                                    struct target_waitstatus *status);
 
 /* Set the cached copy of the last target/ptid/waitstatus.  */
-extern void set_last_target_status (process_stratum_target *target, ptid_t ptid,
-				    const target_waitstatus &status);
+extern void set_last_target_status (process_stratum_target *target,
+                                    ptid_t ptid,
+                                    const target_waitstatus &status);
 
 /* Clear the cached copy of the last ptid/waitstatus returned by
    target_wait().  */
@@ -182,13 +181,13 @@ extern void fetch_inferior_event ();
 extern void init_wait_for_inferior (void);
 
 extern void insert_step_resume_breakpoint_at_sal (struct gdbarch *,
-						  struct symtab_and_line ,
-						  struct frame_id);
+                                                  struct symtab_and_line,
+                                                  struct frame_id);
 
 /* Returns true if we're trying to step past the instruction at
    ADDRESS in ASPACE.  */
 extern int stepping_past_instruction_at (struct address_space *aspace,
-					 CORE_ADDR address);
+                                         CORE_ADDR address);
 
 /* Returns true if thread whose thread number is THREAD is stepping
    over a breakpoint.  */
@@ -199,16 +198,15 @@ extern int thread_is_stepping_over_breakpoint (int thread);
 extern int stepping_past_nonsteppable_watchpoint (void);
 
 /* Record in TP the frame and location we're currently stepping through.  */
-extern void set_step_info (thread_info *tp,
-			   frame_info_ptr frame,
-			   struct symtab_and_line sal);
+extern void set_step_info (thread_info *tp, frame_info_ptr frame,
+                           struct symtab_and_line sal);
 
 /* Several print_*_reason helper functions to print why the inferior
    has stopped to the passed in UIOUT.  */
 
 /* Signal received, print why the inferior has stopped.  */
 extern void print_signal_received_reason (struct ui_out *uiout,
-					  enum gdb_signal siggnal);
+                                          enum gdb_signal siggnal);
 
 /* Print why the inferior has stopped.  We are done with a
    step/next/si/ni command, print why the inferior has stopped.  */
@@ -216,7 +214,7 @@ extern void print_end_stepping_range_reason (struct ui_out *uiout);
 
 /* The inferior was terminated by a signal, print why it stopped.  */
 extern void print_signal_exited_reason (struct ui_out *uiout,
-					enum gdb_signal siggnal);
+                                        enum gdb_signal siggnal);
 
 /* The inferior program is finished, print why it stopped.  */
 extern void print_exited_reason (struct ui_out *uiout, int exitstatus);
@@ -230,7 +228,7 @@ extern void print_no_history_reason (struct ui_out *uiout);
    and its position in the value history.  */
 
 extern void print_return_value (struct ui_out *uiout,
-				struct return_value_info *rv);
+                                struct return_value_info *rv);
 
 /* Print current location without a level number, if we have changed
    functions or hit a breakpoint.  Print source line if we have one.
@@ -242,7 +240,7 @@ extern void print_stop_event (struct ui_out *uiout, bool displays = true);
 /* Pretty print the results of target_wait, for debugging purposes.  */
 
 extern void print_target_wait_results (ptid_t waiton_ptid, ptid_t result_ptid,
-				       const struct target_waitstatus &ws);
+                                       const struct target_waitstatus &ws);
 
 extern int signal_stop_state (int);
 
@@ -306,7 +304,8 @@ extern void all_uis_on_sync_execution_starting (void);
 
 /* In all-stop, restart the target if it had to be stopped to
    detach.  */
-extern void restart_after_all_stop_detach (process_stratum_target *proc_target);
+extern void
+restart_after_all_stop_detach (process_stratum_target *proc_target);
 
 /* RAII object to temporarily disable the requirement for target
    stacks to commit their resumed threads.
@@ -404,6 +403,5 @@ private:
   const char *m_reason;
   bool m_prev_enable_commit_resumed;
 };
-
 
 #endif /* INFRUN_H */

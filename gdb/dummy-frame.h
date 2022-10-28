@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (DUMMY_FRAME_H)
+#if !defined(DUMMY_FRAME_H)
 #define DUMMY_FRAME_H 1
 
 #include "frame.h"
@@ -35,8 +35,7 @@ class thread_info;
    frame's code.  */
 
 extern void dummy_frame_push (infcall_suspend_state *caller_state,
-			      const frame_id *dummy_id,
-			      thread_info *thread);
+                              const frame_id *dummy_id, thread_info *thread);
 
 /* Pop the dummy frame DUMMY_ID, restoring program state to that before the
    frame was created.
@@ -64,20 +63,19 @@ typedef void (dummy_frame_dtor_ftype) (void *data, int registers_valid);
    discarded.  Dummy frame with DUMMY_ID must exist.  Multiple
    destructors may be registered, they will be called in the reverse
    order of registrations (LIFO).  */
-extern void register_dummy_frame_dtor (frame_id dummy_id,
-				       thread_info *thread,
-				       dummy_frame_dtor_ftype *dtor,
-				       void *dtor_data);
+extern void register_dummy_frame_dtor (frame_id dummy_id, thread_info *thread,
+                                       dummy_frame_dtor_ftype *dtor,
+                                       void *dtor_data);
 
 /* Return 1 if there exists any dummy frame with any of its registered
    destructors equal to both DTOR and DTOR_DATA.  Return 0 otherwise.  */
 extern int find_dummy_frame_dtor (dummy_frame_dtor_ftype *dtor,
-				  void *dtor_data);
+                                  void *dtor_data);
 
 /* Default implementation of gdbarch_dummy_id.  Generate a dummy frame_id
    for THIS_FRAME assuming that the frame is a dummy frame.  */
 
 extern struct frame_id default_dummy_id (struct gdbarch *gdbarch,
-					 frame_info_ptr this_frame);
+                                         frame_info_ptr this_frame);
 
 #endif /* !defined (DUMMY_FRAME_H)  */

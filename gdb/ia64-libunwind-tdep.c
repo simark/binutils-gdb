@@ -52,7 +52,7 @@
 #define __LITTLE_ENDIAN 1234
 #endif
 #ifndef __BIG_ENDIAN
-#define __BIG_ENDIAN    4321
+#define __BIG_ENDIAN 4321
 #endif
 
 static int libunwind_initialized;
@@ -62,31 +62,30 @@ static const registry<gdbarch>::key<libunwind_descr> libunwind_descr_handle;
 typedef int (unw_get_reg_p_ftype) (unw_cursor_t *, unw_regnum_t, unw_word_t *);
 static unw_get_reg_p_ftype *unw_get_reg_p;
 typedef int (unw_get_fpreg_p_ftype) (unw_cursor_t *, unw_regnum_t,
-				     unw_fpreg_t *);
+                                     unw_fpreg_t *);
 static unw_get_fpreg_p_ftype *unw_get_fpreg_p;
 typedef int (unw_get_saveloc_p_ftype) (unw_cursor_t *, unw_regnum_t,
-				       unw_save_loc_t *);
+                                       unw_save_loc_t *);
 static unw_get_saveloc_p_ftype *unw_get_saveloc_p;
 typedef int (unw_is_signal_frame_p_ftype) (unw_cursor_t *);
 static unw_is_signal_frame_p_ftype *unw_is_signal_frame_p;
 typedef int (unw_step_p_ftype) (unw_cursor_t *);
 static unw_step_p_ftype *unw_step_p;
 typedef int (unw_init_remote_p_ftype) (unw_cursor_t *, unw_addr_space_t,
-				       void *);
+                                       void *);
 static unw_init_remote_p_ftype *unw_init_remote_p;
 typedef unw_addr_space_t (unw_create_addr_space_p_ftype) (unw_accessors_t *,
-							  int);
+                                                          int);
 static unw_create_addr_space_p_ftype *unw_create_addr_space_p;
 typedef void (unw_destroy_addr_space_p_ftype) (unw_addr_space_t);
 static unw_destroy_addr_space_p_ftype *unw_destroy_addr_space_p;
 typedef int (unw_search_unwind_table_p_ftype) (unw_addr_space_t, unw_word_t,
-					       unw_dyn_info_t *,
-					       unw_proc_info_t *, int, void *);
+                                               unw_dyn_info_t *,
+                                               unw_proc_info_t *, int, void *);
 static unw_search_unwind_table_p_ftype *unw_search_unwind_table_p;
 typedef unw_word_t (unw_find_dyn_list_p_ftype) (unw_addr_space_t,
-						unw_dyn_info_t *, void *);
+                                                unw_dyn_info_t *, void *);
 static unw_find_dyn_list_p_ftype *unw_find_dyn_list_p;
-
 
 struct libunwind_frame_cache
 {
@@ -103,26 +102,27 @@ struct libunwind_frame_cache
 #ifndef LIBUNWIND_SO
 /* Use the stable ABI major version number.  `libunwind-ia64.so' is a link time
    only library, not a runtime one.  */
-#define LIBUNWIND_SO "libunwind-" STRINGIFY(UNW_TARGET) ".so.8"
+#define LIBUNWIND_SO "libunwind-" STRINGIFY (UNW_TARGET) ".so.8"
 
 /* Provide also compatibility with older .so.  The two APIs are compatible, .8
    is only extended a bit, GDB does not use the extended API at all.  */
-#define LIBUNWIND_SO_7 "libunwind-" STRINGIFY(UNW_TARGET) ".so.7"
+#define LIBUNWIND_SO_7 "libunwind-" STRINGIFY (UNW_TARGET) ".so.7"
 #endif
 
-static const char *get_reg_name = STRINGIFY(UNW_OBJ(get_reg));
-static const char *get_fpreg_name = STRINGIFY(UNW_OBJ(get_fpreg));
-static const char *get_saveloc_name = STRINGIFY(UNW_OBJ(get_save_loc));
-static const char *is_signal_frame_name = STRINGIFY(UNW_OBJ(is_signal_frame));
-static const char *step_name = STRINGIFY(UNW_OBJ(step));
-static const char *init_remote_name = STRINGIFY(UNW_OBJ(init_remote));
+static const char *get_reg_name = STRINGIFY (UNW_OBJ (get_reg));
+static const char *get_fpreg_name = STRINGIFY (UNW_OBJ (get_fpreg));
+static const char *get_saveloc_name = STRINGIFY (UNW_OBJ (get_save_loc));
+static const char *is_signal_frame_name
+  = STRINGIFY (UNW_OBJ (is_signal_frame));
+static const char *step_name = STRINGIFY (UNW_OBJ (step));
+static const char *init_remote_name = STRINGIFY (UNW_OBJ (init_remote));
 static const char *create_addr_space_name
-  = STRINGIFY(UNW_OBJ(create_addr_space));
+  = STRINGIFY (UNW_OBJ (create_addr_space));
 static const char *destroy_addr_space_name
-  = STRINGIFY(UNW_OBJ(destroy_addr_space));
+  = STRINGIFY (UNW_OBJ (destroy_addr_space));
 static const char *search_unwind_table_name
-  = STRINGIFY(UNW_OBJ(search_unwind_table));
-static const char *find_dyn_list_name = STRINGIFY(UNW_OBJ(find_dyn_list));
+  = STRINGIFY (UNW_OBJ (search_unwind_table));
+static const char *find_dyn_list_name = STRINGIFY (UNW_OBJ (find_dyn_list));
 
 static struct libunwind_descr *
 libunwind_descr (struct gdbarch *gdbarch)
@@ -135,7 +135,7 @@ libunwind_descr (struct gdbarch *gdbarch)
 
 void
 libunwind_frame_set_descr (struct gdbarch *gdbarch,
-			   struct libunwind_descr *descr)
+                           struct libunwind_descr *descr)
 {
   struct libunwind_descr *arch_descr;
 
@@ -198,11 +198,10 @@ libunwind_frame_cache (frame_info_ptr this_frame, void **this_cache)
      interface which will invoke libunwind's special logic.  */
   descr = libunwind_descr (gdbarch);
   acc = (unw_accessors_t *) descr->accessors;
-  as =  unw_create_addr_space_p (acc,
-				 gdbarch_byte_order (gdbarch)
-				 == BFD_ENDIAN_BIG
-				 ? __BIG_ENDIAN
-				 : __LITTLE_ENDIAN);
+  as = unw_create_addr_space_p (acc,
+                                gdbarch_byte_order (gdbarch) == BFD_ENDIAN_BIG
+                                  ? __BIG_ENDIAN
+                                  : __LITTLE_ENDIAN);
 
   unw_init_remote_p (&cache->cursor, as, this_frame);
   if (unw_step_p (&cache->cursor) < 0)
@@ -217,10 +216,10 @@ libunwind_frame_cache (frame_info_ptr this_frame, void **this_cache)
   if (ret < 0)
     {
       unw_destroy_addr_space_p (as);
-      error (_("Can't get libunwind sp register."));
+      error (_ ("Can't get libunwind sp register."));
     }
 
-  cache->base = (CORE_ADDR)fp;
+  cache->base = (CORE_ADDR) fp;
   cache->as = as;
 
   *this_cache = cache;
@@ -247,7 +246,7 @@ libunwind_find_dyn_list (unw_addr_space_t as, unw_dyn_info_t *di, void *arg)
    libunwind frame unwinding.  */
 int
 libunwind_frame_sniffer (const struct frame_unwind *self,
-			 frame_info_ptr this_frame, void **this_cache)
+                         frame_info_ptr this_frame, void **this_cache)
 {
   unw_cursor_t cursor;
   unw_accessors_t *acc;
@@ -264,11 +263,10 @@ libunwind_frame_sniffer (const struct frame_unwind *self,
 
   descr = libunwind_descr (gdbarch);
   acc = (unw_accessors_t *) descr->accessors;
-  as =  unw_create_addr_space_p (acc,
-				 gdbarch_byte_order (gdbarch)
-				 == BFD_ENDIAN_BIG
-				 ? __BIG_ENDIAN
-				 : __LITTLE_ENDIAN);
+  as = unw_create_addr_space_p (acc,
+                                gdbarch_byte_order (gdbarch) == BFD_ENDIAN_BIG
+                                  ? __BIG_ENDIAN
+                                  : __LITTLE_ENDIAN);
 
   ret = unw_init_remote_p (&cursor, as, this_frame);
 
@@ -278,7 +276,6 @@ libunwind_frame_sniffer (const struct frame_unwind *self,
       return 0;
     }
 
- 
   /* Check to see if we have libunwind info by checking if we are in a 
      signal frame.  If it doesn't return an error, we have libunwind info
      and can use libunwind.  */
@@ -293,21 +290,21 @@ libunwind_frame_sniffer (const struct frame_unwind *self,
 
 void
 libunwind_frame_this_id (frame_info_ptr this_frame, void **this_cache,
-			 struct frame_id *this_id)
+                         struct frame_id *this_id)
 {
-  struct libunwind_frame_cache *cache =
-    libunwind_frame_cache (this_frame, this_cache);
+  struct libunwind_frame_cache *cache
+    = libunwind_frame_cache (this_frame, this_cache);
 
   if (cache != NULL)
     (*this_id) = frame_id_build (cache->base, cache->func_addr);
 }
 
 struct value *
-libunwind_frame_prev_register (frame_info_ptr this_frame,
-			       void **this_cache, int regnum)
+libunwind_frame_prev_register (frame_info_ptr this_frame, void **this_cache,
+                               int regnum)
 {
-  struct libunwind_frame_cache *cache =
-    libunwind_frame_cache (this_frame, this_cache);
+  struct libunwind_frame_cache *cache
+    = libunwind_frame_cache (this_frame, this_cache);
 
   unw_save_loc_t sl;
   int ret;
@@ -319,7 +316,7 @@ libunwind_frame_prev_register (frame_info_ptr this_frame,
 
   if (cache == NULL)
     return frame_unwind_got_constant (this_frame, regnum, 0);
-  
+
   /* Convert from gdb register number to libunwind register number.  */
   descr = libunwind_descr (get_frame_arch (this_frame));
   uw_regnum = descr->gdb2uw (regnum);
@@ -327,7 +324,7 @@ libunwind_frame_prev_register (frame_info_ptr this_frame,
   gdb_assert (regnum >= 0);
 
   if (!target_has_registers ())
-    error (_("No registers."));
+    error (_ ("No registers."));
 
   if (uw_regnum < 0)
     return frame_unwind_got_constant (this_frame, regnum, 0);
@@ -343,52 +340,51 @@ libunwind_frame_prev_register (frame_info_ptr this_frame,
 
     case UNW_SLT_REG:
       val = frame_unwind_got_register (this_frame, regnum,
-				       descr->uw2gdb (sl.u.regnum));
+                                       descr->uw2gdb (sl.u.regnum));
       break;
     case UNW_SLT_NONE:
       {
-	/* The register is not stored at a specific memory address nor
+        /* The register is not stored at a specific memory address nor
 	   inside another register.  So use libunwind to fetch the register
 	   value for us, and create a constant value with the result.  */
-	if (descr->is_fpreg (uw_regnum))
-	  {
-	    ret = unw_get_fpreg_p (&cache->cursor, uw_regnum, &fpval);
-	    if (ret < 0)
-	      return frame_unwind_got_constant (this_frame, regnum, 0);
-	    val = frame_unwind_got_bytes (this_frame, regnum,
-					  (gdb_byte *) &fpval);
-	  }
-	else
-	  {
-	    ret = unw_get_reg_p (&cache->cursor, uw_regnum, &intval);
-	    if (ret < 0)
-	      return frame_unwind_got_constant (this_frame, regnum, 0);
-	    val = frame_unwind_got_constant (this_frame, regnum, intval);
-	  }
-	break;
+        if (descr->is_fpreg (uw_regnum))
+          {
+            ret = unw_get_fpreg_p (&cache->cursor, uw_regnum, &fpval);
+            if (ret < 0)
+              return frame_unwind_got_constant (this_frame, regnum, 0);
+            val = frame_unwind_got_bytes (this_frame, regnum,
+                                          (gdb_byte *) &fpval);
+          }
+        else
+          {
+            ret = unw_get_reg_p (&cache->cursor, uw_regnum, &intval);
+            if (ret < 0)
+              return frame_unwind_got_constant (this_frame, regnum, 0);
+            val = frame_unwind_got_constant (this_frame, regnum, intval);
+          }
+        break;
       }
     }
 
   return val;
-} 
+}
 
 /* The following is a glue routine to call the libunwind unwind table
-   search function to get unwind information for a specified ip address.  */ 
+   search function to get unwind information for a specified ip address.  */
 int
-libunwind_search_unwind_table (void *as, long ip, void *di,
-			       void *pi, int need_unwind_info, void *args)
+libunwind_search_unwind_table (void *as, long ip, void *di, void *pi,
+                               int need_unwind_info, void *args)
 {
   return unw_search_unwind_table_p (*(unw_addr_space_t *) as, (unw_word_t) ip,
-				    (unw_dyn_info_t *) di,
-				    (unw_proc_info_t *) pi, need_unwind_info,
-				    args);
+                                    (unw_dyn_info_t *) di,
+                                    (unw_proc_info_t *) pi, need_unwind_info,
+                                    args);
 }
 
 /* Verify if we are in a sigtramp frame and we can use libunwind to unwind.  */
 int
 libunwind_sigtramp_frame_sniffer (const struct frame_unwind *self,
-				  frame_info_ptr this_frame,
-				  void **this_cache)
+                                  frame_info_ptr this_frame, void **this_cache)
 {
   unw_cursor_t cursor;
   unw_accessors_t *acc;
@@ -406,11 +402,10 @@ libunwind_sigtramp_frame_sniffer (const struct frame_unwind *self,
 
   descr = libunwind_descr (gdbarch);
   acc = (unw_accessors_t *) descr->accessors;
-  as =  unw_create_addr_space_p (acc,
-				 gdbarch_byte_order (gdbarch)
-				 == BFD_ENDIAN_BIG
-				 ? __BIG_ENDIAN
-				 : __LITTLE_ENDIAN);
+  as = unw_create_addr_space_p (acc,
+                                gdbarch_byte_order (gdbarch) == BFD_ENDIAN_BIG
+                                  ? __BIG_ENDIAN
+                                  : __LITTLE_ENDIAN);
 
   ret = unw_init_remote_p (&cursor, as, this_frame);
 
@@ -435,8 +430,8 @@ libunwind_sigtramp_frame_sniffer (const struct frame_unwind *self,
    are usually located at BOF, this is not always true and only the libunwind
    info can decipher where they actually are.  */
 int
-libunwind_get_reg_special (struct gdbarch *gdbarch, readable_regcache *regcache,
-			   int regnum, void *buf)
+libunwind_get_reg_special (struct gdbarch *gdbarch,
+                           readable_regcache *regcache, int regnum, void *buf)
 {
   unw_cursor_t cursor;
   unw_accessors_t *acc;
@@ -448,14 +443,12 @@ libunwind_get_reg_special (struct gdbarch *gdbarch, readable_regcache *regcache,
   unw_fpreg_t fpval;
   void *ptr;
 
-
   descr = libunwind_descr (gdbarch);
   acc = (unw_accessors_t *) descr->special_accessors;
-  as =  unw_create_addr_space_p (acc,
-				 gdbarch_byte_order (gdbarch)
-				 == BFD_ENDIAN_BIG
-				 ? __BIG_ENDIAN
-				 : __LITTLE_ENDIAN);
+  as = unw_create_addr_space_p (acc,
+                                gdbarch_byte_order (gdbarch) == BFD_ENDIAN_BIG
+                                  ? __BIG_ENDIAN
+                                  : __LITTLE_ENDIAN);
 
   ret = unw_init_remote_p (&cursor, as, regcache);
   if (ret < 0)
@@ -487,7 +480,7 @@ libunwind_get_reg_special (struct gdbarch *gdbarch, readable_regcache *regcache,
 
   return 0;
 }
-  
+
 static int
 libunwind_load (void)
 {
@@ -504,11 +497,11 @@ libunwind_load (void)
     }
   if (handle == NULL)
     {
-      gdb_printf (gdb_stderr, _("[GDB failed to load %s: %s]\n"),
-		  LIBUNWIND_SO, so_error);
+      gdb_printf (gdb_stderr, _ ("[GDB failed to load %s: %s]\n"),
+                  LIBUNWIND_SO, so_error);
 #ifdef LIBUNWIND_SO_7
-      gdb_printf (gdb_stderr, _("[GDB failed to load %s: %s]\n"),
-		  LIBUNWIND_SO_7, dlerror ());
+      gdb_printf (gdb_stderr, _ ("[GDB failed to load %s: %s]\n"),
+                  LIBUNWIND_SO_7, dlerror ());
 #endif /* LIBUNWIND_SO_7 */
     }
   xfree (so_error);
@@ -551,13 +544,13 @@ libunwind_load (void)
 
   unw_destroy_addr_space_p
     = (unw_destroy_addr_space_p_ftype *) dlsym (handle,
-						destroy_addr_space_name);
+                                                destroy_addr_space_name);
   if (unw_destroy_addr_space_p == NULL)
     return 0;
 
   unw_search_unwind_table_p
     = (unw_search_unwind_table_p_ftype *) dlsym (handle,
-						 search_unwind_table_name);
+                                                 search_unwind_table_name);
   if (unw_search_unwind_table_p == NULL)
     return 0;
 
@@ -565,7 +558,7 @@ libunwind_load (void)
     = (unw_find_dyn_list_p_ftype *) dlsym (handle, find_dyn_list_name);
   if (unw_find_dyn_list_p == NULL)
     return 0;
-   
+
   return 1;
 }
 

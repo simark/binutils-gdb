@@ -14,7 +14,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (COMPLETER_H)
+#if !defined(COMPLETER_H)
 #define COMPLETER_H 1
 
 #include "gdbsupport/gdb-hashtab.h"
@@ -28,7 +28,7 @@ struct match_list_displayer;
 typedef void mld_crlf_ftype (const struct match_list_displayer *);
 typedef void mld_putch_ftype (const struct match_list_displayer *, int);
 typedef void mld_puts_ftype (const struct match_list_displayer *,
-			     const char *);
+                             const char *);
 typedef void mld_flush_ftype (const struct match_list_displayer *);
 typedef void mld_erase_entire_line_ftype (const struct match_list_displayer *);
 typedef void mld_beep_ftype (const struct match_list_displayer *);
@@ -82,19 +82,16 @@ class completion_match
 public:
   /* Get the completion match result.  See m_match/m_storage's
      descriptions.  */
-  const char *match ()
-  { return m_match; }
+  const char *match () { return m_match; }
 
   /* Set the completion match result.  See m_match/m_storage's
      descriptions.  */
-  void set_match (const char *match)
-  { m_match = match; }
+  void set_match (const char *match) { m_match = match; }
 
   /* Get temporary storage for generating a match result, dynamically.
      The built string is only good until the next clear() call.  I.e.,
      good until the next symbol comparison.  */
-  std::string &storage ()
-  { return m_storage; }
+  std::string &storage () { return m_storage; }
 
   /* Prepare for another completion matching sequence.  */
   void clear ()
@@ -136,16 +133,16 @@ class completion_match_for_lcd
 {
 public:
   /* Get the resulting LCD, after a successful match.  */
-  const char *match ()
-  { return m_match; }
+  const char *match () { return m_match; }
 
   /* Set the match for LCD.  See m_match's description.  */
-  void set_match (const char *match)
-  { m_match = match; }
+  void set_match (const char *match) { m_match = match; }
 
   /* Mark the range between [BEGIN, END) as ignored.  */
   void mark_ignored_range (const char *begin, const char *end)
-  { m_ignored_ranges.emplace_back (begin, end); }
+  {
+    m_ignored_ranges.emplace_back (begin, end);
+  }
 
   /* Get the resulting LCD, after a successful match.  If there are
      ignored ranges, then this builds a new string with the ignored
@@ -158,17 +155,17 @@ public:
       return m_match;
     else
       {
-	m_finished_storage.clear ();
+        m_finished_storage.clear ();
 
-	const char *prev = m_match;
-	for (const auto &range : m_ignored_ranges)
-	  {
-	    m_finished_storage.append (prev, range.first);
-	    prev = range.second;
-	  }
-	m_finished_storage.append (prev);
+        const char *prev = m_match;
+        for (const auto &range : m_ignored_ranges)
+          {
+            m_finished_storage.append (prev, range.first);
+            prev = range.second;
+          }
+        m_finished_storage.append (prev);
 
-	return m_finished_storage.c_str ();
+        return m_finished_storage.c_str ();
       }
   }
 
@@ -235,7 +232,7 @@ struct completion_result
 
   /* Create a result.  */
   completion_result (char **match_list, size_t number_matches,
-		     bool completion_suppress_append);
+                     bool completion_suppress_append);
 
   /* Destroy a result.  */
   ~completion_result ();
@@ -320,8 +317,8 @@ public:
      it is not there already.  If too many completions were already
      found, this throws an error.  */
   void add_completion (gdb::unique_xmalloc_ptr<char> name,
-		       completion_match_for_lcd *match_for_lcd = NULL,
-		       const char *text = NULL, const char *word = NULL);
+                       completion_match_for_lcd *match_for_lcd = NULL,
+                       const char *text = NULL, const char *word = NULL);
 
   /* Add all completions matches in LIST.  Elements are moved out of
      LIST.  */
@@ -334,8 +331,7 @@ public:
   /* Set the quote char to be appended after a unique completion is
      added to the input line.  Set to '\0' to clear.  See
      m_quote_char's description.  */
-  void set_quote_char (int quote_char)
-  { m_quote_char = quote_char; }
+  void set_quote_char (int quote_char) { m_quote_char = quote_char; }
 
   /* The quote char to be appended after a unique completion is added
      to the input line.  Returns '\0' if no quote char has been set.
@@ -347,32 +343,32 @@ public:
      handle_brkchars phase.  Such completers must also compute their
      completions then.  */
   void set_use_custom_word_point (bool enable)
-  { m_use_custom_word_point = enable; }
+  {
+    m_use_custom_word_point = enable;
+  }
 
   /* Whether the current completer computes a custom word point.  */
-  bool use_custom_word_point () const
-  { return m_use_custom_word_point; }
+  bool use_custom_word_point () const { return m_use_custom_word_point; }
 
   /* The custom word point.  */
-  int custom_word_point () const
-  { return m_custom_word_point; }
+  int custom_word_point () const { return m_custom_word_point; }
 
   /* Set the custom word point to POINT.  */
-  void set_custom_word_point (int point)
-  { m_custom_word_point = point; }
+  void set_custom_word_point (int point) { m_custom_word_point = point; }
 
   /* Advance the custom word point by LEN.  */
   void advance_custom_word_point_by (int len);
 
   /* Whether to tell readline to skip appending a whitespace after the
      completion.  See m_suppress_append_ws.  */
-  bool suppress_append_ws () const
-  { return m_suppress_append_ws; }
+  bool suppress_append_ws () const { return m_suppress_append_ws; }
 
   /* Set whether to tell readline to skip appending a whitespace after
      the completion.  See m_suppress_append_ws.  */
   void set_suppress_append_ws (bool suppress)
-  { m_suppress_append_ws = suppress; }
+  {
+    m_suppress_append_ws = suppress;
+  }
 
   /* Return true if we only have one completion, and it matches
      exactly the completion word.  I.e., completing results in what we
@@ -394,7 +390,9 @@ public:
 
   /* True if we have any completion match recorded.  */
   bool have_completions () const
-  { return htab_elements (m_entries_hash.get ()) > 0; }
+  {
+    return htab_elements (m_entries_hash.get ()) > 0;
+  }
 
   /* Discard the current completion match list and the current
      LCD.  */
@@ -403,11 +401,10 @@ public:
   /* Build a completion_result containing the list of completion
      matches to hand over to readline.  The parameters are as in
      rl_attempted_completion_function.  */
-  completion_result build_completion_result (const char *text,
-					     int start, int end);
+  completion_result build_completion_result (const char *text, int start,
+                                             int end);
 
 private:
-
   /* The type that we place into the m_entries_hash hash table.  */
   class completion_hash_entry;
 
@@ -415,8 +412,8 @@ private:
      it is not there already.  If false is returned, too many
      completions were found.  */
   bool maybe_add_completion (gdb::unique_xmalloc_ptr<char> name,
-			     completion_match_for_lcd *match_for_lcd,
-			     const char *text, const char *word);
+                             completion_match_for_lcd *match_for_lcd,
+                             const char *text, const char *word);
 
   /* Ensure that the lowest common denominator held in the member variable
      M_LOWEST_COMMON_DENOMINATOR is valid.  This method must be called if
@@ -502,32 +499,30 @@ private:
    TEXT/WORD.  For a description of TEXT/WORD see completer_ftype.  */
 
 extern gdb::unique_xmalloc_ptr<char>
-  make_completion_match_str (const char *match_name,
-			     const char *text, const char *word);
+make_completion_match_str (const char *match_name, const char *text,
+                           const char *word);
 
 /* Like above, but takes ownership of MATCH_NAME (i.e., can
    reuse/return it).  */
 
 extern gdb::unique_xmalloc_ptr<char>
-  make_completion_match_str (gdb::unique_xmalloc_ptr<char> &&match_name,
-			     const char *text, const char *word);
+make_completion_match_str (gdb::unique_xmalloc_ptr<char> &&match_name,
+                           const char *text, const char *word);
 
 extern void gdb_display_match_list (char **matches, int len, int max,
-				    const struct match_list_displayer *);
+                                    const struct match_list_displayer *);
 
 extern const char *get_max_completions_reached_message (void);
 
-extern void complete_line (completion_tracker &tracker,
-			   const char *text,
-			   const char *line_buffer,
-			   int point);
+extern void complete_line (completion_tracker &tracker, const char *text,
+                           const char *line_buffer, int point);
 
 /* Complete LINE and return completion results.  For completion purposes,
    cursor position is assumed to be at the end of LINE.  WORD is set to
    the end of word to complete.  QUOTE_CHAR is set to the opening quote
    character if we found an unclosed quoted substring, '\0' otherwise.  */
-extern completion_result
-  complete (const char *line, char const **word, int *quote_char);
+extern completion_result complete (const char *line, char const **word,
+                                   int *quote_char);
 
 /* Find the bounds of the word in TEXT for completion purposes, and
    return a pointer to the end of the word.  Calls the completion
@@ -535,62 +530,63 @@ extern completion_result
    the right work break characters for the command in TEXT.
    QUOTE_CHAR, if non-null, is set to the opening quote character if
    we found an unclosed quoted substring, '\0' otherwise.  */
-extern const char *completion_find_completion_word (completion_tracker &tracker,
-						    const char *text,
-						    int *quote_char);
-
+extern const char *
+completion_find_completion_word (completion_tracker &tracker, const char *text,
+                                 int *quote_char);
 
 /* Assuming TEXT is an expression in the current language, find the
    completion word point for TEXT, emulating the algorithm readline
    uses to find the word point, using the current language's word
    break characters.  */
-const char *advance_to_expression_complete_word_point
-  (completion_tracker &tracker, const char *text);
+const char *
+advance_to_expression_complete_word_point (completion_tracker &tracker,
+                                           const char *text);
 
 /* Assuming TEXT is an filename, find the completion word point for
    TEXT, emulating the algorithm readline uses to find the word
    point.  */
-extern const char *advance_to_filename_complete_word_point
-  (completion_tracker &tracker, const char *text);
+extern const char *
+advance_to_filename_complete_word_point (completion_tracker &tracker,
+                                         const char *text);
 
 extern char **gdb_rl_attempted_completion_function (const char *text,
-						    int start, int end);
+                                                    int start, int end);
 
 extern void noop_completer (struct cmd_list_element *,
-			    completion_tracker &tracker,
-			    const char *, const char *);
+                            completion_tracker &tracker, const char *,
+                            const char *);
 
 extern void filename_completer (struct cmd_list_element *,
-				completion_tracker &tracker,
-				const char *, const char *);
+                                completion_tracker &tracker, const char *,
+                                const char *);
 
 extern void expression_completer (struct cmd_list_element *,
-				  completion_tracker &tracker,
-				  const char *, const char *);
+                                  completion_tracker &tracker, const char *,
+                                  const char *);
 
 extern void location_completer (struct cmd_list_element *,
-				completion_tracker &tracker,
-				const char *, const char *);
+                                completion_tracker &tracker, const char *,
+                                const char *);
 
 extern void symbol_completer (struct cmd_list_element *,
-			      completion_tracker &tracker,
-			      const char *, const char *);
+                              completion_tracker &tracker, const char *,
+                              const char *);
 
 extern void command_completer (struct cmd_list_element *,
-			       completion_tracker &tracker,
-			       const char *, const char *);
+                               completion_tracker &tracker, const char *,
+                               const char *);
 
 extern void signal_completer (struct cmd_list_element *,
-			      completion_tracker &tracker,
-			      const char *, const char *);
+                              completion_tracker &tracker, const char *,
+                              const char *);
 
 extern void reg_or_group_completer (struct cmd_list_element *,
-				    completion_tracker &tracker,
-				    const char *, const char *);
+                                    completion_tracker &tracker, const char *,
+                                    const char *);
 
 extern void reggroup_completer (struct cmd_list_element *,
-				completion_tracker &tracker,
-				const char *, const char *);
+                                completion_tracker &tracker, const char *,
+                                const char *);
 
 extern const char *get_gdb_completer_quote_characters (void);
 
@@ -609,7 +605,7 @@ extern void set_rl_completer_word_break_characters (const char *break_chars);
    calculation is done (e.g., for Python functions).  */
 
 extern completer_handle_brkchars_ftype *
-  completer_handle_brkchars_func_for_completer (completer_ftype *fn);
+completer_handle_brkchars_func_for_completer (completer_ftype *fn);
 
 /* Exported to linespec.c */
 
@@ -620,8 +616,8 @@ extern completion_list complete_source_filenames (const char *text);
 /* Complete on expressions.  Often this means completing on symbol
    names, but some language parsers also have support for completing
    field names.  */
-extern void complete_expression (completion_tracker &tracker,
-				 const char *text, const char *word);
+extern void complete_expression (completion_tracker &tracker, const char *text,
+                                 const char *word);
 
 /* Called by custom word point completers that want to recurse into
    the completion machinery to complete a command.  Used to complete
@@ -633,10 +629,10 @@ extern void complete_expression (completion_tracker &tracker,
 
    does the right thing and show the print options.  */
 extern void complete_nested_command_line (completion_tracker &tracker,
-					  const char *text);
+                                          const char *text);
 
 extern const char *skip_quoted_chars (const char *, const char *,
-				      const char *);
+                                      const char *);
 
 extern const char *skip_quoted (const char *);
 

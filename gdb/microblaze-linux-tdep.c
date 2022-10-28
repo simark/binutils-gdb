@@ -38,8 +38,8 @@
 #include "linux-tdep.h"
 
 static int
-microblaze_linux_memory_remove_breakpoint (struct gdbarch *gdbarch, 
-					   struct bp_target_info *bp_tgt)
+microblaze_linux_memory_remove_breakpoint (struct gdbarch *gdbarch,
+                                           struct bp_target_info *bp_tgt)
 {
   CORE_ADDR addr = bp_tgt->reqstd_address;
   const gdb_byte *bp;
@@ -63,9 +63,8 @@ microblaze_linux_memory_remove_breakpoint (struct gdbarch *gdbarch,
 
 static void
 microblaze_linux_sigtramp_cache (frame_info_ptr next_frame,
-				 struct trad_frame_cache *this_cache,
-				 CORE_ADDR func, LONGEST offset,
-				 int bias)
+                                 struct trad_frame_cache *this_cache,
+                                 CORE_ADDR func, LONGEST offset, int bias)
 {
   CORE_ADDR base;
   CORE_ADDR gpregs;
@@ -82,59 +81,54 @@ microblaze_linux_sigtramp_cache (frame_info_ptr next_frame,
 
   /* Registers saved on stack.  */
   for (regnum = 0; regnum < MICROBLAZE_BTR_REGNUM; regnum++)
-    trad_frame_set_reg_addr (this_cache, regnum, 
-			     gpregs + regnum * MICROBLAZE_REGISTER_SIZE);
+    trad_frame_set_reg_addr (this_cache, regnum,
+                             gpregs + regnum * MICROBLAZE_REGISTER_SIZE);
   trad_frame_set_id (this_cache, frame_id_build (base, func));
 }
 
-
 static void
 microblaze_linux_sighandler_cache_init (const struct tramp_frame *self,
-					frame_info_ptr next_frame,
-					struct trad_frame_cache *this_cache,
-					CORE_ADDR func)
+                                        frame_info_ptr next_frame,
+                                        struct trad_frame_cache *this_cache,
+                                        CORE_ADDR func)
 {
   microblaze_linux_sigtramp_cache (next_frame, this_cache, func,
-				   0 /* Offset to ucontext_t.  */
-				   + 24 /* Offset to .reg.  */,
-				   0);
+                                   0 /* Offset to ucontext_t.  */
+                                     + 24 /* Offset to .reg.  */,
+                                   0);
 }
 
-static struct tramp_frame microblaze_linux_sighandler_tramp_frame = 
-{
-  SIGTRAMP_FRAME,
-  4,
-  {
-    { 0x31800077, ULONGEST_MAX }, /* addik R12,R0,119.  */
-    { 0xb9cc0008, ULONGEST_MAX }, /* brki R14,8.  */
-    { TRAMP_SENTINEL_INSN },
-  },
-  microblaze_linux_sighandler_cache_init
-};
-
+static struct tramp_frame microblaze_linux_sighandler_tramp_frame
+  = { SIGTRAMP_FRAME,
+      4,
+      {
+        { 0x31800077, ULONGEST_MAX }, /* addik R12,R0,119.  */
+        { 0xb9cc0008, ULONGEST_MAX }, /* brki R14,8.  */
+        { TRAMP_SENTINEL_INSN },
+      },
+      microblaze_linux_sighandler_cache_init };
 
 static void
-microblaze_linux_init_abi (struct gdbarch_info info,
-			   struct gdbarch *gdbarch)
+microblaze_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   linux_init_abi (info, gdbarch, 0);
 
-  set_gdbarch_memory_remove_breakpoint (gdbarch,
-					microblaze_linux_memory_remove_breakpoint);
+  set_gdbarch_memory_remove_breakpoint (
+    gdbarch, microblaze_linux_memory_remove_breakpoint);
 
   /* Shared library handling.  */
   set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					 linux_ilp32_fetch_link_map_offsets);
+                                         linux_ilp32_fetch_link_map_offsets);
 
   /* Trampolines.  */
   tramp_frame_prepend_unwinder (gdbarch,
-				&microblaze_linux_sighandler_tramp_frame);
+                                &microblaze_linux_sighandler_tramp_frame);
 }
 
 void _initialize_microblaze_linux_tdep ();
 void
 _initialize_microblaze_linux_tdep ()
 {
-  gdbarch_register_osabi (bfd_arch_microblaze, 0, GDB_OSABI_LINUX, 
-			  microblaze_linux_init_abi);
+  gdbarch_register_osabi (bfd_arch_microblaze, 0, GDB_OSABI_LINUX,
+                          microblaze_linux_init_abi);
 }

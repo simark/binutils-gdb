@@ -42,7 +42,7 @@ hppabsd_find_global_pointer (struct gdbarch *gdbarch, struct value *function)
     {
       gdb_byte buf[4];
       if (target_read_memory ((faddr & ~3) + 4, buf, sizeof buf) == 0)
-	return extract_unsigned_integer (buf, sizeof buf, byte_order);
+        return extract_unsigned_integer (buf, sizeof buf, byte_order);
     }
 
   /* If the address is in the .plt section, then the real function
@@ -57,57 +57,56 @@ hppabsd_find_global_pointer (struct gdbarch *gdbarch, struct value *function)
       struct obj_section *sec;
 
       ALL_OBJFILE_OSECTIONS (faddr_sec->objfile, sec)
-	{
-	  if (strcmp (sec->the_bfd_section->name, ".dynamic") == 0)
-	    break;
-	}
+      {
+        if (strcmp (sec->the_bfd_section->name, ".dynamic") == 0)
+          break;
+      }
 
       if (sec < faddr_sec->objfile->sections_end)
-	{
-	  CORE_ADDR addr = sec->addr ();
-	  CORE_ADDR endaddr = sec->endaddr ();
+        {
+          CORE_ADDR addr = sec->addr ();
+          CORE_ADDR endaddr = sec->endaddr ();
 
-	  while (addr < endaddr)
-	    {
-	      gdb_byte buf[4];
-	      LONGEST tag;
+          while (addr < endaddr)
+            {
+              gdb_byte buf[4];
+              LONGEST tag;
 
-	      if (target_read_memory (addr, buf, sizeof buf) != 0)
-		break;
+              if (target_read_memory (addr, buf, sizeof buf) != 0)
+                break;
 
-	      tag = extract_signed_integer (buf, byte_order);
-	      if (tag == DT_PLTGOT)
-		{
-		  CORE_ADDR pltgot;
+              tag = extract_signed_integer (buf, byte_order);
+              if (tag == DT_PLTGOT)
+                {
+                  CORE_ADDR pltgot;
 
-		  if (target_read_memory (addr + 4, buf, sizeof buf) != 0)
-		    break;
+                  if (target_read_memory (addr + 4, buf, sizeof buf) != 0)
+                    break;
 
-		  /* The NetBSD/OpenBSD ld.so doesn't relocate DT_PLTGOT, so
+                  /* The NetBSD/OpenBSD ld.so doesn't relocate DT_PLTGOT, so
 		     we have to do it ourselves.  */
-		  pltgot = extract_unsigned_integer (buf, sizeof buf,
-						     byte_order);
-		  pltgot += sec->objfile->text_section_offset ();
+                  pltgot
+                    = extract_unsigned_integer (buf, sizeof buf, byte_order);
+                  pltgot += sec->objfile->text_section_offset ();
 
-		  return pltgot;
-		}
+                  return pltgot;
+                }
 
-	      if (tag == DT_NULL)
-		break;
+              if (tag == DT_NULL)
+                break;
 
-	      addr += 8;
-	    }
-	}
+              addr += 8;
+            }
+        }
     }
 
   return 0;
 }
-
 
 static void
 hppabsd_dwarf2_frame_init_reg (struct gdbarch *gdbarch, int regnum,
-			       struct dwarf2_frame_state_reg *reg,
-			       frame_info_ptr this_frame)
+                               struct dwarf2_frame_state_reg *reg,
+                               frame_info_ptr this_frame)
 {
   if (regnum == HPPA_PCOQ_HEAD_REGNUM)
     reg->how = DWARF2_FRAME_REG_RA;
@@ -131,8 +130,8 @@ hppabsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_skip_trampoline_code (gdbarch, hppa_skip_trampoline_code);
 
   /* OpenBSD and NetBSD use SVR4-style shared libraries.  */
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, svr4_ilp32_fetch_link_map_offsets);
+  set_solib_svr4_fetch_link_map_offsets (gdbarch,
+                                         svr4_ilp32_fetch_link_map_offsets);
 
   /* Hook in the DWARF CFI frame unwinder.  */
   dwarf2_frame_set_init_reg (gdbarch, hppabsd_dwarf2_frame_init_reg);

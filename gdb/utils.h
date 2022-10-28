@@ -41,7 +41,7 @@ extern bool sevenbit_strings;
 
 enum class strncmp_iw_mode
 {
-/* Do a strcmp() type operation on STRING1 and STRING2, ignoring any
+  /* Do a strcmp() type operation on STRING1 and STRING2, ignoring any
    differences in whitespace.  Returns 0 if they match, non-zero if
    they don't (slightly different than strcmp()'s range of return
    values).  */
@@ -66,11 +66,12 @@ enum class strncmp_iw_mode
    to handle abi tags).  If IGNORE_TEMPLATE_PARAMS is true, all template
    parameter lists will be ignored when language is C++.  */
 
-extern int strncmp_iw_with_mode
-  (const char *string1, const char *string2, size_t string2_len,
-   strncmp_iw_mode mode, enum language language,
-   completion_match_for_lcd *match_for_lcd = NULL,
-   bool ignore_template_params = false);
+extern int strncmp_iw_with_mode (const char *string1, const char *string2,
+                                 size_t string2_len, strncmp_iw_mode mode,
+                                 enum language language,
+                                 completion_match_for_lcd *match_for_lcd
+                                 = NULL,
+                                 bool ignore_template_params = false);
 
 /* Do a strncmp() type operation on STRING1 and STRING2, ignoring any
    differences in whitespace.  STRING2_LEN is STRING2's length.
@@ -80,7 +81,7 @@ extern int strncmp_iw_with_mode
    strncmp_iw_with_mode, and should therefore be avoided if a more
    suitable language is available.  */
 extern int strncmp_iw (const char *string1, const char *string2,
-		       size_t string2_len);
+                       size_t string2_len);
 
 /* Do a strcmp() type operation on STRING1 and STRING2, ignoring any
    differences in whitespace.  Returns 0 if they match, non-zero if
@@ -116,14 +117,13 @@ compare_cstrings (const char *str1, const char *str2)
 void reset_prompt_for_continue_wait_time (void);
 /* Return the time spent in prompt_for_continue.  */
 std::chrono::steady_clock::duration get_prompt_for_continue_wait_time ();
-
+
 /* Parsing utilities.  */
 
 extern int parse_pid_to_attach (const char *args);
 
 extern int parse_escape (struct gdbarch *, const char **);
 
-
 /* Cleanup utilities.  */
 
 extern void init_page_info (void);
@@ -134,14 +134,12 @@ extern void init_page_info (void);
 struct set_batch_flag_and_restore_page_info
 {
 public:
-
   set_batch_flag_and_restore_page_info ();
   ~set_batch_flag_and_restore_page_info ();
 
   DISABLE_COPY_AND_ASSIGN (set_batch_flag_and_restore_page_info);
 
 private:
-
   /* Note that this doesn't use scoped_restore, because it's important
      to control the ordering of operations in the destruction, and it
      was simpler to avoid introducing a new ad hoc class.  */
@@ -150,21 +148,20 @@ private:
   int m_save_batch_flag;
 };
 
-
 /* Path utilities.  */
 
 extern int gdb_filename_fnmatch (const char *pattern, const char *string,
-				 int flags);
+                                 int flags);
 
 extern void substitute_path_component (char **stringp, const char *from,
-				       const char *to);
+                                       const char *to);
 
 std::string ldirname (const char *filename);
 
 extern int count_path_elements (const char *path);
 
 extern const char *strip_leading_path_elements (const char *path, int n);
-
+
 /* GDB output, ui_file utilities.  */
 
 struct ui_file;
@@ -259,24 +256,21 @@ extern int filtered_printing_initialized (void);
 /* Like gdb_printf, but styles the output according to STYLE,
    when appropriate.  */
 
-extern void fprintf_styled (struct ui_file *stream,
-			    const ui_file_style &style,
-			    const char *fmt,
-			    ...)
-  ATTRIBUTE_PRINTF (3, 4);
+extern void fprintf_styled (struct ui_file *stream, const ui_file_style &style,
+                            const char *fmt, ...) ATTRIBUTE_PRINTF (3, 4);
 
 /* Like gdb_puts, but styles the output according to STYLE, when
    appropriate.  */
 
-extern void fputs_styled (const char *linebuffer,
-			  const ui_file_style &style,
-			  struct ui_file *stream);
+extern void fputs_styled (const char *linebuffer, const ui_file_style &style,
+                          struct ui_file *stream);
 
 /* Like fputs_styled, but uses highlight_style to highlight the
    parts of STR that match HIGHLIGHT.  */
 
-extern void fputs_highlighted (const char *str, const compiled_regex &highlight,
-			       struct ui_file *stream);
+extern void fputs_highlighted (const char *str,
+                               const compiled_regex &highlight,
+                               struct ui_file *stream);
 
 /* Return the address only having significant bits.  */
 extern CORE_ADDR address_significant (gdbarch *gdbarch, CORE_ADDR addr);
@@ -289,17 +283,17 @@ extern const char *paddress (struct gdbarch *gdbarch, CORE_ADDR addr);
    which is suitable for printing.  */
 
 extern const char *print_core_address (struct gdbarch *gdbarch,
-				       CORE_ADDR address);
+                                       CORE_ADDR address);
 
 extern CORE_ADDR string_to_core_addr (const char *my_string);
 
-extern void fprintf_symbol (struct ui_file *, const char *,
-			    enum language, int);
+extern void fprintf_symbol (struct ui_file *, const char *, enum language,
+                            int);
 
 extern void perror_warning_with_name (const char *string);
 
 extern void print_sys_errmsg (const char *, int);
-
+
 /* Warnings and error messages.  */
 
 extern void (*deprecated_error_begin_hook) (void);
@@ -310,14 +304,12 @@ extern const char *warning_pre_print;
 
 extern void error_stream (const string_file &) ATTRIBUTE_NORETURN;
 
-extern void demangler_vwarning (const char *file, int line,
-			       const char *, va_list ap)
-     ATTRIBUTE_PRINTF (3, 0);
+extern void demangler_vwarning (const char *file, int line, const char *,
+                                va_list ap) ATTRIBUTE_PRINTF (3, 0);
 
-extern void demangler_warning (const char *file, int line,
-			      const char *, ...) ATTRIBUTE_PRINTF (3, 4);
+extern void demangler_warning (const char *file, int line, const char *, ...)
+  ATTRIBUTE_PRINTF (3, 4);
 
-
 /* Misc. utilities.  */
 
 #ifdef HAVE_WAITPID
@@ -336,10 +328,10 @@ extern ULONGEST uinteger_pow (ULONGEST v1, LONGEST v2);
 /* Resource limits used by getrlimit and setrlimit.  */
 
 enum resource_limit_kind
-  {
-    LIMIT_CUR,
-    LIMIT_MAX
-  };
+{
+  LIMIT_CUR,
+  LIMIT_MAX
+};
 
 /* Check whether GDB will be able to dump core using the dump_core
    function.  Returns zero if GDB cannot or should not dump core.
@@ -362,8 +354,8 @@ extern void dump_core (void);
    Source and destination buffers must not overlap.  */
 
 extern void copy_bitwise (gdb_byte *dest, ULONGEST dest_offset,
-			  const gdb_byte *source, ULONGEST source_offset,
-			  ULONGEST nbits, int bits_big_endian);
+                          const gdb_byte *source, ULONGEST source_offset,
+                          ULONGEST nbits, int bits_big_endian);
 
 /* A fast hashing function.  This can be used to hash data in a fast way
    when the length is known.  If no fast hashing library is available, falls

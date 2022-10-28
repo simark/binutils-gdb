@@ -56,12 +56,10 @@ struct exception_names
 
 /* Names of the probe points and functions on which to break.  This is
    indexed by exception_event_kind.  */
-static const struct exception_names exception_functions[] =
-{
-  { "-probe-stap libstdcxx:throw", "__cxa_throw" },
-  { "-probe-stap libstdcxx:rethrow", "__cxa_rethrow" },
-  { "-probe-stap libstdcxx:catch", "__cxa_begin_catch" }
-};
+static const struct exception_names exception_functions[]
+  = { { "-probe-stap libstdcxx:throw", "__cxa_throw" },
+      { "-probe-stap libstdcxx:rethrow", "__cxa_rethrow" },
+      { "-probe-stap libstdcxx:catch", "__cxa_begin_catch" } };
 
 /* The type of an exception catchpoint.  Unlike most catchpoints, this
    one is implemented with code breakpoints, so it inherits struct
@@ -69,17 +67,17 @@ static const struct exception_names exception_functions[] =
 
 struct exception_catchpoint : public code_breakpoint
 {
-  exception_catchpoint (struct gdbarch *gdbarch,
-			bool temp, const char *cond_string_,
-			enum exception_event_kind kind_,
-			std::string &&except_rx)
+  exception_catchpoint (struct gdbarch *gdbarch, bool temp,
+                        const char *cond_string_,
+                        enum exception_event_kind kind_,
+                        std::string &&except_rx)
     : code_breakpoint (gdbarch, bp_catchpoint, temp, cond_string_),
       kind (kind_),
       exception_rx (std::move (except_rx)),
       pattern (exception_rx.empty ()
-	       ? nullptr
-	       : new compiled_regex (exception_rx.c_str (), REG_NOSUB,
-				     _("invalid type-matching regexp")))
+                 ? nullptr
+                 : new compiled_regex (exception_rx.c_str (), REG_NOSUB,
+                                       _ ("invalid type-matching regexp")))
   {
     pspace = current_program_space;
     re_set ();
@@ -96,10 +94,7 @@ struct exception_catchpoint : public code_breakpoint
 
   /* FIXME this is temporary - until ordinary breakpoints have been
      converted.  */
-  int resources_needed (const struct bp_location *) override
-  {
-    return 1;
-  }
+  int resources_needed (const struct bp_location *) override { return 1; }
 
   /* The kind of exception catchpoint.  */
 
@@ -124,8 +119,6 @@ is_exception_catchpoint (breakpoint *bp)
   return dynamic_cast<exception_catchpoint *> (bp) != nullptr;
 }
 
-
-
 /* A helper function that fetches exception probe arguments.  This
    fills in *ARG0 (if non-NULL) and *ARG1 (which must be non-NULL).
    It will throw an exception on any kind of failure.  */
@@ -133,34 +126,33 @@ is_exception_catchpoint (breakpoint *bp)
 static void
 fetch_probe_arguments (struct value **arg0, struct value **arg1)
 {
-  frame_info_ptr frame = get_selected_frame (_("No frame selected"));
+  frame_info_ptr frame = get_selected_frame (_ ("No frame selected"));
   CORE_ADDR pc = get_frame_pc (frame);
   struct bound_probe pc_probe;
   unsigned n_args;
 
   pc_probe = find_probe_by_pc (pc);
   if (pc_probe.prob == NULL)
-    error (_("did not find exception probe (does libstdcxx have SDT probes?)"));
+    error (
+      _ ("did not find exception probe (does libstdcxx have SDT probes?)"));
 
   if (pc_probe.prob->get_provider () != "libstdcxx"
       || (pc_probe.prob->get_name () != "catch"
-	  && pc_probe.prob->get_name () != "throw"
-	  && pc_probe.prob->get_name () != "rethrow"))
-    error (_("not stopped at a C++ exception catchpoint"));
+          && pc_probe.prob->get_name () != "throw"
+          && pc_probe.prob->get_name () != "rethrow"))
+    error (_ ("not stopped at a C++ exception catchpoint"));
 
   n_args = pc_probe.prob->get_argument_count (get_frame_arch (frame));
   if (n_args < 2)
-    error (_("C++ exception catchpoint has too few arguments"));
+    error (_ ("C++ exception catchpoint has too few arguments"));
 
   if (arg0 != NULL)
     *arg0 = pc_probe.prob->evaluate_argument (0, frame);
   *arg1 = pc_probe.prob->evaluate_argument (1, frame);
 
   if ((arg0 != NULL && *arg0 == NULL) || *arg1 == NULL)
-    error (_("error computing probe argument at c++ exception catchpoint"));
+    error (_ ("error computing probe argument at c++ exception catchpoint"));
 }
-
-
 
 /* Implement the 'check_status' method.  */
 
@@ -188,9 +180,7 @@ exception_catchpoint::check_status (struct bpstat *bs)
       type_name = cplus_typename_from_type_info (typeinfo_arg);
 
       canon = cp_canonicalize_string (type_name.c_str ());
-      name = (canon != nullptr
-	      ? canon.get ()
-	      : type_name.c_str ());
+      name = (canon != nullptr ? canon.get () : type_name.c_str ());
     }
   catch (const gdb_exception_error &e)
     {
@@ -200,7 +190,7 @@ exception_catchpoint::check_status (struct bpstat *bs)
   if (name != nullptr)
     {
       if (self->pattern->exec (name, 0, NULL, 0) != 0)
-	bs->stop = 0;
+        bs->stop = 0;
     }
 }
 
@@ -216,7 +206,7 @@ exception_catchpoint::re_set ()
   try
     {
       location_spec_up locspec
-	= new_probe_location_spec (exception_functions[kind].probe);
+        = new_probe_location_spec (exception_functions[kind].probe);
       sals = parse_probes (locspec.get (), filter_pspace, NULL);
     }
   catch (const gdb_exception_error &e)
@@ -224,19 +214,18 @@ exception_catchpoint::re_set ()
       /* Using the probe interface failed.  Let's fallback to the normal
 	 catchpoint mode.  */
       try
-	{
-	  location_spec_up locspec
-	    = (new_explicit_location_spec_function
-	       (exception_functions[kind].function));
-	  sals = this->decode_location_spec (locspec.get (), filter_pspace);
-	}
+        {
+          location_spec_up locspec = (new_explicit_location_spec_function (
+            exception_functions[kind].function));
+          sals = this->decode_location_spec (locspec.get (), filter_pspace);
+        }
       catch (const gdb_exception_error &ex)
-	{
-	  /* NOT_FOUND_ERROR just means the breakpoint will be
+        {
+          /* NOT_FOUND_ERROR just means the breakpoint will be
 	     pending, so let it through.  */
-	  if (ex.error != NOT_FOUND_ERROR)
-	    throw;
-	}
+          if (ex.error != NOT_FOUND_ERROR)
+            throw;
+        }
     }
 
   update_breakpoint_locations (this, filter_pspace, sals, {});
@@ -252,16 +241,16 @@ exception_catchpoint::print_it (const bpstat *bs) const
   maybe_print_thread_hit_breakpoint (uiout);
 
   bp_temp = disposition == disp_del;
-  uiout->text (bp_temp ? "Temporary catchpoint "
-		       : "Catchpoint ");
+  uiout->text (bp_temp ? "Temporary catchpoint " : "Catchpoint ");
   uiout->field_signed ("bkptno", number);
-  uiout->text ((kind == EX_EVENT_THROW ? " (exception thrown), "
-		: (kind == EX_EVENT_CATCH ? " (exception caught), "
-		   : " (exception rethrown), ")));
+  uiout->text ((kind == EX_EVENT_THROW
+                  ? " (exception thrown), "
+                  : (kind == EX_EVENT_CATCH ? " (exception caught), "
+                                            : " (exception rethrown), ")));
   if (uiout->is_mi_like_p ())
     {
       uiout->field_string ("reason",
-			   async_reason_lookup (EXEC_ASYNC_BREAKPOINT_HIT));
+                           async_reason_lookup (EXEC_ASYNC_BREAKPOINT_HIT));
       uiout->field_string ("disp", bpdisp_text (disposition));
     }
   return PRINT_SRC_AND_LOC;
@@ -284,19 +273,19 @@ exception_catchpoint::print_one (bp_location **last_loc) const
     case EX_EVENT_THROW:
       uiout->field_string ("what", "exception throw");
       if (uiout->is_mi_like_p ())
-	uiout->field_string ("catch-type", "throw");
+        uiout->field_string ("catch-type", "throw");
       break;
 
     case EX_EVENT_RETHROW:
       uiout->field_string ("what", "exception rethrow");
       if (uiout->is_mi_like_p ())
-	uiout->field_string ("catch-type", "rethrow");
+        uiout->field_string ("catch-type", "rethrow");
       break;
 
     case EX_EVENT_CATCH:
       uiout->field_string ("what", "exception catch");
       if (uiout->is_mi_like_p ())
-	uiout->field_string ("catch-type", "catch");
+        uiout->field_string ("catch-type", "catch");
       break;
     }
 
@@ -310,7 +299,7 @@ exception_catchpoint::print_one_detail (struct ui_out *uiout) const
 {
   if (!exception_rx.empty ())
     {
-      uiout->text (_("\tmatching: "));
+      uiout->text (_ ("\tmatching: "));
       uiout->field_string ("regexp", exception_rx);
       uiout->text ("\n");
     }
@@ -324,11 +313,12 @@ exception_catchpoint::print_mention () const
 
   bp_temp = disposition == disp_del;
   uiout->message ("%s %d %s",
-		  (bp_temp ? _("Temporary catchpoint ") : _("Catchpoint")),
-		  number,
-		  (kind == EX_EVENT_THROW
-		   ? _("(throw)") : (kind == EX_EVENT_CATCH
-				     ? _("(catch)") : _("(rethrow)"))));
+                  (bp_temp ? _ ("Temporary catchpoint ") : _ ("Catchpoint")),
+                  number,
+                  (kind == EX_EVENT_THROW
+                     ? _ ("(throw)")
+                     : (kind == EX_EVENT_CATCH ? _ ("(catch)")
+                                               : _ ("(rethrow)"))));
 }
 
 /* Implement the "print_recreate" method for throw and catch
@@ -367,14 +357,14 @@ exception_catchpoint::allocate_location ()
 
 static void
 handle_gnu_v3_exceptions (int tempflag, std::string &&except_rx,
-			  const char *cond_string,
-			  enum exception_event_kind ex_event, int from_tty)
+                          const char *cond_string,
+                          enum exception_event_kind ex_event, int from_tty)
 {
   struct gdbarch *gdbarch = get_current_arch ();
 
-  std::unique_ptr<exception_catchpoint> cp
-    (new exception_catchpoint (gdbarch, tempflag, cond_string,
-			       ex_event, std::move (except_rx)));
+  std::unique_ptr<exception_catchpoint> cp (
+    new exception_catchpoint (gdbarch, tempflag, cond_string, ex_event,
+                              std::move (except_rx)));
 
   install_breakpoint (0, std::move (cp), 1);
 }
@@ -405,7 +395,7 @@ extract_exception_regexp (const char **string)
 
       /* Check for the "if".  */
       if (check_for_argument (&if_token, "if", 2))
-	break;
+        break;
 
       /* No "if" token here.  Skip to the next word start.  */
       last_space = skip_to_space (last);
@@ -421,8 +411,8 @@ extract_exception_regexp (const char **string)
 /* See breakpoint.h.  */
 
 void
-catch_exception_event (enum exception_event_kind ex_event,
-		       const char *arg, bool tempflag, int from_tty)
+catch_exception_event (enum exception_event_kind ex_event, const char *arg,
+                       bool tempflag, int from_tty)
 {
   const char *cond_string = NULL;
 
@@ -435,22 +425,21 @@ catch_exception_event (enum exception_event_kind ex_event,
   cond_string = ep_parse_optional_if_clause (&arg);
 
   if ((*arg != '\0') && !isspace (*arg))
-    error (_("Junk at end of arguments."));
+    error (_ ("Junk at end of arguments."));
 
-  if (ex_event != EX_EVENT_THROW
-      && ex_event != EX_EVENT_CATCH
+  if (ex_event != EX_EVENT_THROW && ex_event != EX_EVENT_CATCH
       && ex_event != EX_EVENT_RETHROW)
-    error (_("Unsupported or unknown exception event; cannot catch it"));
+    error (_ ("Unsupported or unknown exception event; cannot catch it"));
 
   handle_gnu_v3_exceptions (tempflag, std::move (except_rx), cond_string,
-			    ex_event, from_tty);
+                            ex_event, from_tty);
 }
 
 /* Implementation of "catch catch" command.  */
 
 static void
 catch_catch_command (const char *arg, int from_tty,
-		     struct cmd_list_element *command)
+                     struct cmd_list_element *command)
 {
   bool tempflag = command->context () == CATCH_TEMPORARY;
 
@@ -461,7 +450,7 @@ catch_catch_command (const char *arg, int from_tty,
 
 static void
 catch_throw_command (const char *arg, int from_tty,
-		     struct cmd_list_element *command)
+                     struct cmd_list_element *command)
 {
   bool tempflag = command->context () == CATCH_TEMPORARY;
 
@@ -472,14 +461,12 @@ catch_throw_command (const char *arg, int from_tty,
 
 static void
 catch_rethrow_command (const char *arg, int from_tty,
-		       struct cmd_list_element *command)
+                       struct cmd_list_element *command)
 {
   bool tempflag = command->context () == CATCH_TEMPORARY;
 
   catch_exception_event (EX_EVENT_RETHROW, arg, tempflag, from_tty);
 }
-
-
 
 /* Implement the 'make_value' method for the $_exception
    internalvar.  */
@@ -501,37 +488,28 @@ compute_exception (struct gdbarch *argc, struct internalvar *var, void *ignore)
 
 /* Implementation of the '$_exception' variable.  */
 
-static const struct internalvar_funcs exception_funcs =
-{
+static const struct internalvar_funcs exception_funcs = {
   compute_exception,
   NULL,
 };
-
-
 
 void _initialize_break_catch_throw ();
 void
 _initialize_break_catch_throw ()
 {
   /* Add catch and tcatch sub-commands.  */
-  add_catch_command ("catch", _("\
+  add_catch_command ("catch", _ ("\
 Catch an exception, when caught."),
-		     catch_catch_command,
-		     NULL,
-		     CATCH_PERMANENT,
-		     CATCH_TEMPORARY);
-  add_catch_command ("throw", _("\
+                     catch_catch_command, NULL, CATCH_PERMANENT,
+                     CATCH_TEMPORARY);
+  add_catch_command ("throw", _ ("\
 Catch an exception, when thrown."),
-		     catch_throw_command,
-		     NULL,
-		     CATCH_PERMANENT,
-		     CATCH_TEMPORARY);
-  add_catch_command ("rethrow", _("\
+                     catch_throw_command, NULL, CATCH_PERMANENT,
+                     CATCH_TEMPORARY);
+  add_catch_command ("rethrow", _ ("\
 Catch an exception, when rethrown."),
-		     catch_rethrow_command,
-		     NULL,
-		     CATCH_PERMANENT,
-		     CATCH_TEMPORARY);
+                     catch_rethrow_command, NULL, CATCH_PERMANENT,
+                     CATCH_TEMPORARY);
 
   create_internalvar_type_lazy ("_exception", &exception_funcs, NULL);
 }

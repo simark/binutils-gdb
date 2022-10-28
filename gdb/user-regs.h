@@ -45,10 +45,10 @@ struct gdbarch;
    index.  */
 
 extern int user_reg_map_name_to_regnum (struct gdbarch *gdbarch,
-					const char *str, int len);
+                                        const char *str, int len);
 
 extern const char *user_reg_map_regnum_to_name (struct gdbarch *gdbarch,
-						int regnum);
+                                                int regnum);
 
 /* Return the value of the frame register in the specified frame.
 
@@ -57,16 +57,15 @@ extern const char *user_reg_map_regnum_to_name (struct gdbarch *gdbarch,
    to describe the register has not bee initialized.  */
 
 typedef struct value *(user_reg_read_ftype) (frame_info_ptr frame,
-					     const void *baton);
+                                             const void *baton);
 extern struct value *value_of_user_reg (int regnum, frame_info_ptr frame);
 
 /* Add a builtin register (present in all architectures).  */
-extern void user_reg_add_builtin (const char *name,
-				  user_reg_read_ftype *read,
-				  const void *baton);
+extern void user_reg_add_builtin (const char *name, user_reg_read_ftype *read,
+                                  const void *baton);
 
 /* Add a per-architecture frame register.  */
-extern void user_reg_add (struct gdbarch *gdbarch, const char *name, 
-			  user_reg_read_ftype *read, const void *baton);
+extern void user_reg_add (struct gdbarch *gdbarch, const char *name,
+                          user_reg_read_ftype *read, const void *baton);
 
 #endif

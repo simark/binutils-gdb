@@ -43,49 +43,49 @@ inferior_event_handler (enum inferior_event_type event_type)
 
     case INF_EXEC_COMPLETE:
       if (!non_stop)
-	{
-	  /* Unregister the inferior from the event loop.  This is done
+        {
+          /* Unregister the inferior from the event loop.  This is done
 	     so that when the inferior is not running we don't get
 	     distracted by spurious inferior output.  */
-	  if (target_has_execution () && target_can_async_p ())
-	    target_async (false);
-	}
+          if (target_has_execution () && target_can_async_p ())
+            target_async (false);
+        }
 
       /* Do all continuations associated with the whole inferior (not
 	 a particular thread).  */
       if (inferior_ptid != null_ptid)
-	current_inferior ()->do_all_continuations ();
+        current_inferior ()->do_all_continuations ();
 
       /* When running a command list (from a user command, say), these
 	 are only run when the command list is all done.  */
       if (current_ui->async)
-	{
-	  check_frame_language_change ();
+        {
+          check_frame_language_change ();
 
-	  /* Don't propagate breakpoint commands errors.  Either we're
+          /* Don't propagate breakpoint commands errors.  Either we're
 	     stopping or some command resumes the inferior.  The user will
 	     be informed.  */
-	  try
-	    {
-	      bpstat_do_actions ();
-	    }
-	  catch (const gdb_exception &e)
-	    {
-	      /* If the user was running a foreground execution
+          try
+            {
+              bpstat_do_actions ();
+            }
+          catch (const gdb_exception &e)
+            {
+              /* If the user was running a foreground execution
 		 command, then propagate the error so that the prompt
 		 can be reenabled.  Otherwise, the user already has
 		 the prompt and is typing some unrelated command, so
 		 just inform the user and swallow the exception.  */
-	      if (current_ui->prompt_state == PROMPT_BLOCKED)
-		throw;
-	      else
-		exception_print (gdb_stderr, e);
-	    }
-	}
+              if (current_ui->prompt_state == PROMPT_BLOCKED)
+                throw;
+              else
+                exception_print (gdb_stderr, e);
+            }
+        }
       break;
 
     default:
-      gdb_printf (gdb_stderr, _("Event type not recognized.\n"));
+      gdb_printf (gdb_stderr, _ ("Event type not recognized.\n"));
       break;
     }
 }

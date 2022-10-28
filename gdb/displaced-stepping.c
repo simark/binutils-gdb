@@ -38,9 +38,9 @@ bool debug_displaced = false;
 
 static void
 show_debug_displaced (struct ui_file *file, int from_tty,
-		      struct cmd_list_element *c, const char *value)
+                      struct cmd_list_element *c, const char *value)
 {
-  gdb_printf (file, _("Displace stepping debugging is %s.\n"), value);
+  gdb_printf (file, _ ("Displace stepping debugging is %s.\n"), value);
 }
 
 displaced_step_prepare_status
@@ -68,21 +68,21 @@ displaced_step_buffers::prepare (thread_info *thread, CORE_ADDR &displaced_pc)
       bool is_free = candidate.current_thread == nullptr;
 
       if (!bp_in_range)
-	{
-	  if (is_free)
-	    {
-	      buffer = &candidate;
-	      break;
-	    }
-	  else
-	    {
-	      /* This buffer would be suitable, but it's used right now.  */
-	      fail_status = DISPLACED_STEP_PREPARE_STATUS_UNAVAILABLE;
-	    }
-	}
+        {
+          if (is_free)
+            {
+              buffer = &candidate;
+              break;
+            }
+          else
+            {
+              /* This buffer would be suitable, but it's used right now.  */
+              fail_status = DISPLACED_STEP_PREPARE_STATUS_UNAVAILABLE;
+            }
+        }
       else
-	{
-	  /* There's a breakpoint set in the scratch pad location range
+        {
+          /* There's a breakpoint set in the scratch pad location range
 	     (which is usually around the entry point).  We'd either
 	     install it before resuming, which would overwrite/corrupt the
 	     scratch pad, or if it was already inserted, this displaced
@@ -91,17 +91,17 @@ displaced_step_buffers::prepare (thread_info *thread, CORE_ADDR &displaced_pc)
 	     in the scratch pad range (after initial startup) anyway, but
 	     the former is unacceptable.  Simply punt and fallback to
 	     stepping over this breakpoint in-line.  */
-	  displaced_debug_printf ("breakpoint set in displaced stepping "
-				  "buffer at %s, can't use.",
-				  paddress (arch, candidate.addr));
-	}
+          displaced_debug_printf ("breakpoint set in displaced stepping "
+                                  "buffer at %s, can't use.",
+                                  paddress (arch, candidate.addr));
+        }
     }
 
   if (buffer == nullptr)
     return fail_status;
 
   displaced_debug_printf ("selected buffer at %s",
-			  paddress (arch, buffer->addr));
+                          paddress (arch, buffer->addr));
 
   /* Save the original PC of the thread.  */
   buffer->original_pc = regcache_read_pc (regcache);
@@ -112,24 +112,23 @@ displaced_step_buffers::prepare (thread_info *thread, CORE_ADDR &displaced_pc)
   /* Save the original contents of the displaced stepping buffer.  */
   buffer->saved_copy.resize (len);
 
-  int status = target_read_memory (buffer->addr,
-				    buffer->saved_copy.data (), len);
+  int status
+    = target_read_memory (buffer->addr, buffer->saved_copy.data (), len);
   if (status != 0)
     throw_error (MEMORY_ERROR,
-		 _("Error accessing memory address %s (%s) for "
-		   "displaced-stepping scratch space."),
-		 paddress (arch, buffer->addr), safe_strerror (status));
+                 _ ("Error accessing memory address %s (%s) for "
+                    "displaced-stepping scratch space."),
+                 paddress (arch, buffer->addr), safe_strerror (status));
 
-  displaced_debug_printf ("saved %s: %s",
-			  paddress (arch, buffer->addr),
-			  displaced_step_dump_bytes
-			  (buffer->saved_copy.data (), len).c_str ());
+  displaced_debug_printf (
+    "saved %s: %s", paddress (arch, buffer->addr),
+    displaced_step_dump_bytes (buffer->saved_copy.data (), len).c_str ());
 
   /* Save this in a local variable first, so it's released if code below
      throws.  */
   displaced_step_copy_insn_closure_up copy_insn_closure
     = gdbarch_displaced_step_copy_insn (arch, buffer->original_pc,
-					buffer->addr, regcache);
+                                        buffer->addr, regcache);
 
   if (copy_insn_closure == nullptr)
     {
@@ -154,18 +153,18 @@ displaced_step_buffers::prepare (thread_info *thread, CORE_ADDR &displaced_pc)
   for (const displaced_step_buffer &buf : m_buffers)
     {
       if (buf.current_thread == nullptr)
-	{
-	  thread->inf->displaced_step_state.unavailable = false;
-	  break;
-	}
+        {
+          thread->inf->displaced_step_state.unavailable = false;
+          break;
+        }
     }
 
   return DISPLACED_STEP_PREPARE_STATUS_OK;
 }
 
 static void
-write_memory_ptid (ptid_t ptid, CORE_ADDR memaddr,
-		   const gdb_byte *myaddr, int len)
+write_memory_ptid (ptid_t ptid, CORE_ADDR memaddr, const gdb_byte *myaddr,
+                   int len)
 {
   scoped_restore save_inferior_ptid = make_scoped_restore (&inferior_ptid);
 
@@ -175,7 +174,7 @@ write_memory_ptid (ptid_t ptid, CORE_ADDR memaddr,
 
 static bool
 displaced_step_instruction_executed_successfully (gdbarch *arch,
-						  gdb_signal signal)
+                                                  gdb_signal signal)
 {
   if (signal != GDB_SIGNAL_TRAP)
     return false;
@@ -183,8 +182,8 @@ displaced_step_instruction_executed_successfully (gdbarch *arch,
   if (target_stopped_by_watchpoint ())
     {
       if (gdbarch_have_nonsteppable_watchpoint (arch)
-	  || target_have_steppable_watchpoint ())
-	return false;
+          || target_have_steppable_watchpoint ())
+        return false;
     }
 
   return true;
@@ -192,7 +191,7 @@ displaced_step_instruction_executed_successfully (gdbarch *arch,
 
 displaced_step_finish_status
 displaced_step_buffers::finish (gdbarch *arch, thread_info *thread,
-				gdb_signal sig)
+                                gdb_signal sig)
 {
   gdb_assert (thread->displaced_step_state.in_progress ());
 
@@ -202,10 +201,10 @@ displaced_step_buffers::finish (gdbarch *arch, thread_info *thread,
   for (displaced_step_buffer &candidate : m_buffers)
     {
       if (candidate.current_thread == thread)
-	{
-	  buffer = &candidate;
-	  break;
-	}
+        {
+          buffer = &candidate;
+          break;
+        }
     }
 
   gdb_assert (buffer != nullptr);
@@ -228,12 +227,11 @@ displaced_step_buffers::finish (gdbarch *arch, thread_info *thread,
   ULONGEST len = gdbarch_max_insn_length (arch);
 
   /* Restore memory of the buffer.  */
-  write_memory_ptid (thread->ptid, buffer->addr,
-		     buffer->saved_copy.data (), len);
+  write_memory_ptid (thread->ptid, buffer->addr, buffer->saved_copy.data (),
+                     len);
 
-  displaced_debug_printf ("restored %s %s",
-			  thread->ptid.to_string ().c_str (),
-			  paddress (arch, buffer->addr));
+  displaced_debug_printf ("restored %s %s", thread->ptid.to_string ().c_str (),
+                          paddress (arch, buffer->addr));
 
   regcache *rc = get_thread_regcache (thread);
 
@@ -243,8 +241,7 @@ displaced_step_buffers::finish (gdbarch *arch, thread_info *thread,
   if (instruction_executed_successfully)
     {
       gdbarch_displaced_step_fixup (arch, copy_insn_closure.get (),
-				    buffer->original_pc,
-				    buffer->addr, rc);
+                                    buffer->original_pc, buffer->addr, rc);
       return DISPLACED_STEP_FINISH_STATUS_OK;
     }
   else
@@ -264,7 +261,7 @@ displaced_step_buffers::copy_insn_closure_by_addr (CORE_ADDR addr)
   for (const displaced_step_buffer &buffer : m_buffers)
     {
       if (addr == buffer.addr)
-	return buffer.copy_insn_closure.get ();
+        return buffer.copy_insn_closure.get ();
     }
 
   return nullptr;
@@ -276,7 +273,7 @@ displaced_step_buffers::restore_in_ptid (ptid_t ptid)
   for (const displaced_step_buffer &buffer : m_buffers)
     {
       if (buffer.current_thread == nullptr)
-	continue;
+        continue;
 
       regcache *regcache = get_thread_regcache (buffer.current_thread);
       gdbarch *arch = regcache->arch ();
@@ -285,8 +282,8 @@ displaced_step_buffers::restore_in_ptid (ptid_t ptid)
       write_memory_ptid (ptid, buffer.addr, buffer.saved_copy.data (), len);
 
       displaced_debug_printf ("restored in ptid %s %s",
-			      ptid.to_string ().c_str (),
-			      paddress (arch, buffer.addr));
+                              ptid.to_string ().c_str (),
+                              paddress (arch, buffer.addr));
     }
 }
 
@@ -294,12 +291,13 @@ void _initialize_displaced_stepping ();
 void
 _initialize_displaced_stepping ()
 {
-  add_setshow_boolean_cmd ("displaced", class_maintenance,
-			   &debug_displaced, _("\
-Set displaced stepping debugging."), _("\
-Show displaced stepping debugging."), _("\
+  add_setshow_boolean_cmd ("displaced", class_maintenance, &debug_displaced,
+                           _ ("\
+Set displaced stepping debugging."),
+                           _ ("\
+Show displaced stepping debugging."),
+                           _ ("\
 When non-zero, displaced stepping specific debugging is enabled."),
-			    NULL,
-			    show_debug_displaced,
-			    &setdebuglist, &showdebuglist);
+                           NULL, show_debug_displaced, &setdebuglist,
+                           &showdebuglist);
 }

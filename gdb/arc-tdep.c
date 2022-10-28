@@ -138,165 +138,153 @@ static const char *ARC_AUX_FEATURE_NAME = "org.gnu.gdb.arc.aux";
 /* ARCv1 (ARC600, ARC601, ARC700) general core registers feature set.
    See also arc_update_acc_reg_names() for "accl/acch" names.  */
 
-static struct arc_register_feature arc_v1_core_reg_feature =
-{
-  ARC_CORE_FEATURE_NAME,
-  {
-    { ARC_R0_REGNUM + 0, { "r0" }, true },
-    { ARC_R0_REGNUM + 1, { "r1" }, true },
-    { ARC_R0_REGNUM + 2, { "r2" }, true },
-    { ARC_R0_REGNUM + 3, { "r3" }, true },
-    { ARC_R0_REGNUM + 4, { "r4" }, false },
-    { ARC_R0_REGNUM + 5, { "r5" }, false },
-    { ARC_R0_REGNUM + 6, { "r6" }, false },
-    { ARC_R0_REGNUM + 7, { "r7" }, false },
-    { ARC_R0_REGNUM + 8, { "r8" }, false },
-    { ARC_R0_REGNUM + 9, { "r9" }, false },
-    { ARC_R0_REGNUM + 10, { "r10" }, true },
-    { ARC_R0_REGNUM + 11, { "r11" }, true },
-    { ARC_R0_REGNUM + 12, { "r12" }, true },
-    { ARC_R0_REGNUM + 13, { "r13" }, true },
-    { ARC_R0_REGNUM + 14, { "r14" }, true },
-    { ARC_R0_REGNUM + 15, { "r15" }, true },
-    { ARC_R0_REGNUM + 16, { "r16" }, false },
-    { ARC_R0_REGNUM + 17, { "r17" }, false },
-    { ARC_R0_REGNUM + 18, { "r18" }, false },
-    { ARC_R0_REGNUM + 19, { "r19" }, false },
-    { ARC_R0_REGNUM + 20, { "r20" }, false },
-    { ARC_R0_REGNUM + 21, { "r21" }, false },
-    { ARC_R0_REGNUM + 22, { "r22" }, false },
-    { ARC_R0_REGNUM + 23, { "r23" }, false },
-    { ARC_R0_REGNUM + 24, { "r24" }, false },
-    { ARC_R0_REGNUM + 25, { "r25" }, false },
-    { ARC_R0_REGNUM + 26, { "gp" }, true },
-    { ARC_R0_REGNUM + 27, { "fp" }, true },
-    { ARC_R0_REGNUM + 28, { "sp" }, true },
-    { ARC_R0_REGNUM + 29, { "ilink1" }, false },
-    { ARC_R0_REGNUM + 30, { "ilink2" }, false },
-    { ARC_R0_REGNUM + 31, { "blink" }, true },
-    { ARC_R0_REGNUM + 32, { "r32" }, false },
-    { ARC_R0_REGNUM + 33, { "r33" }, false },
-    { ARC_R0_REGNUM + 34, { "r34" }, false },
-    { ARC_R0_REGNUM + 35, { "r35" }, false },
-    { ARC_R0_REGNUM + 36, { "r36" }, false },
-    { ARC_R0_REGNUM + 37, { "r37" }, false },
-    { ARC_R0_REGNUM + 38, { "r38" }, false },
-    { ARC_R0_REGNUM + 39, { "r39" }, false },
-    { ARC_R0_REGNUM + 40, { "r40" }, false },
-    { ARC_R0_REGNUM + 41, { "r41" }, false },
-    { ARC_R0_REGNUM + 42, { "r42" }, false },
-    { ARC_R0_REGNUM + 43, { "r43" }, false },
-    { ARC_R0_REGNUM + 44, { "r44" }, false },
-    { ARC_R0_REGNUM + 45, { "r45" }, false },
-    { ARC_R0_REGNUM + 46, { "r46" }, false },
-    { ARC_R0_REGNUM + 47, { "r47" }, false },
-    { ARC_R0_REGNUM + 48, { "r48" }, false },
-    { ARC_R0_REGNUM + 49, { "r49" }, false },
-    { ARC_R0_REGNUM + 50, { "r50" }, false },
-    { ARC_R0_REGNUM + 51, { "r51" }, false },
-    { ARC_R0_REGNUM + 52, { "r52" }, false },
-    { ARC_R0_REGNUM + 53, { "r53" }, false },
-    { ARC_R0_REGNUM + 54, { "r54" }, false },
-    { ARC_R0_REGNUM + 55, { "r55" }, false },
-    { ARC_R0_REGNUM + 56, { "r56" }, false },
-    { ARC_R0_REGNUM + 57, { "r57" }, false },
-    { ARC_R0_REGNUM + 58, { "r58", "accl" }, false },
-    { ARC_R0_REGNUM + 59, { "r59", "acch" }, false },
-    { ARC_R0_REGNUM + 60, { "lp_count" }, false },
-    { ARC_R0_REGNUM + 61, { "reserved" }, false },
-    { ARC_R0_REGNUM + 62, { "limm" }, false },
-    { ARC_R0_REGNUM + 63, { "pcl" }, true }
-  }
-};
+static struct arc_register_feature arc_v1_core_reg_feature
+  = { ARC_CORE_FEATURE_NAME,
+      { { ARC_R0_REGNUM + 0, { "r0" }, true },
+        { ARC_R0_REGNUM + 1, { "r1" }, true },
+        { ARC_R0_REGNUM + 2, { "r2" }, true },
+        { ARC_R0_REGNUM + 3, { "r3" }, true },
+        { ARC_R0_REGNUM + 4, { "r4" }, false },
+        { ARC_R0_REGNUM + 5, { "r5" }, false },
+        { ARC_R0_REGNUM + 6, { "r6" }, false },
+        { ARC_R0_REGNUM + 7, { "r7" }, false },
+        { ARC_R0_REGNUM + 8, { "r8" }, false },
+        { ARC_R0_REGNUM + 9, { "r9" }, false },
+        { ARC_R0_REGNUM + 10, { "r10" }, true },
+        { ARC_R0_REGNUM + 11, { "r11" }, true },
+        { ARC_R0_REGNUM + 12, { "r12" }, true },
+        { ARC_R0_REGNUM + 13, { "r13" }, true },
+        { ARC_R0_REGNUM + 14, { "r14" }, true },
+        { ARC_R0_REGNUM + 15, { "r15" }, true },
+        { ARC_R0_REGNUM + 16, { "r16" }, false },
+        { ARC_R0_REGNUM + 17, { "r17" }, false },
+        { ARC_R0_REGNUM + 18, { "r18" }, false },
+        { ARC_R0_REGNUM + 19, { "r19" }, false },
+        { ARC_R0_REGNUM + 20, { "r20" }, false },
+        { ARC_R0_REGNUM + 21, { "r21" }, false },
+        { ARC_R0_REGNUM + 22, { "r22" }, false },
+        { ARC_R0_REGNUM + 23, { "r23" }, false },
+        { ARC_R0_REGNUM + 24, { "r24" }, false },
+        { ARC_R0_REGNUM + 25, { "r25" }, false },
+        { ARC_R0_REGNUM + 26, { "gp" }, true },
+        { ARC_R0_REGNUM + 27, { "fp" }, true },
+        { ARC_R0_REGNUM + 28, { "sp" }, true },
+        { ARC_R0_REGNUM + 29, { "ilink1" }, false },
+        { ARC_R0_REGNUM + 30, { "ilink2" }, false },
+        { ARC_R0_REGNUM + 31, { "blink" }, true },
+        { ARC_R0_REGNUM + 32, { "r32" }, false },
+        { ARC_R0_REGNUM + 33, { "r33" }, false },
+        { ARC_R0_REGNUM + 34, { "r34" }, false },
+        { ARC_R0_REGNUM + 35, { "r35" }, false },
+        { ARC_R0_REGNUM + 36, { "r36" }, false },
+        { ARC_R0_REGNUM + 37, { "r37" }, false },
+        { ARC_R0_REGNUM + 38, { "r38" }, false },
+        { ARC_R0_REGNUM + 39, { "r39" }, false },
+        { ARC_R0_REGNUM + 40, { "r40" }, false },
+        { ARC_R0_REGNUM + 41, { "r41" }, false },
+        { ARC_R0_REGNUM + 42, { "r42" }, false },
+        { ARC_R0_REGNUM + 43, { "r43" }, false },
+        { ARC_R0_REGNUM + 44, { "r44" }, false },
+        { ARC_R0_REGNUM + 45, { "r45" }, false },
+        { ARC_R0_REGNUM + 46, { "r46" }, false },
+        { ARC_R0_REGNUM + 47, { "r47" }, false },
+        { ARC_R0_REGNUM + 48, { "r48" }, false },
+        { ARC_R0_REGNUM + 49, { "r49" }, false },
+        { ARC_R0_REGNUM + 50, { "r50" }, false },
+        { ARC_R0_REGNUM + 51, { "r51" }, false },
+        { ARC_R0_REGNUM + 52, { "r52" }, false },
+        { ARC_R0_REGNUM + 53, { "r53" }, false },
+        { ARC_R0_REGNUM + 54, { "r54" }, false },
+        { ARC_R0_REGNUM + 55, { "r55" }, false },
+        { ARC_R0_REGNUM + 56, { "r56" }, false },
+        { ARC_R0_REGNUM + 57, { "r57" }, false },
+        { ARC_R0_REGNUM + 58, { "r58", "accl" }, false },
+        { ARC_R0_REGNUM + 59, { "r59", "acch" }, false },
+        { ARC_R0_REGNUM + 60, { "lp_count" }, false },
+        { ARC_R0_REGNUM + 61, { "reserved" }, false },
+        { ARC_R0_REGNUM + 62, { "limm" }, false },
+        { ARC_R0_REGNUM + 63, { "pcl" }, true } } };
 
 /* ARCv2 (ARCHS) general core registers feature set.  See also
    arc_update_acc_reg_names() for "accl/acch" names.  */
 
-static struct arc_register_feature arc_v2_core_reg_feature =
-{
-  ARC_CORE_FEATURE_NAME,
-  {
-    { ARC_R0_REGNUM + 0, { "r0" }, true },
-    { ARC_R0_REGNUM + 1, { "r1" }, true },
-    { ARC_R0_REGNUM + 2, { "r2" }, true },
-    { ARC_R0_REGNUM + 3, { "r3" }, true },
-    { ARC_R0_REGNUM + 4, { "r4" }, false },
-    { ARC_R0_REGNUM + 5, { "r5" }, false },
-    { ARC_R0_REGNUM + 6, { "r6" }, false },
-    { ARC_R0_REGNUM + 7, { "r7" }, false },
-    { ARC_R0_REGNUM + 8, { "r8" }, false },
-    { ARC_R0_REGNUM + 9, { "r9" }, false },
-    { ARC_R0_REGNUM + 10, { "r10" }, true },
-    { ARC_R0_REGNUM + 11, { "r11" }, true },
-    { ARC_R0_REGNUM + 12, { "r12" }, true },
-    { ARC_R0_REGNUM + 13, { "r13" }, true },
-    { ARC_R0_REGNUM + 14, { "r14" }, true },
-    { ARC_R0_REGNUM + 15, { "r15" }, true },
-    { ARC_R0_REGNUM + 16, { "r16" }, false },
-    { ARC_R0_REGNUM + 17, { "r17" }, false },
-    { ARC_R0_REGNUM + 18, { "r18" }, false },
-    { ARC_R0_REGNUM + 19, { "r19" }, false },
-    { ARC_R0_REGNUM + 20, { "r20" }, false },
-    { ARC_R0_REGNUM + 21, { "r21" }, false },
-    { ARC_R0_REGNUM + 22, { "r22" }, false },
-    { ARC_R0_REGNUM + 23, { "r23" }, false },
-    { ARC_R0_REGNUM + 24, { "r24" }, false },
-    { ARC_R0_REGNUM + 25, { "r25" }, false },
-    { ARC_R0_REGNUM + 26, { "gp" }, true },
-    { ARC_R0_REGNUM + 27, { "fp" }, true },
-    { ARC_R0_REGNUM + 28, { "sp" }, true },
-    { ARC_R0_REGNUM + 29, { "ilink" }, false },
-    { ARC_R0_REGNUM + 30, { "r30" }, true },
-    { ARC_R0_REGNUM + 31, { "blink" }, true },
-    { ARC_R0_REGNUM + 32, { "r32" }, false },
-    { ARC_R0_REGNUM + 33, { "r33" }, false },
-    { ARC_R0_REGNUM + 34, { "r34" }, false },
-    { ARC_R0_REGNUM + 35, { "r35" }, false },
-    { ARC_R0_REGNUM + 36, { "r36" }, false },
-    { ARC_R0_REGNUM + 37, { "r37" }, false },
-    { ARC_R0_REGNUM + 38, { "r38" }, false },
-    { ARC_R0_REGNUM + 39, { "r39" }, false },
-    { ARC_R0_REGNUM + 40, { "r40" }, false },
-    { ARC_R0_REGNUM + 41, { "r41" }, false },
-    { ARC_R0_REGNUM + 42, { "r42" }, false },
-    { ARC_R0_REGNUM + 43, { "r43" }, false },
-    { ARC_R0_REGNUM + 44, { "r44" }, false },
-    { ARC_R0_REGNUM + 45, { "r45" }, false },
-    { ARC_R0_REGNUM + 46, { "r46" }, false },
-    { ARC_R0_REGNUM + 47, { "r47" }, false },
-    { ARC_R0_REGNUM + 48, { "r48" }, false },
-    { ARC_R0_REGNUM + 49, { "r49" }, false },
-    { ARC_R0_REGNUM + 50, { "r50" }, false },
-    { ARC_R0_REGNUM + 51, { "r51" }, false },
-    { ARC_R0_REGNUM + 52, { "r52" }, false },
-    { ARC_R0_REGNUM + 53, { "r53" }, false },
-    { ARC_R0_REGNUM + 54, { "r54" }, false },
-    { ARC_R0_REGNUM + 55, { "r55" }, false },
-    { ARC_R0_REGNUM + 56, { "r56" }, false },
-    { ARC_R0_REGNUM + 57, { "r57" }, false },
-    { ARC_R0_REGNUM + 58, { "r58", "accl" }, false },
-    { ARC_R0_REGNUM + 59, { "r59", "acch" }, false },
-    { ARC_R0_REGNUM + 60, { "lp_count" }, false },
-    { ARC_R0_REGNUM + 61, { "reserved" }, false },
-    { ARC_R0_REGNUM + 62, { "limm" }, false },
-    { ARC_R0_REGNUM + 63, { "pcl" }, true }
-  }
-};
+static struct arc_register_feature arc_v2_core_reg_feature
+  = { ARC_CORE_FEATURE_NAME,
+      { { ARC_R0_REGNUM + 0, { "r0" }, true },
+        { ARC_R0_REGNUM + 1, { "r1" }, true },
+        { ARC_R0_REGNUM + 2, { "r2" }, true },
+        { ARC_R0_REGNUM + 3, { "r3" }, true },
+        { ARC_R0_REGNUM + 4, { "r4" }, false },
+        { ARC_R0_REGNUM + 5, { "r5" }, false },
+        { ARC_R0_REGNUM + 6, { "r6" }, false },
+        { ARC_R0_REGNUM + 7, { "r7" }, false },
+        { ARC_R0_REGNUM + 8, { "r8" }, false },
+        { ARC_R0_REGNUM + 9, { "r9" }, false },
+        { ARC_R0_REGNUM + 10, { "r10" }, true },
+        { ARC_R0_REGNUM + 11, { "r11" }, true },
+        { ARC_R0_REGNUM + 12, { "r12" }, true },
+        { ARC_R0_REGNUM + 13, { "r13" }, true },
+        { ARC_R0_REGNUM + 14, { "r14" }, true },
+        { ARC_R0_REGNUM + 15, { "r15" }, true },
+        { ARC_R0_REGNUM + 16, { "r16" }, false },
+        { ARC_R0_REGNUM + 17, { "r17" }, false },
+        { ARC_R0_REGNUM + 18, { "r18" }, false },
+        { ARC_R0_REGNUM + 19, { "r19" }, false },
+        { ARC_R0_REGNUM + 20, { "r20" }, false },
+        { ARC_R0_REGNUM + 21, { "r21" }, false },
+        { ARC_R0_REGNUM + 22, { "r22" }, false },
+        { ARC_R0_REGNUM + 23, { "r23" }, false },
+        { ARC_R0_REGNUM + 24, { "r24" }, false },
+        { ARC_R0_REGNUM + 25, { "r25" }, false },
+        { ARC_R0_REGNUM + 26, { "gp" }, true },
+        { ARC_R0_REGNUM + 27, { "fp" }, true },
+        { ARC_R0_REGNUM + 28, { "sp" }, true },
+        { ARC_R0_REGNUM + 29, { "ilink" }, false },
+        { ARC_R0_REGNUM + 30, { "r30" }, true },
+        { ARC_R0_REGNUM + 31, { "blink" }, true },
+        { ARC_R0_REGNUM + 32, { "r32" }, false },
+        { ARC_R0_REGNUM + 33, { "r33" }, false },
+        { ARC_R0_REGNUM + 34, { "r34" }, false },
+        { ARC_R0_REGNUM + 35, { "r35" }, false },
+        { ARC_R0_REGNUM + 36, { "r36" }, false },
+        { ARC_R0_REGNUM + 37, { "r37" }, false },
+        { ARC_R0_REGNUM + 38, { "r38" }, false },
+        { ARC_R0_REGNUM + 39, { "r39" }, false },
+        { ARC_R0_REGNUM + 40, { "r40" }, false },
+        { ARC_R0_REGNUM + 41, { "r41" }, false },
+        { ARC_R0_REGNUM + 42, { "r42" }, false },
+        { ARC_R0_REGNUM + 43, { "r43" }, false },
+        { ARC_R0_REGNUM + 44, { "r44" }, false },
+        { ARC_R0_REGNUM + 45, { "r45" }, false },
+        { ARC_R0_REGNUM + 46, { "r46" }, false },
+        { ARC_R0_REGNUM + 47, { "r47" }, false },
+        { ARC_R0_REGNUM + 48, { "r48" }, false },
+        { ARC_R0_REGNUM + 49, { "r49" }, false },
+        { ARC_R0_REGNUM + 50, { "r50" }, false },
+        { ARC_R0_REGNUM + 51, { "r51" }, false },
+        { ARC_R0_REGNUM + 52, { "r52" }, false },
+        { ARC_R0_REGNUM + 53, { "r53" }, false },
+        { ARC_R0_REGNUM + 54, { "r54" }, false },
+        { ARC_R0_REGNUM + 55, { "r55" }, false },
+        { ARC_R0_REGNUM + 56, { "r56" }, false },
+        { ARC_R0_REGNUM + 57, { "r57" }, false },
+        { ARC_R0_REGNUM + 58, { "r58", "accl" }, false },
+        { ARC_R0_REGNUM + 59, { "r59", "acch" }, false },
+        { ARC_R0_REGNUM + 60, { "lp_count" }, false },
+        { ARC_R0_REGNUM + 61, { "reserved" }, false },
+        { ARC_R0_REGNUM + 62, { "limm" }, false },
+        { ARC_R0_REGNUM + 63, { "pcl" }, true } } };
 
 /* The common auxiliary registers feature set.  The REGNUM field
    must match the ARC_REGNUM enum in arc-tdep.h.  */
 
-static const struct arc_register_feature arc_common_aux_reg_feature =
-{
-  ARC_AUX_FEATURE_NAME,
-  {
-    { ARC_FIRST_AUX_REGNUM + 0, { "pc" }, true },
-    { ARC_FIRST_AUX_REGNUM + 1, { "status32" }, true },
-    { ARC_FIRST_AUX_REGNUM + 2, { "lp_start" }, false },
-    { ARC_FIRST_AUX_REGNUM + 3, { "lp_end" }, false },
-    { ARC_FIRST_AUX_REGNUM + 4, { "bta" }, false }
-  }
-};
+static const struct arc_register_feature arc_common_aux_reg_feature
+  = { ARC_AUX_FEATURE_NAME,
+      { { ARC_FIRST_AUX_REGNUM + 0, { "pc" }, true },
+        { ARC_FIRST_AUX_REGNUM + 1, { "status32" }, true },
+        { ARC_FIRST_AUX_REGNUM + 2, { "lp_start" }, false },
+        { ARC_FIRST_AUX_REGNUM + 3, { "lp_end" }, false },
+        { ARC_FIRST_AUX_REGNUM + 4, { "bta" }, false } } };
 
 static char *arc_disassembler_options = NULL;
 
@@ -310,7 +298,7 @@ static char *arc_disassembler_options = NULL;
 
 static ULONGEST
 arc_insn_get_operand_value (const struct arc_instruction &insn,
-			    unsigned int operand_num)
+                            unsigned int operand_num)
 {
   switch (insn.operands[operand_num].kind)
     {
@@ -324,8 +312,7 @@ arc_insn_get_operand_value (const struct arc_instruction &insn,
       struct regcache *regcache = get_current_regcache ();
       ULONGEST value;
       regcache_cooked_read_unsigned (regcache,
-				     insn.operands[operand_num].value,
-				     &value);
+                                     insn.operands[operand_num].value, &value);
       return value;
     }
 }
@@ -334,7 +321,7 @@ arc_insn_get_operand_value (const struct arc_instruction &insn,
 
 static LONGEST
 arc_insn_get_operand_value_signed (const struct arc_instruction &insn,
-				   unsigned int operand_num)
+                                   unsigned int operand_num)
 {
   switch (insn.operands[operand_num].kind)
     {
@@ -352,9 +339,8 @@ arc_insn_get_operand_value_signed (const struct arc_instruction &insn,
       /* Value in instruction is a register number.  */
       struct regcache *regcache = get_current_regcache ();
       LONGEST value;
-      regcache_cooked_read_signed (regcache,
-				   insn.operands[operand_num].value,
-				   &value);
+      regcache_cooked_read_signed (regcache, insn.operands[operand_num].value,
+                                   &value);
       return value;
     }
 }
@@ -407,9 +393,9 @@ arc_insn_get_memory_offset (const struct arc_instruction &insn)
 	 Word and double word means shift by 2 bits.  */
       gdb_assert (insn.data_size_mode != ARC_SCALING_B);
       if (insn.data_size_mode == ARC_SCALING_H)
-	value <<= 1;
+        value <<= 1;
       else
-	value <<= 2;
+        value <<= 2;
     }
   return value;
 }
@@ -436,13 +422,12 @@ arc_insn_get_branch_target (const struct arc_instruction &insn)
   else if (insn.insn_class == JLI)
     {
       gdb_printf (gdb_stderr,
-		  "JLI_S instruction is not supported by the GDB.");
+                  "JLI_S instruction is not supported by the GDB.");
       return 0;
     }
   else if (insn.insn_class == EI)
     {
-      gdb_printf (gdb_stderr,
-		  "EI_S instruction is not supported by the GDB.");
+      gdb_printf (gdb_stderr, "EI_S instruction is not supported by the GDB.");
       return 0;
     }
   /* LEAVE_S: PC = BLINK.  */
@@ -455,7 +440,7 @@ arc_insn_get_branch_target (const struct arc_instruction &insn)
     }
   /* BBIT0/1, BRcc: PC = currentPC + operand.  */
   else if (insn.insn_class == BBIT0 || insn.insn_class == BBIT1
-	   || insn.insn_class == BRCC)
+           || insn.insn_class == BRCC)
     {
       /* Most instructions has branch target as their sole argument.  However
 	 conditional brcc/bbit has it as a third operand.  */
@@ -493,7 +478,7 @@ arc_insn_dump (const struct arc_instruction &insn)
   struct gdbarch *gdbarch = target_gdbarch ();
 
   arc_print ("Dumping arc_instruction at %s\n",
-	     paddress (gdbarch, insn.address));
+             paddress (gdbarch, insn.address));
   arc_print ("\tlength = %u\n", insn.length);
 
   if (!insn.valid)
@@ -527,12 +512,12 @@ arc_insn_dump (const struct arc_instruction &insn)
       arc_print ("\twriteback_mode = %u\n", insn.writeback_mode);
       arc_print ("\tdata_size_mode = %u\n", insn.data_size_mode);
       arc_print ("\tmemory_base_register = %s\n",
-		 gdbarch_register_name (gdbarch,
-					arc_insn_get_memory_base_reg (insn)));
+                 gdbarch_register_name (gdbarch,
+                                        arc_insn_get_memory_base_reg (insn)));
       /* get_memory_offset returns an unsigned CORE_ADDR, but treat it as a
 	 LONGEST for a nicer representation.  */
       arc_print ("\taddr_offset = %s\n",
-		 plongest (arc_insn_get_memory_offset (insn)));
+                 plongest (arc_insn_get_memory_offset (insn)));
     }
 
   arc_print ("\toperands_count = %u\n", insn.operands_count);
@@ -543,15 +528,15 @@ arc_insn_dump (const struct arc_instruction &insn)
       arc_print ("\toperand[%u] = {\n", i);
       arc_print ("\t\tis_reg = %i\n", is_reg);
       if (is_reg)
-	arc_print ("\t\tregister = %s\n",
-		   gdbarch_register_name (gdbarch, insn.operands[i].value));
+        arc_print ("\t\tregister = %s\n",
+                   gdbarch_register_name (gdbarch, insn.operands[i].value));
       /* Don't know if this value is signed or not, so print both
 	 representations.  This tends to look quite ugly, especially for big
 	 numbers.  */
       arc_print ("\t\tunsigned value = %s\n",
-		 pulongest (arc_insn_get_operand_value (insn, i)));
+                 pulongest (arc_insn_get_operand_value (insn, i)));
       arc_print ("\t\tsigned value = %s\n",
-		 plongest (arc_insn_get_operand_value_signed (insn, i)));
+                 plongest (arc_insn_get_operand_value_signed (insn, i)));
       arc_print ("\t}\n");
     }
 }
@@ -602,27 +587,26 @@ arc_write_pc (struct regcache *regcache, CORE_ADDR new_pc)
 {
   struct gdbarch *gdbarch = regcache->arch ();
 
-  arc_debug_printf ("Writing PC, new value=%s",
-		    paddress (gdbarch, new_pc));
+  arc_debug_printf ("Writing PC, new value=%s", paddress (gdbarch, new_pc));
 
   regcache_cooked_write_unsigned (regcache, gdbarch_pc_regnum (gdbarch),
-				  new_pc);
+                                  new_pc);
 
   ULONGEST status32;
   regcache_cooked_read_unsigned (regcache, gdbarch_ps_regnum (gdbarch),
-				 &status32);
+                                 &status32);
 
   if ((status32 & ARC_STATUS32_DE_MASK) != 0)
     {
       arc_debug_printf ("Changing PC while in delay slot.  Will "
-			"reset STATUS32.DE bit to zero.  Value of STATUS32 "
-			"register is 0x%s",
-			phex (status32, ARC_REGISTER_SIZE));
+                        "reset STATUS32.DE bit to zero.  Value of STATUS32 "
+                        "register is 0x%s",
+                        phex (status32, ARC_REGISTER_SIZE));
 
       /* Reset bit and write to the cache.  */
       status32 &= ~0x40;
       regcache_cooked_write_unsigned (regcache, gdbarch_ps_regnum (gdbarch),
-				      status32);
+                                      status32);
     }
 }
 
@@ -650,8 +634,8 @@ arc_write_pc (struct regcache *regcache, CORE_ADDR new_pc)
    virtual FP.  */
 
 static void
-arc_virtual_frame_pointer (struct gdbarch *gdbarch, CORE_ADDR pc,
-			   int *reg_ptr, LONGEST *offset_ptr)
+arc_virtual_frame_pointer (struct gdbarch *gdbarch, CORE_ADDR pc, int *reg_ptr,
+                           LONGEST *offset_ptr)
 {
   *reg_ptr = gdbarch_sp_regnum (gdbarch);
   *offset_ptr = 0;
@@ -726,10 +710,10 @@ arc_virtual_frame_pointer (struct gdbarch *gdbarch, CORE_ADDR pc,
 
 static CORE_ADDR
 arc_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
-		     struct regcache *regcache, CORE_ADDR bp_addr, int nargs,
-		     struct value **args, CORE_ADDR sp,
-		     function_call_return_method return_method,
-		     CORE_ADDR struct_addr)
+                     struct regcache *regcache, CORE_ADDR bp_addr, int nargs,
+                     struct value **args, CORE_ADDR sp,
+                     function_call_return_method return_method,
+                     CORE_ADDR struct_addr)
 {
   arc_debug_printf ("nargs = %d", nargs);
 
@@ -748,7 +732,7 @@ arc_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
       regcache_cooked_write_unsigned (regcache, arg_reg, struct_addr);
 
       arc_debug_printf ("struct return address %s passed in R%d",
-			print_core_address (gdbarch, struct_addr), arg_reg);
+                        print_core_address (gdbarch, struct_addr), arg_reg);
 
       arg_reg++;
     }
@@ -760,14 +744,14 @@ arc_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
       /* How much space do the arguments occupy in total?  Must round each
 	 argument's size up to an integral number of words.  */
       for (int i = 0; i < nargs; i++)
-	{
-	  unsigned int len = value_type (args[i])->length ();
-	  unsigned int space = align_up (len, 4);
+        {
+          unsigned int len = value_type (args[i])->length ();
+          unsigned int space = align_up (len, 4);
 
-	  total_space += space;
+          total_space += space;
 
-	  arc_debug_printf ("arg %d: %u bytes -> %u", i, len, space);
-	}
+          arc_debug_printf ("arg %d: %u bytes -> %u", i, len, space);
+        }
 
       /* Allocate a buffer to hold a memory image of the arguments.  */
       gdb_byte *memory_image = XCNEWVEC (gdb_byte, total_space);
@@ -775,48 +759,47 @@ arc_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
       /* Now copy all of the arguments into the buffer, correctly aligned.  */
       gdb_byte *data = memory_image;
       for (int i = 0; i < nargs; i++)
-	{
-	  unsigned int len = value_type (args[i])->length ();
-	  unsigned int space = align_up (len, 4);
+        {
+          unsigned int len = value_type (args[i])->length ();
+          unsigned int space = align_up (len, 4);
 
-	  memcpy (data, value_contents (args[i]).data (), (size_t) len);
-	  arc_debug_printf ("copying arg %d, val 0x%08x, len %d to mem",
-			    i, *((int *) value_contents (args[i]).data ()),
-			    len);
+          memcpy (data, value_contents (args[i]).data (), (size_t) len);
+          arc_debug_printf ("copying arg %d, val 0x%08x, len %d to mem", i,
+                            *((int *) value_contents (args[i]).data ()), len);
 
-	  data += space;
-	}
+          data += space;
+        }
 
       /* Now load as much as possible of the memory image into registers.  */
       data = memory_image;
       while (arg_reg <= ARC_LAST_ARG_REGNUM)
-	{
-	  arc_debug_printf ("passing 0x%02x%02x%02x%02x in register R%d",
-			    data[0], data[1], data[2], data[3], arg_reg);
+        {
+          arc_debug_printf ("passing 0x%02x%02x%02x%02x in register R%d",
+                            data[0], data[1], data[2], data[3], arg_reg);
 
-	  /* Note we don't use write_unsigned here, since that would convert
+          /* Note we don't use write_unsigned here, since that would convert
 	     the byte order, but we are already in the correct byte order.  */
-	  regcache->cooked_write (arg_reg, data);
+          regcache->cooked_write (arg_reg, data);
 
-	  data += ARC_REGISTER_SIZE;
-	  total_space -= ARC_REGISTER_SIZE;
+          data += ARC_REGISTER_SIZE;
+          total_space -= ARC_REGISTER_SIZE;
 
-	  /* All the data is now in registers.  */
-	  if (total_space == 0)
-	    break;
+          /* All the data is now in registers.  */
+          if (total_space == 0)
+            break;
 
-	  arg_reg++;
-	}
+          arg_reg++;
+        }
 
       /* If there is any data left, push it onto the stack (in a single write
 	 operation).  */
       if (total_space > 0)
-	{
-	  arc_debug_printf ("passing %d bytes on stack\n", total_space);
+        {
+          arc_debug_printf ("passing %d bytes on stack\n", total_space);
 
-	  sp -= total_space;
-	  write_memory (sp, data, (int) total_space);
-	}
+          sp -= total_space;
+          write_memory (sp, data, (int) total_space);
+        }
 
       xfree (memory_image);
     }
@@ -845,9 +828,9 @@ arc_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
 static CORE_ADDR
 arc_push_dummy_code (struct gdbarch *gdbarch, CORE_ADDR sp, CORE_ADDR funaddr,
-		     struct value **args, int nargs, struct type *value_type,
-		     CORE_ADDR *real_pc, CORE_ADDR *bp_addr,
-		     struct regcache *regcache)
+                     struct value **args, int nargs, struct type *value_type,
+                     CORE_ADDR *real_pc, CORE_ADDR *bp_addr,
+                     struct regcache *regcache)
 {
   *real_pc = funaddr;
   *bp_addr = entry_point_address ();
@@ -904,7 +887,7 @@ arc_cannot_store_register (struct gdbarch *gdbarch, int regnum)
 
 static void
 arc_extract_return_value (struct gdbarch *gdbarch, struct type *type,
-			  struct regcache *regcache, gdb_byte *valbuf)
+                          struct regcache *regcache, gdb_byte *valbuf)
 {
   unsigned int len = type->length ();
 
@@ -916,8 +899,8 @@ arc_extract_return_value (struct gdbarch *gdbarch, struct type *type,
 
       /* Get the return value from one register.  */
       regcache_cooked_read_unsigned (regcache, ARC_R0_REGNUM, &val);
-      store_unsigned_integer (valbuf, (int) len,
-			      gdbarch_byte_order (gdbarch), val);
+      store_unsigned_integer (valbuf, (int) len, gdbarch_byte_order (gdbarch),
+                              val);
 
       arc_debug_printf ("returning 0x%s", phex (val, ARC_REGISTER_SIZE));
     }
@@ -930,19 +913,17 @@ arc_extract_return_value (struct gdbarch *gdbarch, struct type *type,
       regcache_cooked_read_unsigned (regcache, ARC_R1_REGNUM, &high);
 
       store_unsigned_integer (valbuf, ARC_REGISTER_SIZE,
-			      gdbarch_byte_order (gdbarch), low);
+                              gdbarch_byte_order (gdbarch), low);
       store_unsigned_integer (valbuf + ARC_REGISTER_SIZE,
-			      (int) len - ARC_REGISTER_SIZE,
-			      gdbarch_byte_order (gdbarch), high);
+                              (int) len - ARC_REGISTER_SIZE,
+                              gdbarch_byte_order (gdbarch), high);
 
-      arc_debug_printf ("returning 0x%s%s",
-			phex (high, ARC_REGISTER_SIZE),
-			phex (low, ARC_REGISTER_SIZE));
+      arc_debug_printf ("returning 0x%s%s", phex (high, ARC_REGISTER_SIZE),
+                        phex (low, ARC_REGISTER_SIZE));
     }
   else
-    error (_("arc: extract_return_value: type length %u too large"), len);
+    error (_ ("arc: extract_return_value: type length %u too large"), len);
 }
-
 
 /* Store the return value of a function into the registers/memory used to
    return it, according to the convention used by the ABI.
@@ -955,7 +936,7 @@ arc_extract_return_value (struct gdbarch *gdbarch, struct type *type,
 
 static void
 arc_store_return_value (struct gdbarch *gdbarch, struct type *type,
-			struct regcache *regcache, const gdb_byte *valbuf)
+                        struct regcache *regcache, const gdb_byte *valbuf)
 {
   unsigned int len = type->length ();
 
@@ -967,7 +948,7 @@ arc_store_return_value (struct gdbarch *gdbarch, struct type *type,
 
       /* Put the return value into one register.  */
       val = extract_unsigned_integer (valbuf, (int) len,
-				      gdbarch_byte_order (gdbarch));
+                                      gdbarch_byte_order (gdbarch));
       regcache_cooked_write_unsigned (regcache, ARC_R0_REGNUM, val);
 
       arc_debug_printf ("storing 0x%s", phex (val, ARC_REGISTER_SIZE));
@@ -978,20 +959,19 @@ arc_store_return_value (struct gdbarch *gdbarch, struct type *type,
 
       /* Put the return value into  two registers.  */
       low = extract_unsigned_integer (valbuf, ARC_REGISTER_SIZE,
-				      gdbarch_byte_order (gdbarch));
+                                      gdbarch_byte_order (gdbarch));
       high = extract_unsigned_integer (valbuf + ARC_REGISTER_SIZE,
-				       (int) len - ARC_REGISTER_SIZE,
-				       gdbarch_byte_order (gdbarch));
+                                       (int) len - ARC_REGISTER_SIZE,
+                                       gdbarch_byte_order (gdbarch));
 
       regcache_cooked_write_unsigned (regcache, ARC_R0_REGNUM, low);
       regcache_cooked_write_unsigned (regcache, ARC_R1_REGNUM, high);
 
-      arc_debug_printf ("storing 0x%s%s",
-			phex (high, ARC_REGISTER_SIZE),
-			phex (low, ARC_REGISTER_SIZE));
+      arc_debug_printf ("storing 0x%s%s", phex (high, ARC_REGISTER_SIZE),
+                        phex (low, ARC_REGISTER_SIZE));
     }
   else
-    error (_("arc_store_return_value: type length too large."));
+    error (_ ("arc_store_return_value: type length too large."));
 }
 
 /* Implement the "get_longjmp_target" gdbarch method.  */
@@ -1005,13 +985,14 @@ arc_get_longjmp_target (frame_info_ptr frame, CORE_ADDR *pc)
   arc_gdbarch_tdep *tdep = gdbarch_tdep<arc_gdbarch_tdep> (gdbarch);
   int pc_offset = tdep->jb_pc * ARC_REGISTER_SIZE;
   gdb_byte buf[ARC_REGISTER_SIZE];
-  CORE_ADDR jb_addr = get_frame_register_unsigned (frame, ARC_FIRST_ARG_REGNUM);
+  CORE_ADDR jb_addr
+    = get_frame_register_unsigned (frame, ARC_FIRST_ARG_REGNUM);
 
   if (target_read_memory (jb_addr + pc_offset, buf, ARC_REGISTER_SIZE))
     return 0; /* Failed to read from memory.  */
 
   *pc = extract_unsigned_integer (buf, ARC_REGISTER_SIZE,
-				  gdbarch_byte_order (gdbarch));
+                                  gdbarch_byte_order (gdbarch));
   return 1;
 }
 
@@ -1019,8 +1000,8 @@ arc_get_longjmp_target (frame_info_ptr frame, CORE_ADDR *pc)
 
 static enum return_value_convention
 arc_return_value (struct gdbarch *gdbarch, struct value *function,
-		  struct type *valtype, struct regcache *regcache,
-		  gdb_byte *readbuf, const gdb_byte *writebuf)
+                  struct type *valtype, struct regcache *regcache,
+                  gdb_byte *readbuf, const gdb_byte *writebuf)
 {
   /* If the return type is a struct, or a union, or would occupy more than two
      registers, the ABI uses the "struct return convention": the calling
@@ -1028,12 +1009,12 @@ arc_return_value (struct gdbarch *gdbarch, struct value *function,
      parameter is the address at which the value being returned should be
      stored.  Otherwise, the result is returned in registers.  */
   int is_struct_return = (valtype->code () == TYPE_CODE_STRUCT
-			  || valtype->code () == TYPE_CODE_UNION
-			  || valtype->length () > 2 * ARC_REGISTER_SIZE);
+                          || valtype->code () == TYPE_CODE_UNION
+                          || valtype->length () > 2 * ARC_REGISTER_SIZE);
 
   arc_debug_printf ("readbuf = %s, writebuf = %s",
-		    host_address_to_string (readbuf),
-		    host_address_to_string (writebuf));
+                    host_address_to_string (readbuf),
+                    host_address_to_string (writebuf));
 
   if (writebuf != NULL)
     {
@@ -1052,9 +1033,8 @@ arc_return_value (struct gdbarch *gdbarch, struct value *function,
       arc_extract_return_value (gdbarch, valtype, regcache, readbuf);
     }
 
-  return (is_struct_return
-	  ? RETURN_VALUE_STRUCT_CONVENTION
-	  : RETURN_VALUE_REGISTER_CONVENTION);
+  return (is_struct_return ? RETURN_VALUE_STRUCT_CONVENTION
+                           : RETURN_VALUE_REGISTER_CONVENTION);
 }
 
 /* Return the base address of the frame.  For ARC, the base address is the
@@ -1070,7 +1050,8 @@ arc_frame_base_address (frame_info_ptr this_frame, void **prologue_cache)
    either a register or a constant.  */
 
 static pv_t
-arc_pv_get_operand (pv_t *regs, const struct arc_instruction &insn, int operand)
+arc_pv_get_operand (pv_t *regs, const struct arc_instruction &insn,
+                    int operand)
 {
   if (insn.operands[operand].kind == ARC_OPERAND_KIND_REG)
     return regs[insn.operands[operand].value];
@@ -1083,8 +1064,9 @@ arc_pv_get_operand (pv_t *regs, const struct arc_instruction &insn, int operand)
    be updated.  */
 
 static bool
-arc_is_in_prologue (struct gdbarch *gdbarch, const struct arc_instruction &insn,
-		    pv_t *regs, struct pv_area *stack)
+arc_is_in_prologue (struct gdbarch *gdbarch,
+                    const struct arc_instruction &insn, pv_t *regs,
+                    struct pv_area *stack)
 {
   /* It might be that currently analyzed address doesn't contain an
      instruction, hence INSN is not valid.  It likely means that address points
@@ -1110,8 +1092,8 @@ arc_is_in_prologue (struct gdbarch *gdbarch, const struct arc_instruction &insn,
 
       /* Store at some constant address.  */
       if (insn.operands_count > 1
-	  && insn.operands[1].kind != ARC_OPERAND_KIND_REG)
-	return false;
+          && insn.operands[1].kind != ARC_OPERAND_KIND_REG)
+        return false;
 
       /* Writeback modes:
 	 Mode	Address used		    Writeback value
@@ -1132,54 +1114,54 @@ arc_is_in_prologue (struct gdbarch *gdbarch, const struct arc_instruction &insn,
 	 value for ARC_WRITEBACK_AS.  */
       pv_t addr;
       if (insn.writeback_mode == ARC_WRITEBACK_AB)
-	addr = regs[base_reg];
+        addr = regs[base_reg];
       else
-	addr = pv_add_constant (regs[base_reg],
-				arc_insn_get_memory_offset (insn));
+        addr = pv_add_constant (regs[base_reg],
+                                arc_insn_get_memory_offset (insn));
 
       if (stack->store_would_trash (addr))
-	return false;
+        return false;
 
       if (insn.data_size_mode != ARC_SCALING_D)
-	{
-	  /* Find the value being stored.  */
-	  pv_t store_value = arc_pv_get_operand (regs, insn, 0);
+        {
+          /* Find the value being stored.  */
+          pv_t store_value = arc_pv_get_operand (regs, insn, 0);
 
-	  /* What is the size of a the stored value?  */
-	  CORE_ADDR size;
-	  if (insn.data_size_mode == ARC_SCALING_B)
-	    size = 1;
-	  else if (insn.data_size_mode == ARC_SCALING_H)
-	    size = 2;
-	  else
-	    size = ARC_REGISTER_SIZE;
+          /* What is the size of a the stored value?  */
+          CORE_ADDR size;
+          if (insn.data_size_mode == ARC_SCALING_B)
+            size = 1;
+          else if (insn.data_size_mode == ARC_SCALING_H)
+            size = 2;
+          else
+            size = ARC_REGISTER_SIZE;
 
-	  stack->store (addr, size, store_value);
-	}
+          stack->store (addr, size, store_value);
+        }
       else
-	{
-	  if (insn.operands[0].kind == ARC_OPERAND_KIND_REG)
-	    {
-	      /* If this is a double store, than write N+1 register as well.  */
-	      pv_t store_value1 = regs[insn.operands[0].value];
-	      pv_t store_value2 = regs[insn.operands[0].value + 1];
-	      stack->store (addr, ARC_REGISTER_SIZE, store_value1);
-	      stack->store (pv_add_constant (addr, ARC_REGISTER_SIZE),
-			    ARC_REGISTER_SIZE, store_value2);
-	    }
-	  else
-	    {
-	      pv_t store_value
-		= pv_constant (arc_insn_get_operand_value (insn, 0));
-	      stack->store (addr, ARC_REGISTER_SIZE * 2, store_value);
-	    }
-	}
+        {
+          if (insn.operands[0].kind == ARC_OPERAND_KIND_REG)
+            {
+              /* If this is a double store, than write N+1 register as well.  */
+              pv_t store_value1 = regs[insn.operands[0].value];
+              pv_t store_value2 = regs[insn.operands[0].value + 1];
+              stack->store (addr, ARC_REGISTER_SIZE, store_value1);
+              stack->store (pv_add_constant (addr, ARC_REGISTER_SIZE),
+                            ARC_REGISTER_SIZE, store_value2);
+            }
+          else
+            {
+              pv_t store_value
+                = pv_constant (arc_insn_get_operand_value (insn, 0));
+              stack->store (addr, ARC_REGISTER_SIZE * 2, store_value);
+            }
+        }
 
       /* Is base register updated?  */
       if (insn.writeback_mode == ARC_WRITEBACK_A
-	  || insn.writeback_mode == ARC_WRITEBACK_AB)
-	regs[base_reg] = pv_add_constant (regs[base_reg],
-					  arc_insn_get_memory_offset (insn));
+          || insn.writeback_mode == ARC_WRITEBACK_AB)
+        regs[base_reg] = pv_add_constant (regs[base_reg],
+                                          arc_insn_get_memory_offset (insn));
 
       return true;
     }
@@ -1189,10 +1171,10 @@ arc_is_in_prologue (struct gdbarch *gdbarch, const struct arc_instruction &insn,
 
       /* Destination argument can be "0", so nothing will happen.  */
       if (insn.operands[0].kind == ARC_OPERAND_KIND_REG)
-	{
-	  int dst_regnum = insn.operands[0].value;
-	  regs[dst_regnum] = arc_pv_get_operand (regs, insn, 1);
-	}
+        {
+          int dst_regnum = insn.operands[0].value;
+          regs[dst_regnum] = arc_pv_get_operand (regs, insn, 1);
+        }
       return true;
     }
   else if (insn.insn_class == SUB)
@@ -1201,11 +1183,11 @@ arc_is_in_prologue (struct gdbarch *gdbarch, const struct arc_instruction &insn,
 
       /* SUB 0,b,c.  */
       if (insn.operands[0].kind != ARC_OPERAND_KIND_REG)
-	return true;
+        return true;
 
       int dst_regnum = insn.operands[0].value;
       regs[dst_regnum] = pv_subtract (arc_pv_get_operand (regs, insn, 1),
-				      arc_pv_get_operand (regs, insn, 2));
+                                      arc_pv_get_operand (regs, insn, 2));
       return true;
     }
   else if (insn.insn_class == ENTER)
@@ -1240,56 +1222,55 @@ arc_is_in_prologue (struct gdbarch *gdbarch, const struct arc_instruction &insn,
 
       bool is_fp_saved;
       if (insn.operands_count > 1)
-	is_fp_saved = (insn.operands[1].value  == ARC_FP_REGNUM);
+        is_fp_saved = (insn.operands[1].value == ARC_FP_REGNUM);
       else
-	is_fp_saved = false;
+        is_fp_saved = false;
 
       bool is_blink_saved;
       if (insn.operands_count > 1)
-	is_blink_saved = (insn.operands[insn.operands_count - 1].value
-			  == ARC_BLINK_REGNUM);
+        is_blink_saved
+          = (insn.operands[insn.operands_count - 1].value == ARC_BLINK_REGNUM);
       else
-	is_blink_saved = false;
+        is_blink_saved = false;
 
       /* Amount of bytes to be allocated to store specified registers.  */
-      CORE_ADDR st_size = ((regs_saved + is_fp_saved + is_blink_saved)
-			   * ARC_REGISTER_SIZE);
+      CORE_ADDR st_size
+        = ((regs_saved + is_fp_saved + is_blink_saved) * ARC_REGISTER_SIZE);
       pv_t new_sp = pv_add_constant (regs[ARC_SP_REGNUM], -st_size);
 
       /* Assume that if the last register (closest to new SP) can be written,
 	 then it is possible to write all of them.  */
       if (stack->store_would_trash (new_sp))
-	return false;
+        return false;
 
       /* Current store address.  */
       pv_t addr = regs[ARC_SP_REGNUM];
 
       if (is_fp_saved)
-	{
-	  addr = pv_add_constant (addr, -ARC_REGISTER_SIZE);
-	  stack->store (addr, ARC_REGISTER_SIZE, regs[ARC_FP_REGNUM]);
-	}
+        {
+          addr = pv_add_constant (addr, -ARC_REGISTER_SIZE);
+          stack->store (addr, ARC_REGISTER_SIZE, regs[ARC_FP_REGNUM]);
+        }
 
       /* Registers are stored in backward order: from GP (R26) to R13.  */
       for (int i = ARC_R13_REGNUM + regs_saved - 1; i >= ARC_R13_REGNUM; i--)
-	{
-	  addr = pv_add_constant (addr, -ARC_REGISTER_SIZE);
-	  stack->store (addr, ARC_REGISTER_SIZE, regs[i]);
-	}
+        {
+          addr = pv_add_constant (addr, -ARC_REGISTER_SIZE);
+          stack->store (addr, ARC_REGISTER_SIZE, regs[i]);
+        }
 
       if (is_blink_saved)
-	{
-	  addr = pv_add_constant (addr, -ARC_REGISTER_SIZE);
-	  stack->store (addr, ARC_REGISTER_SIZE,
-			regs[ARC_BLINK_REGNUM]);
-	}
+        {
+          addr = pv_add_constant (addr, -ARC_REGISTER_SIZE);
+          stack->store (addr, ARC_REGISTER_SIZE, regs[ARC_BLINK_REGNUM]);
+        }
 
       gdb_assert (pv_is_identical (addr, new_sp));
 
       regs[ARC_SP_REGNUM] = new_sp;
 
       if (is_fp_saved)
-	regs[ARC_FP_REGNUM] = regs[ARC_SP_REGNUM];
+        regs[ARC_FP_REGNUM] = regs[ARC_SP_REGNUM];
 
       return true;
     }
@@ -1358,11 +1339,11 @@ arc_is_in_prologue (struct gdbarch *gdbarch, const struct arc_instruction &insn,
 
 static CORE_ADDR
 arc_analyze_prologue (struct gdbarch *gdbarch, const CORE_ADDR entrypoint,
-		      const CORE_ADDR limit_pc, struct arc_frame_cache *cache)
+                      const CORE_ADDR limit_pc, struct arc_frame_cache *cache)
 {
   arc_debug_printf ("entrypoint=%s, limit_pc=%s",
-		    paddress (gdbarch, entrypoint),
-		    paddress (gdbarch, limit_pc));
+                    paddress (gdbarch, entrypoint),
+                    paddress (gdbarch, limit_pc));
 
   /* Prologue values.  Only core registers can be stored.  */
   pv_t regs[ARC_LAST_CORE_REGNUM + 1];
@@ -1379,20 +1360,20 @@ arc_analyze_prologue (struct gdbarch *gdbarch, const CORE_ADDR entrypoint,
 
       struct gdb_non_printing_memory_disassembler dis (gdbarch);
       arc_insn_decode (current_prologue_end, dis.disasm_info (),
-		       arc_delayed_print_insn, &insn);
+                       arc_delayed_print_insn, &insn);
 
       if (arc_debug)
-	arc_insn_dump (insn);
+        arc_insn_dump (insn);
 
       /* If this instruction is in the prologue, fields in the cache will be
 	 updated, and the saved registers mask may be updated.  */
       if (!arc_is_in_prologue (gdbarch, insn, regs, &stack))
-	{
-	  /* Found an instruction that is not in the prologue.  */
-	  arc_debug_printf ("End of prologue reached at address %s",
-			    paddress (gdbarch, insn.address));
-	  break;
-	}
+        {
+          /* Found an instruction that is not in the prologue.  */
+          arc_debug_printf ("End of prologue reached at address %s",
+                            paddress (gdbarch, insn.address));
+          break;
+        }
 
       current_prologue_end = arc_insn_get_linear_next_pc (insn);
     }
@@ -1401,23 +1382,23 @@ arc_analyze_prologue (struct gdbarch *gdbarch, const CORE_ADDR entrypoint,
     {
       /* Figure out if it is a frame pointer or just a stack pointer.  */
       if (pv_is_register (regs[ARC_FP_REGNUM], ARC_SP_REGNUM))
-	{
-	  cache->frame_base_reg = ARC_FP_REGNUM;
-	  cache->frame_base_offset = -regs[ARC_FP_REGNUM].k;
-	}
+        {
+          cache->frame_base_reg = ARC_FP_REGNUM;
+          cache->frame_base_offset = -regs[ARC_FP_REGNUM].k;
+        }
       else
-	{
-	  cache->frame_base_reg = ARC_SP_REGNUM;
-	  cache->frame_base_offset = -regs[ARC_SP_REGNUM].k;
-	}
+        {
+          cache->frame_base_reg = ARC_SP_REGNUM;
+          cache->frame_base_offset = -regs[ARC_SP_REGNUM].k;
+        }
 
       /* Assign offset from old SP to all saved registers.  */
       for (int i = 0; i <= ARC_LAST_CORE_REGNUM; i++)
-	{
-	  CORE_ADDR offset;
-	  if (stack.find_reg (gdbarch, i, &offset))
-	    cache->saved_regs[i].set_addr (offset);
-	}
+        {
+          CORE_ADDR offset;
+          if (stack.find_reg (gdbarch, i, &offset))
+            cache->saved_regs[i].set_addr (offset);
+        }
     }
 
   return current_prologue_end;
@@ -1439,8 +1420,9 @@ arc_analyze_prologue (struct gdbarch *gdbarch, const CORE_ADDR entrypoint,
    limit will be rarely reached.  */
 
 const static int MAX_PROLOGUE_LENGTH
-  = 4 * (ARC_R25_REGNUM - ARC_R13_REGNUM + 1 + 2 + 1 + 6
-	 + ARC_LAST_ARG_REGNUM - ARC_FIRST_ARG_REGNUM + 1);
+  = 4
+    * (ARC_R25_REGNUM - ARC_R13_REGNUM + 1 + 2 + 1 + 6 + ARC_LAST_ARG_REGNUM
+       - ARC_FIRST_ARG_REGNUM + 1);
 
 /* Implement the "skip_prologue" gdbarch method.
 
@@ -1460,11 +1442,10 @@ arc_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
   if (find_pc_partial_function (pc, &func_name, &func_addr, NULL))
     {
       /* Found a function.  */
-      CORE_ADDR postprologue_pc
-	= skip_prologue_using_sal (gdbarch, func_addr);
+      CORE_ADDR postprologue_pc = skip_prologue_using_sal (gdbarch, func_addr);
 
       if (postprologue_pc != 0)
-	return std::max (pc, postprologue_pc);
+        return std::max (pc, postprologue_pc);
     }
 
   /* No prologue info in symbol table, have to analyze prologue.  */
@@ -1524,7 +1505,7 @@ arc_delayed_print_insn (bfd_vma addr, struct disassemble_info *info)
     {
       struct obj_section *s = find_pc_section (addr);
       if (s != NULL)
-	info->section = s->the_bfd_section;
+        info->section = s->the_bfd_section;
     }
 
   return default_print_insn (addr, info);
@@ -1597,15 +1578,13 @@ arc_sw_breakpoint_from_kind (struct gdbarch *gdbarch, int kind, int *size)
 
   if (kind == sizeof (arc_brk_le))
     {
-      return ((gdbarch_byte_order (gdbarch) == BFD_ENDIAN_BIG)
-	      ? arc_brk_be
-	      : arc_brk_le);
+      return ((gdbarch_byte_order (gdbarch) == BFD_ENDIAN_BIG) ? arc_brk_be
+                                                               : arc_brk_le);
     }
   else
     {
-      return ((gdbarch_byte_order (gdbarch) == BFD_ENDIAN_BIG)
-	      ? arc_brk_s_be
-	      : arc_brk_s_le);
+      return ((gdbarch_byte_order (gdbarch) == BFD_ENDIAN_BIG) ? arc_brk_s_be
+                                                               : arc_brk_s_le);
     }
 }
 
@@ -1621,21 +1600,21 @@ arc_frame_align (struct gdbarch *gdbarch, CORE_ADDR sp)
 
 static void
 arc_print_frame_cache (struct gdbarch *gdbarch, const char *message,
-		       struct arc_frame_cache *cache, int addresses_known)
+                       struct arc_frame_cache *cache, int addresses_known)
 {
   arc_debug_printf ("frame_info %s", message);
   arc_debug_printf ("prev_sp = %s", paddress (gdbarch, cache->prev_sp));
   arc_debug_printf ("frame_base_reg = %i", cache->frame_base_reg);
   arc_debug_printf ("frame_base_offset = %s",
-		    plongest (cache->frame_base_offset));
+                    plongest (cache->frame_base_offset));
 
   for (int i = 0; i <= ARC_BLINK_REGNUM; i++)
     {
       if (cache->saved_regs[i].is_addr ())
-	arc_debug_printf ("saved register %s at %s %s",
-			  gdbarch_register_name (gdbarch, i),
-			  (addresses_known) ? "address" : "offset",
-			      paddress (gdbarch, cache->saved_regs[i].addr ()));
+        arc_debug_printf ("saved register %s at %s %s",
+                          gdbarch_register_name (gdbarch, i),
+                          (addresses_known) ? "address" : "offset",
+                          paddress (gdbarch, cache->saved_regs[i].addr ()));
     }
 }
 
@@ -1655,11 +1634,11 @@ arc_make_frame_cache (frame_info_ptr this_frame)
       struct symtab_and_line sal = find_pc_line (entrypoint, 0);
       CORE_ADDR prev_pc = get_frame_pc (this_frame);
       if (sal.line == 0)
-	/* No line info so use current PC.  */
-	prologue_end = prev_pc;
+        /* No line info so use current PC.  */
+        prologue_end = prev_pc;
       else if (sal.end < prologue_end)
-	/* The next line begins after the function end.  */
-	prologue_end = sal.end;
+        /* The next line begins after the function end.  */
+        prologue_end = sal.end;
 
       prologue_end = std::min (prologue_end, prev_pc);
     }
@@ -1672,7 +1651,7 @@ arc_make_frame_cache (frame_info_ptr this_frame)
 	 assumes in this case that program is inside the normal frame (with
 	 frame pointer).  ARC, perhaps, should try to do the same.  */
       entrypoint = get_frame_register_unsigned (this_frame,
-						gdbarch_pc_regnum (gdbarch));
+                                                gdbarch_pc_regnum (gdbarch));
       prologue_end = entrypoint + MAX_PROLOGUE_LENGTH;
     }
 
@@ -1687,8 +1666,8 @@ arc_make_frame_cache (frame_info_ptr this_frame)
   if (arc_debug)
     arc_print_frame_cache (gdbarch, "after prologue", cache, false);
 
-  CORE_ADDR unwound_fb = get_frame_register_unsigned (this_frame,
-						      cache->frame_base_reg);
+  CORE_ADDR unwound_fb
+    = get_frame_register_unsigned (this_frame, cache->frame_base_reg);
   if (unwound_fb == 0)
     return cache;
   cache->prev_sp = unwound_fb + cache->frame_base_offset;
@@ -1696,8 +1675,8 @@ arc_make_frame_cache (frame_info_ptr this_frame)
   for (int i = 0; i <= ARC_LAST_CORE_REGNUM; i++)
     {
       if (cache->saved_regs[i].is_addr ())
-	cache->saved_regs[i].set_addr (cache->saved_regs[i].addr ()
-				       + cache->prev_sp);
+        cache->saved_regs[i].set_addr (cache->saved_regs[i].addr ()
+                                       + cache->prev_sp);
     }
 
   if (arc_debug)
@@ -1710,7 +1689,7 @@ arc_make_frame_cache (frame_info_ptr this_frame)
 
 static void
 arc_frame_this_id (frame_info_ptr this_frame, void **this_cache,
-		   struct frame_id *this_id)
+                   struct frame_id *this_id)
 {
   arc_debug_printf ("called");
 
@@ -1745,8 +1724,8 @@ arc_frame_this_id (frame_info_ptr this_frame, void **this_cache,
    */
   CORE_ADDR code_addr = get_frame_func (this_frame);
   if (code_addr == 0)
-    code_addr = get_frame_register_unsigned (this_frame,
-					     gdbarch_pc_regnum (gdbarch));
+    code_addr
+      = get_frame_register_unsigned (this_frame, gdbarch_pc_regnum (gdbarch));
 
   *this_id = frame_id_build (stack_addr, code_addr);
 }
@@ -1754,8 +1733,8 @@ arc_frame_this_id (frame_info_ptr this_frame, void **this_cache,
 /* Implement the "prev_register" frame_unwind method.  */
 
 static struct value *
-arc_frame_prev_register (frame_info_ptr this_frame,
-			 void **this_cache, int regnum)
+arc_frame_prev_register (frame_info_ptr this_frame, void **this_cache,
+                         int regnum)
 {
   if (*this_cache == NULL)
     *this_cache = arc_make_frame_cache (this_frame);
@@ -1790,8 +1769,8 @@ arc_frame_prev_register (frame_info_ptr this_frame,
 
 static void
 arc_dwarf2_frame_init_reg (struct gdbarch *gdbarch, int regnum,
-			   struct dwarf2_frame_state_reg *reg,
-			   frame_info_ptr info)
+                           struct dwarf2_frame_state_reg *reg,
+                           frame_info_ptr info)
 {
   if (regnum == gdbarch_pc_regnum (gdbarch))
     /* The return address column.  */
@@ -1813,7 +1792,8 @@ arc_make_sigtramp_frame_cache (frame_info_ptr this_frame)
   arc_gdbarch_tdep *tdep = gdbarch_tdep<arc_gdbarch_tdep> (arch);
 
   /* Allocate new frame cache instance and space for saved register info.  */
-  struct arc_frame_cache *cache = FRAME_OBSTACK_ZALLOC (struct arc_frame_cache);
+  struct arc_frame_cache *cache
+    = FRAME_OBSTACK_ZALLOC (struct arc_frame_cache);
   cache->saved_regs = trad_frame_alloc_saved_regs (this_frame);
 
   /* Get the stack pointer and use it as the frame base.  */
@@ -1834,7 +1814,7 @@ arc_make_sigtramp_frame_cache (frame_info_ptr this_frame)
   for (int i = 0; i < tdep->sc_num_regs; i++)
     {
       if (tdep->sc_reg_offset[i] != ARC_OFFSET_NO_REGISTER)
-	cache->saved_regs[i].set_addr (addr + tdep->sc_reg_offset[i]);
+        cache->saved_regs[i].set_addr (addr + tdep->sc_reg_offset[i]);
     }
 
   return cache;
@@ -1844,8 +1824,8 @@ arc_make_sigtramp_frame_cache (frame_info_ptr this_frame)
    frames.  */
 
 static void
-arc_sigtramp_frame_this_id (frame_info_ptr this_frame,
-			    void **this_cache, struct frame_id *this_id)
+arc_sigtramp_frame_this_id (frame_info_ptr this_frame, void **this_cache,
+                            struct frame_id *this_id)
 {
   arc_debug_printf ("called");
 
@@ -1863,8 +1843,8 @@ arc_sigtramp_frame_this_id (frame_info_ptr this_frame,
 /* Get a register from a signal handler frame.  */
 
 static struct value *
-arc_sigtramp_frame_prev_register (frame_info_ptr this_frame,
-				  void **this_cache, int regnum)
+arc_sigtramp_frame_prev_register (frame_info_ptr this_frame, void **this_cache,
+                                  int regnum)
 {
   arc_debug_printf ("regnum = %d", regnum);
 
@@ -1881,8 +1861,7 @@ arc_sigtramp_frame_prev_register (frame_info_ptr this_frame,
 
 static int
 arc_sigtramp_frame_sniffer (const struct frame_unwind *self,
-			    frame_info_ptr this_frame,
-			    void **this_cache)
+                            frame_info_ptr this_frame, void **this_cache)
 {
   arc_debug_printf ("called");
 
@@ -1892,48 +1871,42 @@ arc_sigtramp_frame_sniffer (const struct frame_unwind *self,
   /* If we have a sigcontext_addr handler, then just return 1 (same as the
      "default_frame_sniffer ()").  */
   return (tdep->sigcontext_addr != NULL && tdep->is_sigtramp != NULL
-	  && tdep->is_sigtramp (this_frame));
+          && tdep->is_sigtramp (this_frame));
 }
 
 /* Structure defining the ARC ordinary frame unwind functions.  Since we are
    the fallback unwinder, we use the default frame sniffer, which always
    accepts the frame.  */
 
-static const struct frame_unwind arc_frame_unwind = {
-  "arc prologue",
-  NORMAL_FRAME,
-  default_frame_unwind_stop_reason,
-  arc_frame_this_id,
-  arc_frame_prev_register,
-  NULL,
-  default_frame_sniffer,
-  NULL,
-  NULL
-};
+static const struct frame_unwind arc_frame_unwind
+  = { "arc prologue",
+      NORMAL_FRAME,
+      default_frame_unwind_stop_reason,
+      arc_frame_this_id,
+      arc_frame_prev_register,
+      NULL,
+      default_frame_sniffer,
+      NULL,
+      NULL };
 
 /* Structure defining the ARC signal frame unwind functions.  Custom
    sniffer is used, because this frame must be accepted only in the right
    context.  */
 
-static const struct frame_unwind arc_sigtramp_frame_unwind = {
-  "arc sigtramp",
-  SIGTRAMP_FRAME,
-  default_frame_unwind_stop_reason,
-  arc_sigtramp_frame_this_id,
-  arc_sigtramp_frame_prev_register,
-  NULL,
-  arc_sigtramp_frame_sniffer,
-  NULL,
-  NULL
-};
+static const struct frame_unwind arc_sigtramp_frame_unwind
+  = { "arc sigtramp",
+      SIGTRAMP_FRAME,
+      default_frame_unwind_stop_reason,
+      arc_sigtramp_frame_this_id,
+      arc_sigtramp_frame_prev_register,
+      NULL,
+      arc_sigtramp_frame_sniffer,
+      NULL,
+      NULL };
 
-
-static const struct frame_base arc_normal_base = {
-  &arc_frame_unwind,
-  arc_frame_base_address,
-  arc_frame_base_address,
-  arc_frame_base_address
-};
+static const struct frame_base arc_normal_base
+  = { &arc_frame_unwind, arc_frame_base_address, arc_frame_base_address,
+      arc_frame_base_address };
 
 static enum arc_isa
 mach_type_to_arc_isa (const unsigned long mach)
@@ -1947,7 +1920,7 @@ mach_type_to_arc_isa (const unsigned long mach)
     case bfd_mach_arc_arcv2:
       return ARC_ISA_ARCV2;
     default:
-	internal_error (_("unknown machine id %lu"), mach);
+      internal_error (_ ("unknown machine id %lu"), mach);
     }
 }
 
@@ -1968,11 +1941,11 @@ arc_arch_features_create (const bfd *abfd, const unsigned long mach)
       unsigned char eclass = elf_elfheader (abfd)->e_ident[EI_CLASS];
 
       if (eclass == ELFCLASS32)
-	reg_size = 4;
+        reg_size = 4;
       else if (eclass == ELFCLASS64)
-	reg_size = 8;
+        reg_size = 8;
       else
-	internal_error (_("unknown ELF header class %d"), eclass);
+        internal_error (_ ("unknown ELF header class %d"), eclass);
     }
 
   /* MACH from a bfd_arch_info struct is used here.  It should be a safe
@@ -1997,8 +1970,8 @@ find_obsolete_core_names (const struct target_desc *tdesc)
     feat = tdesc_find_feature (tdesc, ARC_CORE_V2_OBSOLETE_FEATURE_NAME);
 
   if (feat == nullptr)
-    feat = tdesc_find_feature
-      (tdesc, ARC_CORE_V2_REDUCED_OBSOLETE_FEATURE_NAME);
+    feat
+      = tdesc_find_feature (tdesc, ARC_CORE_V2_REDUCED_OBSOLETE_FEATURE_NAME);
 
   return feat;
 }
@@ -2024,8 +1997,8 @@ determine_core_reg_feature_set (const unsigned long mach)
     case ARC_ISA_ARCV2:
       return &arc_v2_core_reg_feature;
     default:
-      gdb_assert_not_reached
-	("Unknown machine type to determine the core feature set.");
+      gdb_assert_not_reached (
+        "Unknown machine type to determine the core feature set.");
     }
 }
 
@@ -2051,10 +2024,8 @@ determine_aux_reg_feature_set ()
 static void
 arc_update_acc_reg_names (const int byte_order)
 {
-  const char *r58_alias
-    = byte_order == BFD_ENDIAN_LITTLE ? "accl" : "acch";
-  const char *r59_alias
-    = byte_order == BFD_ENDIAN_LITTLE ? "acch" : "accl";
+  const char *r58_alias = byte_order == BFD_ENDIAN_LITTLE ? "accl" : "acch";
+  const char *r59_alias = byte_order == BFD_ENDIAN_LITTLE ? "acch" : "accl";
 
   /* Subscript 1 must be OK because those registers have 2 names.  */
   arc_v1_core_reg_feature.registers[ARC_R58_REGNUM].names[1] = r58_alias;
@@ -2070,37 +2041,37 @@ arc_update_acc_reg_names (const int byte_order)
 
 static bool
 arc_check_tdesc_feature (struct tdesc_arch_data *tdesc_data,
-			 const struct tdesc_feature *feature,
-			 const struct arc_register_feature *reg_set)
+                         const struct tdesc_feature *feature,
+                         const struct arc_register_feature *reg_set)
 {
   for (const auto &reg : reg_set->registers)
     {
       bool found = false;
 
       for (const char *name : reg.names)
-	{
-	  found
-	    = tdesc_numbered_register (feature, tdesc_data, reg.regnum, name);
+        {
+          found
+            = tdesc_numbered_register (feature, tdesc_data, reg.regnum, name);
 
-	  if (found)
-	    break;
-	}
+          if (found)
+            break;
+        }
 
       if (!found && reg.required_p)
-	{
-	  std::ostringstream reg_names;
-	  for (std::size_t i = 0; i < reg.names.size(); ++i)
-	    {
-	      if (i == 0)
-		reg_names << "'" << reg.names[0] << "'";
-	      else
-		reg_names << " or '" << reg.names[0] << "'";
-	    }
-	  arc_print (_("Error: Cannot find required register(s) %s "
-		       "in feature '%s'.\n"), reg_names.str ().c_str (),
-		       feature->name.c_str ());
-	  return false;
-	}
+        {
+          std::ostringstream reg_names;
+          for (std::size_t i = 0; i < reg.names.size (); ++i)
+            {
+              if (i == 0)
+                reg_names << "'" << reg.names[0] << "'";
+              else
+                reg_names << " or '" << reg.names[0] << "'";
+            }
+          arc_print (_ ("Error: Cannot find required register(s) %s "
+                        "in feature '%s'.\n"),
+                     reg_names.str ().c_str (), feature->name.c_str ());
+          return false;
+        }
     }
 
   return true;
@@ -2113,7 +2084,7 @@ arc_check_tdesc_feature (struct tdesc_arch_data *tdesc_data,
 
 static bool
 arc_check_for_hw_loops (const struct target_desc *tdesc,
-			struct tdesc_arch_data *data)
+                        struct tdesc_arch_data *data)
 {
   const auto feature_aux = tdesc_find_feature (tdesc, ARC_AUX_FEATURE_NAME);
   const auto aux_regset = determine_aux_reg_feature_set ();
@@ -2122,15 +2093,16 @@ arc_check_for_hw_loops (const struct target_desc *tdesc,
     return false;
 
   bool hw_loop_p = false;
-  const auto lp_start_name =
-    aux_regset->registers[ARC_LP_START_REGNUM - ARC_FIRST_AUX_REGNUM].names[0];
-  const auto lp_end_name =
-    aux_regset->registers[ARC_LP_END_REGNUM - ARC_FIRST_AUX_REGNUM].names[0];
+  const auto lp_start_name
+    = aux_regset->registers[ARC_LP_START_REGNUM - ARC_FIRST_AUX_REGNUM]
+        .names[0];
+  const auto lp_end_name
+    = aux_regset->registers[ARC_LP_END_REGNUM - ARC_FIRST_AUX_REGNUM].names[0];
 
-  hw_loop_p = tdesc_numbered_register (feature_aux, data,
-				       ARC_LP_START_REGNUM, lp_start_name);
-  hw_loop_p &= tdesc_numbered_register (feature_aux, data,
-				       ARC_LP_END_REGNUM, lp_end_name);
+  hw_loop_p = tdesc_numbered_register (feature_aux, data, ARC_LP_START_REGNUM,
+                                       lp_start_name);
+  hw_loop_p &= tdesc_numbered_register (feature_aux, data, ARC_LP_END_REGNUM,
+                                        lp_end_name);
 
   return hw_loop_p;
 }
@@ -2142,7 +2114,7 @@ arc_check_for_hw_loops (const struct target_desc *tdesc,
 
 static bool
 arc_tdesc_init (struct gdbarch_info info, const struct target_desc **tdesc,
-		tdesc_arch_data_up *tdesc_data)
+                tdesc_arch_data_up *tdesc_data)
 {
   const struct target_desc *tdesc_loc = info.target_desc;
   arc_debug_printf ("Target description initialization.");
@@ -2151,8 +2123,7 @@ arc_tdesc_init (struct gdbarch_info info, const struct target_desc **tdesc,
   if (!tdesc_has_registers (tdesc_loc))
     {
       arc_arch_features features
-	= arc_arch_features_create (info.abfd,
-				    info.bfd_arch_info->mach);
+        = arc_arch_features_create (info.abfd, info.bfd_arch_info->mach);
       tdesc_loc = arc_lookup_target_description (features);
     }
   gdb_assert (tdesc_loc != nullptr);
@@ -2172,15 +2143,17 @@ arc_tdesc_init (struct gdbarch_info info, const struct target_desc **tdesc,
 
   if (feature_core == nullptr)
     {
-      arc_print (_("Error: Cannot find required feature '%s' in supplied "
-		   "target description.\n"), ARC_CORE_FEATURE_NAME);
+      arc_print (_ ("Error: Cannot find required feature '%s' in supplied "
+                    "target description.\n"),
+                 ARC_CORE_FEATURE_NAME);
       return false;
     }
 
   if (feature_aux == nullptr)
     {
-      arc_print (_("Error: Cannot find required feature '%s' in supplied "
-		   "target description.\n"), ARC_AUX_FEATURE_NAME);
+      arc_print (_ ("Error: Cannot find required feature '%s' in supplied "
+                    "target description.\n"),
+                 ARC_AUX_FEATURE_NAME);
       return false;
     }
 
@@ -2193,13 +2166,11 @@ arc_tdesc_init (struct gdbarch_info info, const struct target_desc **tdesc,
 
   arc_update_acc_reg_names (info.byte_order);
 
-  bool valid_p = arc_check_tdesc_feature (tdesc_data_loc.get (),
-					  feature_core,
-					  arc_core_reg_feature);
+  bool valid_p = arc_check_tdesc_feature (tdesc_data_loc.get (), feature_core,
+                                          arc_core_reg_feature);
 
-  valid_p &= arc_check_tdesc_feature (tdesc_data_loc.get (),
-				      feature_aux,
-				      arc_aux_reg_feature);
+  valid_p &= arc_check_tdesc_feature (tdesc_data_loc.get (), feature_aux,
+                                      arc_aux_reg_feature);
 
   if (!valid_p)
     {
@@ -2288,7 +2259,7 @@ arc_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_sp_regnum (gdbarch, ARC_SP_REGNUM);
   set_gdbarch_pc_regnum (gdbarch, ARC_PC_REGNUM);
   set_gdbarch_ps_regnum (gdbarch, ARC_STATUS32_REGNUM);
-  set_gdbarch_fp0_regnum (gdbarch, -1);	/* No FPU registers.  */
+  set_gdbarch_fp0_regnum (gdbarch, -1); /* No FPU registers.  */
 
   set_gdbarch_push_dummy_call (gdbarch, arc_push_dummy_call);
   set_gdbarch_push_dummy_code (gdbarch, arc_push_dummy_code);
@@ -2351,11 +2322,11 @@ arc_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   if (info.target_desc != NULL)
     {
       const struct bfd_arch_info *tdesc_arch
-	= tdesc_architecture (info.target_desc);
+        = tdesc_architecture (info.target_desc);
       if (tdesc_arch != NULL)
-	{
-	  xfree (arc_disassembler_options);
-	  /* FIXME: It is not really good to change disassembler options
+        {
+          xfree (arc_disassembler_options);
+          /* FIXME: It is not really good to change disassembler options
 	     behind the scene, because that might override options
 	     specified by the user.  However as of now ARC doesn't support
 	     `set disassembler-options' hence this code is the only place
@@ -2363,7 +2334,7 @@ arc_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 	     existing gdbarches, which also can be problematic, if
 	     arc_gdbarch_init will start reusing existing gdbarch
 	     instances.  */
-	  /* Target description specifies a BFD architecture, which is
+          /* Target description specifies a BFD architecture, which is
 	     different from ARC cpu, as accepted by disassembler (and most
 	     other ARC tools), because cpu values are much more fine grained -
 	     there can be multiple cpu values per single BFD architecture.  As
@@ -2372,35 +2343,35 @@ arc_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 	     best to use the most feature-rich CPU, so that disassembler will
 	     recognize all instructions available to the specified
 	     architecture.  */
-	  switch (tdesc_arch->mach)
-	    {
-	    case bfd_mach_arc_arc601:
-	      arc_disassembler_options = xstrdup ("cpu=arc601");
-	      break;
-	    case bfd_mach_arc_arc600:
-	      arc_disassembler_options = xstrdup ("cpu=arc600");
-	      break;
-	    case bfd_mach_arc_arc700:
-	      arc_disassembler_options = xstrdup ("cpu=arc700");
-	      break;
-	    case bfd_mach_arc_arcv2:
-	      /* Machine arcv2 has three arches: ARCv2, EM and HS; where ARCv2
+          switch (tdesc_arch->mach)
+            {
+            case bfd_mach_arc_arc601:
+              arc_disassembler_options = xstrdup ("cpu=arc601");
+              break;
+            case bfd_mach_arc_arc600:
+              arc_disassembler_options = xstrdup ("cpu=arc600");
+              break;
+            case bfd_mach_arc_arc700:
+              arc_disassembler_options = xstrdup ("cpu=arc700");
+              break;
+            case bfd_mach_arc_arcv2:
+              /* Machine arcv2 has three arches: ARCv2, EM and HS; where ARCv2
 		 is treated as EM.  */
-	      if (arc_arch_is_hs (tdesc_arch))
-		arc_disassembler_options = xstrdup ("cpu=hs38_linux");
-	      else
-		arc_disassembler_options = xstrdup ("cpu=em4_fpuda");
-	      break;
-	    default:
-	      arc_disassembler_options = NULL;
-	      break;
-	    }
-	}
+              if (arc_arch_is_hs (tdesc_arch))
+                arc_disassembler_options = xstrdup ("cpu=hs38_linux");
+              else
+                arc_disassembler_options = xstrdup ("cpu=em4_fpuda");
+              break;
+            default:
+              arc_disassembler_options = NULL;
+              break;
+            }
+        }
     }
 
   set_gdbarch_disassembler_options (gdbarch, &arc_disassembler_options);
   set_gdbarch_valid_disassembler_options (gdbarch,
-					  disassembler_options_arc ());
+                                          disassembler_options_arc ());
 
   tdesc_use_registers (gdbarch, tdesc, std::move (tdesc_data));
 
@@ -2417,13 +2388,12 @@ arc_dump_tdep (struct gdbarch *gdbarch, struct ui_file *file)
   gdb_printf (file, "arc_dump_tdep: jb_pc = %i\n", tdep->jb_pc);
 
   gdb_printf (file, "arc_dump_tdep: is_sigtramp = <%s>\n",
-	      host_address_to_string (tdep->is_sigtramp));
+              host_address_to_string (tdep->is_sigtramp));
   gdb_printf (file, "arc_dump_tdep: sigcontext_addr = <%s>\n",
-	      host_address_to_string (tdep->sigcontext_addr));
+              host_address_to_string (tdep->sigcontext_addr));
   gdb_printf (file, "arc_dump_tdep: sc_reg_offset = <%s>\n",
-	      host_address_to_string (tdep->sc_reg_offset));
-  gdb_printf (file, "arc_dump_tdep: sc_num_regs = %d\n",
-	      tdep->sc_num_regs);
+              host_address_to_string (tdep->sc_reg_offset));
+  gdb_printf (file, "arc_dump_tdep: sc_num_regs = %d\n", tdep->sc_num_regs);
 }
 
 /* This command accepts single argument - address of instruction to
@@ -2456,21 +2426,19 @@ _initialize_arc_tdep ()
 
   /* Add root prefix command for "maintenance print arc" commands.  */
   add_basic_prefix_cmd ("arc", class_maintenance,
-			_("ARC-specific maintenance commands for printing GDB "
-			  "internal state."),
-			&maintenance_print_arc_list,
-			0, &maintenanceprintlist);
+                        _ (
+                          "ARC-specific maintenance commands for printing GDB "
+                          "internal state."),
+                        &maintenance_print_arc_list, 0, &maintenanceprintlist);
 
-  add_cmd ("arc-instruction", class_maintenance,
-	   dump_arc_instruction_command,
-	   _("Dump arc_instruction structure for specified address."),
-	   &maintenance_print_arc_list);
+  add_cmd ("arc-instruction", class_maintenance, dump_arc_instruction_command,
+           _ ("Dump arc_instruction structure for specified address."),
+           &maintenance_print_arc_list);
 
   /* Debug internals for ARC GDB.  */
-  add_setshow_boolean_cmd ("arc", class_maintenance,
-			   &arc_debug,
-			   _("Set ARC specific debugging."),
-			   _("Show ARC specific debugging."),
-			   _("When set, ARC specific debugging is enabled."),
-			   NULL, NULL, &setdebuglist, &showdebuglist);
+  add_setshow_boolean_cmd ("arc", class_maintenance, &arc_debug,
+                           _ ("Set ARC specific debugging."),
+                           _ ("Show ARC specific debugging."),
+                           _ ("When set, ARC specific debugging is enabled."),
+                           NULL, NULL, &setdebuglist, &showdebuglist);
 }

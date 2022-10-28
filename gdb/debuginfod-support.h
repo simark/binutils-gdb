@@ -38,10 +38,9 @@
    function returns -ENOSYS.  */
 
 extern scoped_fd
-debuginfod_source_query (const unsigned char *build_id,
-			 int build_id_len,
-			 const char *src_path,
-			 gdb::unique_xmalloc_ptr<char> *destname);
+debuginfod_source_query (const unsigned char *build_id, int build_id_len,
+                         const char *src_path,
+                         gdb::unique_xmalloc_ptr<char> *destname);
 
 /* Query debuginfod servers for a debug info file with BUILD_ID.
    BUILD_ID can be given as a binary blob or a null-terminated string.
@@ -56,10 +55,9 @@ debuginfod_source_query (const unsigned char *build_id,
    function returns -ENOSYS.  */
 
 extern scoped_fd
-debuginfod_debuginfo_query (const unsigned char *build_id,
-			    int build_id_len,
-			    const char *filename,
-			    gdb::unique_xmalloc_ptr<char> *destname);
+debuginfod_debuginfo_query (const unsigned char *build_id, int build_id_len,
+                            const char *filename,
+                            gdb::unique_xmalloc_ptr<char> *destname);
 
 /* Query debuginfod servers for an executable file with BUILD_ID.
    BUILD_ID can be given as a binary blob or a null-terminated string.
@@ -73,9 +71,8 @@ debuginfod_debuginfo_query (const unsigned char *build_id,
    is stored in DESTNAME.  If GDB is not built with debuginfod, this
    function returns -ENOSYS.  */
 
-extern scoped_fd debuginfod_exec_query (const unsigned char *build_id,
-					int build_id_len,
-					const char *filename,
-					gdb::unique_xmalloc_ptr<char>
-					  *destname);
+extern scoped_fd
+debuginfod_exec_query (const unsigned char *build_id, int build_id_len,
+                       const char *filename,
+                       gdb::unique_xmalloc_ptr<char> *destname);
 #endif /* DEBUGINFOD_SUPPORT_H */

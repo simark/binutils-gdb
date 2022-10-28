@@ -48,7 +48,7 @@ static or1k_linux_nat_target the_or1k_linux_nat_target;
 
 static void
 supply_gregset_regnum (struct regcache *regcache, const prgregset_t *gregs,
-		       int regnum)
+                       int regnum)
 {
   int i;
   const elf_greg_t *regp = *gregs;
@@ -58,7 +58,7 @@ supply_gregset_regnum (struct regcache *regcache, const prgregset_t *gregs,
     {
       /* We fill the general purpose registers.  */
       for (i = OR1K_ZERO_REGNUM + 1; i < OR1K_MAX_GPR_REGS; i++)
-	regcache->raw_supply (i, regp + i);
+        regcache->raw_supply (i, regp + i);
 
       /* Supply OR1K_NPC_REGNUM from index 32.  */
       regcache->raw_supply (OR1K_NPC_REGNUM, regp + 32);
@@ -94,7 +94,7 @@ fill_gregset (const struct regcache *regcache, prgregset_t *gregs, int regnum)
     {
       /* We fill the general purpose registers.  */
       for (int i = OR1K_ZERO_REGNUM + 1; i < OR1K_MAX_GPR_REGS; i++)
-	regcache->raw_collect (i, regp + i);
+        regcache->raw_collect (i, regp + i);
 
       regcache->raw_collect (OR1K_NPC_REGNUM, regp + 32);
     }
@@ -117,8 +117,8 @@ supply_fpregset (struct regcache *regcache, const gdb_fpregset_t *fpregs)
 }
 
 void
-fill_fpregset (const struct regcache *regcache,
-	       gdb_fpregset_t *fpregs, int regno)
+fill_fpregset (const struct regcache *regcache, gdb_fpregset_t *fpregs,
+               int regno)
 {
 }
 
@@ -138,11 +138,10 @@ or1k_linux_nat_target::fetch_registers (struct regcache *regcache, int regnum)
 {
   int tid;
 
-  tid = get_ptrace_pid (regcache->ptid());
+  tid = get_ptrace_pid (regcache->ptid ());
 
   if ((regnum >= OR1K_ZERO_REGNUM && regnum < OR1K_MAX_GPR_REGS)
-      || (regnum == OR1K_NPC_REGNUM)
-      || (regnum == -1))
+      || (regnum == OR1K_NPC_REGNUM) || (regnum == -1))
     {
       struct iovec iov;
       elf_gregset_t regs;
@@ -150,11 +149,11 @@ or1k_linux_nat_target::fetch_registers (struct regcache *regcache, int regnum)
       iov.iov_base = &regs;
       iov.iov_len = sizeof (regs);
 
-      if (ptrace (PTRACE_GETREGSET, tid, NT_PRSTATUS,
-		  (PTRACE_TYPE_ARG3) &iov) == -1)
-	perror_with_name (_("Couldn't get registers"));
+      if (ptrace (PTRACE_GETREGSET, tid, NT_PRSTATUS, (PTRACE_TYPE_ARG3) &iov)
+          == -1)
+        perror_with_name (_ ("Couldn't get registers"));
       else
-	supply_gregset_regnum (regcache, &regs, regnum);
+        supply_gregset_regnum (regcache, &regs, regnum);
     }
 
   /* Access to other SPRs has potential security issues, don't support them for
@@ -172,8 +171,7 @@ or1k_linux_nat_target::store_registers (struct regcache *regcache, int regnum)
   tid = get_ptrace_pid (regcache->ptid ());
 
   if ((regnum >= OR1K_ZERO_REGNUM && regnum < OR1K_MAX_GPR_REGS)
-      || (regnum == OR1K_NPC_REGNUM)
-      || (regnum == -1))
+      || (regnum == OR1K_NPC_REGNUM) || (regnum == -1))
     {
       struct iovec iov;
       elf_gregset_t regs;
@@ -181,17 +179,18 @@ or1k_linux_nat_target::store_registers (struct regcache *regcache, int regnum)
       iov.iov_base = &regs;
       iov.iov_len = sizeof (regs);
 
-      if (ptrace (PTRACE_GETREGSET, tid, NT_PRSTATUS,
-		  (PTRACE_TYPE_ARG3) &iov) == -1)
-	perror_with_name (_("Couldn't get registers"));
+      if (ptrace (PTRACE_GETREGSET, tid, NT_PRSTATUS, (PTRACE_TYPE_ARG3) &iov)
+          == -1)
+        perror_with_name (_ ("Couldn't get registers"));
       else
-	{
-	  fill_gregset (regcache, &regs, regnum);
+        {
+          fill_gregset (regcache, &regs, regnum);
 
-	  if (ptrace (PTRACE_SETREGSET, tid, NT_PRSTATUS,
-		      (PTRACE_TYPE_ARG3) &iov) == -1)
-	    perror_with_name (_("Couldn't set registers"));
-	}
+          if (ptrace (PTRACE_SETREGSET, tid, NT_PRSTATUS,
+                      (PTRACE_TYPE_ARG3) &iov)
+              == -1)
+            perror_with_name (_ ("Couldn't set registers"));
+        }
     }
 
   /* Access to SPRs has potential security issues, don't support them for

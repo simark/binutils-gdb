@@ -140,44 +140,43 @@
 
 /* These magic numbers need to reflect the layout of the kernel
    defined struct rt_sigframe and ucontext.  */
-#define AARCH64_SIGCONTEXT_REG_SIZE             8
-#define AARCH64_RT_SIGFRAME_UCONTEXT_OFFSET     128
-#define AARCH64_UCONTEXT_SIGCONTEXT_OFFSET      176
-#define AARCH64_SIGCONTEXT_XO_OFFSET            8
-#define AARCH64_SIGCONTEXT_RESERVED_OFFSET      288
+#define AARCH64_SIGCONTEXT_REG_SIZE 8
+#define AARCH64_RT_SIGFRAME_UCONTEXT_OFFSET 128
+#define AARCH64_UCONTEXT_SIGCONTEXT_OFFSET 176
+#define AARCH64_SIGCONTEXT_XO_OFFSET 8
+#define AARCH64_SIGCONTEXT_RESERVED_OFFSET 288
 
-#define AARCH64_SIGCONTEXT_RESERVED_SIZE	4096
+#define AARCH64_SIGCONTEXT_RESERVED_SIZE 4096
 
 /* Unique identifiers that may be used for aarch64_ctx.magic.  */
-#define AARCH64_EXTRA_MAGIC			0x45585401
-#define AARCH64_FPSIMD_MAGIC			0x46508001
-#define AARCH64_SVE_MAGIC			0x53564501
+#define AARCH64_EXTRA_MAGIC 0x45585401
+#define AARCH64_FPSIMD_MAGIC 0x46508001
+#define AARCH64_SVE_MAGIC 0x53564501
 
 /* Defines for the extra_context that follows an AARCH64_EXTRA_MAGIC.  */
-#define AARCH64_EXTRA_DATAP_OFFSET		8
+#define AARCH64_EXTRA_DATAP_OFFSET 8
 
 /* Defines for the fpsimd that follows an AARCH64_FPSIMD_MAGIC.  */
-#define AARCH64_FPSIMD_FPSR_OFFSET		8
-#define AARCH64_FPSIMD_FPCR_OFFSET		12
-#define AARCH64_FPSIMD_V0_OFFSET		16
-#define AARCH64_FPSIMD_VREG_SIZE		16
+#define AARCH64_FPSIMD_FPSR_OFFSET 8
+#define AARCH64_FPSIMD_FPCR_OFFSET 12
+#define AARCH64_FPSIMD_V0_OFFSET 16
+#define AARCH64_FPSIMD_VREG_SIZE 16
 
 /* Defines for the sve structure that follows an AARCH64_SVE_MAGIC.  */
-#define AARCH64_SVE_CONTEXT_VL_OFFSET		8
-#define AARCH64_SVE_CONTEXT_REGS_OFFSET		16
+#define AARCH64_SVE_CONTEXT_VL_OFFSET 8
+#define AARCH64_SVE_CONTEXT_REGS_OFFSET 16
 #define AARCH64_SVE_CONTEXT_P_REGS_OFFSET(vq) (32 * vq * 16)
 #define AARCH64_SVE_CONTEXT_FFR_OFFSET(vq) \
   (AARCH64_SVE_CONTEXT_P_REGS_OFFSET (vq) + (16 * vq * 2))
 #define AARCH64_SVE_CONTEXT_SIZE(vq) \
   (AARCH64_SVE_CONTEXT_FFR_OFFSET (vq) + (vq * 2))
 
-
 /* Read an aarch64_ctx, returning the magic value, and setting *SIZE to the
    size, or return 0 on error.  */
 
 static uint32_t
 read_aarch64_ctx (CORE_ADDR ctx_addr, enum bfd_endian byte_order,
-		  uint32_t *size)
+                  uint32_t *size)
 {
   uint32_t magic = 0;
   gdb_byte buf[4];
@@ -202,8 +201,8 @@ read_aarch64_ctx (CORE_ADDR ctx_addr, enum bfd_endian byte_order,
 
 static void
 aarch64_linux_restore_vreg (struct trad_frame_cache *cache, int num_regs,
-			    int vreg_num, CORE_ADDR offset,
-			    enum bfd_endian byte_order, bool has_sve)
+                            int vreg_num, CORE_ADDR offset,
+                            enum bfd_endian byte_order, bool has_sve)
 {
   /* WARNING: SIMD state is laid out in memory in target-endian format.
 
@@ -220,43 +219,48 @@ aarch64_linux_restore_vreg (struct trad_frame_cache *cache, int num_regs,
       gdb_byte buf[V_REGISTER_SIZE];
 
       if (target_read_memory (offset, buf, V_REGISTER_SIZE) != 0)
-	{
-	  size_t size = V_REGISTER_SIZE/2;
+        {
+          size_t size = V_REGISTER_SIZE / 2;
 
-	  /* Read the two halves of the V register in reverse byte order.  */
-	  CORE_ADDR u64 = extract_unsigned_integer (buf, size,
-						    byte_order);
-	  CORE_ADDR l64 = extract_unsigned_integer (buf + size, size,
-						    byte_order);
+          /* Read the two halves of the V register in reverse byte order.  */
+          CORE_ADDR u64 = extract_unsigned_integer (buf, size, byte_order);
+          CORE_ADDR l64
+            = extract_unsigned_integer (buf + size, size, byte_order);
 
-	  /* Copy the reversed bytes to the buffer.  */
-	  store_unsigned_integer (buf, size, BFD_ENDIAN_LITTLE, l64);
-	  store_unsigned_integer (buf + size , size, BFD_ENDIAN_LITTLE, u64);
+          /* Copy the reversed bytes to the buffer.  */
+          store_unsigned_integer (buf, size, BFD_ENDIAN_LITTLE, l64);
+          store_unsigned_integer (buf + size, size, BFD_ENDIAN_LITTLE, u64);
 
-	  /* Now we can store the correct bytes for the V register.  */
-	  trad_frame_set_reg_value_bytes (cache, AARCH64_V0_REGNUM + vreg_num,
-					  {buf, V_REGISTER_SIZE});
-	  trad_frame_set_reg_value_bytes (cache,
-					  num_regs + AARCH64_Q0_REGNUM
-					  + vreg_num, {buf, Q_REGISTER_SIZE});
-	  trad_frame_set_reg_value_bytes (cache,
-					  num_regs + AARCH64_D0_REGNUM
-					  + vreg_num, {buf, D_REGISTER_SIZE});
-	  trad_frame_set_reg_value_bytes (cache,
-					  num_regs + AARCH64_S0_REGNUM
-					  + vreg_num, {buf, S_REGISTER_SIZE});
-	  trad_frame_set_reg_value_bytes (cache,
-					  num_regs + AARCH64_H0_REGNUM
-					  + vreg_num, {buf, H_REGISTER_SIZE});
-	  trad_frame_set_reg_value_bytes (cache,
-					  num_regs + AARCH64_B0_REGNUM
-					  + vreg_num, {buf, B_REGISTER_SIZE});
+          /* Now we can store the correct bytes for the V register.  */
+          trad_frame_set_reg_value_bytes (cache, AARCH64_V0_REGNUM + vreg_num,
+                                          { buf, V_REGISTER_SIZE });
+          trad_frame_set_reg_value_bytes (cache,
+                                          num_regs + AARCH64_Q0_REGNUM
+                                            + vreg_num,
+                                          { buf, Q_REGISTER_SIZE });
+          trad_frame_set_reg_value_bytes (cache,
+                                          num_regs + AARCH64_D0_REGNUM
+                                            + vreg_num,
+                                          { buf, D_REGISTER_SIZE });
+          trad_frame_set_reg_value_bytes (cache,
+                                          num_regs + AARCH64_S0_REGNUM
+                                            + vreg_num,
+                                          { buf, S_REGISTER_SIZE });
+          trad_frame_set_reg_value_bytes (cache,
+                                          num_regs + AARCH64_H0_REGNUM
+                                            + vreg_num,
+                                          { buf, H_REGISTER_SIZE });
+          trad_frame_set_reg_value_bytes (cache,
+                                          num_regs + AARCH64_B0_REGNUM
+                                            + vreg_num,
+                                          { buf, B_REGISTER_SIZE });
 
-	  if (has_sve)
-	    trad_frame_set_reg_value_bytes (cache,
-					    num_regs + AARCH64_SVE_V0_REGNUM
-					    + vreg_num, {buf, V_REGISTER_SIZE});
-	}
+          if (has_sve)
+            trad_frame_set_reg_value_bytes (cache,
+                                            num_regs + AARCH64_SVE_V0_REGNUM
+                                              + vreg_num,
+                                            { buf, V_REGISTER_SIZE });
+        }
       return;
     }
 
@@ -264,36 +268,36 @@ aarch64_linux_restore_vreg (struct trad_frame_cache *cache, int num_regs,
      value.  */
   trad_frame_set_reg_addr (cache, AARCH64_V0_REGNUM + vreg_num, offset);
   trad_frame_set_reg_addr (cache, num_regs + AARCH64_Q0_REGNUM + vreg_num,
-			   offset);
+                           offset);
   trad_frame_set_reg_addr (cache, num_regs + AARCH64_D0_REGNUM + vreg_num,
-			   offset);
+                           offset);
   trad_frame_set_reg_addr (cache, num_regs + AARCH64_S0_REGNUM + vreg_num,
-			   offset);
+                           offset);
   trad_frame_set_reg_addr (cache, num_regs + AARCH64_H0_REGNUM + vreg_num,
-			   offset);
+                           offset);
   trad_frame_set_reg_addr (cache, num_regs + AARCH64_B0_REGNUM + vreg_num,
-			   offset);
+                           offset);
 
   if (has_sve)
-    trad_frame_set_reg_addr (cache, num_regs + AARCH64_SVE_V0_REGNUM
-			     + vreg_num, offset);
-
+    trad_frame_set_reg_addr (cache,
+                             num_regs + AARCH64_SVE_V0_REGNUM + vreg_num,
+                             offset);
 }
 
 /* Implement the "init" method of struct tramp_frame.  */
 
 static void
 aarch64_linux_sigframe_init (const struct tramp_frame *self,
-			     frame_info_ptr this_frame,
-			     struct trad_frame_cache *this_cache,
-			     CORE_ADDR func)
+                             frame_info_ptr this_frame,
+                             struct trad_frame_cache *this_cache,
+                             CORE_ADDR func)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   aarch64_gdbarch_tdep *tdep = gdbarch_tdep<aarch64_gdbarch_tdep> (gdbarch);
   CORE_ADDR sp = get_frame_register_unsigned (this_frame, AARCH64_SP_REGNUM);
   CORE_ADDR sigcontext_addr = (sp + AARCH64_RT_SIGFRAME_UCONTEXT_OFFSET
-			       + AARCH64_UCONTEXT_SIGCONTEXT_OFFSET );
+                               + AARCH64_UCONTEXT_SIGCONTEXT_OFFSET);
   CORE_ADDR section = sigcontext_addr + AARCH64_SIGCONTEXT_RESERVED_OFFSET;
   CORE_ADDR section_end = section + AARCH64_SIGCONTEXT_RESERVED_SIZE;
   CORE_ADDR fpsimd = 0;
@@ -306,88 +310,90 @@ aarch64_linux_sigframe_init (const struct tramp_frame *self,
 
   for (int i = 0; i < 31; i++)
     {
-      trad_frame_set_reg_addr (this_cache,
-			       AARCH64_X0_REGNUM + i,
-			       sigcontext_addr + AARCH64_SIGCONTEXT_XO_OFFSET
-				 + i * AARCH64_SIGCONTEXT_REG_SIZE);
+      trad_frame_set_reg_addr (this_cache, AARCH64_X0_REGNUM + i,
+                               sigcontext_addr + AARCH64_SIGCONTEXT_XO_OFFSET
+                                 + i * AARCH64_SIGCONTEXT_REG_SIZE);
     }
   trad_frame_set_reg_addr (this_cache, AARCH64_SP_REGNUM,
-			   sigcontext_addr + AARCH64_SIGCONTEXT_XO_OFFSET
-			     + 31 * AARCH64_SIGCONTEXT_REG_SIZE);
+                           sigcontext_addr + AARCH64_SIGCONTEXT_XO_OFFSET
+                             + 31 * AARCH64_SIGCONTEXT_REG_SIZE);
   trad_frame_set_reg_addr (this_cache, AARCH64_PC_REGNUM,
-			   sigcontext_addr + AARCH64_SIGCONTEXT_XO_OFFSET
-			     + 32 * AARCH64_SIGCONTEXT_REG_SIZE);
+                           sigcontext_addr + AARCH64_SIGCONTEXT_XO_OFFSET
+                             + 32 * AARCH64_SIGCONTEXT_REG_SIZE);
 
   /* Search for the FP and SVE sections, stopping at null.  */
   while ((magic = read_aarch64_ctx (section, byte_order, &size)) != 0
-	 && size != 0)
+         && size != 0)
     {
       switch (magic)
-	{
-	case AARCH64_FPSIMD_MAGIC:
-	  fpsimd = section;
-	  section += size;
-	  break;
+        {
+        case AARCH64_FPSIMD_MAGIC:
+          fpsimd = section;
+          section += size;
+          break;
 
-	case AARCH64_SVE_MAGIC:
-	  {
-	    /* Check if the section is followed by a full SVE dump, and set
+        case AARCH64_SVE_MAGIC:
+          {
+            /* Check if the section is followed by a full SVE dump, and set
 	       sve_regs if it is.  */
-	    gdb_byte buf[4];
-	    uint16_t vq;
+            gdb_byte buf[4];
+            uint16_t vq;
 
-	    if (!tdep->has_sve ())
-	      break;
+            if (!tdep->has_sve ())
+              break;
 
-	    if (target_read_memory (section + AARCH64_SVE_CONTEXT_VL_OFFSET,
-				    buf, 2) != 0)
-	      {
-		section += size;
-		break;
-	      }
-	    vq = sve_vq_from_vl (extract_unsigned_integer (buf, 2, byte_order));
+            if (target_read_memory (section + AARCH64_SVE_CONTEXT_VL_OFFSET,
+                                    buf, 2)
+                != 0)
+              {
+                section += size;
+                break;
+              }
+            vq
+              = sve_vq_from_vl (extract_unsigned_integer (buf, 2, byte_order));
 
-	    if (vq != tdep->vq)
-	      error (_("Invalid vector length in signal frame %d vs %s."), vq,
-		     pulongest (tdep->vq));
+            if (vq != tdep->vq)
+              error (_ ("Invalid vector length in signal frame %d vs %s."), vq,
+                     pulongest (tdep->vq));
 
-	    if (size >= AARCH64_SVE_CONTEXT_SIZE (vq))
-	      sve_regs = section + AARCH64_SVE_CONTEXT_REGS_OFFSET;
+            if (size >= AARCH64_SVE_CONTEXT_SIZE (vq))
+              sve_regs = section + AARCH64_SVE_CONTEXT_REGS_OFFSET;
 
-	    section += size;
-	    break;
-	  }
+            section += size;
+            break;
+          }
 
-	case AARCH64_EXTRA_MAGIC:
-	  {
-	    /* Extra is always the last valid section in reserved and points to
+        case AARCH64_EXTRA_MAGIC:
+          {
+            /* Extra is always the last valid section in reserved and points to
 	       an additional block of memory filled with more sections. Reset
 	       the address to the extra section and continue looking for more
 	       structures.  */
-	    gdb_byte buf[8];
+            gdb_byte buf[8];
 
-	    if (target_read_memory (section + AARCH64_EXTRA_DATAP_OFFSET,
-				    buf, 8) != 0)
-	      {
-		section += size;
-		break;
-	      }
+            if (target_read_memory (section + AARCH64_EXTRA_DATAP_OFFSET, buf,
+                                    8)
+                != 0)
+              {
+                section += size;
+                break;
+              }
 
-	    section = extract_unsigned_integer (buf, 8, byte_order);
-	    extra_found = true;
-	    break;
-	  }
+            section = extract_unsigned_integer (buf, 8, byte_order);
+            extra_found = true;
+            break;
+          }
 
-	default:
-	  section += size;
-	  break;
-	}
+        default:
+          section += size;
+          break;
+        }
 
       /* Prevent searching past the end of the reserved section.  The extra
 	 section does not have a hard coded limit - we have to rely on it ending
 	 with nulls.  */
       if (!extra_found && section > section_end)
-	break;
+        break;
     }
 
   if (sve_regs != 0)
@@ -395,29 +401,29 @@ aarch64_linux_sigframe_init (const struct tramp_frame *self,
       CORE_ADDR offset;
 
       for (int i = 0; i < 32; i++)
-	{
-	  offset = sve_regs + (i * tdep->vq * 16);
-	  trad_frame_set_reg_addr (this_cache, AARCH64_SVE_Z0_REGNUM + i,
-				   offset);
-	  trad_frame_set_reg_addr (this_cache,
-				   num_regs + AARCH64_SVE_V0_REGNUM + i,
-				   offset);
-	  trad_frame_set_reg_addr (this_cache, num_regs + AARCH64_Q0_REGNUM + i,
-				   offset);
-	  trad_frame_set_reg_addr (this_cache, num_regs + AARCH64_D0_REGNUM + i,
-				   offset);
-	  trad_frame_set_reg_addr (this_cache, num_regs + AARCH64_S0_REGNUM + i,
-				   offset);
-	  trad_frame_set_reg_addr (this_cache, num_regs + AARCH64_H0_REGNUM + i,
-				   offset);
-	  trad_frame_set_reg_addr (this_cache, num_regs + AARCH64_B0_REGNUM + i,
-				   offset);
-	}
+        {
+          offset = sve_regs + (i * tdep->vq * 16);
+          trad_frame_set_reg_addr (this_cache, AARCH64_SVE_Z0_REGNUM + i,
+                                   offset);
+          trad_frame_set_reg_addr (this_cache,
+                                   num_regs + AARCH64_SVE_V0_REGNUM + i,
+                                   offset);
+          trad_frame_set_reg_addr (this_cache,
+                                   num_regs + AARCH64_Q0_REGNUM + i, offset);
+          trad_frame_set_reg_addr (this_cache,
+                                   num_regs + AARCH64_D0_REGNUM + i, offset);
+          trad_frame_set_reg_addr (this_cache,
+                                   num_regs + AARCH64_S0_REGNUM + i, offset);
+          trad_frame_set_reg_addr (this_cache,
+                                   num_regs + AARCH64_H0_REGNUM + i, offset);
+          trad_frame_set_reg_addr (this_cache,
+                                   num_regs + AARCH64_B0_REGNUM + i, offset);
+        }
 
       offset = sve_regs + AARCH64_SVE_CONTEXT_P_REGS_OFFSET (tdep->vq);
       for (int i = 0; i < 16; i++)
-	trad_frame_set_reg_addr (this_cache, AARCH64_SVE_P0_REGNUM + i,
-				 offset + (i * tdep->vq * 2));
+        trad_frame_set_reg_addr (this_cache, AARCH64_SVE_P0_REGNUM + i,
+                                 offset + (i * tdep->vq * 2));
 
       offset = sve_regs + AARCH64_SVE_CONTEXT_FFR_OFFSET (tdep->vq);
       trad_frame_set_reg_addr (this_cache, AARCH64_SVE_FFR_REGNUM, offset);
@@ -426,101 +432,87 @@ aarch64_linux_sigframe_init (const struct tramp_frame *self,
   if (fpsimd != 0)
     {
       trad_frame_set_reg_addr (this_cache, AARCH64_FPSR_REGNUM,
-			       fpsimd + AARCH64_FPSIMD_FPSR_OFFSET);
+                               fpsimd + AARCH64_FPSIMD_FPSR_OFFSET);
       trad_frame_set_reg_addr (this_cache, AARCH64_FPCR_REGNUM,
-			       fpsimd + AARCH64_FPSIMD_FPCR_OFFSET);
+                               fpsimd + AARCH64_FPSIMD_FPCR_OFFSET);
 
       /* If there was no SVE section then set up the V registers.  */
       if (sve_regs == 0)
-	{
-	  for (int i = 0; i < 32; i++)
-	    {
-	      CORE_ADDR offset = (fpsimd + AARCH64_FPSIMD_V0_OFFSET
-				  + (i * AARCH64_FPSIMD_VREG_SIZE));
+        {
+          for (int i = 0; i < 32; i++)
+            {
+              CORE_ADDR offset = (fpsimd + AARCH64_FPSIMD_V0_OFFSET
+                                  + (i * AARCH64_FPSIMD_VREG_SIZE));
 
-	      aarch64_linux_restore_vreg (this_cache, num_regs, i, offset,
-					  byte_order, tdep->has_sve ());
-	    }
-	}
+              aarch64_linux_restore_vreg (this_cache, num_regs, i, offset,
+                                          byte_order, tdep->has_sve ());
+            }
+        }
     }
 
   trad_frame_set_id (this_cache, frame_id_build (sp, func));
 }
 
-static const struct tramp_frame aarch64_linux_rt_sigframe =
-{
-  SIGTRAMP_FRAME,
-  4,
-  {
-    /* movz x8, 0x8b (S=1,o=10,h=0,i=0x8b,r=8)
+static const struct tramp_frame aarch64_linux_rt_sigframe
+  = { SIGTRAMP_FRAME,
+      4,
+      { /* movz x8, 0x8b (S=1,o=10,h=0,i=0x8b,r=8)
        Soo1 0010 1hhi iiii iiii iiii iiir rrrr  */
-    {0xd2801168, ULONGEST_MAX},
+        { 0xd2801168, ULONGEST_MAX },
 
-    /* svc  0x0      (o=0, l=1)
+        /* svc  0x0      (o=0, l=1)
        1101 0100 oooi iiii iiii iiii iii0 00ll  */
-    {0xd4000001, ULONGEST_MAX},
-    {TRAMP_SENTINEL_INSN, ULONGEST_MAX}
-  },
-  aarch64_linux_sigframe_init
-};
+        { 0xd4000001, ULONGEST_MAX },
+        { TRAMP_SENTINEL_INSN, ULONGEST_MAX } },
+      aarch64_linux_sigframe_init };
 
 /* Register maps.  */
 
-static const struct regcache_map_entry aarch64_linux_gregmap[] =
-  {
-    { 31, AARCH64_X0_REGNUM, 8 }, /* x0 ... x30 */
-    { 1, AARCH64_SP_REGNUM, 8 },
-    { 1, AARCH64_PC_REGNUM, 8 },
-    { 1, AARCH64_CPSR_REGNUM, 8 },
-    { 0 }
-  };
+static const struct regcache_map_entry aarch64_linux_gregmap[]
+  = { { 31, AARCH64_X0_REGNUM, 8 }, /* x0 ... x30 */
+      { 1, AARCH64_SP_REGNUM, 8 },
+      { 1, AARCH64_PC_REGNUM, 8 },
+      { 1, AARCH64_CPSR_REGNUM, 8 },
+      { 0 } };
 
-static const struct regcache_map_entry aarch64_linux_fpregmap[] =
-  {
-    { 32, AARCH64_V0_REGNUM, 16 }, /* v0 ... v31 */
-    { 1, AARCH64_FPSR_REGNUM, 4 },
-    { 1, AARCH64_FPCR_REGNUM, 4 },
-    { 0 }
-  };
+static const struct regcache_map_entry aarch64_linux_fpregmap[]
+  = { { 32, AARCH64_V0_REGNUM, 16 }, /* v0 ... v31 */
+      { 1, AARCH64_FPSR_REGNUM, 4 },
+      { 1, AARCH64_FPCR_REGNUM, 4 },
+      { 0 } };
 
 /* Register set definitions.  */
 
-const struct regset aarch64_linux_gregset =
-  {
-    aarch64_linux_gregmap,
-    regcache_supply_regset, regcache_collect_regset
-  };
+const struct regset aarch64_linux_gregset
+  = { aarch64_linux_gregmap, regcache_supply_regset, regcache_collect_regset };
 
-const struct regset aarch64_linux_fpregset =
-  {
-    aarch64_linux_fpregmap,
-    regcache_supply_regset, regcache_collect_regset
-  };
+const struct regset aarch64_linux_fpregset
+  = { aarch64_linux_fpregmap, regcache_supply_regset,
+      regcache_collect_regset };
 
 /* The fields in an SVE header at the start of a SVE regset.  */
 
-#define SVE_HEADER_SIZE_LENGTH		4
-#define SVE_HEADER_MAX_SIZE_LENGTH	4
-#define SVE_HEADER_VL_LENGTH		2
-#define SVE_HEADER_MAX_VL_LENGTH	2
-#define SVE_HEADER_FLAGS_LENGTH		2
-#define SVE_HEADER_RESERVED_LENGTH	2
+#define SVE_HEADER_SIZE_LENGTH 4
+#define SVE_HEADER_MAX_SIZE_LENGTH 4
+#define SVE_HEADER_VL_LENGTH 2
+#define SVE_HEADER_MAX_VL_LENGTH 2
+#define SVE_HEADER_FLAGS_LENGTH 2
+#define SVE_HEADER_RESERVED_LENGTH 2
 
-#define SVE_HEADER_SIZE_OFFSET		0
-#define SVE_HEADER_MAX_SIZE_OFFSET	\
+#define SVE_HEADER_SIZE_OFFSET 0
+#define SVE_HEADER_MAX_SIZE_OFFSET \
   (SVE_HEADER_SIZE_OFFSET + SVE_HEADER_SIZE_LENGTH)
-#define SVE_HEADER_VL_OFFSET		\
+#define SVE_HEADER_VL_OFFSET \
   (SVE_HEADER_MAX_SIZE_OFFSET + SVE_HEADER_MAX_SIZE_LENGTH)
-#define SVE_HEADER_MAX_VL_OFFSET	\
-  (SVE_HEADER_VL_OFFSET + SVE_HEADER_VL_LENGTH)
-#define SVE_HEADER_FLAGS_OFFSET		\
+#define SVE_HEADER_MAX_VL_OFFSET (SVE_HEADER_VL_OFFSET + SVE_HEADER_VL_LENGTH)
+#define SVE_HEADER_FLAGS_OFFSET \
   (SVE_HEADER_MAX_VL_OFFSET + SVE_HEADER_MAX_VL_LENGTH)
-#define SVE_HEADER_RESERVED_OFFSET	\
+#define SVE_HEADER_RESERVED_OFFSET \
   (SVE_HEADER_FLAGS_OFFSET + SVE_HEADER_FLAGS_LENGTH)
-#define SVE_HEADER_SIZE			\
+#define SVE_HEADER_SIZE \
   (SVE_HEADER_RESERVED_OFFSET + SVE_HEADER_RESERVED_LENGTH)
 
-#define SVE_HEADER_FLAG_SVE		1
+#define SVE_HEADER_FLAG_SVE 1
 
 /* Get VQ value from SVE section in the core dump.  */
 
@@ -542,31 +534,34 @@ aarch64_linux_core_read_vq (struct gdbarch *gdbarch, bfd *abfd)
   /* Check extended state size.  */
   if (size < SVE_HEADER_SIZE)
     {
-      warning (_("'.reg-aarch-sve' section in core file too small."));
+      warning (_ ("'.reg-aarch-sve' section in core file too small."));
       return 0;
     }
 
-  if (!bfd_get_section_contents (abfd, sve_section, header, 0, SVE_HEADER_SIZE))
+  if (!bfd_get_section_contents (abfd, sve_section, header, 0,
+                                 SVE_HEADER_SIZE))
     {
-      warning (_("Couldn't read sve header from "
-		 "'.reg-aarch-sve' section in core file."));
+      warning (_ ("Couldn't read sve header from "
+                  "'.reg-aarch-sve' section in core file."));
       return 0;
     }
 
   uint64_t vl = extract_unsigned_integer (header + SVE_HEADER_VL_OFFSET,
-					  SVE_HEADER_VL_LENGTH, byte_order);
+                                          SVE_HEADER_VL_LENGTH, byte_order);
   uint64_t vq = sve_vq_from_vl (vl);
 
   if (vq > AARCH64_MAX_SVE_VQ)
     {
-      warning (_("SVE Vector length in core file not supported by this version"
-		 " of GDB.  (VQ=%s)"), pulongest (vq));
+      warning (_ (
+                 "SVE Vector length in core file not supported by this version"
+                 " of GDB.  (VQ=%s)"),
+               pulongest (vq));
       return 0;
     }
   else if (vq == 0)
     {
-      warning (_("SVE Vector length in core file is invalid. (VQ=%s"),
-	       pulongest (vq));
+      warning (_ ("SVE Vector length in core file is invalid. (VQ=%s"),
+               pulongest (vq));
       return 0;
     }
 
@@ -579,8 +574,8 @@ aarch64_linux_core_read_vq (struct gdbarch *gdbarch, bfd *abfd)
 
 static void
 aarch64_linux_supply_sve_regset (const struct regset *regset,
-				 struct regcache *regcache,
-				 int regnum, const void *buf, size_t size)
+                                 struct regcache *regcache, int regnum,
+                                 const void *buf, size_t size)
 {
   gdb_byte *header = (gdb_byte *) buf;
   struct gdbarch *gdbarch = regcache->arch ();
@@ -595,16 +590,16 @@ aarch64_linux_supply_sve_regset (const struct regset *regset,
 
   /* Extract required fields from the header.  */
   ULONGEST vl = extract_unsigned_integer (header + SVE_HEADER_VL_OFFSET,
-					  SVE_HEADER_VL_LENGTH, byte_order);
-  uint16_t flags = extract_unsigned_integer (header + SVE_HEADER_FLAGS_OFFSET,
-					     SVE_HEADER_FLAGS_LENGTH,
-					     byte_order);
+                                          SVE_HEADER_VL_LENGTH, byte_order);
+  uint16_t flags
+    = extract_unsigned_integer (header + SVE_HEADER_FLAGS_OFFSET,
+                                SVE_HEADER_FLAGS_LENGTH, byte_order);
 
   if (regnum == -1 || regnum == AARCH64_SVE_VG_REGNUM)
     {
       gdb_byte vg_target[8];
-      store_integer ((gdb_byte *)&vg_target, sizeof (uint64_t), byte_order,
-		     sve_vg_from_vl (vl));
+      store_integer ((gdb_byte *) &vg_target, sizeof (uint64_t), byte_order,
+                     sve_vg_from_vl (vl));
       regcache->raw_supply (AARCH64_SVE_VG_REGNUM, &vg_target);
     }
 
@@ -612,23 +607,23 @@ aarch64_linux_supply_sve_regset (const struct regset *regset,
     {
       /* Register dump is a SVE structure.  */
       regcache->supply_regset (regset, regnum,
-			       (gdb_byte *) buf + SVE_HEADER_SIZE,
-			       size - SVE_HEADER_SIZE);
+                               (gdb_byte *) buf + SVE_HEADER_SIZE,
+                               size - SVE_HEADER_SIZE);
     }
   else
     {
       /* Register dump is a fpsimd structure.  First clear the SVE
 	 registers.  */
       for (int i = 0; i < AARCH64_SVE_Z_REGS_NUM; i++)
-	regcache->raw_supply_zeroed (AARCH64_SVE_Z0_REGNUM + i);
+        regcache->raw_supply_zeroed (AARCH64_SVE_Z0_REGNUM + i);
       for (int i = 0; i < AARCH64_SVE_P_REGS_NUM; i++)
-	regcache->raw_supply_zeroed (AARCH64_SVE_P0_REGNUM + i);
+        regcache->raw_supply_zeroed (AARCH64_SVE_P0_REGNUM + i);
       regcache->raw_supply_zeroed (AARCH64_SVE_FFR_REGNUM);
 
       /* Then supply the fpsimd registers.  */
       regcache->supply_regset (&aarch64_linux_fpregset, regnum,
-			       (gdb_byte *) buf + SVE_HEADER_SIZE,
-			       size - SVE_HEADER_SIZE);
+                               (gdb_byte *) buf + SVE_HEADER_SIZE,
+                               size - SVE_HEADER_SIZE);
     }
 }
 
@@ -638,8 +633,8 @@ aarch64_linux_supply_sve_regset (const struct regset *regset,
 
 static void
 aarch64_linux_collect_sve_regset (const struct regset *regset,
-				  const struct regcache *regcache,
-				  int regnum, void *buf, size_t size)
+                                  const struct regcache *regcache, int regnum,
+                                  void *buf, size_t size)
 {
   gdb_byte *header = (gdb_byte *) buf;
   struct gdbarch *gdbarch = regcache->arch ();
@@ -653,32 +648,31 @@ aarch64_linux_collect_sve_regset (const struct regset *regset,
   /* BUF starts with a SVE header prior to the register dump.  */
 
   store_unsigned_integer (header + SVE_HEADER_SIZE_OFFSET,
-			  SVE_HEADER_SIZE_LENGTH, byte_order, size);
+                          SVE_HEADER_SIZE_LENGTH, byte_order, size);
   store_unsigned_integer (header + SVE_HEADER_MAX_SIZE_OFFSET,
-			  SVE_HEADER_MAX_SIZE_LENGTH, byte_order, size);
+                          SVE_HEADER_MAX_SIZE_LENGTH, byte_order, size);
   store_unsigned_integer (header + SVE_HEADER_VL_OFFSET, SVE_HEADER_VL_LENGTH,
-			  byte_order, sve_vl_from_vq (vq));
+                          byte_order, sve_vl_from_vq (vq));
   store_unsigned_integer (header + SVE_HEADER_MAX_VL_OFFSET,
-			  SVE_HEADER_MAX_VL_LENGTH, byte_order,
-			  sve_vl_from_vq (vq));
+                          SVE_HEADER_MAX_VL_LENGTH, byte_order,
+                          sve_vl_from_vq (vq));
   store_unsigned_integer (header + SVE_HEADER_FLAGS_OFFSET,
-			  SVE_HEADER_FLAGS_LENGTH, byte_order,
-			  SVE_HEADER_FLAG_SVE);
+                          SVE_HEADER_FLAGS_LENGTH, byte_order,
+                          SVE_HEADER_FLAG_SVE);
   store_unsigned_integer (header + SVE_HEADER_RESERVED_OFFSET,
-			  SVE_HEADER_RESERVED_LENGTH, byte_order, 0);
+                          SVE_HEADER_RESERVED_LENGTH, byte_order, 0);
 
   /* The SVE register dump follows.  */
   regcache->collect_regset (regset, regnum, (gdb_byte *) buf + SVE_HEADER_SIZE,
-			    size - SVE_HEADER_SIZE);
+                            size - SVE_HEADER_SIZE);
 }
 
 /* Implement the "iterate_over_regset_sections" gdbarch method.  */
 
 static void
-aarch64_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
-					    iterate_over_regset_sections_cb *cb,
-					    void *cb_data,
-					    const struct regcache *regcache)
+aarch64_linux_iterate_over_regset_sections (
+  struct gdbarch *gdbarch, iterate_over_regset_sections_cb *cb, void *cb_data,
+  const struct regcache *regcache)
 {
   aarch64_gdbarch_tdep *tdep = gdbarch_tdep<aarch64_gdbarch_tdep> (gdbarch);
 
@@ -688,88 +682,68 @@ aarch64_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
   if (tdep->has_sve ())
     {
       /* Create this on the fly in order to handle vector register sizes.  */
-      const struct regcache_map_entry sve_regmap[] =
-	{
-	  { 32, AARCH64_SVE_Z0_REGNUM, (int) (tdep->vq * 16) },
-	  { 16, AARCH64_SVE_P0_REGNUM, (int) (tdep->vq * 16 / 8) },
-	  { 1, AARCH64_SVE_FFR_REGNUM, (int) (tdep->vq * 16 / 8) },
-	  { 1, AARCH64_FPSR_REGNUM, 4 },
-	  { 1, AARCH64_FPCR_REGNUM, 4 },
-	  { 0 }
-	};
+      const struct regcache_map_entry sve_regmap[]
+        = { { 32, AARCH64_SVE_Z0_REGNUM, (int) (tdep->vq * 16) },
+            { 16, AARCH64_SVE_P0_REGNUM, (int) (tdep->vq * 16 / 8) },
+            { 1, AARCH64_SVE_FFR_REGNUM, (int) (tdep->vq * 16 / 8) },
+            { 1, AARCH64_FPSR_REGNUM, 4 },
+            { 1, AARCH64_FPCR_REGNUM, 4 },
+            { 0 } };
 
-      const struct regset aarch64_linux_sve_regset =
-	{
-	  sve_regmap,
-	  aarch64_linux_supply_sve_regset, aarch64_linux_collect_sve_regset,
-	  REGSET_VARIABLE_SIZE
-	};
+      const struct regset aarch64_linux_sve_regset
+        = { sve_regmap, aarch64_linux_supply_sve_regset,
+            aarch64_linux_collect_sve_regset, REGSET_VARIABLE_SIZE };
 
       cb (".reg-aarch-sve",
-	  SVE_HEADER_SIZE + regcache_map_entry_size (aarch64_linux_fpregmap),
-	  SVE_HEADER_SIZE + regcache_map_entry_size (sve_regmap),
-	  &aarch64_linux_sve_regset, "SVE registers", cb_data);
+          SVE_HEADER_SIZE + regcache_map_entry_size (aarch64_linux_fpregmap),
+          SVE_HEADER_SIZE + regcache_map_entry_size (sve_regmap),
+          &aarch64_linux_sve_regset, "SVE registers", cb_data);
     }
   else
     cb (".reg2", AARCH64_LINUX_SIZEOF_FPREGSET, AARCH64_LINUX_SIZEOF_FPREGSET,
-	&aarch64_linux_fpregset, NULL, cb_data);
-
+        &aarch64_linux_fpregset, NULL, cb_data);
 
   if (tdep->has_pauth ())
     {
       /* Create this on the fly in order to handle the variable location.  */
-      const struct regcache_map_entry pauth_regmap[] =
-	{
-	  { 2, AARCH64_PAUTH_DMASK_REGNUM (tdep->pauth_reg_base), 8},
-	  { 0 }
-	};
+      const struct regcache_map_entry pauth_regmap[]
+        = { { 2, AARCH64_PAUTH_DMASK_REGNUM (tdep->pauth_reg_base), 8 },
+            { 0 } };
 
-      const struct regset aarch64_linux_pauth_regset =
-	{
-	  pauth_regmap, regcache_supply_regset, regcache_collect_regset
-	};
+      const struct regset aarch64_linux_pauth_regset
+        = { pauth_regmap, regcache_supply_regset, regcache_collect_regset };
 
       cb (".reg-aarch-pauth", AARCH64_LINUX_SIZEOF_PAUTH,
-	  AARCH64_LINUX_SIZEOF_PAUTH, &aarch64_linux_pauth_regset,
-	  "pauth registers", cb_data);
+          AARCH64_LINUX_SIZEOF_PAUTH, &aarch64_linux_pauth_regset,
+          "pauth registers", cb_data);
     }
 
   /* Handle MTE registers.  */
   if (tdep->has_mte ())
     {
       /* Create this on the fly in order to handle the variable location.  */
-      const struct regcache_map_entry mte_regmap[] =
-	{
-	  { 1, tdep->mte_reg_base, 8},
-	  { 0 }
-	};
+      const struct regcache_map_entry mte_regmap[]
+        = { { 1, tdep->mte_reg_base, 8 }, { 0 } };
 
-      const struct regset aarch64_linux_mte_regset =
-	{
-	  mte_regmap, regcache_supply_regset, regcache_collect_regset
-	};
+      const struct regset aarch64_linux_mte_regset
+        = { mte_regmap, regcache_supply_regset, regcache_collect_regset };
 
       cb (".reg-aarch-mte", AARCH64_LINUX_SIZEOF_MTE_REGSET,
-	  AARCH64_LINUX_SIZEOF_MTE_REGSET, &aarch64_linux_mte_regset,
-	  "MTE registers", cb_data);
+          AARCH64_LINUX_SIZEOF_MTE_REGSET, &aarch64_linux_mte_regset,
+          "MTE registers", cb_data);
     }
 
   if (tdep->has_tls ())
     {
-      const struct regcache_map_entry tls_regmap[] =
-	{
-	  { 1, tdep->tls_regnum, 8 },
-	  { 0 }
-	};
+      const struct regcache_map_entry tls_regmap[]
+        = { { 1, tdep->tls_regnum, 8 }, { 0 } };
 
-      const struct regset aarch64_linux_tls_regset =
-	{
-	  tls_regmap, regcache_supply_regset, regcache_collect_regset
-	};
+      const struct regset aarch64_linux_tls_regset
+        = { tls_regmap, regcache_supply_regset, regcache_collect_regset };
 
       cb (".reg-aarch-tls", AARCH64_LINUX_SIZEOF_TLSREGSET,
-	  AARCH64_LINUX_SIZEOF_TLSREGSET, &aarch64_linux_tls_regset,
-	  "TLS register", cb_data);
+          AARCH64_LINUX_SIZEOF_TLSREGSET, &aarch64_linux_tls_regset,
+          "TLS register", cb_data);
     }
 }
 
@@ -777,7 +751,7 @@ aarch64_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
 
 static const struct target_desc *
 aarch64_linux_core_read_description (struct gdbarch *gdbarch,
-				     struct target_ops *target, bfd *abfd)
+                                     struct target_ops *target, bfd *abfd)
 {
   asection *tls = bfd_get_section_by_name (abfd, ".reg-aarch-tls");
   gdb::optional<gdb::byte_vector> auxv = target_read_auxv_raw (target);
@@ -800,8 +774,8 @@ static int
 aarch64_stap_is_single_operand (struct gdbarch *gdbarch, const char *s)
 {
   return (*s == '#' || isdigit (*s) /* Literal number.  */
-	  || *s == '[' /* Register indirection.  */
-	  || isalpha (*s)); /* Register value.  */
+          || *s == '['              /* Register indirection.  */
+          || isalpha (*s));         /* Register value.  */
 }
 
 /* This routine is used to parse a special token in AArch64's assembly.
@@ -815,7 +789,7 @@ aarch64_stap_is_single_operand (struct gdbarch *gdbarch, const char *s)
 
 static expr::operation_up
 aarch64_stap_parse_special_token (struct gdbarch *gdbarch,
-				  struct stap_parse_info *p)
+                                  struct stap_parse_info *p)
 {
   if (*p->arg == '[')
     {
@@ -833,42 +807,42 @@ aarch64_stap_parse_special_token (struct gdbarch *gdbarch,
 
       /* Register name.  */
       while (isalnum (*tmp))
-	++tmp;
+        ++tmp;
 
       if (*tmp != ',')
-	return {};
+        return {};
 
       len = tmp - start;
       std::string regname (start, len);
 
       if (user_reg_map_name_to_regnum (gdbarch, regname.c_str (), len) == -1)
-	error (_("Invalid register name `%s' on expression `%s'."),
-	       regname.c_str (), p->saved_arg);
+        error (_ ("Invalid register name `%s' on expression `%s'."),
+               regname.c_str (), p->saved_arg);
 
       ++tmp;
       tmp = skip_spaces (tmp);
       /* Now we expect a number.  It can begin with '#' or simply
 	 a digit.  */
       if (*tmp == '#')
-	++tmp;
+        ++tmp;
 
       if (*tmp == '-')
-	{
-	  ++tmp;
-	  got_minus = 1;
-	}
+        {
+          ++tmp;
+          got_minus = 1;
+        }
       else if (*tmp == '+')
-	++tmp;
+        ++tmp;
 
       if (!isdigit (*tmp))
-	return {};
+        return {};
 
       displacement = strtol (tmp, &endp, 10);
       tmp = endp;
 
       /* Skipping last `]'.  */
       if (*tmp++ != ']')
-	return {};
+        return {};
       p->arg = tmp;
 
       using namespace expr;
@@ -876,21 +850,21 @@ aarch64_stap_parse_special_token (struct gdbarch *gdbarch,
       /* The displacement.  */
       struct type *long_type = builtin_type (gdbarch)->builtin_long;
       if (got_minus)
-	displacement = -displacement;
-      operation_up disp = make_operation<long_const_operation> (long_type,
-								displacement);
+        displacement = -displacement;
+      operation_up disp
+        = make_operation<long_const_operation> (long_type, displacement);
 
       /* The register name.  */
       operation_up reg
-	= make_operation<register_operation> (std::move (regname));
+        = make_operation<register_operation> (std::move (regname));
 
       operation_up sum
-	= make_operation<add_operation> (std::move (reg), std::move (disp));
+        = make_operation<add_operation> (std::move (reg), std::move (disp));
 
       /* Casting to the expected type.  */
       struct type *arg_ptr_type = lookup_pointer_type (p->arg_type);
-      sum = make_operation<unop_cast_operation> (std::move (sum),
-						 arg_ptr_type);
+      sum
+        = make_operation<unop_cast_operation> (std::move (sum), arg_ptr_type);
       return make_operation<unop_ind_operation> (std::move (sum));
     }
   return {};
@@ -903,7 +877,8 @@ static linux_record_tdep aarch64_linux_record_tdep;
 /* Enum that defines the AArch64 linux specific syscall identifiers used for
    process record/replay.  */
 
-enum aarch64_syscall {
+enum aarch64_syscall
+{
   aarch64_sys_io_setup = 0,
   aarch64_sys_io_destroy = 1,
   aarch64_sys_io_submit = 2,
@@ -1174,11 +1149,13 @@ enum aarch64_syscall {
 static enum gdb_syscall
 aarch64_canonicalize_syscall (enum aarch64_syscall syscall_number)
 {
-#define SYSCALL_MAP(SYSCALL) case aarch64_sys_##SYSCALL: \
-  return gdb_sys_##SYSCALL
+#define SYSCALL_MAP(SYSCALL)  \
+  case aarch64_sys_##SYSCALL: \
+    return gdb_sys_##SYSCALL
 
-#define UNSUPPORTED_SYSCALL_MAP(SYSCALL) case aarch64_sys_##SYSCALL: \
-  return gdb_sys_no_syscall
+#define UNSUPPORTED_SYSCALL_MAP(SYSCALL) \
+  case aarch64_sys_##SYSCALL:            \
+    return gdb_sys_no_syscall
 
   switch (syscall_number)
     {
@@ -1448,9 +1425,9 @@ aarch64_canonicalize_syscall (enum aarch64_syscall syscall_number)
       UNSUPPORTED_SYSCALL_MAP (sched_setattr);
       UNSUPPORTED_SYSCALL_MAP (sched_getattr);
       SYSCALL_MAP (getrandom);
-  default:
-    return gdb_sys_no_syscall;
-  }
+    default:
+      return gdb_sys_no_syscall;
+    }
 }
 
 /* Retrieve the syscall number at a ptrace syscall-stop, either on syscall entry
@@ -1480,8 +1457,8 @@ aarch64_linux_get_syscall_number (struct gdbarch *gdbarch, thread_info *thread)
       regs->cooked_read (AARCH64_X0_REGNUM + 1, &x1);
       regs->cooked_read (AARCH64_FP_REGNUM, &fp);
       regs->cooked_read (AARCH64_LR_REGNUM, &lr);
-      if (x1 == 0 && fp ==0 && lr == 0)
-	return aarch64_sys_execve;
+      if (x1 == 0 && fp == 0 && lr == 0)
+        return aarch64_sys_execve;
     }
 
   return ret;
@@ -1508,33 +1485,32 @@ aarch64_all_but_pc_registers_record (struct regcache *regcache)
 
 static int
 aarch64_linux_syscall_record (struct regcache *regcache,
-			      unsigned long svc_number)
+                              unsigned long svc_number)
 {
   int ret = 0;
   enum gdb_syscall syscall_gdb;
 
-  syscall_gdb =
-    aarch64_canonicalize_syscall ((enum aarch64_syscall) svc_number);
+  syscall_gdb
+    = aarch64_canonicalize_syscall ((enum aarch64_syscall) svc_number);
 
   if (syscall_gdb < 0)
     {
       gdb_printf (gdb_stderr,
-		  _("Process record and replay target doesn't "
-		    "support syscall number %s\n"),
-		  plongest (svc_number));
+                  _ ("Process record and replay target doesn't "
+                     "support syscall number %s\n"),
+                  plongest (svc_number));
       return -1;
     }
 
-  if (syscall_gdb == gdb_sys_sigreturn
-      || syscall_gdb == gdb_sys_rt_sigreturn)
-   {
-     if (aarch64_all_but_pc_registers_record (regcache))
-       return -1;
-     return 0;
-   }
+  if (syscall_gdb == gdb_sys_sigreturn || syscall_gdb == gdb_sys_rt_sigreturn)
+    {
+      if (aarch64_all_but_pc_registers_record (regcache))
+        return -1;
+      return 0;
+    }
 
   ret = record_linux_system_call (syscall_gdb, regcache,
-				  &aarch64_linux_record_tdep);
+                                  &aarch64_linux_record_tdep);
   if (ret != 0)
     return ret;
 
@@ -1571,12 +1547,12 @@ aarch64_mte_get_atag (CORE_ADDR address)
 
   /* Attempt to fetch the allocation tag.  */
   if (!target_fetch_memtags (address, 1, tags,
-			     static_cast<int> (memtag_type::allocation)))
+                             static_cast<int> (memtag_type::allocation)))
     return {};
 
   /* Only one tag should've been returned.  Make sure we got exactly that.  */
   if (tags.size () != 1)
-    error (_("Target returned an unexpected number of tags."));
+    error (_ ("Target returned an unexpected number of tags."));
 
   /* Although our tags are 4 bits in size, they are stored in a
      byte.  */
@@ -1606,8 +1582,7 @@ aarch64_linux_tagged_address_p (struct gdbarch *gdbarch, struct value *address)
 /* Implement the memtag_matches_p gdbarch method.  */
 
 static bool
-aarch64_linux_memtag_matches_p (struct gdbarch *gdbarch,
-				struct value *address)
+aarch64_linux_memtag_matches_p (struct gdbarch *gdbarch, struct value *address)
 {
   gdb_assert (address != nullptr);
 
@@ -1635,8 +1610,8 @@ aarch64_linux_memtag_matches_p (struct gdbarch *gdbarch,
 
 static bool
 aarch64_linux_set_memtags (struct gdbarch *gdbarch, struct value *address,
-			   size_t length, const gdb::byte_vector &tags,
-			   memtag_type tag_type)
+                           size_t length, const gdb::byte_vector &tags,
+                           memtag_type tag_type)
 {
   gdb_assert (!tags.empty ());
   gdb_assert (address != nullptr);
@@ -1662,7 +1637,7 @@ aarch64_linux_set_memtags (struct gdbarch *gdbarch, struct value *address,
 
       /* Make sure we are dealing with a tagged address to begin with.  */
       if (!aarch64_linux_tagged_address_p (gdbarch, address))
-	return false;
+        return false;
 
       /* With G being the number of tag granules and N the number of tags
 	 passed in, we can have the following cases:
@@ -1678,18 +1653,18 @@ aarch64_linux_set_memtags (struct gdbarch *gdbarch, struct value *address,
       */
 
       size_t g = aarch64_mte_get_tag_granules (addr, length,
-					       AARCH64_MTE_GRANULE_SIZE);
+                                               AARCH64_MTE_GRANULE_SIZE);
       size_t n = tags.size ();
 
       if (g < n)
-	warning (_("Got more tags than memory granules.  Tags will be "
-		   "truncated."));
+        warning (_ ("Got more tags than memory granules.  Tags will be "
+                    "truncated."));
       else if (g > n)
-	warning (_("Using tag pattern to fill memory range."));
+        warning (_ ("Using tag pattern to fill memory range."));
 
       if (!target_store_memtags (addr, length, tags,
-				 static_cast<int> (memtag_type::allocation)))
-	return false;
+                                 static_cast<int> (memtag_type::allocation)))
+        return false;
     }
   return true;
 }
@@ -1698,7 +1673,7 @@ aarch64_linux_set_memtags (struct gdbarch *gdbarch, struct value *address,
 
 static struct value *
 aarch64_linux_get_memtag (struct gdbarch *gdbarch, struct value *address,
-			  memtag_type tag_type)
+                          memtag_type tag_type)
 {
   gdb_assert (address != nullptr);
 
@@ -1712,27 +1687,28 @@ aarch64_linux_get_memtag (struct gdbarch *gdbarch, struct value *address,
     {
       /* Make sure we are dealing with a tagged address to begin with.  */
       if (!aarch64_linux_tagged_address_p (gdbarch, address))
-	return nullptr;
+        return nullptr;
 
       /* Remove the top byte.  */
       addr = address_significant (gdbarch, addr);
       gdb::optional<CORE_ADDR> atag = aarch64_mte_get_atag (addr);
 
       if (!atag.has_value ())
-	return nullptr;
+        return nullptr;
 
       tag = *atag;
     }
 
   /* Convert the tag to a value.  */
   return value_from_ulongest (builtin_type (gdbarch)->builtin_unsigned_int,
-			      tag);
+                              tag);
 }
 
 /* Implement the memtag_to_string gdbarch method.  */
 
 static std::string
-aarch64_linux_memtag_to_string (struct gdbarch *gdbarch, struct value *tag_value)
+aarch64_linux_memtag_to_string (struct gdbarch *gdbarch,
+                                struct value *tag_value)
 {
   if (tag_value == nullptr)
     return "";
@@ -1747,8 +1723,8 @@ aarch64_linux_memtag_to_string (struct gdbarch *gdbarch, struct value *tag_value
 
 static void
 aarch64_linux_report_signal_info (struct gdbarch *gdbarch,
-				  struct ui_out *uiout,
-				  enum gdb_signal siggnal)
+                                  struct ui_out *uiout,
+                                  enum gdb_signal siggnal)
 {
   aarch64_gdbarch_tdep *tdep = gdbarch_tdep<aarch64_gdbarch_tdep> (gdbarch);
 
@@ -1765,7 +1741,7 @@ aarch64_linux_report_signal_info (struct gdbarch *gdbarch,
       si_code = parse_and_eval_long ("$_siginfo.si_code");
 
       fault_addr
-	= parse_and_eval_long ("$_siginfo._sifields._sigfault.si_addr");
+        = parse_and_eval_long ("$_siginfo._sifields._sigfault.si_addr");
     }
   catch (const gdb_exception_error &exception)
     {
@@ -1779,34 +1755,34 @@ aarch64_linux_report_signal_info (struct gdbarch *gdbarch,
 
   uiout->text ("\n");
 
-  uiout->field_string ("sigcode-meaning", _("Memory tag violation"));
+  uiout->field_string ("sigcode-meaning", _ ("Memory tag violation"));
 
   /* For synchronous faults, show additional information.  */
   if (si_code == SEGV_MTESERR)
     {
-      uiout->text (_(" while accessing address "));
+      uiout->text (_ (" while accessing address "));
       uiout->field_core_addr ("fault-addr", gdbarch, fault_addr);
       uiout->text ("\n");
 
       gdb::optional<CORE_ADDR> atag
-	= aarch64_mte_get_atag (address_significant (gdbarch, fault_addr));
+        = aarch64_mte_get_atag (address_significant (gdbarch, fault_addr));
       gdb_byte ltag = aarch64_mte_get_ltag (fault_addr);
 
       if (!atag.has_value ())
-	uiout->text (_("Allocation tag unavailable"));
+        uiout->text (_ ("Allocation tag unavailable"));
       else
-	{
-	  uiout->text (_("Allocation tag "));
-	  uiout->field_string ("allocation-tag", hex_string (*atag));
-	  uiout->text ("\n");
-	  uiout->text (_("Logical tag "));
-	  uiout->field_string ("logical-tag", hex_string (ltag));
-	}
+        {
+          uiout->text (_ ("Allocation tag "));
+          uiout->field_string ("allocation-tag", hex_string (*atag));
+          uiout->text ("\n");
+          uiout->text (_ ("Logical tag "));
+          uiout->field_string ("logical-tag", hex_string (ltag));
+        }
     }
   else
     {
       uiout->text ("\n");
-      uiout->text (_("Fault address unavailable"));
+      uiout->text (_ ("Fault address unavailable"));
     }
 }
 
@@ -1814,7 +1790,7 @@ aarch64_linux_report_signal_info (struct gdbarch *gdbarch,
 
 static asection *
 aarch64_linux_create_memtag_section (struct gdbarch *gdbarch, bfd *obfd,
-				     CORE_ADDR address, size_t size)
+                                     CORE_ADDR address, size_t size)
 {
   gdb_assert (obfd != nullptr);
   gdb_assert (size > 0);
@@ -1841,7 +1817,7 @@ aarch64_linux_create_memtag_section (struct gdbarch *gdbarch, bfd *obfd,
   bfd_set_section_size (mte_section, (tags_count + 1) >> 1);
   /* Store program header information.  */
   bfd_record_phdr (obfd, PT_AARCH64_MEMTAG_MTE, 1, 0, 0, 0, 0, 0, 1,
-		   &mte_section);
+                   &mte_section);
 
   return mte_section;
 }
@@ -1862,7 +1838,7 @@ aarch64_linux_fill_memtag_section (struct gdbarch *gdbarch, asection *osec)
 
   /* Figure out how many tags we need to store in this memory range.  */
   size_t granules = aarch64_mte_get_tag_granules (start_address, segment_size,
-						  AARCH64_MTE_GRANULE_SIZE);
+                                                  AARCH64_MTE_GRANULE_SIZE);
 
   /* If there are no tag granules to fetch, just return.  */
   if (granules == 0)
@@ -1877,19 +1853,18 @@ aarch64_linux_fill_memtag_section (struct gdbarch *gdbarch, asection *osec)
     {
       /* Transfer tags in chunks.  */
       gdb::byte_vector tags_read;
-      size_t xfer_len
-	= ((granules >= MAX_TAGS_TO_TRANSFER)
-	  ? MAX_TAGS_TO_TRANSFER * AARCH64_MTE_GRANULE_SIZE
-	  : granules * AARCH64_MTE_GRANULE_SIZE);
+      size_t xfer_len = ((granules >= MAX_TAGS_TO_TRANSFER)
+                           ? MAX_TAGS_TO_TRANSFER * AARCH64_MTE_GRANULE_SIZE
+                           : granules * AARCH64_MTE_GRANULE_SIZE);
 
       if (!target_fetch_memtags (address, xfer_len, tags_read,
-				 static_cast<int> (memtag_type::allocation)))
-	{
-	  warning (_("Failed to read MTE tags from memory range [%s,%s)."),
-		     phex_nz (start_address, sizeof (start_address)),
-		     phex_nz (end_address, sizeof (end_address)));
-	  return false;
-	}
+                                 static_cast<int> (memtag_type::allocation)))
+        {
+          warning (_ ("Failed to read MTE tags from memory range [%s,%s)."),
+                   phex_nz (start_address, sizeof (start_address)),
+                   phex_nz (end_address, sizeof (end_address)));
+          return false;
+        }
 
       /* Transfer over the tags that have been read.  */
       tags.insert (tags.end (), tags_read.begin (), tags_read.end ());
@@ -1902,13 +1877,12 @@ aarch64_linux_fill_memtag_section (struct gdbarch *gdbarch, asection *osec)
   /* Pack the MTE tag bits.  */
   aarch64_mte_pack_tags (tags);
 
-  if (!bfd_set_section_contents (osec->owner, osec, tags.data (),
-				 0, tags.size ()))
+  if (!bfd_set_section_contents (osec->owner, osec, tags.data (), 0,
+                                 tags.size ()))
     {
-      warning (_("Failed to write %s bytes of corefile memory "
-		 "tag content (%s)."),
-	       pulongest (tags.size ()),
-	       bfd_errmsg (bfd_get_error ()));
+      warning (_ ("Failed to write %s bytes of corefile memory "
+                  "tag content (%s)."),
+               pulongest (tags.size ()), bfd_errmsg (bfd_get_error ()));
     }
   return true;
 }
@@ -1921,9 +1895,8 @@ aarch64_linux_fill_memtag_section (struct gdbarch *gdbarch, asection *osec)
 
 static gdb::byte_vector
 aarch64_linux_decode_memtag_section (struct gdbarch *gdbarch,
-				     bfd_section *section,
-				     int type,
-				     CORE_ADDR address, size_t length)
+                                     bfd_section *section, int type,
+                                     CORE_ADDR address, size_t length)
 {
   gdb_assert (section != nullptr);
 
@@ -1931,16 +1904,16 @@ aarch64_linux_decode_memtag_section (struct gdbarch *gdbarch,
   gdb_assert (section->vma <= address);
 
   /* Figure out how many tags we need to fetch in this memory range.  */
-  size_t granules = aarch64_mte_get_tag_granules (address, length,
-						  AARCH64_MTE_GRANULE_SIZE);
+  size_t granules
+    = aarch64_mte_get_tag_granules (address, length, AARCH64_MTE_GRANULE_SIZE);
   /* Sanity check.  */
   gdb_assert (granules > 0);
 
   /* Fetch the total number of tags in the range [VMA, address + length).  */
   size_t granules_from_vma
     = aarch64_mte_get_tag_granules (section->vma,
-				    address - section->vma + length,
-				    AARCH64_MTE_GRANULE_SIZE);
+                                    address - section->vma + length,
+                                    AARCH64_MTE_GRANULE_SIZE);
 
   /* Adjust the tags vector to contain the exact number of packed bytes.  */
   gdb::byte_vector tags (((granules - 1) >> 1) + 1);
@@ -1948,9 +1921,9 @@ aarch64_linux_decode_memtag_section (struct gdbarch *gdbarch,
   /* Figure out the starting offset into the packed tags data.  */
   file_ptr offset = ((granules_from_vma - granules) >> 1);
 
-  if (!bfd_get_section_contents (section->owner, section, tags.data (),
-				 offset, tags.size ()))
-    error (_("Couldn't read contents from memtag section."));
+  if (!bfd_get_section_contents (section->owner, section, tags.data (), offset,
+                                 tags.size ()))
+    error (_ ("Couldn't read contents from memtag section."));
 
   /* At this point, the tags are packed 2 per byte.  Unpack them before
      returning.  */
@@ -1968,10 +1941,10 @@ aarch64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   static const char *const stap_integer_prefixes[] = { "#", "", NULL };
   static const char *const stap_register_prefixes[] = { "", NULL };
-  static const char *const stap_register_indirection_prefixes[] = { "[",
-								    NULL };
-  static const char *const stap_register_indirection_suffixes[] = { "]",
-								    NULL };
+  static const char *const stap_register_indirection_prefixes[]
+    = { "[", NULL };
+  static const char *const stap_register_indirection_suffixes[]
+    = { "]", NULL };
   aarch64_gdbarch_tdep *tdep = gdbarch_tdep<aarch64_gdbarch_tdep> (gdbarch);
 
   tdep->lowest_pc = 0x8000;
@@ -1979,11 +1952,11 @@ aarch64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   linux_init_abi (info, gdbarch, 1);
 
   set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					 linux_lp64_fetch_link_map_offsets);
+                                         linux_lp64_fetch_link_map_offsets);
 
   /* Enable TLS support.  */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
-					     svr4_fetch_objfile_link_map);
+                                             svr4_fetch_objfile_link_map);
 
   /* Shared library handling.  */
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
@@ -1994,21 +1967,21 @@ aarch64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* Enable longjmp.  */
   tdep->jb_pc = 11;
 
-  set_gdbarch_iterate_over_regset_sections
-    (gdbarch, aarch64_linux_iterate_over_regset_sections);
-  set_gdbarch_core_read_description
-    (gdbarch, aarch64_linux_core_read_description);
+  set_gdbarch_iterate_over_regset_sections (
+    gdbarch, aarch64_linux_iterate_over_regset_sections);
+  set_gdbarch_core_read_description (gdbarch,
+                                     aarch64_linux_core_read_description);
 
   /* SystemTap related.  */
   set_gdbarch_stap_integer_prefixes (gdbarch, stap_integer_prefixes);
   set_gdbarch_stap_register_prefixes (gdbarch, stap_register_prefixes);
-  set_gdbarch_stap_register_indirection_prefixes (gdbarch,
-					    stap_register_indirection_prefixes);
-  set_gdbarch_stap_register_indirection_suffixes (gdbarch,
-					    stap_register_indirection_suffixes);
+  set_gdbarch_stap_register_indirection_prefixes (
+    gdbarch, stap_register_indirection_prefixes);
+  set_gdbarch_stap_register_indirection_suffixes (
+    gdbarch, stap_register_indirection_suffixes);
   set_gdbarch_stap_is_single_operand (gdbarch, aarch64_stap_is_single_operand);
   set_gdbarch_stap_parse_special_token (gdbarch,
-					aarch64_stap_parse_special_token);
+                                        aarch64_stap_parse_special_token);
 
   /* Reversible debugging, process record.  */
   set_gdbarch_process_record (gdbarch, aarch64_process_record);
@@ -2027,8 +2000,7 @@ aarch64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
       set_gdbarch_tagged_address_p (gdbarch, aarch64_linux_tagged_address_p);
 
       /* Register a hook for checking if there is a memory tag match.  */
-      set_gdbarch_memtag_matches_p (gdbarch,
-				    aarch64_linux_memtag_matches_p);
+      set_gdbarch_memtag_matches_p (gdbarch, aarch64_linux_memtag_matches_p);
 
       /* Register a hook for setting the logical/allocation tags for
 	 a range of addresses.  */
@@ -2045,22 +2017,22 @@ aarch64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
       set_gdbarch_memtag_to_string (gdbarch, aarch64_linux_memtag_to_string);
 
       set_gdbarch_report_signal_info (gdbarch,
-				      aarch64_linux_report_signal_info);
+                                      aarch64_linux_report_signal_info);
 
       /* Core file helpers.  */
 
       /* Core file helper to create a memory tag section for a particular
 	 PT_LOAD segment.  */
-      set_gdbarch_create_memtag_section
-	(gdbarch, aarch64_linux_create_memtag_section);
+      set_gdbarch_create_memtag_section (gdbarch,
+                                         aarch64_linux_create_memtag_section);
 
       /* Core file helper to fill a memory tag section with tag data.  */
-      set_gdbarch_fill_memtag_section
-	(gdbarch, aarch64_linux_fill_memtag_section);
+      set_gdbarch_fill_memtag_section (gdbarch,
+                                       aarch64_linux_fill_memtag_section);
 
       /* Core file helper to decode a memory tag section.  */
       set_gdbarch_decode_memtag_section (gdbarch,
-					 aarch64_linux_decode_memtag_section);
+                                         aarch64_linux_decode_memtag_section);
     }
 
   /* Initialize the aarch64_linux_record_tdep.  */
@@ -2230,17 +2202,18 @@ aarch64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* Displaced stepping.  */
   set_gdbarch_max_insn_length (gdbarch, 4 * AARCH64_DISPLACED_MODIFIED_INSNS);
   set_gdbarch_displaced_step_copy_insn (gdbarch,
-					aarch64_displaced_step_copy_insn);
+                                        aarch64_displaced_step_copy_insn);
   set_gdbarch_displaced_step_fixup (gdbarch, aarch64_displaced_step_fixup);
-  set_gdbarch_displaced_step_hw_singlestep (gdbarch,
-					    aarch64_displaced_step_hw_singlestep);
+  set_gdbarch_displaced_step_hw_singlestep (
+    gdbarch, aarch64_displaced_step_hw_singlestep);
 
   set_gdbarch_gcc_target_options (gdbarch, aarch64_linux_gcc_target_options);
 }
 
 #if GDB_SELF_TEST
 
-namespace selftests {
+namespace selftests
+{
 
 /* Verify functions to read and write logical tags.  */
 
@@ -2267,10 +2240,10 @@ void
 _initialize_aarch64_linux_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_aarch64, 0, GDB_OSABI_LINUX,
-			  aarch64_linux_init_abi);
+                          aarch64_linux_init_abi);
 
 #if GDB_SELF_TEST
   selftests::register_test ("aarch64-linux-tagged-address",
-			    selftests::aarch64_linux_ltag_tests);
+                            selftests::aarch64_linux_ltag_tests);
 #endif
 }

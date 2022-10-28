@@ -30,8 +30,8 @@
 #include "target/waitstatus.h" /* For enum target_stop_reason.  */
 #include "gdbsupport/enum-flags.h"
 
-#if defined (HAVE_LIBIPT)
-#  include <intel-pt.h>
+#if defined(HAVE_LIBIPT)
+#include <intel-pt.h>
 #endif
 
 #include <vector>
@@ -132,8 +132,11 @@ enum btrace_pt_error
 struct btrace_function
 {
   btrace_function (struct minimal_symbol *msym_, struct symbol *sym_,
-		   unsigned int number_, unsigned int insn_offset_, int level_)
-    : msym (msym_), sym (sym_), insn_offset (insn_offset_), number (number_),
+                   unsigned int number_, unsigned int insn_offset_, int level_)
+    : msym (msym_),
+      sym (sym_),
+      insn_offset (insn_offset_),
+      number (number_),
       level (level_)
   {
   }
@@ -250,7 +253,7 @@ enum btrace_thread_flag : unsigned
 };
 DEF_ENUM_FLAGS_TYPE (enum btrace_thread_flag, btrace_thread_flags);
 
-#if defined (HAVE_LIBIPT)
+#if defined(HAVE_LIBIPT)
 /* A packet.  */
 struct btrace_pt_packet
 {
@@ -292,7 +295,7 @@ struct btrace_maint_info
       struct btrace_maint_packet_history packet_history;
     } bts;
 
-#if defined (HAVE_LIBIPT)
+#if defined(HAVE_LIBIPT)
     /* BTRACE.DATA.FORMAT == BTRACE_FORMAT_PT  */
     struct
     {
@@ -361,12 +364,12 @@ struct btrace_thread_info
 
 /* Enable branch tracing for a thread.  */
 extern void btrace_enable (struct thread_info *tp,
-			   const struct btrace_config *conf);
+                           const struct btrace_config *conf);
 
 /* Get the branch trace configuration for a thread.
    Return NULL if branch tracing is not enabled for that thread.  */
 extern const struct btrace_config *
-  btrace_conf (const struct btrace_thread_info *);
+btrace_conf (const struct btrace_thread_info *);
 
 /* Disable branch tracing for a thread.
    This will also delete the current branch trace data.  */
@@ -380,12 +383,12 @@ extern void btrace_teardown (struct thread_info *);
 /* Return a human readable error string for the given ERRCODE in FORMAT.
    The pointer will never be NULL and must not be freed.  */
 
-extern const char *btrace_decode_error (enum btrace_format format, int errcode);
+extern const char *btrace_decode_error (enum btrace_format format,
+                                        int errcode);
 
 /* Fetch the branch trace for a single thread.  If CPU is not NULL, assume
    CPU for trace decode.  */
-extern void btrace_fetch (struct thread_info *,
-			  const struct btrace_cpu *cpu);
+extern void btrace_fetch (struct thread_info *, const struct btrace_cpu *cpu);
 
 /* Clear the branch trace for a single thread.  */
 extern void btrace_clear (struct thread_info *);
@@ -397,13 +400,14 @@ extern void btrace_free_objfile (struct objfile *);
 extern void parse_xml_btrace (struct btrace_data *data, const char *xml);
 
 /* Parse a branch trace configuration xml document XML into CONF.  */
-extern void parse_xml_btrace_conf (struct btrace_config *conf, const char *xml);
+extern void parse_xml_btrace_conf (struct btrace_config *conf,
+                                   const char *xml);
 
 /* Dereference a branch trace instruction iterator.  Return a pointer to the
    instruction the iterator points to.
    May return NULL if the iterator points to a gap in the trace.  */
 extern const struct btrace_insn *
-  btrace_insn_get (const struct btrace_insn_iterator *);
+btrace_insn_get (const struct btrace_insn_iterator *);
 
 /* Return the error code for a branch trace instruction iterator.  Returns zero
    if there is no error, i.e. the instruction is valid.  */
@@ -416,39 +420,39 @@ extern unsigned int btrace_insn_number (const struct btrace_insn_iterator *);
 /* Initialize a branch trace instruction iterator to point to the begin/end of
    the branch trace.  Throws an error if there is no branch trace.  */
 extern void btrace_insn_begin (struct btrace_insn_iterator *,
-			       const struct btrace_thread_info *);
+                               const struct btrace_thread_info *);
 extern void btrace_insn_end (struct btrace_insn_iterator *,
-			     const struct btrace_thread_info *);
+                             const struct btrace_thread_info *);
 
 /* Increment/decrement a branch trace instruction iterator by at most STRIDE
    instructions.  Return the number of instructions by which the instruction
    iterator has been advanced.
    Returns zero, if the operation failed or STRIDE had been zero.  */
 extern unsigned int btrace_insn_next (struct btrace_insn_iterator *,
-				      unsigned int stride);
+                                      unsigned int stride);
 extern unsigned int btrace_insn_prev (struct btrace_insn_iterator *,
-				      unsigned int stride);
+                                      unsigned int stride);
 
 /* Compare two branch trace instruction iterators.
    Return a negative number if LHS < RHS.
    Return zero if LHS == RHS.
    Return a positive number if LHS > RHS.  */
 extern int btrace_insn_cmp (const struct btrace_insn_iterator *lhs,
-			    const struct btrace_insn_iterator *rhs);
+                            const struct btrace_insn_iterator *rhs);
 
 /* Find an instruction or gap in the function branch trace by its number.
    If the instruction is found, initialize the branch trace instruction
    iterator to point to this instruction and return non-zero.
    Return zero otherwise.  */
 extern int btrace_find_insn_by_number (struct btrace_insn_iterator *,
-				       const struct btrace_thread_info *,
-				       unsigned int number);
+                                       const struct btrace_thread_info *,
+                                       unsigned int number);
 
 /* Dereference a branch trace call iterator.  Return a pointer to the
    function the iterator points to or NULL if the iterator points past
    the end of the branch trace.  */
 extern const struct btrace_function *
-  btrace_call_get (const struct btrace_call_iterator *);
+btrace_call_get (const struct btrace_call_iterator *);
 
 /* Return the function number for a branch trace call iterator.
    Returns one past the maximum function number for the end iterator.
@@ -458,45 +462,45 @@ extern unsigned int btrace_call_number (const struct btrace_call_iterator *);
 /* Initialize a branch trace call iterator to point to the begin/end of
    the branch trace.  Throws an error if there is no branch trace.  */
 extern void btrace_call_begin (struct btrace_call_iterator *,
-			       const struct btrace_thread_info *);
+                               const struct btrace_thread_info *);
 extern void btrace_call_end (struct btrace_call_iterator *,
-			     const struct btrace_thread_info *);
+                             const struct btrace_thread_info *);
 
 /* Increment/decrement a branch trace call iterator by at most STRIDE function
    segments.  Return the number of function segments by which the call
    iterator has been advanced.
    Returns zero, if the operation failed or STRIDE had been zero.  */
 extern unsigned int btrace_call_next (struct btrace_call_iterator *,
-				      unsigned int stride);
+                                      unsigned int stride);
 extern unsigned int btrace_call_prev (struct btrace_call_iterator *,
-				      unsigned int stride);
+                                      unsigned int stride);
 
 /* Compare two branch trace call iterators.
    Return a negative number if LHS < RHS.
    Return zero if LHS == RHS.
    Return a positive number if LHS > RHS.  */
 extern int btrace_call_cmp (const struct btrace_call_iterator *lhs,
-			    const struct btrace_call_iterator *rhs);
+                            const struct btrace_call_iterator *rhs);
 
 /* Find a function in the function branch trace by its NUMBER.
    If the function is found, initialize the branch trace call
    iterator to point to this function and return non-zero.
    Return zero otherwise.  */
 extern int btrace_find_call_by_number (struct btrace_call_iterator *,
-				       const struct btrace_thread_info *,
-				       unsigned int number);
+                                       const struct btrace_thread_info *,
+                                       unsigned int number);
 
 /* Set the branch trace instruction history from BEGIN (inclusive) to
    END (exclusive).  */
 extern void btrace_set_insn_history (struct btrace_thread_info *,
-				     const struct btrace_insn_iterator *begin,
-				     const struct btrace_insn_iterator *end);
+                                     const struct btrace_insn_iterator *begin,
+                                     const struct btrace_insn_iterator *end);
 
 /* Set the branch trace function call history from BEGIN (inclusive) to
    END (exclusive).  */
 extern void btrace_set_call_history (struct btrace_thread_info *,
-				     const struct btrace_call_iterator *begin,
-				     const struct btrace_call_iterator *end);
+                                     const struct btrace_call_iterator *begin,
+                                     const struct btrace_call_iterator *end);
 
 /* Determine if branch tracing is currently replaying TP.  */
 extern int btrace_is_replaying (struct thread_info *tp);

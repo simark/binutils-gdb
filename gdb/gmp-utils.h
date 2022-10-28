@@ -71,7 +71,6 @@ struct gdb_mpz
     mpz_swap (val, from.val);
   }
 
-  
   gdb_mpz &operator= (const gdb_mpz &from)
   {
     mpz_set (val, from.val);
@@ -94,7 +93,8 @@ struct gdb_mpz
   /* Convert VAL to an integer of the given type.
 
      The return type can signed or unsigned, with no size restriction.  */
-  template<typename T> T as_integer () const;
+  template<typename T>
+  T as_integer () const;
 
   /* Set VAL by importing the number stored in the byte array (BUF),
      using the given BYTE_ORDER.  The size of the data to read is
@@ -102,14 +102,14 @@ struct gdb_mpz
 
      UNSIGNED_P indicates whether the number has an unsigned type.  */
   void read (gdb::array_view<const gdb_byte> buf, enum bfd_endian byte_order,
-	     bool unsigned_p);
+             bool unsigned_p);
 
   /* Write VAL into BUF as a number whose byte size is the size of BUF,
      using the given BYTE_ORDER.
 
      UNSIGNED_P indicates whether the number has an unsigned type.  */
   void write (gdb::array_view<gdb_byte> buf, enum bfd_endian byte_order,
-	      bool unsigned_p) const;
+              bool unsigned_p) const;
 
   /* Return a string containing VAL.  */
   std::string str () const { return gmp_string_printf ("%Zd", val); }
@@ -118,9 +118,9 @@ struct gdb_mpz
   ~gdb_mpz () { mpz_clear (val); }
 
 private:
-
   /* Helper template for constructor and operator=.  */
-  template<typename T> void set (T src);
+  template<typename T>
+  void set (T src);
 
   /* Low-level function to export VAL into BUF as a number whose byte size
      is the size of BUF.
@@ -137,8 +137,8 @@ private:
 
     An error is raised if BUF is not large enough to contain the value
     being exported.  */
-  void safe_export (gdb::array_view<gdb_byte> buf,
-		    int endian, bool unsigned_p) const;
+  void safe_export (gdb::array_view<gdb_byte> buf, int endian,
+                    bool unsigned_p) const;
 };
 
 /* A class to make it easier to use GMP's mpq_t values within GDB.  */
@@ -197,8 +197,8 @@ struct gdb_mpq
      SCALING_FACTOR is the scaling factor to apply after having
      read the unscaled value from our buffer.  */
   void read_fixed_point (gdb::array_view<const gdb_byte> buf,
-			 enum bfd_endian byte_order, bool unsigned_p,
-			 const gdb_mpq &scaling_factor);
+                         enum bfd_endian byte_order, bool unsigned_p,
+                         const gdb_mpq &scaling_factor);
 
   /* Write VAL into BUF as fixed point value following the given BYTE_ORDER.
      The size of BUF is used as the length to write the value into.
@@ -207,8 +207,8 @@ struct gdb_mpq
      SCALING_FACTOR is the scaling factor to apply before writing
      the unscaled value to our buffer.  */
   void write_fixed_point (gdb::array_view<gdb_byte> buf,
-			  enum bfd_endian byte_order, bool unsigned_p,
-			  const gdb_mpq &scaling_factor) const;
+                          enum bfd_endian byte_order, bool unsigned_p,
+                          const gdb_mpq &scaling_factor) const;
 
   /* The destructor.  */
   ~gdb_mpq () { mpq_clear (val); }
@@ -236,8 +236,8 @@ struct gdb_mpf
      SCALING_FACTOR is the scaling factor to apply after having
      read the unscaled value from our buffer.  */
   void read_fixed_point (gdb::array_view<const gdb_byte> buf,
-			 enum bfd_endian byte_order, bool unsigned_p,
-			 const gdb_mpq &scaling_factor)
+                         enum bfd_endian byte_order, bool unsigned_p,
+                         const gdb_mpq &scaling_factor)
   {
     gdb_mpq tmp_q;
 
@@ -255,9 +255,8 @@ template<typename T>
 void
 gdb_mpz::set (T src)
 {
-  mpz_import (val, 1 /* count */, -1 /* order */,
-	      sizeof (T) /* size */, 0 /* endian (0 = native) */,
-	      0 /* nails */, &src /* op */);
+  mpz_import (val, 1 /* count */, -1 /* order */, sizeof (T) /* size */,
+              0 /* endian (0 = native) */, 0 /* nails */, &src /* op */);
   if (std::is_signed<T>::value && src < 0)
     {
       /* mpz_import does not handle the sign, so our value was imported
@@ -278,9 +277,9 @@ gdb_mpz::as_integer () const
 {
   T result;
 
-  this->safe_export ({(gdb_byte *) &result, sizeof (result)},
-		     0 /* endian (0 = native) */,
-		     !std::is_signed<T>::value /* unsigned_p */);
+  this->safe_export ({ (gdb_byte *) &result, sizeof (result) },
+                     0 /* endian (0 = native) */,
+                     !std::is_signed<T>::value /* unsigned_p */);
 
   return result;
 }

@@ -28,7 +28,7 @@
 
 static bool
 compare_block_starting_address (const memory_write_request &a_req,
-				const memory_write_request &b_req)
+                                const memory_write_request &b_req)
 {
   return a_req.begin < b_req.begin;
 }
@@ -41,9 +41,8 @@ compare_block_starting_address (const memory_write_request &a_req,
 
 static void
 claim_memory (const std::vector<memory_write_request> &blocks,
-	      std::vector<memory_write_request> *result,
-	      ULONGEST begin,
-	      ULONGEST end)
+              std::vector<memory_write_request> *result, ULONGEST begin,
+              ULONGEST end)
 {
   ULONGEST claimed_begin;
   ULONGEST claimed_end;
@@ -57,28 +56,28 @@ claim_memory (const std::vector<memory_write_request> &blocks,
 	 target_write_memory_blocks which checks for that.  */
 
       if (begin >= r.end)
-	continue;
+        continue;
       if (end != 0 && end <= r.begin)
-	continue;
+        continue;
 
       claimed_begin = std::max (begin, r.begin);
       if (end == 0)
-	claimed_end = r.end;
+        claimed_end = r.end;
       else
-	claimed_end = std::min (end, r.end);
+        claimed_end = std::min (end, r.end);
 
       if (claimed_begin == r.begin && claimed_end == r.end)
-	result->push_back (r);
+        result->push_back (r);
       else
-	{
-	  struct memory_write_request n = r;
+        {
+          struct memory_write_request n = r;
 
-	  n.begin = claimed_begin;
-	  n.end = claimed_end;
-	  n.data += claimed_begin - r.begin;
+          n.begin = claimed_begin;
+          n.end = claimed_end;
+          n.data += claimed_begin - r.begin;
 
-	  result->push_back (n);
-	}
+          result->push_back (n);
+        }
     }
 }
 
@@ -87,9 +86,10 @@ claim_memory (const std::vector<memory_write_request> &blocks,
    regular memory to REGULAR_BLOCKS.  */
 
 static void
-split_regular_and_flash_blocks (const std::vector<memory_write_request> &blocks,
-				std::vector<memory_write_request> *regular_blocks,
-				std::vector<memory_write_request> *flash_blocks)
+split_regular_and_flash_blocks (
+  const std::vector<memory_write_request> &blocks,
+  std::vector<memory_write_request> *regular_blocks,
+  std::vector<memory_write_request> *flash_blocks)
 {
   struct mem_region *region;
   CORE_ADDR cur_address;
@@ -113,7 +113,7 @@ split_regular_and_flash_blocks (const std::vector<memory_write_request> &blocks,
       claim_memory (blocks, r, region->lo, region->hi);
 
       if (cur_address == 0)
-	break;
+        break;
     }
 }
 
@@ -138,7 +138,8 @@ block_boundaries (CORE_ADDR address, CORE_ADDR *begin, CORE_ADDR *end)
   if (begin)
     *begin = region->lo + offset_in_region / blocksize * blocksize;
   if (end)
-    *end = region->lo + (offset_in_region + blocksize - 1) / blocksize * blocksize;
+    *end = region->lo
+           + (offset_in_region + blocksize - 1) / blocksize * blocksize;
 }
 
 /* Given the list of memory requests to be WRITTEN, this function
@@ -158,9 +159,9 @@ blocks_to_erase (const std::vector<memory_write_request> &written)
       block_boundaries (request.end - 1, 0, &end);
 
       if (!result.empty () && result.back ().end >= begin)
-	result.back ().end = end;
+        result.back ().end = end;
       else
-	result.emplace_back (begin, end);
+        result.emplace_back (begin, end);
     }
 
   return result;
@@ -173,8 +174,9 @@ blocks_to_erase (const std::vector<memory_write_request> &written)
    which is only partially filled by "load").  */
 
 static std::vector<memory_write_request>
-compute_garbled_blocks (const std::vector<memory_write_request> &erased_blocks,
-			const std::vector<memory_write_request> &written_blocks)
+compute_garbled_blocks (
+  const std::vector<memory_write_request> &erased_blocks,
+  const std::vector<memory_write_request> &written_blocks)
 {
   std::vector<memory_write_request> result;
 
@@ -195,64 +197,62 @@ compute_garbled_blocks (const std::vector<memory_write_request> &erased_blocks,
       struct memory_write_request erased = erased_iter;
 
       for (j = 0; j != je;)
-	{
-	  const memory_write_request *written = &written_blocks[j];
+        {
+          const memory_write_request *written = &written_blocks[j];
 
-	  /* Now try various cases.  */
+          /* Now try various cases.  */
 
-	  /* If WRITTEN is fully to the left of ERASED, check the next
+          /* If WRITTEN is fully to the left of ERASED, check the next
 	     written memory_write_request.  */
-	  if (written->end <= erased.begin)
-	    {
-	      ++j;
-	      continue;
-	    }
+          if (written->end <= erased.begin)
+            {
+              ++j;
+              continue;
+            }
 
-	  /* If WRITTEN is fully to the right of ERASED, then ERASED
+          /* If WRITTEN is fully to the right of ERASED, then ERASED
 	     is not written at all.  WRITTEN might affect other
 	     blocks.  */
-	  if (written->begin >= erased.end)
-	    {
-	      result.push_back (erased);
-	      goto next_erased;
-	    }
+          if (written->begin >= erased.end)
+            {
+              result.push_back (erased);
+              goto next_erased;
+            }
 
-	  /* If all of ERASED is completely written, we can move on to
+          /* If all of ERASED is completely written, we can move on to
 	     the next erased region.  */
-	  if (written->begin <= erased.begin
-	      && written->end >= erased.end)
-	    {
-	      goto next_erased;
-	    }
+          if (written->begin <= erased.begin && written->end >= erased.end)
+            {
+              goto next_erased;
+            }
 
-	  /* If there is an unwritten part at the beginning of ERASED,
+          /* If there is an unwritten part at the beginning of ERASED,
 	     then we should record that part and try this inner loop
 	     again for the remainder.  */
-	  if (written->begin > erased.begin)
-	    {
-	      result.emplace_back (erased.begin, written->begin);
-	      erased.begin = written->begin;
-	      continue;
-	    }
+          if (written->begin > erased.begin)
+            {
+              result.emplace_back (erased.begin, written->begin);
+              erased.begin = written->begin;
+              continue;
+            }
 
-	  /* If there is an unwritten part at the end of ERASED, we
+          /* If there is an unwritten part at the end of ERASED, we
 	     forget about the part that was written to and wait to see
 	     if the next write request writes more of ERASED.  We can't
 	     push it yet.  */
-	  if (written->end < erased.end)
-	    {
-	      erased.begin = written->end;
-	      ++j;
-	      continue;
-	    }
-	}
+          if (written->end < erased.end)
+            {
+              erased.begin = written->end;
+              ++j;
+              continue;
+            }
+        }
 
       /* If we ran out of write requests without doing anything about
 	 ERASED, then that means it's really erased.  */
       result.push_back (erased);
 
-    next_erased:
-      ;
+    next_erased:;
     }
 
   return result;
@@ -260,8 +260,8 @@ compute_garbled_blocks (const std::vector<memory_write_request> &erased_blocks,
 
 int
 target_write_memory_blocks (const std::vector<memory_write_request> &requests,
-			    enum flash_preserve_mode preserve_flash_p,
-			    void (*progress_cb) (ULONGEST, void *))
+                            enum flash_preserve_mode preserve_flash_p,
+                            void (*progress_cb) (ULONGEST, void *))
 {
   std::vector<memory_write_request> blocks = requests;
   std::vector<memory_write_request> regular;
@@ -299,27 +299,27 @@ target_write_memory_blocks (const std::vector<memory_write_request> &requests,
   if (!garbled.empty ())
     {
       if (preserve_flash_p == flash_preserve)
-	{
-	  /* Read in regions that must be preserved and add them to
+        {
+          /* Read in regions that must be preserved and add them to
 	     the list of blocks we read.  */
-	  for (memory_write_request &iter : garbled)
-	    {
-	      gdb_assert (iter.data == NULL);
-	      gdb::unique_xmalloc_ptr<gdb_byte> holder
-		((gdb_byte *) xmalloc (iter.end - iter.begin));
-	      iter.data = holder.get ();
-	      mem_holders.push_back (std::move (holder));
-	      int err = target_read_memory (iter.begin, iter.data,
-					    iter.end - iter.begin);
-	      if (err != 0)
-		return err;
+          for (memory_write_request &iter : garbled)
+            {
+              gdb_assert (iter.data == NULL);
+              gdb::unique_xmalloc_ptr<gdb_byte> holder (
+                (gdb_byte *) xmalloc (iter.end - iter.begin));
+              iter.data = holder.get ();
+              mem_holders.push_back (std::move (holder));
+              int err = target_read_memory (iter.begin, iter.data,
+                                            iter.end - iter.begin);
+              if (err != 0)
+                return err;
 
-	      flash.push_back (iter);
-	    }
+              flash.push_back (iter);
+            }
 
-	  std::sort (flash.begin (), flash.end (),
-		     compare_block_starting_address);
-	}
+          std::sort (flash.begin (), flash.end (),
+                     compare_block_starting_address);
+        }
     }
 
   /* We could coalesce adjacent memory blocks here, to reduce the
@@ -337,36 +337,35 @@ target_write_memory_blocks (const std::vector<memory_write_request> &requests,
       LONGEST len;
 
       len = target_write_with_progress (current_inferior ()->top_target (),
-					TARGET_OBJECT_MEMORY, NULL,
-					iter.data, iter.begin,
-					iter.end - iter.begin,
-					progress_cb, iter.baton);
+                                        TARGET_OBJECT_MEMORY, NULL, iter.data,
+                                        iter.begin, iter.end - iter.begin,
+                                        progress_cb, iter.baton);
       if (len < (LONGEST) (iter.end - iter.begin))
-	{
-	  /* Call error?  */
-	  return -1;
-	}
+        {
+          /* Call error?  */
+          return -1;
+        }
     }
 
   if (!erased.empty ())
     {
       /* Erase all pages.  */
       for (const memory_write_request &iter : erased)
-	target_flash_erase (iter.begin, iter.end - iter.begin);
+        target_flash_erase (iter.begin, iter.end - iter.begin);
 
       /* Write flash data.  */
       for (const memory_write_request &iter : flash)
-	{
-	  LONGEST len;
+        {
+          LONGEST len;
 
-	  len = target_write_with_progress (current_inferior ()->top_target (),
-					    TARGET_OBJECT_FLASH, NULL,
-					    iter.data, iter.begin,
-					    iter.end - iter.begin,
-					    progress_cb, iter.baton);
-	  if (len < (LONGEST) (iter.end - iter.begin))
-	    error (_("Error writing data to flash"));
-	}
+          len
+            = target_write_with_progress (current_inferior ()->top_target (),
+                                          TARGET_OBJECT_FLASH, NULL, iter.data,
+                                          iter.begin, iter.end - iter.begin,
+                                          progress_cb, iter.baton);
+          if (len < (LONGEST) (iter.end - iter.begin))
+            error (_ ("Error writing data to flash"));
+        }
 
       target_flash_done ();
     }

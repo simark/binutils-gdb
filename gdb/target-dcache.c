@@ -100,9 +100,9 @@ set_stack_cache (const char *args, int from_tty, struct cmd_list_element *c)
 
 static void
 show_stack_cache (struct ui_file *file, int from_tty,
-		  struct cmd_list_element *c, const char *value)
+                  struct cmd_list_element *c, const char *value)
 {
-  gdb_printf (file, _("Cache use for stack accesses is %s.\n"), value);
+  gdb_printf (file, _ ("Cache use for stack accesses is %s.\n"), value);
 }
 
 /* Return true if "stack cache" is enabled, otherwise, return false.  */
@@ -140,9 +140,9 @@ set_code_cache (const char *args, int from_tty, struct cmd_list_element *c)
 
 static void
 show_code_cache (struct ui_file *file, int from_tty,
-		 struct cmd_list_element *c, const char *value)
+                 struct cmd_list_element *c, const char *value)
 {
-  gdb_printf (file, _("Cache use for code accesses is %s.\n"), value);
+  gdb_printf (file, _ ("Cache use for code accesses is %s.\n"), value);
 }
 
 /* Return true if "code cache" is enabled, otherwise, return false.  */
@@ -160,7 +160,7 @@ maint_flush_dcache_command (const char *command, int from_tty)
 {
   target_dcache_invalidate ();
   if (from_tty)
-    gdb_printf (_("The dcache was flushed.\n"));
+    gdb_printf (_ ("The dcache was flushed.\n"));
 }
 
 void _initialize_target_dcache ();
@@ -168,33 +168,34 @@ void
 _initialize_target_dcache ()
 {
   add_setshow_boolean_cmd ("stack-cache", class_support,
-			   &stack_cache_enabled_1, _("\
-Set cache use for stack access."), _("\
-Show cache use for stack access."), _("\
+                           &stack_cache_enabled_1, _ ("\
+Set cache use for stack access."),
+                           _ ("\
+Show cache use for stack access."),
+                           _ ("\
 When on, use the target memory cache for all stack access, regardless of any\n\
 configured memory regions.  This improves remote performance significantly.\n\
 By default, caching for stack access is on."),
-			   set_stack_cache,
-			   show_stack_cache,
-			   &setlist, &showlist);
+                           set_stack_cache, show_stack_cache, &setlist,
+                           &showlist);
 
-  add_setshow_boolean_cmd ("code-cache", class_support,
-			   &code_cache_enabled_1, _("\
-Set cache use for code segment access."), _("\
-Show cache use for code segment access."), _("\
+  add_setshow_boolean_cmd ("code-cache", class_support, &code_cache_enabled_1,
+                           _ ("\
+Set cache use for code segment access."),
+                           _ ("\
+Show cache use for code segment access."),
+                           _ ("\
 When on, use the target memory cache for all code segment accesses,\n\
 regardless of any configured memory regions.  This improves remote\n\
 performance significantly.  By default, caching for code segment\n\
 access is on."),
-			   set_code_cache,
-			   show_code_cache,
-			   &setlist, &showlist);
+                           set_code_cache, show_code_cache, &setlist,
+                           &showlist);
 
-  add_cmd ("dcache", class_maintenance, maint_flush_dcache_command,
-	   _("\
+  add_cmd ("dcache", class_maintenance, maint_flush_dcache_command, _ ("\
 Force gdb to flush its target memory data cache.\n\
 \n\
 The dcache caches all target memory accesses where possible, this\n\
 includes the stack-cache and the code-cache."),
-	   &maintenanceflushlist);
+           &maintenanceflushlist);
 }

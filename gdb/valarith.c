@@ -31,8 +31,8 @@
 
 /* Forward declarations.  */
 static struct value *value_subscripted_rvalue (struct value *array,
-					       LONGEST index,
-					       LONGEST lowerbound);
+                                               LONGEST index,
+                                               LONGEST lowerbound);
 
 /* Define whether or not the C operator '/' truncates towards zero for
    differently signed operands (truncation direction is undefined in C).  */
@@ -60,19 +60,20 @@ find_size_for_pointer_math (struct type *ptr_type)
   if (sz == 0)
     {
       if (ptr_type->code () == TYPE_CODE_VOID)
-	sz = 1;
+        sz = 1;
       else
-	{
-	  const char *name;
-	  
-	  name = ptr_target->name ();
-	  if (name == NULL)
-	    error (_("Cannot perform pointer math on incomplete types, "
-		   "try casting to a known type, or void *."));
-	  else
-	    error (_("Cannot perform pointer math on incomplete type \"%s\", "
-		   "try casting to a known type, or void *."), name);
-	}
+        {
+          const char *name;
+
+          name = ptr_target->name ();
+          if (name == NULL)
+            error (_ ("Cannot perform pointer math on incomplete types, "
+                      "try casting to a known type, or void *."));
+          else
+            error (_ ("Cannot perform pointer math on incomplete type \"%s\", "
+                      "try casting to a known type, or void *."),
+                   name);
+        }
     }
   return sz;
 }
@@ -91,8 +92,8 @@ value_ptradd (struct value *arg1, LONGEST arg2)
   valptrtype = check_typedef (value_type (arg1));
   sz = find_size_for_pointer_math (valptrtype);
 
-  result = value_from_pointer (valptrtype,
-			       value_as_address (arg1) + sz * arg2);
+  result
+    = value_from_pointer (valptrtype, value_as_address (arg1) + sz * arg2);
   if (VALUE_LVAL (result) != lval_internalvar)
     set_value_component_location (result, arg1);
   return result;
@@ -117,15 +118,15 @@ value_ptrdiff (struct value *arg1, struct value *arg2)
 
   if (check_typedef (type1->target_type ())->length ()
       != check_typedef (type2->target_type ())->length ())
-    error (_("First argument of `-' is a pointer and "
-	     "second argument is neither\n"
-	     "an integer nor a pointer of the same type."));
+    error (_ ("First argument of `-' is a pointer and "
+              "second argument is neither\n"
+              "an integer nor a pointer of the same type."));
 
   sz = type_length_units (check_typedef (type1->target_type ()));
-  if (sz == 0) 
+  if (sz == 0)
     {
-      warning (_("Type size unknown, assuming 1. "
-	       "Try casting to a known type, or void *."));
+      warning (_ ("Type size unknown, assuming 1. "
+                  "Try casting to a known type, or void *."));
       sz = 1;
     }
 
@@ -157,29 +158,28 @@ value_subscript (struct value *array, LONGEST index)
       struct type *range_type = tarray->index_type ();
       gdb::optional<LONGEST> lowerbound = get_discrete_low_bound (range_type);
       if (!lowerbound.has_value ())
-	lowerbound = 0;
+        lowerbound = 0;
 
       if (VALUE_LVAL (array) != lval_memory)
-	return value_subscripted_rvalue (array, index, *lowerbound);
+        return value_subscripted_rvalue (array, index, *lowerbound);
 
-      gdb::optional<LONGEST> upperbound
-	= get_discrete_high_bound (range_type);
+      gdb::optional<LONGEST> upperbound = get_discrete_high_bound (range_type);
 
       if (!upperbound.has_value ())
-	upperbound = -1;
+        upperbound = -1;
 
       if (index >= *lowerbound && index <= *upperbound)
-	return value_subscripted_rvalue (array, index, *lowerbound);
+        return value_subscripted_rvalue (array, index, *lowerbound);
 
       if (!c_style)
-	{
-	  /* Emit warning unless we have an array of unknown size.
+        {
+          /* Emit warning unless we have an array of unknown size.
 	     An array of unknown size has lowerbound 0 and upperbound -1.  */
-	  if (*upperbound > -1)
-	    warning (_("array or string index out of range"));
-	  /* fall doing C stuff */
-	  c_style = true;
-	}
+          if (*upperbound > -1)
+            warning (_ ("array or string index out of range"));
+          /* fall doing C stuff */
+          c_style = true;
+        }
 
       index -= *lowerbound;
       array = value_coerce_array (array);
@@ -188,7 +188,7 @@ value_subscript (struct value *array, LONGEST index)
   if (c_style)
     return value_ind (value_ptradd (array, index));
   else
-    error (_("not an array or string"));
+    error (_ ("not an array or string"));
 }
 
 /* Return the value of EXPR[IDX], expr an aggregate rvalue
@@ -197,7 +197,7 @@ value_subscript (struct value *array, LONGEST index)
 
 static struct value *
 value_subscripted_rvalue (struct value *array, LONGEST index,
-			  LONGEST lowerbound)
+                          LONGEST lowerbound)
 {
   struct type *array_type = check_typedef (value_type (array));
   struct type *elt_type = array_type->target_type ();
@@ -219,15 +219,15 @@ value_subscripted_rvalue (struct value *array, LONGEST index,
 
   if (index < lowerbound
       || (!array_upper_bound_undefined
-	  && elt_offs >= type_length_units (array_type))
+          && elt_offs >= type_length_units (array_type))
       || (VALUE_LVAL (array) != lval_memory && array_upper_bound_undefined))
     {
       if (type_not_associated (array_type))
-	error (_("no such vector element (vector not associated)"));
+        error (_ ("no such vector element (vector not associated)"));
       else if (type_not_allocated (array_type))
-	error (_("no such vector element (vector not allocated)"));
+        error (_ ("no such vector element (vector not allocated)"));
       else
-	error (_("no such vector element"));
+        error (_ ("no such vector element"));
     }
 
   if (is_dynamic_type (elt_type))
@@ -241,7 +241,6 @@ value_subscripted_rvalue (struct value *array, LONGEST index,
   return value_from_component (array, elt_type, elt_offs);
 }
 
-
 /* Check to see if either argument is a structure, or a reference to
    one.  This is called so we know whether to go ahead with the normal
    binop or look for a user defined function instead.
@@ -249,8 +248,8 @@ value_subscripted_rvalue (struct value *array, LONGEST index,
    For now, we do not overload the `=' operator.  */
 
 int
-binop_types_user_defined_p (enum exp_opcode op,
-			    struct type *type1, struct type *type2)
+binop_types_user_defined_p (enum exp_opcode op, struct type *type1,
+                            struct type *type2)
 {
   if (op == BINOP_ASSIGN)
     return 0;
@@ -264,7 +263,7 @@ binop_types_user_defined_p (enum exp_opcode op,
     type2 = check_typedef (type2->target_type ());
 
   return (type1->code () == TYPE_CODE_STRUCT
-	  || type2->code () == TYPE_CODE_STRUCT);
+          || type2->code () == TYPE_CODE_STRUCT);
 }
 
 /* Check to see if either argument is a structure, or a reference to
@@ -274,8 +273,8 @@ binop_types_user_defined_p (enum exp_opcode op,
    For now, we do not overload the `=' operator.  */
 
 int
-binop_user_defined_p (enum exp_opcode op,
-		      struct value *arg1, struct value *arg2)
+binop_user_defined_p (enum exp_opcode op, struct value *arg1,
+                      struct value *arg2)
 {
   return binop_types_user_defined_p (op, value_type (arg1), value_type (arg2));
 }
@@ -309,16 +308,15 @@ unop_user_defined_p (enum exp_opcode op, struct value *arg1)
 
 static struct value *
 value_user_defined_cpp_op (gdb::array_view<value *> args, char *oper,
-			   int *static_memfuncp, enum noside noside)
+                           int *static_memfuncp, enum noside noside)
 {
-
   struct symbol *symp = NULL;
   struct value *valp = NULL;
 
   find_overload_match (args, oper, BOTH /* could be method */,
-		       &args[0] /* objp */,
-		       NULL /* pass NULL symbol since symbol is unknown */,
-		       &valp, &symp, static_memfuncp, 0, noside);
+                       &args[0] /* objp */,
+                       NULL /* pass NULL symbol since symbol is unknown */,
+                       &valp, &symp, static_memfuncp, 0, noside);
 
   if (valp)
     return valp;
@@ -332,7 +330,7 @@ value_user_defined_cpp_op (gdb::array_view<value *> args, char *oper,
       return value_of_variable (symp, 0);
     }
 
-  error (_("Could not find %s."), oper);
+  error (_ ("Could not find %s."), oper);
 }
 
 /* Lookup user defined operator NAME.  Return a value representing the
@@ -340,18 +338,16 @@ value_user_defined_cpp_op (gdb::array_view<value *> args, char *oper,
 
 static struct value *
 value_user_defined_op (struct value **argp, gdb::array_view<value *> args,
-		       char *name, int *static_memfuncp, enum noside noside)
+                       char *name, int *static_memfuncp, enum noside noside)
 {
   struct value *result = NULL;
 
   if (current_language->la_language == language_cplus)
     {
-      result = value_user_defined_cpp_op (args, name, static_memfuncp,
-					  noside);
+      result = value_user_defined_cpp_op (args, name, static_memfuncp, noside);
     }
   else
-    result = value_struct_elt (argp, args, name, static_memfuncp,
-			       "structure");
+    result = value_struct_elt (argp, args, name, static_memfuncp, "structure");
 
   return result;
 }
@@ -367,7 +363,7 @@ value_user_defined_op (struct value **argp, gdb::array_view<value *> args,
 
 struct value *
 value_x_binop (struct value *arg1, struct value *arg2, enum exp_opcode op,
-	       enum exp_opcode otherop, enum noside noside)
+               enum exp_opcode otherop, enum noside noside)
 {
   char *ptr;
   char tstr[13];
@@ -380,7 +376,7 @@ value_x_binop (struct value *arg1, struct value *arg2, enum exp_opcode op,
      arg vector and find the right function to call it with.  */
 
   if (check_typedef (value_type (arg1))->code () != TYPE_CODE_STRUCT)
-    error (_("Can't do that binary op on that type"));	/* FIXME be explicit */
+    error (_ ("Can't do that binary op on that type")); /* FIXME be explicit */
 
   value *argvec_storage[3];
   gdb::array_view<value *> argvec = argvec_storage;
@@ -440,35 +436,35 @@ value_x_binop (struct value *arg1, struct value *arg2, enum exp_opcode op,
       break;
     case BINOP_ASSIGN_MODIFY:
       switch (otherop)
-	{
-	case BINOP_ADD:
-	  strcpy (ptr, "+=");
-	  break;
-	case BINOP_SUB:
-	  strcpy (ptr, "-=");
-	  break;
-	case BINOP_MUL:
-	  strcpy (ptr, "*=");
-	  break;
-	case BINOP_DIV:
-	  strcpy (ptr, "/=");
-	  break;
-	case BINOP_REM:
-	  strcpy (ptr, "%=");
-	  break;
-	case BINOP_BITWISE_AND:
-	  strcpy (ptr, "&=");
-	  break;
-	case BINOP_BITWISE_IOR:
-	  strcpy (ptr, "|=");
-	  break;
-	case BINOP_BITWISE_XOR:
-	  strcpy (ptr, "^=");
-	  break;
-	case BINOP_MOD:	/* invalid */
-	default:
-	  error (_("Invalid binary operation specified."));
-	}
+        {
+        case BINOP_ADD:
+          strcpy (ptr, "+=");
+          break;
+        case BINOP_SUB:
+          strcpy (ptr, "-=");
+          break;
+        case BINOP_MUL:
+          strcpy (ptr, "*=");
+          break;
+        case BINOP_DIV:
+          strcpy (ptr, "/=");
+          break;
+        case BINOP_REM:
+          strcpy (ptr, "%=");
+          break;
+        case BINOP_BITWISE_AND:
+          strcpy (ptr, "&=");
+          break;
+        case BINOP_BITWISE_IOR:
+          strcpy (ptr, "|=");
+          break;
+        case BINOP_BITWISE_XOR:
+          strcpy (ptr, "^=");
+          break;
+        case BINOP_MOD: /* invalid */
+        default:
+          error (_ ("Invalid binary operation specified."));
+        }
       break;
     case BINOP_SUBSCRIPT:
       strcpy (ptr, "[]");
@@ -491,48 +487,47 @@ value_x_binop (struct value *arg1, struct value *arg2, enum exp_opcode op,
     case BINOP_LEQ:
       strcpy (ptr, "<=");
       break;
-    case BINOP_MOD:		/* invalid */
+    case BINOP_MOD: /* invalid */
     default:
-      error (_("Invalid binary operation specified."));
+      error (_ ("Invalid binary operation specified."));
     }
 
   argvec[0] = value_user_defined_op (&arg1, argvec.slice (1), tstr,
-				     &static_memfuncp, noside);
+                                     &static_memfuncp, noside);
 
   if (argvec[0])
     {
       if (static_memfuncp)
-	{
-	  argvec[1] = argvec[0];
-	  argvec = argvec.slice (1);
-	}
+        {
+          argvec[1] = argvec[0];
+          argvec = argvec.slice (1);
+        }
       if (value_type (argvec[0])->code () == TYPE_CODE_XMETHOD)
-	{
-	  /* Static xmethods are not supported yet.  */
-	  gdb_assert (static_memfuncp == 0);
-	  if (noside == EVAL_AVOID_SIDE_EFFECTS)
-	    {
-	      struct type *return_type
-		= result_type_of_xmethod (argvec[0], argvec.slice (1));
+        {
+          /* Static xmethods are not supported yet.  */
+          gdb_assert (static_memfuncp == 0);
+          if (noside == EVAL_AVOID_SIDE_EFFECTS)
+            {
+              struct type *return_type
+                = result_type_of_xmethod (argvec[0], argvec.slice (1));
 
-	      if (return_type == NULL)
-		error (_("Xmethod is missing return type."));
-	      return value_zero (return_type, VALUE_LVAL (arg1));
-	    }
-	  return call_xmethod (argvec[0], argvec.slice (1));
-	}
+              if (return_type == NULL)
+                error (_ ("Xmethod is missing return type."));
+              return value_zero (return_type, VALUE_LVAL (arg1));
+            }
+          return call_xmethod (argvec[0], argvec.slice (1));
+        }
       if (noside == EVAL_AVOID_SIDE_EFFECTS)
-	{
-	  struct type *return_type;
+        {
+          struct type *return_type;
 
-	  return_type = check_typedef (value_type (argvec[0]))->target_type ();
-	  return value_zero (return_type, VALUE_LVAL (arg1));
-	}
+          return_type = check_typedef (value_type (argvec[0]))->target_type ();
+          return value_zero (return_type, VALUE_LVAL (arg1));
+        }
       return call_function_by_hand (argvec[0], NULL,
-				    argvec.slice (1, 2 - static_memfuncp));
+                                    argvec.slice (1, 2 - static_memfuncp));
     }
-  throw_error (NOT_FOUND_ERROR,
-	       _("member function %s not found"), tstr);
+  throw_error (NOT_FOUND_ERROR, _ ("member function %s not found"), tstr);
 }
 
 /* We know that arg1 is a structure, so try to find a unary user
@@ -555,7 +550,7 @@ value_x_unop (struct value *arg1, enum exp_opcode op, enum noside noside)
      arg vector and find the right function to call it with.  */
 
   if (check_typedef (value_type (arg1))->code () != TYPE_CODE_STRUCT)
-    error (_("Can't do that unary op on that type"));	/* FIXME be explicit */
+    error (_ ("Can't do that unary op on that type")); /* FIXME be explicit */
 
   value *argvec_storage[3];
   gdb::array_view<value *> argvec = argvec_storage;
@@ -580,12 +575,12 @@ value_x_unop (struct value *arg1, enum exp_opcode op, enum noside noside)
     case UNOP_POSTINCREMENT:
       strcpy (ptr, "++");
       argvec[2] = value_from_longest (builtin_type (gdbarch)->builtin_int, 0);
-      nargs ++;
+      nargs++;
       break;
     case UNOP_POSTDECREMENT:
       strcpy (ptr, "--");
       argvec[2] = value_from_longest (builtin_type (gdbarch)->builtin_int, 0);
-      nargs ++;
+      nargs++;
       break;
     case UNOP_LOGICAL_NOT:
       strcpy (ptr, "!");
@@ -606,48 +601,45 @@ value_x_unop (struct value *arg1, enum exp_opcode op, enum noside noside)
       strcpy (ptr, "->");
       break;
     default:
-      error (_("Invalid unary operation specified."));
+      error (_ ("Invalid unary operation specified."));
     }
 
   argvec[0] = value_user_defined_op (&arg1, argvec.slice (1, nargs), tstr,
-				     &static_memfuncp, noside);
+                                     &static_memfuncp, noside);
 
   if (argvec[0])
     {
       if (static_memfuncp)
-	{
-	  argvec[1] = argvec[0];
-	  argvec = argvec.slice (1);
-	}
+        {
+          argvec[1] = argvec[0];
+          argvec = argvec.slice (1);
+        }
       if (value_type (argvec[0])->code () == TYPE_CODE_XMETHOD)
-	{
-	  /* Static xmethods are not supported yet.  */
-	  gdb_assert (static_memfuncp == 0);
-	  if (noside == EVAL_AVOID_SIDE_EFFECTS)
-	    {
-	      struct type *return_type
-		= result_type_of_xmethod (argvec[0], argvec[1]);
+        {
+          /* Static xmethods are not supported yet.  */
+          gdb_assert (static_memfuncp == 0);
+          if (noside == EVAL_AVOID_SIDE_EFFECTS)
+            {
+              struct type *return_type
+                = result_type_of_xmethod (argvec[0], argvec[1]);
 
-	      if (return_type == NULL)
-		error (_("Xmethod is missing return type."));
-	      return value_zero (return_type, VALUE_LVAL (arg1));
-	    }
-	  return call_xmethod (argvec[0], argvec[1]);
-	}
+              if (return_type == NULL)
+                error (_ ("Xmethod is missing return type."));
+              return value_zero (return_type, VALUE_LVAL (arg1));
+            }
+          return call_xmethod (argvec[0], argvec[1]);
+        }
       if (noside == EVAL_AVOID_SIDE_EFFECTS)
-	{
-	  struct type *return_type;
+        {
+          struct type *return_type;
 
-	  return_type = check_typedef (value_type (argvec[0]))->target_type ();
-	  return value_zero (return_type, VALUE_LVAL (arg1));
-	}
-      return call_function_by_hand (argvec[0], NULL,
-				    argvec.slice (1, nargs));
+          return_type = check_typedef (value_type (argvec[0]))->target_type ();
+          return value_zero (return_type, VALUE_LVAL (arg1));
+        }
+      return call_function_by_hand (argvec[0], NULL, argvec.slice (1, nargs));
     }
-  throw_error (NOT_FOUND_ERROR,
-	       _("member function %s not found"), tstr);
+  throw_error (NOT_FOUND_ERROR, _ ("member function %s not found"), tstr);
 }
-
 
 /* Concatenate two values.  One value must be an array; and the other
    value must either be an array with the same element type, or be of
@@ -668,8 +660,8 @@ value_concat (struct value *arg1, struct value *arg2)
     {
       elttype1 = elttype1->target_type ();
       if (!get_array_bounds (type1, &low1, &high1))
-	error (_("could not determine array bounds on left-hand-side of "
-		 "array concatenation"));
+        error (_ ("could not determine array bounds on left-hand-side of "
+                  "array concatenation"));
     }
   else
     {
@@ -683,8 +675,8 @@ value_concat (struct value *arg1, struct value *arg2)
     {
       elttype2 = elttype2->target_type ();
       if (!get_array_bounds (type2, &low2, &high2))
-	error (_("could not determine array bounds on right-hand-side of "
-		 "array concatenation"));
+        error (_ ("could not determine array bounds on right-hand-side of "
+                  "array concatenation"));
     }
   else
     {
@@ -693,13 +685,12 @@ value_concat (struct value *arg1, struct value *arg2)
     }
 
   if (!types_equal (elttype1, elttype2))
-    error (_("concatenation with different element types"));
+    error (_ ("concatenation with different element types"));
 
   LONGEST lowbound = current_language->c_style_arrays_p () ? 0 : 1;
   LONGEST n_elts = (high1 - low1 + 1) + (high2 - low2 + 1);
-  struct type *atype = lookup_array_range_type (elttype1,
-						lowbound,
-						lowbound + n_elts - 1);
+  struct type *atype
+    = lookup_array_range_type (elttype1, lowbound, lowbound + n_elts - 1);
 
   struct value *result = allocate_value (atype);
   gdb::array_view<gdb_byte> contents = value_contents_raw (result);
@@ -710,7 +701,7 @@ value_concat (struct value *arg1, struct value *arg2)
 
   return result;
 }
-
+
 /* Integer exponentiation: V1**V2, where both arguments are
    integers.  Requires V1 != 0 if V2 < 0.  Returns 1 for 0 ** 0.  */
 
@@ -720,25 +711,25 @@ integer_pow (LONGEST v1, LONGEST v2)
   if (v2 < 0)
     {
       if (v1 == 0)
-	error (_("Attempt to raise 0 to negative power."));
+        error (_ ("Attempt to raise 0 to negative power."));
       else
-	return 0;
+        return 0;
     }
-  else 
+  else
     {
       /* The Russian Peasant's Algorithm.  */
       LONGEST v;
-      
+
       v = 1;
       for (;;)
-	{
-	  if (v2 & 1L) 
-	    v *= v1;
-	  v2 >>= 1;
-	  if (v2 == 0)
-	    return v;
-	  v1 *= v1;
-	}
+        {
+          if (v2 & 1L)
+            v *= v1;
+          v2 >>= 1;
+          if (v2 == 0)
+            return v;
+          v1 *= v1;
+        }
     }
 }
 
@@ -746,8 +737,8 @@ integer_pow (LONGEST v1, LONGEST v2)
    other types if one of them is not floating point.  */
 static void
 value_args_as_target_float (struct value *arg1, struct value *arg2,
-			    gdb_byte *x, struct type **eff_type_x,
-			    gdb_byte *y, struct type **eff_type_y)
+                            gdb_byte *x, struct type **eff_type_x, gdb_byte *y,
+                            struct type **eff_type_y)
 {
   struct type *type1, *type2;
 
@@ -762,8 +753,8 @@ value_args_as_target_float (struct value *arg1, struct value *arg2,
     /* The DFP extension to the C language does not allow mixing of
      * decimal float types with other float types in expressions
      * (see WDTR 24732, page 12).  */
-    error (_("Mixing decimal floating types with "
-	     "other floating types is not allowed."));
+    error (_ ("Mixing decimal floating types with "
+              "other floating types is not allowed."));
 
   /* Obtain value of arg1, converting from other types if necessary.  */
 
@@ -776,13 +767,13 @@ value_args_as_target_float (struct value *arg1, struct value *arg2,
     {
       *eff_type_x = type2;
       if (type1->is_unsigned ())
-	target_float_from_ulongest (x, *eff_type_x, value_as_long (arg1));
+        target_float_from_ulongest (x, *eff_type_x, value_as_long (arg1));
       else
-	target_float_from_longest (x, *eff_type_x, value_as_long (arg1));
+        target_float_from_longest (x, *eff_type_x, value_as_long (arg1));
     }
   else
-    error (_("Don't know how to convert from %s to %s."), type1->name (),
-	     type2->name ());
+    error (_ ("Don't know how to convert from %s to %s."), type1->name (),
+           type2->name ());
 
   /* Obtain value of arg2, converting from other types if necessary.  */
 
@@ -795,13 +786,13 @@ value_args_as_target_float (struct value *arg1, struct value *arg2,
     {
       *eff_type_y = type1;
       if (type2->is_unsigned ())
-	target_float_from_ulongest (y, *eff_type_y, value_as_long (arg2));
+        target_float_from_ulongest (y, *eff_type_y, value_as_long (arg2));
       else
-	target_float_from_longest (y, *eff_type_y, value_as_long (arg2));
+        target_float_from_longest (y, *eff_type_y, value_as_long (arg2));
     }
   else
-    error (_("Don't know how to convert from %s to %s."), type1->name (),
-	     type2->name ());
+    error (_ ("Don't know how to convert from %s to %s."), type1->name (),
+           type2->name ());
 }
 
 /* Assuming at last one of ARG1 or ARG2 is a fixed point value,
@@ -829,41 +820,38 @@ fixed_point_binop (struct value *arg1, struct value *arg2, enum exp_opcode op)
       /* The code below uses TYPE1 for the result type, so make sure
 	 it is set properly.  */
       if (!is_fixed_point_type (type1))
-	type1 = type2;
+        type1 = type2;
     }
   else
     {
       if (!is_fixed_point_type (type1))
-	{
-	  arg1 = value_cast (type2, arg1);
-	  type1 = type2;
-	}
+        {
+          arg1 = value_cast (type2, arg1);
+          type1 = type2;
+        }
       if (!is_fixed_point_type (type2))
-	{
-	  arg2 = value_cast (type1, arg2);
-	  type2 = type1;
-	}
+        {
+          arg2 = value_cast (type1, arg2);
+          type2 = type1;
+        }
 
-      v1.read_fixed_point (value_contents (arg1),
-			   type_byte_order (type1), type1->is_unsigned (),
-			   type1->fixed_point_scaling_factor ());
-      v2.read_fixed_point (value_contents (arg2),
-			   type_byte_order (type2), type2->is_unsigned (),
-			   type2->fixed_point_scaling_factor ());
+      v1.read_fixed_point (value_contents (arg1), type_byte_order (type1),
+                           type1->is_unsigned (),
+                           type1->fixed_point_scaling_factor ());
+      v2.read_fixed_point (value_contents (arg2), type_byte_order (type2),
+                           type2->is_unsigned (),
+                           type2->fixed_point_scaling_factor ());
     }
 
-  auto fixed_point_to_value = [type1] (const gdb_mpq &fp)
-    {
-      value *fp_val = allocate_value (type1);
+  auto fixed_point_to_value = [type1] (const gdb_mpq &fp) {
+    value *fp_val = allocate_value (type1);
 
-      fp.write_fixed_point
-	(value_contents_raw (fp_val),
-	 type_byte_order (type1),
-	 type1->is_unsigned (),
-	 type1->fixed_point_scaling_factor ());
+    fp.write_fixed_point (value_contents_raw (fp_val), type_byte_order (type1),
+                          type1->is_unsigned (),
+                          type1->fixed_point_scaling_factor ());
 
-      return fp_val;
-    };
+    return fp_val;
+  };
 
   switch (op)
     {
@@ -892,23 +880,23 @@ fixed_point_binop (struct value *arg1, struct value *arg2, enum exp_opcode op)
 
     case BINOP_DIV:
       if (mpq_sgn (v2.val) == 0)
-	error (_("Division by zero"));
+        error (_ ("Division by zero"));
       mpq_div (res.val, v1.val, v2.val);
       val = fixed_point_to_value (res);
       break;
 
     case BINOP_EQUAL:
       val = value_from_ulongest (language_bool_type (language, gdbarch),
-				 mpq_cmp (v1.val, v2.val) == 0 ? 1 : 0);
+                                 mpq_cmp (v1.val, v2.val) == 0 ? 1 : 0);
       break;
 
     case BINOP_LESS:
       val = value_from_ulongest (language_bool_type (language, gdbarch),
-				 mpq_cmp (v1.val, v2.val) < 0 ? 1 : 0);
+                                 mpq_cmp (v1.val, v2.val) < 0 ? 1 : 0);
       break;
 
     default:
-      error (_("Integer-only operation on fixed point number."));
+      error (_ ("Integer-only operation on fixed point number."));
     }
 
   return val;
@@ -927,34 +915,34 @@ promotion_type (struct type *type1, struct type *type2)
       /* If only one type is floating-point, use its type.
 	 Otherwise use the bigger type.  */
       if (!is_floating_type (type1))
-	result_type = type2;
+        result_type = type2;
       else if (!is_floating_type (type2))
-	result_type = type1;
+        result_type = type1;
       else if (type2->length () > type1->length ())
-	result_type = type2;
+        result_type = type2;
       else
-	result_type = type1;
+        result_type = type1;
     }
   else
     {
       /* Integer types.  */
       if (type1->length () > type2->length ())
-	result_type = type1;
+        result_type = type1;
       else if (type2->length () > type1->length ())
-	result_type = type2;
+        result_type = type2;
       else if (type1->is_unsigned ())
-	result_type = type1;
+        result_type = type1;
       else if (type2->is_unsigned ())
-	result_type = type2;
+        result_type = type2;
       else
-	result_type = type1;
+        result_type = type1;
     }
 
   return result_type;
 }
 
 static struct value *scalar_binop (struct value *arg1, struct value *arg2,
-				   enum exp_opcode op);
+                                   enum exp_opcode op);
 
 /* Perform a binary operation on complex operands.  */
 
@@ -986,10 +974,10 @@ complex_binop (struct value *arg1, struct value *arg2, enum exp_opcode op)
       arg2_imag = value_zero (arg2_type, not_lval);
     }
 
-  struct type *comp_type = promotion_type (value_type (arg1_real),
-					   value_type (arg2_real));
+  struct type *comp_type
+    = promotion_type (value_type (arg1_real), value_type (arg2_real));
   if (!can_create_complex_type (comp_type))
-    error (_("Argument to complex arithmetic operation not supported."));
+    error (_ ("Argument to complex arithmetic operation not supported."));
 
   arg1_real = value_cast (comp_type, arg1_real);
   arg1_imag = value_cast (comp_type, arg1_imag);
@@ -1009,60 +997,60 @@ complex_binop (struct value *arg1, struct value *arg2, enum exp_opcode op)
 
     case BINOP_MUL:
       {
-	struct value *x1 = scalar_binop (arg1_real, arg2_real, op);
-	struct value *x2 = scalar_binop (arg1_imag, arg2_imag, op);
-	result_real = scalar_binop (x1, x2, BINOP_SUB);
+        struct value *x1 = scalar_binop (arg1_real, arg2_real, op);
+        struct value *x2 = scalar_binop (arg1_imag, arg2_imag, op);
+        result_real = scalar_binop (x1, x2, BINOP_SUB);
 
-	x1 = scalar_binop (arg1_real, arg2_imag, op);
-	x2 = scalar_binop (arg1_imag, arg2_real, op);
-	result_imag = scalar_binop (x1, x2, BINOP_ADD);
+        x1 = scalar_binop (arg1_real, arg2_imag, op);
+        x2 = scalar_binop (arg1_imag, arg2_real, op);
+        result_imag = scalar_binop (x1, x2, BINOP_ADD);
       }
       break;
 
     case BINOP_DIV:
       {
-	if (arg2_type->code () == TYPE_CODE_COMPLEX)
-	  {
-	    struct value *conjugate = value_complement (arg2);
-	    /* We have to reconstruct ARG1, in case the type was
+        if (arg2_type->code () == TYPE_CODE_COMPLEX)
+          {
+            struct value *conjugate = value_complement (arg2);
+            /* We have to reconstruct ARG1, in case the type was
 	       promoted.  */
-	    arg1 = value_literal_complex (arg1_real, arg1_imag, result_type);
+            arg1 = value_literal_complex (arg1_real, arg1_imag, result_type);
 
-	    struct value *numerator = scalar_binop (arg1, conjugate,
-						    BINOP_MUL);
-	    arg1_real = value_real_part (numerator);
-	    arg1_imag = value_imaginary_part (numerator);
+            struct value *numerator
+              = scalar_binop (arg1, conjugate, BINOP_MUL);
+            arg1_real = value_real_part (numerator);
+            arg1_imag = value_imaginary_part (numerator);
 
-	    struct value *x1 = scalar_binop (arg2_real, arg2_real, BINOP_MUL);
-	    struct value *x2 = scalar_binop (arg2_imag, arg2_imag, BINOP_MUL);
-	    arg2_real = scalar_binop (x1, x2, BINOP_ADD);
-	  }
+            struct value *x1 = scalar_binop (arg2_real, arg2_real, BINOP_MUL);
+            struct value *x2 = scalar_binop (arg2_imag, arg2_imag, BINOP_MUL);
+            arg2_real = scalar_binop (x1, x2, BINOP_ADD);
+          }
 
-	result_real = scalar_binop (arg1_real, arg2_real, op);
-	result_imag = scalar_binop (arg1_imag, arg2_real, op);
+        result_real = scalar_binop (arg1_real, arg2_real, op);
+        result_imag = scalar_binop (arg1_imag, arg2_real, op);
       }
       break;
 
     case BINOP_EQUAL:
     case BINOP_NOTEQUAL:
       {
-	struct value *x1 = scalar_binop (arg1_real, arg2_real, op);
-	struct value *x2 = scalar_binop (arg1_imag, arg2_imag, op);
+        struct value *x1 = scalar_binop (arg1_real, arg2_real, op);
+        struct value *x2 = scalar_binop (arg1_imag, arg2_imag, op);
 
-	LONGEST v1 = value_as_long (x1);
-	LONGEST v2 = value_as_long (x2);
+        LONGEST v1 = value_as_long (x1);
+        LONGEST v2 = value_as_long (x2);
 
-	if (op == BINOP_EQUAL)
-	  v1 = v1 && v2;
-	else
-	  v1 = v1 || v2;
+        if (op == BINOP_EQUAL)
+          v1 = v1 && v2;
+        else
+          v1 = v1 || v2;
 
-	return value_from_longest (value_type (x1), v1);
+        return value_from_longest (value_type (x1), v1);
       }
       break;
 
     default:
-      error (_("Invalid binary operation on numbers."));
+      error (_ ("Invalid binary operation on numbers."));
     }
 
   return value_literal_complex (result_real, result_imag, result_type);
@@ -1087,26 +1075,25 @@ type_length_bits (type *type)
    false, or errors out.  Returns true if valid.  */
 
 static bool
-check_valid_shift_count (int op, type *result_type,
-			 type *shift_count_type, ULONGEST shift_count)
+check_valid_shift_count (int op, type *result_type, type *shift_count_type,
+                         ULONGEST shift_count)
 {
   if (!shift_count_type->is_unsigned () && (LONGEST) shift_count < 0)
     {
-      auto error_or_warning = [] (const char *msg)
-      {
-	/* Shifts by a negative amount are always an error in Go.  Other
+      auto error_or_warning = [] (const char *msg) {
+        /* Shifts by a negative amount are always an error in Go.  Other
 	   languages are more permissive and their compilers just warn or
 	   have modes to disable the errors.  */
-	if (current_language->la_language == language_go)
-	  error (("%s"), msg);
-	else
-	  warning (("%s"), msg);
+        if (current_language->la_language == language_go)
+          error (("%s"), msg);
+        else
+          warning (("%s"), msg);
       };
 
       if (op == BINOP_RSH)
-	error_or_warning (_("right shift count is negative"));
+        error_or_warning (_ ("right shift count is negative"));
       else
-	error_or_warning (_("left shift count is negative"));
+        error_or_warning (_ ("left shift count is negative"));
       return false;
     }
 
@@ -1116,12 +1103,12 @@ check_valid_shift_count (int op, type *result_type,
 	 still return false, as the caller's error path does the right
 	 thing for Go.  */
       if (current_language->la_language != language_go)
-	{
-	  if (op == BINOP_RSH)
-	    warning (_("right shift count >= width of type"));
-	  else
-	    warning (_("left shift count >= width of type"));
-	}
+        {
+          if (op == BINOP_RSH)
+            warning (_ ("right shift count >= width of type"));
+          else
+            warning (_ ("left shift count >= width of type"));
+        }
       return false;
     }
 
@@ -1150,13 +1137,11 @@ scalar_binop (struct value *arg1, struct value *arg2, enum exp_opcode op)
       || type2->code () == TYPE_CODE_COMPLEX)
     return complex_binop (arg1, arg2, op);
 
-  if ((!is_floating_value (arg1)
-       && !is_integral_type (type1)
+  if ((!is_floating_value (arg1) && !is_integral_type (type1)
        && !is_fixed_point_type (type1))
-      || (!is_floating_value (arg2)
-	  && !is_integral_type (type2)
-	  && !is_fixed_point_type (type2)))
-    error (_("Argument to arithmetic operation not a number or boolean."));
+      || (!is_floating_value (arg2) && !is_integral_type (type2)
+          && !is_fixed_point_type (type2)))
+    error (_ ("Argument to arithmetic operation not a number or boolean."));
 
   if (is_fixed_point_type (type1) || is_fixed_point_type (type2))
     return fixed_point_binop (arg1, arg2, op);
@@ -1171,15 +1156,13 @@ scalar_binop (struct value *arg1, struct value *arg2, enum exp_opcode op)
       v1.resize (result_type->length ());
       v2.resize (result_type->length ());
 
-      value_args_as_target_float (arg1, arg2,
-				  v1.data (), &eff_type_v1,
-				  v2.data (), &eff_type_v2);
-      target_float_binop (op, v1.data (), eff_type_v1,
-			      v2.data (), eff_type_v2,
-			      value_contents_raw (val).data (), result_type);
+      value_args_as_target_float (arg1, arg2, v1.data (), &eff_type_v1,
+                                  v2.data (), &eff_type_v2);
+      target_float_binop (op, v1.data (), eff_type_v1, v2.data (), eff_type_v2,
+                          value_contents_raw (val).data (), result_type);
     }
   else if (type1->code () == TYPE_CODE_BOOL
-	   || type2->code () == TYPE_CODE_BOOL)
+           || type2->code () == TYPE_CODE_BOOL)
     {
       LONGEST v1, v2, v = 0;
 
@@ -1187,38 +1170,37 @@ scalar_binop (struct value *arg1, struct value *arg2, enum exp_opcode op)
       v2 = value_as_long (arg2);
 
       switch (op)
-	{
-	case BINOP_BITWISE_AND:
-	  v = v1 & v2;
-	  break;
+        {
+        case BINOP_BITWISE_AND:
+          v = v1 & v2;
+          break;
 
-	case BINOP_BITWISE_IOR:
-	  v = v1 | v2;
-	  break;
+        case BINOP_BITWISE_IOR:
+          v = v1 | v2;
+          break;
 
-	case BINOP_BITWISE_XOR:
-	  v = v1 ^ v2;
-	  break;
-	      
-	case BINOP_EQUAL:
-	  v = v1 == v2;
-	  break;
-	  
-	case BINOP_NOTEQUAL:
-	  v = v1 != v2;
-	  break;
+        case BINOP_BITWISE_XOR:
+          v = v1 ^ v2;
+          break;
 
-	default:
-	  error (_("Invalid operation on booleans."));
-	}
+        case BINOP_EQUAL:
+          v = v1 == v2;
+          break;
+
+        case BINOP_NOTEQUAL:
+          v = v1 != v2;
+          break;
+
+        default:
+          error (_ ("Invalid operation on booleans."));
+        }
 
       result_type = type1;
 
       val = allocate_value (result_type);
       store_signed_integer (value_contents_raw (val).data (),
-			    result_type->length (),
-			    type_byte_order (result_type),
-			    v);
+                            result_type->length (),
+                            type_byte_order (result_type), v);
     }
   else
     /* Integral operations here.  */
@@ -1230,224 +1212,223 @@ scalar_binop (struct value *arg1, struct value *arg2, enum exp_opcode op)
 	 If both operands are of equal length, use unsigned operation
 	 if one of the operands is unsigned.  */
       if (op == BINOP_RSH || op == BINOP_LSH || op == BINOP_EXP)
-	result_type = type1;
+        result_type = type1;
       else
-	result_type = promotion_type (type1, type2);
+        result_type = promotion_type (type1, type2);
 
       if (result_type->is_unsigned ())
-	{
-	  LONGEST v2_signed = value_as_long (arg2);
-	  ULONGEST v1, v2, v = 0;
+        {
+          LONGEST v2_signed = value_as_long (arg2);
+          ULONGEST v1, v2, v = 0;
 
-	  v1 = (ULONGEST) value_as_long (arg1);
-	  v2 = (ULONGEST) v2_signed;
+          v1 = (ULONGEST) value_as_long (arg1);
+          v2 = (ULONGEST) v2_signed;
 
-	  switch (op)
-	    {
-	    case BINOP_ADD:
-	      v = v1 + v2;
-	      break;
+          switch (op)
+            {
+            case BINOP_ADD:
+              v = v1 + v2;
+              break;
 
-	    case BINOP_SUB:
-	      v = v1 - v2;
-	      break;
+            case BINOP_SUB:
+              v = v1 - v2;
+              break;
 
-	    case BINOP_MUL:
-	      v = v1 * v2;
-	      break;
+            case BINOP_MUL:
+              v = v1 * v2;
+              break;
 
-	    case BINOP_DIV:
-	    case BINOP_INTDIV:
-	      if (v2 != 0)
-		v = v1 / v2;
-	      else
-		error (_("Division by zero"));
-	      break;
+            case BINOP_DIV:
+            case BINOP_INTDIV:
+              if (v2 != 0)
+                v = v1 / v2;
+              else
+                error (_ ("Division by zero"));
+              break;
 
-	    case BINOP_EXP:
-	      v = uinteger_pow (v1, v2_signed);
-	      break;
+            case BINOP_EXP:
+              v = uinteger_pow (v1, v2_signed);
+              break;
 
-	    case BINOP_REM:
-	      if (v2 != 0)
-		v = v1 % v2;
-	      else
-		error (_("Division by zero"));
-	      break;
+            case BINOP_REM:
+              if (v2 != 0)
+                v = v1 % v2;
+              else
+                error (_ ("Division by zero"));
+              break;
 
-	    case BINOP_MOD:
-	      /* Knuth 1.2.4, integer only.  Note that unlike the C '%' op,
+            case BINOP_MOD:
+              /* Knuth 1.2.4, integer only.  Note that unlike the C '%' op,
 		 v1 mod 0 has a defined value, v1.  */
-	      if (v2 == 0)
-		{
-		  v = v1;
-		}
-	      else
-		{
-		  v = v1 / v2;
-		  /* Note floor(v1/v2) == v1/v2 for unsigned.  */
-		  v = v1 - (v2 * v);
-		}
-	      break;
+              if (v2 == 0)
+                {
+                  v = v1;
+                }
+              else
+                {
+                  v = v1 / v2;
+                  /* Note floor(v1/v2) == v1/v2 for unsigned.  */
+                  v = v1 - (v2 * v);
+                }
+              break;
 
-	    case BINOP_LSH:
-	      if (!check_valid_shift_count (op, result_type, type2, v2))
-		v = 0;
-	      else
-		v = v1 << v2;
-	      break;
+            case BINOP_LSH:
+              if (!check_valid_shift_count (op, result_type, type2, v2))
+                v = 0;
+              else
+                v = v1 << v2;
+              break;
 
-	    case BINOP_RSH:
-	      if (!check_valid_shift_count (op, result_type, type2, v2))
-		v = 0;
-	      else
-		v = v1 >> v2;
-	      break;
+            case BINOP_RSH:
+              if (!check_valid_shift_count (op, result_type, type2, v2))
+                v = 0;
+              else
+                v = v1 >> v2;
+              break;
 
-	    case BINOP_BITWISE_AND:
-	      v = v1 & v2;
-	      break;
+            case BINOP_BITWISE_AND:
+              v = v1 & v2;
+              break;
 
-	    case BINOP_BITWISE_IOR:
-	      v = v1 | v2;
-	      break;
+            case BINOP_BITWISE_IOR:
+              v = v1 | v2;
+              break;
 
-	    case BINOP_BITWISE_XOR:
-	      v = v1 ^ v2;
-	      break;
+            case BINOP_BITWISE_XOR:
+              v = v1 ^ v2;
+              break;
 
-	    case BINOP_LOGICAL_AND:
-	      v = v1 && v2;
-	      break;
+            case BINOP_LOGICAL_AND:
+              v = v1 && v2;
+              break;
 
-	    case BINOP_LOGICAL_OR:
-	      v = v1 || v2;
-	      break;
+            case BINOP_LOGICAL_OR:
+              v = v1 || v2;
+              break;
 
-	    case BINOP_MIN:
-	      v = v1 < v2 ? v1 : v2;
-	      break;
+            case BINOP_MIN:
+              v = v1 < v2 ? v1 : v2;
+              break;
 
-	    case BINOP_MAX:
-	      v = v1 > v2 ? v1 : v2;
-	      break;
+            case BINOP_MAX:
+              v = v1 > v2 ? v1 : v2;
+              break;
 
-	    case BINOP_EQUAL:
-	      v = v1 == v2;
-	      break;
+            case BINOP_EQUAL:
+              v = v1 == v2;
+              break;
 
-	    case BINOP_NOTEQUAL:
-	      v = v1 != v2;
-	      break;
+            case BINOP_NOTEQUAL:
+              v = v1 != v2;
+              break;
 
-	    case BINOP_LESS:
-	      v = v1 < v2;
-	      break;
+            case BINOP_LESS:
+              v = v1 < v2;
+              break;
 
-	    case BINOP_GTR:
-	      v = v1 > v2;
-	      break;
+            case BINOP_GTR:
+              v = v1 > v2;
+              break;
 
-	    case BINOP_LEQ:
-	      v = v1 <= v2;
-	      break;
+            case BINOP_LEQ:
+              v = v1 <= v2;
+              break;
 
-	    case BINOP_GEQ:
-	      v = v1 >= v2;
-	      break;
+            case BINOP_GEQ:
+              v = v1 >= v2;
+              break;
 
-	    default:
-	      error (_("Invalid binary operation on numbers."));
-	    }
+            default:
+              error (_ ("Invalid binary operation on numbers."));
+            }
 
-	  val = allocate_value (result_type);
-	  store_unsigned_integer (value_contents_raw (val).data (),
-				  value_type (val)->length (),
-				  type_byte_order (result_type),
-				  v);
-	}
+          val = allocate_value (result_type);
+          store_unsigned_integer (value_contents_raw (val).data (),
+                                  value_type (val)->length (),
+                                  type_byte_order (result_type), v);
+        }
       else
-	{
-	  LONGEST v1, v2, v = 0;
+        {
+          LONGEST v1, v2, v = 0;
 
-	  v1 = value_as_long (arg1);
-	  v2 = value_as_long (arg2);
+          v1 = value_as_long (arg1);
+          v2 = value_as_long (arg2);
 
-	  switch (op)
-	    {
-	    case BINOP_ADD:
-	      v = v1 + v2;
-	      break;
+          switch (op)
+            {
+            case BINOP_ADD:
+              v = v1 + v2;
+              break;
 
-	    case BINOP_SUB:
-	      /* Avoid runtime error: signed integer overflow: \
+            case BINOP_SUB:
+              /* Avoid runtime error: signed integer overflow: \
 		 0 - -9223372036854775808 cannot be represented in type
 		 'long int'.  */
-	      v = (ULONGEST)v1 - (ULONGEST)v2;
-	      break;
+              v = (ULONGEST) v1 - (ULONGEST) v2;
+              break;
 
-	    case BINOP_MUL:
-	      v = v1 * v2;
-	      break;
+            case BINOP_MUL:
+              v = v1 * v2;
+              break;
 
-	    case BINOP_DIV:
-	    case BINOP_INTDIV:
-	      if (v2 != 0)
-		v = v1 / v2;
-	      else
-		error (_("Division by zero"));
-	      break;
+            case BINOP_DIV:
+            case BINOP_INTDIV:
+              if (v2 != 0)
+                v = v1 / v2;
+              else
+                error (_ ("Division by zero"));
+              break;
 
-	    case BINOP_EXP:
-	      v = integer_pow (v1, v2);
-	      break;
+            case BINOP_EXP:
+              v = integer_pow (v1, v2);
+              break;
 
-	    case BINOP_REM:
-	      if (v2 != 0)
-		v = v1 % v2;
-	      else
-		error (_("Division by zero"));
-	      break;
+            case BINOP_REM:
+              if (v2 != 0)
+                v = v1 % v2;
+              else
+                error (_ ("Division by zero"));
+              break;
 
-	    case BINOP_MOD:
-	      /* Knuth 1.2.4, integer only.  Note that unlike the C '%' op,
+            case BINOP_MOD:
+              /* Knuth 1.2.4, integer only.  Note that unlike the C '%' op,
 		 X mod 0 has a defined value, X.  */
-	      if (v2 == 0)
-		{
-		  v = v1;
-		}
-	      else
-		{
-		  v = v1 / v2;
-		  /* Compute floor.  */
-		  if (TRUNCATION_TOWARDS_ZERO && (v < 0) && ((v1 % v2) != 0))
-		    {
-		      v--;
-		    }
-		  v = v1 - (v2 * v);
-		}
-	      break;
+              if (v2 == 0)
+                {
+                  v = v1;
+                }
+              else
+                {
+                  v = v1 / v2;
+                  /* Compute floor.  */
+                  if (TRUNCATION_TOWARDS_ZERO && (v < 0) && ((v1 % v2) != 0))
+                    {
+                      v--;
+                    }
+                  v = v1 - (v2 * v);
+                }
+              break;
 
-	    case BINOP_LSH:
-	      if (!check_valid_shift_count (op, result_type, type2, v2))
-		v = 0;
-	      else
-		{
-		  /* Cast to unsigned to avoid undefined behavior on
+            case BINOP_LSH:
+              if (!check_valid_shift_count (op, result_type, type2, v2))
+                v = 0;
+              else
+                {
+                  /* Cast to unsigned to avoid undefined behavior on
 		     signed shift overflow (unless C++20 or later),
 		     which would crash GDB when built with UBSan.
 		     Note we don't warn on left signed shift overflow,
 		     because starting with C++20, that is actually
 		     defined behavior.  Also, note GDB assumes 2's
 		     complement throughout.  */
-		  v = (ULONGEST) v1 << v2;
-		}
-	      break;
+                  v = (ULONGEST) v1 << v2;
+                }
+              break;
 
-	    case BINOP_RSH:
-	      if (!check_valid_shift_count (op, result_type, type2, v2))
-		{
-		  /* Pretend the too-large shift was decomposed in a
+            case BINOP_RSH:
+              if (!check_valid_shift_count (op, result_type, type2, v2))
+                {
+                  /* Pretend the too-large shift was decomposed in a
 		     number of smaller shifts.  An arithmetic signed
 		     right shift of a negative number always yields -1
 		     with such semantics.  This is the right thing to
@@ -1456,77 +1437,76 @@ scalar_binop (struct value *arg1, struct value *arg2, enum exp_opcode op)
 		     shift by a negative number was a shift by the
 		     negative number cast to unsigned, which is the
 		     same as shifting by a too-large number.  */
-		  if (v1 < 0)
-		    v = -1;
-		  else
-		    v = 0;
-		}
-	      else
-		v = v1 >> v2;
-	      break;
+                  if (v1 < 0)
+                    v = -1;
+                  else
+                    v = 0;
+                }
+              else
+                v = v1 >> v2;
+              break;
 
-	    case BINOP_BITWISE_AND:
-	      v = v1 & v2;
-	      break;
+            case BINOP_BITWISE_AND:
+              v = v1 & v2;
+              break;
 
-	    case BINOP_BITWISE_IOR:
-	      v = v1 | v2;
-	      break;
+            case BINOP_BITWISE_IOR:
+              v = v1 | v2;
+              break;
 
-	    case BINOP_BITWISE_XOR:
-	      v = v1 ^ v2;
-	      break;
+            case BINOP_BITWISE_XOR:
+              v = v1 ^ v2;
+              break;
 
-	    case BINOP_LOGICAL_AND:
-	      v = v1 && v2;
-	      break;
+            case BINOP_LOGICAL_AND:
+              v = v1 && v2;
+              break;
 
-	    case BINOP_LOGICAL_OR:
-	      v = v1 || v2;
-	      break;
+            case BINOP_LOGICAL_OR:
+              v = v1 || v2;
+              break;
 
-	    case BINOP_MIN:
-	      v = v1 < v2 ? v1 : v2;
-	      break;
+            case BINOP_MIN:
+              v = v1 < v2 ? v1 : v2;
+              break;
 
-	    case BINOP_MAX:
-	      v = v1 > v2 ? v1 : v2;
-	      break;
+            case BINOP_MAX:
+              v = v1 > v2 ? v1 : v2;
+              break;
 
-	    case BINOP_EQUAL:
-	      v = v1 == v2;
-	      break;
+            case BINOP_EQUAL:
+              v = v1 == v2;
+              break;
 
-	    case BINOP_NOTEQUAL:
-	      v = v1 != v2;
-	      break;
+            case BINOP_NOTEQUAL:
+              v = v1 != v2;
+              break;
 
-	    case BINOP_LESS:
-	      v = v1 < v2;
-	      break;
+            case BINOP_LESS:
+              v = v1 < v2;
+              break;
 
-	    case BINOP_GTR:
-	      v = v1 > v2;
-	      break;
+            case BINOP_GTR:
+              v = v1 > v2;
+              break;
 
-	    case BINOP_LEQ:
-	      v = v1 <= v2;
-	      break;
+            case BINOP_LEQ:
+              v = v1 <= v2;
+              break;
 
-	    case BINOP_GEQ:
-	      v = v1 >= v2;
-	      break;
+            case BINOP_GEQ:
+              v = v1 >= v2;
+              break;
 
-	    default:
-	      error (_("Invalid binary operation on numbers."));
-	    }
+            default:
+              error (_ ("Invalid binary operation on numbers."));
+            }
 
-	  val = allocate_value (result_type);
-	  store_signed_integer (value_contents_raw (val).data (),
-				value_type (val)->length (),
-				type_byte_order (result_type),
-				v);
-	}
+          val = allocate_value (result_type);
+          store_signed_integer (value_contents_raw (val).data (),
+                                value_type (val)->length (),
+                                type_byte_order (result_type), v);
+        }
     }
 
   return val;
@@ -1550,10 +1530,10 @@ value_vector_widen (struct value *scalar_value, struct type *vector_type)
   vector_type = check_typedef (vector_type);
 
   gdb_assert (vector_type->code () == TYPE_CODE_ARRAY
-	      && vector_type->is_vector ());
+              && vector_type->is_vector ());
 
   if (!get_array_bounds (vector_type, &low_bound, &high_bound))
-    error (_("Could not determine the vector bounds"));
+    error (_ ("Could not determine the vector bounds"));
 
   eltype = check_typedef (vector_type->target_type ());
   elval = value_cast (eltype, scalar_value);
@@ -1564,7 +1544,7 @@ value_vector_widen (struct value *scalar_value, struct type *vector_type)
      important bits.  */
   if (eltype->length () < scalar_type->length ()
       && !value_equal (elval, scalar_value))
-    error (_("conversion of scalar to vector involves truncation"));
+    error (_ ("conversion of scalar to vector involves truncation"));
 
   value *val = allocate_value (vector_type);
   gdb::array_view<gdb_byte> val_contents = value_contents_writeable (val);
@@ -1573,7 +1553,7 @@ value_vector_widen (struct value *scalar_value, struct type *vector_type)
   for (i = 0; i < high_bound - low_bound + 1; i++)
     /* Duplicate the contents of elval into the destination vector.  */
     copy (value_contents_all (elval),
-	  val_contents.slice (i * elt_len, elt_len));
+          val_contents.slice (i * elt_len, elt_len));
 
   return val;
 }
@@ -1591,27 +1571,26 @@ vector_binop (struct value *val1, struct value *val2, enum exp_opcode op)
   type1 = check_typedef (value_type (val1));
   type2 = check_typedef (value_type (val2));
 
-  t1_is_vec = (type1->code () == TYPE_CODE_ARRAY
-	       && type1->is_vector ()) ? 1 : 0;
-  t2_is_vec = (type2->code () == TYPE_CODE_ARRAY
-	       && type2->is_vector ()) ? 1 : 0;
+  t1_is_vec
+    = (type1->code () == TYPE_CODE_ARRAY && type1->is_vector ()) ? 1 : 0;
+  t2_is_vec
+    = (type2->code () == TYPE_CODE_ARRAY && type2->is_vector ()) ? 1 : 0;
 
   if (!t1_is_vec || !t2_is_vec)
-    error (_("Vector operations are only supported among vectors"));
+    error (_ ("Vector operations are only supported among vectors"));
 
   if (!get_array_bounds (type1, &low_bound1, &high_bound1)
       || !get_array_bounds (type2, &low_bound2, &high_bound2))
-    error (_("Could not determine the vector bounds"));
+    error (_ ("Could not determine the vector bounds"));
 
   eltype1 = check_typedef (type1->target_type ());
   eltype2 = check_typedef (type2->target_type ());
   elsize = eltype1->length ();
 
-  if (eltype1->code () != eltype2->code ()
-      || elsize != eltype2->length ()
+  if (eltype1->code () != eltype2->code () || elsize != eltype2->length ()
       || eltype1->is_unsigned () != eltype2->is_unsigned ()
       || low_bound1 != low_bound2 || high_bound1 != high_bound2)
-    error (_("Cannot perform operation on vectors with different types"));
+    error (_ ("Cannot perform operation on vectors with different types"));
 
   value *val = allocate_value (type1);
   gdb::array_view<gdb_byte> val_contents = value_contents_writeable (val);
@@ -1619,10 +1598,9 @@ vector_binop (struct value *val1, struct value *val2, enum exp_opcode op)
   for (i = 0; i < high_bound1 - low_bound1 + 1; i++)
     {
       value *tmp = value_binop (value_subscript (val1, i),
-				value_subscript (val2, i), op);
-      copy (value_contents_all (tmp),
-	    val_contents.slice (i * elsize, elsize));
-     }
+                                value_subscript (val2, i), op);
+      copy (value_contents_all (tmp), val_contents.slice (i * elsize, elsize));
+    }
 
   return val;
 }
@@ -1635,10 +1613,8 @@ value_binop (struct value *arg1, struct value *arg2, enum exp_opcode op)
   struct value *val;
   struct type *type1 = check_typedef (value_type (arg1));
   struct type *type2 = check_typedef (value_type (arg2));
-  int t1_is_vec = (type1->code () == TYPE_CODE_ARRAY
-		   && type1->is_vector ());
-  int t2_is_vec = (type2->code () == TYPE_CODE_ARRAY
-		   && type2->is_vector ());
+  int t1_is_vec = (type1->code () == TYPE_CODE_ARRAY && type1->is_vector ());
+  int t2_is_vec = (type2->code () == TYPE_CODE_ARRAY && type2->is_vector ());
 
   if (!t1_is_vec && !t2_is_vec)
     val = scalar_binop (arg1, arg2, op);
@@ -1649,11 +1625,10 @@ value_binop (struct value *arg1, struct value *arg2, enum exp_opcode op)
       /* Widen the scalar operand to a vector.  */
       struct value **v = t1_is_vec ? &arg2 : &arg1;
       struct type *t = t1_is_vec ? type2 : type1;
-      
-      if (t->code () != TYPE_CODE_FLT
-	  && t->code () != TYPE_CODE_DECFLOAT
-	  && !is_integral_type (t))
-	error (_("Argument to operation not a number or boolean."));
+
+      if (t->code () != TYPE_CODE_FLT && t->code () != TYPE_CODE_DECFLOAT
+          && !is_integral_type (t))
+        error (_ ("Argument to operation not a number or boolean."));
 
       /* Replicate the scalar value to make a vector value.  */
       *v = value_vector_widen (*v, t1_is_vec ? type1 : type2);
@@ -1663,7 +1638,7 @@ value_binop (struct value *arg1, struct value *arg2, enum exp_opcode op)
 
   return val;
 }
-
+
 /* See value.h.  */
 
 bool
@@ -1685,7 +1660,7 @@ value_logical_not (struct value *arg1)
   while (--len >= 0)
     {
       if (*p++)
-	break;
+        break;
     }
 
   return len < 0;
@@ -1706,11 +1681,11 @@ value_strcmp (struct value *arg1, struct value *arg2)
   for (i = 0; i < len; i++)
     {
       if (s1[i] < s2[i])
-	return -1;
+        return -1;
       else if (s1[i] > s2[i])
-	return 1;
+        return 1;
       else
-	continue;
+        continue;
     }
 
   if (len1 < len2)
@@ -1746,22 +1721,22 @@ value_equal (struct value *arg1, struct value *arg2)
   is_int2 = is_integral_type (type2);
 
   if (is_int1 && is_int2)
-    return longest_to_int (value_as_long (value_binop (arg1, arg2,
-						       BINOP_EQUAL)));
+    return longest_to_int (
+      value_as_long (value_binop (arg1, arg2, BINOP_EQUAL)));
   else if ((is_floating_value (arg1) || is_int1)
-	   && (is_floating_value (arg2) || is_int2))
+           && (is_floating_value (arg2) || is_int2))
     {
       struct type *eff_type_v1, *eff_type_v2;
       gdb::byte_vector v1, v2;
       v1.resize (std::max (type1->length (), type2->length ()));
       v2.resize (std::max (type1->length (), type2->length ()));
 
-      value_args_as_target_float (arg1, arg2,
-				  v1.data (), &eff_type_v1,
-				  v2.data (), &eff_type_v2);
+      value_args_as_target_float (arg1, arg2, v1.data (), &eff_type_v1,
+                                  v2.data (), &eff_type_v2);
 
-      return target_float_compare (v1.data (), eff_type_v1,
-				   v2.data (), eff_type_v2) == 0;
+      return target_float_compare (v1.data (), eff_type_v1, v2.data (),
+                                   eff_type_v2)
+             == 0;
     }
 
   /* FIXME: Need to promote to either CORE_ADDR or LONGEST, whichever
@@ -1772,16 +1747,15 @@ value_equal (struct value *arg1, struct value *arg2)
     return (CORE_ADDR) value_as_long (arg1) == value_as_address (arg2);
 
   else if (code1 == code2
-	   && ((len = (int) type1->length ())
-	       == (int) type2->length ()))
+           && ((len = (int) type1->length ()) == (int) type2->length ()))
     {
       p1 = value_contents (arg1).data ();
       p2 = value_contents (arg2).data ();
       while (--len >= 0)
-	{
-	  if (*p1++ != *p2++)
-	    break;
-	}
+        {
+          if (*p1++ != *p2++)
+            break;
+        }
       return len < 0;
     }
   else if (code1 == TYPE_CODE_STRING && code2 == TYPE_CODE_STRING)
@@ -1789,7 +1763,7 @@ value_equal (struct value *arg1, struct value *arg2)
       return value_strcmp (arg1, arg2) == 0;
     }
   else
-    error (_("Invalid type combination in equality test."));
+    error (_ ("Invalid type combination in equality test."));
 }
 
 /* Compare values based on their raw contents.  Useful for arrays since
@@ -1805,10 +1779,10 @@ value_equal_contents (struct value *arg1, struct value *arg2)
   type2 = check_typedef (value_type (arg2));
 
   return (type1->code () == type2->code ()
-	  && type1->length () == type2->length ()
-	  && memcmp (value_contents (arg1).data (),
-		     value_contents (arg2).data (),
-		     type1->length ()) == 0);
+          && type1->length () == type2->length ()
+          && memcmp (value_contents (arg1).data (),
+                     value_contents (arg2).data (), type1->length ())
+               == 0);
 }
 
 /* Simulate the C operator < by returning 1
@@ -1834,22 +1808,22 @@ value_less (struct value *arg1, struct value *arg2)
 
   if ((is_int1 && is_int2)
       || (is_fixed_point_type (type1) && is_fixed_point_type (type2)))
-    return longest_to_int (value_as_long (value_binop (arg1, arg2,
-						       BINOP_LESS)));
+    return longest_to_int (
+      value_as_long (value_binop (arg1, arg2, BINOP_LESS)));
   else if ((is_floating_value (arg1) || is_int1)
-	   && (is_floating_value (arg2) || is_int2))
+           && (is_floating_value (arg2) || is_int2))
     {
       struct type *eff_type_v1, *eff_type_v2;
       gdb::byte_vector v1, v2;
       v1.resize (std::max (type1->length (), type2->length ()));
       v2.resize (std::max (type1->length (), type2->length ()));
 
-      value_args_as_target_float (arg1, arg2,
-				  v1.data (), &eff_type_v1,
-				  v2.data (), &eff_type_v2);
+      value_args_as_target_float (arg1, arg2, v1.data (), &eff_type_v1,
+                                  v2.data (), &eff_type_v2);
 
-      return target_float_compare (v1.data (), eff_type_v1,
-				   v2.data (), eff_type_v2) == -1;
+      return target_float_compare (v1.data (), eff_type_v1, v2.data (),
+                                   eff_type_v2)
+             == -1;
     }
   else if (code1 == TYPE_CODE_PTR && code2 == TYPE_CODE_PTR)
     return value_as_address (arg1) < value_as_address (arg2);
@@ -1864,11 +1838,11 @@ value_less (struct value *arg1, struct value *arg2)
     return value_strcmp (arg1, arg2) < 0;
   else
     {
-      error (_("Invalid type combination in ordering comparison."));
+      error (_ ("Invalid type combination in ordering comparison."));
       return 0;
     }
 }
-
+
 /* The unary operators +, - and ~.  They free the argument ARG1.  */
 
 struct value *
@@ -1884,7 +1858,7 @@ value_pos (struct value *arg1)
       || type->code () == TYPE_CODE_COMPLEX)
     return value_from_contents (type, value_contents (arg1).data ());
   else
-    error (_("Argument to positive operation not a number."));
+    error (_ ("Argument to positive operation not a number."));
 }
 
 struct value *
@@ -1907,17 +1881,17 @@ value_neg (struct value *arg1)
       LONGEST low_bound, high_bound;
 
       if (!get_array_bounds (type, &low_bound, &high_bound))
-	error (_("Could not determine the vector bounds"));
+        error (_ ("Could not determine the vector bounds"));
 
       gdb::array_view<gdb_byte> val_contents = value_contents_writeable (val);
       int elt_len = eltype->length ();
 
       for (i = 0; i < high_bound - low_bound + 1; i++)
-	{
-	  value *tmp = value_neg (value_subscript (arg1, i));
-	  copy (value_contents_all (tmp),
-		val_contents.slice (i * elt_len, elt_len));
-	}
+        {
+          value *tmp = value_neg (value_subscript (arg1, i));
+          copy (value_contents_all (tmp),
+                val_contents.slice (i * elt_len, elt_len));
+        }
       return val;
     }
   else if (type->code () == TYPE_CODE_COMPLEX)
@@ -1930,7 +1904,7 @@ value_neg (struct value *arg1)
       return value_literal_complex (real, imag, type);
     }
   else
-    error (_("Argument to negate operation not a number."));
+    error (_ ("Argument to negate operation not a number."));
 }
 
 struct value *
@@ -1951,18 +1925,18 @@ value_complement (struct value *arg1)
       LONGEST low_bound, high_bound;
 
       if (!get_array_bounds (type, &low_bound, &high_bound))
-	error (_("Could not determine the vector bounds"));
+        error (_ ("Could not determine the vector bounds"));
 
       val = allocate_value (type);
       gdb::array_view<gdb_byte> val_contents = value_contents_writeable (val);
       int elt_len = eltype->length ();
 
       for (i = 0; i < high_bound - low_bound + 1; i++)
-	{
-	  value *tmp = value_complement (value_subscript (arg1, i));
-	  copy (value_contents_all (tmp),
-		val_contents.slice (i * elt_len, elt_len));
-	}
+        {
+          value *tmp = value_complement (value_subscript (arg1, i));
+          copy (value_contents_all (tmp),
+                val_contents.slice (i * elt_len, elt_len));
+        }
     }
   else if (type->code () == TYPE_CODE_COMPLEX)
     {
@@ -1975,11 +1949,11 @@ value_complement (struct value *arg1)
       return value_literal_complex (real, imag, type);
     }
   else
-    error (_("Argument to complement operation not an integer, boolean."));
+    error (_ ("Argument to complement operation not an integer, boolean."));
 
   return val;
 }
-
+
 /* The INDEX'th bit of SET value whose value_type is TYPE,
    and whose value_contents is valaddr.
    Return -1 if out of range, -2 other error.  */
@@ -1999,7 +1973,7 @@ value_bit_index (struct type *type, const gdb_byte *valaddr, int index)
     return -1;
   rel_index = index - low_bound;
   word = extract_unsigned_integer (valaddr + (rel_index / TARGET_CHAR_BIT), 1,
-				   type_byte_order (type));
+                                   type_byte_order (type));
   rel_index %= TARGET_CHAR_BIT;
   if (gdbarch_byte_order (gdbarch) == BFD_ENDIAN_BIG)
     rel_index = TARGET_CHAR_BIT - 1 - rel_index;
@@ -2016,15 +1990,14 @@ value_in (struct value *element, struct value *set)
   if (eltype->code () == TYPE_CODE_RANGE)
     eltype = eltype->target_type ();
   if (settype->code () != TYPE_CODE_SET)
-    error (_("Second argument of 'IN' has wrong type"));
-  if (eltype->code () != TYPE_CODE_INT
-      && eltype->code () != TYPE_CODE_CHAR
+    error (_ ("Second argument of 'IN' has wrong type"));
+  if (eltype->code () != TYPE_CODE_INT && eltype->code () != TYPE_CODE_CHAR
       && eltype->code () != TYPE_CODE_ENUM
       && eltype->code () != TYPE_CODE_BOOL)
-    error (_("First argument of 'IN' has wrong type"));
+    error (_ ("First argument of 'IN' has wrong type"));
   member = value_bit_index (settype, value_contents (set).data (),
-			    value_as_long (element));
+                            value_as_long (element));
   if (member < 0)
-    error (_("First argument of 'IN' not in range"));
+    error (_ ("First argument of 'IN' not in range"));
   return member;
 }

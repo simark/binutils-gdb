@@ -73,7 +73,7 @@ get_frame_block (frame_info_ptr frame, CORE_ADDR *addr_in_block)
   while (inline_count > 0)
     {
       if (block_inlined_p (bl))
-	inline_count--;
+        inline_count--;
 
       bl = bl->superblock ();
       gdb_assert (bl != NULL);
@@ -94,10 +94,10 @@ get_pc_function_start (CORE_ADDR pc)
       struct symbol *symbol = block_linkage_function (bl);
 
       if (symbol)
-	{
-	  bl = symbol->value_block ();
-	  return bl->entry_pc ();
-	}
+        {
+          bl = symbol->value_block ();
+          return bl->entry_pc ();
+        }
     }
 
   msymbol = lookup_minimal_symbol_by_pc (pc);
@@ -106,7 +106,7 @@ get_pc_function_start (CORE_ADDR pc)
       CORE_ADDR fstart = msymbol.value_address ();
 
       if (find_pc_section (fstart))
-	return fstart;
+        return fstart;
     }
 
   return 0;
@@ -127,7 +127,6 @@ get_frame_function (frame_info_ptr frame)
 
   return bl->function ();
 }
-
 
 /* Return the function containing pc value PC in section SECTION.
    Returns 0 if function is not known.  */
@@ -211,9 +210,9 @@ clear_pc_function_cache (void)
 
 bool
 find_pc_partial_function_sym (CORE_ADDR pc,
-			      const struct general_symbol_info **sym,
-			      CORE_ADDR *address, CORE_ADDR *endaddr,
-			      const struct block **block)
+                              const struct general_symbol_info **sym,
+                              CORE_ADDR *address, CORE_ADDR *endaddr,
+                              const struct block **block)
 {
   struct obj_section *section;
   struct symbol *f;
@@ -232,8 +231,7 @@ find_pc_partial_function_sym (CORE_ADDR pc,
 
   mapped_pc = overlay_mapped_address (pc, section);
 
-  if (mapped_pc >= cache_pc_function_low
-      && mapped_pc < cache_pc_function_high
+  if (mapped_pc >= cache_pc_function_low && mapped_pc < cache_pc_function_high
       && section == cache_pc_function_section)
     goto return_cached_value;
 
@@ -253,17 +251,16 @@ find_pc_partial_function_sym (CORE_ADDR pc,
 	 lowest range of addresses.  */
       f = find_pc_sect_function (mapped_pc, section);
       if (f != NULL
-	  && (msymbol.minsym == NULL
-	      || (f->value_block ()->entry_pc ()
-		  >= msymbol.value_address ())))
-	{
-	  const struct block *b = f->value_block ();
+          && (msymbol.minsym == NULL
+              || (f->value_block ()->entry_pc () >= msymbol.value_address ())))
+        {
+          const struct block *b = f->value_block ();
 
-	  cache_pc_function_sym = f;
-	  cache_pc_function_section = section;
-	  cache_pc_function_block = b;
+          cache_pc_function_sym = f;
+          cache_pc_function_section = section;
+          cache_pc_function_block = b;
 
-	  /* For blocks occupying contiguous addresses (i.e. no gaps),
+          /* For blocks occupying contiguous addresses (i.e. no gaps),
 	     the low and high cache addresses are simply the start
 	     and end of the block.
 
@@ -276,31 +273,30 @@ find_pc_partial_function_sym (CORE_ADDR pc,
 	     comment preceding declaration of find_pc_partial_function
 	     in symtab.h for more information.  */
 
-	  if (b->is_contiguous ())
-	    {
-	      cache_pc_function_low = b->start ();
-	      cache_pc_function_high = b->end ();
-	    }
-	  else
-	    {
-	      bool found = false;
-	      for (const blockrange &range : b->ranges ())
-		{
-		  if (range.start () <= mapped_pc && mapped_pc < range.end ())
-		    {
-		      cache_pc_function_low = range.start ();
-		      cache_pc_function_high = range.end ();
-		      found = true;
-		      break;
-		    }
-		}
-	      /* Above loop should exit via the break.  */
-	      gdb_assert (found);
-	    }
+          if (b->is_contiguous ())
+            {
+              cache_pc_function_low = b->start ();
+              cache_pc_function_high = b->end ();
+            }
+          else
+            {
+              bool found = false;
+              for (const blockrange &range : b->ranges ())
+                {
+                  if (range.start () <= mapped_pc && mapped_pc < range.end ())
+                    {
+                      cache_pc_function_low = range.start ();
+                      cache_pc_function_high = range.end ();
+                      found = true;
+                      break;
+                    }
+                }
+              /* Above loop should exit via the break.  */
+              gdb_assert (found);
+            }
 
-
-	  goto return_cached_value;
-	}
+          goto return_cached_value;
+        }
     }
 
   /* Not in the normal symbol tables, see if the pc is in a known
@@ -316,13 +312,13 @@ find_pc_partial_function_sym (CORE_ADDR pc,
     {
       /* No available symbol.  */
       if (sym != nullptr)
-	*sym = 0;
+        *sym = 0;
       if (address != NULL)
-	*address = 0;
+        *address = 0;
       if (endaddr != NULL)
-	*endaddr = 0;
+        *endaddr = 0;
       if (block != nullptr)
-	*block = nullptr;
+        *block = nullptr;
       return false;
     }
 
@@ -332,14 +328,14 @@ find_pc_partial_function_sym (CORE_ADDR pc,
   cache_pc_function_high = minimal_symbol_upper_bound (msymbol);
   cache_pc_function_block = nullptr;
 
- return_cached_value:
+return_cached_value:
 
   if (address)
     {
       if (pc_in_unmapped_range (pc, section))
-	*address = overlay_unmapped_address (cache_pc_function_low, section);
+        *address = overlay_unmapped_address (cache_pc_function_low, section);
       else
-	*address = cache_pc_function_low;
+        *address = cache_pc_function_low;
     }
 
   if (sym != nullptr)
@@ -348,17 +344,18 @@ find_pc_partial_function_sym (CORE_ADDR pc,
   if (endaddr)
     {
       if (pc_in_unmapped_range (pc, section))
-	{
-	  /* Because the high address is actually beyond the end of
+        {
+          /* Because the high address is actually beyond the end of
 	     the function (and therefore possibly beyond the end of
 	     the overlay), we must actually convert (high - 1) and
 	     then add one to that.  */
 
-	  *endaddr = 1 + overlay_unmapped_address (cache_pc_function_high - 1,
-						   section);
-	}
+          *endaddr
+            = 1
+              + overlay_unmapped_address (cache_pc_function_high - 1, section);
+        }
       else
-	*endaddr = cache_pc_function_high;
+        *endaddr = cache_pc_function_high;
     }
 
   if (block != nullptr)
@@ -371,7 +368,7 @@ find_pc_partial_function_sym (CORE_ADDR pc,
 
 bool
 find_pc_partial_function (CORE_ADDR pc, const char **name, CORE_ADDR *address,
-			  CORE_ADDR *endaddr, const struct block **block)
+                          CORE_ADDR *endaddr, const struct block **block)
 {
   const general_symbol_info *gsi;
   bool r = find_pc_partial_function_sym (pc, &gsi, address, endaddr, block);
@@ -380,12 +377,11 @@ find_pc_partial_function (CORE_ADDR pc, const char **name, CORE_ADDR *address,
   return r;
 }
 
-
 /* See symtab.h.  */
 
 bool
 find_function_entry_range_from_pc (CORE_ADDR pc, const char **name,
-				   CORE_ADDR *address, CORE_ADDR *endaddr)
+                                   CORE_ADDR *address, CORE_ADDR *endaddr)
 {
   const struct block *block;
   bool status = find_pc_partial_function (pc, name, address, endaddr, &block);
@@ -395,22 +391,23 @@ find_function_entry_range_from_pc (CORE_ADDR pc, const char **name,
       CORE_ADDR entry_pc = block->entry_pc ();
 
       for (const blockrange &range : block->ranges ())
-	{
-	  if (range.start () <= entry_pc && entry_pc < range.end ())
-	    {
-	      if (address != nullptr)
-		*address = range.start ();
+        {
+          if (range.start () <= entry_pc && entry_pc < range.end ())
+            {
+              if (address != nullptr)
+                *address = range.start ();
 
-	      if (endaddr != nullptr)
-		*endaddr = range.end ();
+              if (endaddr != nullptr)
+                *endaddr = range.end ();
 
-	      return status;
-	    }
-	}
+              return status;
+            }
+        }
 
       /* It's an internal error if we exit the above loop without finding
 	 the range.  */
-      internal_error (_("Entry block not found in find_function_entry_range_from_pc"));
+      internal_error (
+        _ ("Entry block not found in find_function_entry_range_from_pc"));
     }
 
   return status;
@@ -439,17 +436,16 @@ find_gnu_ifunc_target_type (CORE_ADDR resolver_funaddr)
     {
       /* Get the return type of the resolver.  */
       struct type *resolver_ret_type
-	= check_typedef (resolver_type->target_type ());
+        = check_typedef (resolver_type->target_type ());
 
       /* If we found a pointer to function, then the resolved type
 	 is the type of the pointed-to function.  */
       if (resolver_ret_type->code () == TYPE_CODE_PTR)
-	{
-	  struct type *resolved_type
-	    = resolver_ret_type->target_type ();
-	  if (check_typedef (resolved_type)->code () == TYPE_CODE_FUNC)
-	    return resolved_type;
-	}
+        {
+          struct type *resolved_type = resolver_ret_type->target_type ();
+          if (check_typedef (resolved_type)->code () == TYPE_CODE_FUNC)
+            return resolved_type;
+        }
     }
 
   return NULL;
@@ -470,7 +466,7 @@ block_innermost_frame (const struct block *block)
     {
       const struct block *frame_block = get_frame_block (frame, NULL);
       if (frame_block != NULL && contained_in (frame_block, block))
-	return frame;
+        return frame;
 
       frame = get_prev_frame (frame);
     }

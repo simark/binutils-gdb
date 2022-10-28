@@ -21,7 +21,7 @@
 #include "defs.h"
 #include "elf-none-tdep.h"
 #include "regset.h"
-#include "elf-bfd.h"            /* for elfcore_write_* */
+#include "elf-bfd.h" /* for elfcore_write_* */
 #include "inferior.h"
 #include "regcache.h"
 #include "gdbarch.h"
@@ -34,7 +34,7 @@
 
 static gdb::unique_xmalloc_ptr<char>
 elf_none_make_corefile_notes (struct gdbarch *gdbarch, bfd *obfd,
-			      int *note_size)
+                              int *note_size)
 {
   gdb::unique_xmalloc_ptr<char> note_data;
 
@@ -51,7 +51,7 @@ elf_none_make_corefile_notes (struct gdbarch *gdbarch, bfd *obfd,
 
       const std::string &infargs = current_inferior ()->args ();
       if (!infargs.empty ())
-	psargs += ' ' + infargs;
+        psargs += ' ' + infargs;
 
       /* All existing targets that handle writing out prpsinfo expect the
 	 fname and psargs strings to be at least 16 and 80 characters long
@@ -69,8 +69,8 @@ elf_none_make_corefile_notes (struct gdbarch *gdbarch, bfd *obfd,
 
   /* Now write out the prpsinfo structure.  */
   note_data.reset (elfcore_write_prpsinfo (obfd, note_data.release (),
-					   note_size, fname.c_str (),
-					   psargs.c_str ()));
+                                           note_size, fname.c_str (),
+                                           psargs.c_str ()));
   if (note_data == nullptr)
     return nullptr;
 
@@ -97,18 +97,16 @@ elf_none_make_corefile_notes (struct gdbarch *gdbarch, bfd *obfd,
     stop_signal = GDB_SIGNAL_0;
 
   if (signalled_thr != nullptr)
-    gcore_elf_build_thread_register_notes (gdbarch, signalled_thr,
-					   stop_signal, obfd, &note_data,
-					   note_size);
+    gcore_elf_build_thread_register_notes (gdbarch, signalled_thr, stop_signal,
+                                           obfd, &note_data, note_size);
   for (thread_info *thr : current_inferior ()->non_exited_threads ())
     {
       if (thr == signalled_thr)
-	continue;
+        continue;
 
       gcore_elf_build_thread_register_notes (gdbarch, thr, stop_signal, obfd,
-					     &note_data, note_size);
+                                             &note_data, note_size);
     }
-
 
   /* Target description.  */
   gcore_elf_make_tdesc_note (obfd, &note_data, note_size);

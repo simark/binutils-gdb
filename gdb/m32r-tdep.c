@@ -51,7 +51,6 @@ m32r_frame_align (struct gdbarch *gdbarch, CORE_ADDR sp)
   return sp & ~3;
 }
 
-
 /* Breakpoints
  
    The little endian mode of M32R is unique.  In most of architectures,
@@ -77,18 +76,18 @@ m32r_frame_align (struct gdbarch *gdbarch, CORE_ADDR sp)
 
 static int
 m32r_memory_insert_breakpoint (struct gdbarch *gdbarch,
-			       struct bp_target_info *bp_tgt)
+                               struct bp_target_info *bp_tgt)
 {
   CORE_ADDR addr = bp_tgt->placed_address = bp_tgt->reqstd_address;
   int val;
   gdb_byte buf[4];
   gdb_byte contents_cache[4];
-  gdb_byte bp_entry[] = { 0x10, 0xf1 };	/* dpt */
+  gdb_byte bp_entry[] = { 0x10, 0xf1 }; /* dpt */
 
   /* Save the memory contents.  */
   val = target_read_memory (addr & 0xfffffffc, contents_cache, 4);
   if (val != 0)
-    return val;			/* return error */
+    return val; /* return error */
 
   memcpy (bp_tgt->shadow_contents, contents_cache, 4);
   bp_tgt->shadow_len = 4;
@@ -97,36 +96,36 @@ m32r_memory_insert_breakpoint (struct gdbarch *gdbarch,
   if (gdbarch_byte_order (gdbarch) == BFD_ENDIAN_BIG)
     {
       if ((addr & 3) == 0)
-	{
-	  buf[0] = bp_entry[0];
-	  buf[1] = bp_entry[1];
-	  buf[2] = contents_cache[2] & 0x7f;
-	  buf[3] = contents_cache[3];
-	}
+        {
+          buf[0] = bp_entry[0];
+          buf[1] = bp_entry[1];
+          buf[2] = contents_cache[2] & 0x7f;
+          buf[3] = contents_cache[3];
+        }
       else
-	{
-	  buf[0] = contents_cache[0];
-	  buf[1] = contents_cache[1];
-	  buf[2] = bp_entry[0];
-	  buf[3] = bp_entry[1];
-	}
+        {
+          buf[0] = contents_cache[0];
+          buf[1] = contents_cache[1];
+          buf[2] = bp_entry[0];
+          buf[3] = bp_entry[1];
+        }
     }
-  else				/* little-endian */
+  else /* little-endian */
     {
       if ((addr & 3) == 0)
-	{
-	  buf[0] = contents_cache[0];
-	  buf[1] = contents_cache[1] & 0x7f;
-	  buf[2] = bp_entry[1];
-	  buf[3] = bp_entry[0];
-	}
+        {
+          buf[0] = contents_cache[0];
+          buf[1] = contents_cache[1] & 0x7f;
+          buf[2] = bp_entry[1];
+          buf[3] = bp_entry[0];
+        }
       else
-	{
-	  buf[0] = bp_entry[1];
-	  buf[1] = bp_entry[0];
-	  buf[2] = contents_cache[2];
-	  buf[3] = contents_cache[3];
-	}
+        {
+          buf[0] = bp_entry[1];
+          buf[1] = bp_entry[0];
+          buf[2] = contents_cache[2];
+          buf[3] = contents_cache[3];
+        }
     }
 
   /* Write the breakpoint.  */
@@ -136,7 +135,7 @@ m32r_memory_insert_breakpoint (struct gdbarch *gdbarch,
 
 static int
 m32r_memory_remove_breakpoint (struct gdbarch *gdbarch,
-			       struct bp_target_info *bp_tgt)
+                               struct bp_target_info *bp_tgt)
 {
   CORE_ADDR addr = bp_tgt->placed_address;
   int val;
@@ -152,12 +151,12 @@ m32r_memory_remove_breakpoint (struct gdbarch *gdbarch,
   if (gdbarch_byte_order (gdbarch) == BFD_ENDIAN_BIG)
     {
       if ((buf[0] & 0x80) == 0 && (buf[2] & 0x80) != 0)
-	buf[2] &= 0x7f;
+        buf[2] &= 0x7f;
     }
-  else				/* little-endian */
+  else /* little-endian */
     {
       if ((buf[3] & 0x80) == 0 && (buf[1] & 0x80) != 0)
-	buf[1] &= 0x7f;
+        buf[1] &= 0x7f;
     }
 
   /* Write contents.  */
@@ -181,12 +180,8 @@ m32r_breakpoint_kind_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr)
 static const gdb_byte *
 m32r_sw_breakpoint_from_kind (struct gdbarch *gdbarch, int kind, int *size)
 {
-  static gdb_byte be_bp_entry[] = {
-    0x10, 0xf1, 0x70, 0x00
-  };	/* dpt -> nop */
-  static gdb_byte le_bp_entry[] = {
-    0x00, 0x70, 0xf1, 0x10
-  };	/* dpt -> nop */
+  static gdb_byte be_bp_entry[] = { 0x10, 0xf1, 0x70, 0x00 }; /* dpt -> nop */
+  static gdb_byte le_bp_entry[] = { 0x00, 0x70, 0xf1, 0x10 }; /* dpt -> nop */
 
   *size = kind;
 
@@ -196,18 +191,16 @@ m32r_sw_breakpoint_from_kind (struct gdbarch *gdbarch, int kind, int *size)
   else
     {
       if (kind == 4)
-	return le_bp_entry;
+        return le_bp_entry;
       else
-	return le_bp_entry + 2;
+        return le_bp_entry + 2;
     }
 }
 
-static const char * const m32r_register_names[] = {
-  "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
-  "r8", "r9", "r10", "r11", "r12", "fp", "lr", "sp",
-  "psw", "cbr", "spi", "spu", "bpc", "pc", "accl", "acch",
-  "evb"
-};
+static const char *const m32r_register_names[]
+  = { "r0",  "r1",  "r2",  "r3",  "r4",   "r5",   "r6", "r7",  "r8",
+      "r9",  "r10", "r11", "r12", "fp",   "lr",   "sp", "psw", "cbr",
+      "spi", "spu", "bpc", "pc",  "accl", "acch", "evb" };
 
 static const char *
 m32r_register_name (struct gdbarch *gdbarch, int reg_nr)
@@ -215,7 +208,6 @@ m32r_register_name (struct gdbarch *gdbarch, int reg_nr)
   gdb_static_assert (ARRAY_SIZE (m32r_register_names) == M32R_NUM_REGS);
   return m32r_register_names[reg_nr];
 }
-
 
 /* Return the GDB type object for the "standard" data type
    of data in register N.  */
@@ -231,7 +223,6 @@ m32r_register_type (struct gdbarch *gdbarch, int reg_nr)
     return builtin_type (gdbarch)->builtin_int32;
 }
 
-
 /* Write into appropriate registers a function return value
    of type TYPE, given in virtual format.
 
@@ -239,7 +230,7 @@ m32r_register_type (struct gdbarch *gdbarch, int reg_nr)
 
 static void
 m32r_store_return_value (struct type *type, struct regcache *regcache,
-			 const gdb_byte *valbuf)
+                         const gdb_byte *valbuf)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -251,8 +242,7 @@ m32r_store_return_value (struct type *type, struct regcache *regcache,
 
   if (len > 4)
     {
-      regval = extract_unsigned_integer (valbuf + 4,
-					 len - 4, byte_order);
+      regval = extract_unsigned_integer (valbuf + 4, len - 4, byte_order);
       regcache_cooked_write_unsigned (regcache, RET1_REGNUM + 1, regval);
     }
 }
@@ -261,9 +251,9 @@ m32r_store_return_value (struct type *type, struct regcache *regcache,
    should be cached because this thrashing is getting nuts.  */
 
 static int
-decode_prologue (struct gdbarch *gdbarch,
-		 CORE_ADDR start_pc, CORE_ADDR scan_limit,
-		 CORE_ADDR *pl_endptr, unsigned long *framelength)
+decode_prologue (struct gdbarch *gdbarch, CORE_ADDR start_pc,
+                 CORE_ADDR scan_limit, CORE_ADDR *pl_endptr,
+                 unsigned long *framelength)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   unsigned long framesize;
@@ -282,127 +272,126 @@ decode_prologue (struct gdbarch *gdbarch,
     {
       /* Check if current pc's location is readable.  */
       if (!safe_read_memory_integer (current_pc, 2, byte_order, &return_value))
-	return -1;
+        return -1;
 
       insn = read_memory_unsigned_integer (current_pc, 2, byte_order);
 
       if (insn == 0x0000)
-	break;
+        break;
 
       /* If this is a 32 bit instruction, we dont want to examine its
 	 immediate data as though it were an instruction.  */
       if (current_pc & 0x02)
-	{
-	  /* Decode this instruction further.  */
-	  insn &= 0x7fff;
-	}
+        {
+          /* Decode this instruction further.  */
+          insn &= 0x7fff;
+        }
       else
-	{
-	  if (insn & 0x8000)
-	    {
-	      if (current_pc == scan_limit)
-		scan_limit += 2;	/* extend the search */
+        {
+          if (insn & 0x8000)
+            {
+              if (current_pc == scan_limit)
+                scan_limit += 2; /* extend the search */
 
-	      current_pc += 2;	/* skip the immediate data */
+              current_pc += 2; /* skip the immediate data */
 
-	      /* Check if current pc's location is readable.  */
-	      if (!safe_read_memory_integer (current_pc, 2, byte_order,
-					     &return_value))
-		return -1;
+              /* Check if current pc's location is readable.  */
+              if (!safe_read_memory_integer (current_pc, 2, byte_order,
+                                             &return_value))
+                return -1;
 
-	      if (insn == 0x8faf)	/* add3 sp, sp, xxxx */
-		/* add 16 bit sign-extended offset */
-		{
-		  framesize +=
-		    -((short) read_memory_unsigned_integer (current_pc,
-							    2, byte_order));
-		}
-	      else
-		{
-		  if (((insn >> 8) == 0xe4) /* ld24 r4, xxxxxx; sub sp, r4 */
-		      && safe_read_memory_integer (current_pc + 2,
-						   2, byte_order,
-						   &return_value)
-		      && read_memory_unsigned_integer (current_pc + 2,
-						       2, byte_order)
-			 == 0x0f24)
-		    {
-		      /* Subtract 24 bit sign-extended negative-offset.  */
-		      insn = read_memory_unsigned_integer (current_pc - 2,
-							   4, byte_order);
-		      if (insn & 0x00800000)	/* sign extend */
-			insn |= 0xff000000;	/* negative */
-		      else
-			insn &= 0x00ffffff;	/* positive */
-		      framesize += insn;
-		    }
-		}
-	      after_push = current_pc + 2;
-	      continue;
-	    }
-	}
-      op1 = insn & 0xf000;	/* Isolate just the first nibble.  */
+              if (insn == 0x8faf) /* add3 sp, sp, xxxx */
+                /* add 16 bit sign-extended offset */
+                {
+                  framesize
+                    += -((short) read_memory_unsigned_integer (current_pc, 2,
+                                                               byte_order));
+                }
+              else
+                {
+                  if (((insn >> 8) == 0xe4) /* ld24 r4, xxxxxx; sub sp, r4 */
+                      && safe_read_memory_integer (current_pc + 2, 2,
+                                                   byte_order, &return_value)
+                      && read_memory_unsigned_integer (current_pc + 2, 2,
+                                                       byte_order)
+                           == 0x0f24)
+                    {
+                      /* Subtract 24 bit sign-extended negative-offset.  */
+                      insn = read_memory_unsigned_integer (current_pc - 2, 4,
+                                                           byte_order);
+                      if (insn & 0x00800000) /* sign extend */
+                        insn |= 0xff000000;  /* negative */
+                      else
+                        insn &= 0x00ffffff; /* positive */
+                      framesize += insn;
+                    }
+                }
+              after_push = current_pc + 2;
+              continue;
+            }
+        }
+      op1 = insn & 0xf000; /* Isolate just the first nibble.  */
 
       if ((insn & 0xf0ff) == 0x207f)
-	{			/* st reg, @-sp */
-	  framesize += 4;
-	  after_prologue = 0;
-	  continue;
-	}
-      if ((insn >> 8) == 0x4f)	/* addi sp, xx */
-	/* Add 8 bit sign-extended offset.  */
-	{
-	  int stack_adjust = (signed char) (insn & 0xff);
+        { /* st reg, @-sp */
+          framesize += 4;
+          after_prologue = 0;
+          continue;
+        }
+      if ((insn >> 8) == 0x4f) /* addi sp, xx */
+        /* Add 8 bit sign-extended offset.  */
+        {
+          int stack_adjust = (signed char) (insn & 0xff);
 
-	  /* there are probably two of these stack adjustments:
+          /* there are probably two of these stack adjustments:
 	     1) A negative one in the prologue, and
 	     2) A positive one in the epilogue.
 	     We are only interested in the first one.  */
 
-	  if (stack_adjust < 0)
-	    {
-	      framesize -= stack_adjust;
-	      after_prologue = 0;
-	      /* A frameless function may have no "mv fp, sp".
+          if (stack_adjust < 0)
+            {
+              framesize -= stack_adjust;
+              after_prologue = 0;
+              /* A frameless function may have no "mv fp, sp".
 		 In that case, this is the end of the prologue.  */
-	      after_stack_adjust = current_pc + 2;
-	    }
-	  continue;
-	}
+              after_stack_adjust = current_pc + 2;
+            }
+          continue;
+        }
       if (insn == 0x1d8f)
-	{			/* mv fp, sp */
-	  after_prologue = current_pc + 2;
-	  break;		/* end of stack adjustments */
-	}
+        { /* mv fp, sp */
+          after_prologue = current_pc + 2;
+          break; /* end of stack adjustments */
+        }
 
       /* Nop looks like a branch, continue explicitly.  */
       if (insn == 0x7000)
-	{
-	  after_prologue = current_pc + 2;
-	  continue;		/* nop occurs between pushes.  */
-	}
+        {
+          after_prologue = current_pc + 2;
+          continue; /* nop occurs between pushes.  */
+        }
       /* End of prolog if any of these are trap instructions.  */
       if ((insn & 0xfff0) == 0x10f0)
-	{
-	  after_prologue = current_pc;
-	  break;
-	}
+        {
+          after_prologue = current_pc;
+          break;
+        }
       /* End of prolog if any of these are branch instructions.  */
       if ((op1 == 0x7000) || (op1 == 0xb000) || (op1 == 0xf000))
-	{
-	  after_prologue = current_pc;
-	  continue;
-	}
+        {
+          after_prologue = current_pc;
+          continue;
+        }
       /* Some of the branch instructions are mixed with other types.  */
       if (op1 == 0x1000)
-	{
-	  int subop = insn & 0x0ff0;
-	  if ((subop == 0x0ec0) || (subop == 0x0fc0))
-	    {
-	      after_prologue = current_pc;
-	      continue;		/* jmp , jl */
-	    }
-	}
+        {
+          int subop = insn & 0x0ff0;
+          if ((subop == 0x0ec0) || (subop == 0x0fc0))
+            {
+              after_prologue = current_pc;
+              continue; /* jmp , jl */
+            }
+        }
     }
 
   if (framelength)
@@ -411,29 +400,29 @@ decode_prologue (struct gdbarch *gdbarch,
   if (current_pc >= scan_limit)
     {
       if (pl_endptr)
-	{
-	  if (after_stack_adjust != 0)
-	    /* We did not find a "mv fp,sp", but we DID find
+        {
+          if (after_stack_adjust != 0)
+            /* We did not find a "mv fp,sp", but we DID find
 	       a stack_adjust.  Is it safe to use that as the
 	       end of the prologue?  I just don't know.  */
-	    {
-	      *pl_endptr = after_stack_adjust;
-	    }
-	  else if (after_push != 0)
-	    /* We did not find a "mv fp,sp", but we DID find
+            {
+              *pl_endptr = after_stack_adjust;
+            }
+          else if (after_push != 0)
+            /* We did not find a "mv fp,sp", but we DID find
 	       a push.  Is it safe to use that as the
 	       end of the prologue?  I just don't know.  */
-	    {
-	      *pl_endptr = after_push;
-	    }
-	  else
-	    /* We reached the end of the loop without finding the end
+            {
+              *pl_endptr = after_push;
+            }
+          else
+            /* We reached the end of the loop without finding the end
 	       of the prologue.  No way to win -- we should report
 	       failure.  The way we do that is to return the original
 	       start_pc.  GDB will set a breakpoint at the start of
 	       the function (etc.)  */
-	    *pl_endptr = start_pc;
-	}
+            *pl_endptr = start_pc;
+        }
       return 0;
     }
 
@@ -444,7 +433,7 @@ decode_prologue (struct gdbarch *gdbarch,
     *pl_endptr = after_prologue;
 
   return 0;
-}				/*  decode_prologue */
+} /*  decode_prologue */
 
 /* Function: skip_prologue
    Find end of function prologue.  */
@@ -466,16 +455,16 @@ m32r_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
       sal = find_pc_line (func_addr, 0);
 
       if (sal.line != 0 && sal.end <= func_end)
-	{
-	  func_end = sal.end;
-	}
+        {
+          func_end = sal.end;
+        }
       else
-	/* Either there's no line info, or the line after the prologue is after
+        /* Either there's no line info, or the line after the prologue is after
 	   the end of the function.  In this case, there probably isn't a
 	   prologue.  */
-	{
-	  func_end = std::min (func_end, func_addr + DEFAULT_SEARCH_LIMIT);
-	}
+        {
+          func_end = std::min (func_end, func_addr + DEFAULT_SEARCH_LIMIT);
+        }
     }
   else
     func_end = pc + DEFAULT_SEARCH_LIMIT;
@@ -516,8 +505,7 @@ struct m32r_unwind_cache
    for it IS the sp for the next frame.  */
 
 static struct m32r_unwind_cache *
-m32r_frame_unwind_cache (frame_info_ptr this_frame,
-			 void **this_prologue_cache)
+m32r_frame_unwind_cache (frame_info_ptr this_frame, void **this_prologue_cache)
 {
   CORE_ADDR pc, scan_limit;
   ULONGEST prev_sp;
@@ -525,7 +513,6 @@ m32r_frame_unwind_cache (frame_info_ptr this_frame,
   unsigned long op;
   int i;
   struct m32r_unwind_cache *info;
-
 
   if ((*this_prologue_cache))
     return (struct m32r_unwind_cache *) (*this_prologue_cache);
@@ -539,65 +526,64 @@ m32r_frame_unwind_cache (frame_info_ptr this_frame,
   info->uses_frame = 0;
 
   scan_limit = get_frame_pc (this_frame);
-  for (pc = get_frame_func (this_frame);
-       pc > 0 && pc < scan_limit; pc += 2)
+  for (pc = get_frame_func (this_frame); pc > 0 && pc < scan_limit; pc += 2)
     {
       if ((pc & 2) == 0)
-	{
-	  op = get_frame_memory_unsigned (this_frame, pc, 4);
-	  if ((op & 0x80000000) == 0x80000000)
-	    {
-	      /* 32-bit instruction */
-	      if ((op & 0xffff0000) == 0x8faf0000)
-		{
-		  /* add3 sp,sp,xxxx */
-		  short n = op & 0xffff;
-		  info->sp_offset += n;
-		}
-	      else if (((op >> 8) == 0xe4)
-		       && get_frame_memory_unsigned (this_frame, pc + 2,
-						     2) == 0x0f24)
-		{
-		  /* ld24 r4, xxxxxx; sub sp, r4 */
-		  unsigned long n = op & 0xffffff;
-		  info->sp_offset += n;
-		  pc += 2;	/* skip sub instruction */
-		}
+        {
+          op = get_frame_memory_unsigned (this_frame, pc, 4);
+          if ((op & 0x80000000) == 0x80000000)
+            {
+              /* 32-bit instruction */
+              if ((op & 0xffff0000) == 0x8faf0000)
+                {
+                  /* add3 sp,sp,xxxx */
+                  short n = op & 0xffff;
+                  info->sp_offset += n;
+                }
+              else if (((op >> 8) == 0xe4)
+                       && get_frame_memory_unsigned (this_frame, pc + 2, 2)
+                            == 0x0f24)
+                {
+                  /* ld24 r4, xxxxxx; sub sp, r4 */
+                  unsigned long n = op & 0xffffff;
+                  info->sp_offset += n;
+                  pc += 2; /* skip sub instruction */
+                }
 
-	      if (pc == scan_limit)
-		scan_limit += 2;	/* extend the search */
-	      pc += 2;		/* skip the immediate data */
-	      continue;
-	    }
-	}
+              if (pc == scan_limit)
+                scan_limit += 2; /* extend the search */
+              pc += 2;           /* skip the immediate data */
+              continue;
+            }
+        }
 
       /* 16-bit instructions */
       op = get_frame_memory_unsigned (this_frame, pc, 2) & 0x7fff;
       if ((op & 0xf0ff) == 0x207f)
-	{
-	  /* st rn, @-sp */
-	  int regno = ((op >> 8) & 0xf);
-	  info->sp_offset -= 4;
-	  info->saved_regs[regno].set_addr (info->sp_offset);
-	}
+        {
+          /* st rn, @-sp */
+          int regno = ((op >> 8) & 0xf);
+          info->sp_offset -= 4;
+          info->saved_regs[regno].set_addr (info->sp_offset);
+        }
       else if ((op & 0xff00) == 0x4f00)
-	{
-	  /* addi sp, xx */
-	  int n = (signed char) (op & 0xff);
-	  info->sp_offset += n;
-	}
+        {
+          /* addi sp, xx */
+          int n = (signed char) (op & 0xff);
+          info->sp_offset += n;
+        }
       else if (op == 0x1d8f)
-	{
-	  /* mv fp, sp */
-	  info->uses_frame = 1;
-	  info->r13_offset = info->sp_offset;
-	  break;		/* end of stack adjustments */
-	}
+        {
+          /* mv fp, sp */
+          info->uses_frame = 1;
+          info->r13_offset = info->sp_offset;
+          break; /* end of stack adjustments */
+        }
       else if ((op & 0xfff0) == 0x10f0)
-	{
-	  /* End of prologue if this is a trap instruction.  */
-	  break;		/* End of stack adjustments.  */
-	}
+        {
+          /* End of prologue if this is a trap instruction.  */
+          break; /* End of stack adjustments.  */
+        }
     }
 
   info->size = -info->sp_offset;
@@ -631,7 +617,7 @@ m32r_frame_unwind_cache (frame_info_ptr this_frame,
   for (i = 0; i < gdbarch_num_regs (get_frame_arch (this_frame)) - 1; i++)
     if (info->saved_regs[i].is_addr ())
       info->saved_regs[i].set_addr (info->prev_sp
-				    + info->saved_regs[i].addr ());
+                                    + info->saved_regs[i].addr ());
 
   /* The call instruction moves the caller's PC in the callee's LR.
      Since this is an unwind, do the reverse.  Copy the location of LR
@@ -648,10 +634,10 @@ m32r_frame_unwind_cache (frame_info_ptr this_frame,
 
 static CORE_ADDR
 m32r_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
-		      struct regcache *regcache, CORE_ADDR bp_addr, int nargs,
-		      struct value **args, CORE_ADDR sp,
-		      function_call_return_method return_method,
-		      CORE_ADDR struct_addr)
+                      struct regcache *regcache, CORE_ADDR bp_addr, int nargs,
+                      struct value **args, CORE_ADDR sp,
+                      function_call_return_method return_method,
+                      CORE_ADDR struct_addr)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   int stack_offset, stack_alloc;
@@ -683,7 +669,7 @@ m32r_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   /* Now make sure there's space on the stack.  */
   for (argnum = 0, stack_alloc = 0; argnum < nargs; argnum++)
     stack_alloc += ((value_type (args[argnum])->length () + 3) & ~3);
-  sp -= stack_alloc;		/* Make room on stack for args.  */
+  sp -= stack_alloc; /* Make room on stack for args.  */
 
   for (argnum = 0, stack_offset = 0; argnum < nargs; argnum++)
     {
@@ -695,48 +681,48 @@ m32r_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
       /* Passes structures that do not fit in 2 registers by reference.  */
       if (len > 8
-	  && (typecode == TYPE_CODE_STRUCT || typecode == TYPE_CODE_UNION))
-	{
-	  store_unsigned_integer (valbuf, 4, byte_order,
-				  value_address (args[argnum]));
-	  typecode = TYPE_CODE_PTR;
-	  len = 4;
-	  val = valbuf;
-	}
+          && (typecode == TYPE_CODE_STRUCT || typecode == TYPE_CODE_UNION))
+        {
+          store_unsigned_integer (valbuf, 4, byte_order,
+                                  value_address (args[argnum]));
+          typecode = TYPE_CODE_PTR;
+          len = 4;
+          val = valbuf;
+        }
       else if (len < 4)
-	{
-	  /* Value gets right-justified in the register or stack word.  */
-	  memcpy (valbuf + (register_size (gdbarch, argreg) - len),
-		  (gdb_byte *) value_contents (args[argnum]).data (), len);
-	  val = valbuf;
-	}
+        {
+          /* Value gets right-justified in the register or stack word.  */
+          memcpy (valbuf + (register_size (gdbarch, argreg) - len),
+                  (gdb_byte *) value_contents (args[argnum]).data (), len);
+          val = valbuf;
+        }
       else
-	val = (gdb_byte *) value_contents (args[argnum]).data ();
+        val = (gdb_byte *) value_contents (args[argnum]).data ();
 
       while (len > 0)
-	{
-	  if (argreg > ARGN_REGNUM)
-	    {
-	      /* Must go on the stack.  */
-	      write_memory (sp + stack_offset, val, 4);
-	      stack_offset += 4;
-	    }
-	  else if (argreg <= ARGN_REGNUM)
-	    {
-	      /* There's room in a register.  */
-	      regval =
-		extract_unsigned_integer (val,
-					  register_size (gdbarch, argreg),
-					  byte_order);
-	      regcache_cooked_write_unsigned (regcache, argreg++, regval);
-	    }
+        {
+          if (argreg > ARGN_REGNUM)
+            {
+              /* Must go on the stack.  */
+              write_memory (sp + stack_offset, val, 4);
+              stack_offset += 4;
+            }
+          else if (argreg <= ARGN_REGNUM)
+            {
+              /* There's room in a register.  */
+              regval
+                = extract_unsigned_integer (val,
+                                            register_size (gdbarch, argreg),
+                                            byte_order);
+              regcache_cooked_write_unsigned (regcache, argreg++, regval);
+            }
 
-	  /* Store the value 4 bytes at a time.  This means that things
+          /* Store the value 4 bytes at a time.  This means that things
 	     larger than 4 bytes may go partly in registers and partly
 	     on the stack.  */
-	  len -= register_size (gdbarch, argreg);
-	  val += register_size (gdbarch, argreg);
-	}
+          len -= register_size (gdbarch, argreg);
+          val += register_size (gdbarch, argreg);
+        }
     }
 
   /* Finally, update the SP register.  */
@@ -745,13 +731,12 @@ m32r_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   return sp;
 }
 
-
 /* Given a return value in `regbuf' with a type `valtype', 
    extract and copy its value into `valbuf'.  */
 
 static void
 m32r_extract_return_value (struct type *type, struct regcache *regcache,
-			   gdb_byte *dst)
+                           gdb_byte *dst)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -774,17 +759,17 @@ m32r_extract_return_value (struct type *type, struct regcache *regcache,
 
 static enum return_value_convention
 m32r_return_value (struct gdbarch *gdbarch, struct value *function,
-		   struct type *valtype, struct regcache *regcache,
-		   gdb_byte *readbuf, const gdb_byte *writebuf)
+                   struct type *valtype, struct regcache *regcache,
+                   gdb_byte *readbuf, const gdb_byte *writebuf)
 {
   if (valtype->length () > 8)
     return RETURN_VALUE_STRUCT_CONVENTION;
   else
     {
       if (readbuf != NULL)
-	m32r_extract_return_value (valtype, regcache, readbuf);
+        m32r_extract_return_value (valtype, regcache, readbuf);
       if (writebuf != NULL)
-	m32r_store_return_value (valtype, regcache, writebuf);
+        m32r_store_return_value (valtype, regcache, writebuf);
       return RETURN_VALUE_REGISTER_CONVENTION;
     }
 }
@@ -793,8 +778,8 @@ m32r_return_value (struct gdbarch *gdbarch, struct value *function,
    frame.  This will be used to create a new GDB frame struct.  */
 
 static void
-m32r_frame_this_id (frame_info_ptr this_frame,
-		    void **this_prologue_cache, struct frame_id *this_id)
+m32r_frame_this_id (frame_info_ptr this_frame, void **this_prologue_cache,
+                    struct frame_id *this_id)
 {
   struct m32r_unwind_cache *info
     = m32r_frame_unwind_cache (this_frame, this_prologue_cache);
@@ -824,22 +809,21 @@ m32r_frame_this_id (frame_info_ptr this_frame,
 
 static struct value *
 m32r_frame_prev_register (frame_info_ptr this_frame,
-			  void **this_prologue_cache, int regnum)
+                          void **this_prologue_cache, int regnum)
 {
   struct m32r_unwind_cache *info
     = m32r_frame_unwind_cache (this_frame, this_prologue_cache);
   return trad_frame_get_prev_register (this_frame, info->saved_regs, regnum);
 }
 
-static const struct frame_unwind m32r_frame_unwind = {
-  "m32r prologue",
-  NORMAL_FRAME,
-  default_frame_unwind_stop_reason,
-  m32r_frame_this_id,
-  m32r_frame_prev_register,
-  NULL,
-  default_frame_sniffer
-};
+static const struct frame_unwind m32r_frame_unwind
+  = { "m32r prologue",
+      NORMAL_FRAME,
+      default_frame_unwind_stop_reason,
+      m32r_frame_this_id,
+      m32r_frame_prev_register,
+      NULL,
+      default_frame_sniffer };
 
 static CORE_ADDR
 m32r_frame_base_address (frame_info_ptr this_frame, void **this_cache)
@@ -849,12 +833,9 @@ m32r_frame_base_address (frame_info_ptr this_frame, void **this_cache)
   return info->base;
 }
 
-static const struct frame_base m32r_frame_base = {
-  &m32r_frame_unwind,
-  m32r_frame_base_address,
-  m32r_frame_base_address,
-  m32r_frame_base_address
-};
+static const struct frame_base m32r_frame_base
+  = { &m32r_frame_unwind, m32r_frame_base_address, m32r_frame_base_address,
+      m32r_frame_base_address };
 
 static gdbarch_init_ftype m32r_gdbarch_init;
 
@@ -889,9 +870,9 @@ m32r_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_breakpoint_kind_from_pc (gdbarch, m32r_breakpoint_kind_from_pc);
   set_gdbarch_sw_breakpoint_from_kind (gdbarch, m32r_sw_breakpoint_from_kind);
   set_gdbarch_memory_insert_breakpoint (gdbarch,
-					m32r_memory_insert_breakpoint);
+                                        m32r_memory_insert_breakpoint);
   set_gdbarch_memory_remove_breakpoint (gdbarch,
-					m32r_memory_remove_breakpoint);
+                                        m32r_memory_remove_breakpoint);
 
   set_gdbarch_frame_align (gdbarch, m32r_frame_align);
 

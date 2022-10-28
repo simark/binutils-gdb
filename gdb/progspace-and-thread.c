@@ -32,12 +32,12 @@ switch_to_program_space_and_thread (program_space *pspace)
       thread_info *tp = any_live_thread_of_inferior (inf);
 
       if (tp != NULL)
-	{
-	  switch_to_thread (tp);
-	  /* Switching thread switches pspace implicitly.  We're
+        {
+          switch_to_thread (tp);
+          /* Switching thread switches pspace implicitly.  We're
 	     done.  */
-	  return;
-	}
+          return;
+        }
     }
 
   switch_to_inferior_no_thread (inf);

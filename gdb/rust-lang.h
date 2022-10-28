@@ -48,31 +48,28 @@ extern const char *rust_last_path_segment (const char *path);
    "usize" type to use.  The new type is allocated whereever ELT_TYPE
    is allocated.  */
 extern struct type *rust_slice_type (const char *name, struct type *elt_type,
-				     struct type *usize_type);
+                                     struct type *usize_type);
 
 /* Class representing the Rust language.  */
 
 class rust_language : public language_defn
 {
 public:
-  rust_language ()
-    : language_defn (language_rust)
-  { /* Nothing.  */ }
+  rust_language () : language_defn (language_rust)
+  { /* Nothing.  */
+  }
 
   /* See language.h.  */
 
-  const char *name () const override
-  { return "rust"; }
+  const char *name () const override { return "rust"; }
 
   /* See language.h.  */
 
-  const char *natural_name () const override
-  { return "Rust"; }
+  const char *natural_name () const override { return "Rust"; }
 
   /* See language.h.  */
 
-  const char *get_digit_separator () const override
-  { return "_"; }
+  const char *get_digit_separator () const override { return "_"; }
 
   /* See language.h.  */
 
@@ -85,13 +82,13 @@ public:
   /* See language.h.  */
 
   void language_arch_info (struct gdbarch *gdbarch,
-			   struct language_arch_info *lai) const override;
+                           struct language_arch_info *lai) const override;
 
   /* See language.h.  */
 
-  bool sniff_from_mangled_name
-       (const char *mangled, gdb::unique_xmalloc_ptr<char> *demangled)
-       const override
+  bool sniff_from_mangled_name (
+    const char *mangled,
+    gdb::unique_xmalloc_ptr<char> *demangled) const override
   {
     *demangled = gdb_demangle (mangled, DMGL_PARAMS | DMGL_ANSI);
     return *demangled != NULL;
@@ -100,7 +97,7 @@ public:
   /* See language.h.  */
 
   gdb::unique_xmalloc_ptr<char> demangle_symbol (const char *mangled,
-						 int options) const override
+                                                 int options) const override
   {
     return gdb_demangle (mangled, options);
   }
@@ -108,68 +105,68 @@ public:
   /* See language.h.  */
 
   void print_type (struct type *type, const char *varstring,
-		   struct ui_file *stream, int show, int level,
-		   const struct type_print_options *flags) const override;
+                   struct ui_file *stream, int show, int level,
+                   const struct type_print_options *flags) const override;
 
   /* See language.h.  */
 
-  gdb::unique_xmalloc_ptr<char> watch_location_expression
-	(struct type *type, CORE_ADDR addr) const override
+  gdb::unique_xmalloc_ptr<char>
+  watch_location_expression (struct type *type, CORE_ADDR addr) const override
   {
     type = check_typedef (check_typedef (type)->target_type ());
     std::string name = type_to_string (type);
     return xstrprintf ("*(%s as *mut %s)", core_addr_to_string (addr),
-		       name.c_str ());
+                       name.c_str ());
   }
 
   /* See language.h.  */
 
-  void value_print_inner
-	(struct value *val, struct ui_file *stream, int recurse,
-	 const struct value_print_options *options) const override;
+  void
+  value_print_inner (struct value *val, struct ui_file *stream, int recurse,
+                     const struct value_print_options *options) const override;
 
   /* See language.h.  */
 
   void value_print (struct value *val, struct ui_file *stream,
-		    const struct value_print_options *options) const override;
+                    const struct value_print_options *options) const override;
 
   /* See language.h.  */
 
-  struct block_symbol lookup_symbol_nonlocal
-	(const char *name, const struct block *block,
-	 const domain_enum domain) const override
+  struct block_symbol
+  lookup_symbol_nonlocal (const char *name, const struct block *block,
+                          const domain_enum domain) const override
   {
     struct block_symbol result = {};
 
     if (symbol_lookup_debug)
       {
-	gdb_printf (gdb_stdlog,
-		    "rust_lookup_symbol_non_local"
-		    " (%s, %s (scope %s), %s)\n",
-		    name, host_address_to_string (block),
-		    block_scope (block), domain_name (domain));
+        gdb_printf (gdb_stdlog,
+                    "rust_lookup_symbol_non_local"
+                    " (%s, %s (scope %s), %s)\n",
+                    name, host_address_to_string (block), block_scope (block),
+                    domain_name (domain));
       }
 
     /* Look up bare names in the block's scope.  */
     std::string scopedname;
     if (name[cp_find_first_component (name)] == '\0')
       {
-	const char *scope = block_scope (block);
+        const char *scope = block_scope (block);
 
-	if (scope[0] != '\0')
-	  {
-	    scopedname = std::string (scope) + "::" + name;
-	    name = scopedname.c_str ();
-	  }
-	else
-	  name = NULL;
+        if (scope[0] != '\0')
+          {
+            scopedname = std::string (scope) + "::" + name;
+            name = scopedname.c_str ();
+          }
+        else
+          name = NULL;
       }
 
     if (name != NULL)
       {
-	result = lookup_symbol_in_static_block (name, block, domain);
-	if (result.symbol == NULL)
-	  result = lookup_global_symbol (name, block, domain);
+        result = lookup_symbol_in_static_block (name, block, domain);
+        if (result.symbol == NULL)
+          result = lookup_global_symbol (name, block, domain);
       }
     return result;
   }
@@ -180,13 +177,13 @@ public:
 
   /* See language.h.  */
 
-  void emitchar (int ch, struct type *chtype,
-		 struct ui_file *stream, int quoter) const override;
+  void emitchar (int ch, struct type *chtype, struct ui_file *stream,
+                 int quoter) const override;
 
   /* See language.h.  */
 
   void printchar (int ch, struct type *chtype,
-		  struct ui_file *stream) const override
+                  struct ui_file *stream) const override
   {
     gdb_puts ("'", stream);
     emitchar (ch, chtype, stream, '\'');
@@ -196,14 +193,14 @@ public:
   /* See language.h.  */
 
   void printstr (struct ui_file *stream, struct type *elttype,
-		 const gdb_byte *string, unsigned int length,
-		 const char *encoding, int force_ellipses,
-		 const struct value_print_options *options) const override;
+                 const gdb_byte *string, unsigned int length,
+                 const char *encoding, int force_ellipses,
+                 const struct value_print_options *options) const override;
 
   /* See language.h.  */
 
   void print_typedef (struct type *type, struct symbol *new_symbol,
-		      struct ui_file *stream) const override
+                      struct ui_file *stream) const override
   {
     type = check_typedef (type);
     gdb_printf (stream, "type %s = ", new_symbol->print_name ());
@@ -217,23 +214,21 @@ public:
 
   /* See language.h.  */
 
-  bool range_checking_on_by_default () const override
-  { return true; }
+  bool range_checking_on_by_default () const override { return true; }
 
 private:
-
   /* Helper for value_print_inner, arguments are as for that function.
      Prints structs and untagged unions.  */
 
   void val_print_struct (struct value *val, struct ui_file *stream,
-			 int recurse,
-			 const struct value_print_options *options) const;
+                         int recurse,
+                         const struct value_print_options *options) const;
 
   /* Helper for value_print_inner, arguments are as for that function.
      Prints discriminated unions (Rust enums).  */
 
   void print_enum (struct value *val, struct ui_file *stream, int recurse,
-		   const struct value_print_options *options) const;
+                   const struct value_print_options *options) const;
 };
 
 #endif /* RUST_LANG_H */

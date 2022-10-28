@@ -61,7 +61,6 @@
 #define XML_SYSCALL_FILENAME_S390 "syscalls/s390-linux.xml"
 #define XML_SYSCALL_FILENAME_S390X "syscalls/s390x-linux.xml"
 
-
 /* Register handling.  */
 
 /* Implement cannot_store_register gdbarch method.  */
@@ -96,95 +95,61 @@ s390_write_pc (struct regcache *regcache, CORE_ADDR pc)
 
 /* Maps for register sets.  */
 
-static const struct regcache_map_entry s390_gregmap[] =
-  {
-    { 1, S390_PSWM_REGNUM },
-    { 1, S390_PSWA_REGNUM },
-    { 16, S390_R0_REGNUM },
-    { 16, S390_A0_REGNUM },
-    { 1, S390_ORIG_R2_REGNUM },
-    { 0 }
-  };
+static const struct regcache_map_entry s390_gregmap[]
+  = { { 1, S390_PSWM_REGNUM },    { 1, S390_PSWA_REGNUM },
+      { 16, S390_R0_REGNUM },     { 16, S390_A0_REGNUM },
+      { 1, S390_ORIG_R2_REGNUM }, { 0 } };
 
-static const struct regcache_map_entry s390_fpregmap[] =
-  {
-    { 1, S390_FPC_REGNUM, 8 },
-    { 16, S390_F0_REGNUM, 8 },
-    { 0 }
-  };
+static const struct regcache_map_entry s390_fpregmap[]
+  = { { 1, S390_FPC_REGNUM, 8 }, { 16, S390_F0_REGNUM, 8 }, { 0 } };
 
-static const struct regcache_map_entry s390_regmap_upper[] =
-  {
-    { 16, S390_R0_UPPER_REGNUM, 4 },
-    { 0 }
-  };
+static const struct regcache_map_entry s390_regmap_upper[]
+  = { { 16, S390_R0_UPPER_REGNUM, 4 }, { 0 } };
 
-static const struct regcache_map_entry s390_regmap_last_break[] =
-  {
-    { 1, REGCACHE_MAP_SKIP, 4 },
-    { 1, S390_LAST_BREAK_REGNUM, 4 },
-    { 0 }
-  };
+static const struct regcache_map_entry s390_regmap_last_break[]
+  = { { 1, REGCACHE_MAP_SKIP, 4 }, { 1, S390_LAST_BREAK_REGNUM, 4 }, { 0 } };
 
-static const struct regcache_map_entry s390x_regmap_last_break[] =
-  {
-    { 1, S390_LAST_BREAK_REGNUM, 8 },
-    { 0 }
-  };
+static const struct regcache_map_entry s390x_regmap_last_break[]
+  = { { 1, S390_LAST_BREAK_REGNUM, 8 }, { 0 } };
 
-static const struct regcache_map_entry s390_regmap_system_call[] =
-  {
-    { 1, S390_SYSTEM_CALL_REGNUM, 4 },
-    { 0 }
-  };
+static const struct regcache_map_entry s390_regmap_system_call[]
+  = { { 1, S390_SYSTEM_CALL_REGNUM, 4 }, { 0 } };
 
-static const struct regcache_map_entry s390_regmap_tdb[] =
-  {
-    { 1, S390_TDB_DWORD0_REGNUM, 8 },
-    { 1, S390_TDB_ABORT_CODE_REGNUM, 8 },
-    { 1, S390_TDB_CONFLICT_TOKEN_REGNUM, 8 },
-    { 1, S390_TDB_ATIA_REGNUM, 8 },
-    { 12, REGCACHE_MAP_SKIP, 8 },
-    { 16, S390_TDB_R0_REGNUM, 8 },
-    { 0 }
-  };
+static const struct regcache_map_entry s390_regmap_tdb[]
+  = { { 1, S390_TDB_DWORD0_REGNUM, 8 },
+      { 1, S390_TDB_ABORT_CODE_REGNUM, 8 },
+      { 1, S390_TDB_CONFLICT_TOKEN_REGNUM, 8 },
+      { 1, S390_TDB_ATIA_REGNUM, 8 },
+      { 12, REGCACHE_MAP_SKIP, 8 },
+      { 16, S390_TDB_R0_REGNUM, 8 },
+      { 0 } };
 
-static const struct regcache_map_entry s390_regmap_vxrs_low[] =
-  {
-    { 16, S390_V0_LOWER_REGNUM, 8 },
-    { 0 }
-  };
+static const struct regcache_map_entry s390_regmap_vxrs_low[]
+  = { { 16, S390_V0_LOWER_REGNUM, 8 }, { 0 } };
 
-static const struct regcache_map_entry s390_regmap_vxrs_high[] =
-  {
-    { 16, S390_V16_REGNUM, 16 },
-    { 0 }
-  };
+static const struct regcache_map_entry s390_regmap_vxrs_high[]
+  = { { 16, S390_V16_REGNUM, 16 }, { 0 } };
 
-static const struct regcache_map_entry s390_regmap_gs[] =
-  {
-    { 1, REGCACHE_MAP_SKIP, 8 },
-    { 1, S390_GSD_REGNUM, 8 },
-    { 1, S390_GSSM_REGNUM, 8 },
-    { 1, S390_GSEPLA_REGNUM, 8 },
-    { 0 }
-  };
+static const struct regcache_map_entry s390_regmap_gs[]
+  = { { 1, REGCACHE_MAP_SKIP, 8 },
+      { 1, S390_GSD_REGNUM, 8 },
+      { 1, S390_GSSM_REGNUM, 8 },
+      { 1, S390_GSEPLA_REGNUM, 8 },
+      { 0 } };
 
-static const struct regcache_map_entry s390_regmap_gsbc[] =
-  {
-    { 1, REGCACHE_MAP_SKIP, 8 },
-    { 1, S390_BC_GSD_REGNUM, 8 },
-    { 1, S390_BC_GSSM_REGNUM, 8 },
-    { 1, S390_BC_GSEPLA_REGNUM, 8 },
-    { 0 }
-  };
+static const struct regcache_map_entry s390_regmap_gsbc[]
+  = { { 1, REGCACHE_MAP_SKIP, 8 },
+      { 1, S390_BC_GSD_REGNUM, 8 },
+      { 1, S390_BC_GSSM_REGNUM, 8 },
+      { 1, S390_BC_GSEPLA_REGNUM, 8 },
+      { 0 } };
 
 /* Supply the TDB regset.  Like regcache_supply_regset, but invalidate
    the TDB registers unless the TDB format field is valid.  */
 
 static void
 s390_supply_tdb_regset (const struct regset *regset, struct regcache *regcache,
-		    int regnum, const void *regs, size_t len)
+                        int regnum, const void *regs, size_t len)
 {
   ULONGEST tdw;
   enum register_status ret;
@@ -195,118 +160,89 @@ s390_supply_tdb_regset (const struct regset *regset, struct regcache *regcache,
     regcache_supply_regset (regset, regcache, regnum, NULL, len);
 }
 
-const struct regset s390_gregset = {
-  s390_gregmap,
-  regcache_supply_regset,
-  regcache_collect_regset
-};
+const struct regset s390_gregset
+  = { s390_gregmap, regcache_supply_regset, regcache_collect_regset };
 
-const struct regset s390_fpregset = {
-  s390_fpregmap,
-  regcache_supply_regset,
-  regcache_collect_regset
-};
+const struct regset s390_fpregset
+  = { s390_fpregmap, regcache_supply_regset, regcache_collect_regset };
 
-static const struct regset s390_upper_regset = {
-  s390_regmap_upper,
-  regcache_supply_regset,
-  regcache_collect_regset
-};
+static const struct regset s390_upper_regset
+  = { s390_regmap_upper, regcache_supply_regset, regcache_collect_regset };
 
-const struct regset s390_last_break_regset = {
-  s390_regmap_last_break,
-  regcache_supply_regset,
-  regcache_collect_regset
-};
+const struct regset s390_last_break_regset
+  = { s390_regmap_last_break, regcache_supply_regset,
+      regcache_collect_regset };
 
-const struct regset s390x_last_break_regset = {
-  s390x_regmap_last_break,
-  regcache_supply_regset,
-  regcache_collect_regset
-};
+const struct regset s390x_last_break_regset
+  = { s390x_regmap_last_break, regcache_supply_regset,
+      regcache_collect_regset };
 
-const struct regset s390_system_call_regset = {
-  s390_regmap_system_call,
-  regcache_supply_regset,
-  regcache_collect_regset
-};
+const struct regset s390_system_call_regset
+  = { s390_regmap_system_call, regcache_supply_regset,
+      regcache_collect_regset };
 
-const struct regset s390_tdb_regset = {
-  s390_regmap_tdb,
-  s390_supply_tdb_regset,
-  regcache_collect_regset
-};
+const struct regset s390_tdb_regset
+  = { s390_regmap_tdb, s390_supply_tdb_regset, regcache_collect_regset };
 
-const struct regset s390_vxrs_low_regset = {
-  s390_regmap_vxrs_low,
-  regcache_supply_regset,
-  regcache_collect_regset
-};
+const struct regset s390_vxrs_low_regset
+  = { s390_regmap_vxrs_low, regcache_supply_regset, regcache_collect_regset };
 
-const struct regset s390_vxrs_high_regset = {
-  s390_regmap_vxrs_high,
-  regcache_supply_regset,
-  regcache_collect_regset
-};
+const struct regset s390_vxrs_high_regset
+  = { s390_regmap_vxrs_high, regcache_supply_regset, regcache_collect_regset };
 
-const struct regset s390_gs_regset = {
-  s390_regmap_gs,
-  regcache_supply_regset,
-  regcache_collect_regset
-};
+const struct regset s390_gs_regset
+  = { s390_regmap_gs, regcache_supply_regset, regcache_collect_regset };
 
-const struct regset s390_gsbc_regset = {
-  s390_regmap_gsbc,
-  regcache_supply_regset,
-  regcache_collect_regset
-};
+const struct regset s390_gsbc_regset
+  = { s390_regmap_gsbc, regcache_supply_regset, regcache_collect_regset };
 
 /* Iterate over supported core file register note sections. */
 
 static void
 s390_iterate_over_regset_sections (struct gdbarch *gdbarch,
-				   iterate_over_regset_sections_cb *cb,
-				   void *cb_data,
-				   const struct regcache *regcache)
+                                   iterate_over_regset_sections_cb *cb,
+                                   void *cb_data,
+                                   const struct regcache *regcache)
 {
   s390_gdbarch_tdep *tdep = gdbarch_tdep<s390_gdbarch_tdep> (gdbarch);
-  const int gregset_size = (tdep->abi == ABI_LINUX_S390 ?
-			    s390_sizeof_gregset : s390x_sizeof_gregset);
+  const int gregset_size
+    = (tdep->abi == ABI_LINUX_S390 ? s390_sizeof_gregset
+                                   : s390x_sizeof_gregset);
 
   cb (".reg", gregset_size, gregset_size, &s390_gregset, NULL, cb_data);
-  cb (".reg2", s390_sizeof_fpregset, s390_sizeof_fpregset, &s390_fpregset, NULL,
-      cb_data);
+  cb (".reg2", s390_sizeof_fpregset, s390_sizeof_fpregset, &s390_fpregset,
+      NULL, cb_data);
 
   if (tdep->abi == ABI_LINUX_S390 && tdep->gpr_full_regnum != -1)
     cb (".reg-s390-high-gprs", 16 * 4, 16 * 4, &s390_upper_regset,
-	"s390 GPR upper halves", cb_data);
+        "s390 GPR upper halves", cb_data);
 
   if (tdep->have_linux_v1)
     cb (".reg-s390-last-break", 8, 8,
-	(gdbarch_ptr_bit (gdbarch) == 32
-	 ? &s390_last_break_regset : &s390x_last_break_regset),
-	"s390 last-break address", cb_data);
+        (gdbarch_ptr_bit (gdbarch) == 32 ? &s390_last_break_regset
+                                         : &s390x_last_break_regset),
+        "s390 last-break address", cb_data);
 
   if (tdep->have_linux_v2)
     cb (".reg-s390-system-call", 4, 4, &s390_system_call_regset,
-	"s390 system-call", cb_data);
+        "s390 system-call", cb_data);
 
   /* If regcache is set, we are in "write" (gcore) mode.  In this
      case, don't iterate over the TDB unless its registers are
      available.  */
   if (tdep->have_tdb
       && (regcache == NULL
-	  || (REG_VALID
-	      == regcache->get_register_status (S390_TDB_DWORD0_REGNUM))))
+          || (REG_VALID
+              == regcache->get_register_status (S390_TDB_DWORD0_REGNUM))))
     cb (".reg-s390-tdb", s390_sizeof_tdbregset, s390_sizeof_tdbregset,
-	&s390_tdb_regset, "s390 TDB", cb_data);
+        &s390_tdb_regset, "s390 TDB", cb_data);
 
   if (tdep->v0_full_regnum != -1)
     {
       cb (".reg-s390-vxrs-low", 16 * 8, 16 * 8, &s390_vxrs_low_regset,
-	  "s390 vector registers 0-15 lower half", cb_data);
+          "s390 vector registers 0-15 lower half", cb_data);
       cb (".reg-s390-vxrs-high", 16 * 16, 16 * 16, &s390_vxrs_high_regset,
-	  "s390 vector registers 16-31", cb_data);
+          "s390 vector registers 16-31", cb_data);
     }
 
   /* Iterate over the guarded-storage regsets if in "read" mode, or if
@@ -314,22 +250,22 @@ s390_iterate_over_regset_sections (struct gdbarch *gdbarch,
   if (tdep->have_gs)
     {
       if (regcache == NULL
-	  || REG_VALID == regcache->get_register_status (S390_GSD_REGNUM))
-	cb (".reg-s390-gs-cb", 4 * 8, 4 * 8, &s390_gs_regset,
-	    "s390 guarded-storage registers", cb_data);
+          || REG_VALID == regcache->get_register_status (S390_GSD_REGNUM))
+        cb (".reg-s390-gs-cb", 4 * 8, 4 * 8, &s390_gs_regset,
+            "s390 guarded-storage registers", cb_data);
 
       if (regcache == NULL
-	  || REG_VALID == regcache->get_register_status (S390_BC_GSD_REGNUM))
-	cb (".reg-s390-gs-bc", 4 * 8, 4 * 8, &s390_gsbc_regset,
-	    "s390 guarded-storage broadcast control", cb_data);
+          || REG_VALID == regcache->get_register_status (S390_BC_GSD_REGNUM))
+        cb (".reg-s390-gs-bc", 4 * 8, 4 * 8, &s390_gsbc_regset,
+            "s390 guarded-storage broadcast control", cb_data);
     }
 }
 
 /* Implement core_read_description gdbarch method.  */
 
 static const struct target_desc *
-s390_core_read_description (struct gdbarch *gdbarch,
-			    struct target_ops *target, bfd *abfd)
+s390_core_read_description (struct gdbarch *gdbarch, struct target_ops *target,
+                            bfd *abfd)
 {
   asection *section = bfd_get_section_by_name (abfd, ".reg");
   gdb::optional<gdb::byte_vector> auxv = target_read_auxv_raw (target);
@@ -339,8 +275,7 @@ s390_core_read_description (struct gdbarch *gdbarch,
   if (!section)
     return NULL;
 
-  high_gprs = (bfd_get_section_by_name (abfd, ".reg-s390-high-gprs")
-	       != NULL);
+  high_gprs = (bfd_get_section_by_name (abfd, ".reg-s390-high-gprs") != NULL);
   v1 = (bfd_get_section_by_name (abfd, ".reg-s390-last-break") != NULL);
   v2 = (bfd_get_section_by_name (abfd, ".reg-s390-system-call") != NULL);
   vx = (hwcap & HWCAP_S390_VX);
@@ -351,23 +286,26 @@ s390_core_read_description (struct gdbarch *gdbarch,
     {
     case s390_sizeof_gregset:
       if (high_gprs)
-	return (gs ? tdesc_s390_gs_linux64 :
-		te && vx ? tdesc_s390_tevx_linux64 :
-		vx ? tdesc_s390_vx_linux64 :
-		te ? tdesc_s390_te_linux64 :
-		v2 ? tdesc_s390_linux64v2 :
-		v1 ? tdesc_s390_linux64v1 : tdesc_s390_linux64);
+        return (gs         ? tdesc_s390_gs_linux64
+                : te && vx ? tdesc_s390_tevx_linux64
+                : vx       ? tdesc_s390_vx_linux64
+                : te       ? tdesc_s390_te_linux64
+                : v2       ? tdesc_s390_linux64v2
+                : v1       ? tdesc_s390_linux64v1
+                           : tdesc_s390_linux64);
       else
-	return (v2 ? tdesc_s390_linux32v2 :
-		v1 ? tdesc_s390_linux32v1 : tdesc_s390_linux32);
+        return (v2   ? tdesc_s390_linux32v2
+                : v1 ? tdesc_s390_linux32v1
+                     : tdesc_s390_linux32);
 
     case s390x_sizeof_gregset:
-      return (gs ? tdesc_s390x_gs_linux64 :
-	      te && vx ? tdesc_s390x_tevx_linux64 :
-	      vx ? tdesc_s390x_vx_linux64 :
-	      te ? tdesc_s390x_te_linux64 :
-	      v2 ? tdesc_s390x_linux64v2 :
-	      v1 ? tdesc_s390x_linux64v1 : tdesc_s390x_linux64);
+      return (gs         ? tdesc_s390x_gs_linux64
+              : te && vx ? tdesc_s390x_tevx_linux64
+              : vx       ? tdesc_s390x_vx_linux64
+              : te       ? tdesc_s390x_te_linux64
+              : v2       ? tdesc_s390x_linux64v2
+              : v1       ? tdesc_s390x_linux64v1
+                         : tdesc_s390x_linux64);
 
     default:
       return NULL;
@@ -378,7 +316,8 @@ s390_core_read_description (struct gdbarch *gdbarch,
 
 /* Signal trampoline stack frames.  */
 
-struct s390_sigtramp_unwind_cache {
+struct s390_sigtramp_unwind_cache
+{
   CORE_ADDR frame_base;
   trad_frame_saved_reg *saved_regs;
 };
@@ -388,7 +327,7 @@ struct s390_sigtramp_unwind_cache {
 
 static struct s390_sigtramp_unwind_cache *
 s390_sigtramp_frame_unwind_cache (frame_info_ptr this_frame,
-				  void **this_prologue_cache)
+                                  void **this_prologue_cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   s390_gdbarch_tdep *tdep = gdbarch_tdep<s390_gdbarch_tdep> (gdbarch);
@@ -408,7 +347,7 @@ s390_sigtramp_frame_unwind_cache (frame_info_ptr this_frame,
 
   this_sp = get_frame_register_unsigned (this_frame, S390_SP_REGNUM);
   next_ra = get_frame_pc (this_frame);
-  next_cfa = this_sp + 16*word_size + 32;
+  next_cfa = this_sp + 16 * word_size + 32;
 
   /* New-style RT frame:
 	retcode + alignment (8 bytes)
@@ -416,7 +355,7 @@ s390_sigtramp_frame_unwind_cache (frame_info_ptr this_frame,
 	ucontext (contains sigregs at offset 5 words).  */
   if (next_ra == next_cfa)
     {
-      sigreg_ptr = next_cfa + 8 + 128 + align_up (5*word_size, 8);
+      sigreg_ptr = next_cfa + 8 + 128 + align_up (5 * word_size, 8);
       /* sigregs are followed by uc_sigmask (8 bytes), then by the
 	 upper GPR halves if present.  */
       sigreg_high_off = 8;
@@ -427,8 +366,8 @@ s390_sigtramp_frame_unwind_cache (frame_info_ptr this_frame,
 	pointer to sigregs.  */
   else
     {
-      sigreg_ptr = read_memory_unsigned_integer (next_cfa + 8,
-						 word_size, byte_order);
+      sigreg_ptr
+        = read_memory_unsigned_integer (next_cfa + 8, word_size, byte_order);
       /* sigregs are followed by signo (4 bytes), then by the
 	 upper GPR halves if present.  */
       sigreg_high_off = 4;
@@ -479,17 +418,17 @@ s390_sigtramp_frame_unwind_cache (frame_info_ptr this_frame,
   if (tdep->gpr_full_regnum != -1)
     for (i = 0; i < 16; i++)
       {
-	info->saved_regs[S390_R0_UPPER_REGNUM + i].set_addr (sigreg_ptr);
-	sigreg_ptr += 4;
+        info->saved_regs[S390_R0_UPPER_REGNUM + i].set_addr (sigreg_ptr);
+        sigreg_ptr += 4;
       }
 
   /* Restore the previous frame's SP.  */
-  prev_sp = read_memory_unsigned_integer (
-			info->saved_regs[S390_SP_REGNUM].addr (),
-			word_size, byte_order);
+  prev_sp
+    = read_memory_unsigned_integer (info->saved_regs[S390_SP_REGNUM].addr (),
+                                    word_size, byte_order);
 
   /* Determine our frame base.  */
-  info->frame_base = prev_sp + 16*word_size + 32;
+  info->frame_base = prev_sp + 16 * word_size + 32;
 
   return info;
 }
@@ -498,8 +437,8 @@ s390_sigtramp_frame_unwind_cache (frame_info_ptr this_frame,
 
 static void
 s390_sigtramp_frame_this_id (frame_info_ptr this_frame,
-			     void **this_prologue_cache,
-			     struct frame_id *this_id)
+                             void **this_prologue_cache,
+                             struct frame_id *this_id)
 {
   struct s390_sigtramp_unwind_cache *info
     = s390_sigtramp_frame_unwind_cache (this_frame, this_prologue_cache);
@@ -510,7 +449,7 @@ s390_sigtramp_frame_this_id (frame_info_ptr this_frame,
 
 static struct value *
 s390_sigtramp_frame_prev_register (frame_info_ptr this_frame,
-				   void **this_prologue_cache, int regnum)
+                                   void **this_prologue_cache, int regnum)
 {
   struct s390_sigtramp_unwind_cache *info
     = s390_sigtramp_frame_unwind_cache (this_frame, this_prologue_cache);
@@ -521,8 +460,8 @@ s390_sigtramp_frame_prev_register (frame_info_ptr this_frame,
 
 static int
 s390_sigtramp_frame_sniffer (const struct frame_unwind *self,
-			     frame_info_ptr this_frame,
-			     void **this_prologue_cache)
+                             frame_info_ptr this_frame,
+                             void **this_prologue_cache)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
   bfd_byte sigreturn[2];
@@ -542,15 +481,14 @@ s390_sigtramp_frame_sniffer (const struct frame_unwind *self,
 
 /* S390 sigtramp frame unwinder.  */
 
-static const struct frame_unwind s390_sigtramp_frame_unwind = {
-  "s390 linux sigtramp",
-  SIGTRAMP_FRAME,
-  default_frame_unwind_stop_reason,
-  s390_sigtramp_frame_this_id,
-  s390_sigtramp_frame_prev_register,
-  NULL,
-  s390_sigtramp_frame_sniffer
-};
+static const struct frame_unwind s390_sigtramp_frame_unwind
+  = { "s390 linux sigtramp",
+      SIGTRAMP_FRAME,
+      default_frame_unwind_stop_reason,
+      s390_sigtramp_frame_this_id,
+      s390_sigtramp_frame_prev_register,
+      NULL,
+      s390_sigtramp_frame_sniffer };
 
 /* Syscall handling.  */
 
@@ -558,8 +496,7 @@ static const struct frame_unwind s390_sigtramp_frame_unwind = {
    upon error. */
 
 static LONGEST
-s390_linux_get_syscall_number (struct gdbarch *gdbarch,
-			       thread_info *thread)
+s390_linux_get_syscall_number (struct gdbarch *gdbarch, thread_info *thread)
 {
   struct regcache *regs = get_thread_regcache (thread);
   s390_gdbarch_tdep *tdep = gdbarch_tdep<s390_gdbarch_tdep> (gdbarch);
@@ -576,8 +513,8 @@ s390_linux_get_syscall_number (struct gdbarch *gdbarch,
   if (opcode != op_svc)
     return -1;
 
-  svc_number = read_memory_unsigned_integer ((CORE_ADDR) pc + 1, 1,
-					     byte_order);
+  svc_number
+    = read_memory_unsigned_integer ((CORE_ADDR) pc + 1, 1, byte_order);
   if (svc_number == 0)
     regcache_cooked_read_unsigned (regs, S390_R1_REGNUM, &svc_number);
 
@@ -601,21 +538,22 @@ s390_all_but_pc_registers_record (struct regcache *regcache)
   for (i = 0; i < 16; i++)
     {
       if (record_full_arch_list_add_reg (regcache, S390_R0_REGNUM + i))
-	return -1;
+        return -1;
       if (record_full_arch_list_add_reg (regcache, S390_A0_REGNUM + i))
-	return -1;
+        return -1;
       if (record_full_arch_list_add_reg (regcache, S390_F0_REGNUM + i))
-	return -1;
+        return -1;
       if (tdep->gpr_full_regnum != -1)
-	if (record_full_arch_list_add_reg (regcache, S390_R0_UPPER_REGNUM + i))
-	  return -1;
+        if (record_full_arch_list_add_reg (regcache, S390_R0_UPPER_REGNUM + i))
+          return -1;
       if (tdep->v0_full_regnum != -1)
-	{
-	  if (record_full_arch_list_add_reg (regcache, S390_V0_LOWER_REGNUM + i))
-	    return -1;
-	  if (record_full_arch_list_add_reg (regcache, S390_V16_REGNUM + i))
-	    return -1;
-	}
+        {
+          if (record_full_arch_list_add_reg (regcache,
+                                             S390_V0_LOWER_REGNUM + i))
+            return -1;
+          if (record_full_arch_list_add_reg (regcache, S390_V16_REGNUM + i))
+            return -1;
+        }
     }
   if (record_full_arch_list_add_reg (regcache, S390_PSWM_REGNUM))
     return -1;
@@ -640,21 +578,21 @@ s390_canonicalize_syscall (int syscall, enum s390_abi_kind abi)
     case 7:
       return gdb_sys_restart_syscall;
     /* These syscalls work only on 31-bit.  */
-    case 13: /* time */
-    case 16: /* lchown[16] */
-    case 23: /* setuid[16] */
-    case 24: /* getuid[16] */
-    case 25: /* stime */
-    case 46: /* setgid[16] */
-    case 47: /* getgid[16] */
-    case 49: /* seteuid[16] */
-    case 50: /* getegid[16] */
-    case 70: /* setreuid[16] */
-    case 71: /* setregid[16] */
-    case 76: /* [old_]getrlimit */
-    case 80: /* getgroups[16] */
-    case 81: /* setgroups[16] */
-    case 95: /* fchown[16] */
+    case 13:  /* time */
+    case 16:  /* lchown[16] */
+    case 23:  /* setuid[16] */
+    case 24:  /* getuid[16] */
+    case 25:  /* stime */
+    case 46:  /* setgid[16] */
+    case 47:  /* getgid[16] */
+    case 49:  /* seteuid[16] */
+    case 50:  /* getegid[16] */
+    case 70:  /* setreuid[16] */
+    case 71:  /* setregid[16] */
+    case 76:  /* [old_]getrlimit */
+    case 80:  /* getgroups[16] */
+    case 81:  /* setgroups[16] */
+    case 95:  /* fchown[16] */
     case 101: /* ioperm */
     case 138: /* setfsuid[16] */
     case 139: /* setfsgid[16] */
@@ -672,25 +610,25 @@ s390_canonicalize_syscall (int syscall, enum s390_abi_kind abi)
     case 197: /* fstat64 */
     case 221: /* fcntl64 */
       if (abi == ABI_LINUX_S390)
-	return (enum gdb_syscall) syscall;
+        return (enum gdb_syscall) syscall;
       return gdb_sys_no_syscall;
     /* These syscalls don't exist on s390.  */
-    case 17: /* break */
-    case 18: /* oldstat */
-    case 28: /* oldfstat */
-    case 31: /* stty */
-    case 32: /* gtty */
-    case 35: /* ftime */
-    case 44: /* prof */
-    case 53: /* lock */
-    case 56: /* mpx */
-    case 58: /* ulimit */
-    case 59: /* oldolduname */
-    case 68: /* sgetmask */
-    case 69: /* ssetmask */
-    case 82: /* [old_]select */
-    case 84: /* oldlstat */
-    case 98: /* profil */
+    case 17:  /* break */
+    case 18:  /* oldstat */
+    case 28:  /* oldfstat */
+    case 31:  /* stty */
+    case 32:  /* gtty */
+    case 35:  /* ftime */
+    case 44:  /* prof */
+    case 53:  /* lock */
+    case 56:  /* mpx */
+    case 58:  /* ulimit */
+    case 59:  /* oldolduname */
+    case 68:  /* sgetmask */
+    case 69:  /* ssetmask */
+    case 82:  /* [old_]select */
+    case 84:  /* oldlstat */
+    case 98:  /* profil */
     case 109: /* olduname */
     case 113: /* vm86old */
     case 123: /* modify_ldt */
@@ -703,7 +641,7 @@ s390_canonicalize_syscall (int syscall, enum s390_abi_kind abi)
       return gdb_sys_readahead;
     case 223:
       if (abi == ABI_LINUX_S390)
-	return gdb_sys_sendfile64;
+        return gdb_sys_sendfile64;
       return gdb_sys_no_syscall;
     /* 224-235 handled below */
     case 236:
@@ -745,7 +683,7 @@ s390_canonicalize_syscall (int syscall, enum s390_abi_kind abi)
     /* 263 reserved */
     case 264:
       if (abi == ABI_LINUX_S390)
-	return gdb_sys_fadvise64_64;
+        return gdb_sys_fadvise64_64;
       return gdb_sys_no_syscall;
     case 265:
       return gdb_sys_statfs64;
@@ -766,34 +704,34 @@ s390_canonicalize_syscall (int syscall, enum s390_abi_kind abi)
     /* 282-312 handled below */
     case 293:
       if (abi == ABI_LINUX_S390)
-	return gdb_sys_fstatat64;
+        return gdb_sys_fstatat64;
       return gdb_sys_newfstatat;
     /* 313+ not yet supported */
     default:
       {
-	int ret;
+        int ret;
 
-	/* Most "old" syscalls copied from i386.  */
-	if (syscall <= 221)
-	  ret = syscall;
-	/* xattr syscalls.  */
-	else if (syscall >= 224 && syscall <= 235)
-	  ret = syscall + 2;
-	/* timer syscalls.  */
-	else if (syscall >= 254 && syscall <= 262)
-	  ret = syscall + 5;
-	/* mq_* and kexec_load */
-	else if (syscall >= 271 && syscall <= 277)
-	  ret = syscall + 6;
-	/* ioprio_set .. epoll_pwait */
-	else if (syscall >= 282 && syscall <= 312)
-	  ret = syscall + 7;
-	else if (syscall == 349)
-	  ret = gdb_sys_getrandom;
-	else
-	  ret = gdb_sys_no_syscall;
+        /* Most "old" syscalls copied from i386.  */
+        if (syscall <= 221)
+          ret = syscall;
+        /* xattr syscalls.  */
+        else if (syscall >= 224 && syscall <= 235)
+          ret = syscall + 2;
+        /* timer syscalls.  */
+        else if (syscall >= 254 && syscall <= 262)
+          ret = syscall + 5;
+        /* mq_* and kexec_load */
+        else if (syscall >= 271 && syscall <= 277)
+          ret = syscall + 6;
+        /* ioprio_set .. epoll_pwait */
+        else if (syscall >= 282 && syscall <= 312)
+          ret = syscall + 7;
+        else if (syscall == 349)
+          ret = gdb_sys_getrandom;
+        else
+          ret = gdb_sys_no_syscall;
 
-	return (enum gdb_syscall) ret;
+        return (enum gdb_syscall) ret;
       }
     }
 }
@@ -819,26 +757,25 @@ s390_linux_syscall_record (struct regcache *regcache, LONGEST syscall_native)
   if (syscall_gdb < 0)
     {
       gdb_printf (gdb_stderr,
-		  _("Process record and replay target doesn't "
-		    "support syscall number %s\n"),
-		  plongest (syscall_native));
+                  _ ("Process record and replay target doesn't "
+                     "support syscall number %s\n"),
+                  plongest (syscall_native));
       return -1;
     }
 
-  if (syscall_gdb == gdb_sys_sigreturn
-      || syscall_gdb == gdb_sys_rt_sigreturn)
+  if (syscall_gdb == gdb_sys_sigreturn || syscall_gdb == gdb_sys_rt_sigreturn)
     {
       if (s390_all_but_pc_registers_record (regcache))
-	return -1;
+        return -1;
       return 0;
     }
 
   if (tdep->abi == ABI_LINUX_ZSERIES)
     ret = record_linux_system_call (syscall_gdb, regcache,
-				    &s390x_linux_record_tdep);
+                                    &s390x_linux_record_tdep);
   else
     ret = record_linux_system_call (syscall_gdb, regcache,
-				    &s390_linux_record_tdep);
+                                    &s390_linux_record_tdep);
 
   if (ret)
     return ret;
@@ -854,23 +791,24 @@ s390_linux_syscall_record (struct regcache *regcache, LONGEST syscall_native)
 
 static int
 s390_linux_record_signal (struct gdbarch *gdbarch, struct regcache *regcache,
-			  enum gdb_signal signal)
+                          enum gdb_signal signal)
 {
   s390_gdbarch_tdep *tdep = gdbarch_tdep<s390_gdbarch_tdep> (gdbarch);
   /* There are two kinds of signal frames on s390. rt_sigframe is always
      the larger one, so don't even bother with sigframe.  */
-  const int sizeof_rt_sigframe = (tdep->abi == ABI_LINUX_ZSERIES ?
-				  160 + 8 + 128 + 1024 : 96 + 8 + 128 + 1000);
+  const int sizeof_rt_sigframe
+    = (tdep->abi == ABI_LINUX_ZSERIES ? 160 + 8 + 128 + 1024
+                                      : 96 + 8 + 128 + 1000);
   ULONGEST sp;
   int i;
 
   for (i = 0; i < 16; i++)
     {
       if (record_full_arch_list_add_reg (regcache, S390_R0_REGNUM + i))
-	return -1;
+        return -1;
       if (tdep->gpr_full_regnum != -1)
-	if (record_full_arch_list_add_reg (regcache, S390_R0_UPPER_REGNUM + i))
-	  return -1;
+        if (record_full_arch_list_add_reg (regcache, S390_R0_UPPER_REGNUM + i))
+          return -1;
     }
   if (record_full_arch_list_add_reg (regcache, S390_PSWA_REGNUM))
     return -1;
@@ -895,7 +833,7 @@ s390_linux_record_signal (struct gdbarch *gdbarch, struct regcache *regcache,
 
 static void
 s390_init_linux_record_tdep (struct linux_record_tdep *record_tdep,
-			     enum s390_abi_kind abi)
+                             enum s390_abi_kind abi)
 {
   /* These values are the size of the type that will be used in a system
      call.  They are obtained from Linux Kernel source.  */
@@ -949,7 +887,7 @@ s390_init_linux_record_tdep (struct linux_record_tdep *record_tdep,
       /* stat64 unused */
       record_tdep->size_gid_t = 4;
       record_tdep->size_uid_t = 4;
-      record_tdep->size_PAGE_SIZE = 0x1000;        /* 4KB */
+      record_tdep->size_PAGE_SIZE = 0x1000; /* 4KB */
       record_tdep->size_flock64 = 32;
       record_tdep->size_io_event = 32;
       record_tdep->size_iocb = 64;
@@ -1016,7 +954,7 @@ s390_init_linux_record_tdep (struct linux_record_tdep *record_tdep,
       record_tdep->size_stat64 = 104;
       record_tdep->size_gid_t = 4;
       record_tdep->size_uid_t = 4;
-      record_tdep->size_PAGE_SIZE = 0x1000;        /* 4KB */
+      record_tdep->size_PAGE_SIZE = 0x1000; /* 4KB */
       record_tdep->size_flock64 = 32;
       record_tdep->size_io_event = 32;
       record_tdep->size_iocb = 64;
@@ -1129,7 +1067,7 @@ s390_linux_init_abi_any (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* Register handling.  */
   set_gdbarch_core_read_description (gdbarch, s390_core_read_description);
   set_gdbarch_iterate_over_regset_sections (gdbarch,
-					    s390_iterate_over_regset_sections);
+                                            s390_iterate_over_regset_sections);
   set_gdbarch_write_pc (gdbarch, s390_write_pc);
   set_gdbarch_cannot_store_register (gdbarch, s390_cannot_store_register);
 
@@ -1142,7 +1080,7 @@ s390_linux_init_abi_any (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   /* Enable TLS support.  */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
-					     svr4_fetch_objfile_link_map);
+                                             svr4_fetch_objfile_link_map);
 
   /* Support reverse debugging.  */
   set_gdbarch_process_record_signal (gdbarch, s390_linux_record_signal);
@@ -1162,7 +1100,7 @@ s390_linux_init_abi_31 (struct gdbarch_info info, struct gdbarch *gdbarch)
   s390_linux_init_abi_any (info, gdbarch);
 
   set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					 linux_ilp32_fetch_link_map_offsets);
+                                         linux_ilp32_fetch_link_map_offsets);
   set_xml_syscall_file_name (gdbarch, XML_SYSCALL_FILENAME_S390);
 }
 
@@ -1178,7 +1116,7 @@ s390_linux_init_abi_64 (struct gdbarch_info info, struct gdbarch *gdbarch)
   s390_linux_init_abi_any (info, gdbarch);
 
   set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					 linux_lp64_fetch_link_map_offsets);
+                                         linux_lp64_fetch_link_map_offsets);
   set_xml_syscall_file_name (gdbarch, XML_SYSCALL_FILENAME_S390X);
 }
 
@@ -1188,9 +1126,9 @@ _initialize_s390_linux_tdep ()
 {
   /* Hook us into the OSABI mechanism.  */
   gdbarch_register_osabi (bfd_arch_s390, bfd_mach_s390_31, GDB_OSABI_LINUX,
-			  s390_linux_init_abi_31);
+                          s390_linux_init_abi_31);
   gdbarch_register_osabi (bfd_arch_s390, bfd_mach_s390_64, GDB_OSABI_LINUX,
-			  s390_linux_init_abi_64);
+                          s390_linux_init_abi_64);
 
   /* Initialize the GNU/Linux target descriptions.  */
   initialize_tdesc_s390_linux32v1 ();

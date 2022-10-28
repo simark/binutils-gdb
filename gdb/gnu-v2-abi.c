@@ -58,11 +58,11 @@ static int
 gnuv2_is_vtable_name (const char *name)
 {
   return (((name)[0] == '_'
-	   && (((name)[1] == 'V' && (name)[2] == 'T')
-	       || ((name)[1] == 'v' && (name)[2] == 't'))
-	   && is_cplus_marker ((name)[3])) ||
-	  ((name)[0] == '_' && (name)[1] == '_'
-	   && (name)[2] == 'v' && (name)[3] == 't' && (name)[4] == '_'));
+           && (((name)[1] == 'V' && (name)[2] == 'T')
+               || ((name)[1] == 'v' && (name)[2] == 't'))
+           && is_cplus_marker ((name)[3]))
+          || ((name)[0] == '_' && (name)[1] == '_' && (name)[2] == 'v'
+              && (name)[3] == 't' && (name)[4] == '_'));
 }
 
 static int
@@ -71,7 +71,6 @@ gnuv2_is_operator_name (const char *name)
   return startswith (name, CP_OPERATOR_STR);
 }
 
-
 /* Return a virtual function as a value.
    ARG1 is the object which provides the virtual function
    table pointer.  *ARG1P is side-effected in calling this function.
@@ -81,8 +80,8 @@ gnuv2_is_operator_name (const char *name)
 
    TYPE is the type in which F is located.  */
 static struct value *
-gnuv2_virtual_fn_field (struct value **arg1p, struct fn_field * f, int j,
-			struct type * type, int offset)
+gnuv2_virtual_fn_field (struct value **arg1p, struct fn_field *f, int j,
+                        struct type *type, int offset)
 {
   struct value *arg1 = *arg1p;
   struct type *type1 = check_typedef (value_type (arg1));
@@ -128,7 +127,7 @@ gnuv2_virtual_fn_field (struct value **arg1p, struct fn_field * f, int j,
   /* The virtual function table is now an array of structures
      which have the form { int16 offset, delta; void *pfn; }.  */
   vtbl = value_primitive_field (arg1, 0, context_vptr_fieldno,
-				context_vptr_basetype);
+                                context_vptr_basetype);
 
   /* With older versions of g++, the vtbl field pointed to an array
      of structures.  Nowadays it points directly to the structure.  */
@@ -159,31 +158,31 @@ gnuv2_virtual_fn_field (struct value **arg1p, struct fn_field * f, int j,
     {
       /* Move the `this' pointer according to the virtual function table.  */
       set_value_offset (arg1, value_offset (arg1)
-			+ value_as_long (value_field (entry, 0)));
+                                + value_as_long (value_field (entry, 0)));
 
       if (!value_lazy (arg1))
-	{
-	  set_value_lazy (arg1, 1);
-	  value_fetch_lazy (arg1);
-	}
+        {
+          set_value_lazy (arg1, 1);
+          value_fetch_lazy (arg1);
+        }
 
       vfn = value_field (entry, 2);
     }
   else if (entry_type->code () == TYPE_CODE_PTR)
     vfn = entry;
   else
-    error (_("I'm confused:  virtual function table has bad type"));
+    error (_ ("I'm confused:  virtual function table has bad type"));
   /* Reinstantiate the function pointer with the correct type.  */
   deprecated_set_value_type (vfn,
-			     lookup_pointer_type (TYPE_FN_FIELD_TYPE (f, j)));
+                             lookup_pointer_type (TYPE_FN_FIELD_TYPE (f, j)));
 
   *arg1p = arg1;
   return vfn;
 }
 
-
 static struct type *
-gnuv2_value_rtti_type (struct value *v, int *full, LONGEST *top, int *using_enc)
+gnuv2_value_rtti_type (struct value *v, int *full, LONGEST *top,
+                       int *using_enc)
 {
   struct type *known_type;
   struct type *rtti_type;
@@ -215,8 +214,8 @@ gnuv2_value_rtti_type (struct value *v, int *full, LONGEST *top, int *using_enc)
      until then.  */
 
   /* Try to get the vptr basetype, fieldno.  */
-  known_type_vptr_fieldno = get_vptr_fieldno (known_type,
-					      &known_type_vptr_basetype);
+  known_type_vptr_fieldno
+    = get_vptr_fieldno (known_type, &known_type_vptr_basetype);
 
   /* If we can't find it, give up.  */
   if (known_type_vptr_fieldno < 0)
@@ -226,11 +225,11 @@ gnuv2_value_rtti_type (struct value *v, int *full, LONGEST *top, int *using_enc)
      so we can get at the vtable properly.  */
   btype = known_type_vptr_basetype;
   btype = check_typedef (btype);
-  if (btype != known_type )
+  if (btype != known_type)
     {
       v = value_cast (btype, v);
       if (using_enc)
-	*using_enc=1;
+        *using_enc = 1;
     }
   /* We can't use value_ind here, because it would want to use RTTI, and
      we'd waste a bunch of time figuring out we already know the type.
@@ -241,15 +240,15 @@ gnuv2_value_rtti_type (struct value *v, int *full, LONGEST *top, int *using_enc)
   vtbl = value_as_address (value_field (v, known_type_vptr_fieldno));
 
   /* Try to find a symbol that is the vtable.  */
-  minsym=lookup_minimal_symbol_by_pc(vtbl);
-  if (minsym.minsym==NULL
-      || (linkage_name=minsym.minsym->linkage_name ())==NULL
+  minsym = lookup_minimal_symbol_by_pc (vtbl);
+  if (minsym.minsym == NULL
+      || (linkage_name = minsym.minsym->linkage_name ()) == NULL
       || !is_vtable_name (linkage_name))
     return NULL;
 
   /* If we just skip the prefix, we get screwed by namespaces.  */
   gdb::unique_xmalloc_ptr<char> demangled_name
-    = gdb_demangle(linkage_name,DMGL_PARAMS|DMGL_ANSI);
+    = gdb_demangle (linkage_name, DMGL_PARAMS | DMGL_ANSI);
   p = strchr (demangled_name.get (), ' ');
   if (p)
     *p = '\0';
@@ -260,29 +259,29 @@ gnuv2_value_rtti_type (struct value *v, int *full, LONGEST *top, int *using_enc)
   if (rtti_type == NULL)
     return NULL;
 
-  if (TYPE_N_BASECLASSES(rtti_type) > 1 &&  full && (*full) != 1)
+  if (TYPE_N_BASECLASSES (rtti_type) > 1 && full && (*full) != 1)
     {
       if (top)
-	*top = TYPE_BASECLASS_BITPOS (rtti_type,
-				      TYPE_VPTR_FIELDNO(rtti_type)) / 8;
-      if (top && ((*top) >0))
-	{
-	  if (rtti_type->length () > known_type->length ())
-	    {
-	      if (full)
-		*full=0;
-	    }
-	  else
-	    {
-	      if (full)
-		*full=1;
-	    }
-	}
+        *top = TYPE_BASECLASS_BITPOS (rtti_type, TYPE_VPTR_FIELDNO (rtti_type))
+               / 8;
+      if (top && ((*top) > 0))
+        {
+          if (rtti_type->length () > known_type->length ())
+            {
+              if (full)
+                *full = 0;
+            }
+          else
+            {
+              if (full)
+                *full = 1;
+            }
+        }
     }
   else
     {
       if (full)
-	*full=1;
+        *full = 1;
     }
 
   return rtti_type;
@@ -314,8 +313,7 @@ vb_match (struct type *type, int index, struct type *basetype)
   /* It's a virtual baseclass pointer, now we just need to find out whether
      it is for this baseclass.  */
   fieldtype = type->field (index).type ();
-  if (fieldtype == NULL
-      || fieldtype->code () != TYPE_CODE_PTR)
+  if (fieldtype == NULL || fieldtype->code () != TYPE_CODE_PTR)
     /* "Can't happen".  */
     return 0;
 
@@ -326,10 +324,8 @@ vb_match (struct type *type, int index, struct type *basetype)
   if (fieldtype->target_type () == basetype)
     return 1;
 
-  if (basetype->name () != NULL
-      && fieldtype->target_type ()->name () != NULL
-      && strcmp (basetype->name (),
-		 fieldtype->target_type ()->name ()) == 0)
+  if (basetype->name () != NULL && fieldtype->target_type ()->name () != NULL
+      && strcmp (basetype->name (), fieldtype->target_type ()->name ()) == 0)
     return 1;
   return 0;
 }
@@ -340,9 +336,9 @@ vb_match (struct type *type, int index, struct type *basetype)
    to (the address of)(ARG) + OFFSET.  */
 
 static int
-gnuv2_baseclass_offset (struct type *type, int index,
-			const bfd_byte *valaddr, LONGEST embedded_offset,
-			CORE_ADDR address, const struct value *val)
+gnuv2_baseclass_offset (struct type *type, int index, const bfd_byte *valaddr,
+                        LONGEST embedded_offset, CORE_ADDR address,
+                        const struct value *val)
 {
   struct type *basetype = TYPE_BASECLASS (type, index);
 
@@ -355,44 +351,43 @@ gnuv2_baseclass_offset (struct type *type, int index,
       /* First look for the virtual baseclass pointer
 	 in the fields.  */
       for (i = n_baseclasses; i < len; i++)
-	{
-	  if (vb_match (type, i, basetype))
-	    {
-	      struct type *field_type;
-	      LONGEST field_offset;
-	      int field_length;
-	      CORE_ADDR addr;
+        {
+          if (vb_match (type, i, basetype))
+            {
+              struct type *field_type;
+              LONGEST field_offset;
+              int field_length;
+              CORE_ADDR addr;
 
-	      field_type = check_typedef (type->field (i).type ());
-	      field_offset = type->field (i).loc_bitpos () / 8;
-	      field_length = field_type->length ();
+              field_type = check_typedef (type->field (i).type ());
+              field_offset = type->field (i).loc_bitpos () / 8;
+              field_length = field_type->length ();
 
-	      if (!value_bytes_available (val, embedded_offset + field_offset,
-					  field_length))
-		throw_error (NOT_AVAILABLE_ERROR,
-			     _("Virtual baseclass pointer is not available"));
+              if (!value_bytes_available (val, embedded_offset + field_offset,
+                                          field_length))
+                throw_error (NOT_AVAILABLE_ERROR,
+                             _ ("Virtual baseclass pointer is not available"));
 
-	      addr = unpack_pointer (field_type,
-				     valaddr + embedded_offset + field_offset);
+              addr = unpack_pointer (field_type,
+                                     valaddr + embedded_offset + field_offset);
 
-	      return addr - (LONGEST) address + embedded_offset;
-	    }
-	}
+              return addr - (LONGEST) address + embedded_offset;
+            }
+        }
       /* Not in the fields, so try looking through the baseclasses.  */
       for (i = index + 1; i < n_baseclasses; i++)
-	{
-	  /* Don't go through baseclass_offset, as that wraps
+        {
+          /* Don't go through baseclass_offset, as that wraps
 	     exceptions, thus, inner exceptions would be wrapped more
 	     than once.  */
-	  int boffset =
-	    gnuv2_baseclass_offset (type, i, valaddr,
-				    embedded_offset, address, val);
+          int boffset = gnuv2_baseclass_offset (type, i, valaddr,
+                                                embedded_offset, address, val);
 
-	  if (boffset)
-	    return boffset;
-	}
+          if (boffset)
+            return boffset;
+        }
 
-      error (_("Baseclass offset not found"));
+      error (_ ("Baseclass offset not found"));
     }
 
   /* Baseclass is easily computed.  */

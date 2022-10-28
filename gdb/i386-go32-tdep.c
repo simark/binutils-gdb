@@ -49,7 +49,6 @@ i386_go32_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_wchar_bit (gdbarch, 16);
   set_gdbarch_wchar_signed (gdbarch, 0);
 }
-
 
 static enum gdb_osabi
 i386_coff_osabi_sniffer (bfd *abfd)
@@ -60,15 +59,14 @@ i386_coff_osabi_sniffer (bfd *abfd)
 
   return GDB_OSABI_UNKNOWN;
 }
-
 
 void _initialize_i386_go32_tdep ();
 void
 _initialize_i386_go32_tdep ()
 {
   gdbarch_register_osabi_sniffer (bfd_arch_i386, bfd_target_coff_flavour,
-				  i386_coff_osabi_sniffer);
+                                  i386_coff_osabi_sniffer);
 
   gdbarch_register_osabi (bfd_arch_i386, 0, GDB_OSABI_GO32,
-			  i386_go32_init_abi);
+                          i386_go32_init_abi);
 }

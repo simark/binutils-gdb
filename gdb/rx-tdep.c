@@ -62,7 +62,8 @@ enum
 };
 
 /* RX frame types.  */
-enum rx_frame_type {
+enum rx_frame_type
+{
   RX_FRAME_TYPE_NORMAL,
   RX_FRAME_TYPE_EXCEPTION,
   RX_FRAME_TYPE_FAST_INTERRUPT
@@ -121,12 +122,10 @@ struct rx_prologue
 
 /* RX register names */
 static const char *const rx_register_names[] = {
-  "r0",  "r1",  "r2",  "r3",  "r4",  "r5",  "r6",  "r7",
-  "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15",
-  "usp", "isp", "psw", "pc",  "intb", "bpsw","bpc","fintv",
-  "fpsw", "acc",
+  "r0",  "r1",  "r2",   "r3",   "r4",  "r5",    "r6",   "r7",  "r8",
+  "r9",  "r10", "r11",  "r12",  "r13", "r14",   "r15",  "usp", "isp",
+  "psw", "pc",  "intb", "bpsw", "bpc", "fintv", "fpsw", "acc",
 };
-
 
 /* Function for finding saved registers in a 'struct pv_area'; this
    function is passed to pv_area::scan.
@@ -139,8 +138,7 @@ check_for_saved (void *result_untyped, pv_t addr, CORE_ADDR size, pv_t value)
 {
   struct rx_prologue *result = (struct rx_prologue *) result_untyped;
 
-  if (value.kind == pvk_register
-      && value.k == 0
+  if (value.kind == pvk_register && value.k == 0
       && pv_is_register (addr, RX_SP_REGNUM)
       && size == register_size (target_gdbarch (), value.reg))
     result->reg_offset[value.reg] = addr.k;
@@ -180,8 +178,7 @@ rx_get_opcode_byte (void *handle)
 
 static void
 rx_analyze_prologue (CORE_ADDR start_pc, CORE_ADDR limit_pc,
-		     enum rx_frame_type frame_type,
-		     struct rx_prologue *result)
+                     enum rx_frame_type frame_type, struct rx_prologue *result)
 {
   CORE_ADDR pc, next_pc;
   int rn;
@@ -212,18 +209,16 @@ rx_analyze_prologue (CORE_ADDR start_pc, CORE_ADDR limit_pc,
       /* When an exception occurs, the PSW is saved to the interrupt stack
 	 first.  */
       if (frame_type == RX_FRAME_TYPE_EXCEPTION)
-	{
-	  reg[RX_SP_REGNUM] = pv_add_constant (reg[RX_SP_REGNUM], -4);
-	  stack.store (reg[RX_SP_REGNUM], 4, reg[RX_PSW_REGNUM]);
-	}
+        {
+          reg[RX_SP_REGNUM] = pv_add_constant (reg[RX_SP_REGNUM], -4);
+          stack.store (reg[RX_SP_REGNUM], 4, reg[RX_PSW_REGNUM]);
+        }
 
       /* The call instruction (or an exception/interrupt) has saved the return
 	  address on the stack.  */
       reg[RX_SP_REGNUM] = pv_add_constant (reg[RX_SP_REGNUM], -4);
       stack.store (reg[RX_SP_REGNUM], 4, reg[RX_PC_REGNUM]);
-
     }
-
 
   pc = start_pc;
   while (pc < limit_pc)
@@ -233,83 +228,78 @@ rx_analyze_prologue (CORE_ADDR start_pc, CORE_ADDR limit_pc,
       RX_Opcode_Decoded opc;
 
       opcode_handle.pc = pc;
-      bytes_read = rx_decode_opcode (pc, &opc, rx_get_opcode_byte,
-				     &opcode_handle);
+      bytes_read
+        = rx_decode_opcode (pc, &opc, rx_get_opcode_byte, &opcode_handle);
       next_pc = pc + bytes_read;
 
-      if (opc.id == RXO_pushm	/* pushm r1, r2 */
-	  && opc.op[1].type == RX_Operand_Register
-	  && opc.op[2].type == RX_Operand_Register)
-	{
-	  int r1, r2;
-	  int r;
+      if (opc.id == RXO_pushm /* pushm r1, r2 */
+          && opc.op[1].type == RX_Operand_Register
+          && opc.op[2].type == RX_Operand_Register)
+        {
+          int r1, r2;
+          int r;
 
-	  r1 = opc.op[1].reg;
-	  r2 = opc.op[2].reg;
-	  for (r = r2; r >= r1; r--)
-	    {
-	      reg[RX_SP_REGNUM] = pv_add_constant (reg[RX_SP_REGNUM], -4);
-	      stack.store (reg[RX_SP_REGNUM], 4, reg[r]);
-	    }
-	  after_last_frame_setup_insn = next_pc;
-	}
-      else if (opc.id == RXO_mov	/* mov.l rdst, rsrc */
-	       && opc.op[0].type == RX_Operand_Register
-	       && opc.op[1].type == RX_Operand_Register
-	       && opc.size == RX_Long)
-	{
-	  int rdst, rsrc;
+          r1 = opc.op[1].reg;
+          r2 = opc.op[2].reg;
+          for (r = r2; r >= r1; r--)
+            {
+              reg[RX_SP_REGNUM] = pv_add_constant (reg[RX_SP_REGNUM], -4);
+              stack.store (reg[RX_SP_REGNUM], 4, reg[r]);
+            }
+          after_last_frame_setup_insn = next_pc;
+        }
+      else if (opc.id == RXO_mov /* mov.l rdst, rsrc */
+               && opc.op[0].type == RX_Operand_Register
+               && opc.op[1].type == RX_Operand_Register && opc.size == RX_Long)
+        {
+          int rdst, rsrc;
 
-	  rdst = opc.op[0].reg;
-	  rsrc = opc.op[1].reg;
-	  reg[rdst] = reg[rsrc];
-	  if (rdst == RX_FP_REGNUM && rsrc == RX_SP_REGNUM)
-	    after_last_frame_setup_insn = next_pc;
-	}
-      else if (opc.id == RXO_mov	/* mov.l rsrc, [-SP] */
-	       && opc.op[0].type == RX_Operand_Predec
-	       && opc.op[0].reg == RX_SP_REGNUM
-	       && opc.op[1].type == RX_Operand_Register
-	       && opc.size == RX_Long)
-	{
-	  int rsrc;
+          rdst = opc.op[0].reg;
+          rsrc = opc.op[1].reg;
+          reg[rdst] = reg[rsrc];
+          if (rdst == RX_FP_REGNUM && rsrc == RX_SP_REGNUM)
+            after_last_frame_setup_insn = next_pc;
+        }
+      else if (opc.id == RXO_mov /* mov.l rsrc, [-SP] */
+               && opc.op[0].type == RX_Operand_Predec
+               && opc.op[0].reg == RX_SP_REGNUM
+               && opc.op[1].type == RX_Operand_Register && opc.size == RX_Long)
+        {
+          int rsrc;
 
-	  rsrc = opc.op[1].reg;
-	  reg[RX_SP_REGNUM] = pv_add_constant (reg[RX_SP_REGNUM], -4);
-	  stack.store (reg[RX_SP_REGNUM], 4, reg[rsrc]);
-	  after_last_frame_setup_insn = next_pc;
-	}
-      else if (opc.id == RXO_add	/* add #const, rsrc, rdst */
-	       && opc.op[0].type == RX_Operand_Register
-	       && opc.op[1].type == RX_Operand_Immediate
-	       && opc.op[2].type == RX_Operand_Register)
-	{
-	  int rdst = opc.op[0].reg;
-	  int addend = opc.op[1].addend;
-	  int rsrc = opc.op[2].reg;
-	  reg[rdst] = pv_add_constant (reg[rsrc], addend);
-	  /* Negative adjustments to the stack pointer or frame pointer
+          rsrc = opc.op[1].reg;
+          reg[RX_SP_REGNUM] = pv_add_constant (reg[RX_SP_REGNUM], -4);
+          stack.store (reg[RX_SP_REGNUM], 4, reg[rsrc]);
+          after_last_frame_setup_insn = next_pc;
+        }
+      else if (opc.id == RXO_add /* add #const, rsrc, rdst */
+               && opc.op[0].type == RX_Operand_Register
+               && opc.op[1].type == RX_Operand_Immediate
+               && opc.op[2].type == RX_Operand_Register)
+        {
+          int rdst = opc.op[0].reg;
+          int addend = opc.op[1].addend;
+          int rsrc = opc.op[2].reg;
+          reg[rdst] = pv_add_constant (reg[rsrc], addend);
+          /* Negative adjustments to the stack pointer or frame pointer
 	     are (most likely) part of the prologue.  */
-	  if ((rdst == RX_SP_REGNUM || rdst == RX_FP_REGNUM) && addend < 0)
-	    after_last_frame_setup_insn = next_pc;
-	}
-      else if (opc.id == RXO_mov
-	       && opc.op[0].type == RX_Operand_Indirect
-	       && opc.op[1].type == RX_Operand_Register
-	       && opc.size == RX_Long
-	       && (opc.op[0].reg == RX_SP_REGNUM
-		   || opc.op[0].reg == RX_FP_REGNUM)
-	       && (RX_R1_REGNUM <= opc.op[1].reg
-		   && opc.op[1].reg <= RX_R4_REGNUM))
-	{
-	  /* This moves an argument register to the stack.  Don't
+          if ((rdst == RX_SP_REGNUM || rdst == RX_FP_REGNUM) && addend < 0)
+            after_last_frame_setup_insn = next_pc;
+        }
+      else if (opc.id == RXO_mov && opc.op[0].type == RX_Operand_Indirect
+               && opc.op[1].type == RX_Operand_Register && opc.size == RX_Long
+               && (opc.op[0].reg == RX_SP_REGNUM
+                   || opc.op[0].reg == RX_FP_REGNUM)
+               && (RX_R1_REGNUM <= opc.op[1].reg
+                   && opc.op[1].reg <= RX_R4_REGNUM))
+        {
+          /* This moves an argument register to the stack.  Don't
 	     record it, but allow it to be a part of the prologue.  */
-	}
-      else if (opc.id == RXO_branch
-	       && opc.op[0].type == RX_Operand_Immediate
-	       && next_pc < opc.op[0].addend)
-	{
-	  /* When a loop appears as the first statement of a function
+        }
+      else if (opc.id == RXO_branch && opc.op[0].type == RX_Operand_Immediate
+               && next_pc < opc.op[0].addend)
+        {
+          /* When a loop appears as the first statement of a function
 	     body, gcc 4.x will use a BRA instruction to branch to the
 	     loop condition checking code.  This BRA instruction is
 	     marked as part of the prologue.  We therefore set next_pc
@@ -328,14 +318,14 @@ rx_analyze_prologue (CORE_ADDR start_pc, CORE_ADDR limit_pc,
 	     happens and that is precisely what is done by the default
 	     case below.  */
 
-	  after_last_frame_setup_insn = opc.op[0].addend;
-	  break;		/* Scan no further if we hit this case.  */
-	}
+          after_last_frame_setup_insn = opc.op[0].addend;
+          break; /* Scan no further if we hit this case.  */
+        }
       else
-	{
-	  /* Terminate the prologue scan.  */
-	  break;
-	}
+        {
+          /* Terminate the prologue scan.  */
+          break;
+        }
 
       pc = next_pc;
     }
@@ -356,7 +346,6 @@ rx_analyze_prologue (CORE_ADDR start_pc, CORE_ADDR limit_pc,
 
   result->prologue_end = after_last_frame_setup_insn;
 }
-
 
 /* Implement the "skip_prologue" gdbarch method.  */
 static CORE_ADDR
@@ -383,8 +372,8 @@ rx_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
 
 static struct rx_prologue *
 rx_analyze_frame_prologue (frame_info_ptr this_frame,
-			   enum rx_frame_type frame_type,
-			   void **this_prologue_cache)
+                           enum rx_frame_type frame_type,
+                           void **this_prologue_cache)
 {
   if (!*this_prologue_cache)
     {
@@ -398,10 +387,10 @@ rx_analyze_frame_prologue (frame_info_ptr this_frame,
       /* If we couldn't find any function containing the PC, then
 	 just initialize the prologue cache, but don't do anything.  */
       if (!func_start)
-	stop_addr = func_start;
+        stop_addr = func_start;
 
       rx_analyze_prologue (func_start, stop_addr, frame_type,
-			   (struct rx_prologue *) *this_prologue_cache);
+                           (struct rx_prologue *) *this_prologue_cache);
     }
 
   return (struct rx_prologue *) *this_prologue_cache;
@@ -432,9 +421,9 @@ rx_frame_type (frame_info_ptr this_frame, void **this_cache)
 
   /* No cached value; scan the function.  The frame type is cached in
      rx_analyze_prologue / rx_analyze_frame_prologue.  */
-  
+
   pc = get_frame_pc (this_frame);
-  
+
   /* Attempt to find the last address in the function.  If it cannot
      be determined, set the limit to be a short ways past the frame's
      pc.  */
@@ -444,22 +433,21 @@ rx_frame_type (frame_info_ptr this_frame, void **this_cache)
   while (pc < lim_pc)
     {
       opcode_handle.pc = pc;
-      bytes_read = rx_decode_opcode (pc, &opc, rx_get_opcode_byte,
-				     &opcode_handle);
+      bytes_read
+        = rx_decode_opcode (pc, &opc, rx_get_opcode_byte, &opcode_handle);
 
       if (bytes_read <= 0 || opc.id == RXO_rts)
-	return RX_FRAME_TYPE_NORMAL;
+        return RX_FRAME_TYPE_NORMAL;
       else if (opc.id == RXO_rtfi)
-	return RX_FRAME_TYPE_FAST_INTERRUPT;
+        return RX_FRAME_TYPE_FAST_INTERRUPT;
       else if (opc.id == RXO_rte)
-	return RX_FRAME_TYPE_EXCEPTION;
+        return RX_FRAME_TYPE_EXCEPTION;
 
       pc += bytes_read;
     }
 
   return RX_FRAME_TYPE_NORMAL;
 }
-
 
 /* Given the next frame and a prologue cache, return this frame's
    base.  */
@@ -493,17 +481,17 @@ rx_frame_base (frame_info_ptr this_frame, void **this_cache)
 
 static void
 rx_frame_this_id (frame_info_ptr this_frame, void **this_cache,
-		  struct frame_id *this_id)
+                  struct frame_id *this_id)
 {
   *this_id = frame_id_build (rx_frame_base (this_frame, this_cache),
-			     get_frame_func (this_frame));
+                             get_frame_func (this_frame));
 }
 
 /* Implement the "frame_prev_register" method for unwinding frames.  */
 
 static struct value *
 rx_frame_prev_register (frame_info_ptr this_frame, void **this_cache,
-			int regnum)
+                        int regnum)
 {
   enum rx_frame_type frame_type = rx_frame_type (this_frame, this_cache);
   struct rx_prologue *p
@@ -513,22 +501,23 @@ rx_frame_prev_register (frame_info_ptr this_frame, void **this_cache,
   if (regnum == RX_SP_REGNUM)
     {
       if (frame_type == RX_FRAME_TYPE_EXCEPTION)
-	{
-	  struct value *psw_val;
-	  CORE_ADDR psw;
+        {
+          struct value *psw_val;
+          CORE_ADDR psw;
 
-	  psw_val = rx_frame_prev_register (this_frame, this_cache,
-					    RX_PSW_REGNUM);
-	  psw = extract_unsigned_integer
-	    (value_contents_all (psw_val).data (), 4,
-	     gdbarch_byte_order (get_frame_arch (this_frame)));
+          psw_val
+            = rx_frame_prev_register (this_frame, this_cache, RX_PSW_REGNUM);
+          psw = extract_unsigned_integer (value_contents_all (psw_val).data (),
+                                          4,
+                                          gdbarch_byte_order (
+                                            get_frame_arch (this_frame)));
 
-	  if ((psw & 0x20000 /* U bit */) != 0)
-	    return rx_frame_prev_register (this_frame, this_cache,
-					   RX_USP_REGNUM);
+          if ((psw & 0x20000 /* U bit */) != 0)
+            return rx_frame_prev_register (this_frame, this_cache,
+                                           RX_USP_REGNUM);
 
-	  /* Fall through for the case where U bit is zero.  */
-	}
+          /* Fall through for the case where U bit is zero.  */
+        }
 
       return frame_unwind_got_constant (this_frame, regnum, frame_base);
     }
@@ -536,18 +525,16 @@ rx_frame_prev_register (frame_info_ptr this_frame, void **this_cache,
   if (frame_type == RX_FRAME_TYPE_FAST_INTERRUPT)
     {
       if (regnum == RX_PC_REGNUM)
-	return rx_frame_prev_register (this_frame, this_cache,
-				       RX_BPC_REGNUM);
+        return rx_frame_prev_register (this_frame, this_cache, RX_BPC_REGNUM);
       if (regnum == RX_PSW_REGNUM)
-	return rx_frame_prev_register (this_frame, this_cache,
-				       RX_BPSW_REGNUM);
+        return rx_frame_prev_register (this_frame, this_cache, RX_BPSW_REGNUM);
     }
 
   /* If prologue analysis says we saved this register somewhere,
      return a description of the stack slot holding it.  */
   if (p->reg_offset[regnum] != 1)
     return frame_unwind_got_memory (this_frame, regnum,
-				    frame_base + p->reg_offset[regnum]);
+                                    frame_base + p->reg_offset[regnum]);
 
   /* Otherwise, presume we haven't changed the value of this
      register, and get it from the next frame.  */
@@ -569,16 +556,15 @@ static int
 exception_frame_p (enum rx_frame_type frame_type)
 {
   return (frame_type == RX_FRAME_TYPE_EXCEPTION
-	  || frame_type == RX_FRAME_TYPE_FAST_INTERRUPT);
+          || frame_type == RX_FRAME_TYPE_FAST_INTERRUPT);
 }
 
 /* Common code used by both normal and exception frame sniffers.  */
 
 static int
 rx_frame_sniffer_common (const struct frame_unwind *self,
-			 frame_info_ptr this_frame,
-			 void **this_cache,
-			 int (*sniff_p)(enum rx_frame_type) )
+                         frame_info_ptr this_frame, void **this_cache,
+                         int (*sniff_p) (enum rx_frame_type))
 {
   gdb_assert (this_cache != NULL);
 
@@ -587,15 +573,16 @@ rx_frame_sniffer_common (const struct frame_unwind *self,
       enum rx_frame_type frame_type = rx_frame_type (this_frame, this_cache);
 
       if (sniff_p (frame_type))
-	{
-	  /* The call below will fill in the cache, including the frame
+        {
+          /* The call below will fill in the cache, including the frame
 	     type.  */
-	  (void) rx_analyze_frame_prologue (this_frame, frame_type, this_cache);
+          (void) rx_analyze_frame_prologue (this_frame, frame_type,
+                                            this_cache);
 
-	  return 1;
-	}
+          return 1;
+        }
       else
-	return 0;
+        return 0;
     }
   else
     {
@@ -608,35 +595,29 @@ rx_frame_sniffer_common (const struct frame_unwind *self,
 /* Frame sniffer for normal (non-exception) frames.  */
 
 static int
-rx_frame_sniffer (const struct frame_unwind *self,
-		  frame_info_ptr this_frame,
-		  void **this_cache)
+rx_frame_sniffer (const struct frame_unwind *self, frame_info_ptr this_frame,
+                  void **this_cache)
 {
   return rx_frame_sniffer_common (self, this_frame, this_cache,
-				  normal_frame_p);
+                                  normal_frame_p);
 }
 
 /* Frame sniffer for exception frames.  */
 
 static int
 rx_exception_sniffer (const struct frame_unwind *self,
-			     frame_info_ptr this_frame,
-			     void **this_cache)
+                      frame_info_ptr this_frame, void **this_cache)
 {
   return rx_frame_sniffer_common (self, this_frame, this_cache,
-				  exception_frame_p);
+                                  exception_frame_p);
 }
 
 /* Data structure for normal code using instruction-based prologue
    analyzer.  */
 
 static const struct frame_unwind rx_frame_unwind = {
-  "rx prologue",
-  NORMAL_FRAME,
-  default_frame_unwind_stop_reason,
-  rx_frame_this_id,
-  rx_frame_prev_register,
-  NULL,
+  "rx prologue",    NORMAL_FRAME,           default_frame_unwind_stop_reason,
+  rx_frame_this_id, rx_frame_prev_register, NULL,
   rx_frame_sniffer
 };
 
@@ -646,21 +627,17 @@ static const struct frame_unwind rx_frame_unwind = {
 static const struct frame_unwind rx_exception_unwind = {
   "rx exception",
   /* SIGTRAMP_FRAME could be used here, but backtraces are less informative.  */
-  NORMAL_FRAME,
-  default_frame_unwind_stop_reason,
-  rx_frame_this_id,
-  rx_frame_prev_register,
-  NULL,
-  rx_exception_sniffer
+  NORMAL_FRAME, default_frame_unwind_stop_reason, rx_frame_this_id,
+  rx_frame_prev_register, NULL, rx_exception_sniffer
 };
 
 /* Implement the "push_dummy_call" gdbarch method.  */
 static CORE_ADDR
 rx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
-		    struct regcache *regcache, CORE_ADDR bp_addr, int nargs,
-		    struct value **args, CORE_ADDR sp,
-		    function_call_return_method return_method,
-		    CORE_ADDR struct_addr)
+                    struct regcache *regcache, CORE_ADDR bp_addr, int nargs,
+                    struct value **args, CORE_ADDR sp,
+                    function_call_return_method return_method,
+                    CORE_ADDR struct_addr)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   int write_pass;
@@ -676,7 +653,7 @@ rx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
   /* The end result had better be a function or a method.  */
   gdb_assert (func_type->code () == TYPE_CODE_FUNC
-	      || func_type->code () == TYPE_CODE_METHOD);
+              || func_type->code () == TYPE_CODE_METHOD);
 
   /* Functions with a variable number of arguments have all of their
      variable arguments and the last non-variable argument passed
@@ -702,153 +679,149 @@ rx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
       int arg_reg = RX_R1_REGNUM;
 
       if (write_pass)
-	sp = align_down (sp - sp_off, 4);
+        sp = align_down (sp - sp_off, 4);
       sp_off = 0;
 
       if (return_method == return_method_struct)
-	{
-	  struct type *return_type = func_type->target_type ();
+        {
+          struct type *return_type = func_type->target_type ();
 
-	  gdb_assert (return_type->code () == TYPE_CODE_STRUCT
-		      || func_type->code () == TYPE_CODE_UNION);
+          gdb_assert (return_type->code () == TYPE_CODE_STRUCT
+                      || func_type->code () == TYPE_CODE_UNION);
 
-	  if (return_type->length () > 16
-	      || return_type->length () % 4 != 0)
-	    {
-	      if (write_pass)
-		regcache_cooked_write_unsigned (regcache, RX_R15_REGNUM,
-						struct_addr);
-	    }
-	}
+          if (return_type->length () > 16 || return_type->length () % 4 != 0)
+            {
+              if (write_pass)
+                regcache_cooked_write_unsigned (regcache, RX_R15_REGNUM,
+                                                struct_addr);
+            }
+        }
 
       /* Push the arguments.  */
       for (i = 0; i < nargs; i++)
-	{
-	  struct value *arg = args[i];
-	  const gdb_byte *arg_bits = value_contents_all (arg).data ();
-	  struct type *arg_type = check_typedef (value_type (arg));
-	  ULONGEST arg_size = arg_type->length ();
+        {
+          struct value *arg = args[i];
+          const gdb_byte *arg_bits = value_contents_all (arg).data ();
+          struct type *arg_type = check_typedef (value_type (arg));
+          ULONGEST arg_size = arg_type->length ();
 
-	  if (i == 0 && struct_addr != 0
-	      && return_method != return_method_struct
-	      && arg_type->code () == TYPE_CODE_PTR
-	      && extract_unsigned_integer (arg_bits, 4,
-					   byte_order) == struct_addr)
-	    {
-	      /* This argument represents the address at which C++ (and
+          if (i == 0 && struct_addr != 0
+              && return_method != return_method_struct
+              && arg_type->code () == TYPE_CODE_PTR
+              && extract_unsigned_integer (arg_bits, 4, byte_order)
+                   == struct_addr)
+            {
+              /* This argument represents the address at which C++ (and
 		 possibly other languages) store their return value.
 		 Put this value in R15.  */
-	      if (write_pass)
-		regcache_cooked_write_unsigned (regcache, RX_R15_REGNUM,
-						struct_addr);
-	    }
-	  else if (arg_type->code () != TYPE_CODE_STRUCT
-		   && arg_type->code () != TYPE_CODE_UNION
-		   && arg_size <= 8)
-	    {
-	      /* Argument is a scalar.  */
-	      if (arg_size == 8)
-		{
-		  if (i < num_register_candidate_args
-		      && arg_reg <= RX_R4_REGNUM - 1)
-		    {
-		      /* If argument registers are going to be used to pass
+              if (write_pass)
+                regcache_cooked_write_unsigned (regcache, RX_R15_REGNUM,
+                                                struct_addr);
+            }
+          else if (arg_type->code () != TYPE_CODE_STRUCT
+                   && arg_type->code () != TYPE_CODE_UNION && arg_size <= 8)
+            {
+              /* Argument is a scalar.  */
+              if (arg_size == 8)
+                {
+                  if (i < num_register_candidate_args
+                      && arg_reg <= RX_R4_REGNUM - 1)
+                    {
+                      /* If argument registers are going to be used to pass
 			 an 8 byte scalar, the ABI specifies that two registers
 			 must be available.  */
-		      if (write_pass)
-			{
-			  regcache_cooked_write_unsigned (regcache, arg_reg,
-							  extract_unsigned_integer
-							  (arg_bits, 4,
-							   byte_order));
-			  regcache_cooked_write_unsigned (regcache,
-							  arg_reg + 1,
-							  extract_unsigned_integer
-							  (arg_bits + 4, 4,
-							   byte_order));
-			}
-		      arg_reg += 2;
-		    }
-		  else
-		    {
-		      sp_off = align_up (sp_off, 4);
-		      /* Otherwise, pass the 8 byte scalar on the stack.  */
-		      if (write_pass)
-			write_memory (sp + sp_off, arg_bits, 8);
-		      sp_off += 8;
-		    }
-		}
-	      else
-		{
-		  ULONGEST u;
+                      if (write_pass)
+                        {
+                          regcache_cooked_write_unsigned (
+                            regcache, arg_reg,
+                            extract_unsigned_integer (arg_bits, 4,
+                                                      byte_order));
+                          regcache_cooked_write_unsigned (
+                            regcache, arg_reg + 1,
+                            extract_unsigned_integer (arg_bits + 4, 4,
+                                                      byte_order));
+                        }
+                      arg_reg += 2;
+                    }
+                  else
+                    {
+                      sp_off = align_up (sp_off, 4);
+                      /* Otherwise, pass the 8 byte scalar on the stack.  */
+                      if (write_pass)
+                        write_memory (sp + sp_off, arg_bits, 8);
+                      sp_off += 8;
+                    }
+                }
+              else
+                {
+                  ULONGEST u;
 
-		  gdb_assert (arg_size <= 4);
+                  gdb_assert (arg_size <= 4);
 
-		  u =
-		    extract_unsigned_integer (arg_bits, arg_size, byte_order);
+                  u = extract_unsigned_integer (arg_bits, arg_size,
+                                                byte_order);
 
-		  if (i < num_register_candidate_args
-		      && arg_reg <= RX_R4_REGNUM)
-		    {
-		      if (write_pass)
-			regcache_cooked_write_unsigned (regcache, arg_reg, u);
-		      arg_reg += 1;
-		    }
-		  else
-		    {
-		      int p_arg_size = 4;
+                  if (i < num_register_candidate_args
+                      && arg_reg <= RX_R4_REGNUM)
+                    {
+                      if (write_pass)
+                        regcache_cooked_write_unsigned (regcache, arg_reg, u);
+                      arg_reg += 1;
+                    }
+                  else
+                    {
+                      int p_arg_size = 4;
 
-		      if (func_type->is_prototyped ()
-			  && i < func_type->num_fields ())
-			{
-			  struct type *p_arg_type =
-			    func_type->field (i).type ();
-			  p_arg_size = p_arg_type->length ();
-			}
+                      if (func_type->is_prototyped ()
+                          && i < func_type->num_fields ())
+                        {
+                          struct type *p_arg_type
+                            = func_type->field (i).type ();
+                          p_arg_size = p_arg_type->length ();
+                        }
 
-		      sp_off = align_up (sp_off, p_arg_size);
+                      sp_off = align_up (sp_off, p_arg_size);
 
-		      if (write_pass)
-			write_memory_unsigned_integer (sp + sp_off,
-						       p_arg_size, byte_order,
-						       u);
-		      sp_off += p_arg_size;
-		    }
-		}
-	    }
-	  else
-	    {
-	      /* Argument is a struct or union.  Pass as much of the struct
+                      if (write_pass)
+                        write_memory_unsigned_integer (sp + sp_off, p_arg_size,
+                                                       byte_order, u);
+                      sp_off += p_arg_size;
+                    }
+                }
+            }
+          else
+            {
+              /* Argument is a struct or union.  Pass as much of the struct
 		 in registers, if possible.  Pass the rest on the stack.  */
-	      while (arg_size > 0)
-		{
-		  if (i < num_register_candidate_args
-		      && arg_reg <= RX_R4_REGNUM
-		      && arg_size <= 4 * (RX_R4_REGNUM - arg_reg + 1)
-		      && arg_size % 4 == 0)
-		    {
-		      int len = std::min (arg_size, (ULONGEST) 4);
+              while (arg_size > 0)
+                {
+                  if (i < num_register_candidate_args
+                      && arg_reg <= RX_R4_REGNUM
+                      && arg_size <= 4 * (RX_R4_REGNUM - arg_reg + 1)
+                      && arg_size % 4 == 0)
+                    {
+                      int len = std::min (arg_size, (ULONGEST) 4);
 
-		      if (write_pass)
-			regcache_cooked_write_unsigned (regcache, arg_reg,
-							extract_unsigned_integer
-							(arg_bits, len,
-							 byte_order));
-		      arg_bits += len;
-		      arg_size -= len;
-		      arg_reg++;
-		    }
-		  else
-		    {
-		      sp_off = align_up (sp_off, 4);
-		      if (write_pass)
-			write_memory (sp + sp_off, arg_bits, arg_size);
-		      sp_off += align_up (arg_size, 4);
-		      arg_size = 0;
-		    }
-		}
-	    }
-	}
+                      if (write_pass)
+                        regcache_cooked_write_unsigned (
+                          regcache, arg_reg,
+                          extract_unsigned_integer (arg_bits, len,
+                                                    byte_order));
+                      arg_bits += len;
+                      arg_size -= len;
+                      arg_reg++;
+                    }
+                  else
+                    {
+                      sp_off = align_up (sp_off, 4);
+                      if (write_pass)
+                        write_memory (sp + sp_off, arg_bits, arg_size);
+                      sp_off += align_up (arg_size, 4);
+                      arg_size = 0;
+                    }
+                }
+            }
+        }
     }
 
   /* Keep track of the stack address prior to pushing the return address.
@@ -867,19 +840,17 @@ rx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
 /* Implement the "return_value" gdbarch method.  */
 static enum return_value_convention
-rx_return_value (struct gdbarch *gdbarch,
-		 struct value *function,
-		 struct type *valtype,
-		 struct regcache *regcache,
-		 gdb_byte *readbuf, const gdb_byte *writebuf)
+rx_return_value (struct gdbarch *gdbarch, struct value *function,
+                 struct type *valtype, struct regcache *regcache,
+                 gdb_byte *readbuf, const gdb_byte *writebuf)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   ULONGEST valtype_len = valtype->length ();
 
   if (valtype->length () > 16
       || ((valtype->code () == TYPE_CODE_STRUCT
-	   || valtype->code () == TYPE_CODE_UNION)
-	  && valtype->length () % 4 != 0))
+           || valtype->code () == TYPE_CODE_UNION)
+          && valtype->length () % 4 != 0))
     return RETURN_VALUE_STRUCT_CONVENTION;
 
   if (readbuf)
@@ -889,15 +860,15 @@ rx_return_value (struct gdbarch *gdbarch,
       int offset = 0;
 
       while (valtype_len > 0)
-	{
-	  int len = std::min (valtype_len, (ULONGEST) 4);
+        {
+          int len = std::min (valtype_len, (ULONGEST) 4);
 
-	  regcache_cooked_read_unsigned (regcache, argreg, &u);
-	  store_unsigned_integer (readbuf + offset, len, byte_order, u);
-	  valtype_len -= len;
-	  offset += len;
-	  argreg++;
-	}
+          regcache_cooked_read_unsigned (regcache, argreg, &u);
+          store_unsigned_integer (readbuf + offset, len, byte_order, u);
+          valtype_len -= len;
+          offset += len;
+          argreg++;
+        }
     }
 
   if (writebuf)
@@ -907,15 +878,15 @@ rx_return_value (struct gdbarch *gdbarch,
       int offset = 0;
 
       while (valtype_len > 0)
-	{
-	  int len = std::min (valtype_len, (ULONGEST) 4);
+        {
+          int len = std::min (valtype_len, (ULONGEST) 4);
 
-	  u = extract_unsigned_integer (writebuf + offset, len, byte_order);
-	  regcache_cooked_write_unsigned (regcache, argreg, u);
-	  valtype_len -= len;
-	  offset += len;
-	  argreg++;
-	}
+          u = extract_unsigned_integer (writebuf + offset, len, byte_order);
+          regcache_cooked_write_unsigned (regcache, argreg, u);
+          valtype_len -= len;
+          offset += len;
+          argreg++;
+        }
     }
 
   return RETURN_VALUE_REGISTER_CONVENTION;
@@ -956,24 +927,21 @@ rx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   else
     elf_flags = 0;
 
-
   /* Try to find the architecture in the list of already defined
      architectures.  */
-  for (arches = gdbarch_list_lookup_by_info (arches, &info);
-       arches != NULL;
+  for (arches = gdbarch_list_lookup_by_info (arches, &info); arches != NULL;
        arches = gdbarch_list_lookup_by_info (arches->next, &info))
     {
-      rx_gdbarch_tdep *tdep
-	= gdbarch_tdep<rx_gdbarch_tdep> (arches->gdbarch);
+      rx_gdbarch_tdep *tdep = gdbarch_tdep<rx_gdbarch_tdep> (arches->gdbarch);
 
       if (tdep->elf_flags != elf_flags)
-	continue;
+        continue;
 
       return arches->gdbarch;
     }
 
   if (tdesc == NULL)
-      tdesc = tdesc_rx;
+    tdesc = tdesc_rx;
 
   /* Check any target description for validity.  */
   if (tdesc_has_registers (tdesc))
@@ -984,18 +952,18 @@ rx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       feature = tdesc_find_feature (tdesc, "org.gnu.gdb.rx.core");
 
       if (feature != NULL)
-	{
-	  tdesc_data = tdesc_data_alloc ();
-	  for (int i = 0; i < RX_NUM_REGS; i++)
-	    valid_p &= tdesc_numbered_register (feature, tdesc_data.get (), i,
-						rx_register_names[i]);
-	}
+        {
+          tdesc_data = tdesc_data_alloc ();
+          for (int i = 0; i < RX_NUM_REGS; i++)
+            valid_p &= tdesc_numbered_register (feature, tdesc_data.get (), i,
+                                                rx_register_names[i]);
+        }
 
       if (!valid_p)
-	return NULL;
+        return NULL;
     }
 
-  gdb_assert(tdesc_data != NULL);
+  gdb_assert (tdesc_data != NULL);
 
   rx_gdbarch_tdep *tdep = new rx_gdbarch_tdep;
   gdbarch = gdbarch_alloc (&info, tdep);

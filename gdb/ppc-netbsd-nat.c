@@ -55,12 +55,10 @@ getregs_supplies (struct gdbarch *gdbarch, int regnum)
   ppc_gdbarch_tdep *tdep = gdbarch_tdep<ppc_gdbarch_tdep> (gdbarch);
 
   return ((regnum >= tdep->ppc_gp0_regnum
-	   && regnum < tdep->ppc_gp0_regnum + ppc_num_gprs)
-	  || regnum == tdep->ppc_lr_regnum
-	  || regnum == tdep->ppc_cr_regnum
-	  || regnum == tdep->ppc_xer_regnum
-	  || regnum == tdep->ppc_ctr_regnum
-	  || regnum == gdbarch_pc_regnum (gdbarch));
+           && regnum < tdep->ppc_gp0_regnum + ppc_num_gprs)
+          || regnum == tdep->ppc_lr_regnum || regnum == tdep->ppc_cr_regnum
+          || regnum == tdep->ppc_xer_regnum || regnum == tdep->ppc_ctr_regnum
+          || regnum == gdbarch_pc_regnum (gdbarch));
 }
 
 /* Like above, but for PT_GETFPREGS.  */
@@ -83,8 +81,8 @@ getfpregs_supplies (struct gdbarch *gdbarch, int regnum)
   gdb_assert (ppc_floating_point_unit_p (gdbarch));
 
   return ((regnum >= tdep->ppc_fp0_regnum
-	   && regnum < tdep->ppc_fp0_regnum + ppc_num_fprs)
-	  || regnum == tdep->ppc_fpscr_regnum);
+           && regnum < tdep->ppc_fp0_regnum + ppc_num_fprs)
+          || regnum == tdep->ppc_fpscr_regnum);
 }
 
 void
@@ -99,10 +97,10 @@ ppc_nbsd_nat_target::fetch_registers (struct regcache *regcache, int regnum)
       struct reg regs;
 
       if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
-	perror_with_name (_("Couldn't get registers"));
+        perror_with_name (_ ("Couldn't get registers"));
 
-      ppc_supply_gregset (&ppcnbsd_gregset, regcache,
-			  regnum, &regs, sizeof regs);
+      ppc_supply_gregset (&ppcnbsd_gregset, regcache, regnum, &regs,
+                          sizeof regs);
     }
 
   if (regnum == -1 || getfpregs_supplies (gdbarch, regnum))
@@ -110,10 +108,10 @@ ppc_nbsd_nat_target::fetch_registers (struct regcache *regcache, int regnum)
       struct fpreg fpregs;
 
       if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, lwp) == -1)
-	perror_with_name (_("Couldn't get FP registers"));
+        perror_with_name (_ ("Couldn't get FP registers"));
 
-      ppc_supply_fpregset (&ppcnbsd_fpregset, regcache,
-			   regnum, &fpregs, sizeof fpregs);
+      ppc_supply_fpregset (&ppcnbsd_fpregset, regcache, regnum, &fpregs,
+                           sizeof fpregs);
     }
 }
 
@@ -129,13 +127,13 @@ ppc_nbsd_nat_target::store_registers (struct regcache *regcache, int regnum)
       struct reg regs;
 
       if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
-	perror_with_name (_("Couldn't get registers"));
+        perror_with_name (_ ("Couldn't get registers"));
 
-      ppc_collect_gregset (&ppcnbsd_gregset, regcache,
-			   regnum, &regs, sizeof regs);
+      ppc_collect_gregset (&ppcnbsd_gregset, regcache, regnum, &regs,
+                           sizeof regs);
 
       if (ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
-	perror_with_name (_("Couldn't write registers"));
+        perror_with_name (_ ("Couldn't write registers"));
     }
 
   if (regnum == -1 || getfpregs_supplies (gdbarch, regnum))
@@ -143,13 +141,13 @@ ppc_nbsd_nat_target::store_registers (struct regcache *regcache, int regnum)
       struct fpreg fpregs;
 
       if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, lwp) == -1)
-	perror_with_name (_("Couldn't get FP registers"));
+        perror_with_name (_ ("Couldn't get FP registers"));
 
-      ppc_collect_fpregset (&ppcnbsd_fpregset, regcache,
-			    regnum, &fpregs, sizeof fpregs);
+      ppc_collect_fpregset (&ppcnbsd_fpregset, regcache, regnum, &fpregs,
+                            sizeof fpregs);
 
       if (ptrace (PT_SETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, lwp) == -1)
-	perror_with_name (_("Couldn't set FP registers"));
+        perror_with_name (_ ("Couldn't set FP registers"));
     }
 }
 
@@ -166,18 +164,18 @@ ppcnbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
   if (pcb->pcb_sp == 0)
     return 0;
 
-  read_memory (pcb->pcb_sp, (gdb_byte *)&sf, sizeof sf);
+  read_memory (pcb->pcb_sp, (gdb_byte *) &sf, sizeof sf);
   regcache->raw_supply (tdep->ppc_cr_regnum, &sf.cr);
   regcache->raw_supply (tdep->ppc_gp0_regnum + 2, &sf.fixreg2);
-  for (i = 0 ; i < 19 ; i++)
+  for (i = 0; i < 19; i++)
     regcache->raw_supply (tdep->ppc_gp0_regnum + 13 + i, &sf.fixreg[i]);
 
-  read_memory(sf.sp, (gdb_byte *)&cf, sizeof(cf));
+  read_memory (sf.sp, (gdb_byte *) &cf, sizeof (cf));
   regcache->raw_supply (tdep->ppc_gp0_regnum + 30, &cf.r30);
   regcache->raw_supply (tdep->ppc_gp0_regnum + 31, &cf.r31);
   regcache->raw_supply (tdep->ppc_gp0_regnum + 1, &cf.sp);
 
-  read_memory(cf.sp, (gdb_byte *)&cf, sizeof(cf));
+  read_memory (cf.sp, (gdb_byte *) &cf, sizeof (cf));
   regcache->raw_supply (tdep->ppc_lr_regnum, &cf.lr);
   regcache->raw_supply (gdbarch_pc_regnum (gdbarch), &cf.lr);
 

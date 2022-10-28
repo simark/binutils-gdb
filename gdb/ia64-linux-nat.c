@@ -52,11 +52,10 @@ public:
   void store_registers (struct regcache *, int) override;
 
   enum target_xfer_status xfer_partial (enum target_object object,
-					const char *annex,
-					gdb_byte *readbuf,
-					const gdb_byte *writebuf,
-					ULONGEST offset, ULONGEST len,
-					ULONGEST *xfered_len) override;
+                                        const char *annex, gdb_byte *readbuf,
+                                        const gdb_byte *writebuf,
+                                        ULONGEST offset, ULONGEST len,
+                                        ULONGEST *xfered_len) override;
 
   /* Override watchpoint routines.  */
 
@@ -75,9 +74,9 @@ public:
   bool stopped_by_watchpoint () override;
   bool stopped_data_address (CORE_ADDR *) override;
   int insert_watchpoint (CORE_ADDR, int, enum target_hw_bp_type,
-			 struct expression *) override;
+                         struct expression *) override;
   int remove_watchpoint (CORE_ADDR, int, enum target_hw_bp_type,
-			 struct expression *) override;
+                         struct expression *) override;
   /* Override linux_nat_target low methods.  */
   void low_new_thread (struct lwp_info *lp) override;
   bool low_status_is_event (int status) override;
@@ -92,258 +91,609 @@ static ia64_linux_nat_target the_ia64_linux_nat_target;
    Some sort of lookup table is needed because the offsets associated
    with the registers are all over the board.  */
 
-static int u_offsets[] =
-  {
-    /* general registers */
-    -1,		/* gr0 not available; i.e, it's always zero.  */
-    PT_R1,
-    PT_R2,
-    PT_R3,
-    PT_R4,
-    PT_R5,
-    PT_R6,
-    PT_R7,
-    PT_R8,
-    PT_R9,
-    PT_R10,
-    PT_R11,
-    PT_R12,
-    PT_R13,
-    PT_R14,
-    PT_R15,
-    PT_R16,
-    PT_R17,
-    PT_R18,
-    PT_R19,
-    PT_R20,
-    PT_R21,
-    PT_R22,
-    PT_R23,
-    PT_R24,
-    PT_R25,
-    PT_R26,
-    PT_R27,
-    PT_R28,
-    PT_R29,
-    PT_R30,
-    PT_R31,
-    /* gr32 through gr127 not directly available via the ptrace interface.  */
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    /* Floating point registers */
-    -1, -1,	/* f0 and f1 not available (f0 is +0.0 and f1 is +1.0).  */
-    PT_F2,
-    PT_F3,
-    PT_F4,
-    PT_F5,
-    PT_F6,
-    PT_F7,
-    PT_F8,
-    PT_F9,
-    PT_F10,
-    PT_F11,
-    PT_F12,
-    PT_F13,
-    PT_F14,
-    PT_F15,
-    PT_F16,
-    PT_F17,
-    PT_F18,
-    PT_F19,
-    PT_F20,
-    PT_F21,
-    PT_F22,
-    PT_F23,
-    PT_F24,
-    PT_F25,
-    PT_F26,
-    PT_F27,
-    PT_F28,
-    PT_F29,
-    PT_F30,
-    PT_F31,
-    PT_F32,
-    PT_F33,
-    PT_F34,
-    PT_F35,
-    PT_F36,
-    PT_F37,
-    PT_F38,
-    PT_F39,
-    PT_F40,
-    PT_F41,
-    PT_F42,
-    PT_F43,
-    PT_F44,
-    PT_F45,
-    PT_F46,
-    PT_F47,
-    PT_F48,
-    PT_F49,
-    PT_F50,
-    PT_F51,
-    PT_F52,
-    PT_F53,
-    PT_F54,
-    PT_F55,
-    PT_F56,
-    PT_F57,
-    PT_F58,
-    PT_F59,
-    PT_F60,
-    PT_F61,
-    PT_F62,
-    PT_F63,
-    PT_F64,
-    PT_F65,
-    PT_F66,
-    PT_F67,
-    PT_F68,
-    PT_F69,
-    PT_F70,
-    PT_F71,
-    PT_F72,
-    PT_F73,
-    PT_F74,
-    PT_F75,
-    PT_F76,
-    PT_F77,
-    PT_F78,
-    PT_F79,
-    PT_F80,
-    PT_F81,
-    PT_F82,
-    PT_F83,
-    PT_F84,
-    PT_F85,
-    PT_F86,
-    PT_F87,
-    PT_F88,
-    PT_F89,
-    PT_F90,
-    PT_F91,
-    PT_F92,
-    PT_F93,
-    PT_F94,
-    PT_F95,
-    PT_F96,
-    PT_F97,
-    PT_F98,
-    PT_F99,
-    PT_F100,
-    PT_F101,
-    PT_F102,
-    PT_F103,
-    PT_F104,
-    PT_F105,
-    PT_F106,
-    PT_F107,
-    PT_F108,
-    PT_F109,
-    PT_F110,
-    PT_F111,
-    PT_F112,
-    PT_F113,
-    PT_F114,
-    PT_F115,
-    PT_F116,
-    PT_F117,
-    PT_F118,
-    PT_F119,
-    PT_F120,
-    PT_F121,
-    PT_F122,
-    PT_F123,
-    PT_F124,
-    PT_F125,
-    PT_F126,
-    PT_F127,
-    /* Predicate registers - we don't fetch these individually.  */
-    -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1,
-    /* branch registers */
-    PT_B0,
-    PT_B1,
-    PT_B2,
-    PT_B3,
-    PT_B4,
-    PT_B5,
-    PT_B6,
-    PT_B7,
-    /* Virtual frame pointer and virtual return address pointer.  */
-    -1, -1,
-    /* other registers */
-    PT_PR,
-    PT_CR_IIP,	/* ip */
-    PT_CR_IPSR, /* psr */
-    PT_CFM,	/* cfm */
-    /* kernel registers not visible via ptrace interface (?)  */
-    -1, -1, -1, -1, -1, -1, -1, -1,
-    /* hole */
-    -1, -1, -1, -1, -1, -1, -1, -1,
-    PT_AR_RSC,
-    PT_AR_BSP,
-    PT_AR_BSPSTORE,
-    PT_AR_RNAT,
-    -1,
-    -1,		/* Not available: FCR, IA32 floating control register.  */
-    -1, -1,
-    -1,		/* Not available: EFLAG */
-    -1,		/* Not available: CSD */
-    -1,		/* Not available: SSD */
-    -1,		/* Not available: CFLG */
-    -1,		/* Not available: FSR */
-    -1,		/* Not available: FIR */
-    -1,		/* Not available: FDR */
-    -1,
-    PT_AR_CCV,
-    -1, -1, -1,
-    PT_AR_UNAT,
-    -1, -1, -1,
-    PT_AR_FPSR,
-    -1, -1, -1,
-    -1,		/* Not available: ITC */
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    PT_AR_PFS,
-    PT_AR_LC,
-    PT_AR_EC,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1,
-    /* nat bits - not fetched directly; instead we obtain these bits from
+static int u_offsets[] = {
+  /* general registers */
+  -1, /* gr0 not available; i.e, it's always zero.  */
+  PT_R1,
+  PT_R2,
+  PT_R3,
+  PT_R4,
+  PT_R5,
+  PT_R6,
+  PT_R7,
+  PT_R8,
+  PT_R9,
+  PT_R10,
+  PT_R11,
+  PT_R12,
+  PT_R13,
+  PT_R14,
+  PT_R15,
+  PT_R16,
+  PT_R17,
+  PT_R18,
+  PT_R19,
+  PT_R20,
+  PT_R21,
+  PT_R22,
+  PT_R23,
+  PT_R24,
+  PT_R25,
+  PT_R26,
+  PT_R27,
+  PT_R28,
+  PT_R29,
+  PT_R30,
+  PT_R31,
+  /* gr32 through gr127 not directly available via the ptrace interface.  */
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  /* Floating point registers */
+  -1,
+  -1, /* f0 and f1 not available (f0 is +0.0 and f1 is +1.0).  */
+  PT_F2,
+  PT_F3,
+  PT_F4,
+  PT_F5,
+  PT_F6,
+  PT_F7,
+  PT_F8,
+  PT_F9,
+  PT_F10,
+  PT_F11,
+  PT_F12,
+  PT_F13,
+  PT_F14,
+  PT_F15,
+  PT_F16,
+  PT_F17,
+  PT_F18,
+  PT_F19,
+  PT_F20,
+  PT_F21,
+  PT_F22,
+  PT_F23,
+  PT_F24,
+  PT_F25,
+  PT_F26,
+  PT_F27,
+  PT_F28,
+  PT_F29,
+  PT_F30,
+  PT_F31,
+  PT_F32,
+  PT_F33,
+  PT_F34,
+  PT_F35,
+  PT_F36,
+  PT_F37,
+  PT_F38,
+  PT_F39,
+  PT_F40,
+  PT_F41,
+  PT_F42,
+  PT_F43,
+  PT_F44,
+  PT_F45,
+  PT_F46,
+  PT_F47,
+  PT_F48,
+  PT_F49,
+  PT_F50,
+  PT_F51,
+  PT_F52,
+  PT_F53,
+  PT_F54,
+  PT_F55,
+  PT_F56,
+  PT_F57,
+  PT_F58,
+  PT_F59,
+  PT_F60,
+  PT_F61,
+  PT_F62,
+  PT_F63,
+  PT_F64,
+  PT_F65,
+  PT_F66,
+  PT_F67,
+  PT_F68,
+  PT_F69,
+  PT_F70,
+  PT_F71,
+  PT_F72,
+  PT_F73,
+  PT_F74,
+  PT_F75,
+  PT_F76,
+  PT_F77,
+  PT_F78,
+  PT_F79,
+  PT_F80,
+  PT_F81,
+  PT_F82,
+  PT_F83,
+  PT_F84,
+  PT_F85,
+  PT_F86,
+  PT_F87,
+  PT_F88,
+  PT_F89,
+  PT_F90,
+  PT_F91,
+  PT_F92,
+  PT_F93,
+  PT_F94,
+  PT_F95,
+  PT_F96,
+  PT_F97,
+  PT_F98,
+  PT_F99,
+  PT_F100,
+  PT_F101,
+  PT_F102,
+  PT_F103,
+  PT_F104,
+  PT_F105,
+  PT_F106,
+  PT_F107,
+  PT_F108,
+  PT_F109,
+  PT_F110,
+  PT_F111,
+  PT_F112,
+  PT_F113,
+  PT_F114,
+  PT_F115,
+  PT_F116,
+  PT_F117,
+  PT_F118,
+  PT_F119,
+  PT_F120,
+  PT_F121,
+  PT_F122,
+  PT_F123,
+  PT_F124,
+  PT_F125,
+  PT_F126,
+  PT_F127,
+  /* Predicate registers - we don't fetch these individually.  */
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  /* branch registers */
+  PT_B0,
+  PT_B1,
+  PT_B2,
+  PT_B3,
+  PT_B4,
+  PT_B5,
+  PT_B6,
+  PT_B7,
+  /* Virtual frame pointer and virtual return address pointer.  */
+  -1,
+  -1,
+  /* other registers */
+  PT_PR,
+  PT_CR_IIP,  /* ip */
+  PT_CR_IPSR, /* psr */
+  PT_CFM,     /* cfm */
+  /* kernel registers not visible via ptrace interface (?)  */
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  /* hole */
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  PT_AR_RSC,
+  PT_AR_BSP,
+  PT_AR_BSPSTORE,
+  PT_AR_RNAT,
+  -1,
+  -1, /* Not available: FCR, IA32 floating control register.  */
+  -1,
+  -1,
+  -1, /* Not available: EFLAG */
+  -1, /* Not available: CSD */
+  -1, /* Not available: SSD */
+  -1, /* Not available: CFLG */
+  -1, /* Not available: FSR */
+  -1, /* Not available: FIR */
+  -1, /* Not available: FDR */
+  -1,
+  PT_AR_CCV,
+  -1,
+  -1,
+  -1,
+  PT_AR_UNAT,
+  -1,
+  -1,
+  -1,
+  PT_AR_FPSR,
+  -1,
+  -1,
+  -1,
+  -1, /* Not available: ITC */
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  PT_AR_PFS,
+  PT_AR_LC,
+  PT_AR_EC,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  /* nat bits - not fetched directly; instead we obtain these bits from
        either rnat or unat or from memory.  */
-    -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1,
-  };
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+};
 
 static CORE_ADDR
 ia64_register_addr (struct gdbarch *gdbarch, int regno)
@@ -351,7 +701,7 @@ ia64_register_addr (struct gdbarch *gdbarch, int regno)
   CORE_ADDR addr;
 
   if (regno < 0 || regno >= gdbarch_num_regs (gdbarch))
-    error (_("Invalid register number %d."), regno);
+    error (_ ("Invalid register number %d."), regno);
 
   if (u_offsets[regno] == -1)
     addr = 0;
@@ -364,9 +714,8 @@ ia64_register_addr (struct gdbarch *gdbarch, int regno)
 static int
 ia64_cannot_fetch_register (struct gdbarch *gdbarch, int regno)
 {
-  return regno < 0
-	 || regno >= gdbarch_num_regs (gdbarch)
-	 || u_offsets[regno] == -1;
+  return regno < 0 || regno >= gdbarch_num_regs (gdbarch)
+         || u_offsets[regno] == -1;
 }
 
 static int
@@ -401,10 +750,8 @@ ia64_cannot_store_register (struct gdbarch *gdbarch, int regno)
      were previously read from the inferior process to be written
      back.)  */
 
-  return regno < 0
-	 || regno >= gdbarch_num_regs (gdbarch)
-	 || u_offsets[regno] == -1
-	 || regno == IA64_BSPSTORE_REGNUM;
+  return regno < 0 || regno >= gdbarch_num_regs (gdbarch)
+         || u_offsets[regno] == -1 || regno == IA64_BSPSTORE_REGNUM;
 }
 
 void
@@ -449,9 +796,9 @@ fill_gregset (const struct regcache *regcache, gregset_t *gregsetp, int regno)
   int regi;
   greg_t *regp = (greg_t *) gregsetp;
 
-#define COPY_REG(_idx_,_regi_) \
+#define COPY_REG(_idx_, _regi_)         \
   if ((regno == -1) || regno == _regi_) \
-    regcache->raw_collect (_regi_, regp + _idx_)
+  regcache->raw_collect (_regi_, regp + _idx_)
 
   for (regi = IA64_GR0_REGNUM; regi <= IA64_GR31_REGNUM; regi++)
     {
@@ -492,8 +839,8 @@ supply_fpregset (struct regcache *regcache, const fpregset_t *fpregsetp)
   int regi;
   const char *from;
   const gdb_byte f_zero[16] = { 0 };
-  const gdb_byte f_one[16] =
-    { 0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0xff, 0, 0, 0, 0, 0, 0 };
+  const gdb_byte f_one[16]
+    = { 0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0xff, 0, 0, 0, 0, 0, 0 };
 
   /* Kernel generated cores have fr1==0 instead of 1.0.  Older GDBs
      did the same.  So ignore whatever might be recorded in fpregset_t
@@ -517,15 +864,15 @@ supply_fpregset (struct regcache *regcache, const fpregset_t *fpregsetp)
    them all.  */
 
 void
-fill_fpregset (const struct regcache *regcache,
-	       fpregset_t *fpregsetp, int regno)
+fill_fpregset (const struct regcache *regcache, fpregset_t *fpregsetp,
+               int regno)
 {
   int regi;
 
   for (regi = IA64_FR0_REGNUM; regi <= IA64_FR127_REGNUM; regi++)
     {
       if ((regno == -1) || (regno == regi))
-	regcache->raw_collect (regi, &((*fpregsetp)[regi - IA64_FR0_REGNUM]));
+        regcache->raw_collect (regi, &((*fpregsetp)[regi - IA64_FR0_REGNUM]));
     }
 }
 
@@ -541,7 +888,7 @@ ia64_linux_nat_target::enable_watchpoints_in_psr (ptid_t ptid)
   regcache_cooked_read_unsigned (regcache, IA64_PSR_REGNUM, &psr);
   if (!(psr & IA64_PSR_DB))
     {
-      psr |= IA64_PSR_DB;	/* Set the db bit - this enables hardware
+      psr |= IA64_PSR_DB; /* Set the db bit - this enables hardware
 				   watchpoints and breakpoints.  */
       regcache_cooked_write_unsigned (regcache, IA64_PSR_REGNUM, psr);
     }
@@ -563,7 +910,7 @@ store_debug_register (ptid_t ptid, int idx, long val)
 
 static void
 store_debug_register_pair (ptid_t ptid, int idx, long *dbr_addr,
-			   long *dbr_mask)
+                           long *dbr_mask)
 {
   if (dbr_addr)
     store_debug_register (ptid, 2 * idx, *dbr_addr);
@@ -586,8 +933,8 @@ is_power_of_2 (int val)
 
 int
 ia64_linux_nat_target::insert_watchpoint (CORE_ADDR addr, int len,
-					  enum target_hw_bp_type type,
-					  struct expression *cond)
+                                          enum target_hw_bp_type type,
+                                          struct expression *cond)
 {
   int idx;
   long dbr_addr, dbr_mask;
@@ -600,28 +947,28 @@ ia64_linux_nat_target::insert_watchpoint (CORE_ADDR addr, int len,
     {
       dbr_mask = debug_registers[idx * 2 + 1];
       if ((dbr_mask & (0x3UL << 62)) == 0)
-	{
-	  /* Exit loop if both r and w bits clear.  */
-	  break;
-	}
+        {
+          /* Exit loop if both r and w bits clear.  */
+          break;
+        }
     }
 
   if (idx == max_watchpoints)
     return -1;
 
   dbr_addr = (long) addr;
-  dbr_mask = (~(len - 1) & 0x00ffffffffffffffL);  /* construct mask to match */
-  dbr_mask |= 0x0800000000000000L;           /* Only match privilege level 3 */
+  dbr_mask = (~(len - 1) & 0x00ffffffffffffffL); /* construct mask to match */
+  dbr_mask |= 0x0800000000000000L; /* Only match privilege level 3 */
   switch (type)
     {
     case hw_write:
-      dbr_mask |= (1L << 62);			/* Set w bit */
+      dbr_mask |= (1L << 62); /* Set w bit */
       break;
     case hw_read:
-      dbr_mask |= (1L << 63);			/* Set r bit */
+      dbr_mask |= (1L << 63); /* Set r bit */
       break;
     case hw_access:
-      dbr_mask |= (3L << 62);			/* Set both r and w bits */
+      dbr_mask |= (3L << 62); /* Set both r and w bits */
       break;
     default:
       return -1;
@@ -641,8 +988,8 @@ ia64_linux_nat_target::insert_watchpoint (CORE_ADDR addr, int len,
 
 int
 ia64_linux_nat_target::remove_watchpoint (CORE_ADDR addr, int len,
-					  enum target_hw_bp_type type,
-					  struct expression *cond)
+                                          enum target_hw_bp_type type,
+                                          struct expression *cond)
 {
   int idx;
   long dbr_addr, dbr_mask;
@@ -656,17 +1003,17 @@ ia64_linux_nat_target::remove_watchpoint (CORE_ADDR addr, int len,
       dbr_addr = debug_registers[2 * idx];
       dbr_mask = debug_registers[2 * idx + 1];
       if ((dbr_mask & (0x3UL << 62)) && addr == (CORE_ADDR) dbr_addr)
-	{
-	  debug_registers[2 * idx] = 0;
-	  debug_registers[2 * idx + 1] = 0;
-	  dbr_addr = 0;
-	  dbr_mask = 0;
+        {
+          debug_registers[2 * idx] = 0;
+          debug_registers[2 * idx + 1] = 0;
+          dbr_addr = 0;
+          dbr_mask = 0;
 
-	  for (const lwp_info *lp : all_lwps ())
-	    store_debug_register_pair (lp->ptid, idx, &dbr_addr, &dbr_mask);
+          for (const lwp_info *lp : all_lwps ())
+            store_debug_register_pair (lp->ptid, idx, &dbr_addr, &dbr_mask);
 
-	  return 0;
-	}
+          return 0;
+        }
     }
   return -1;
 }
@@ -680,7 +1027,7 @@ ia64_linux_nat_target::low_new_thread (struct lwp_info *lp)
   for (i = 0; i < 8; i++)
     {
       if (debug_registers[i] != 0)
-	any = 1;
+        any = 1;
       store_debug_register (lp->ptid, i, debug_registers[i]);
     }
 
@@ -703,7 +1050,7 @@ ia64_linux_nat_target::stopped_data_address (CORE_ADDR *addr_p)
     return false;
 
   regcache_cooked_read_unsigned (regcache, IA64_PSR_REGNUM, &psr);
-  psr |= IA64_PSR_DD;	/* Set the dd bit - this will disable the watchpoint
+  psr |= IA64_PSR_DD; /* Set the dd bit - this will disable the watchpoint
 			   for the next instruction.  */
   regcache_cooked_write_unsigned (regcache, IA64_PSR_REGNUM, psr);
 
@@ -719,12 +1066,11 @@ ia64_linux_nat_target::stopped_by_watchpoint ()
 }
 
 int
-ia64_linux_nat_target::can_use_hw_breakpoint (enum bptype type,
-					      int cnt, int othertype)
+ia64_linux_nat_target::can_use_hw_breakpoint (enum bptype type, int cnt,
+                                              int othertype)
 {
   return 1;
 }
-
 
 /* Fetch register REGNUM from the inferior.  */
 
@@ -761,8 +1107,8 @@ ia64_linux_fetch_register (struct regcache *regcache, int regnum)
   /* fr1 cannot be fetched but is always one (1.0).  */
   if (regnum == IA64_FR1_REGNUM)
     {
-      const gdb_byte f_one[16] =
-	{ 0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0xff, 0, 0, 0, 0, 0, 0 };
+      const gdb_byte f_one[16]
+        = { 0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0xff, 0, 0, 0, 0, 0, 0 };
 
       gdb_assert (sizeof (f_one) == register_size (gdbarch, regnum));
       regcache->raw_supply (regnum, f_one);
@@ -788,11 +1134,11 @@ ia64_linux_fetch_register (struct regcache *regcache, int regnum)
   for (i = 0; i < size / sizeof (PTRACE_TYPE_RET); i++)
     {
       errno = 0;
-      buf[i] = ptrace (PT_READ_U, pid, (PTRACE_TYPE_ARG3)addr, 0);
+      buf[i] = ptrace (PT_READ_U, pid, (PTRACE_TYPE_ARG3) addr, 0);
       if (errno != 0)
-	error (_("Couldn't read register %s (#%d): %s."),
-	       gdbarch_register_name (gdbarch, regnum),
-	       regnum, safe_strerror (errno));
+        error (_ ("Couldn't read register %s (#%d): %s."),
+               gdbarch_register_name (gdbarch, regnum), regnum,
+               safe_strerror (errno));
 
       addr += sizeof (PTRACE_TYPE_RET);
     }
@@ -806,9 +1152,7 @@ void
 ia64_linux_nat_target::fetch_registers (struct regcache *regcache, int regnum)
 {
   if (regnum == -1)
-    for (regnum = 0;
-	 regnum < gdbarch_num_regs (regcache->arch ());
-	 regnum++)
+    for (regnum = 0; regnum < gdbarch_num_regs (regcache->arch ()); regnum++)
       ia64_linux_fetch_register (regcache, regnum);
   else
     ia64_linux_fetch_register (regcache, regnum);
@@ -843,11 +1187,11 @@ ia64_linux_store_register (const struct regcache *regcache, int regnum)
   for (i = 0; i < size / sizeof (PTRACE_TYPE_RET); i++)
     {
       errno = 0;
-      ptrace (PT_WRITE_U, pid, (PTRACE_TYPE_ARG3)addr, buf[i]);
+      ptrace (PT_WRITE_U, pid, (PTRACE_TYPE_ARG3) addr, buf[i]);
       if (errno != 0)
-	error (_("Couldn't write register %s (#%d): %s."),
-	       gdbarch_register_name (gdbarch, regnum),
-	       regnum, safe_strerror (errno));
+        error (_ ("Couldn't write register %s (#%d): %s."),
+               gdbarch_register_name (gdbarch, regnum), regnum,
+               safe_strerror (errno));
 
       addr += sizeof (PTRACE_TYPE_RET);
     }
@@ -860,9 +1204,7 @@ void
 ia64_linux_nat_target::store_registers (struct regcache *regcache, int regnum)
 {
   if (regnum == -1)
-    for (regnum = 0;
-	 regnum < gdbarch_num_regs (regcache->arch ());
-	 regnum++)
+    for (regnum = 0; regnum < gdbarch_num_regs (regcache->arch ()); regnum++)
       ia64_linux_store_register (regcache, regnum);
   else
     ia64_linux_store_register (regcache, regnum);
@@ -872,10 +1214,9 @@ ia64_linux_nat_target::store_registers (struct regcache *regcache, int regnum)
 
 enum target_xfer_status
 ia64_linux_nat_target::xfer_partial (enum target_object object,
-				     const char *annex,
-				     gdb_byte *readbuf, const gdb_byte *writebuf,
-				     ULONGEST offset, ULONGEST len,
-				     ULONGEST *xfered_len)
+                                     const char *annex, gdb_byte *readbuf,
+                                     const gdb_byte *writebuf, ULONGEST offset,
+                                     ULONGEST len, ULONGEST *xfered_len)
 {
   if (object == TARGET_OBJECT_UNWIND_TABLE && readbuf != NULL)
     {
@@ -885,21 +1226,21 @@ ia64_linux_nat_target::xfer_partial (enum target_object object,
 
       /* Probe for the table size once.  */
       if (gate_table_size == 0)
-	gate_table_size = syscall (__NR_getunwind, NULL, 0);
+        gate_table_size = syscall (__NR_getunwind, NULL, 0);
       if (gate_table_size < 0)
-	return TARGET_XFER_E_IO;
+        return TARGET_XFER_E_IO;
 
       if (offset >= gate_table_size)
-	return TARGET_XFER_EOF;
+        return TARGET_XFER_EOF;
 
       tmp_buf = (gdb_byte *) alloca (gate_table_size);
       res = syscall (__NR_getunwind, tmp_buf, gate_table_size);
       if (res < 0)
-	return TARGET_XFER_E_IO;
+        return TARGET_XFER_E_IO;
       gdb_assert (res == gate_table_size);
 
       if (offset + len > gate_table_size)
-	len = gate_table_size - offset;
+        len = gate_table_size - offset;
 
       memcpy (readbuf, tmp_buf + offset, len);
       *xfered_len = len;
@@ -907,7 +1248,7 @@ ia64_linux_nat_target::xfer_partial (enum target_object object,
     }
 
   return linux_nat_target::xfer_partial (object, annex, readbuf, writebuf,
-					 offset, len, xfered_len);
+                                         offset, len, xfered_len);
 }
 
 /* For break.b instruction ia64 CPU forgets the immediate value and generates
@@ -918,8 +1259,8 @@ ia64_linux_nat_target::xfer_partial (enum target_object object,
 bool
 ia64_linux_nat_target::low_status_is_event (int status)
 {
-  return WIFSTOPPED (status) && (WSTOPSIG (status) == SIGTRAP
-				 || WSTOPSIG (status) == SIGILL);
+  return WIFSTOPPED (status)
+         && (WSTOPSIG (status) == SIGTRAP || WSTOPSIG (status) == SIGILL);
 }
 
 void _initialize_ia64_linux_nat ();

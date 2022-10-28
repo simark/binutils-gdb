@@ -48,7 +48,7 @@ windows_get_absolute_argv0 (const char *argv0)
 
 int
 gdb_select (int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
-	    struct timeval *timeout)
+            struct timeval *timeout)
 {
   static HANDLE never_handle;
   HANDLE handles[MAXIMUM_WAIT_OBJECTS];
@@ -70,7 +70,7 @@ gdb_select (int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 	 WaitForMultipleObjects cannot be zero.  That's why we just
 	 use a regular Sleep here.  */
       if (timeout != NULL)
-	Sleep (timeout->tv_sec * 1000 + timeout->tv_usec / 1000);
+        Sleep (timeout->tv_sec * 1000 + timeout->tv_usec / 1000);
 
       return 0;
     }
@@ -89,53 +89,50 @@ gdb_select (int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
       gdb_assert (!writefds || !FD_ISSET (fd, writefds));
 
       if ((!readfds || !FD_ISSET (fd, readfds))
-	  && (!exceptfds || !FD_ISSET (fd, exceptfds)))
-	continue;
+          && (!exceptfds || !FD_ISSET (fd, exceptfds)))
+        continue;
 
       scb = serial_for_fd (fd);
       if (scb)
-	{
-	  serial_wait_handle (scb, &read, &except);
-	  scbs[num_scbs++] = scb;
-	}
+        {
+          serial_wait_handle (scb, &read, &except);
+          scbs[num_scbs++] = scb;
+        }
 
       if (read == NULL)
-	read = (HANDLE) _get_osfhandle (fd);
+        read = (HANDLE) _get_osfhandle (fd);
       if (except == NULL)
-	{
-	  if (!never_handle)
-	    never_handle = CreateEvent (0, FALSE, FALSE, 0);
+        {
+          if (!never_handle)
+            never_handle = CreateEvent (0, FALSE, FALSE, 0);
 
-	  except = never_handle;
-	}
+          except = never_handle;
+        }
 
       if (readfds && FD_ISSET (fd, readfds))
-	{
-	  gdb_assert (num_handles < MAXIMUM_WAIT_OBJECTS);
-	  handles[num_handles++] = read;
-	}
+        {
+          gdb_assert (num_handles < MAXIMUM_WAIT_OBJECTS);
+          handles[num_handles++] = read;
+        }
 
       if (exceptfds && FD_ISSET (fd, exceptfds))
-	{
-	  gdb_assert (num_handles < MAXIMUM_WAIT_OBJECTS);
-	  handles[num_handles++] = except;
-	}
+        {
+          gdb_assert (num_handles < MAXIMUM_WAIT_OBJECTS);
+          handles[num_handles++] = except;
+        }
     }
 
   gdb_assert (num_handles <= MAXIMUM_WAIT_OBJECTS);
 
-  event = WaitForMultipleObjects (num_handles,
-				  handles,
-				  FALSE,
-				  timeout
-				  ? (timeout->tv_sec * 1000
-				     + timeout->tv_usec / 1000)
-				  : INFINITE);
+  event = WaitForMultipleObjects (num_handles, handles, FALSE,
+                                  timeout ? (timeout->tv_sec * 1000
+                                             + timeout->tv_usec / 1000)
+                                          : INFINITE);
   /* EVENT can only be a value in the WAIT_ABANDONED_0 range if the
      HANDLES included an abandoned mutex.  Since GDB doesn't use
      mutexes, that should never occur.  */
-  gdb_assert (!(WAIT_ABANDONED_0 <= event
-		&& event < WAIT_ABANDONED_0 + num_handles));
+  gdb_assert (
+    !(WAIT_ABANDONED_0 <= event && event < WAIT_ABANDONED_0 + num_handles));
   /* We no longer need the helper threads to check for activity.  */
   for (indx = 0; indx < num_scbs; ++indx)
     serial_done_wait_handle (scbs[indx]);
@@ -151,30 +148,30 @@ gdb_select (int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
       HANDLE fd_h;
 
       if ((!readfds || !FD_ISSET (fd, readfds))
-	  && (!exceptfds || !FD_ISSET (fd, exceptfds)))
-	continue;
+          && (!exceptfds || !FD_ISSET (fd, exceptfds)))
+        continue;
 
       if (readfds && FD_ISSET (fd, readfds))
-	{
-	  fd_h = handles[indx++];
-	  /* This handle might be ready, even though it wasn't the handle
+        {
+          fd_h = handles[indx++];
+          /* This handle might be ready, even though it wasn't the handle
 	     returned by WaitForMultipleObjects.  */
-	  if (fd_h != h && WaitForSingleObject (fd_h, 0) != WAIT_OBJECT_0)
-	    FD_CLR (fd, readfds);
-	  else
-	    num_ready++;
-	}
+          if (fd_h != h && WaitForSingleObject (fd_h, 0) != WAIT_OBJECT_0)
+            FD_CLR (fd, readfds);
+          else
+            num_ready++;
+        }
 
       if (exceptfds && FD_ISSET (fd, exceptfds))
-	{
-	  fd_h = handles[indx++];
-	  /* This handle might be ready, even though it wasn't the handle
+        {
+          fd_h = handles[indx++];
+          /* This handle might be ready, even though it wasn't the handle
 	     returned by WaitForMultipleObjects.  */
-	  if (fd_h != h && WaitForSingleObject (fd_h, 0) != WAIT_OBJECT_0)
-	    FD_CLR (fd, exceptfds);
-	  else
-	    num_ready++;
-	}
+          if (fd_h != h && WaitForSingleObject (fd_h, 0) != WAIT_OBJECT_0)
+            FD_CLR (fd, exceptfds);
+          else
+            num_ready++;
+        }
     }
 
   return num_ready;
@@ -212,7 +209,7 @@ static int mingw_console_initialized;
 static HANDLE hstdout = INVALID_HANDLE_VALUE;
 
 /* Text attribute to use for normal text (the "none" pseudo-color).  */
-static SHORT  norm_attr;
+static SHORT norm_attr;
 
 /* The most recently applied style.  */
 static ui_file_style last_style;
@@ -225,19 +222,19 @@ gdb_console_fputs (const char *linebuf, FILE *fstream)
 {
   if (!mingw_console_initialized)
     {
-      hstdout = (HANDLE)_get_osfhandle (fileno (fstream));
+      hstdout = (HANDLE) _get_osfhandle (fileno (fstream));
       DWORD cmode;
       CONSOLE_SCREEN_BUFFER_INFO csbi;
 
       if (hstdout != INVALID_HANDLE_VALUE
-	  && GetConsoleMode (hstdout, &cmode) != 0
-	  && GetConsoleScreenBufferInfo (hstdout, &csbi))
-	{
-	  norm_attr = csbi.wAttributes;
-	  mingw_console_initialized = 1;
-	}
+          && GetConsoleMode (hstdout, &cmode) != 0
+          && GetConsoleScreenBufferInfo (hstdout, &csbi))
+        {
+          norm_attr = csbi.wAttributes;
+          mingw_console_initialized = 1;
+        }
       else if (hstdout != INVALID_HANDLE_VALUE)
-	mingw_console_initialized = -1; /* valid, but not a console device */
+        mingw_console_initialized = -1; /* valid, but not a console device */
     }
   /* If our stdout is not a console device, let the default 'fputs'
      handle the task. */
@@ -246,23 +243,23 @@ gdb_console_fputs (const char *linebuf, FILE *fstream)
 
   /* Mapping between 8 ANSI colors and Windows console attributes.  */
   static int fg_color[] = {
-    0,					/* black */
-    FOREGROUND_RED,			/* red */
-    FOREGROUND_GREEN,			/* green */
-    FOREGROUND_GREEN | FOREGROUND_RED,	/* yellow */
-    FOREGROUND_BLUE,			/* blue */
-    FOREGROUND_BLUE | FOREGROUND_RED,	/* magenta */
-    FOREGROUND_BLUE | FOREGROUND_GREEN, /* cyan */
+    0,                                                  /* black */
+    FOREGROUND_RED,                                     /* red */
+    FOREGROUND_GREEN,                                   /* green */
+    FOREGROUND_GREEN | FOREGROUND_RED,                  /* yellow */
+    FOREGROUND_BLUE,                                    /* blue */
+    FOREGROUND_BLUE | FOREGROUND_RED,                   /* magenta */
+    FOREGROUND_BLUE | FOREGROUND_GREEN,                 /* cyan */
     FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE /* gray */
   };
   static int bg_color[] = {
-    0,					/* black */
-    BACKGROUND_RED,			/* red */
-    BACKGROUND_GREEN,			/* green */
-    BACKGROUND_GREEN | BACKGROUND_RED,	/* yellow */
-    BACKGROUND_BLUE,			/* blue */
-    BACKGROUND_BLUE | BACKGROUND_RED,	/* magenta */
-    BACKGROUND_BLUE | BACKGROUND_GREEN, /* cyan */
+    0,                                                  /* black */
+    BACKGROUND_RED,                                     /* red */
+    BACKGROUND_GREEN,                                   /* green */
+    BACKGROUND_GREEN | BACKGROUND_RED,                  /* yellow */
+    BACKGROUND_BLUE,                                    /* blue */
+    BACKGROUND_BLUE | BACKGROUND_RED,                   /* magenta */
+    BACKGROUND_BLUE | BACKGROUND_GREEN,                 /* cyan */
     BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE /* gray */
   };
 
@@ -270,102 +267,102 @@ gdb_console_fputs (const char *linebuf, FILE *fstream)
   unsigned char c;
   size_t n_read;
 
-  for ( ; (c = *linebuf) != 0; linebuf += n_read)
+  for (; (c = *linebuf) != 0; linebuf += n_read)
     {
       if (c == '\033')
-	{
-	  fflush (fstream);
-	  bool parsed = style.parse (linebuf, &n_read);
-	  if (n_read <= 0)	/* should never happen */
-	    n_read = 1;
-	  if (!parsed)
-	    {
-	      /* This means we silently swallow SGR sequences we
+        {
+          fflush (fstream);
+          bool parsed = style.parse (linebuf, &n_read);
+          if (n_read <= 0) /* should never happen */
+            n_read = 1;
+          if (!parsed)
+            {
+              /* This means we silently swallow SGR sequences we
 		 cannot parse.  */
-	      continue;
-	    }
-	  /* Colors.  */
-	  const ui_file_style::color &fg = style.get_foreground ();
-	  const ui_file_style::color &bg = style.get_background ();
-	  int fgcolor, bgcolor, bright, inverse;
-	  if (fg.is_none ())
-	    fgcolor = norm_attr & 15;
-	  else if (fg.is_basic ())
-	    fgcolor = fg_color[fg.get_value () & 15];
-	  else
-	    fgcolor = rgb_to_16colors (fg);
-	  if (bg.is_none ())
-	    bgcolor = norm_attr & (15 << 4);
-	  else if (bg.is_basic ())
-	    bgcolor = bg_color[bg.get_value () & 15];
-	  else
-	    bgcolor = rgb_to_16colors (bg) << 4;
+              continue;
+            }
+          /* Colors.  */
+          const ui_file_style::color &fg = style.get_foreground ();
+          const ui_file_style::color &bg = style.get_background ();
+          int fgcolor, bgcolor, bright, inverse;
+          if (fg.is_none ())
+            fgcolor = norm_attr & 15;
+          else if (fg.is_basic ())
+            fgcolor = fg_color[fg.get_value () & 15];
+          else
+            fgcolor = rgb_to_16colors (fg);
+          if (bg.is_none ())
+            bgcolor = norm_attr & (15 << 4);
+          else if (bg.is_basic ())
+            bgcolor = bg_color[bg.get_value () & 15];
+          else
+            bgcolor = rgb_to_16colors (bg) << 4;
 
-	  /* Intensity.  */
-	  switch (style.get_intensity ())
-	    {
-	    case ui_file_style::NORMAL:
-	    case ui_file_style::DIM:
-	      bright = 0;
-	      break;
-	    case ui_file_style::BOLD:
-	      bright = 1;
-	      break;
-	    default:
-	      gdb_assert_not_reached ("invalid intensity");
-	    }
+          /* Intensity.  */
+          switch (style.get_intensity ())
+            {
+            case ui_file_style::NORMAL:
+            case ui_file_style::DIM:
+              bright = 0;
+              break;
+            case ui_file_style::BOLD:
+              bright = 1;
+              break;
+            default:
+              gdb_assert_not_reached ("invalid intensity");
+            }
 
-	  /* Inverse video.  */
-	  if (style.is_reverse ())
-	    inverse = 1;
-	  else
-	    inverse = 0;
+          /* Inverse video.  */
+          if (style.is_reverse ())
+            inverse = 1;
+          else
+            inverse = 0;
 
-	  /* Construct the attribute.  */
-	  if (inverse)
-	    {
-	      int t = fgcolor;
-	      fgcolor = (bgcolor >> 4);
-	      bgcolor = (t << 4);
-	    }
-	  if (bright)
-	    fgcolor |= FOREGROUND_INTENSITY;
+          /* Construct the attribute.  */
+          if (inverse)
+            {
+              int t = fgcolor;
+              fgcolor = (bgcolor >> 4);
+              bgcolor = (t << 4);
+            }
+          if (bright)
+            fgcolor |= FOREGROUND_INTENSITY;
 
-	  SHORT attr = (bgcolor & (15 << 4)) | (fgcolor & 15);
+          SHORT attr = (bgcolor & (15 << 4)) | (fgcolor & 15);
 
-	  /* Apply the attribute.  */
-	  SetConsoleTextAttribute (hstdout, attr);
-	}
+          /* Apply the attribute.  */
+          SetConsoleTextAttribute (hstdout, attr);
+        }
       else
-	{
-	  /* When we are about to write newline, we need to clear to
+        {
+          /* When we are about to write newline, we need to clear to
 	     EOL with the normal attribute, to avoid spilling the
 	     colors to the next screen line.  We assume here that no
 	     non-default attribute extends beyond the newline.  */
-	  if (c == '\n')
-	    {
-	      DWORD nchars;
-	      COORD start_pos;
-	      DWORD written;
-	      CONSOLE_SCREEN_BUFFER_INFO csbi;
+          if (c == '\n')
+            {
+              DWORD nchars;
+              COORD start_pos;
+              DWORD written;
+              CONSOLE_SCREEN_BUFFER_INFO csbi;
 
-	      fflush (fstream);
-	      GetConsoleScreenBufferInfo (hstdout, &csbi);
+              fflush (fstream);
+              GetConsoleScreenBufferInfo (hstdout, &csbi);
 
-	      if (csbi.wAttributes != norm_attr)
-		{
-		  start_pos = csbi.dwCursorPosition;
-		  nchars = csbi.dwSize.X - start_pos.X;
+              if (csbi.wAttributes != norm_attr)
+                {
+                  start_pos = csbi.dwCursorPosition;
+                  nchars = csbi.dwSize.X - start_pos.X;
 
-		  FillConsoleOutputAttribute (hstdout, norm_attr, nchars,
-					      start_pos, &written);
-		  FillConsoleOutputCharacter (hstdout, ' ', nchars,
-					      start_pos, &written);
-		}
-	    }
-	  fputc (c, fstream);
-	  n_read = 1;
-	}
+                  FillConsoleOutputAttribute (hstdout, norm_attr, nchars,
+                                              start_pos, &written);
+                  FillConsoleOutputCharacter (hstdout, ' ', nchars, start_pos,
+                                              &written);
+                }
+            }
+          fputc (c, fstream);
+          n_read = 1;
+        }
     }
 
   last_style = style;

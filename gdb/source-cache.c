@@ -56,21 +56,19 @@ static bool use_gnu_source_highlight;
 /* The "maint show gnu-source-highlight enabled" command. */
 
 static void
-show_use_gnu_source_highlight_enabled  (struct ui_file *file, int from_tty,
-					struct cmd_list_element *c,
-					const char *value)
+show_use_gnu_source_highlight_enabled (struct ui_file *file, int from_tty,
+                                       struct cmd_list_element *c,
+                                       const char *value)
 {
-  gdb_printf (file,
-	      _("Use of GNU Source Highlight library is \"%s\".\n"),
-	      value);
+  gdb_printf (file, _ ("Use of GNU Source Highlight library is \"%s\".\n"),
+              value);
 }
 
 /* The "maint set gnu-source-highlight enabled" command.  */
 
 static void
-set_use_gnu_source_highlight_enabled (const char *ignore_args,
-				      int from_tty,
-				      struct cmd_list_element *c)
+set_use_gnu_source_highlight_enabled (const char *ignore_args, int from_tty,
+                                      struct cmd_list_element *c)
 {
 #ifndef HAVE_SOURCE_HIGHLIGHT
   /* If the library is not available and the user tried to enable use of
@@ -78,7 +76,7 @@ set_use_gnu_source_highlight_enabled (const char *ignore_args,
   if (use_gnu_source_highlight)
     {
       use_gnu_source_highlight = false;
-      error (_("the GNU Source Highlight library is not available"));
+      error (_ ("the GNU Source Highlight library is not available"));
     }
 #else
   /* We (might) have just changed how we style source code, discard any
@@ -91,7 +89,7 @@ set_use_gnu_source_highlight_enabled (const char *ignore_args,
 
 std::string
 source_cache::get_plain_source_lines (struct symtab *s,
-				      const std::string &fullname)
+                                      const std::string &fullname)
 {
   scoped_fd desc (open_source_file (s));
   if (desc.get () < 0)
@@ -114,12 +112,11 @@ source_cache::get_plain_source_lines (struct symtab *s,
     mtime = current_program_space->ebfd_mtime;
 
   if (mtime && mtime < st.st_mtime)
-    warning (_("Source file is more recent than executable."));
+    warning (_ ("Source file is more recent than executable."));
 
   std::vector<off_t> offsets;
   offsets.push_back (0);
-  for (size_t offset = lines.find ('\n');
-       offset != std::string::npos;
+  for (size_t offset = lines.find ('\n'); offset != std::string::npos;
        offset = lines.find ('\n', offset))
     {
       ++offset;
@@ -127,7 +124,7 @@ source_cache::get_plain_source_lines (struct symtab *s,
 	 seem simpler to just strip the newline in this function, but
 	 then "list" won't print the final newline.  */
       if (offset != lines.size ())
-	offsets.push_back (offset);
+        offsets.push_back (offset);
     }
 
   offsets.shrink_to_fit ();
@@ -202,19 +199,18 @@ source_cache::ensure (struct symtab *s)
   for (int i = 0; i < size; ++i)
     {
       if (m_source_map[i].fullname == fullname)
-	{
-	  /* This should always hold, because we create the file offsets
+        {
+          /* This should always hold, because we create the file offsets
 	     when reading the file.  */
-	  gdb_assert (m_offset_cache.find (fullname)
-		      != m_offset_cache.end ());
-	  /* Not strictly LRU, but at least ensure that the most
+          gdb_assert (m_offset_cache.find (fullname) != m_offset_cache.end ());
+          /* Not strictly LRU, but at least ensure that the most
 	     recently used entry is always the last candidate for
 	     deletion.  Note that this property is relied upon by at
 	     least one caller.  */
-	  if (i != size - 1)
-	    std::swap (m_source_map[i], m_source_map[size - 1]);
-	  return true;
-	}
+          if (i != size - 1)
+            std::swap (m_source_map[i], m_source_map[size - 1]);
+          return true;
+        }
     }
 
   std::string contents;
@@ -234,46 +230,46 @@ source_cache::ensure (struct symtab *s)
       bool already_styled = false;
       const char *lang_name = get_language_name (s->language ());
       if (lang_name != nullptr && use_gnu_source_highlight)
-	{
-	  /* The global source highlight object, or null if one was
+        {
+          /* The global source highlight object, or null if one was
 	     never constructed.  This is stored here rather than in
 	     the class so that we don't need to include anything or do
 	     conditional compilation in source-cache.h.  */
-	  static srchilite::SourceHighlight *highlighter;
+          static srchilite::SourceHighlight *highlighter;
 
-	  try
-	    {
-	      if (highlighter == nullptr)
-		{
-		  highlighter = new srchilite::SourceHighlight ("esc.outlang");
-		  highlighter->setStyleFile ("esc.style");
-		}
+          try
+            {
+              if (highlighter == nullptr)
+                {
+                  highlighter = new srchilite::SourceHighlight ("esc.outlang");
+                  highlighter->setStyleFile ("esc.style");
+                }
 
-	      std::istringstream input (contents);
-	      std::ostringstream output;
-	      highlighter->highlight (input, output, lang_name, fullname);
-	      contents = output.str ();
-	      already_styled = true;
-	    }
-	  catch (...)
-	    {
-	      /* Source Highlight will throw an exception if
+              std::istringstream input (contents);
+              std::ostringstream output;
+              highlighter->highlight (input, output, lang_name, fullname);
+              contents = output.str ();
+              already_styled = true;
+            }
+          catch (...)
+            {
+              /* Source Highlight will throw an exception if
 		 highlighting fails.  One possible reason it can fail
 		 is if the language is unknown -- which matters to gdb
 		 because Rust support wasn't added until after 3.1.8.
 		 Ignore exceptions here and fall back to
 		 un-highlighted text. */
-	    }
-	}
+            }
+        }
 
       if (!already_styled)
 #endif /* HAVE_SOURCE_HIGHLIGHT */
-	{
-	  gdb::optional<std::string> ext_contents;
-	  ext_contents = ext_lang_colorize (fullname, contents);
-	  if (ext_contents.has_value ())
-	    contents = std::move (*ext_contents);
-	}
+        {
+          gdb::optional<std::string> ext_contents;
+          ext_contents = ext_lang_colorize (fullname, contents);
+          if (ext_contents.has_value ())
+            contents = std::move (*ext_contents);
+        }
     }
 
   source_text result = { std::move (fullname), std::move (contents) };
@@ -293,7 +289,7 @@ source_cache::ensure (struct symtab *s)
 
 bool
 source_cache::get_line_charpos (struct symtab *s,
-				const std::vector<off_t> **offsets)
+                                const std::vector<off_t> **offsets)
 {
   std::string fullname = symtab_to_fullname (s);
 
@@ -301,7 +297,7 @@ source_cache::get_line_charpos (struct symtab *s,
   if (iter == m_offset_cache.end ())
     {
       if (!ensure (s))
-	return false;
+        return false;
       iter = m_offset_cache.find (fullname);
       /* cache_source_text ensured this was entered.  */
       gdb_assert (iter != m_offset_cache.end ());
@@ -318,7 +314,7 @@ source_cache::get_line_charpos (struct symtab *s,
 
 static bool
 extract_lines (const std::string &text, int first_line, int last_line,
-	       std::string *lines_out)
+               std::string *lines_out)
 {
   int lineno = 1;
   std::string::size_type pos = 0;
@@ -329,22 +325,21 @@ extract_lines (const std::string &text, int first_line, int last_line,
       std::string::size_type new_pos = text.find ('\n', pos);
 
       if (lineno == first_line)
-	first_pos = pos;
+        first_pos = pos;
 
       pos = new_pos;
       if (lineno == last_line || pos == std::string::npos)
-	{
-	  /* A newline at the end does not start a new line.  */
-	  if (first_pos == std::string::npos
-	      || first_pos == text.size ())
-	    return false;
-	  if (pos == std::string::npos)
-	    pos = text.size ();
-	  else
-	    ++pos;
-	  *lines_out = text.substr (first_pos, pos - first_pos);
-	  return true;
-	}
+        {
+          /* A newline at the end does not start a new line.  */
+          if (first_pos == std::string::npos || first_pos == text.size ())
+            return false;
+          if (pos == std::string::npos)
+            pos = text.size ();
+          else
+            ++pos;
+          *lines_out = text.substr (first_pos, pos - first_pos);
+          return true;
+        }
       ++lineno;
       ++pos;
     }
@@ -356,7 +351,7 @@ extract_lines (const std::string &text, int first_line, int last_line,
 
 bool
 source_cache::get_source_lines (struct symtab *s, int first_line,
-				int last_line, std::string *lines)
+                                int last_line, std::string *lines)
 {
   if (first_line < 1 || last_line < 1 || first_line > last_line)
     return false;
@@ -364,8 +359,8 @@ source_cache::get_source_lines (struct symtab *s, int first_line,
   if (!ensure (s))
     return false;
 
-  return extract_lines (m_source_map.back ().contents,
-			first_line, last_line, lines);
+  return extract_lines (m_source_map.back ().contents, first_line, last_line,
+                        lines);
 }
 
 /* Implement 'maint flush source-cache' command.  */
@@ -374,26 +369,25 @@ static void
 source_cache_flush_command (const char *command, int from_tty)
 {
   forget_cached_source_info ();
-  gdb_printf (_("Source cache flushed.\n"));
+  gdb_printf (_ ("Source cache flushed.\n"));
 }
 
 #if GDB_SELF_TEST
 namespace selftests
 {
-static void extract_lines_test ()
+static void
+extract_lines_test ()
 {
   std::string input_text = "abc\ndef\nghi\njkl\n";
   std::string result;
 
-  SELF_CHECK (extract_lines (input_text, 1, 1, &result)
-	      && result == "abc\n");
+  SELF_CHECK (extract_lines (input_text, 1, 1, &result) && result == "abc\n");
   SELF_CHECK (!extract_lines (input_text, 2, 1, &result));
   SELF_CHECK (extract_lines (input_text, 1, 2, &result)
-	      && result == "abc\ndef\n");
-  SELF_CHECK (extract_lines ("abc", 1, 1, &result)
-	      && result == "abc");
+              && result == "abc\ndef\n");
+  SELF_CHECK (extract_lines ("abc", 1, 1, &result) && result == "abc");
 }
-}
+} // namespace selftests
 #endif
 
 void _initialize_source_cache ();
@@ -401,8 +395,8 @@ void
 _initialize_source_cache ()
 {
   add_cmd ("source-cache", class_maintenance, source_cache_flush_command,
-	   _("Force gdb to flush its source code cache."),
-	   &maintenanceflushlist);
+           _ ("Force gdb to flush its source code cache."),
+           &maintenanceflushlist);
 
   /* All the 'maint set|show gnu-source-highlight' sub-commands.  */
   static struct cmd_list_element *maint_set_gnu_source_highlight_cmdlist;
@@ -410,24 +404,25 @@ _initialize_source_cache ()
 
   /* Adds 'maint set|show gnu-source-highlight'.  */
   add_setshow_prefix_cmd ("gnu-source-highlight", class_maintenance,
-			  _("Set gnu-source-highlight specific variables."),
-			  _("Show gnu-source-highlight specific variables."),
-			  &maint_set_gnu_source_highlight_cmdlist,
-			  &maint_show_gnu_source_highlight_cmdlist,
-			  &maintenance_set_cmdlist,
-			  &maintenance_show_cmdlist);
+                          _ ("Set gnu-source-highlight specific variables."),
+                          _ ("Show gnu-source-highlight specific variables."),
+                          &maint_set_gnu_source_highlight_cmdlist,
+                          &maint_show_gnu_source_highlight_cmdlist,
+                          &maintenance_set_cmdlist, &maintenance_show_cmdlist);
 
   /* Adds 'maint set|show gnu-source-highlight enabled'.  */
   add_setshow_boolean_cmd ("enabled", class_maintenance,
-			   &use_gnu_source_highlight, _("\
-Set whether the GNU Source Highlight library should be used."), _("\
-Show whether the GNU Source Highlight library is being used."),_("\
+                           &use_gnu_source_highlight, _ ("\
+Set whether the GNU Source Highlight library should be used."),
+                           _ ("\
+Show whether the GNU Source Highlight library is being used."),
+                           _ ("\
 When enabled, GDB will use the GNU Source Highlight library to apply\n\
 styling to source code lines that are shown."),
-			   set_use_gnu_source_highlight_enabled,
-			   show_use_gnu_source_highlight_enabled,
-			   &maint_set_gnu_source_highlight_cmdlist,
-			   &maint_show_gnu_source_highlight_cmdlist);
+                           set_use_gnu_source_highlight_enabled,
+                           show_use_gnu_source_highlight_enabled,
+                           &maint_set_gnu_source_highlight_cmdlist,
+                           &maint_show_gnu_source_highlight_cmdlist);
 
   /* Enable use of GNU Source Highlight library, if we have it.  */
 #ifdef HAVE_SOURCE_HIGHLIGHT

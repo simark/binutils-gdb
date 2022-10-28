@@ -42,22 +42,22 @@ xml_escape_text_append (std::string *result, const char *text)
     switch (text[i])
       {
       case '\'':
-	*result += "&apos;";
-	break;
+        *result += "&apos;";
+        break;
       case '\"':
-	*result += "&quot;";
-	break;
+        *result += "&quot;";
+        break;
       case '&':
-	*result += "&amp;";
-	break;
+        *result += "&amp;";
+        break;
       case '<':
-	*result += "&lt;";
-	break;
+        *result += "&lt;";
+        break;
       case '>':
-	*result += "&gt;";
-	break;
+        *result += "&gt;";
+        break;
       default:
-	*result += text[i];
-	break;
+        *result += text[i];
+        break;
       }
 }

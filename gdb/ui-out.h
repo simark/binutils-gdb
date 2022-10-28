@@ -41,12 +41,12 @@ extern struct ui_out **current_ui_current_uiout_ptr (void);
 
 /* alignment enum */
 enum ui_align
-  {
-    ui_left = -1,
-    ui_center,
-    ui_right,
-    ui_noalign
-  };
+{
+  ui_left = -1,
+  ui_center,
+  ui_right,
+  ui_noalign
+};
 
 /* flags enum */
 enum ui_out_flag
@@ -67,20 +67,20 @@ DEF_ENUM_FLAGS_TYPE (ui_out_flag, ui_out_flags);
    tuples.  */
 
 enum ui_out_type
-  {
-    ui_out_type_tuple,
-    ui_out_type_list
-  };
+{
+  ui_out_type_tuple,
+  ui_out_type_list
+};
 
 /* The possible kinds of fields.  */
 enum class field_kind
-  {
-    /* "FIELD_STRING" needs a funny name to avoid clashes with tokens
+{
+  /* "FIELD_STRING" needs a funny name to avoid clashes with tokens
        named "STRING".  See PR build/25250.  FIELD_SIGNED is given a
        similar name for consistency.  */
-    FIELD_SIGNED,
-    FIELD_STRING,
-  };
+  FIELD_SIGNED,
+  FIELD_STRING,
+};
 
 /* The base type of all fields that can be emitted using %pF.  */
 
@@ -102,8 +102,7 @@ struct signed_field_s : base_field_s
    it's not possible to pass a reference via va_args.  */
 
 static inline signed_field_s *
-signed_field (const char *name, LONGEST val,
-	      signed_field_s &&tmp = {})
+signed_field (const char *name, LONGEST val, signed_field_s &&tmp = {})
 {
   tmp.name = name;
   tmp.kind = field_kind::FIELD_SIGNED;
@@ -123,8 +122,7 @@ struct string_field_s : base_field_s
    it's not possible to pass a reference via va_args.  */
 
 static inline string_field_s *
-string_field (const char *name, const char *str,
-	      string_field_s &&tmp = {})
+string_field (const char *name, const char *str, string_field_s &&tmp = {})
 {
   tmp.name = name;
   tmp.kind = field_kind::FIELD_STRING;
@@ -149,7 +147,7 @@ struct styled_string_s
 
 static inline styled_string_s *
 styled_string (const ui_file_style &style, const char *str,
-	       styled_string_s &&tmp = {})
+               styled_string_s &&tmp = {})
 {
   tmp.style = style;
   tmp.str = str;
@@ -158,8 +156,7 @@ styled_string (const ui_file_style &style, const char *str,
 
 class ui_out
 {
- public:
-
+public:
   explicit ui_out (ui_out_flags flags = 0);
   virtual ~ui_out ();
 
@@ -173,7 +170,7 @@ class ui_out
 
   void table_begin (int nr_cols, int nr_rows, const std::string &tblid);
   void table_header (int width, ui_align align, const std::string &col_name,
-		     const std::string &col_hdr);
+                     const std::string &col_hdr);
   void table_body ();
   void table_end ();
 
@@ -182,26 +179,25 @@ class ui_out
 
   void field_signed (const char *fldname, LONGEST value);
   void field_fmt_signed (int width, ui_align align, const char *fldname,
-			 LONGEST value);
+                         LONGEST value);
   /* Like field_signed, but print an unsigned value.  */
   void field_unsigned (const char *fldname, ULONGEST value);
   void field_core_addr (const char *fldname, struct gdbarch *gdbarch,
-			CORE_ADDR address);
+                        CORE_ADDR address);
   void field_string (const char *fldname, const char *string,
-		     const ui_file_style &style = ui_file_style ());
+                     const ui_file_style &style = ui_file_style ());
   void field_string (const char *fldname, const std::string &string,
-		     const ui_file_style &style = ui_file_style ())
+                     const ui_file_style &style = ui_file_style ())
   {
     field_string (fldname, string.c_str (), style);
   }
   void field_stream (const char *fldname, string_file &stream,
-		     const ui_file_style &style = ui_file_style ());
+                     const ui_file_style &style = ui_file_style ());
   void field_skip (const char *fldname);
   void field_fmt (const char *fldname, const char *format, ...)
     ATTRIBUTE_PRINTF (3, 4);
   void field_fmt (const char *fldname, const ui_file_style &style,
-		  const char *format, ...)
-    ATTRIBUTE_PRINTF (4, 5);
+                  const char *format, ...) ATTRIBUTE_PRINTF (4, 5);
 
   void spaces (int numspaces);
   void text (const char *string);
@@ -252,8 +248,8 @@ class ui_out
      because code in GDB that wants to print a host address should use
      host_address_to_string instead of %p.  */
   void message (const char *format, ...) ATTRIBUTE_PRINTF (2, 3);
-  void vmessage (const ui_file_style &in_style,
-		 const char *format, va_list args) ATTRIBUTE_PRINTF (3, 0);
+  void vmessage (const ui_file_style &in_style, const char *format,
+                 va_list args) ATTRIBUTE_PRINTF (3, 0);
 
   void wrap_hint (int indent);
 
@@ -272,7 +268,7 @@ class ui_out
   bool is_mi_like_p () const;
 
   bool query_table_field (int colno, int *width, int *alignment,
-			  const char **col_name);
+                          const char **col_name);
 
   /* Return true if this stream is prepared to handle style
      escapes.  */
@@ -284,7 +280,7 @@ class ui_out
   public:
     /* SHOULD_PRINT indicates whether something should be printed for a tty.  */
     progress_meter (struct ui_out *uiout, const std::string &name,
-		    bool should_print)
+                    bool should_print)
       : m_uiout (uiout)
     {
       m_uiout->do_progress_start (name, should_print);
@@ -301,46 +297,47 @@ class ui_out
 
     /* Emit some progress for this progress meter.  HOWMUCH may range
        from 0.0 to 1.0.  */
-    void progress (double howmuch)
-    {
-      m_uiout->do_progress_notify (howmuch);
-    }
+    void progress (double howmuch) { m_uiout->do_progress_notify (howmuch); }
 
   private:
-
     struct ui_out *m_uiout;
   };
 
- protected:
-
+protected:
   virtual void do_table_begin (int nbrofcols, int nr_rows, const char *tblid)
     = 0;
   virtual void do_table_body () = 0;
   virtual void do_table_end () = 0;
   virtual void do_table_header (int width, ui_align align,
-				const std::string &col_name,
-				const std::string &col_hdr) = 0;
+                                const std::string &col_name,
+                                const std::string &col_hdr)
+    = 0;
 
   virtual void do_begin (ui_out_type type, const char *id) = 0;
   virtual void do_end (ui_out_type type) = 0;
   virtual void do_field_signed (int fldno, int width, ui_align align,
-				const char *fldname, LONGEST value) = 0;
+                                const char *fldname, LONGEST value)
+    = 0;
   virtual void do_field_unsigned (int fldno, int width, ui_align align,
-				  const char *fldname, ULONGEST value) = 0;
+                                  const char *fldname, ULONGEST value)
+    = 0;
   virtual void do_field_skip (int fldno, int width, ui_align align,
-			      const char *fldname) = 0;
+                              const char *fldname)
+    = 0;
   virtual void do_field_string (int fldno, int width, ui_align align,
-				const char *fldname, const char *string,
-				const ui_file_style &style) = 0;
+                                const char *fldname, const char *string,
+                                const ui_file_style &style)
+    = 0;
   virtual void do_field_fmt (int fldno, int width, ui_align align,
-			     const char *fldname, const ui_file_style &style,
-			     const char *format, va_list args)
-    ATTRIBUTE_PRINTF (7, 0) = 0;
+                             const char *fldname, const ui_file_style &style,
+                             const char *format, va_list args)
+    ATTRIBUTE_PRINTF (7, 0)
+    = 0;
   virtual void do_spaces (int numspaces) = 0;
   virtual void do_text (const char *string) = 0;
-  virtual void do_message (const ui_file_style &style,
-			   const char *format, va_list args)
-    ATTRIBUTE_PRINTF (3,0) = 0;
+  virtual void do_message (const ui_file_style &style, const char *format,
+                           va_list args) ATTRIBUTE_PRINTF (3, 0)
+    = 0;
   virtual void do_wrap_hint (int indent) = 0;
   virtual void do_flush () = 0;
   virtual void do_redirect (struct ui_file *outstream) = 0;
@@ -352,12 +349,10 @@ class ui_out
   /* Set as not MI-like by default.  It is overridden in subclasses if
      necessary.  */
 
-  virtual bool do_is_mi_like_p () const
-  { return false; }
+  virtual bool do_is_mi_like_p () const { return false; }
 
- private:
-  void call_do_message (const ui_file_style &style, const char *format,
-			...);
+private:
+  void call_do_message (const ui_file_style &style, const char *format, ...);
 
   ui_out_flags m_flags;
 
@@ -380,22 +375,16 @@ template<ui_out_type Type>
 class ui_out_emit_type
 {
 public:
-
-  ui_out_emit_type (struct ui_out *uiout, const char *id)
-    : m_uiout (uiout)
+  ui_out_emit_type (struct ui_out *uiout, const char *id) : m_uiout (uiout)
   {
     uiout->begin (Type, id);
   }
 
-  ~ui_out_emit_type ()
-  {
-    m_uiout->end (Type);
-  }
+  ~ui_out_emit_type () { m_uiout->end (Type); }
 
   DISABLE_COPY_AND_ASSIGN (ui_out_emit_type<Type>);
 
 private:
-
   struct ui_out *m_uiout;
 };
 
@@ -407,24 +396,19 @@ typedef ui_out_emit_type<ui_out_type_list> ui_out_emit_list;
 class ui_out_emit_table
 {
 public:
-
   ui_out_emit_table (struct ui_out *uiout, int nr_cols, int nr_rows,
-		     const char *tblid)
+                     const char *tblid)
     : m_uiout (uiout)
   {
     m_uiout->table_begin (nr_cols, nr_rows, tblid);
   }
 
-  ~ui_out_emit_table ()
-  {
-    m_uiout->table_end ();
-  }
+  ~ui_out_emit_table () { m_uiout->table_end (); }
 
   ui_out_emit_table (const ui_out_emit_table &) = delete;
   ui_out_emit_table &operator= (const ui_out_emit_table &) = delete;
 
 private:
-
   struct ui_out *m_uiout;
 };
 
@@ -434,17 +418,12 @@ private:
 class ui_out_redirect_pop
 {
 public:
-
-  ui_out_redirect_pop (ui_out *uiout, ui_file *stream)
-    : m_uiout (uiout)
+  ui_out_redirect_pop (ui_out *uiout, ui_file *stream) : m_uiout (uiout)
   {
     m_uiout->redirect (stream);
   }
 
-  ~ui_out_redirect_pop ()
-  {
-    m_uiout->redirect (NULL);
-  }
+  ~ui_out_redirect_pop () { m_uiout->redirect (NULL); }
 
   ui_out_redirect_pop (const ui_out_redirect_pop &) = delete;
   ui_out_redirect_pop &operator= (const ui_out_redirect_pop &) = delete;

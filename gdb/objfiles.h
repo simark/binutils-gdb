@@ -17,11 +17,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (OBJFILES_H)
+#if !defined(OBJFILES_H)
 #define OBJFILES_H
 
 #include "hashtab.h"
-#include "gdbsupport/gdb_obstack.h"	/* For obstack internals.  */
+#include "gdbsupport/gdb_obstack.h" /* For obstack internals.  */
 #include "objfile-flags.h"
 #include "symfile.h"
 #include "progspace.h"
@@ -127,28 +127,28 @@ struct entry_info
   unsigned initialized : 1;
 };
 
-#define ALL_OBJFILE_OSECTIONS(objfile, osect)	\
+#define ALL_OBJFILE_OSECTIONS(objfile, osect)                             \
   for (osect = objfile->sections; osect < objfile->sections_end; osect++) \
-    if (osect->the_bfd_section == NULL)					\
-      {									\
-	/* Nothing.  */							\
-      }									\
+    if (osect->the_bfd_section == NULL)                                   \
+      {                                                                   \
+        /* Nothing.  */                                                   \
+      }                                                                   \
     else
 
-#define SECT_OFF_DATA(objfile) \
-     ((objfile->sect_index_data == -1) \
-      ? (internal_error (_("sect_index_data not initialized")), -1)	\
-      : objfile->sect_index_data)
+#define SECT_OFF_DATA(objfile)                                      \
+  ((objfile->sect_index_data == -1)                                 \
+     ? (internal_error (_ ("sect_index_data not initialized")), -1) \
+     : objfile->sect_index_data)
 
-#define SECT_OFF_RODATA(objfile) \
-     ((objfile->sect_index_rodata == -1) \
-      ? (internal_error (_("sect_index_rodata not initialized")), -1)	\
-      : objfile->sect_index_rodata)
+#define SECT_OFF_RODATA(objfile)                                      \
+  ((objfile->sect_index_rodata == -1)                                 \
+     ? (internal_error (_ ("sect_index_rodata not initialized")), -1) \
+     : objfile->sect_index_rodata)
 
-#define SECT_OFF_TEXT(objfile) \
-     ((objfile->sect_index_text == -1) \
-      ? (internal_error (_("sect_index_text not initialized")), -1)	\
-      : objfile->sect_index_text)
+#define SECT_OFF_TEXT(objfile)                                      \
+  ((objfile->sect_index_text == -1)                                 \
+     ? (internal_error (_ ("sect_index_text not initialized")), -1) \
+     : objfile->sect_index_text)
 
 /* Sometimes the .bss section is missing from the objfile, so we don't
    want to die here.  Let the users of SECT_OFF_BSS deal with an
@@ -175,7 +175,7 @@ struct objstats
   int sz_strtab = 0;
 };
 
-#define OBJSTAT(objfile, expr) (objfile -> stats.expr)
+#define OBJSTAT(objfile, expr) (objfile->stats.expr)
 #define OBJSTATS struct objstats stats
 extern void print_objfile_statistics (void);
 
@@ -198,10 +198,7 @@ struct minimal_symbol_iterator
   {
   }
 
-  value_type operator* () const
-  {
-    return m_msym;
-  }
+  value_type operator* () const { return m_msym; }
 
   bool operator== (const self_type &other) const
   {
@@ -230,9 +227,7 @@ private:
 
 struct objfile_per_bfd_storage
 {
-  objfile_per_bfd_storage (bfd *bfd)
-    : minsyms_read (false), m_bfd (bfd)
-  {}
+  objfile_per_bfd_storage (bfd *bfd) : minsyms_read (false), m_bfd (bfd) {}
 
   ~objfile_per_bfd_storage ();
 
@@ -255,10 +250,7 @@ struct objfile_per_bfd_storage
 
   /* Get the BFD this object is associated to.  */
 
-  bfd *get_bfd () const
-  {
-    return m_bfd;
-  }
+  bfd *get_bfd () const { return m_bfd; }
 
   /* The storage has an obstack of its own.  */
 
@@ -350,7 +342,6 @@ private:
 class separate_debug_iterator
 {
 public:
-
   explicit separate_debug_iterator (struct objfile *objfile)
     : m_objfile (objfile),
       m_parent (objfile)
@@ -364,13 +355,9 @@ public:
 
   separate_debug_iterator &operator++ ();
 
-  struct objfile *operator* ()
-  {
-    return m_objfile;
-  }
+  struct objfile *operator* () { return m_objfile; }
 
 private:
-
   struct objfile *m_objfile;
   struct objfile *m_parent;
 };
@@ -396,12 +383,10 @@ typedef iterator_range<separate_debug_iterator> separate_debug_range;
 struct objfile
 {
 private:
-
   /* The only way to create an objfile is to call objfile::make.  */
   objfile (gdb_bfd_ref_ptr, const char *, objfile_flags);
 
 public:
-
   /* Normally you should not call delete.  Instead, call 'unlink' to
      remove it from the program space's list.  In some cases, you may
      need to hold a reference to an objfile that is independent of its
@@ -412,7 +397,7 @@ public:
 
   /* Create an objfile.  */
   static objfile *make (gdb_bfd_ref_ptr bfd_, const char *name_,
-			objfile_flags flags_, objfile *parent = nullptr);
+                        objfile_flags flags_, objfile *parent = nullptr);
 
   /* Remove an objfile from the current program space, and free
      it.  */
@@ -440,7 +425,7 @@ public:
   {
     auto start = minimal_symbol_iterator (per_bfd->msymbols.get ());
     auto end = minimal_symbol_iterator (per_bfd->msymbols.get ()
-					+ per_bfd->minimal_symbol_count);
+                                        + per_bfd->minimal_symbol_count);
     return msymbols_range (start, end);
   }
 
@@ -466,23 +451,14 @@ public:
 
   /* Intern STRING and return the unique copy.  The copy has the same
      lifetime as the per-BFD object.  */
-  const char *intern (const char *str)
-  {
-    return per_bfd->intern (str);
-  }
+  const char *intern (const char *str) { return per_bfd->intern (str); }
 
   /* Intern STRING and return the unique copy.  The copy has the same
      lifetime as the per-BFD object.  */
-  const char *intern (const std::string &str)
-  {
-    return per_bfd->intern (str);
-  }
+  const char *intern (const std::string &str) { return per_bfd->intern (str); }
 
   /* Retrieve the gdbarch associated with this objfile.  */
-  struct gdbarch *arch () const
-  {
-    return per_bfd->gdbarch;
-  }
+  struct gdbarch *arch () const { return per_bfd->gdbarch; }
 
   /* Return true if OBJFILE has partial symbols.  */
 
@@ -512,9 +488,9 @@ public:
      Then, this calls iterate_over_some_symtabs (or equivalent) over
      all newly-created symbol tables, passing CALLBACK to it.
      The result of this call is returned.  */
-  bool map_symtabs_matching_filename
-    (const char *name, const char *real_path,
-     gdb::function_view<bool (symtab *)> callback);
+  bool
+  map_symtabs_matching_filename (const char *name, const char *real_path,
+                                 gdb::function_view<bool (symtab *)> callback);
 
   /* Check to see if the symbol is defined in a "partial" symbol table
      of this objfile.  BLOCK_INDEX should be either GLOBAL_BLOCK or
@@ -527,7 +503,7 @@ public:
      contains !TYPE_OPAQUE symbol prefer its compunit.  If it contains
      only TYPE_OPAQUE symbol(s), return at least that compunit.  */
   struct compunit_symtab *lookup_symbol (block_enum kind, const char *name,
-					 domain_enum domain);
+                                         domain_enum domain);
 
   /* See quick_symbol_functions.  */
   void print_stats (bool print_bcache);
@@ -550,39 +526,36 @@ public:
   void expand_symtabs_with_fullname (const char *fullname);
 
   /* See quick_symbol_functions.  */
-  void expand_matching_symbols
-    (const lookup_name_info &name, domain_enum domain,
-     int global,
-     symbol_compare_ftype *ordered_compare);
+  void expand_matching_symbols (const lookup_name_info &name,
+                                domain_enum domain, int global,
+                                symbol_compare_ftype *ordered_compare);
 
   /* See quick_symbol_functions.  */
-  bool expand_symtabs_matching
-    (gdb::function_view<expand_symtabs_file_matcher_ftype> file_matcher,
-     const lookup_name_info *lookup_name,
-     gdb::function_view<expand_symtabs_symbol_matcher_ftype> symbol_matcher,
-     gdb::function_view<expand_symtabs_exp_notify_ftype> expansion_notify,
-     block_search_flags search_flags,
-     domain_enum domain,
-     enum search_domain kind);
+  bool expand_symtabs_matching (
+    gdb::function_view<expand_symtabs_file_matcher_ftype> file_matcher,
+    const lookup_name_info *lookup_name,
+    gdb::function_view<expand_symtabs_symbol_matcher_ftype> symbol_matcher,
+    gdb::function_view<expand_symtabs_exp_notify_ftype> expansion_notify,
+    block_search_flags search_flags, domain_enum domain,
+    enum search_domain kind);
 
   /* See quick_symbol_functions.  */
-  struct compunit_symtab *find_pc_sect_compunit_symtab
-    (struct bound_minimal_symbol msymbol,
-     CORE_ADDR pc,
-     struct obj_section *section,
-     int warn_if_readin);
+  struct compunit_symtab *
+  find_pc_sect_compunit_symtab (struct bound_minimal_symbol msymbol,
+                                CORE_ADDR pc, struct obj_section *section,
+                                int warn_if_readin);
 
   /* See quick_symbol_functions.  */
   void map_symbol_filenames (gdb::function_view<symbol_filename_ftype> fun,
-			     bool need_fullname);
+                             bool need_fullname);
 
   /* See quick_symbol_functions.  */
   struct compunit_symtab *find_compunit_symtab_by_address (CORE_ADDR address);
 
   /* See quick_symbol_functions.  */
   enum language lookup_global_symbol_language (const char *name,
-					       domain_enum domain,
-					       bool *symbol_found_p);
+                                               domain_enum domain,
+                                               bool *symbol_found_p);
 
   /* See quick_symbol_functions.  */
   void require_partial_symbols (bool verbose);
@@ -610,7 +583,6 @@ public:
   }
 
 private:
-
   /* Ensure that partial symbols have been read and return the "quick" (aka
      partial) symbol functions for this symbol reader.  */
   const std::forward_list<quick_symbol_functions_up> &
@@ -621,7 +593,6 @@ private:
   }
 
 public:
-
   /* The object file's original name as specified by the user,
      made absolute, and tilde-expanded.  However, it is not canonicalized
      (i.e., it has not been passed through gdb_realpath).
@@ -788,16 +759,12 @@ public:
 
 struct objfile_deleter
 {
-  void operator() (objfile *ptr) const
-  {
-    ptr->unlink ();
-  }
+  void operator() (objfile *ptr) const { ptr->unlink (); }
 };
 
 /* A unique pointer that holds an objfile.  */
 
 typedef std::unique_ptr<objfile, objfile_deleter> objfile_up;
-
 
 /* Sections in an objfile.  The section offsets are stored in the
    OBJFILE.  */
@@ -861,7 +828,7 @@ extern int have_partial_symbols (void);
 extern int have_full_symbols (void);
 
 extern void objfile_set_sym_fns (struct objfile *objfile,
-				 const struct sym_fns *sf);
+                                 const struct sym_fns *sf);
 
 extern void objfiles_changed (void);
 
@@ -874,7 +841,7 @@ extern bool is_addr_in_objfile (CORE_ADDR addr, const struct objfile *objfile);
    OBJF_SHARED objfile of PSPACE and false otherwise.  */
 
 extern bool shared_objfile_contains_address_p (struct program_space *pspace,
-					       CORE_ADDR address);
+                                               CORE_ADDR address);
 
 /* This operation deletes all objfile entries that represent solibs that
    weren't explicitly loaded by the user, via e.g., the add-symbol-file
@@ -898,8 +865,7 @@ extern int pc_in_section (CORE_ADDR, const char *);
 static inline int
 in_plt_section (CORE_ADDR pc)
 {
-  return (pc_in_section (pc, ".plt")
-	  || pc_in_section (pc, ".plt.sec"));
+  return (pc_in_section (pc, ".plt") || pc_in_section (pc, ".plt.sec"));
 }
 
 /* In normal use, the section map will be rebuilt by find_pc_section
@@ -910,12 +876,12 @@ in_plt_section (CORE_ADDR pc)
    call to find_pc_section in the inhibited region relates to a
    section that is already in the section map and has not since been
    removed or relocated.  */
-extern scoped_restore_tmpl<int> inhibit_section_map_updates
-    (struct program_space *pspace);
+extern scoped_restore_tmpl<int>
+inhibit_section_map_updates (struct program_space *pspace);
 
-extern void default_iterate_over_objfiles_in_search_order
-  (gdbarch *gdbarch, iterate_over_objfiles_in_search_order_cb_ftype cb,
-   objfile *current_objfile);
+extern void default_iterate_over_objfiles_in_search_order (
+  gdbarch *gdbarch, iterate_over_objfiles_in_search_order_cb_ftype cb,
+  objfile *current_objfile);
 
 /* Reset the per-BFD storage area on OBJ.  */
 
@@ -943,20 +909,21 @@ const char *objfile_flavour_name (struct objfile *objfile);
 
 /* Set the objfile's notion of the "main" name and language.  */
 
-extern void set_objfile_main_name (struct objfile *objfile,
-				   const char *name, enum language lang);
+extern void set_objfile_main_name (struct objfile *objfile, const char *name,
+                                   enum language lang);
 
 /* Find an integer type SIZE_IN_BYTES bytes in size from OF and return it.
    UNSIGNED_P controls if the integer is unsigned or not.  */
 extern struct type *objfile_int_type (struct objfile *of, int size_in_bytes,
-				      bool unsigned_p);
+                                      bool unsigned_p);
 
-extern void objfile_register_static_link
-  (struct objfile *objfile,
-   const struct block *block,
-   const struct dynamic_prop *static_link);
+extern void
+objfile_register_static_link (struct objfile *objfile,
+                              const struct block *block,
+                              const struct dynamic_prop *static_link);
 
-extern const struct dynamic_prop *objfile_lookup_static_link
-  (struct objfile *objfile, const struct block *block);
+extern const struct dynamic_prop *
+objfile_lookup_static_link (struct objfile *objfile,
+                            const struct block *block);
 
 #endif /* !defined (OBJFILES_H) */

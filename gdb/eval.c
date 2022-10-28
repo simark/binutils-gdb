@@ -25,7 +25,7 @@
 #include "target.h"
 #include "frame.h"
 #include "gdbthread.h"
-#include "language.h"		/* For CAST_IS_CONVERSION.  */
+#include "language.h" /* For CAST_IS_CONVERSION.  */
 #include "cp-abi.h"
 #include "infcall.h"
 #include "objc-lang.h"
@@ -44,7 +44,6 @@
 #include "c-exp.h"
 #include "inferior.h"
 
-
 /* Parse the string EXP as a C expression, evaluate it,
    and return the result as a number.  */
 
@@ -85,7 +84,6 @@ parse_to_comma_and_eval (const char **expp)
 
   return evaluate_expression (expr.get ());
 }
-
 
 /* See expression.h.  */
 
@@ -147,11 +145,10 @@ evaluate_type (struct expression *exp)
    values will be left on the value chain.  */
 
 void
-fetch_subexp_value (struct expression *exp,
-		    expr::operation *op,
-		    struct value **valp, struct value **resultp,
-		    std::vector<value_ref_ptr> *val_chain,
-		    bool preserve_errors)
+fetch_subexp_value (struct expression *exp, expr::operation *op,
+                    struct value **valp, struct value **resultp,
+                    std::vector<value_ref_ptr> *val_chain,
+                    bool preserve_errors)
 {
   struct value *mark, *new_mark, *result;
 
@@ -175,15 +172,15 @@ fetch_subexp_value (struct expression *exp,
 	 inaccessible memory to still be created; otherwise, throw the
 	 error to some higher catcher.  */
       switch (ex.error)
-	{
-	case MEMORY_ERROR:
-	  if (!preserve_errors)
-	    break;
-	  /* Fall through.  */
-	default:
-	  throw;
-	  break;
-	}
+        {
+        case MEMORY_ERROR:
+          if (!preserve_errors)
+            break;
+          /* Fall through.  */
+        default:
+          throw;
+          break;
+        }
     }
 
   new_mark = value_mark ();
@@ -197,19 +194,18 @@ fetch_subexp_value (struct expression *exp,
   if (result != NULL)
     {
       if (!value_lazy (result))
-	*valp = result;
+        *valp = result;
       else
-	{
-
-	  try
-	    {
-	      value_fetch_lazy (result);
-	      *valp = result;
-	    }
-	  catch (const gdb_exception_error &except)
-	    {
-	    }
-	}
+        {
+          try
+            {
+              value_fetch_lazy (result);
+              *valp = result;
+            }
+          catch (const gdb_exception_error &except)
+            {
+            }
+        }
     }
 
   if (val_chain)
@@ -227,7 +223,7 @@ fetch_subexp_value (struct expression *exp,
 
 void
 unop_promote (const struct language_defn *language, struct gdbarch *gdbarch,
-	      struct value **arg1)
+              struct value **arg1)
 {
   struct type *type1;
 
@@ -237,19 +233,19 @@ unop_promote (const struct language_defn *language, struct gdbarch *gdbarch,
   if (is_integral_type (type1))
     {
       switch (language->la_language)
-	{
-	default:
-	  /* Perform integral promotion for ANSI C/C++.
+        {
+        default:
+          /* Perform integral promotion for ANSI C/C++.
 	     If not appropriate for any particular language
 	     it needs to modify this function.  */
-	  {
-	    struct type *builtin_int = builtin_type (gdbarch)->builtin_int;
+          {
+            struct type *builtin_int = builtin_type (gdbarch)->builtin_int;
 
-	    if (type1->length () < builtin_int->length ())
-	      *arg1 = value_cast (builtin_int, *arg1);
-	  }
-	  break;
-	}
+            if (type1->length () < builtin_int->length ())
+              *arg1 = value_cast (builtin_int, *arg1);
+          }
+          break;
+        }
     }
 }
 
@@ -260,7 +256,7 @@ unop_promote (const struct language_defn *language, struct gdbarch *gdbarch,
 
 void
 binop_promote (const struct language_defn *language, struct gdbarch *gdbarch,
-	       struct value **arg1, struct value **arg2)
+               struct value **arg1, struct value **arg2)
 {
   struct type *promoted_type = NULL;
   struct type *type1;
@@ -272,12 +268,11 @@ binop_promote (const struct language_defn *language, struct gdbarch *gdbarch,
   type1 = check_typedef (value_type (*arg1));
   type2 = check_typedef (value_type (*arg2));
 
-  if ((type1->code () != TYPE_CODE_FLT
-       && type1->code () != TYPE_CODE_DECFLOAT
+  if ((type1->code () != TYPE_CODE_FLT && type1->code () != TYPE_CODE_DECFLOAT
        && !is_integral_type (type1))
       || (type2->code () != TYPE_CODE_FLT
-	  && type2->code () != TYPE_CODE_DECFLOAT
-	  && !is_integral_type (type2)))
+          && type2->code () != TYPE_CODE_DECFLOAT
+          && !is_integral_type (type2)))
     return;
 
   if (is_fixed_point_type (type1) || is_fixed_point_type (type2))
@@ -288,34 +283,33 @@ binop_promote (const struct language_defn *language, struct gdbarch *gdbarch,
     {
       /* No promotion required.  */
     }
-  else if (type1->code () == TYPE_CODE_FLT
-	   || type2->code () == TYPE_CODE_FLT)
+  else if (type1->code () == TYPE_CODE_FLT || type2->code () == TYPE_CODE_FLT)
     {
       switch (language->la_language)
-	{
-	case language_c:
-	case language_cplus:
-	case language_asm:
-	case language_objc:
-	case language_opencl:
-	  /* No promotion required.  */
-	  break;
+        {
+        case language_c:
+        case language_cplus:
+        case language_asm:
+        case language_objc:
+        case language_opencl:
+          /* No promotion required.  */
+          break;
 
-	default:
-	  /* For other languages the result type is unchanged from gdb
+        default:
+          /* For other languages the result type is unchanged from gdb
 	     version 6.7 for backward compatibility.
 	     If either arg was long double, make sure that value is also long
 	     double.  Otherwise use double.  */
-	  if (type1->length () * 8 > gdbarch_double_bit (gdbarch)
-	      || type2->length () * 8 > gdbarch_double_bit (gdbarch))
-	    promoted_type = builtin_type (gdbarch)->builtin_long_double;
-	  else
-	    promoted_type = builtin_type (gdbarch)->builtin_double;
-	  break;
-	}
+          if (type1->length () * 8 > gdbarch_double_bit (gdbarch)
+              || type2->length () * 8 > gdbarch_double_bit (gdbarch))
+            promoted_type = builtin_type (gdbarch)->builtin_long_double;
+          else
+            promoted_type = builtin_type (gdbarch)->builtin_double;
+          break;
+        }
     }
   else if (type1->code () == TYPE_CODE_BOOL
-	   && type2->code () == TYPE_CODE_BOOL)
+           && type2->code () == TYPE_CODE_BOOL)
     {
       /* No promotion required.  */
     }
@@ -334,96 +328,94 @@ binop_promote (const struct language_defn *language, struct gdbarch *gdbarch,
       /* Determine type length and signedness after promotion for
 	 both operands.  */
       if (promoted_len1 < builtin->builtin_int->length ())
-	{
-	  is_unsigned1 = 0;
-	  promoted_len1 = builtin->builtin_int->length ();
-	}
+        {
+          is_unsigned1 = 0;
+          promoted_len1 = builtin->builtin_int->length ();
+        }
       if (promoted_len2 < builtin->builtin_int->length ())
-	{
-	  is_unsigned2 = 0;
-	  promoted_len2 = builtin->builtin_int->length ();
-	}
+        {
+          is_unsigned2 = 0;
+          promoted_len2 = builtin->builtin_int->length ();
+        }
 
       if (promoted_len1 > promoted_len2)
-	{
-	  unsigned_operation = is_unsigned1;
-	  result_len = promoted_len1;
-	}
+        {
+          unsigned_operation = is_unsigned1;
+          result_len = promoted_len1;
+        }
       else if (promoted_len2 > promoted_len1)
-	{
-	  unsigned_operation = is_unsigned2;
-	  result_len = promoted_len2;
-	}
+        {
+          unsigned_operation = is_unsigned2;
+          result_len = promoted_len2;
+        }
       else
-	{
-	  unsigned_operation = is_unsigned1 || is_unsigned2;
-	  result_len = promoted_len1;
-	}
+        {
+          unsigned_operation = is_unsigned1 || is_unsigned2;
+          result_len = promoted_len1;
+        }
 
       switch (language->la_language)
-	{
-	case language_c:
-	case language_cplus:
-	case language_asm:
-	case language_objc:
-	  if (result_len <= builtin->builtin_int->length ())
-	    {
-	      promoted_type = (unsigned_operation
-			       ? builtin->builtin_unsigned_int
-			       : builtin->builtin_int);
-	    }
-	  else if (result_len <= builtin->builtin_long->length ())
-	    {
-	      promoted_type = (unsigned_operation
-			       ? builtin->builtin_unsigned_long
-			       : builtin->builtin_long);
-	    }
-	  else
-	    {
-	      promoted_type = (unsigned_operation
-			       ? builtin->builtin_unsigned_long_long
-			       : builtin->builtin_long_long);
-	    }
-	  break;
-	case language_opencl:
-	  if (result_len
-	      <= lookup_signed_typename (language, "int")->length())
-	    {
-	      promoted_type =
-		(unsigned_operation
-		 ? lookup_unsigned_typename (language, "int")
-		 : lookup_signed_typename (language, "int"));
-	    }
-	  else if (result_len
-		   <= lookup_signed_typename (language, "long")->length())
-	    {
-	      promoted_type =
-		(unsigned_operation
-		 ? lookup_unsigned_typename (language, "long")
-		 : lookup_signed_typename (language,"long"));
-	    }
-	  break;
-	default:
-	  /* For other languages the result type is unchanged from gdb
+        {
+        case language_c:
+        case language_cplus:
+        case language_asm:
+        case language_objc:
+          if (result_len <= builtin->builtin_int->length ())
+            {
+              promoted_type
+                = (unsigned_operation ? builtin->builtin_unsigned_int
+                                      : builtin->builtin_int);
+            }
+          else if (result_len <= builtin->builtin_long->length ())
+            {
+              promoted_type
+                = (unsigned_operation ? builtin->builtin_unsigned_long
+                                      : builtin->builtin_long);
+            }
+          else
+            {
+              promoted_type
+                = (unsigned_operation ? builtin->builtin_unsigned_long_long
+                                      : builtin->builtin_long_long);
+            }
+          break;
+        case language_opencl:
+          if (result_len
+              <= lookup_signed_typename (language, "int")->length ())
+            {
+              promoted_type = (unsigned_operation
+                                 ? lookup_unsigned_typename (language, "int")
+                                 : lookup_signed_typename (language, "int"));
+            }
+          else if (result_len
+                   <= lookup_signed_typename (language, "long")->length ())
+            {
+              promoted_type = (unsigned_operation
+                                 ? lookup_unsigned_typename (language, "long")
+                                 : lookup_signed_typename (language, "long"));
+            }
+          break;
+        default:
+          /* For other languages the result type is unchanged from gdb
 	     version 6.7 for backward compatibility.
 	     If either arg was long long, make sure that value is also long
 	     long.  Otherwise use long.  */
-	  if (unsigned_operation)
-	    {
-	      if (result_len > gdbarch_long_bit (gdbarch) / HOST_CHAR_BIT)
-		promoted_type = builtin->builtin_unsigned_long_long;
-	      else
-		promoted_type = builtin->builtin_unsigned_long;
-	    }
-	  else
-	    {
-	      if (result_len > gdbarch_long_bit (gdbarch) / HOST_CHAR_BIT)
-		promoted_type = builtin->builtin_long_long;
-	      else
-		promoted_type = builtin->builtin_long;
-	    }
-	  break;
-	}
+          if (unsigned_operation)
+            {
+              if (result_len > gdbarch_long_bit (gdbarch) / HOST_CHAR_BIT)
+                promoted_type = builtin->builtin_unsigned_long_long;
+              else
+                promoted_type = builtin->builtin_unsigned_long;
+            }
+          else
+            {
+              if (result_len > gdbarch_long_bit (gdbarch) / HOST_CHAR_BIT)
+                promoted_type = builtin->builtin_long_long;
+              else
+                promoted_type = builtin->builtin_long;
+            }
+          break;
+        }
     }
 
   if (promoted_type)
@@ -464,20 +456,22 @@ ptrmath_type_p (const struct language_defn *lang, struct type *type)
 class fake_method
 {
 public:
-  fake_method (type_instance_flags flags,
-	       int num_types, struct type **param_types);
+  fake_method (type_instance_flags flags, int num_types,
+               struct type **param_types);
   ~fake_method ();
 
   /* The constructed type.  */
   struct type *type () { return &m_type; }
 
 private:
-  struct type m_type {};
+  struct type m_type
+  {
+  };
   main_type m_main_type {};
 };
 
-fake_method::fake_method (type_instance_flags flags,
-			  int num_types, struct type **param_types)
+fake_method::fake_method (type_instance_flags flags, int num_types,
+                          struct type **param_types)
 {
   struct type *type = &m_type;
 
@@ -489,18 +483,18 @@ fake_method::fake_method (type_instance_flags flags,
   if (num_types > 0)
     {
       if (param_types[num_types - 1] == NULL)
-	{
-	  --num_types;
-	  type->set_has_varargs (true);
-	}
+        {
+          --num_types;
+          type->set_has_varargs (true);
+        }
       else if (check_typedef (param_types[num_types - 1])->code ()
-	       == TYPE_CODE_VOID)
-	{
-	  --num_types;
-	  /* Caller should have ensured this.  */
-	  gdb_assert (num_types == 0);
-	  type->set_is_prototyped (true);
-	}
+               == TYPE_CODE_VOID)
+        {
+          --num_types;
+          /* Caller should have ensured this.  */
+          gdb_assert (num_types == 0);
+          type->set_is_prototyped (true);
+        }
     }
 
   /* We don't use TYPE_ZALLOC here to allocate space as TYPE is owned by
@@ -508,8 +502,8 @@ fake_method::fake_method (type_instance_flags flags,
      allocate memory for auxiliary fields, and free the memory ourselves
      when we are done with it.  */
   type->set_num_fields (num_types);
-  type->set_fields
-    ((struct field *) xzalloc (sizeof (struct field) * num_types));
+  type->set_fields (
+    (struct field *) xzalloc (sizeof (struct field) * num_types));
 
   while (num_types-- > 0)
     type->field (num_types).set_type (param_types[num_types]);
@@ -525,18 +519,17 @@ namespace expr
 
 value *
 type_instance_operation::evaluate (struct type *expect_type,
-				   struct expression *exp,
-				   enum noside noside)
+                                   struct expression *exp, enum noside noside)
 {
   type_instance_flags flags = std::get<0> (m_storage);
   std::vector<type *> &types = std::get<1> (m_storage);
 
   fake_method fake_expect_type (flags, types.size (), types.data ());
-  return std::get<2> (m_storage)->evaluate (fake_expect_type.type (),
-					    exp, noside);
+  return std::get<2> (m_storage)->evaluate (fake_expect_type.type (), exp,
+                                            noside);
 }
 
-}
+} // namespace expr
 
 /* Helper for evaluating an OP_VAR_VALUE.  */
 
@@ -562,7 +555,7 @@ evaluate_var_value (enum noside noside, const block *blk, symbol *var)
   catch (const gdb_exception_error &except)
     {
       if (noside != EVAL_AVOID_SIDE_EFFECTS)
-	throw;
+        throw;
 
       ret = value_zero (var->type (), not_lval);
     }
@@ -576,8 +569,7 @@ namespace expr
 
 value *
 var_value_operation::evaluate (struct type *expect_type,
-			       struct expression *exp,
-			       enum noside noside)
+                               struct expression *exp, enum noside noside)
 {
   symbol *var = std::get<0> (m_storage).symbol;
   if (var->type ()->code () == TYPE_CODE_ERROR)
@@ -590,8 +582,8 @@ var_value_operation::evaluate (struct type *expect_type,
 /* Helper for evaluating an OP_VAR_MSYM_VALUE.  */
 
 value *
-evaluate_var_msym_value (enum noside noside,
-			 struct objfile *objfile, minimal_symbol *msymbol)
+evaluate_var_msym_value (enum noside noside, struct objfile *objfile,
+                         minimal_symbol *msymbol)
 {
   CORE_ADDR address;
   type *the_type = find_minsym_type_and_address (msymbol, objfile, &address);
@@ -605,14 +597,12 @@ evaluate_var_msym_value (enum noside noside,
 /* See expression.h.  */
 
 value *
-evaluate_subexp_do_call (expression *exp, enum noside noside,
-			 value *callee,
-			 gdb::array_view<value *> argvec,
-			 const char *function_name,
-			 type *default_return_type)
+evaluate_subexp_do_call (expression *exp, enum noside noside, value *callee,
+                         gdb::array_view<value *> argvec,
+                         const char *function_name, type *default_return_type)
 {
   if (callee == NULL)
-    error (_("Cannot evaluate function -- may be inlined"));
+    error (_ ("Cannot evaluate function -- may be inlined"));
   if (noside == EVAL_AVOID_SIDE_EFFECTS)
     {
       /* If the return type doesn't look like a function type,
@@ -622,52 +612,52 @@ evaluate_subexp_do_call (expression *exp, enum noside noside,
       type *ftype = value_type (callee);
 
       if (ftype->code () == TYPE_CODE_INTERNAL_FUNCTION)
-	{
-	  /* We don't know anything about what the internal
+        {
+          /* We don't know anything about what the internal
 	     function might return, but we have to return
 	     something.  */
-	  return value_zero (builtin_type (exp->gdbarch)->builtin_int,
-			     not_lval);
-	}
+          return value_zero (builtin_type (exp->gdbarch)->builtin_int,
+                             not_lval);
+        }
       else if (ftype->code () == TYPE_CODE_XMETHOD)
-	{
-	  type *return_type = result_type_of_xmethod (callee, argvec);
+        {
+          type *return_type = result_type_of_xmethod (callee, argvec);
 
-	  if (return_type == NULL)
-	    error (_("Xmethod is missing return type."));
-	  return value_zero (return_type, not_lval);
-	}
+          if (return_type == NULL)
+            error (_ ("Xmethod is missing return type."));
+          return value_zero (return_type, not_lval);
+        }
       else if (ftype->code () == TYPE_CODE_FUNC
-	       || ftype->code () == TYPE_CODE_METHOD)
-	{
-	  if (ftype->is_gnu_ifunc ())
-	    {
-	      CORE_ADDR address = value_address (callee);
-	      type *resolved_type = find_gnu_ifunc_target_type (address);
+               || ftype->code () == TYPE_CODE_METHOD)
+        {
+          if (ftype->is_gnu_ifunc ())
+            {
+              CORE_ADDR address = value_address (callee);
+              type *resolved_type = find_gnu_ifunc_target_type (address);
 
-	      if (resolved_type != NULL)
-		ftype = resolved_type;
-	    }
+              if (resolved_type != NULL)
+                ftype = resolved_type;
+            }
 
-	  type *return_type = ftype->target_type ();
+          type *return_type = ftype->target_type ();
 
-	  if (return_type == NULL)
-	    return_type = default_return_type;
+          if (return_type == NULL)
+            return_type = default_return_type;
 
-	  if (return_type == NULL)
-	    error_call_unknown_return_type (function_name);
+          if (return_type == NULL)
+            error_call_unknown_return_type (function_name);
 
-	  return allocate_value (return_type);
-	}
+          return allocate_value (return_type);
+        }
       else
-	error (_("Expression of type other than "
-		 "\"Function returning ...\" used as function"));
+        error (_ ("Expression of type other than "
+                  "\"Function returning ...\" used as function"));
     }
   switch (value_type (callee)->code ())
     {
     case TYPE_CODE_INTERNAL_FUNCTION:
-      return call_internal_function (exp->gdbarch, exp->language_defn,
-				     callee, argvec.size (), argvec.data ());
+      return call_internal_function (exp->gdbarch, exp->language_defn, callee,
+                                     argvec.size (), argvec.data ());
     case TYPE_CODE_XMETHOD:
       return call_xmethod (callee, argvec);
     default:
@@ -679,11 +669,9 @@ namespace expr
 {
 
 value *
-operation::evaluate_funcall (struct type *expect_type,
-			     struct expression *exp,
-			     enum noside noside,
-			     const char *function_name,
-			     const std::vector<operation_up> &args)
+operation::evaluate_funcall (struct type *expect_type, struct expression *exp,
+                             enum noside noside, const char *function_name,
+                             const std::vector<operation_up> &args)
 {
   std::vector<value *> vals (args.size ());
 
@@ -694,20 +682,20 @@ operation::evaluate_funcall (struct type *expect_type,
   for (int i = 0; i < args.size (); ++i)
     {
       if (i < type->num_fields ())
-	vals[i] = args[i]->evaluate (type->field (i).type (), exp, noside);
+        vals[i] = args[i]->evaluate (type->field (i).type (), exp, noside);
       else
-	vals[i] = args[i]->evaluate_with_coercion (exp, noside);
+        vals[i] = args[i]->evaluate_with_coercion (exp, noside);
     }
 
-  return evaluate_subexp_do_call (exp, noside, callee, vals,
-				  function_name, expect_type);
+  return evaluate_subexp_do_call (exp, noside, callee, vals, function_name,
+                                  expect_type);
 }
 
 value *
 var_value_operation::evaluate_funcall (struct type *expect_type,
-				       struct expression *exp,
-				       enum noside noside,
-				       const std::vector<operation_up> &args)
+                                       struct expression *exp,
+                                       enum noside noside,
+                                       const std::vector<operation_up> &args)
 {
   if (!overload_resolution
       || exp->language_defn->la_language != language_cplus)
@@ -718,24 +706,23 @@ var_value_operation::evaluate_funcall (struct type *expect_type,
     argvec[i] = args[i]->evaluate_with_coercion (exp, noside);
 
   struct symbol *symp;
-  find_overload_match (argvec, NULL, NON_METHOD,
-		       NULL, std::get<0> (m_storage).symbol,
-		       NULL, &symp, NULL, 0, noside);
+  find_overload_match (argvec, NULL, NON_METHOD, NULL,
+                       std::get<0> (m_storage).symbol, NULL, &symp, NULL, 0,
+                       noside);
 
   if (symp->type ()->code () == TYPE_CODE_ERROR)
     error_unknown_type (symp->print_name ());
-  value *callee = evaluate_var_value (noside, std::get<0> (m_storage).block,
-				      symp);
+  value *callee
+    = evaluate_var_value (noside, std::get<0> (m_storage).block, symp);
 
-  return evaluate_subexp_do_call (exp, noside, callee, argvec,
-				  nullptr, expect_type);
+  return evaluate_subexp_do_call (exp, noside, callee, argvec, nullptr,
+                                  expect_type);
 }
 
 value *
 scope_operation::evaluate_funcall (struct type *expect_type,
-				   struct expression *exp,
-				   enum noside noside,
-				   const std::vector<operation_up> &args)
+                                   struct expression *exp, enum noside noside,
+                                   const std::vector<operation_up> &args)
 {
   if (!overload_resolution
       || exp->language_defn->la_language != language_cplus)
@@ -751,18 +738,18 @@ scope_operation::evaluate_funcall (struct type *expect_type,
   std::vector<value *> argvec (1 + args.size ());
   if (type->code () == TYPE_CODE_NAMESPACE)
     {
-      function = cp_lookup_symbol_namespace (type->name (),
-					     name.c_str (),
-					     get_selected_block (0),
-					     VAR_DOMAIN).symbol;
+      function
+        = cp_lookup_symbol_namespace (type->name (), name.c_str (),
+                                      get_selected_block (0), VAR_DOMAIN)
+            .symbol;
       if (function == NULL)
-	error (_("No symbol \"%s\" in namespace \"%s\"."),
-	       name.c_str (), type->name ());
+        error (_ ("No symbol \"%s\" in namespace \"%s\"."), name.c_str (),
+               type->name ());
     }
   else
     {
       gdb_assert (type->code () == TYPE_CODE_STRUCT
-		  || type->code () == TYPE_CODE_UNION);
+                  || type->code () == TYPE_CODE_UNION);
       function_name = name.c_str ();
 
       /* We need a properly typed value for method lookup.  */
@@ -778,16 +765,16 @@ scope_operation::evaluate_funcall (struct type *expect_type,
     {
       int static_memfuncp;
 
-      find_overload_match (arg_view, function_name, METHOD,
-			   &argvec[0], nullptr, &callee, nullptr,
-			   &static_memfuncp, 0, noside);
+      find_overload_match (arg_view, function_name, METHOD, &argvec[0],
+                           nullptr, &callee, nullptr, &static_memfuncp, 0,
+                           noside);
       if (!static_memfuncp)
-	{
-	  /* For the time being, we don't handle this.  */
-	  error (_("Call to overloaded function %s requires "
-		   "`this' pointer"),
-		 function_name);
-	}
+        {
+          /* For the time being, we don't handle this.  */
+          error (_ ("Call to overloaded function %s requires "
+                    "`this' pointer"),
+                 function_name);
+        }
 
       arg_view = arg_view.slice (1);
     }
@@ -795,21 +782,20 @@ scope_operation::evaluate_funcall (struct type *expect_type,
     {
       symbol *symp;
       arg_view = arg_view.slice (1);
-      find_overload_match (arg_view, nullptr,
-			   NON_METHOD, nullptr, function,
-			   nullptr, &symp, nullptr, 1, noside);
+      find_overload_match (arg_view, nullptr, NON_METHOD, nullptr, function,
+                           nullptr, &symp, nullptr, 1, noside);
       callee = value_of_variable (symp, get_selected_block (0));
     }
 
-  return evaluate_subexp_do_call (exp, noside, callee, arg_view,
-				  nullptr, expect_type);
+  return evaluate_subexp_do_call (exp, noside, callee, arg_view, nullptr,
+                                  expect_type);
 }
 
 value *
 structop_member_base::evaluate_funcall (struct type *expect_type,
-					struct expression *exp,
-					enum noside noside,
-					const std::vector<operation_up> &args)
+                                        struct expression *exp,
+                                        enum noside noside,
+                                        const std::vector<operation_up> &args)
 {
   /* First, evaluate the structure into lhs.  */
   value *lhs;
@@ -831,18 +817,17 @@ structop_member_base::evaluate_funcall (struct type *expect_type,
   if (a1_type->code () == TYPE_CODE_METHODPTR)
     {
       if (noside == EVAL_AVOID_SIDE_EFFECTS)
-	callee = value_zero (a1_type->target_type (), not_lval);
+        callee = value_zero (a1_type->target_type (), not_lval);
       else
-	callee = cplus_method_ptr_to_value (&lhs, rhs);
+        callee = cplus_method_ptr_to_value (&lhs, rhs);
 
       vals[0] = lhs;
     }
   else if (a1_type->code () == TYPE_CODE_MEMBERPTR)
     {
-      struct type *type_ptr
-	= lookup_pointer_type (TYPE_SELF_TYPE (a1_type));
+      struct type *type_ptr = lookup_pointer_type (TYPE_SELF_TYPE (a1_type));
       struct type *target_type_ptr
-	= lookup_pointer_type (a1_type->target_type ());
+        = lookup_pointer_type (a1_type->target_type ());
 
       /* Now, convert this value to an address.  */
       lhs = value_cast (type_ptr, lhs);
@@ -850,27 +835,26 @@ structop_member_base::evaluate_funcall (struct type *expect_type,
       long mem_offset = value_as_long (rhs);
 
       callee = value_from_pointer (target_type_ptr,
-				   value_as_long (lhs) + mem_offset);
+                                   value_as_long (lhs) + mem_offset);
       callee = value_ind (callee);
 
       val_view = val_view.slice (1);
     }
   else
-    error (_("Non-pointer-to-member value used in pointer-to-member "
-	     "construct"));
+    error (_ ("Non-pointer-to-member value used in pointer-to-member "
+              "construct"));
 
   for (int i = 0; i < args.size (); ++i)
     vals[i + 1] = args[i]->evaluate_with_coercion (exp, noside);
 
-  return evaluate_subexp_do_call (exp, noside, callee, val_view,
-				  nullptr, expect_type);
-
+  return evaluate_subexp_do_call (exp, noside, callee, val_view, nullptr,
+                                  expect_type);
 }
 
 value *
-structop_base_operation::evaluate_funcall
-     (struct type *expect_type, struct expression *exp, enum noside noside,
-      const std::vector<operation_up> &args)
+structop_base_operation::evaluate_funcall (
+  struct type *expect_type, struct expression *exp, enum noside noside,
+  const std::vector<operation_up> &args)
 {
   /* Allocate space for the function call arguments, Including space for a
      `this' pointer at the start.  */
@@ -902,22 +886,22 @@ structop_base_operation::evaluate_funcall
 	 value returned by the custom operator and continue
 	 evaluation.  */
       while (unop_user_defined_p (op, vals[0]))
-	{
-	  struct value *value = nullptr;
-	  try
-	    {
-	      value = value_x_unop (vals[0], op, noside);
-	    }
-	  catch (const gdb_exception_error &except)
-	    {
-	      if (except.error == NOT_FOUND_ERROR)
-		break;
-	      else
-		throw;
-	    }
+        {
+          struct value *value = nullptr;
+          try
+            {
+              value = value_x_unop (vals[0], op, noside);
+            }
+          catch (const gdb_exception_error &except)
+            {
+              if (except.error == NOT_FOUND_ERROR)
+                break;
+              else
+                throw;
+            }
 
-	  vals[0] = value;
-	}
+          vals[0] = value;
+        }
     }
 
   /* Evaluate the arguments.  The '+ 1' here is to allow for the `this'
@@ -931,15 +915,13 @@ structop_base_operation::evaluate_funcall
   int static_memfuncp;
   value *callee;
   const char *tstr = std::get<1> (m_storage).c_str ();
-  if (overload_resolution
-      && exp->language_defn->la_language == language_cplus)
+  if (overload_resolution && exp->language_defn->la_language == language_cplus)
     {
       /* Language is C++, do some overload resolution before
 	 evaluation.  */
       value *val0 = vals[0];
-      find_overload_match (arg_view, tstr, METHOD,
-			   &val0, nullptr, &callee, nullptr,
-			   &static_memfuncp, 0, noside);
+      find_overload_match (arg_view, tstr, METHOD, &val0, nullptr, &callee,
+                           nullptr, &static_memfuncp, 0, noside);
       vals[0] = val0;
     }
   else
@@ -947,24 +929,23 @@ structop_base_operation::evaluate_funcall
     {
       struct value *temp = vals[0];
 
-      callee = value_struct_elt (&temp, arg_view, tstr,
-				 &static_memfuncp,
-				 op == STRUCTOP_STRUCT
-				 ? "structure" : "structure pointer");
+      callee = value_struct_elt (&temp, arg_view, tstr, &static_memfuncp,
+                                 op == STRUCTOP_STRUCT ? "structure"
+                                                       : "structure pointer");
       /* value_struct_elt updates temp with the correct value of the
 	 ``this'' pointer if necessary, so modify it to reflect any
 	 ``this'' changes.  */
       vals[0] = value_from_longest (lookup_pointer_type (value_type (temp)),
-				    value_address (temp)
-				    + value_embedded_offset (temp));
+                                    value_address (temp)
+                                      + value_embedded_offset (temp));
     }
 
   /* Take out `this' if needed.  */
   if (static_memfuncp)
     arg_view = arg_view.slice (1);
 
-  return evaluate_subexp_do_call (exp, noside, callee, arg_view,
-				  nullptr, expect_type);
+  return evaluate_subexp_do_call (exp, noside, callee, arg_view, nullptr,
+                                  expect_type);
 }
 
 /* Helper for structop_base_operation::complete which recursively adds
@@ -973,7 +954,7 @@ structop_base_operation::evaluate_funcall
 
 static void
 add_struct_fields (struct type *type, completion_list &output,
-		   const char *fieldname, int namelen, const char *prefix)
+                   const char *fieldname, int namelen, const char *prefix)
 {
   int i;
   int computed_type_name = 0;
@@ -983,41 +964,40 @@ add_struct_fields (struct type *type, completion_list &output,
   for (i = 0; i < type->num_fields (); ++i)
     {
       if (i < TYPE_N_BASECLASSES (type))
-	add_struct_fields (TYPE_BASECLASS (type, i),
-			   output, fieldname, namelen, prefix);
+        add_struct_fields (TYPE_BASECLASS (type, i), output, fieldname,
+                           namelen, prefix);
       else if (type->field (i).name ())
-	{
-	  if (type->field (i).name ()[0] != '\0')
-	    {
-	      if (! strncmp (type->field (i).name (),
-			     fieldname, namelen))
-		output.emplace_back (concat (prefix, type->field (i).name (),
-					     nullptr));
-	    }
-	  else if (type->field (i).type ()->code () == TYPE_CODE_UNION)
-	    {
-	      /* Recurse into anonymous unions.  */
-	      add_struct_fields (type->field (i).type (),
-				 output, fieldname, namelen, prefix);
-	    }
-	}
+        {
+          if (type->field (i).name ()[0] != '\0')
+            {
+              if (!strncmp (type->field (i).name (), fieldname, namelen))
+                output.emplace_back (
+                  concat (prefix, type->field (i).name (), nullptr));
+            }
+          else if (type->field (i).type ()->code () == TYPE_CODE_UNION)
+            {
+              /* Recurse into anonymous unions.  */
+              add_struct_fields (type->field (i).type (), output, fieldname,
+                                 namelen, prefix);
+            }
+        }
     }
 
   for (i = TYPE_NFN_FIELDS (type) - 1; i >= 0; --i)
     {
       const char *name = TYPE_FN_FIELDLIST_NAME (type, i);
 
-      if (name && ! strncmp (name, fieldname, namelen))
-	{
-	  if (!computed_type_name)
-	    {
-	      type_name = type->name ();
-	      computed_type_name = 1;
-	    }
-	  /* Omit constructors from the completion list.  */
-	  if (!type_name || strcmp (type_name, name))
-	    output.emplace_back (concat (prefix, name, nullptr));
-	}
+      if (name && !strncmp (name, fieldname, namelen))
+        {
+          if (!computed_type_name)
+            {
+              type_name = type->name ();
+              computed_type_name = 1;
+            }
+          /* Omit constructors from the completion list.  */
+          if (!type_name || strcmp (type_name, name))
+            output.emplace_back (concat (prefix, name, nullptr));
+        }
     }
 }
 
@@ -1025,29 +1005,28 @@ add_struct_fields (struct type *type, completion_list &output,
 
 bool
 structop_base_operation::complete (struct expression *exp,
-				   completion_tracker &tracker,
-				   const char *prefix)
+                                   completion_tracker &tracker,
+                                   const char *prefix)
 {
   const std::string &fieldname = std::get<1> (m_storage);
 
   value *lhs = std::get<0> (m_storage)->evaluate (nullptr, exp,
-						  EVAL_AVOID_SIDE_EFFECTS);
+                                                  EVAL_AVOID_SIDE_EFFECTS);
   struct type *type = value_type (lhs);
   for (;;)
     {
       type = check_typedef (type);
       if (!type->is_pointer_or_reference ())
-	break;
+        break;
       type = type->target_type ();
     }
 
-  if (type->code () == TYPE_CODE_UNION
-      || type->code () == TYPE_CODE_STRUCT)
+  if (type->code () == TYPE_CODE_UNION || type->code () == TYPE_CODE_STRUCT)
     {
       completion_list result;
 
-      add_struct_fields (type, result, fieldname.c_str (),
-			 fieldname.length (), prefix);
+      add_struct_fields (type, result, fieldname.c_str (), fieldname.length (),
+                         prefix);
       tracker.add_completions (std::move (result));
       return true;
     }
@@ -1066,22 +1045,20 @@ is_integral_or_integral_reference (struct type *type)
     return true;
 
   type = check_typedef (type);
-  return (type != nullptr
-	  && TYPE_IS_REFERENCE (type)
-	  && is_integral_type (type->target_type ()));
+  return (type != nullptr && TYPE_IS_REFERENCE (type)
+          && is_integral_type (type->target_type ()));
 }
 
 /* Helper function that implements the body of OP_SCOPE.  */
 
 struct value *
 eval_op_scope (struct type *expect_type, struct expression *exp,
-	       enum noside noside,
-	       struct type *type, const char *string)
+               enum noside noside, struct type *type, const char *string)
 {
-  struct value *arg1 = value_aggregate_elt (type, string, expect_type,
-					    0, noside);
+  struct value *arg1
+    = value_aggregate_elt (type, string, expect_type, 0, noside);
   if (arg1 == NULL)
-    error (_("There is no field named %s"), string);
+    error (_ ("There is no field named %s"), string);
   return arg1;
 }
 
@@ -1089,15 +1066,15 @@ eval_op_scope (struct type *expect_type, struct expression *exp,
 
 struct value *
 eval_op_var_entry_value (struct type *expect_type, struct expression *exp,
-			 enum noside noside, symbol *sym)
+                         enum noside noside, symbol *sym)
 {
   if (noside == EVAL_AVOID_SIDE_EFFECTS)
     return value_zero (sym->type (), not_lval);
 
   if (SYMBOL_COMPUTED_OPS (sym) == NULL
       || SYMBOL_COMPUTED_OPS (sym)->read_variable_at_entry == NULL)
-    error (_("Symbol \"%s\" does not have any specific entry value"),
-	   sym->print_name ());
+    error (_ ("Symbol \"%s\" does not have any specific entry value"),
+           sym->print_name ());
 
   frame_info_ptr frame = get_selected_frame (NULL);
   return SYMBOL_COMPUTED_OPS (sym)->read_variable_at_entry (sym, frame);
@@ -1107,11 +1084,11 @@ eval_op_var_entry_value (struct type *expect_type, struct expression *exp,
 
 struct value *
 eval_op_var_msym_value (struct type *expect_type, struct expression *exp,
-			enum noside noside, bool outermost_p,
-			bound_minimal_symbol msymbol)
+                        enum noside noside, bool outermost_p,
+                        bound_minimal_symbol msymbol)
 {
-  value *val = evaluate_var_msym_value (noside, msymbol.objfile,
-					msymbol.minsym);
+  value *val
+    = evaluate_var_msym_value (noside, msymbol.objfile, msymbol.minsym);
 
   struct type *type = value_type (val);
   if (type->code () == TYPE_CODE_ERROR
@@ -1124,14 +1101,13 @@ eval_op_var_msym_value (struct type *expect_type, struct expression *exp,
 
 struct value *
 eval_op_func_static_var (struct type *expect_type, struct expression *exp,
-			 enum noside noside,
-			 value *func, const char *var)
+                         enum noside noside, value *func, const char *var)
 {
   CORE_ADDR addr = value_address (func);
   const block *blk = block_for_pc (addr);
   struct block_symbol sym = lookup_symbol (var, blk, VAR_DOMAIN, NULL);
   if (sym.symbol == NULL)
-    error (_("No symbol \"%s\" in specified context."), var);
+    error (_ ("No symbol \"%s\" in specified context."), var);
   return evaluate_var_value (noside, sym.block, sym.symbol);
 }
 
@@ -1139,15 +1115,14 @@ eval_op_func_static_var (struct type *expect_type, struct expression *exp,
 
 struct value *
 eval_op_register (struct type *expect_type, struct expression *exp,
-		  enum noside noside, const char *name)
+                  enum noside noside, const char *name)
 {
   int regno;
   struct value *val;
 
-  regno = user_reg_map_name_to_regnum (exp->gdbarch,
-				       name, strlen (name));
+  regno = user_reg_map_name_to_regnum (exp->gdbarch, name, strlen (name));
   if (regno == -1)
-    error (_("Register $%s not available."), name);
+    error (_ ("Register $%s not available."), name);
 
   /* In EVAL_AVOID_SIDE_EFFECTS mode, we only need to return
      a value with the appropriate register type.  Unfortunately,
@@ -1160,7 +1135,7 @@ eval_op_register (struct type *expect_type, struct expression *exp,
   else
     val = value_of_register (regno, get_selected_frame (NULL));
   if (val == NULL)
-    error (_("Value of register %s not available."), name);
+    error (_ ("Value of register %s not available."), name);
   else
     return val;
 }
@@ -1169,13 +1144,12 @@ namespace expr
 {
 
 value *
-string_operation::evaluate (struct type *expect_type,
-			    struct expression *exp,
-			    enum noside noside)
+string_operation::evaluate (struct type *expect_type, struct expression *exp,
+                            enum noside noside)
 {
   const std::string &str = std::get<0> (m_storage);
-  struct type *type = language_string_char_type (exp->language_defn,
-						 exp->gdbarch);
+  struct type *type
+    = language_string_char_type (exp->language_defn, exp->gdbarch);
   return value_string (str.c_str (), str.size (), type);
 }
 
@@ -1185,20 +1159,19 @@ string_operation::evaluate (struct type *expect_type,
 
 struct value *
 eval_op_objc_selector (struct type *expect_type, struct expression *exp,
-		       enum noside noside,
-		       const char *sel)
+                       enum noside noside, const char *sel)
 {
   struct type *selector_type = builtin_type (exp->gdbarch)->builtin_data_ptr;
   return value_from_longest (selector_type,
-			     lookup_child_selector (exp->gdbarch, sel));
+                             lookup_child_selector (exp->gdbarch, sel));
 }
 
 /* A helper function for TERNOP_SLICE.  */
 
 struct value *
 eval_op_ternop (struct type *expect_type, struct expression *exp,
-		enum noside noside,
-		struct value *array, struct value *low, struct value *upper)
+                enum noside noside, struct value *array, struct value *low,
+                struct value *upper)
 {
   int lowbound = value_as_long (low);
   int upperbound = value_as_long (upper);
@@ -1209,11 +1182,10 @@ eval_op_ternop (struct type *expect_type, struct expression *exp,
 
 struct value *
 eval_op_structop_struct (struct type *expect_type, struct expression *exp,
-			 enum noside noside,
-			 struct value *arg1, const char *string)
+                         enum noside noside, struct value *arg1,
+                         const char *string)
 {
-  struct value *arg3 = value_struct_elt (&arg1, {}, string,
-					 NULL, "structure");
+  struct value *arg3 = value_struct_elt (&arg1, {}, string, NULL, "structure");
   if (noside == EVAL_AVOID_SIDE_EFFECTS)
     arg3 = value_zero (value_type (arg3), VALUE_LVAL (arg3));
   return arg3;
@@ -1223,8 +1195,8 @@ eval_op_structop_struct (struct type *expect_type, struct expression *exp,
 
 struct value *
 eval_op_structop_ptr (struct type *expect_type, struct expression *exp,
-		      enum noside noside,
-		      struct value *arg1, const char *string)
+                      enum noside noside, struct value *arg1,
+                      const char *string)
 {
   /* Check to see if operator '->' has been overloaded.  If so replace
      arg1 with the value returned by evaluating operator->().  */
@@ -1232,17 +1204,17 @@ eval_op_structop_ptr (struct type *expect_type, struct expression *exp,
     {
       struct value *value = NULL;
       try
-	{
-	  value = value_x_unop (arg1, STRUCTOP_PTR, noside);
-	}
+        {
+          value = value_x_unop (arg1, STRUCTOP_PTR, noside);
+        }
 
       catch (const gdb_exception_error &except)
-	{
-	  if (except.error == NOT_FOUND_ERROR)
-	    break;
-	  else
-	    throw;
-	}
+        {
+          if (except.error == NOT_FOUND_ERROR)
+            break;
+          else
+            throw;
+        }
 
       arg1 = value;
     }
@@ -1259,17 +1231,16 @@ eval_op_structop_ptr (struct type *expect_type, struct expression *exp,
 
     get_user_print_options (&opts);
     if (opts.objectprint && arg_type->target_type ()
-	&& (arg_type->target_type ()->code () == TYPE_CODE_STRUCT))
+        && (arg_type->target_type ()->code () == TYPE_CODE_STRUCT))
       {
-	real_type = value_rtti_indirect_type (arg1, &full, &top,
-					      &using_enc);
-	if (real_type)
-	  arg1 = value_cast (real_type, arg1);
+        real_type = value_rtti_indirect_type (arg1, &full, &top, &using_enc);
+        if (real_type)
+          arg1 = value_cast (real_type, arg1);
       }
   }
 
-  struct value *arg3 = value_struct_elt (&arg1, {}, string,
-					 NULL, "structure pointer");
+  struct value *arg3
+    = value_struct_elt (&arg1, {}, string, NULL, "structure pointer");
   if (noside == EVAL_AVOID_SIDE_EFFECTS)
     arg3 = value_zero (value_type (arg3), VALUE_LVAL (arg3));
   return arg3;
@@ -1279,8 +1250,7 @@ eval_op_structop_ptr (struct type *expect_type, struct expression *exp,
 
 struct value *
 eval_op_member (struct type *expect_type, struct expression *exp,
-		enum noside noside,
-		struct value *arg1, struct value *arg2)
+                enum noside noside, struct value *arg1, struct value *arg2)
 {
   long mem_offset;
 
@@ -1290,28 +1260,28 @@ eval_op_member (struct type *expect_type, struct expression *exp,
     {
     case TYPE_CODE_METHODPTR:
       if (noside == EVAL_AVOID_SIDE_EFFECTS)
-	return value_zero (type->target_type (), not_lval);
+        return value_zero (type->target_type (), not_lval);
       else
-	{
-	  arg2 = cplus_method_ptr_to_value (&arg1, arg2);
-	  gdb_assert (value_type (arg2)->code () == TYPE_CODE_PTR);
-	  return value_ind (arg2);
-	}
+        {
+          arg2 = cplus_method_ptr_to_value (&arg1, arg2);
+          gdb_assert (value_type (arg2)->code () == TYPE_CODE_PTR);
+          return value_ind (arg2);
+        }
 
     case TYPE_CODE_MEMBERPTR:
       /* Now, convert these values to an address.  */
       arg1 = value_cast_pointers (lookup_pointer_type (TYPE_SELF_TYPE (type)),
-				  arg1, 1);
+                                  arg1, 1);
 
       mem_offset = value_as_long (arg2);
 
       arg3 = value_from_pointer (lookup_pointer_type (type->target_type ()),
-				 value_as_long (arg1) + mem_offset);
+                                 value_as_long (arg1) + mem_offset);
       return value_ind (arg3);
 
     default:
-      error (_("non-pointer-to-member value used "
-	       "in pointer-to-member construct"));
+      error (_ ("non-pointer-to-member value used "
+                "in pointer-to-member construct"));
     }
 }
 
@@ -1319,16 +1289,15 @@ eval_op_member (struct type *expect_type, struct expression *exp,
 
 struct value *
 eval_op_add (struct type *expect_type, struct expression *exp,
-	     enum noside noside,
-	     struct value *arg1, struct value *arg2)
+             enum noside noside, struct value *arg1, struct value *arg2)
 {
   if (binop_user_defined_p (BINOP_ADD, arg1, arg2))
     return value_x_binop (arg1, arg2, BINOP_ADD, OP_NULL, noside);
   else if (ptrmath_type_p (exp->language_defn, value_type (arg1))
-	   && is_integral_or_integral_reference (value_type (arg2)))
+           && is_integral_or_integral_reference (value_type (arg2)))
     return value_ptradd (arg1, value_as_long (arg2));
   else if (ptrmath_type_p (exp->language_defn, value_type (arg2))
-	   && is_integral_or_integral_reference (value_type (arg1)))
+           && is_integral_or_integral_reference (value_type (arg1)))
     return value_ptradd (arg2, value_as_long (arg1));
   else
     {
@@ -1341,21 +1310,20 @@ eval_op_add (struct type *expect_type, struct expression *exp,
 
 struct value *
 eval_op_sub (struct type *expect_type, struct expression *exp,
-	     enum noside noside,
-	     struct value *arg1, struct value *arg2)
+             enum noside noside, struct value *arg1, struct value *arg2)
 {
   if (binop_user_defined_p (BINOP_SUB, arg1, arg2))
     return value_x_binop (arg1, arg2, BINOP_SUB, OP_NULL, noside);
   else if (ptrmath_type_p (exp->language_defn, value_type (arg1))
-	   && ptrmath_type_p (exp->language_defn, value_type (arg2)))
+           && ptrmath_type_p (exp->language_defn, value_type (arg2)))
     {
       /* FIXME -- should be ptrdiff_t */
       struct type *type = builtin_type (exp->gdbarch)->builtin_long;
       return value_from_longest (type, value_ptrdiff (arg1, arg2));
     }
   else if (ptrmath_type_p (exp->language_defn, value_type (arg1))
-	   && is_integral_or_integral_reference (value_type (arg2)))
-    return value_ptradd (arg1, - value_as_long (arg2));
+           && is_integral_or_integral_reference (value_type (arg2)))
+    return value_ptradd (arg1, -value_as_long (arg2));
   else
     {
       binop_promote (exp->language_defn, exp->gdbarch, &arg1, &arg2);
@@ -1367,8 +1335,8 @@ eval_op_sub (struct type *expect_type, struct expression *exp,
 
 struct value *
 eval_op_binary (struct type *expect_type, struct expression *exp,
-		enum noside noside, enum exp_opcode op,
-		struct value *arg1, struct value *arg2)
+                enum noside noside, enum exp_opcode op, struct value *arg1,
+                struct value *arg2)
 {
   if (binop_user_defined_p (op, arg1, arg2))
     return value_x_binop (arg1, arg2, op, OP_NULL, noside);
@@ -1378,33 +1346,31 @@ eval_op_binary (struct type *expect_type, struct expression *exp,
 	 fudge arg2 to avoid division-by-zero, the caller is
 	 (theoretically) only looking for the type of the result.  */
       if (noside == EVAL_AVOID_SIDE_EFFECTS
-	  /* ??? Do we really want to test for BINOP_MOD here?
+          /* ??? Do we really want to test for BINOP_MOD here?
 	     The implementation of value_binop gives it a well-defined
 	     value.  */
-	  && (op == BINOP_DIV
-	      || op == BINOP_INTDIV
-	      || op == BINOP_REM
-	      || op == BINOP_MOD)
-	  && value_logical_not (arg2))
-	{
-	  struct value *v_one;
+          && (op == BINOP_DIV || op == BINOP_INTDIV || op == BINOP_REM
+              || op == BINOP_MOD)
+          && value_logical_not (arg2))
+        {
+          struct value *v_one;
 
-	  v_one = value_one (value_type (arg2));
-	  binop_promote (exp->language_defn, exp->gdbarch, &arg1, &v_one);
-	  return value_binop (arg1, v_one, op);
-	}
+          v_one = value_one (value_type (arg2));
+          binop_promote (exp->language_defn, exp->gdbarch, &arg1, &v_one);
+          return value_binop (arg1, v_one, op);
+        }
       else
-	{
-	  /* For shift and integer exponentiation operations,
+        {
+          /* For shift and integer exponentiation operations,
 	     only promote the first argument.  */
-	  if ((op == BINOP_LSH || op == BINOP_RSH || op == BINOP_EXP)
-	      && is_integral_type (value_type (arg2)))
-	    unop_promote (exp->language_defn, exp->gdbarch, &arg1);
-	  else
-	    binop_promote (exp->language_defn, exp->gdbarch, &arg1, &arg2);
+          if ((op == BINOP_LSH || op == BINOP_RSH || op == BINOP_EXP)
+              && is_integral_type (value_type (arg2)))
+            unop_promote (exp->language_defn, exp->gdbarch, &arg1);
+          else
+            binop_promote (exp->language_defn, exp->gdbarch, &arg1, &arg2);
 
-	  return value_binop (arg1, arg2, op);
-	}
+          return value_binop (arg1, arg2, op);
+        }
     }
 }
 
@@ -1412,8 +1378,8 @@ eval_op_binary (struct type *expect_type, struct expression *exp,
 
 struct value *
 eval_op_subscript (struct type *expect_type, struct expression *exp,
-		   enum noside noside, enum exp_opcode op,
-		   struct value *arg1, struct value *arg2)
+                   enum noside noside, enum exp_opcode op, struct value *arg1,
+                   struct value *arg2)
 {
   if (binop_user_defined_p (op, arg1, arg2))
     return value_x_binop (arg1, arg2, op, OP_NULL, noside);
@@ -1425,20 +1391,19 @@ eval_op_subscript (struct type *expect_type, struct expression *exp,
 
       arg1 = coerce_ref (arg1);
       struct type *type = check_typedef (value_type (arg1));
-      if (type->code () != TYPE_CODE_ARRAY
-	  && type->code () != TYPE_CODE_PTR)
-	{
-	  if (type->name ())
-	    error (_("cannot subscript something of type `%s'"),
-		   type->name ());
-	  else
-	    error (_("cannot subscript requested type"));
-	}
+      if (type->code () != TYPE_CODE_ARRAY && type->code () != TYPE_CODE_PTR)
+        {
+          if (type->name ())
+            error (_ ("cannot subscript something of type `%s'"),
+                   type->name ());
+          else
+            error (_ ("cannot subscript requested type"));
+        }
 
       if (noside == EVAL_AVOID_SIDE_EFFECTS)
-	return value_zero (type->target_type (), VALUE_LVAL (arg1));
+        return value_zero (type->target_type (), VALUE_LVAL (arg1));
       else
-	return value_subscript (arg1, value_as_long (arg2));
+        return value_subscript (arg1, value_as_long (arg2));
     }
 }
 
@@ -1446,8 +1411,8 @@ eval_op_subscript (struct type *expect_type, struct expression *exp,
 
 struct value *
 eval_op_equal (struct type *expect_type, struct expression *exp,
-	       enum noside noside, enum exp_opcode op,
-	       struct value *arg1, struct value *arg2)
+               enum noside noside, enum exp_opcode op, struct value *arg1,
+               struct value *arg2)
 {
   if (binop_user_defined_p (op, arg1, arg2))
     {
@@ -1457,8 +1422,8 @@ eval_op_equal (struct type *expect_type, struct expression *exp,
     {
       binop_promote (exp->language_defn, exp->gdbarch, &arg1, &arg2);
       int tem = value_equal (arg1, arg2);
-      struct type *type = language_bool_type (exp->language_defn,
-					      exp->gdbarch);
+      struct type *type
+        = language_bool_type (exp->language_defn, exp->gdbarch);
       return value_from_longest (type, (LONGEST) tem);
     }
 }
@@ -1467,8 +1432,8 @@ eval_op_equal (struct type *expect_type, struct expression *exp,
 
 struct value *
 eval_op_notequal (struct type *expect_type, struct expression *exp,
-		  enum noside noside, enum exp_opcode op,
-		  struct value *arg1, struct value *arg2)
+                  enum noside noside, enum exp_opcode op, struct value *arg1,
+                  struct value *arg2)
 {
   if (binop_user_defined_p (op, arg1, arg2))
     {
@@ -1478,9 +1443,9 @@ eval_op_notequal (struct type *expect_type, struct expression *exp,
     {
       binop_promote (exp->language_defn, exp->gdbarch, &arg1, &arg2);
       int tem = value_equal (arg1, arg2);
-      struct type *type = language_bool_type (exp->language_defn,
-					      exp->gdbarch);
-      return value_from_longest (type, (LONGEST) ! tem);
+      struct type *type
+        = language_bool_type (exp->language_defn, exp->gdbarch);
+      return value_from_longest (type, (LONGEST) !tem);
     }
 }
 
@@ -1488,8 +1453,8 @@ eval_op_notequal (struct type *expect_type, struct expression *exp,
 
 struct value *
 eval_op_less (struct type *expect_type, struct expression *exp,
-	      enum noside noside, enum exp_opcode op,
-	      struct value *arg1, struct value *arg2)
+              enum noside noside, enum exp_opcode op, struct value *arg1,
+              struct value *arg2)
 {
   if (binop_user_defined_p (op, arg1, arg2))
     {
@@ -1499,8 +1464,8 @@ eval_op_less (struct type *expect_type, struct expression *exp,
     {
       binop_promote (exp->language_defn, exp->gdbarch, &arg1, &arg2);
       int tem = value_less (arg1, arg2);
-      struct type *type = language_bool_type (exp->language_defn,
-					      exp->gdbarch);
+      struct type *type
+        = language_bool_type (exp->language_defn, exp->gdbarch);
       return value_from_longest (type, (LONGEST) tem);
     }
 }
@@ -1509,8 +1474,8 @@ eval_op_less (struct type *expect_type, struct expression *exp,
 
 struct value *
 eval_op_gtr (struct type *expect_type, struct expression *exp,
-	     enum noside noside, enum exp_opcode op,
-	     struct value *arg1, struct value *arg2)
+             enum noside noside, enum exp_opcode op, struct value *arg1,
+             struct value *arg2)
 {
   if (binop_user_defined_p (op, arg1, arg2))
     {
@@ -1520,8 +1485,8 @@ eval_op_gtr (struct type *expect_type, struct expression *exp,
     {
       binop_promote (exp->language_defn, exp->gdbarch, &arg1, &arg2);
       int tem = value_less (arg2, arg1);
-      struct type *type = language_bool_type (exp->language_defn,
-					      exp->gdbarch);
+      struct type *type
+        = language_bool_type (exp->language_defn, exp->gdbarch);
       return value_from_longest (type, (LONGEST) tem);
     }
 }
@@ -1530,8 +1495,8 @@ eval_op_gtr (struct type *expect_type, struct expression *exp,
 
 struct value *
 eval_op_geq (struct type *expect_type, struct expression *exp,
-	     enum noside noside, enum exp_opcode op,
-	     struct value *arg1, struct value *arg2)
+             enum noside noside, enum exp_opcode op, struct value *arg1,
+             struct value *arg2)
 {
   if (binop_user_defined_p (op, arg1, arg2))
     {
@@ -1541,8 +1506,8 @@ eval_op_geq (struct type *expect_type, struct expression *exp,
     {
       binop_promote (exp->language_defn, exp->gdbarch, &arg1, &arg2);
       int tem = value_less (arg2, arg1) || value_equal (arg1, arg2);
-      struct type *type = language_bool_type (exp->language_defn,
-					      exp->gdbarch);
+      struct type *type
+        = language_bool_type (exp->language_defn, exp->gdbarch);
       return value_from_longest (type, (LONGEST) tem);
     }
 }
@@ -1551,8 +1516,8 @@ eval_op_geq (struct type *expect_type, struct expression *exp,
 
 struct value *
 eval_op_leq (struct type *expect_type, struct expression *exp,
-	     enum noside noside, enum exp_opcode op,
-	     struct value *arg1, struct value *arg2)
+             enum noside noside, enum exp_opcode op, struct value *arg1,
+             struct value *arg2)
 {
   if (binop_user_defined_p (op, arg1, arg2))
     {
@@ -1562,8 +1527,8 @@ eval_op_leq (struct type *expect_type, struct expression *exp,
     {
       binop_promote (exp->language_defn, exp->gdbarch, &arg1, &arg2);
       int tem = value_less (arg1, arg2) || value_equal (arg1, arg2);
-      struct type *type = language_bool_type (exp->language_defn,
-					      exp->gdbarch);
+      struct type *type
+        = language_bool_type (exp->language_defn, exp->gdbarch);
       return value_from_longest (type, (LONGEST) tem);
     }
 }
@@ -1572,17 +1537,16 @@ eval_op_leq (struct type *expect_type, struct expression *exp,
 
 struct value *
 eval_op_repeat (struct type *expect_type, struct expression *exp,
-		enum noside noside, enum exp_opcode op,
-		struct value *arg1, struct value *arg2)
+                enum noside noside, enum exp_opcode op, struct value *arg1,
+                struct value *arg2)
 {
   struct type *type = check_typedef (value_type (arg2));
-  if (type->code () != TYPE_CODE_INT
-      && type->code () != TYPE_CODE_ENUM)
-    error (_("Non-integral right operand for \"@\" operator."));
+  if (type->code () != TYPE_CODE_INT && type->code () != TYPE_CODE_ENUM)
+    error (_ ("Non-integral right operand for \"@\" operator."));
   if (noside == EVAL_AVOID_SIDE_EFFECTS)
     {
       return allocate_repeat_value (value_type (arg1),
-				    longest_to_int (value_as_long (arg2)));
+                                    longest_to_int (value_as_long (arg2)));
     }
   else
     return value_repeat (arg1, longest_to_int (value_as_long (arg2)));
@@ -1592,8 +1556,7 @@ eval_op_repeat (struct type *expect_type, struct expression *exp,
 
 struct value *
 eval_op_plus (struct type *expect_type, struct expression *exp,
-	      enum noside noside, enum exp_opcode op,
-	      struct value *arg1)
+              enum noside noside, enum exp_opcode op, struct value *arg1)
 {
   if (unop_user_defined_p (op, arg1))
     return value_x_unop (arg1, op, noside);
@@ -1608,8 +1571,7 @@ eval_op_plus (struct type *expect_type, struct expression *exp,
 
 struct value *
 eval_op_neg (struct type *expect_type, struct expression *exp,
-	     enum noside noside, enum exp_opcode op,
-	     struct value *arg1)
+             enum noside noside, enum exp_opcode op, struct value *arg1)
 {
   if (unop_user_defined_p (op, arg1))
     return value_x_unop (arg1, op, noside);
@@ -1624,8 +1586,7 @@ eval_op_neg (struct type *expect_type, struct expression *exp,
 
 struct value *
 eval_op_complement (struct type *expect_type, struct expression *exp,
-		    enum noside noside, enum exp_opcode op,
-		    struct value *arg1)
+                    enum noside noside, enum exp_opcode op, struct value *arg1)
 {
   if (unop_user_defined_p (UNOP_COMPLEMENT, arg1))
     return value_x_unop (arg1, UNOP_COMPLEMENT, noside);
@@ -1640,15 +1601,14 @@ eval_op_complement (struct type *expect_type, struct expression *exp,
 
 struct value *
 eval_op_lognot (struct type *expect_type, struct expression *exp,
-		enum noside noside, enum exp_opcode op,
-		struct value *arg1)
+                enum noside noside, enum exp_opcode op, struct value *arg1)
 {
   if (unop_user_defined_p (op, arg1))
     return value_x_unop (arg1, op, noside);
   else
     {
-      struct type *type = language_bool_type (exp->language_defn,
-					      exp->gdbarch);
+      struct type *type
+        = language_bool_type (exp->language_defn, exp->gdbarch);
       return value_from_longest (type, (LONGEST) value_logical_not (arg1));
     }
 }
@@ -1657,14 +1617,13 @@ eval_op_lognot (struct type *expect_type, struct expression *exp,
 
 struct value *
 eval_op_ind (struct type *expect_type, struct expression *exp,
-	     enum noside noside,
-	     struct value *arg1)
+             enum noside noside, struct value *arg1)
 {
   struct type *type = check_typedef (value_type (arg1));
   if (type->code () == TYPE_CODE_METHODPTR
       || type->code () == TYPE_CODE_MEMBERPTR)
-    error (_("Attempt to dereference pointer "
-	     "to member without an object"));
+    error (_ ("Attempt to dereference pointer "
+              "to member without an object"));
   if (unop_user_defined_p (UNOP_IND, arg1))
     return value_x_unop (arg1, UNOP_IND, noside);
   else if (noside == EVAL_AVOID_SIDE_EFFECTS)
@@ -1677,20 +1636,19 @@ eval_op_ind (struct type *expect_type, struct expression *exp,
 	 in the inferior, but being able to print accurate type
 	 information seems worth the risk. */
       if (!type->is_pointer_or_reference ()
-	  || !is_dynamic_type (type->target_type ()))
-	{
-	  if (type->is_pointer_or_reference ()
-	      /* In C you can dereference an array to get the 1st elt.  */
-	      || type->code () == TYPE_CODE_ARRAY)
-	    return value_zero (type->target_type (),
-			       lval_memory);
-	  else if (type->code () == TYPE_CODE_INT)
-	    /* GDB allows dereferencing an int.  */
-	    return value_zero (builtin_type (exp->gdbarch)->builtin_int,
-			       lval_memory);
-	  else
-	    error (_("Attempt to take contents of a non-pointer value."));
-	}
+          || !is_dynamic_type (type->target_type ()))
+        {
+          if (type->is_pointer_or_reference ()
+              /* In C you can dereference an array to get the 1st elt.  */
+              || type->code () == TYPE_CODE_ARRAY)
+            return value_zero (type->target_type (), lval_memory);
+          else if (type->code () == TYPE_CODE_INT)
+            /* GDB allows dereferencing an int.  */
+            return value_zero (builtin_type (exp->gdbarch)->builtin_int,
+                               lval_memory);
+          else
+            error (_ ("Attempt to take contents of a non-pointer value."));
+        }
     }
 
   /* Allow * on an integer so we can cast it to whatever we want.
@@ -1699,7 +1657,7 @@ eval_op_ind (struct type *expect_type, struct expression *exp,
      BUILTIN_TYPE_LONGEST would seem to be a mistake.  */
   if (type->code () == TYPE_CODE_INT)
     return value_at_lazy (builtin_type (exp->gdbarch)->builtin_int,
-			  (CORE_ADDR) value_as_address (arg1));
+                          (CORE_ADDR) value_as_address (arg1));
   return value_ind (arg1);
 }
 
@@ -1707,15 +1665,14 @@ eval_op_ind (struct type *expect_type, struct expression *exp,
 
 struct value *
 eval_op_alignof (struct type *expect_type, struct expression *exp,
-		 enum noside noside,
-		 struct value *arg1)
+                 enum noside noside, struct value *arg1)
 {
   struct type *type = value_type (arg1);
   /* FIXME: This should be size_t.  */
   struct type *size_type = builtin_type (exp->gdbarch)->builtin_int;
   ULONGEST align = type_align (type);
   if (align == 0)
-    error (_("could not determine alignment of type"));
+    error (_ ("could not determine alignment of type"));
   return value_from_longest (size_type, align);
 }
 
@@ -1723,8 +1680,7 @@ eval_op_alignof (struct type *expect_type, struct expression *exp,
 
 struct value *
 eval_op_memval (struct type *expect_type, struct expression *exp,
-		enum noside noside,
-		struct value *arg1, struct type *type)
+                enum noside noside, struct value *arg1, struct type *type)
 {
   if (noside == EVAL_AVOID_SIDE_EFFECTS)
     return value_zero (type, lval_memory);
@@ -1736,8 +1692,7 @@ eval_op_memval (struct type *expect_type, struct expression *exp,
 
 struct value *
 eval_op_preinc (struct type *expect_type, struct expression *exp,
-		enum noside noside, enum exp_opcode op,
-		struct value *arg1)
+                enum noside noside, enum exp_opcode op, struct value *arg1)
 {
   if (noside == EVAL_AVOID_SIDE_EFFECTS)
     return arg1;
@@ -1749,15 +1704,15 @@ eval_op_preinc (struct type *expect_type, struct expression *exp,
     {
       struct value *arg2;
       if (ptrmath_type_p (exp->language_defn, value_type (arg1)))
-	arg2 = value_ptradd (arg1, 1);
+        arg2 = value_ptradd (arg1, 1);
       else
-	{
-	  struct value *tmp = arg1;
+        {
+          struct value *tmp = arg1;
 
-	  arg2 = value_one (value_type (arg1));
-	  binop_promote (exp->language_defn, exp->gdbarch, &tmp, &arg2);
-	  arg2 = value_binop (tmp, arg2, BINOP_ADD);
-	}
+          arg2 = value_one (value_type (arg1));
+          binop_promote (exp->language_defn, exp->gdbarch, &tmp, &arg2);
+          arg2 = value_binop (tmp, arg2, BINOP_ADD);
+        }
 
       return value_assign (arg1, arg2);
     }
@@ -1767,8 +1722,7 @@ eval_op_preinc (struct type *expect_type, struct expression *exp,
 
 struct value *
 eval_op_predec (struct type *expect_type, struct expression *exp,
-		enum noside noside, enum exp_opcode op,
-		struct value *arg1)
+                enum noside noside, enum exp_opcode op, struct value *arg1)
 {
   if (noside == EVAL_AVOID_SIDE_EFFECTS)
     return arg1;
@@ -1780,15 +1734,15 @@ eval_op_predec (struct type *expect_type, struct expression *exp,
     {
       struct value *arg2;
       if (ptrmath_type_p (exp->language_defn, value_type (arg1)))
-	arg2 = value_ptradd (arg1, -1);
+        arg2 = value_ptradd (arg1, -1);
       else
-	{
-	  struct value *tmp = arg1;
+        {
+          struct value *tmp = arg1;
 
-	  arg2 = value_one (value_type (arg1));
-	  binop_promote (exp->language_defn, exp->gdbarch, &tmp, &arg2);
-	  arg2 = value_binop (tmp, arg2, BINOP_SUB);
-	}
+          arg2 = value_one (value_type (arg1));
+          binop_promote (exp->language_defn, exp->gdbarch, &tmp, &arg2);
+          arg2 = value_binop (tmp, arg2, BINOP_SUB);
+        }
 
       return value_assign (arg1, arg2);
     }
@@ -1798,8 +1752,7 @@ eval_op_predec (struct type *expect_type, struct expression *exp,
 
 struct value *
 eval_op_postinc (struct type *expect_type, struct expression *exp,
-		 enum noside noside, enum exp_opcode op,
-		 struct value *arg1)
+                 enum noside noside, enum exp_opcode op, struct value *arg1)
 {
   if (noside == EVAL_AVOID_SIDE_EFFECTS)
     return arg1;
@@ -1813,15 +1766,15 @@ eval_op_postinc (struct type *expect_type, struct expression *exp,
       struct value *arg2;
 
       if (ptrmath_type_p (exp->language_defn, value_type (arg1)))
-	arg2 = value_ptradd (arg1, 1);
+        arg2 = value_ptradd (arg1, 1);
       else
-	{
-	  struct value *tmp = arg1;
+        {
+          struct value *tmp = arg1;
 
-	  arg2 = value_one (value_type (arg1));
-	  binop_promote (exp->language_defn, exp->gdbarch, &tmp, &arg2);
-	  arg2 = value_binop (tmp, arg2, BINOP_ADD);
-	}
+          arg2 = value_one (value_type (arg1));
+          binop_promote (exp->language_defn, exp->gdbarch, &tmp, &arg2);
+          arg2 = value_binop (tmp, arg2, BINOP_ADD);
+        }
 
       value_assign (arg1, arg2);
       return arg3;
@@ -1832,8 +1785,7 @@ eval_op_postinc (struct type *expect_type, struct expression *exp,
 
 struct value *
 eval_op_postdec (struct type *expect_type, struct expression *exp,
-		 enum noside noside, enum exp_opcode op,
-		 struct value *arg1)
+                 enum noside noside, enum exp_opcode op, struct value *arg1)
 {
   if (noside == EVAL_AVOID_SIDE_EFFECTS)
     return arg1;
@@ -1847,15 +1799,15 @@ eval_op_postdec (struct type *expect_type, struct expression *exp,
       struct value *arg2;
 
       if (ptrmath_type_p (exp->language_defn, value_type (arg1)))
-	arg2 = value_ptradd (arg1, -1);
+        arg2 = value_ptradd (arg1, -1);
       else
-	{
-	  struct value *tmp = arg1;
+        {
+          struct value *tmp = arg1;
 
-	  arg2 = value_one (value_type (arg1));
-	  binop_promote (exp->language_defn, exp->gdbarch, &tmp, &arg2);
-	  arg2 = value_binop (tmp, arg2, BINOP_SUB);
-	}
+          arg2 = value_one (value_type (arg1));
+          binop_promote (exp->language_defn, exp->gdbarch, &tmp, &arg2);
+          arg2 = value_binop (tmp, arg2, BINOP_SUB);
+        }
 
       value_assign (arg1, arg2);
       return arg3;
@@ -1866,33 +1818,33 @@ eval_op_postdec (struct type *expect_type, struct expression *exp,
 
 struct value *
 eval_op_type (struct type *expect_type, struct expression *exp,
-	      enum noside noside, struct type *type)
+              enum noside noside, struct type *type)
 {
   if (noside == EVAL_AVOID_SIDE_EFFECTS)
     return allocate_value (type);
   else
-    error (_("Attempt to use a type name as an expression"));
+    error (_ ("Attempt to use a type name as an expression"));
 }
 
 /* A helper function for BINOP_ASSIGN_MODIFY.  */
 
 struct value *
 eval_binop_assign_modify (struct type *expect_type, struct expression *exp,
-			  enum noside noside, enum exp_opcode op,
-			  struct value *arg1, struct value *arg2)
+                          enum noside noside, enum exp_opcode op,
+                          struct value *arg1, struct value *arg2)
 {
   if (noside == EVAL_AVOID_SIDE_EFFECTS)
     return arg1;
   if (binop_user_defined_p (op, arg1, arg2))
     return value_x_binop (arg1, arg2, BINOP_ASSIGN_MODIFY, op, noside);
-  else if (op == BINOP_ADD && ptrmath_type_p (exp->language_defn,
-					      value_type (arg1))
-	   && is_integral_type (value_type (arg2)))
+  else if (op == BINOP_ADD
+           && ptrmath_type_p (exp->language_defn, value_type (arg1))
+           && is_integral_type (value_type (arg2)))
     arg2 = value_ptradd (arg1, value_as_long (arg2));
-  else if (op == BINOP_SUB && ptrmath_type_p (exp->language_defn,
-					      value_type (arg1))
-	   && is_integral_type (value_type (arg2)))
-    arg2 = value_ptradd (arg1, - value_as_long (arg2));
+  else if (op == BINOP_SUB
+           && ptrmath_type_p (exp->language_defn, value_type (arg1))
+           && is_integral_type (value_type (arg2)))
+    arg2 = value_ptradd (arg1, -value_as_long (arg2));
   else
     {
       struct value *tmp = arg1;
@@ -1900,10 +1852,10 @@ eval_binop_assign_modify (struct type *expect_type, struct expression *exp,
       /* For shift and integer exponentiation operations,
 	 only promote the first argument.  */
       if ((op == BINOP_LSH || op == BINOP_RSH || op == BINOP_EXP)
-	  && is_integral_type (value_type (arg2)))
-	unop_promote (exp->language_defn, exp->gdbarch, &tmp);
+          && is_integral_type (value_type (arg2)))
+        unop_promote (exp->language_defn, exp->gdbarch, &tmp);
       else
-	binop_promote (exp->language_defn, exp->gdbarch, &tmp, &arg2);
+        binop_promote (exp->language_defn, exp->gdbarch, &tmp, &arg2);
 
       arg2 = value_binop (tmp, arg2, op);
     }
@@ -1914,8 +1866,8 @@ eval_binop_assign_modify (struct type *expect_type, struct expression *exp,
    null pointer.  */
 static struct value *
 eval_op_objc_msgcall (struct type *expect_type, struct expression *exp,
-		      enum noside noside, CORE_ADDR selector,
-		      value *target, gdb::array_view<value *> args)
+                      enum noside noside, CORE_ADDR selector, value *target,
+                      gdb::array_view<value *> args)
 {
   CORE_ADDR responds_selector = 0;
   CORE_ADDR method_selector = 0;
@@ -1965,19 +1917,17 @@ eval_op_objc_msgcall (struct type *expect_type, struct expression *exp,
       type = lookup_pointer_type (type);
 
       msg_send = find_function_in_inferior ("objc_msg_lookup", NULL);
-      msg_send_stret
-	= find_function_in_inferior ("objc_msg_lookup", NULL);
+      msg_send_stret = find_function_in_inferior ("objc_msg_lookup", NULL);
 
       msg_send = value_from_pointer (type, value_as_address (msg_send));
-      msg_send_stret = value_from_pointer (type,
-					   value_as_address (msg_send_stret));
+      msg_send_stret
+        = value_from_pointer (type, value_as_address (msg_send_stret));
     }
   else
     {
       msg_send = find_function_in_inferior ("objc_msgSend", NULL);
       /* Special dispatcher for methods returning structs.  */
-      msg_send_stret
-	= find_function_in_inferior ("objc_msgSend_stret", NULL);
+      msg_send_stret = find_function_in_inferior ("objc_msgSend_stret", NULL);
     }
 
   /* Verify the target object responds to this method.  The
@@ -1988,20 +1938,17 @@ eval_op_objc_msgcall (struct type *expect_type, struct expression *exp,
   responds_selector
     = lookup_child_selector (exp->gdbarch, "respondsToSelector:");
   if (responds_selector == 0)
-    responds_selector
-      = lookup_child_selector (exp->gdbarch, "respondsTo:");
+    responds_selector = lookup_child_selector (exp->gdbarch, "respondsTo:");
 
   if (responds_selector == 0)
-    error (_("no 'respondsTo:' or 'respondsToSelector:' method"));
+    error (_ ("no 'respondsTo:' or 'respondsToSelector:' method"));
 
-  method_selector
-    = lookup_child_selector (exp->gdbarch, "methodForSelector:");
+  method_selector = lookup_child_selector (exp->gdbarch, "methodForSelector:");
   if (method_selector == 0)
-    method_selector
-      = lookup_child_selector (exp->gdbarch, "methodFor:");
+    method_selector = lookup_child_selector (exp->gdbarch, "methodFor:");
 
   if (method_selector == 0)
-    error (_("no 'methodFor:' or 'methodForSelector:' method"));
+    error (_ ("no 'methodFor:' or 'methodForSelector:' method"));
 
   /* Call the verification method, to make sure that the target
      class implements the desired method.  */
@@ -2012,15 +1959,15 @@ eval_op_objc_msgcall (struct type *expect_type, struct expression *exp,
   argvec[3] = value_from_longest (long_type, selector);
   argvec[4] = 0;
 
-  ret = call_function_by_hand (argvec[0], NULL, {argvec + 1, 3});
+  ret = call_function_by_hand (argvec[0], NULL, { argvec + 1, 3 });
   if (gnu_runtime)
     {
       /* Function objc_msg_lookup returns a pointer.  */
       argvec[0] = ret;
-      ret = call_function_by_hand (argvec[0], NULL, {argvec + 1, 3});
+      ret = call_function_by_hand (argvec[0], NULL, { argvec + 1, 3 });
     }
   if (value_as_long (ret) == 0)
-    error (_("Target does not respond to this message selector."));
+    error (_ ("Target does not respond to this message selector."));
 
   /* Call "methodForSelector:" method, to get the address of a
      function method that implements this selector for this
@@ -2034,11 +1981,11 @@ eval_op_objc_msgcall (struct type *expect_type, struct expression *exp,
   argvec[3] = value_from_longest (long_type, selector);
   argvec[4] = 0;
 
-  ret = call_function_by_hand (argvec[0], NULL, {argvec + 1, 3});
+  ret = call_function_by_hand (argvec[0], NULL, { argvec + 1, 3 });
   if (gnu_runtime)
     {
       argvec[0] = ret;
-      ret = call_function_by_hand (argvec[0], NULL, {argvec + 1, 3});
+      ret = call_function_by_hand (argvec[0], NULL, { argvec + 1, 3 });
     }
 
   /* ret should now be the selector.  */
@@ -2050,13 +1997,13 @@ eval_op_objc_msgcall (struct type *expect_type, struct expression *exp,
 
       /* The address might point to a function descriptor;
 	 resolve it to the actual code address instead.  */
-      addr = gdbarch_convert_from_func_ptr_addr
-	(exp->gdbarch, addr, current_inferior ()->top_target ());
+      addr = gdbarch_convert_from_func_ptr_addr (
+        exp->gdbarch, addr, current_inferior ()->top_target ());
 
       /* Is it a high_level symbol?  */
       sym = find_pc_function (addr);
       if (sym != NULL)
-	method = value_of_variable (sym, 0);
+        method = value_of_variable (sym, 0);
     }
 
   /* If we found a method with symbol information, check to see
@@ -2073,20 +2020,18 @@ eval_op_objc_msgcall (struct type *expect_type, struct expression *exp,
 
       val_type = check_typedef (val_type);
 
-      if ((val_type == NULL)
-	  || (val_type->code () == TYPE_CODE_ERROR))
-	{
-	  if (expect_type != NULL)
-	    val_type = expect_type;
-	}
+      if ((val_type == NULL) || (val_type->code () == TYPE_CODE_ERROR))
+        {
+          if (expect_type != NULL)
+            val_type = expect_type;
+        }
 
-      struct_return = using_struct_return (exp->gdbarch, method,
-					   val_type);
+      struct_return = using_struct_return (exp->gdbarch, method, val_type);
     }
   else if (expect_type != NULL)
     {
       struct_return = using_struct_return (exp->gdbarch, NULL,
-					   check_typedef (expect_type));
+                                           check_typedef (expect_type));
     }
 
   /* Found a function symbol.  Now we will substitute its
@@ -2105,8 +2050,8 @@ eval_op_objc_msgcall (struct type *expect_type, struct expression *exp,
   if (method)
     {
       if (value_type (method)->code () != TYPE_CODE_FUNC)
-	error (_("method address has symbol information "
-		 "with non-function type; skipping"));
+        error (_ ("method address has symbol information "
+                  "with non-function type; skipping"));
 
       /* Create a function pointer of the appropriate type, and
 	 replace its value with the value of msg_send or
@@ -2115,22 +2060,21 @@ eval_op_objc_msgcall (struct type *expect_type, struct expression *exp,
 	 the representation may be different on systems that use
 	 function descriptors.  */
       if (struct_return)
-	called_method
-	  = value_from_pointer (lookup_pointer_type (value_type (method)),
-				value_as_address (msg_send_stret));
+        called_method
+          = value_from_pointer (lookup_pointer_type (value_type (method)),
+                                value_as_address (msg_send_stret));
       else
-	called_method
-	  = value_from_pointer (lookup_pointer_type (value_type (method)),
-				value_as_address (msg_send));
+        called_method
+          = value_from_pointer (lookup_pointer_type (value_type (method)),
+                                value_as_address (msg_send));
     }
   else
     {
       if (struct_return)
-	called_method = msg_send_stret;
+        called_method = msg_send_stret;
       else
-	called_method = msg_send;
+        called_method = msg_send;
     }
-
 
   if (noside == EVAL_AVOID_SIDE_EFFECTS)
     {
@@ -2145,19 +2089,19 @@ eval_op_objc_msgcall (struct type *expect_type, struct expression *exp,
       struct type *callee_type = value_type (called_method);
 
       if (callee_type && callee_type->code () == TYPE_CODE_PTR)
-	callee_type = callee_type->target_type ();
+        callee_type = callee_type->target_type ();
       callee_type = callee_type->target_type ();
 
       if (callee_type)
-	{
-	  if ((callee_type->code () == TYPE_CODE_ERROR) && expect_type)
-	    return allocate_value (expect_type);
-	  else
-	    return allocate_value (callee_type);
-	}
+        {
+          if ((callee_type->code () == TYPE_CODE_ERROR) && expect_type)
+            return allocate_value (expect_type);
+          else
+            return allocate_value (callee_type);
+        }
       else
-	error (_("Expression of type other than "
-		 "\"method returning ...\" used as a method"));
+        error (_ ("Expression of type other than "
+                  "\"method returning ...\" used as a method"));
     }
 
   /* Now depending on whether we found a symbol for the method,
@@ -2183,36 +2127,36 @@ eval_op_objc_msgcall (struct type *expect_type, struct expression *exp,
 
 static struct value *
 eval_multi_subscript (struct type *expect_type, struct expression *exp,
-		      enum noside noside, value *arg1,
-		      gdb::array_view<value *> args)
+                      enum noside noside, value *arg1,
+                      gdb::array_view<value *> args)
 {
   for (value *arg2 : args)
     {
       if (binop_user_defined_p (MULTI_SUBSCRIPT, arg1, arg2))
-	{
-	  arg1 = value_x_binop (arg1, arg2, MULTI_SUBSCRIPT, OP_NULL, noside);
-	}
+        {
+          arg1 = value_x_binop (arg1, arg2, MULTI_SUBSCRIPT, OP_NULL, noside);
+        }
       else
-	{
-	  arg1 = coerce_ref (arg1);
-	  struct type *type = check_typedef (value_type (arg1));
+        {
+          arg1 = coerce_ref (arg1);
+          struct type *type = check_typedef (value_type (arg1));
 
-	  switch (type->code ())
-	    {
-	    case TYPE_CODE_PTR:
-	    case TYPE_CODE_ARRAY:
-	    case TYPE_CODE_STRING:
-	      arg1 = value_subscript (arg1, value_as_long (arg2));
-	      break;
+          switch (type->code ())
+            {
+            case TYPE_CODE_PTR:
+            case TYPE_CODE_ARRAY:
+            case TYPE_CODE_STRING:
+              arg1 = value_subscript (arg1, value_as_long (arg2));
+              break;
 
-	    default:
-	      if (type->name ())
-		error (_("cannot subscript something of type `%s'"),
-		       type->name ());
-	      else
-		error (_("cannot subscript requested type"));
-	    }
-	}
+            default:
+              if (type->name ())
+                error (_ ("cannot subscript something of type `%s'"),
+                       type->name ());
+              else
+                error (_ ("cannot subscript requested type"));
+            }
+        }
     }
   return (arg1);
 }
@@ -2222,8 +2166,7 @@ namespace expr
 
 value *
 objc_msgcall_operation::evaluate (struct type *expect_type,
-				  struct expression *exp,
-				  enum noside noside)
+                                  struct expression *exp, enum noside noside)
 {
   enum noside sub_no_side = EVAL_NORMAL;
   struct type *selector_type = builtin_type (exp->gdbarch)->builtin_data_ptr;
@@ -2247,16 +2190,16 @@ objc_msgcall_operation::evaluate (struct type *expect_type,
     argvec[i + 2] = args[i]->evaluate_with_coercion (exp, sub_no_side);
   argvec[args.size () + 2] = nullptr;
 
-  return eval_op_objc_msgcall (expect_type, exp, noside, std::
-			       get<0> (m_storage), target,
-			       gdb::make_array_view (argvec,
-						     args.size () + 3));
+  return eval_op_objc_msgcall (expect_type, exp, noside,
+                               std::get<0> (m_storage), target,
+                               gdb::make_array_view (argvec,
+                                                     args.size () + 3));
 }
 
 value *
 multi_subscript_operation::evaluate (struct type *expect_type,
-				     struct expression *exp,
-				     enum noside noside)
+                                     struct expression *exp,
+                                     enum noside noside)
 {
   value *arg1 = std::get<0> (m_storage)->evaluate_with_coercion (exp, noside);
   std::vector<operation_up> &values = std::get<1> (m_storage);
@@ -2264,18 +2207,17 @@ multi_subscript_operation::evaluate (struct type *expect_type,
   for (int ix = 0; ix < values.size (); ++ix)
     argvec[ix] = values[ix]->evaluate_with_coercion (exp, noside);
   return eval_multi_subscript (expect_type, exp, noside, arg1,
-			       gdb::make_array_view (argvec, values.size ()));
+                               gdb::make_array_view (argvec, values.size ()));
 }
 
 value *
 logical_and_operation::evaluate (struct type *expect_type,
-				 struct expression *exp,
-				 enum noside noside)
+                                 struct expression *exp, enum noside noside)
 {
   value *arg1 = std::get<0> (m_storage)->evaluate (nullptr, exp, noside);
 
   value *arg2 = std::get<1> (m_storage)->evaluate (nullptr, exp,
-						   EVAL_AVOID_SIDE_EFFECTS);
+                                                   EVAL_AVOID_SIDE_EFFECTS);
 
   if (binop_user_defined_p (BINOP_LOGICAL_AND, arg1, arg2))
     {
@@ -2286,25 +2228,24 @@ logical_and_operation::evaluate (struct type *expect_type,
     {
       bool tem = value_logical_not (arg1);
       if (!tem)
-	{
-	  arg2 = std::get<1> (m_storage)->evaluate (nullptr, exp, noside);
-	  tem = value_logical_not (arg2);
-	}
-      struct type *type = language_bool_type (exp->language_defn,
-					      exp->gdbarch);
+        {
+          arg2 = std::get<1> (m_storage)->evaluate (nullptr, exp, noside);
+          tem = value_logical_not (arg2);
+        }
+      struct type *type
+        = language_bool_type (exp->language_defn, exp->gdbarch);
       return value_from_longest (type, !tem);
     }
 }
 
 value *
 logical_or_operation::evaluate (struct type *expect_type,
-				struct expression *exp,
-				enum noside noside)
+                                struct expression *exp, enum noside noside)
 {
   value *arg1 = std::get<0> (m_storage)->evaluate (nullptr, exp, noside);
 
   value *arg2 = std::get<1> (m_storage)->evaluate (nullptr, exp,
-						   EVAL_AVOID_SIDE_EFFECTS);
+                                                   EVAL_AVOID_SIDE_EFFECTS);
 
   if (binop_user_defined_p (BINOP_LOGICAL_OR, arg1, arg2))
     {
@@ -2315,21 +2256,20 @@ logical_or_operation::evaluate (struct type *expect_type,
     {
       bool tem = value_logical_not (arg1);
       if (tem)
-	{
-	  arg2 = std::get<1> (m_storage)->evaluate (nullptr, exp, noside);
-	  tem = value_logical_not (arg2);
-	}
+        {
+          arg2 = std::get<1> (m_storage)->evaluate (nullptr, exp, noside);
+          tem = value_logical_not (arg2);
+        }
 
-      struct type *type = language_bool_type (exp->language_defn,
-					      exp->gdbarch);
+      struct type *type
+        = language_bool_type (exp->language_defn, exp->gdbarch);
       return value_from_longest (type, !tem);
     }
 }
 
 value *
-adl_func_operation::evaluate (struct type *expect_type,
-			      struct expression *exp,
-			      enum noside noside)
+adl_func_operation::evaluate (struct type *expect_type, struct expression *exp,
+                              enum noside noside)
 {
   std::vector<operation_up> &arg_ops = std::get<2> (m_storage);
   std::vector<value *> args (arg_ops.size ());
@@ -2337,16 +2277,13 @@ adl_func_operation::evaluate (struct type *expect_type,
     args[i] = arg_ops[i]->evaluate_with_coercion (exp, noside);
 
   struct symbol *symp;
-  find_overload_match (args, std::get<0> (m_storage).c_str (),
-		       NON_METHOD,
-		       nullptr, nullptr,
-		       nullptr, &symp, nullptr, 0, noside);
+  find_overload_match (args, std::get<0> (m_storage).c_str (), NON_METHOD,
+                       nullptr, nullptr, nullptr, &symp, nullptr, 0, noside);
   if (symp->type ()->code () == TYPE_CODE_ERROR)
     error_unknown_type (symp->print_name ());
   value *callee = evaluate_var_value (noside, std::get<1> (m_storage), symp);
-  return evaluate_subexp_do_call (exp, noside, callee, args,
-				  nullptr, expect_type);
-
+  return evaluate_subexp_do_call (exp, noside, callee, args, nullptr,
+                                  expect_type);
 }
 
 /* This function evaluates brace-initializers (in C/C++) for
@@ -2354,8 +2291,8 @@ adl_func_operation::evaluate (struct type *expect_type,
 
 struct value *
 array_operation::evaluate_struct_tuple (struct value *struct_val,
-					struct expression *exp,
-					enum noside noside, int nargs)
+                                        struct expression *exp,
+                                        enum noside noside, int nargs)
 {
   const std::vector<operation_up> &in_args = std::get<2> (m_storage);
   struct type *struct_type = check_typedef (value_type (struct_val));
@@ -2372,14 +2309,14 @@ array_operation::evaluate_struct_tuple (struct value *struct_val,
       fieldno++;
       /* Skip static fields.  */
       while (fieldno < struct_type->num_fields ()
-	     && field_is_static (&struct_type->field (fieldno)))
-	fieldno++;
+             && field_is_static (&struct_type->field (fieldno)))
+        fieldno++;
       if (fieldno >= struct_type->num_fields ())
-	error (_("too many initializers"));
+        error (_ ("too many initializers"));
       field_type = struct_type->field (fieldno).type ();
       if (field_type->code () == TYPE_CODE_UNION
-	  && struct_type->field (fieldno).name ()[0] == '0')
-	error (_("don't know which variant you want to set"));
+          && struct_type->field (fieldno).name ()[0] == '0')
+        error (_ ("don't know which variant you want to set"));
 
       /* Here, struct_type is the type of the inner struct,
 	 while substruct_type is the type of the inner struct.
@@ -2392,32 +2329,30 @@ array_operation::evaluate_struct_tuple (struct value *struct_val,
 
       field_type = struct_type->field (fieldno).type ();
       if (val == 0)
-	val = in_args[idx++]->evaluate (field_type, exp, noside);
+        val = in_args[idx++]->evaluate (field_type, exp, noside);
 
       /* Now actually set the field in struct_val.  */
 
       /* Assign val to field fieldno.  */
       if (value_type (val) != field_type)
-	val = value_cast (field_type, val);
+        val = value_cast (field_type, val);
 
       bitsize = TYPE_FIELD_BITSIZE (struct_type, fieldno);
       bitpos = struct_type->field (fieldno).loc_bitpos ();
       addr = value_contents_writeable (struct_val).data () + bitpos / 8;
       if (bitsize)
-	modify_field (struct_type, addr,
-		      value_as_long (val), bitpos % 8, bitsize);
+        modify_field (struct_type, addr, value_as_long (val), bitpos % 8,
+                      bitsize);
       else
-	memcpy (addr, value_contents (val).data (),
-		value_type (val)->length ());
-
+        memcpy (addr, value_contents (val).data (),
+                value_type (val)->length ());
     }
   return struct_val;
 }
 
 value *
-array_operation::evaluate (struct type *expect_type,
-			   struct expression *exp,
-			   enum noside noside)
+array_operation::evaluate (struct type *expect_type, struct expression *exp,
+                           enum noside noside)
 {
   int tem;
   int tem2 = std::get<0> (m_storage);
@@ -2426,8 +2361,7 @@ array_operation::evaluate (struct type *expect_type,
   int nargs = tem3 - tem2 + 1;
   struct type *type = expect_type ? check_typedef (expect_type) : nullptr;
 
-  if (expect_type != nullptr
-      && type->code () == TYPE_CODE_STRUCT)
+  if (expect_type != nullptr && type->code () == TYPE_CODE_STRUCT)
     {
       struct value *rec = allocate_value (expect_type);
 
@@ -2435,8 +2369,7 @@ array_operation::evaluate (struct type *expect_type,
       return evaluate_struct_tuple (rec, exp, noside, nargs);
     }
 
-  if (expect_type != nullptr
-      && type->code () == TYPE_CODE_ARRAY)
+  if (expect_type != nullptr && type->code () == TYPE_CODE_ARRAY)
     {
       struct type *range_type = type->index_type ();
       struct type *element_type = type->target_type ();
@@ -2445,34 +2378,32 @@ array_operation::evaluate (struct type *expect_type,
       LONGEST low_bound, high_bound, index;
 
       if (!get_discrete_bounds (range_type, &low_bound, &high_bound))
-	{
-	  low_bound = 0;
-	  high_bound = (type->length () / element_size) - 1;
-	}
+        {
+          low_bound = 0;
+          high_bound = (type->length () / element_size) - 1;
+        }
       index = low_bound;
       memset (value_contents_raw (array).data (), 0, expect_type->length ());
       for (tem = nargs; --nargs >= 0;)
-	{
-	  struct value *element;
+        {
+          struct value *element;
 
-	  element = in_args[index - low_bound]->evaluate (element_type,
-							  exp, noside);
-	  if (value_type (element) != element_type)
-	    element = value_cast (element_type, element);
-	  if (index > high_bound)
-	    /* To avoid memory corruption.  */
-	    error (_("Too many array elements"));
-	  memcpy (value_contents_raw (array).data ()
-		  + (index - low_bound) * element_size,
-		  value_contents (element).data (),
-		  element_size);
-	  index++;
-	}
+          element
+            = in_args[index - low_bound]->evaluate (element_type, exp, noside);
+          if (value_type (element) != element_type)
+            element = value_cast (element_type, element);
+          if (index > high_bound)
+            /* To avoid memory corruption.  */
+            error (_ ("Too many array elements"));
+          memcpy (value_contents_raw (array).data ()
+                    + (index - low_bound) * element_size,
+                  value_contents (element).data (), element_size);
+          index++;
+        }
       return array;
     }
 
-  if (expect_type != nullptr
-      && type->code () == TYPE_CODE_SET)
+  if (expect_type != nullptr && type->code () == TYPE_CODE_SET)
     {
       struct value *set = allocate_value (expect_type);
       gdb_byte *valaddr = value_contents_raw (set).data ();
@@ -2482,58 +2413,58 @@ array_operation::evaluate (struct type *expect_type,
 
       /* Get targettype of elementtype.  */
       while (check_type->code () == TYPE_CODE_RANGE
-	     || check_type->code () == TYPE_CODE_TYPEDEF)
-	check_type = check_type->target_type ();
+             || check_type->code () == TYPE_CODE_TYPEDEF)
+        check_type = check_type->target_type ();
 
       if (!get_discrete_bounds (element_type, &low_bound, &high_bound))
-	error (_("(power)set type with unknown size"));
+        error (_ ("(power)set type with unknown size"));
       memset (valaddr, '\0', type->length ());
       int idx = 0;
       for (tem = 0; tem < nargs; tem++)
-	{
-	  LONGEST range_low, range_high;
-	  struct type *range_low_type, *range_high_type;
-	  struct value *elem_val;
+        {
+          LONGEST range_low, range_high;
+          struct type *range_low_type, *range_high_type;
+          struct value *elem_val;
 
-	  elem_val = in_args[idx++]->evaluate (element_type, exp, noside);
-	  range_low_type = range_high_type = value_type (elem_val);
-	  range_low = range_high = value_as_long (elem_val);
+          elem_val = in_args[idx++]->evaluate (element_type, exp, noside);
+          range_low_type = range_high_type = value_type (elem_val);
+          range_low = range_high = value_as_long (elem_val);
 
-	  /* Check types of elements to avoid mixture of elements from
+          /* Check types of elements to avoid mixture of elements from
 	     different types. Also check if type of element is "compatible"
 	     with element type of powerset.  */
-	  if (range_low_type->code () == TYPE_CODE_RANGE)
-	    range_low_type = range_low_type->target_type ();
-	  if (range_high_type->code () == TYPE_CODE_RANGE)
-	    range_high_type = range_high_type->target_type ();
-	  if ((range_low_type->code () != range_high_type->code ())
-	      || (range_low_type->code () == TYPE_CODE_ENUM
-		  && (range_low_type != range_high_type)))
-	    /* different element modes.  */
-	    error (_("POWERSET tuple elements of different mode"));
-	  if ((check_type->code () != range_low_type->code ())
-	      || (check_type->code () == TYPE_CODE_ENUM
-		  && range_low_type != check_type))
-	    error (_("incompatible POWERSET tuple elements"));
-	  if (range_low > range_high)
-	    {
-	      warning (_("empty POWERSET tuple range"));
-	      continue;
-	    }
-	  if (range_low < low_bound || range_high > high_bound)
-	    error (_("POWERSET tuple element out of range"));
-	  range_low -= low_bound;
-	  range_high -= low_bound;
-	  for (; range_low <= range_high; range_low++)
-	    {
-	      int bit_index = (unsigned) range_low % TARGET_CHAR_BIT;
+          if (range_low_type->code () == TYPE_CODE_RANGE)
+            range_low_type = range_low_type->target_type ();
+          if (range_high_type->code () == TYPE_CODE_RANGE)
+            range_high_type = range_high_type->target_type ();
+          if ((range_low_type->code () != range_high_type->code ())
+              || (range_low_type->code () == TYPE_CODE_ENUM
+                  && (range_low_type != range_high_type)))
+            /* different element modes.  */
+            error (_ ("POWERSET tuple elements of different mode"));
+          if ((check_type->code () != range_low_type->code ())
+              || (check_type->code () == TYPE_CODE_ENUM
+                  && range_low_type != check_type))
+            error (_ ("incompatible POWERSET tuple elements"));
+          if (range_low > range_high)
+            {
+              warning (_ ("empty POWERSET tuple range"));
+              continue;
+            }
+          if (range_low < low_bound || range_high > high_bound)
+            error (_ ("POWERSET tuple element out of range"));
+          range_low -= low_bound;
+          range_high -= low_bound;
+          for (; range_low <= range_high; range_low++)
+            {
+              int bit_index = (unsigned) range_low % TARGET_CHAR_BIT;
 
-	      if (gdbarch_byte_order (exp->gdbarch) == BFD_ENDIAN_BIG)
-		bit_index = TARGET_CHAR_BIT - 1 - bit_index;
-	      valaddr[(unsigned) range_low / TARGET_CHAR_BIT]
-		|= 1 << bit_index;
-	    }
-	}
+              if (gdbarch_byte_order (exp->gdbarch) == BFD_ENDIAN_BIG)
+                bit_index = TARGET_CHAR_BIT - 1 - bit_index;
+              valaddr[(unsigned) range_low / TARGET_CHAR_BIT] |= 1
+                                                                 << bit_index;
+            }
+        }
       return set;
     }
 
@@ -2549,42 +2480,40 @@ array_operation::evaluate (struct type *expect_type,
 
 value *
 unop_extract_operation::evaluate (struct type *expect_type,
-				  struct expression *exp,
-				  enum noside noside)
+                                  struct expression *exp, enum noside noside)
 {
   value *old_value = std::get<0> (m_storage)->evaluate (nullptr, exp, noside);
   struct type *type = get_type ();
 
   if (type->length () > value_type (old_value)->length ())
-    error (_("length type is larger than the value type"));
+    error (_ ("length type is larger than the value type"));
 
   struct value *result = allocate_value (type);
   value_contents_copy (result, 0, old_value, 0, type->length ());
   return result;
 }
 
-}
+} // namespace expr
 
-
 /* Helper for evaluate_subexp_for_address.  */
 
 static value *
 evaluate_subexp_for_address_base (struct expression *exp, enum noside noside,
-				  value *x)
+                                  value *x)
 {
   if (noside == EVAL_AVOID_SIDE_EFFECTS)
     {
       struct type *type = check_typedef (value_type (x));
 
       if (TYPE_IS_REFERENCE (type))
-	return value_zero (lookup_pointer_type (type->target_type ()),
-			   not_lval);
-      else if (VALUE_LVAL (x) == lval_memory || value_must_coerce_to_target (x))
-	return value_zero (lookup_pointer_type (value_type (x)),
-			   not_lval);
+        return value_zero (lookup_pointer_type (type->target_type ()),
+                           not_lval);
+      else if (VALUE_LVAL (x) == lval_memory
+               || value_must_coerce_to_target (x))
+        return value_zero (lookup_pointer_type (value_type (x)), not_lval);
       else
-	error (_("Attempt to take address of "
-		 "value not located in memory."));
+        error (_ ("Attempt to take address of "
+                  "value not located in memory."));
     }
   return value_addr (x);
 }
@@ -2593,9 +2522,8 @@ namespace expr
 {
 
 value *
-operation::evaluate_for_cast (struct type *expect_type,
-			      struct expression *exp,
-			      enum noside noside)
+operation::evaluate_for_cast (struct type *expect_type, struct expression *exp,
+                              enum noside noside)
 {
   value *val = evaluate (expect_type, exp, noside);
   return value_cast (expect_type, val);
@@ -2610,19 +2538,19 @@ operation::evaluate_for_address (struct expression *exp, enum noside noside)
 
 value *
 scope_operation::evaluate_for_address (struct expression *exp,
-				       enum noside noside)
+                                       enum noside noside)
 {
-  value *x = value_aggregate_elt (std::get<0> (m_storage),
-				  std::get<1> (m_storage).c_str (),
-				  NULL, 1, noside);
+  value *x
+    = value_aggregate_elt (std::get<0> (m_storage),
+                           std::get<1> (m_storage).c_str (), NULL, 1, noside);
   if (x == NULL)
-    error (_("There is no field named %s"), std::get<1> (m_storage).c_str ());
+    error (_ ("There is no field named %s"), std::get<1> (m_storage).c_str ());
   return x;
 }
 
 value *
 unop_ind_base_operation::evaluate_for_address (struct expression *exp,
-					       enum noside noside)
+                                               enum noside noside)
 {
   value *x = std::get<0> (m_storage)->evaluate (nullptr, exp, noside);
 
@@ -2638,7 +2566,7 @@ unop_ind_base_operation::evaluate_for_address (struct expression *exp,
 
 value *
 var_msym_value_operation::evaluate_for_address (struct expression *exp,
-						enum noside noside)
+                                                enum noside noside)
 {
   const bound_minimal_symbol &b = std::get<0> (m_storage);
   value *val = evaluate_var_msym_value (noside, b.objfile, b.minsym);
@@ -2653,26 +2581,26 @@ var_msym_value_operation::evaluate_for_address (struct expression *exp,
 
 value *
 unop_memval_operation::evaluate_for_address (struct expression *exp,
-					     enum noside noside)
+                                             enum noside noside)
 {
   return value_cast (lookup_pointer_type (std::get<1> (m_storage)),
-		     std::get<0> (m_storage)->evaluate (nullptr, exp, noside));
+                     std::get<0> (m_storage)->evaluate (nullptr, exp, noside));
 }
 
 value *
 unop_memval_type_operation::evaluate_for_address (struct expression *exp,
-						  enum noside noside)
+                                                  enum noside noside)
 {
   value *typeval = std::get<0> (m_storage)->evaluate (nullptr, exp,
-						      EVAL_AVOID_SIDE_EFFECTS);
+                                                      EVAL_AVOID_SIDE_EFFECTS);
   struct type *type = value_type (typeval);
   return value_cast (lookup_pointer_type (type),
-		     std::get<1> (m_storage)->evaluate (nullptr, exp, noside));
+                     std::get<1> (m_storage)->evaluate (nullptr, exp, noside));
 }
 
 value *
 var_value_operation::evaluate_for_address (struct expression *exp,
-					   enum noside noside)
+                                           enum noside noside)
 {
   symbol *var = std::get<0> (m_storage).symbol;
 
@@ -2686,10 +2614,9 @@ var_value_operation::evaluate_for_address (struct expression *exp,
       struct type *type = lookup_pointer_type (var->type ());
       enum address_class sym_class = var->aclass ();
 
-      if (sym_class == LOC_CONST
-	  || sym_class == LOC_CONST_BYTES
-	  || sym_class == LOC_REGISTER)
-	error (_("Attempt to take address of register or constant."));
+      if (sym_class == LOC_CONST || sym_class == LOC_CONST_BYTES
+          || sym_class == LOC_REGISTER)
+        error (_ ("Attempt to take address of register or constant."));
 
       return value_zero (type, not_lval);
     }
@@ -2699,22 +2626,21 @@ var_value_operation::evaluate_for_address (struct expression *exp,
 
 value *
 var_value_operation::evaluate_with_coercion (struct expression *exp,
-					     enum noside noside)
+                                             enum noside noside)
 {
   struct symbol *var = std::get<0> (m_storage).symbol;
   struct type *type = check_typedef (var->type ());
-  if (type->code () == TYPE_CODE_ARRAY
-      && !type->is_vector ()
+  if (type->code () == TYPE_CODE_ARRAY && !type->is_vector ()
       && CAST_IS_CONVERSION (exp->language_defn))
     {
-      struct value *val = address_of_variable (var,
-					       std::get<0> (m_storage).block);
+      struct value *val
+        = address_of_variable (var, std::get<0> (m_storage).block);
       return value_cast (lookup_pointer_type (type->target_type ()), val);
     }
   return evaluate (nullptr, exp, noside);
 }
 
-}
+} // namespace expr
 
 /* Helper function for evaluating the size of a type.  */
 
@@ -2745,7 +2671,7 @@ operation::evaluate_for_sizeof (struct expression *exp, enum noside noside)
 
 value *
 var_msym_value_operation::evaluate_for_sizeof (struct expression *exp,
-					       enum noside noside)
+                                               enum noside noside)
 
 {
   const bound_minimal_symbol &b = std::get<0> (m_storage);
@@ -2762,32 +2688,32 @@ var_msym_value_operation::evaluate_for_sizeof (struct expression *exp,
 
 value *
 subscript_operation::evaluate_for_sizeof (struct expression *exp,
-					  enum noside noside)
+                                          enum noside noside)
 {
   if (noside == EVAL_NORMAL)
     {
       value *val = std::get<0> (m_storage)->evaluate (nullptr, exp,
-						      EVAL_AVOID_SIDE_EFFECTS);
+                                                      EVAL_AVOID_SIDE_EFFECTS);
       struct type *type = check_typedef (value_type (val));
       if (type->code () == TYPE_CODE_ARRAY)
-	{
-	  type = check_typedef (type->target_type ());
-	  if (type->code () == TYPE_CODE_ARRAY)
-	    {
-	      type = type->index_type ();
-	      /* Only re-evaluate the right hand side if the resulting type
+        {
+          type = check_typedef (type->target_type ());
+          if (type->code () == TYPE_CODE_ARRAY)
+            {
+              type = type->index_type ();
+              /* Only re-evaluate the right hand side if the resulting type
 		 is a variable length type.  */
-	      if (type->bounds ()->flag_bound_evaluated)
-		{
-		  val = evaluate (nullptr, exp, EVAL_NORMAL);
-		  /* FIXME: This should be size_t.  */
-		  struct type *size_type
-		    = builtin_type (exp->gdbarch)->builtin_int;
-		  return value_from_longest
-		    (size_type, (LONGEST) value_type (val)->length ());
-		}
-	    }
-	}
+              if (type->bounds ()->flag_bound_evaluated)
+                {
+                  val = evaluate (nullptr, exp, EVAL_NORMAL);
+                  /* FIXME: This should be size_t.  */
+                  struct type *size_type
+                    = builtin_type (exp->gdbarch)->builtin_int;
+                  return value_from_longest (
+                    size_type, (LONGEST) value_type (val)->length ());
+                }
+            }
+        }
     }
 
   return operation::evaluate_for_sizeof (exp, noside);
@@ -2795,14 +2721,13 @@ subscript_operation::evaluate_for_sizeof (struct expression *exp,
 
 value *
 unop_ind_base_operation::evaluate_for_sizeof (struct expression *exp,
-					      enum noside noside)
+                                              enum noside noside)
 {
   value *val = std::get<0> (m_storage)->evaluate (nullptr, exp,
-						  EVAL_AVOID_SIDE_EFFECTS);
+                                                  EVAL_AVOID_SIDE_EFFECTS);
   struct type *type = check_typedef (value_type (val));
-  if (!type->is_pointer_or_reference ()
-      && type->code () != TYPE_CODE_ARRAY)
-    error (_("Attempt to take contents of a non-pointer value."));
+  if (!type->is_pointer_or_reference () && type->code () != TYPE_CODE_ARRAY)
+    error (_ ("Attempt to take contents of a non-pointer value."));
   type = type->target_type ();
   if (is_dynamic_type (type))
     type = value_type (value_ind (val));
@@ -2813,23 +2738,23 @@ unop_ind_base_operation::evaluate_for_sizeof (struct expression *exp,
 
 value *
 unop_memval_operation::evaluate_for_sizeof (struct expression *exp,
-					    enum noside noside)
+                                            enum noside noside)
 {
   return evaluate_subexp_for_sizeof_base (exp, std::get<1> (m_storage));
 }
 
 value *
 unop_memval_type_operation::evaluate_for_sizeof (struct expression *exp,
-						 enum noside noside)
+                                                 enum noside noside)
 {
   value *typeval = std::get<0> (m_storage)->evaluate (nullptr, exp,
-						      EVAL_AVOID_SIDE_EFFECTS);
+                                                      EVAL_AVOID_SIDE_EFFECTS);
   return evaluate_subexp_for_sizeof_base (exp, value_type (typeval));
 }
 
 value *
 var_value_operation::evaluate_for_sizeof (struct expression *exp,
-					  enum noside noside)
+                                          enum noside noside)
 {
   struct type *type = std::get<0> (m_storage).symbol->type ();
   if (is_dynamic_type (type))
@@ -2837,23 +2762,23 @@ var_value_operation::evaluate_for_sizeof (struct expression *exp,
       value *val = evaluate (nullptr, exp, EVAL_NORMAL);
       type = value_type (val);
       if (type->code () == TYPE_CODE_ARRAY)
-	{
-	  /* FIXME: This should be size_t.  */
-	  struct type *size_type = builtin_type (exp->gdbarch)->builtin_int;
-	  if (type_not_allocated (type) || type_not_associated (type))
-	    return value_zero (size_type, not_lval);
-	  else if (is_dynamic_type (type->index_type ())
-		   && type->bounds ()->high.kind () == PROP_UNDEFINED)
-	    return allocate_optimized_out_value (size_type);
-	}
+        {
+          /* FIXME: This should be size_t.  */
+          struct type *size_type = builtin_type (exp->gdbarch)->builtin_int;
+          if (type_not_allocated (type) || type_not_associated (type))
+            return value_zero (size_type, not_lval);
+          else if (is_dynamic_type (type->index_type ())
+                   && type->bounds ()->high.kind () == PROP_UNDEFINED)
+            return allocate_optimized_out_value (size_type);
+        }
     }
   return evaluate_subexp_for_sizeof_base (exp, type);
 }
 
 value *
 var_msym_value_operation::evaluate_for_cast (struct type *to_type,
-					     struct expression *exp,
-					     enum noside noside)
+                                             struct expression *exp,
+                                             enum noside noside)
 {
   if (noside == EVAL_AVOID_SIDE_EFFECTS)
     return value_zero (to_type, not_lval);
@@ -2867,7 +2792,7 @@ var_msym_value_operation::evaluate_for_cast (struct type *to_type,
   if (VALUE_LVAL (val) == lval_memory)
     {
       if (value_lazy (val))
-	value_fetch_lazy (val);
+        value_fetch_lazy (val);
       VALUE_LVAL (val) = not_lval;
     }
   return val;
@@ -2875,12 +2800,11 @@ var_msym_value_operation::evaluate_for_cast (struct type *to_type,
 
 value *
 var_value_operation::evaluate_for_cast (struct type *to_type,
-					struct expression *exp,
-					enum noside noside)
+                                        struct expression *exp,
+                                        enum noside noside)
 {
-  value *val = evaluate_var_value (noside,
-				   std::get<0> (m_storage).block,
-				   std::get<0> (m_storage).symbol);
+  value *val = evaluate_var_value (noside, std::get<0> (m_storage).block,
+                                   std::get<0> (m_storage).symbol);
 
   val = value_cast (to_type, val);
 
@@ -2888,13 +2812,13 @@ var_value_operation::evaluate_for_cast (struct type *to_type,
   if (VALUE_LVAL (val) == lval_memory)
     {
       if (value_lazy (val))
-	value_fetch_lazy (val);
+        value_fetch_lazy (val);
       VALUE_LVAL (val) = not_lval;
     }
   return val;
 }
 
-}
+} // namespace expr
 
 /* Parse a type expression in the string [P..P+LENGTH).  */
 
@@ -2912,6 +2836,6 @@ parse_and_eval_type (const char *p, int length)
   expr::unop_cast_operation *op
     = dynamic_cast<expr::unop_cast_operation *> (expr->op.get ());
   if (op == nullptr)
-    error (_("Internal error in eval_type."));
+    error (_ ("Internal error in eval_type."));
   return op->get_type ();
 }

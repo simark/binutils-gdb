@@ -29,6 +29,7 @@ template<typename BaseTarget>
 class x86bsd_nat_target : public x86_nat_target<BaseTarget>
 {
   using base_class = x86_nat_target<BaseTarget>;
+
 public:
   void mourn_inferior () override
   {
@@ -36,7 +37,7 @@ public:
     base_class::mourn_inferior ();
   }
 };
-#else /* !HAVE_PT_GETDBREGS */
+#else  /* !HAVE_PT_GETDBREGS */
 template<typename BaseTarget>
 class x86bsd_nat_target : public BaseTarget
 {

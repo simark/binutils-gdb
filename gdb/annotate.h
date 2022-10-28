@@ -106,7 +106,7 @@ struct annotate_arg_emitter
    has behaved this way for some time, and front ends that still use
    annotations now depend on this behaviour.  */
 extern bool annotate_source_line (struct symtab *s, int line,
-				  int mid_statement, CORE_ADDR pc);
+                                  int mid_statement, CORE_ADDR pc);
 
 extern void annotate_frame_begin (int, struct gdbarch *, CORE_ADDR);
 extern void annotate_function_call (void);

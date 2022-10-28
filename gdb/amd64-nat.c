@@ -80,13 +80,12 @@ amd64_native_gregset_supplies_p (struct gdbarch *gdbarch, int regnum)
   return (amd64_native_gregset_reg_offset (gdbarch, regnum) != -1);
 }
 
-
 /* Supply register REGNUM, whose contents are stored in GREGS, to
    REGCACHE.  If REGNUM is -1, supply all appropriate registers.  */
 
 void
-amd64_supply_native_gregset (struct regcache *regcache,
-			     const void *gregs, int regnum)
+amd64_supply_native_gregset (struct regcache *regcache, const void *gregs,
+                             int regnum)
 {
   const char *regs = (const char *) gregs;
   struct gdbarch *gdbarch = regcache->arch ();
@@ -102,12 +101,12 @@ amd64_supply_native_gregset (struct regcache *regcache,
   for (i = 0; i < num_regs; i++)
     {
       if (regnum == -1 || regnum == i)
-	{
-	  int offset = amd64_native_gregset_reg_offset (gdbarch, i);
+        {
+          int offset = amd64_native_gregset_reg_offset (gdbarch, i);
 
-	  if (offset != -1)
-	    regcache->raw_supply (i, regs + offset);
-	}
+          if (offset != -1)
+            regcache->raw_supply (i, regs + offset);
+        }
     }
 }
 
@@ -116,8 +115,8 @@ amd64_supply_native_gregset (struct regcache *regcache,
    registers.  */
 
 void
-amd64_collect_native_gregset (const struct regcache *regcache,
-			      void *gregs, int regnum)
+amd64_collect_native_gregset (const struct regcache *regcache, void *gregs,
+                              int regnum)
 {
   char *regs = (char *) gregs;
   struct gdbarch *gdbarch = regcache->arch ();
@@ -131,16 +130,16 @@ amd64_collect_native_gregset (const struct regcache *regcache,
       /* Make sure %eax, %ebx, %ecx, %edx, %esi, %edi, %ebp, %esp and
 	 %eip get zero-extended to 64 bits.  */
       for (i = 0; i <= I386_EIP_REGNUM; i++)
-	{
-	  if (regnum == -1 || regnum == i)
-	    memset (regs + amd64_native_gregset_reg_offset (gdbarch, i), 0, 8);
-	}
+        {
+          if (regnum == -1 || regnum == i)
+            memset (regs + amd64_native_gregset_reg_offset (gdbarch, i), 0, 8);
+        }
       /* Ditto for %cs, %ss, %ds, %es, %fs, and %gs.  */
       for (i = I386_CS_REGNUM; i <= I386_GS_REGNUM; i++)
-	{
-	  if (regnum == -1 || regnum == i)
-	    memset (regs + amd64_native_gregset_reg_offset (gdbarch, i), 0, 8);
-	}
+        {
+          if (regnum == -1 || regnum == i)
+            memset (regs + amd64_native_gregset_reg_offset (gdbarch, i), 0, 8);
+        }
     }
 
   if (num_regs > gdbarch_num_regs (gdbarch))
@@ -149,11 +148,11 @@ amd64_collect_native_gregset (const struct regcache *regcache,
   for (i = 0; i < num_regs; i++)
     {
       if (regnum == -1 || regnum == i)
-	{
-	  int offset = amd64_native_gregset_reg_offset (gdbarch, i);
+        {
+          int offset = amd64_native_gregset_reg_offset (gdbarch, i);
 
-	  if (offset != -1)
-	    regcache->raw_collect (i, regs + offset);
-	}
+          if (offset != -1)
+            regcache->raw_collect (i, regs + offset);
+        }
     }
 }

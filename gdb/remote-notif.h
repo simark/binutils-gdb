@@ -27,9 +27,7 @@
 
 struct notif_event
 {
-  virtual ~notif_event ()
-  {
-  }
+  virtual ~notif_event () {}
 };
 
 /* A unique pointer holding a notif_event.  */
@@ -59,20 +57,18 @@ struct notif_client
   /* Parse BUF to get the expected event and update EVENT.  This
      function may throw exception if contents in BUF is not the
      expected event.  */
-  void (*parse) (remote_target *remote,
-		 struct notif_client *self, const char *buf,
-		 struct notif_event *event);
+  void (*parse) (remote_target *remote, struct notif_client *self,
+                 const char *buf, struct notif_event *event);
 
   /* Send field <ack_command> to remote, and do some checking.  If
      something wrong, throw an exception.  */
-  void (*ack) (remote_target *remote,
-	       struct notif_client *self, const char *buf,
-	       struct notif_event *event);
+  void (*ack) (remote_target *remote, struct notif_client *self,
+               const char *buf, struct notif_event *event);
 
   /* Check this notification client can get pending events in
      'remote_notif_process'.  */
   int (*can_get_pending_events) (remote_target *remote,
-				 struct notif_client *self);
+                                 struct notif_client *self);
 
   /* Allocate an event.  */
   notif_event_up (*alloc_event) ();
@@ -115,16 +111,15 @@ struct remote_notif_state
 };
 
 void remote_notif_ack (remote_target *remote, notif_client *nc,
-		       const char *buf);
+                       const char *buf);
 struct notif_event *remote_notif_parse (remote_target *remote,
-					notif_client *nc,
-					const char *buf);
+                                        notif_client *nc, const char *buf);
 
 void handle_notification (struct remote_notif_state *notif_state,
-			  const char *buf);
+                          const char *buf);
 
 void remote_notif_process (struct remote_notif_state *state,
-			   struct notif_client *except);
+                           struct notif_client *except);
 remote_notif_state *remote_notif_state_allocate (remote_target *remote);
 
 extern struct notif_client notif_client_stop;

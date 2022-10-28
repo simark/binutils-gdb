@@ -29,7 +29,7 @@
 #endif /* HAVE_SYS_RESOURCE_H */
 
 #ifdef TUI
-#include "tui/tui.h"		/* For tui_get_command_dimension.   */
+#include "tui/tui.h" /* For tui_get_command_dimension.   */
 #endif
 
 #ifdef __GO32__
@@ -54,7 +54,7 @@
 #include "main.h"
 #include "solist.h"
 
-#include "inferior.h"		/* for signed_pointer_to_address */
+#include "inferior.h" /* for signed_pointer_to_address */
 
 #include "gdb_curses.h"
 
@@ -106,11 +106,12 @@ bool debug_timestamp = false;
 bool sevenbit_strings = false;
 static void
 show_sevenbit_strings (struct ui_file *file, int from_tty,
-		       struct cmd_list_element *c, const char *value)
+                       struct cmd_list_element *c, const char *value)
 {
-  gdb_printf (file, _("Printing of 8-bit characters "
-		      "in strings as \\nnn is %s.\n"),
-	      value);
+  gdb_printf (file,
+              _ ("Printing of 8-bit characters "
+                 "in strings as \\nnn is %s.\n"),
+              value);
 }
 
 /* String to be printed before warning messages, if any.  */
@@ -120,13 +121,10 @@ const char *warning_pre_print = "\nwarning: ";
 bool pagination_enabled = true;
 static void
 show_pagination_enabled (struct ui_file *file, int from_tty,
-			 struct cmd_list_element *c, const char *value)
+                         struct cmd_list_element *c, const char *value)
 {
-  gdb_printf (file, _("State of pagination is %s.\n"), value);
+  gdb_printf (file, _ ("State of pagination is %s.\n"), value);
 }
-
-
-
 
 /* Print a warning message.  The first argument STRING is the warning
    message, used as an fprintf format string, the second is the
@@ -143,12 +141,12 @@ vwarning (const char *string, va_list args)
     {
       gdb::optional<target_terminal::scoped_restore_terminal_state> term_state;
       if (target_supports_terminal_ours ())
-	{
-	  term_state.emplace ();
-	  target_terminal::ours_for_output ();
-	}
+        {
+          term_state.emplace ();
+          target_terminal::ours_for_output ();
+        }
       if (warning_pre_print)
-	gdb_puts (warning_pre_print, gdb_stderr);
+        gdb_puts (warning_pre_print, gdb_stderr);
       gdb_vprintf (gdb_stderr, string, args);
       gdb_printf (gdb_stderr, "\n");
     }
@@ -180,7 +178,7 @@ abort_with_message (const char *msg)
   else
     gdb_puts (msg, gdb_stderr);
 
-  abort ();		/* ARI: abort */
+  abort (); /* ARI: abort */
 }
 
 /* Dump core trying to increase the core soft limit to hard limit first.  */
@@ -199,7 +197,7 @@ dump_core (void)
      a backtrace to the console here.  */
   signal (SIGABRT, SIG_DFL);
 
-  abort ();		/* ARI: abort */
+  abort (); /* ARI: abort */
 }
 
 /* Check whether GDB will be able to dump core using the dump_core
@@ -221,12 +219,12 @@ can_dump_core (enum resource_limit_kind limit_kind)
     {
     case LIMIT_CUR:
       if (rlim.rlim_cur == 0)
-	return 0;
+        return 0;
       /* Fall through.  */
 
     case LIMIT_MAX:
       if (rlim.rlim_max == 0)
-	return 0;
+        return 0;
     }
 #endif /* HAVE_GETRLIMIT */
 
@@ -239,17 +237,16 @@ void
 warn_cant_dump_core (const char *reason)
 {
   gdb_printf (gdb_stderr,
-	      _("%s\nUnable to dump core, use `ulimit -c"
-		" unlimited' before executing GDB next time.\n"),
-	      reason);
+              _ ("%s\nUnable to dump core, use `ulimit -c"
+                 " unlimited' before executing GDB next time.\n"),
+              reason);
 }
 
 /* Check whether GDB will be able to dump core using the dump_core
    function, and print a warning if we cannot.  */
 
 static int
-can_dump_core_warn (enum resource_limit_kind limit_kind,
-		    const char *reason)
+can_dump_core_warn (enum resource_limit_kind limit_kind, const char *reason)
 {
   int core_dump_allowed = can_dump_core (limit_kind);
 
@@ -265,13 +262,8 @@ can_dump_core_warn (enum resource_limit_kind limit_kind,
 const char internal_problem_ask[] = "ask";
 const char internal_problem_yes[] = "yes";
 const char internal_problem_no[] = "no";
-static const char *const internal_problem_modes[] =
-{
-  internal_problem_ask,
-  internal_problem_yes,
-  internal_problem_no,
-  NULL
-};
+static const char *const internal_problem_modes[]
+  = { internal_problem_ask, internal_problem_yes, internal_problem_no, NULL };
 
 /* Data structure used to control how the internal_vproblem function
    should behave.  An instance of this structure is created for each
@@ -321,8 +313,8 @@ readline_initialized (struct ui *ui)
    either allow execution to resume or throw an error.  */
 
 static void ATTRIBUTE_PRINTF (4, 0)
-internal_vproblem (struct internal_problem *problem,
-		   const char *file, int line, const char *fmt, va_list ap)
+  internal_vproblem (struct internal_problem *problem, const char *file,
+                     int line, const char *fmt, va_list ap)
 {
   static int dejavu;
   int quit_p;
@@ -336,21 +328,21 @@ internal_vproblem (struct internal_problem *problem,
     switch (dejavu)
       {
       case 0:
-	dejavu = 1;
-	break;
+        dejavu = 1;
+        break;
       case 1:
-	dejavu = 2;
-	abort_with_message (msg);
+        dejavu = 2;
+        abort_with_message (msg);
       default:
-	dejavu = 3;
-	/* Newer GLIBC versions put the warn_unused_result attribute
+        dejavu = 3;
+        /* Newer GLIBC versions put the warn_unused_result attribute
 	   on write, but this is one of those rare cases where
 	   ignoring the return value is correct.  Casting to (void)
 	   does not fix this problem.  This is the solution suggested
 	   at http://gcc.gnu.org/bugzilla/show_bug.cgi?id=25509.  */
-	if (write (STDERR_FILENO, msg, sizeof (msg)) != sizeof (msg))
-	  abort (); /* ARI: abort */
-	exit (1);
+        if (write (STDERR_FILENO, msg, sizeof (msg)) != sizeof (msg))
+          abort (); /* ARI: abort */
+        exit (1);
       }
   }
 
@@ -362,9 +354,9 @@ internal_vproblem (struct internal_problem *problem,
   {
     std::string msg = string_vprintf (fmt, ap);
     reason = string_printf ("%s:%d: %s: %s\n"
-			    "A problem internal to GDB has been detected,\n"
-			    "further debugging may prove unreliable.",
-			    file, line, problem->name, msg.c_str ());
+                            "A problem internal to GDB has been detected,\n"
+                            "further debugging may prove unreliable.",
+                            file, line, problem->name, msg.c_str ());
   }
 
   /* Fall back to abort_with_message if gdb_stderr is not set up.  */
@@ -385,11 +377,9 @@ internal_vproblem (struct internal_problem *problem,
     begin_line ();
 
   /* Emit the message unless query will emit it below.  */
-  if (problem->should_quit != internal_problem_ask
-      || !confirm
+  if (problem->should_quit != internal_problem_ask || !confirm
       || !filtered_printing_initialized ()
-      || !readline_initialized (current_ui)
-      || problem->should_print_backtrace)
+      || !readline_initialized (current_ui) || problem->should_print_backtrace)
     gdb_printf (gdb_stderr, "%s\n", reason.c_str ());
 
   if (problem->should_print_backtrace)
@@ -401,86 +391,93 @@ internal_vproblem (struct internal_problem *problem,
 	 this lessens the likelihood of GDB going into an infinite
 	 loop.  */
       if (!confirm || !filtered_printing_initialized ()
-	  || !readline_initialized (current_ui))
-	quit_p = 1;
+          || !readline_initialized (current_ui))
+        quit_p = 1;
       else
-	quit_p = query (_("%s\nQuit this debugging session? "),
-			reason.c_str ());
+        quit_p
+          = query (_ ("%s\nQuit this debugging session? "), reason.c_str ());
     }
   else if (problem->should_quit == internal_problem_yes)
     quit_p = 1;
   else if (problem->should_quit == internal_problem_no)
     quit_p = 0;
   else
-    internal_error (_("bad switch"));
+    internal_error (_ ("bad switch"));
 
-  gdb_puts (_("\nThis is a bug, please report it."), gdb_stderr);
+  gdb_puts (_ ("\nThis is a bug, please report it."), gdb_stderr);
   if (REPORT_BUGS_TO[0])
-    gdb_printf (gdb_stderr, _("  For instructions, see:\n%ps."),
-		styled_string (file_name_style.style (),
-			       REPORT_BUGS_TO));
+    gdb_printf (gdb_stderr, _ ("  For instructions, see:\n%ps."),
+                styled_string (file_name_style.style (), REPORT_BUGS_TO));
   gdb_puts ("\n\n", gdb_stderr);
 
   if (problem->should_dump_core == internal_problem_ask)
     {
       if (!can_dump_core_warn (LIMIT_MAX, reason.c_str ()))
-	dump_core_p = 0;
+        dump_core_p = 0;
       else if (!filtered_printing_initialized ()
-	       || !readline_initialized (current_ui))
-	dump_core_p = 1;
+               || !readline_initialized (current_ui))
+        dump_core_p = 1;
       else
-	{
-	  /* Default (yes/batch case) is to dump core.  This leaves a GDB
+        {
+          /* Default (yes/batch case) is to dump core.  This leaves a GDB
 	     `dropping' so that it is easier to see that something went
 	     wrong in GDB.  */
-	  dump_core_p = query (_("%s\nCreate a core file of GDB? "),
-			       reason.c_str ());
-	}
+          dump_core_p
+            = query (_ ("%s\nCreate a core file of GDB? "), reason.c_str ());
+        }
     }
   else if (problem->should_dump_core == internal_problem_yes)
     dump_core_p = can_dump_core_warn (LIMIT_MAX, reason.c_str ());
   else if (problem->should_dump_core == internal_problem_no)
     dump_core_p = 0;
   else
-    internal_error (_("bad switch"));
+    internal_error (_ ("bad switch"));
 
   if (quit_p)
     {
       if (dump_core_p)
-	dump_core ();
+        dump_core ();
       else
-	exit (1);
+        exit (1);
     }
   else
     {
       if (dump_core_p)
-	{
+        {
 #ifdef HAVE_WORKING_FORK
-	  if (fork () == 0)
-	    dump_core ();
+          if (fork () == 0)
+            dump_core ();
 #endif
-	}
+        }
     }
 
   dejavu = 0;
 }
 
-static struct internal_problem internal_error_problem = {
-  "internal-error", true, internal_problem_ask, true, internal_problem_ask,
-  true, GDB_PRINT_INTERNAL_BACKTRACE_INIT_ON
-};
+static struct internal_problem internal_error_problem
+  = { "internal-error",
+      true,
+      internal_problem_ask,
+      true,
+      internal_problem_ask,
+      true,
+      GDB_PRINT_INTERNAL_BACKTRACE_INIT_ON };
 
 void
 internal_verror (const char *file, int line, const char *fmt, va_list ap)
 {
   internal_vproblem (&internal_error_problem, file, line, fmt, ap);
-  throw_quit (_("Command aborted."));
+  throw_quit (_ ("Command aborted."));
 }
 
-static struct internal_problem internal_warning_problem = {
-  "internal-warning", true, internal_problem_ask, true, internal_problem_ask,
-  true, false
-};
+static struct internal_problem internal_warning_problem
+  = { "internal-warning",
+      true,
+      internal_problem_ask,
+      true,
+      internal_problem_ask,
+      true,
+      false };
 
 void
 internal_vwarning (const char *file, int line, const char *fmt, va_list ap)
@@ -488,10 +485,14 @@ internal_vwarning (const char *file, int line, const char *fmt, va_list ap)
   internal_vproblem (&internal_warning_problem, file, line, fmt, ap);
 }
 
-static struct internal_problem demangler_warning_problem = {
-  "demangler-warning", true, internal_problem_ask, false, internal_problem_no,
-  false, false
-};
+static struct internal_problem demangler_warning_problem
+  = { "demangler-warning",
+      true,
+      internal_problem_ask,
+      false,
+      internal_problem_no,
+      false,
+      false };
 
 void
 demangler_vwarning (const char *file, int line, const char *fmt, va_list ap)
@@ -539,73 +540,71 @@ add_internal_problem_command (struct internal_problem *problem)
      ownership of the string passed in, which is why we don't need to free
      set_doc and show_doc in this function.  */
   const char *set_doc
-    = xstrprintf (_("Configure what GDB does when %s is detected."),
-		  problem->name).release ();
+    = xstrprintf (_ ("Configure what GDB does when %s is detected."),
+                  problem->name)
+        .release ();
   const char *show_doc
-    = xstrprintf (_("Show what GDB does when %s is detected."),
-		  problem->name).release ();
+    = xstrprintf (_ ("Show what GDB does when %s is detected."), problem->name)
+        .release ();
 
-  add_setshow_prefix_cmd (problem->name, class_maintenance,
-			  set_doc, show_doc, set_cmd_list, show_cmd_list,
-			  &maintenance_set_cmdlist, &maintenance_show_cmdlist);
+  add_setshow_prefix_cmd (problem->name, class_maintenance, set_doc, show_doc,
+                          set_cmd_list, show_cmd_list,
+                          &maintenance_set_cmdlist, &maintenance_show_cmdlist);
 
   if (problem->user_settable_should_quit)
     {
       std::string set_quit_doc
-	= string_printf (_("Set whether GDB should quit when an %s is "
-			   "detected."), problem->name);
+        = string_printf (_ ("Set whether GDB should quit when an %s is "
+                            "detected."),
+                         problem->name);
       std::string show_quit_doc
-	= string_printf (_("Show whether GDB will quit when an %s is "
-			   "detected."), problem->name);
-      add_setshow_enum_cmd ("quit", class_maintenance,
-			    internal_problem_modes,
-			    &problem->should_quit,
-			    set_quit_doc.c_str (),
-			    show_quit_doc.c_str (),
-			    NULL, /* help_doc */
-			    NULL, /* setfunc */
-			    NULL, /* showfunc */
-			    set_cmd_list,
-			    show_cmd_list);
+        = string_printf (_ ("Show whether GDB will quit when an %s is "
+                            "detected."),
+                         problem->name);
+      add_setshow_enum_cmd ("quit", class_maintenance, internal_problem_modes,
+                            &problem->should_quit, set_quit_doc.c_str (),
+                            show_quit_doc.c_str (), NULL, /* help_doc */
+                            NULL,                         /* setfunc */
+                            NULL,                         /* showfunc */
+                            set_cmd_list, show_cmd_list);
     }
 
   if (problem->user_settable_should_dump_core)
     {
       std::string set_core_doc
-	= string_printf (_("Set whether GDB should create a core file of "
-			   "GDB when %s is detected."), problem->name);
+        = string_printf (_ ("Set whether GDB should create a core file of "
+                            "GDB when %s is detected."),
+                         problem->name);
       std::string show_core_doc
-	= string_printf (_("Show whether GDB will create a core file of "
-			   "GDB when %s is detected."), problem->name);
+        = string_printf (_ ("Show whether GDB will create a core file of "
+                            "GDB when %s is detected."),
+                         problem->name);
       add_setshow_enum_cmd ("corefile", class_maintenance,
-			    internal_problem_modes,
-			    &problem->should_dump_core,
-			    set_core_doc.c_str (),
-			    show_core_doc.c_str (),
-			    NULL, /* help_doc */
-			    NULL, /* setfunc */
-			    NULL, /* showfunc */
-			    set_cmd_list,
-			    show_cmd_list);
+                            internal_problem_modes, &problem->should_dump_core,
+                            set_core_doc.c_str (), show_core_doc.c_str (),
+                            NULL, /* help_doc */
+                            NULL, /* setfunc */
+                            NULL, /* showfunc */
+                            set_cmd_list, show_cmd_list);
     }
 
   if (problem->user_settable_should_print_backtrace)
     {
       std::string set_bt_doc
-	= string_printf (_("Set whether GDB should print a backtrace of "
-			   "GDB when %s is detected."), problem->name);
+        = string_printf (_ ("Set whether GDB should print a backtrace of "
+                            "GDB when %s is detected."),
+                         problem->name);
       std::string show_bt_doc
-	= string_printf (_("Show whether GDB will print a backtrace of "
-			   "GDB when %s is detected."), problem->name);
+        = string_printf (_ ("Show whether GDB will print a backtrace of "
+                            "GDB when %s is detected."),
+                         problem->name);
       add_setshow_boolean_cmd ("backtrace", class_maintenance,
-			       &problem->should_print_backtrace,
-			       set_bt_doc.c_str (),
-			       show_bt_doc.c_str (),
-			       NULL, /* help_doc */
-			       gdb_internal_backtrace_set_cmd,
-			       NULL, /* showfunc */
-			       set_cmd_list,
-			       show_cmd_list);
+                               &problem->should_print_backtrace,
+                               set_bt_doc.c_str (), show_bt_doc.c_str (),
+                               NULL, /* help_doc */
+                               gdb_internal_backtrace_set_cmd,
+                               NULL, /* showfunc */
+                               set_cmd_list, show_cmd_list);
     }
 }
 
@@ -634,7 +633,7 @@ throw_perror_with_name (enum errors errcode, const char *string)
   bfd_set_error (bfd_error_no_error);
   errno = 0;
 
-  throw_error (errcode, _("%s."), combined.c_str ());
+  throw_error (errcode, _ ("%s."), combined.c_str ());
 }
 
 /* See throw_perror_with_name, ERRCODE defaults here to GENERIC_ERROR.  */
@@ -652,7 +651,7 @@ void
 perror_warning_with_name (const char *string)
 {
   std::string combined = perror_string (string);
-  warning (_("%s"), combined.c_str ());
+  warning (_ ("%s"), combined.c_str ());
 }
 
 /* Print the system error message for ERRCODE, and also mention STRING
@@ -705,7 +704,6 @@ maybe_quit (void)
   quit_handler ();
 }
 
-
 /* Called when a memory allocation fails, with the number of bytes of
    memory requested in SIZE.  */
 
@@ -714,12 +712,13 @@ malloc_failure (long size)
 {
   if (size > 0)
     {
-      internal_error (_("virtual memory exhausted: can't allocate %ld bytes."),
-		      size);
+      internal_error (_ (
+                        "virtual memory exhausted: can't allocate %ld bytes."),
+                      size);
     }
   else
     {
-      internal_error (_("virtual memory exhausted."));
+      internal_error (_ ("virtual memory exhausted."));
     }
 }
 
@@ -745,9 +744,9 @@ myread (int desc, char *addr, int len)
     {
       val = read (desc, addr, len);
       if (val < 0)
-	return val;
+        return val;
       if (val == 0)
-	return orglen - len;
+        return orglen - len;
       len -= val;
       addr += val;
     }
@@ -762,9 +761,9 @@ uinteger_pow (ULONGEST v1, LONGEST v2)
   if (v2 < 0)
     {
       if (v1 == 0)
-	error (_("Attempt to raise 0 to negative power."));
+        error (_ ("Attempt to raise 0 to negative power."));
       else
-	return 0;
+        return 0;
     }
   else
     {
@@ -773,18 +772,16 @@ uinteger_pow (ULONGEST v1, LONGEST v2)
 
       v = 1;
       for (;;)
-	{
-	  if (v2 & 1L)
-	    v *= v1;
-	  v2 >>= 1;
-	  if (v2 == 0)
-	    return v;
-	  v1 *= v1;
-	}
+        {
+          if (v2 & 1L)
+            v *= v1;
+          v2 >>= 1;
+          if (v2 == 0)
+            return v;
+          v1 *= v1;
+        }
     }
 }
-
-
 
 /* An RAII class that sets up to handle input and then tears down
    during destruction.  */
@@ -792,7 +789,6 @@ uinteger_pow (ULONGEST v1, LONGEST v2)
 class scoped_input_handler
 {
 public:
-
   scoped_input_handler ()
     : m_quit_handler (&quit_handler, default_quit_handler),
       m_ui (NULL)
@@ -812,7 +808,6 @@ public:
   DISABLE_COPY_AND_ASSIGN (scoped_input_handler);
 
 private:
-
   /* Save and restore the terminal state.  */
   target_terminal::scoped_restore_terminal_state m_term_state;
 
@@ -822,8 +817,6 @@ private:
   /* The saved UI, if non-NULL.  */
   struct ui *m_ui;
 };
-
-
 
 /* This function supports the query, nquery, and yquery functions.
    Ask user a y-or-n question and return 0 if answer is no, 1 if
@@ -836,7 +829,7 @@ private:
    printf.  */
 
 static int ATTRIBUTE_PRINTF (1, 0)
-defaulted_query (const char *ctlstr, const char defchar, va_list args)
+  defaulted_query (const char *ctlstr, const char defchar, va_list args)
 {
   int retval;
   int def_value;
@@ -888,9 +881,9 @@ defaulted_query (const char *ctlstr, const char defchar, va_list args)
       gdb_stdout->wrap_here (0);
       gdb_vprintf (gdb_stdout, ctlstr, args);
 
-      gdb_printf (_("(%s or %s) [answered %c; "
-		    "input not from terminal]\n"),
-		  y_string, n_string, def_answer);
+      gdb_printf (_ ("(%s or %s) [answered %c; "
+                     "input not from terminal]\n"),
+                  y_string, n_string, def_answer);
 
       return def_value;
     }
@@ -904,10 +897,10 @@ defaulted_query (const char *ctlstr, const char defchar, va_list args)
   /* Format the question outside of the loop, to avoid reusing args.  */
   std::string question = string_vprintf (ctlstr, args);
   std::string prompt
-    = string_printf (_("%s%s(%s or %s) %s"),
-		     annotation_level > 1 ? "\n\032\032pre-query\n" : "",
-		     question.c_str (), y_string, n_string,
-		     annotation_level > 1 ? "\n\032\032query\n" : "");
+    = string_printf (_ ("%s%s(%s or %s) %s"),
+                     annotation_level > 1 ? "\n\032\032pre-query\n" : "",
+                     question.c_str (), y_string, n_string,
+                     annotation_level > 1 ? "\n\032\032query\n" : "");
 
   /* Used to add duration we waited for user to respond to
      prompt_for_continue_wait_time.  */
@@ -923,37 +916,35 @@ defaulted_query (const char *ctlstr, const char defchar, va_list args)
       gdb_flush (gdb_stdout);
       response = gdb_readline_wrapper (prompt.c_str ());
 
-      if (response == NULL)	/* C-d  */
-	{
-	  gdb_printf ("EOF [assumed %c]\n", def_answer);
-	  retval = def_value;
-	  break;
-	}
+      if (response == NULL) /* C-d  */
+        {
+          gdb_printf ("EOF [assumed %c]\n", def_answer);
+          retval = def_value;
+          break;
+        }
 
       answer = response[0];
       xfree (response);
 
       if (answer >= 'a')
-	answer -= 040;
+        answer -= 040;
       /* Check answer.  For the non-default, the user must specify
 	 the non-default explicitly.  */
       if (answer == not_def_answer)
-	{
-	  retval = !def_value;
-	  break;
-	}
+        {
+          retval = !def_value;
+          break;
+        }
       /* Otherwise, if a default was specified, the user may either
 	 specify the required input or have it default by entering
 	 nothing.  */
-      if (answer == def_answer
-	  || (defchar != '\0' && answer == '\0'))
-	{
-	  retval = def_value;
-	  break;
-	}
+      if (answer == def_answer || (defchar != '\0' && answer == '\0'))
+        {
+          retval = def_value;
+          break;
+        }
       /* Invalid entries are not defaulted and require another selection.  */
-      gdb_printf (_("Please answer %s or %s.\n"),
-		  y_string, n_string);
+      gdb_printf (_ ("Please answer %s or %s.\n"), y_string, n_string);
     }
 
   /* Add time spend in this routine to prompt_for_continue_wait_time.  */
@@ -963,7 +954,6 @@ defaulted_query (const char *ctlstr, const char defchar, va_list args)
     gdb_printf (("\n\032\032post-query\n"));
   return retval;
 }
-
 
 /* Ask user a y-or-n question and return 0 if answer is no, 1 if
    answer is yes, or 0 if answer is defaulted.
@@ -1032,8 +1022,8 @@ host_char_to_target (struct gdbarch *gdbarch, int c, int *target_c)
   auto_obstack host_data;
 
   convert_between_encodings (target_charset (gdbarch), host_charset (),
-			     (gdb_byte *) &the_char, 1, 1,
-			     &host_data, translit_none);
+                             (gdb_byte *) &the_char, 1, 1, &host_data,
+                             translit_none);
 
   if (obstack_object_size (&host_data) == 1)
     {
@@ -1062,44 +1052,44 @@ host_char_to_target (struct gdbarch *gdbarch, int c, int *target_c)
 int
 parse_escape (struct gdbarch *gdbarch, const char **string_ptr)
 {
-  int target_char = -2;	/* Initialize to avoid GCC warnings.  */
+  int target_char = -2; /* Initialize to avoid GCC warnings.  */
   int c = *(*string_ptr)++;
 
   switch (c)
     {
-      case '\n':
-	return -2;
-      case 0:
-	(*string_ptr)--;
-	return 0;
+    case '\n':
+      return -2;
+    case 0:
+      (*string_ptr)--;
+      return 0;
 
-      case '0':
-      case '1':
-      case '2':
-      case '3':
-      case '4':
-      case '5':
-      case '6':
-      case '7':
-	{
-	  int i = fromhex (c);
-	  int count = 0;
-	  while (++count < 3)
-	    {
-	      c = (**string_ptr);
-	      if (ISDIGIT (c) && c != '8' && c != '9')
-		{
-		  (*string_ptr)++;
-		  i *= 8;
-		  i += fromhex (c);
-		}
-	      else
-		{
-		  break;
-		}
-	    }
-	  return i;
-	}
+    case '0':
+    case '1':
+    case '2':
+    case '3':
+    case '4':
+    case '5':
+    case '6':
+    case '7':
+      {
+        int i = fromhex (c);
+        int count = 0;
+        while (++count < 3)
+          {
+            c = (**string_ptr);
+            if (ISDIGIT (c) && c != '8' && c != '9')
+              {
+                (*string_ptr)++;
+                i *= 8;
+                i += fromhex (c);
+              }
+            else
+              {
+                break;
+              }
+          }
+        return i;
+      }
 
     case 'a':
       c = '\a';
@@ -1128,34 +1118,32 @@ parse_escape (struct gdbarch *gdbarch, const char **string_ptr)
     }
 
   if (!host_char_to_target (gdbarch, c, &target_char))
-    error (_("The escape sequence `\\%c' is equivalent to plain `%c',"
-	     " which has no equivalent\nin the `%s' character set."),
-	   c, c, target_charset (gdbarch));
+    error (_ ("The escape sequence `\\%c' is equivalent to plain `%c',"
+              " which has no equivalent\nin the `%s' character set."),
+           c, c, target_charset (gdbarch));
   return target_char;
 }
-
 
 /* Number of lines per page or UINT_MAX if paging is disabled.  */
 static unsigned int lines_per_page;
 static void
 show_lines_per_page (struct ui_file *file, int from_tty,
-		     struct cmd_list_element *c, const char *value)
+                     struct cmd_list_element *c, const char *value)
 {
-  gdb_printf (file,
-	      _("Number of lines gdb thinks are in a page is %s.\n"),
-	      value);
+  gdb_printf (file, _ ("Number of lines gdb thinks are in a page is %s.\n"),
+              value);
 }
 
 /* Number of chars per line or UINT_MAX if line folding is disabled.  */
 static unsigned int chars_per_line;
 static void
 show_chars_per_line (struct ui_file *file, int from_tty,
-		     struct cmd_list_element *c, const char *value)
+                     struct cmd_list_element *c, const char *value)
 {
   gdb_printf (file,
-	      _("Number of characters gdb thinks "
-		"are in a line is %s.\n"),
-	      value);
+              _ ("Number of characters gdb thinks "
+                 "are in a line is %s.\n"),
+              value);
 }
 
 /* Current count of lines printed on this page, chars on this line.  */
@@ -1175,8 +1163,6 @@ static bool pagination_disabled_for_command;
 
 static bool filter_initialized = false;
 
-
-
 /* Initialize the number of lines per page and chars per line.  */
 
 void
@@ -1189,7 +1175,7 @@ init_page_info (void)
     }
   else
 #if defined(TUI)
-  if (!tui_get_command_dimension (&chars_per_line, &lines_per_page))
+    if (!tui_get_command_dimension (&chars_per_line, &lines_per_page))
 #endif
     {
       int rows, cols;
@@ -1212,19 +1198,19 @@ init_page_info (void)
 	 Only try to use tgetnum function if rl_get_screen_size
 	 did not return a useful value. */
       if (((rows <= 0) && (tgetnum ((char *) "li") < 0))
-	/* Also disable paging if inside Emacs.  $EMACS was used
+          /* Also disable paging if inside Emacs.  $EMACS was used
 	   before Emacs v25.1, $INSIDE_EMACS is used since then.  */
-	  || getenv ("EMACS") || getenv ("INSIDE_EMACS"))
-	{
-	  /* The number of lines per page is not mentioned in the terminal
+          || getenv ("EMACS") || getenv ("INSIDE_EMACS"))
+        {
+          /* The number of lines per page is not mentioned in the terminal
 	     description or EMACS environment variable is set.  This probably
 	     means that paging is not useful, so disable paging.  */
-	  lines_per_page = UINT_MAX;
-	}
+          lines_per_page = UINT_MAX;
+        }
 
       /* If the output is not a terminal, don't paginate it.  */
       if (!gdb_stdout->isatty ())
-	lines_per_page = UINT_MAX;
+        lines_per_page = UINT_MAX;
 #endif
     }
 
@@ -1341,9 +1327,9 @@ pager_file::emit_style_escape (const ui_file_style &style)
     {
       m_applied_style = style;
       if (m_paging)
-	m_stream->emit_style_escape (style);
+        m_stream->emit_style_escape (style);
       else
-	m_wrap_buffer.append (style.to_ansi ());
+        m_wrap_buffer.append (style.to_ansi ());
     }
 }
 
@@ -1382,9 +1368,8 @@ pager_file::prompt_for_continue ()
   if (annotation_level > 1)
     m_stream->puts (("\n\032\032pre-prompt-for-continue\n"));
 
-  strcpy (cont_prompt,
-	  "--Type <RET> for more, q to quit, "
-	  "c to continue without paging--");
+  strcpy (cont_prompt, "--Type <RET> for more, q to quit, "
+                       "c to continue without paging--");
   if (annotation_level > 1)
     strcat (cont_prompt, "\n\032\032prompt-for-continue\n");
 
@@ -1410,12 +1395,12 @@ pager_file::prompt_for_continue ()
       char *p = ignore.get ();
 
       while (*p == ' ' || *p == '\t')
-	++p;
+        ++p;
       if (p[0] == 'q')
-	/* Do not call quit here; there is no possibility of SIGINT.  */
-	throw_quit ("Quit");
+        /* Do not call quit here; there is no possibility of SIGINT.  */
+        throw_quit ("Quit");
       if (p[0] == 'c')
-	disable_pagination = true;
+        disable_pagination = true;
     }
 
   /* Now we have to do this again, so that GDB will know that it doesn't
@@ -1423,7 +1408,7 @@ pager_file::prompt_for_continue ()
   reinitialize_more_filter ();
   pagination_disabled_for_command = disable_pagination;
 
-  dont_repeat ();		/* Forget prev cmd -- CR won't repeat it.  */
+  dont_repeat (); /* Forget prev cmd -- CR won't repeat it.  */
 }
 
 /* Initialize timer to keep track of how long we waited for the user.  */
@@ -1496,7 +1481,7 @@ pager_file::wrap_here (int indent)
   gdb_assert (filter_initialized);
 
   flush_wrap_buffer ();
-  if (chars_per_line == UINT_MAX)	/* No line overflow checking.  */
+  if (chars_per_line == UINT_MAX) /* No line overflow checking.  */
     {
       m_wrap_column = 0;
     }
@@ -1504,7 +1489,7 @@ pager_file::wrap_here (int indent)
     {
       this->puts ("\n");
       if (indent != 0)
-	this->puts (n_spaces (indent));
+        this->puts (n_spaces (indent));
       m_wrap_column = 0;
     }
   else
@@ -1558,7 +1543,6 @@ puts_tabular (char *string, int width, int right)
   gdb_puts (string);
 }
 
-
 /* Ensure that whatever gets printed next, using the filtered output
    commands, starts at the beginning of the line.  I.e. if there is
    any pending output for the current line, flush it and start a new
@@ -1582,8 +1566,7 @@ pager_file::puts (const char *linebuffer)
     return;
 
   /* Don't do any filtering or wrapping if both are disabled.  */
-  if (batch_flag
-      || (lines_per_page == UINT_MAX && chars_per_line == UINT_MAX)
+  if (batch_flag || (lines_per_page == UINT_MAX && chars_per_line == UINT_MAX)
       || top_level_interpreter () == NULL
       || top_level_interpreter ()->interp_ui_out ()->is_mi_like_p ())
     {
@@ -1592,19 +1575,16 @@ pager_file::puts (const char *linebuffer)
       return;
     }
 
-  auto buffer_clearer
-    = make_scope_exit ([&] ()
-		       {
-			 m_wrap_buffer.clear ();
-			 m_wrap_column = 0;
-			 m_wrap_indent = 0;
-		       });
+  auto buffer_clearer = make_scope_exit ([&] () {
+    m_wrap_buffer.clear ();
+    m_wrap_column = 0;
+    m_wrap_indent = 0;
+  });
 
   /* If the user does "set height 1" then the pager will exhibit weird
      behavior.  This is pathological, though, so don't allow it.  */
-  const unsigned int lines_allowed = (lines_per_page > 1
-				      ? lines_per_page - 1
-				      : 1);
+  const unsigned int lines_allowed
+    = (lines_per_page > 1 ? lines_per_page - 1 : 1);
 
   /* Go through and output each character.  Show line extension
      when this is necessary; prompt user for new page when this is
@@ -1616,125 +1596,123 @@ pager_file::puts (const char *linebuffer)
       /* Possible new page.  Note that PAGINATION_DISABLED_FOR_COMMAND
 	 might be set during this loop, so we must continue to check
 	 it here.  */
-      if (pagination_enabled
-	  && !pagination_disabled_for_command
-	  && lines_printed >= lines_allowed)
-	prompt_for_continue ();
+      if (pagination_enabled && !pagination_disabled_for_command
+          && lines_printed >= lines_allowed)
+        prompt_for_continue ();
 
       while (*lineptr && *lineptr != '\n')
-	{
-	  int skip_bytes;
+        {
+          int skip_bytes;
 
-	  /* Print a single line.  */
-	  if (*lineptr == '\t')
-	    {
-	      m_wrap_buffer.push_back ('\t');
-	      /* Shifting right by 3 produces the number of tab stops
+          /* Print a single line.  */
+          if (*lineptr == '\t')
+            {
+              m_wrap_buffer.push_back ('\t');
+              /* Shifting right by 3 produces the number of tab stops
 		 we have already passed, and then adding one and
 		 shifting left 3 advances to the next tab stop.  */
-	      chars_printed = ((chars_printed >> 3) + 1) << 3;
-	      lineptr++;
-	    }
-	  else if (*lineptr == '\033'
-		   && skip_ansi_escape (lineptr, &skip_bytes))
-	    {
-	      m_wrap_buffer.append (lineptr, skip_bytes);
-	      /* Note that we don't consider this a character, so we
+              chars_printed = ((chars_printed >> 3) + 1) << 3;
+              lineptr++;
+            }
+          else if (*lineptr == '\033'
+                   && skip_ansi_escape (lineptr, &skip_bytes))
+            {
+              m_wrap_buffer.append (lineptr, skip_bytes);
+              /* Note that we don't consider this a character, so we
 		 don't increment chars_printed here.  */
-	      lineptr += skip_bytes;
-	    }
-	  else if (*lineptr == '\r')
-	    {
-	      m_wrap_buffer.push_back (*lineptr);
-	      chars_printed = 0;
-	      lineptr++;
-	    }
-	  else
-	    {
-	      m_wrap_buffer.push_back (*lineptr);
-	      chars_printed++;
-	      lineptr++;
-	    }
+              lineptr += skip_bytes;
+            }
+          else if (*lineptr == '\r')
+            {
+              m_wrap_buffer.push_back (*lineptr);
+              chars_printed = 0;
+              lineptr++;
+            }
+          else
+            {
+              m_wrap_buffer.push_back (*lineptr);
+              chars_printed++;
+              lineptr++;
+            }
 
-	  if (chars_printed >= chars_per_line)
-	    {
-	      unsigned int save_chars = chars_printed;
+          if (chars_printed >= chars_per_line)
+            {
+              unsigned int save_chars = chars_printed;
 
-	      /* If we change the style, below, we'll want to reset it
+              /* If we change the style, below, we'll want to reset it
 		 before continuing to print.  If there is no wrap
 		 column, then we'll only reset the style if the pager
 		 prompt is given; and to avoid emitting style
 		 sequences in the middle of a run of text, we track
 		 this as well.  */
-	      ui_file_style save_style = m_applied_style;
-	      bool did_paginate = false;
+              ui_file_style save_style = m_applied_style;
+              bool did_paginate = false;
 
-	      chars_printed = 0;
-	      lines_printed++;
-	      if (m_wrap_column)
-		{
-		  /* We are about to insert a newline at an historic
+              chars_printed = 0;
+              lines_printed++;
+              if (m_wrap_column)
+                {
+                  /* We are about to insert a newline at an historic
 		     location in the WRAP_BUFFER.  Before we do we want to
 		     restore the default style.  To know if we actually
 		     need to insert an escape sequence we must restore the
 		     current applied style to how it was at the WRAP_COLUMN
 		     location.  */
-		  m_applied_style = m_wrap_style;
-		  m_stream->emit_style_escape (ui_file_style ());
-		  /* If we aren't actually wrapping, don't output
+                  m_applied_style = m_wrap_style;
+                  m_stream->emit_style_escape (ui_file_style ());
+                  /* If we aren't actually wrapping, don't output
 		     newline -- if chars_per_line is right, we
 		     probably just overflowed anyway; if it's wrong,
 		     let us keep going.  */
-		  m_stream->puts ("\n");
-		}
-	      else
-		this->flush_wrap_buffer ();
+                  m_stream->puts ("\n");
+                }
+              else
+                this->flush_wrap_buffer ();
 
-	      /* Possible new page.  Note that
+              /* Possible new page.  Note that
 		 PAGINATION_DISABLED_FOR_COMMAND might be set during
 		 this loop, so we must continue to check it here.  */
-	      if (pagination_enabled
-		  && !pagination_disabled_for_command
-		  && lines_printed >= lines_allowed)
-		{
-		  prompt_for_continue ();
-		  did_paginate = true;
-		}
+              if (pagination_enabled && !pagination_disabled_for_command
+                  && lines_printed >= lines_allowed)
+                {
+                  prompt_for_continue ();
+                  did_paginate = true;
+                }
 
-	      /* Now output indentation and wrapped string.  */
-	      if (m_wrap_column)
-		{
-		  m_stream->puts (n_spaces (m_wrap_indent));
+              /* Now output indentation and wrapped string.  */
+              if (m_wrap_column)
+                {
+                  m_stream->puts (n_spaces (m_wrap_indent));
 
-		  /* Having finished inserting the wrapping we should
+                  /* Having finished inserting the wrapping we should
 		     restore the style as it was at the WRAP_COLUMN.  */
-		  m_stream->emit_style_escape (m_wrap_style);
+                  m_stream->emit_style_escape (m_wrap_style);
 
-		  /* The WRAP_BUFFER will still contain content, and that
+                  /* The WRAP_BUFFER will still contain content, and that
 		     content might set some alternative style.  Restore
 		     APPLIED_STYLE as it was before we started wrapping,
 		     this reflects the current style for the last character
 		     in WRAP_BUFFER.  */
-		  m_applied_style = save_style;
+                  m_applied_style = save_style;
 
-		  /* Note that this can set chars_printed > chars_per_line
+                  /* Note that this can set chars_printed > chars_per_line
 		     if we are printing a long string.  */
-		  chars_printed = m_wrap_indent + (save_chars - m_wrap_column);
-		  m_wrap_column = 0;	/* And disable fancy wrap */
-		}
-	      else if (did_paginate)
-		m_stream->emit_style_escape (save_style);
-	    }
-	}
+                  chars_printed = m_wrap_indent + (save_chars - m_wrap_column);
+                  m_wrap_column = 0; /* And disable fancy wrap */
+                }
+              else if (did_paginate)
+                m_stream->emit_style_escape (save_style);
+            }
+        }
 
       if (*lineptr == '\n')
-	{
-	  chars_printed = 0;
-	  wrap_here (0); /* Spit out chars, cancel further wraps.  */
-	  lines_printed++;
-	  m_stream->puts ("\n");
-	  lineptr++;
-	}
+        {
+          chars_printed = 0;
+          wrap_here (0); /* Spit out chars, cancel further wraps.  */
+          lines_printed++;
+          m_stream->puts ("\n");
+          lineptr++;
+        }
     }
 
   buffer_clearer.release ();
@@ -1765,15 +1743,11 @@ test_pager ()
     = make_scoped_restore (&pagination_enabled, false);
   scoped_restore save_disabled
     = make_scoped_restore (&pagination_disabled_for_command, false);
-  scoped_restore save_batch
-    = make_scoped_restore (&batch_flag, false);
-  scoped_restore save_lines
-    = make_scoped_restore (&lines_per_page, 50);
+  scoped_restore save_batch = make_scoped_restore (&batch_flag, false);
+  scoped_restore save_lines = make_scoped_restore (&lines_per_page, 50);
   /* Make it easy to word wrap.  */
-  scoped_restore save_chars
-    = make_scoped_restore (&chars_per_line, 15);
-  scoped_restore save_printed
-    = make_scoped_restore (&chars_printed, 0);
+  scoped_restore save_chars = make_scoped_restore (&chars_per_line, 15);
+  scoped_restore save_printed = make_scoped_restore (&chars_printed, 0);
 
   pager.puts ("aaaaaaaaaaaa");
   pager.wrap_here (2);
@@ -1794,7 +1768,7 @@ gdb_puts (const char *linebuffer, struct ui_file *stream)
 
 void
 fputs_styled (const char *linebuffer, const ui_file_style &style,
-	      struct ui_file *stream)
+              struct ui_file *stream)
 {
   stream->emit_style_escape (style);
   gdb_puts (linebuffer, stream);
@@ -1805,7 +1779,7 @@ fputs_styled (const char *linebuffer, const ui_file_style &style,
 
 void
 fputs_highlighted (const char *str, const compiled_regex &highlight,
-		   struct ui_file *stream)
+                   struct ui_file *stream)
 {
   regmatch_t pmatch;
 
@@ -1815,20 +1789,20 @@ fputs_highlighted (const char *str, const compiled_regex &highlight,
 
       /* Output the part before pmatch with current style.  */
       while (pmatch.rm_so > 0)
-	{
-	  gdb_putc (*str, stream);
-	  pmatch.rm_so--;
-	  str++;
-	}
+        {
+          gdb_putc (*str, stream);
+          pmatch.rm_so--;
+          str++;
+        }
 
       /* Output pmatch with the highlight style.  */
       stream->emit_style_escape (highlight_style.style ());
       while (n_highlight > 0)
-	{
-	  gdb_putc (*str, stream);
-	  n_highlight--;
-	  str++;
-	}
+        {
+          gdb_putc (*str, stream);
+          n_highlight--;
+          str++;
+        }
       stream->emit_style_escape (ui_file_style ());
     }
 
@@ -1875,7 +1849,7 @@ gdb_printf (struct ui_file *stream, const char *format, ...)
 
 void
 fprintf_styled (struct ui_file *stream, const ui_file_style &style,
-		const char *format, ...)
+                const char *format, ...)
 {
   va_list args;
 
@@ -1895,7 +1869,6 @@ gdb_printf (const char *format, ...)
   gdb_vprintf (gdb_stdout, format, args);
   va_end (args);
 }
-
 
 void
 printf_unfiltered (const char *format, ...)
@@ -1934,7 +1907,7 @@ n_spaces (int n)
       xfree (spaces);
       spaces = (char *) xmalloc (n + 1);
       for (t = spaces + n; t != spaces;)
-	*--t = ' ';
+        *--t = ' ';
       spaces[n] = '\0';
       max_spaces = n;
     }
@@ -1948,7 +1921,7 @@ print_spaces (int n, struct ui_file *stream)
 {
   gdb_puts (n_spaces (n), stream);
 }
-
+
 /* C++/ObjC demangler stuff.  */
 
 /* fprintf_symbol attempts to demangle NAME, a symbol in language
@@ -1957,22 +1930,22 @@ print_spaces (int n, struct ui_file *stream)
    demangling is off, the name is printed in its "raw" form.  */
 
 void
-fprintf_symbol (struct ui_file *stream, const char *name,
-		enum language lang, int arg_mode)
+fprintf_symbol (struct ui_file *stream, const char *name, enum language lang,
+                int arg_mode)
 {
   if (name != NULL)
     {
       /* If user wants to see raw output, no problem.  */
       if (!demangle)
-	{
-	  gdb_puts (name, stream);
-	}
+        {
+          gdb_puts (name, stream);
+        }
       else
-	{
-	  gdb::unique_xmalloc_ptr<char> demangled
-	    = language_demangle (language_def (lang), name, arg_mode);
-	  gdb_puts (demangled ? demangled.get () : name, stream);
-	}
+        {
+          gdb::unique_xmalloc_ptr<char> demangled
+            = language_demangle (language_def (lang), name, arg_mode);
+          gdb_puts (demangled ? demangled.get () : name, stream);
+        }
     }
 }
 
@@ -1995,47 +1968,34 @@ cp_skip_operator_token (const char *token, const char *end)
   while (p != end && !ISSPACE (*p) && *p != '(')
     {
       if (valid_identifier_name_char (*p))
-	{
-	  while (p != end && valid_identifier_name_char (*p))
-	    p++;
-	  return p;
-	}
+        {
+          while (p != end && valid_identifier_name_char (*p))
+            p++;
+          return p;
+        }
       else
-	{
-	  /* Note, ordered such that among ops that share a prefix,
+        {
+          /* Note, ordered such that among ops that share a prefix,
 	     longer comes first.  This is so that the loop below can
 	     bail on first match.  */
-	  static const char *ops[] =
-	    {
-	      "[",
-	      "]",
-	      "~",
-	      ",",
-	      "-=", "--", "->", "-",
-	      "+=", "++", "+",
-	      "*=", "*",
-	      "/=", "/",
-	      "%=", "%",
-	      "|=", "||", "|",
-	      "&=", "&&", "&",
-	      "^=", "^",
-	      "!=", "!",
-	      "<<=", "<=", "<<", "<",
-	      ">>=", ">=", ">>", ">",
-	      "==", "=",
-	    };
+          static const char *ops[] = {
+            "[",  "]",   "~",  ",",  "-=", "--", "->", "-",   "+=", "++",
+            "+",  "*=",  "*",  "/=", "/",  "%=", "%",  "|=",  "||", "|",
+            "&=", "&&",  "&",  "^=", "^",  "!=", "!",  "<<=", "<=", "<<",
+            "<",  ">>=", ">=", ">>", ">",  "==", "=",
+          };
 
-	  for (const char *op : ops)
-	    {
-	      size_t oplen = strlen (op);
-	      size_t lencmp = std::min<size_t> (oplen, end - p);
+          for (const char *op : ops)
+            {
+              size_t oplen = strlen (op);
+              size_t lencmp = std::min<size_t> (oplen, end - p);
 
-	      if (strncmp (p, op, lencmp) == 0)
-		return p + lencmp;
-	    }
-	  /* Some unidentified character.  Return it.  */
-	  return p + 1;
-	}
+              if (strncmp (p, op, lencmp) == 0)
+                return p + lencmp;
+            }
+          /* Some unidentified character.  Return it.  */
+          return p + 1;
+        }
     }
 
   return p;
@@ -2059,10 +2019,9 @@ skip_ws (const char *&string1, const char *&string2, const char *end_str2)
 static bool
 cp_is_operator (const char *string, const char *start)
 {
-  return ((string == start
-	   || !valid_identifier_name_char (string[-1]))
-	  && strncmp (string, CP_OPERATOR_STR, CP_OPERATOR_LEN) == 0
-	  && !valid_identifier_name_char (string[CP_OPERATOR_LEN]));
+  return ((string == start || !valid_identifier_name_char (string[-1]))
+          && strncmp (string, CP_OPERATOR_STR, CP_OPERATOR_LEN) == 0
+          && !valid_identifier_name_char (string[CP_OPERATOR_LEN]));
 }
 
 /* If *NAME points at an ABI tag, skip it and return true.  Otherwise
@@ -2080,14 +2039,14 @@ skip_abi_tag (const char **name)
       p += 5;
 
       while (valid_identifier_name_char (*p))
-	p++;
+        p++;
 
       if (*p == ']')
-	{
-	  p++;
-	  *name = p;
-	  return true;
-	}
+        {
+          p++;
+          *name = p;
+          return true;
+        }
     }
   return false;
 }
@@ -2105,7 +2064,7 @@ skip_template_parameter_list (const char **name)
       const char *template_param_list_end = find_toplevel_char (p + 1, '>');
 
       if (template_param_list_end == NULL)
-	return false;
+        return false;
 
       p = template_param_list_end + 1;
 
@@ -2113,9 +2072,9 @@ skip_template_parameter_list (const char **name)
 	 parameter list, but only if it is the end of parameter list.  */
       const char *q = p;
       while (ISSPACE (*q))
-	++q;
+        ++q;
       if (*q == '>')
-	p = q;
+        p = q;
       *name = p;
       return true;
     }
@@ -2127,27 +2086,27 @@ skip_template_parameter_list (const char **name)
 
 int
 strncmp_iw_with_mode (const char *string1, const char *string2,
-		      size_t string2_len, strncmp_iw_mode mode,
-		      enum language language,
-		      completion_match_for_lcd *match_for_lcd,
-		      bool ignore_template_params)
+                      size_t string2_len, strncmp_iw_mode mode,
+                      enum language language,
+                      completion_match_for_lcd *match_for_lcd,
+                      bool ignore_template_params)
 {
   const char *string1_start = string1;
   const char *end_str2 = string2 + string2_len;
   bool skip_spaces = true;
-  bool have_colon_op = (language == language_cplus
-			|| language == language_rust
-			|| language == language_fortran);
+  bool have_colon_op = (language == language_cplus || language == language_rust
+                        || language == language_fortran);
 
   while (1)
     {
       if (skip_spaces
-	  || ((ISSPACE (*string1) && !valid_identifier_name_char (*string2))
-	      || (ISSPACE (*string2) && !valid_identifier_name_char (*string1))))
-	{
-	  skip_ws (string1, string2, end_str2);
-	  skip_spaces = false;
-	}
+          || ((ISSPACE (*string1) && !valid_identifier_name_char (*string2))
+              || (ISSPACE (*string2)
+                  && !valid_identifier_name_char (*string1))))
+        {
+          skip_ws (string1, string2, end_str2);
+          skip_spaces = false;
+        }
 
       /* Skip [abi:cxx11] tags in the symbol name if the lookup name
 	 doesn't include them.  E.g.:
@@ -2165,20 +2124,20 @@ strncmp_iw_with_mode (const char *string1, const char *string2,
 	 string2: function(Struct, int)
       */
       if (string2 == end_str2
-	  || (*string2 != '[' && !valid_identifier_name_char (*string2)))
-	{
-	  const char *abi_start = string1;
+          || (*string2 != '[' && !valid_identifier_name_char (*string2)))
+        {
+          const char *abi_start = string1;
 
-	  /* There can be more than one tag.  */
-	  while (*string1 == '[' && skip_abi_tag (&string1))
-	    ;
+          /* There can be more than one tag.  */
+          while (*string1 == '[' && skip_abi_tag (&string1))
+            ;
 
-	  if (match_for_lcd != NULL && abi_start != string1)
-	    match_for_lcd->mark_ignored_range (abi_start, string1);
+          if (match_for_lcd != NULL && abi_start != string1)
+            match_for_lcd->mark_ignored_range (abi_start, string1);
 
-	  while (ISSPACE (*string1))
-	    string1++;
-	}
+          while (ISSPACE (*string1))
+            string1++;
+        }
 
       /* Skip template parameters in STRING1 if STRING2 does not contain
 	 any.  E.g.:
@@ -2207,153 +2166,152 @@ strncmp_iw_with_mode (const char *string1, const char *string2,
 	 string2: foo<A
       */
       if (language == language_cplus && ignore_template_params
-	  && *string1 == '<' && *string2 != '<')
-	{
-	  /* Skip any parameter list in STRING1.  */
-	  const char *template_start = string1;
+          && *string1 == '<' && *string2 != '<')
+        {
+          /* Skip any parameter list in STRING1.  */
+          const char *template_start = string1;
 
-	  if (skip_template_parameter_list (&string1))
-	    {
-	      /* Don't mark the parameter list ignored if the user didn't
+          if (skip_template_parameter_list (&string1))
+            {
+              /* Don't mark the parameter list ignored if the user didn't
 		 try to ignore it.  [Case #5 above]  */
-	      if (*string2 != '\0'
-		  && match_for_lcd != NULL && template_start != string1)
-		match_for_lcd->mark_ignored_range (template_start, string1);
-	    }
-	}
+              if (*string2 != '\0' && match_for_lcd != NULL
+                  && template_start != string1)
+                match_for_lcd->mark_ignored_range (template_start, string1);
+            }
+        }
 
       if (*string1 == '\0' || string2 == end_str2)
-	break;
+        break;
 
       /* Handle the :: operator.  */
       if (have_colon_op && string1[0] == ':' && string1[1] == ':')
-	{
-	  if (*string2 != ':')
-	    return 1;
+        {
+          if (*string2 != ':')
+            return 1;
 
-	  string1++;
-	  string2++;
+          string1++;
+          string2++;
 
-	  if (string2 == end_str2)
-	    break;
+          if (string2 == end_str2)
+            break;
 
-	  if (*string2 != ':')
-	    return 1;
+          if (*string2 != ':')
+            return 1;
 
-	  string1++;
-	  string2++;
+          string1++;
+          string2++;
 
-	  while (ISSPACE (*string1))
-	    string1++;
-	  while (string2 < end_str2 && ISSPACE (*string2))
-	    string2++;
-	  continue;
-	}
+          while (ISSPACE (*string1))
+            string1++;
+          while (string2 < end_str2 && ISSPACE (*string2))
+            string2++;
+          continue;
+        }
 
       /* Handle C++ user-defined operators.  */
-      else if (language == language_cplus
-	       && *string1 == 'o')
-	{
-	  if (cp_is_operator (string1, string1_start))
-	    {
-	      /* An operator name in STRING1.  Check STRING2.  */
-	      size_t cmplen
-		= std::min<size_t> (CP_OPERATOR_LEN, end_str2 - string2);
-	      if (strncmp (string1, string2, cmplen) != 0)
-		return 1;
+      else if (language == language_cplus && *string1 == 'o')
+        {
+          if (cp_is_operator (string1, string1_start))
+            {
+              /* An operator name in STRING1.  Check STRING2.  */
+              size_t cmplen
+                = std::min<size_t> (CP_OPERATOR_LEN, end_str2 - string2);
+              if (strncmp (string1, string2, cmplen) != 0)
+                return 1;
 
-	      string1 += cmplen;
-	      string2 += cmplen;
+              string1 += cmplen;
+              string2 += cmplen;
 
-	      if (string2 != end_str2)
-		{
-		  /* Check for "operatorX" in STRING2.  */
-		  if (valid_identifier_name_char (*string2))
-		    return 1;
+              if (string2 != end_str2)
+                {
+                  /* Check for "operatorX" in STRING2.  */
+                  if (valid_identifier_name_char (*string2))
+                    return 1;
 
-		  skip_ws (string1, string2, end_str2);
-		}
+                  skip_ws (string1, string2, end_str2);
+                }
 
-	      /* Handle operator().  */
-	      if (*string1 == '(')
-		{
-		  if (string2 == end_str2)
-		    {
-		      if (mode == strncmp_iw_mode::NORMAL)
-			return 0;
-		      else
-			{
-			  /* Don't break for the regular return at the
+              /* Handle operator().  */
+              if (*string1 == '(')
+                {
+                  if (string2 == end_str2)
+                    {
+                      if (mode == strncmp_iw_mode::NORMAL)
+                        return 0;
+                      else
+                        {
+                          /* Don't break for the regular return at the
 			     bottom, because "operator" should not
 			     match "operator()", since this open
 			     parentheses is not the parameter list
 			     start.  */
-			  return *string1 != '\0';
-			}
-		    }
+                          return *string1 != '\0';
+                        }
+                    }
 
-		  if (*string1 != *string2)
-		    return 1;
+                  if (*string1 != *string2)
+                    return 1;
 
-		  string1++;
-		  string2++;
-		}
+                  string1++;
+                  string2++;
+                }
 
-	      while (1)
-		{
-		  skip_ws (string1, string2, end_str2);
+              while (1)
+                {
+                  skip_ws (string1, string2, end_str2);
 
-		  /* Skip to end of token, or to END, whatever comes
+                  /* Skip to end of token, or to END, whatever comes
 		     first.  */
-		  const char *end_str1 = string1 + strlen (string1);
-		  const char *p1 = cp_skip_operator_token (string1, end_str1);
-		  const char *p2 = cp_skip_operator_token (string2, end_str2);
+                  const char *end_str1 = string1 + strlen (string1);
+                  const char *p1 = cp_skip_operator_token (string1, end_str1);
+                  const char *p2 = cp_skip_operator_token (string2, end_str2);
 
-		  cmplen = std::min (p1 - string1, p2 - string2);
-		  if (p2 == end_str2)
-		    {
-		      if (strncmp (string1, string2, cmplen) != 0)
-			return 1;
-		    }
-		  else
-		    {
-		      if (p1 - string1 != p2 - string2)
-			return 1;
-		      if (strncmp (string1, string2, cmplen) != 0)
-			return 1;
-		    }
+                  cmplen = std::min (p1 - string1, p2 - string2);
+                  if (p2 == end_str2)
+                    {
+                      if (strncmp (string1, string2, cmplen) != 0)
+                        return 1;
+                    }
+                  else
+                    {
+                      if (p1 - string1 != p2 - string2)
+                        return 1;
+                      if (strncmp (string1, string2, cmplen) != 0)
+                        return 1;
+                    }
 
-		  string1 += cmplen;
-		  string2 += cmplen;
+                  string1 += cmplen;
+                  string2 += cmplen;
 
-		  if (*string1 == '\0' || string2 == end_str2)
-		    break;
-		  if (*string1 == '(' || *string2 == '(')
-		    break;
+                  if (*string1 == '\0' || string2 == end_str2)
+                    break;
+                  if (*string1 == '(' || *string2 == '(')
+                    break;
 
-		  /* If STRING1 or STRING2 starts with a template
+                  /* If STRING1 or STRING2 starts with a template
 		     parameter list, break out of operator processing.  */
-		  skip_ws (string1, string2, end_str2);
-		  if (*string1 == '<' || *string2 == '<')
-		    break;
-		}
+                  skip_ws (string1, string2, end_str2);
+                  if (*string1 == '<' || *string2 == '<')
+                    break;
+                }
 
-	      continue;
-	    }
-	}
+              continue;
+            }
+        }
 
       if (case_sensitivity == case_sensitive_on && *string1 != *string2)
-	break;
+        break;
       if (case_sensitivity == case_sensitive_off
-	  && (TOLOWER ((unsigned char) *string1)
-	      != TOLOWER ((unsigned char) *string2)))
-	break;
+          && (TOLOWER ((unsigned char) *string1)
+              != TOLOWER ((unsigned char) *string2)))
+        break;
 
       /* If we see any non-whitespace, non-identifier-name character
 	 (any of "()<>*&" etc.), then skip spaces the next time
 	 around.  */
       if (!ISSPACE (*string1) && !valid_identifier_name_char (*string1))
-	skip_spaces = true;
+        skip_spaces = true;
 
       string1++;
       string2++;
@@ -2362,8 +2320,8 @@ strncmp_iw_with_mode (const char *string1, const char *string2,
   if (string2 == end_str2)
     {
       if (mode == strncmp_iw_mode::NORMAL)
-	{
-	  /* Strip abi tag markers from the matched symbol name.
+        {
+          /* Strip abi tag markers from the matched symbol name.
 	     Usually the ABI marker will be found on function name
 	     (automatically added because the function returns an
 	     object marked with an ABI tag).  However, it's also
@@ -2379,25 +2337,25 @@ strncmp_iw_with_mode (const char *string1, const char *string2,
 	     the match was for:
 	       function(some_struct, int)
 	  */
-	  if (match_for_lcd != NULL)
-	    {
-	      while ((string1 = strstr (string1, "[abi:")) != NULL)
-		{
-		  const char *abi_start = string1;
+          if (match_for_lcd != NULL)
+            {
+              while ((string1 = strstr (string1, "[abi:")) != NULL)
+                {
+                  const char *abi_start = string1;
 
-		  /* There can be more than one tag.  */
-		  while (skip_abi_tag (&string1) && *string1 == '[')
-		    ;
+                  /* There can be more than one tag.  */
+                  while (skip_abi_tag (&string1) && *string1 == '[')
+                    ;
 
-		  if (abi_start != string1)
-		    match_for_lcd->mark_ignored_range (abi_start, string1);
-		}
-	    }
+                  if (abi_start != string1)
+                    match_for_lcd->mark_ignored_range (abi_start, string1);
+                }
+            }
 
-	  return 0;
-	}
+          return 0;
+        }
       else
-	return (*string1 != '\0' && *string1 != '(');
+        return (*string1 != '\0' && *string1 != '(');
     }
   else
     return 1;
@@ -2407,26 +2365,26 @@ strncmp_iw_with_mode (const char *string1, const char *string2,
 
 /* Unit tests for strncmp_iw_with_mode.  */
 
-#define CHECK_MATCH_LM(S1, S2, MODE, LANG, LCD)			\
-  SELF_CHECK (strncmp_iw_with_mode ((S1), (S2), strlen ((S2)),	\
-				    strncmp_iw_mode::MODE,				\
-				    (LANG), (LCD)) == 0)
+#define CHECK_MATCH_LM(S1, S2, MODE, LANG, LCD)                           \
+  SELF_CHECK (strncmp_iw_with_mode ((S1), (S2), strlen ((S2)),            \
+                                    strncmp_iw_mode::MODE, (LANG), (LCD)) \
+              == 0)
 
-#define CHECK_MATCH_LANG(S1, S2, MODE, LANG)			\
+#define CHECK_MATCH_LANG(S1, S2, MODE, LANG) \
   CHECK_MATCH_LM ((S1), (S2), MODE, (LANG), nullptr)
 
-#define CHECK_MATCH(S1, S2, MODE)						\
+#define CHECK_MATCH(S1, S2, MODE) \
   CHECK_MATCH_LANG ((S1), (S2), MODE, language_minimal)
 
-#define CHECK_NO_MATCH_LM(S1, S2, MODE, LANG, LCD)		\
-  SELF_CHECK (strncmp_iw_with_mode ((S1), (S2), strlen ((S2)),	\
-				    strncmp_iw_mode::MODE,				\
-				    (LANG)) != 0)
+#define CHECK_NO_MATCH_LM(S1, S2, MODE, LANG, LCD)                 \
+  SELF_CHECK (strncmp_iw_with_mode ((S1), (S2), strlen ((S2)),     \
+                                    strncmp_iw_mode::MODE, (LANG)) \
+              != 0)
 
-#define CHECK_NO_MATCH_LANG(S1, S2, MODE, LANG)		\
+#define CHECK_NO_MATCH_LANG(S1, S2, MODE, LANG) \
   CHECK_NO_MATCH_LM ((S1), (S2), MODE, (LANG), nullptr)
 
-#define CHECK_NO_MATCH(S1, S2, MODE)				       \
+#define CHECK_NO_MATCH(S1, S2, MODE) \
   CHECK_NO_MATCH_LANG ((S1), (S2), MODE, language_minimal)
 
 static void
@@ -2478,11 +2436,11 @@ check_scope_operator (enum language lang)
   CHECK_MATCH_LANG (" \ta:: \tb:: \tc", "a::b::c", NORMAL, lang);
   CHECK_MATCH_LANG ("\t a::\t b::\t c", "a::b::c", NORMAL, lang);
   CHECK_MATCH_LANG ("a :: b:: c\t", "\ta :: b\t::  c\t\t", NORMAL, lang);
-  CHECK_MATCH_LANG ("  a::\t  \t    b::     c\t", "\ta ::b::  c\t\t",
-	      NORMAL, lang);
-  CHECK_MATCH_LANG ("a      :: b               :: \t\t\tc\t",
-	      "\t\t\t\ta        ::   \t\t\t        b             \t\t::c",
-	      NORMAL, lang);
+  CHECK_MATCH_LANG ("  a::\t  \t    b::     c\t", "\ta ::b::  c\t\t", NORMAL,
+                    lang);
+  CHECK_MATCH_LANG (
+    "a      :: b               :: \t\t\tc\t",
+    "\t\t\t\ta        ::   \t\t\t        b             \t\t::c", NORMAL, lang);
   CHECK_MATCH_LANG ("a::b()", "a", NORMAL, lang);
   CHECK_MATCH_LANG ("a::b()", "a::", NORMAL, lang);
   CHECK_MATCH_LANG ("a::b()", "a::b", NORMAL, lang);
@@ -2541,10 +2499,10 @@ strncmp_iw_with_mode_tests ()
   CHECK_MATCH (" \tfoo \t", "foo", NORMAL);
   CHECK_MATCH ("\t foo\t ", "foo", NORMAL);
   CHECK_MATCH ("\t \t     \t\t\t\t   foo\t\t\t  \t\t   \t   \t    \t  \t ",
-	       "foo", NORMAL);
+               "foo", NORMAL);
   CHECK_MATCH ("foo",
-	       "\t \t     \t\t\t\t   foo\t\t\t  \t\t   \t   \t    \t  \t ",
-	       NORMAL);
+               "\t \t     \t\t\t\t   foo\t\t\t  \t\t   \t   \t    \t  \t ",
+               NORMAL);
   CHECK_MATCH ("foo bar", "foo", NORMAL);
   CHECK_NO_MATCH ("foo", "bar", NORMAL);
   CHECK_NO_MATCH ("foo bar", "foobar", NORMAL);
@@ -2675,64 +2633,64 @@ strncmp_iw_with_mode_tests ()
 
   /* Test C++ user-defined operators.  */
   CHECK_MATCH_LANG ("operator foo(int&)", "operator foo(int &)", NORMAL,
-		    language_cplus);
+                    language_cplus);
   CHECK_MATCH_LANG ("operator foo(int &)", "operator foo(int &)", NORMAL,
-		    language_cplus);
+                    language_cplus);
   CHECK_MATCH_LANG ("operator foo(int\t&)", "operator foo(int\t&)", NORMAL,
-		    language_cplus);
+                    language_cplus);
   CHECK_MATCH_LANG ("operator foo (int)", "operator foo(int)", NORMAL,
-		    language_cplus);
+                    language_cplus);
   CHECK_MATCH_LANG ("operator foo\t(int)", "operator foo(int)", NORMAL,
-		    language_cplus);
+                    language_cplus);
   CHECK_MATCH_LANG ("operator foo \t(int)", "operator foo(int)", NORMAL,
-		    language_cplus);
+                    language_cplus);
   CHECK_MATCH_LANG ("operator foo (int)", "operator foo \t(int)", NORMAL,
-		    language_cplus);
+                    language_cplus);
   CHECK_MATCH_LANG ("operator foo\t(int)", "operator foo \t(int)", NORMAL,
-		    language_cplus);
+                    language_cplus);
   CHECK_MATCH_LANG ("operator foo \t(int)", "operator foo \t(int)", NORMAL,
-		    language_cplus);
+                    language_cplus);
 
   CHECK_MATCH_LANG ("a::operator foo(int&)", "a::operator foo(int &)", NORMAL,
-		    language_cplus);
-  CHECK_MATCH_LANG ("a :: operator foo(int &)", "a::operator foo(int &)", NORMAL,
-		    language_cplus);
-  CHECK_MATCH_LANG ("a \t:: \toperator foo(int\t&)", "a::operator foo(int\t&)", NORMAL,
-		    language_cplus);
+                    language_cplus);
+  CHECK_MATCH_LANG ("a :: operator foo(int &)", "a::operator foo(int &)",
+                    NORMAL, language_cplus);
+  CHECK_MATCH_LANG ("a \t:: \toperator foo(int\t&)", "a::operator foo(int\t&)",
+                    NORMAL, language_cplus);
   CHECK_MATCH_LANG ("a::operator foo (int)", "a::operator foo(int)", NORMAL,
-		    language_cplus);
+                    language_cplus);
   CHECK_MATCH_LANG ("a::operator foo\t(int)", "a::operator foo(int)", NORMAL,
-		    language_cplus);
+                    language_cplus);
   CHECK_MATCH_LANG ("a::operator foo \t(int)", "a::operator foo(int)", NORMAL,
-		    language_cplus);
+                    language_cplus);
   CHECK_MATCH_LANG ("a::operator foo (int)", "a::operator foo \t(int)", NORMAL,
-		    language_cplus);
-  CHECK_MATCH_LANG ("a::operator foo\t(int)", "a::operator foo \t(int)", NORMAL,
-		    language_cplus);
-  CHECK_MATCH_LANG ("a::operator foo \t(int)", "a::operator foo \t(int)", NORMAL,
-		    language_cplus);
+                    language_cplus);
+  CHECK_MATCH_LANG ("a::operator foo\t(int)", "a::operator foo \t(int)",
+                    NORMAL, language_cplus);
+  CHECK_MATCH_LANG ("a::operator foo \t(int)", "a::operator foo \t(int)",
+                    NORMAL, language_cplus);
 
   CHECK_NO_MATCH_LANG ("operator foo(int)", "operator foo(char)", NORMAL,
-		       language_cplus);
+                       language_cplus);
   CHECK_NO_MATCH_LANG ("operator foo(int)", "operator foo(int *)", NORMAL,
-		       language_cplus);
+                       language_cplus);
   CHECK_NO_MATCH_LANG ("operator foo(int)", "operator foo(int &)", NORMAL,
-		       language_cplus);
-  CHECK_NO_MATCH_LANG ("operator foo(int)", "operator foo(int, char *)", NORMAL,
-		       language_cplus);
+                       language_cplus);
+  CHECK_NO_MATCH_LANG ("operator foo(int)", "operator foo(int, char *)",
+                       NORMAL, language_cplus);
   CHECK_NO_MATCH_LANG ("operator foo(int)", "operator bar(int)", NORMAL,
-		       language_cplus);
+                       language_cplus);
 
-  CHECK_NO_MATCH_LANG ("a::operator b::foo(int)", "a::operator a::foo(char)", NORMAL,
-		       language_cplus);
-  CHECK_NO_MATCH_LANG ("a::operator foo(int)", "a::operator foo(int *)", NORMAL,
-		       language_cplus);
-  CHECK_NO_MATCH_LANG ("a::operator foo(int)", "a::operator foo(int &)", NORMAL,
-		       language_cplus);
-  CHECK_NO_MATCH_LANG ("a::operator foo(int)", "a::operator foo(int, char *)", NORMAL,
-		       language_cplus);
+  CHECK_NO_MATCH_LANG ("a::operator b::foo(int)", "a::operator a::foo(char)",
+                       NORMAL, language_cplus);
+  CHECK_NO_MATCH_LANG ("a::operator foo(int)", "a::operator foo(int *)",
+                       NORMAL, language_cplus);
+  CHECK_NO_MATCH_LANG ("a::operator foo(int)", "a::operator foo(int &)",
+                       NORMAL, language_cplus);
+  CHECK_NO_MATCH_LANG ("a::operator foo(int)", "a::operator foo(int, char *)",
+                       NORMAL, language_cplus);
   CHECK_NO_MATCH_LANG ("a::operator foo(int)", "a::operator bar(int)", NORMAL,
-		       language_cplus);
+                       language_cplus);
 
   /* Skip "[abi:cxx11]" tags in the symbol name if the lookup name
      doesn't include them.  These are not language-specific in
@@ -2772,50 +2730,56 @@ strncmp_iw_with_mode_tests ()
   CHECK_MATCH ("foo[abi : : : ]", "foo[abi:::]", NORMAL);
   CHECK_MATCH ("foo[abi:::]", "foo[abi : : : ]", NORMAL);
   CHECK_MATCH ("foo[ \t abi  \t:\t:   :   \t]",
-	       "foo[   abi :                \t    ::]",
-	       NORMAL);
+               "foo[   abi :                \t    ::]", NORMAL);
   CHECK_MATCH ("foo< bar< baz< quxi > > >(int)", "foo<bar<baz<quxi>>>(int)",
-	       NORMAL);
+               NORMAL);
   CHECK_MATCH ("\tfoo<\tbar<\tbaz\t<\tquxi\t>\t>\t>(int)",
-	       "foo<bar<baz<quxi>>>(int)", NORMAL);
-  CHECK_MATCH (" \tfoo \t< \tbar \t< \tbaz \t< \tquxi \t> \t> \t> \t( \tint \t)",
-	       "foo<bar<baz<quxi>>>(int)", NORMAL);
+               "foo<bar<baz<quxi>>>(int)", NORMAL);
+  CHECK_MATCH (
+    " \tfoo \t< \tbar \t< \tbaz \t< \tquxi \t> \t> \t> \t( \tint \t)",
+    "foo<bar<baz<quxi>>>(int)", NORMAL);
   CHECK_MATCH ("foo<bar<baz<quxi>>>(int)",
-	       "foo < bar < baz < quxi > > > (int)", NORMAL);
+               "foo < bar < baz < quxi > > > (int)", NORMAL);
   CHECK_MATCH ("foo<bar<baz<quxi>>>(int)",
-	       "\tfoo\t<\tbar\t<\tbaz\t<\tquxi\t>\t>\t>\t(int)", NORMAL);
-  CHECK_MATCH ("foo<bar<baz<quxi>>>(int)",
-	       " \tfoo \t< \tbar \t< \tbaz \t< \tquxi \t> \t> \t> \t( \tint \t)", NORMAL);
+               "\tfoo\t<\tbar\t<\tbaz\t<\tquxi\t>\t>\t>\t(int)", NORMAL);
+  CHECK_MATCH (
+    "foo<bar<baz<quxi>>>(int)",
+    " \tfoo \t< \tbar \t< \tbaz \t< \tquxi \t> \t> \t> \t( \tint \t)", NORMAL);
   CHECK_MATCH ("foo<bar<baz>>::foo(quxi &)", "fo", NORMAL);
   CHECK_MATCH ("foo<bar<baz>>::foo(quxi &)", "foo", NORMAL);
   CHECK_MATCH ("foo<bar<baz>>::foo(quxi &)", "foo<bar<baz>>::", NORMAL);
   CHECK_MATCH ("foo<bar<baz>>::foo(quxi &)", "foo<bar<baz> >::foo", NORMAL);
-  CHECK_MATCH ("foo[abi:a][abi:b](bar[abi:c][abi:d])", "foo[abi:a][abi:b](bar[abi:c][abi:d])",
-	       NORMAL);
+  CHECK_MATCH ("foo[abi:a][abi:b](bar[abi:c][abi:d])",
+               "foo[abi:a][abi:b](bar[abi:c][abi:d])", NORMAL);
   CHECK_MATCH ("foo[abi:a][abi:b](bar[abi:c][abi:d])", "foo", NORMAL);
   CHECK_MATCH ("foo[abi:a][abi:b](bar[abi:c][abi:d])", "foo(bar)", NORMAL);
-  CHECK_MATCH ("foo[abi:a][abi:b](bar[abi:c][abi:d])", "foo[abi:a](bar)", NORMAL);
-  CHECK_MATCH ("foo[abi:a][abi:b](bar[abi:c][abi:d])", "foo(bar[abi:c])", NORMAL);
-  CHECK_MATCH ("foo[abi:a][abi:b](bar[abi:c][abi:d])", "foo[abi:a](bar[abi:c])", NORMAL);
-  CHECK_MATCH ("foo[abi:a][abi:b](bar[abi:c][abi:d])", "foo[abi:a][abi:b](bar)", NORMAL);
-  CHECK_MATCH ("foo[abi:a][abi:b](bar[abi:c][abi:d])", "foo[abi:a][abi:b](bar[abi:c])",
-	       NORMAL);
-  CHECK_MATCH("foo<bar[abi:a]>(char *, baz[abi:b])", "foo", NORMAL);
-  CHECK_NO_MATCH("foo<bar[abi:a]>(char *, baz[abi:b])", "foo()", NORMAL);
-  CHECK_MATCH("foo<bar[abi:a]>(char *, baz[abi:b])", "foo<bar>", NORMAL);
-  CHECK_MATCH("foo<bar[abi:a]>(char *, baz[abi:b])", "foo<bar>(char*, baz)", NORMAL);
-  CHECK_MATCH("foo<bar[abi:a]>(char *, baz[abi:b])", "foo<bar>(char*, baz[abi:b])",
-	      NORMAL);
-  CHECK_NO_MATCH("foo<bar[abi:a]>(char *, baz[abi:b])", "foo<bar>(char*, baz[abi:A])",
-	      NORMAL);
-  CHECK_MATCH("foo<bar[abi:a]>(char *, baz[abi:b])", "foo<bar[abi:a]>(char*, baz)",
-	      NORMAL);
-  CHECK_NO_MATCH("foo<bar[abi:a]>(char *, baz[abi:b])", "foo<bar[abi:A]>(char*, baz)",
-	      NORMAL);
-  CHECK_MATCH("foo<bar[abi:a]>(char *, baz[abi:b])", "foo<bar[abi:a]>(char*, baz[abi:b])",
-	      NORMAL);
-  CHECK_NO_MATCH("foo<bar[abi:a]>(char *, baz[abi:b])",
-		 "foo<bar[abi:a]>(char*, baz[abi:B])", NORMAL);
+  CHECK_MATCH ("foo[abi:a][abi:b](bar[abi:c][abi:d])", "foo[abi:a](bar)",
+               NORMAL);
+  CHECK_MATCH ("foo[abi:a][abi:b](bar[abi:c][abi:d])", "foo(bar[abi:c])",
+               NORMAL);
+  CHECK_MATCH ("foo[abi:a][abi:b](bar[abi:c][abi:d])",
+               "foo[abi:a](bar[abi:c])", NORMAL);
+  CHECK_MATCH ("foo[abi:a][abi:b](bar[abi:c][abi:d])",
+               "foo[abi:a][abi:b](bar)", NORMAL);
+  CHECK_MATCH ("foo[abi:a][abi:b](bar[abi:c][abi:d])",
+               "foo[abi:a][abi:b](bar[abi:c])", NORMAL);
+  CHECK_MATCH ("foo<bar[abi:a]>(char *, baz[abi:b])", "foo", NORMAL);
+  CHECK_NO_MATCH ("foo<bar[abi:a]>(char *, baz[abi:b])", "foo()", NORMAL);
+  CHECK_MATCH ("foo<bar[abi:a]>(char *, baz[abi:b])", "foo<bar>", NORMAL);
+  CHECK_MATCH ("foo<bar[abi:a]>(char *, baz[abi:b])", "foo<bar>(char*, baz)",
+               NORMAL);
+  CHECK_MATCH ("foo<bar[abi:a]>(char *, baz[abi:b])",
+               "foo<bar>(char*, baz[abi:b])", NORMAL);
+  CHECK_NO_MATCH ("foo<bar[abi:a]>(char *, baz[abi:b])",
+                  "foo<bar>(char*, baz[abi:A])", NORMAL);
+  CHECK_MATCH ("foo<bar[abi:a]>(char *, baz[abi:b])",
+               "foo<bar[abi:a]>(char*, baz)", NORMAL);
+  CHECK_NO_MATCH ("foo<bar[abi:a]>(char *, baz[abi:b])",
+                  "foo<bar[abi:A]>(char*, baz)", NORMAL);
+  CHECK_MATCH ("foo<bar[abi:a]>(char *, baz[abi:b])",
+               "foo<bar[abi:a]>(char*, baz[abi:b])", NORMAL);
+  CHECK_NO_MATCH ("foo<bar[abi:a]>(char *, baz[abi:b])",
+                  "foo<bar[abi:a]>(char*, baz[abi:B])", NORMAL);
 
   CHECK_NO_MATCH ("foo", "foo[", NORMAL);
   CHECK_NO_MATCH ("foo", "foo[]", NORMAL);
@@ -2883,8 +2847,8 @@ strncmp_iw_with_mode_tests ()
   CHECK_NO_MATCH ("foo[abi::a]", "foo[abi:a]", NORMAL);
   CHECK_NO_MATCH ("foo[abi:,([a]", "foo[abi:a]", NORMAL);
 
-  CHECK_MATCH ("foo <a, b [, c (",  "foo", NORMAL);
-  CHECK_MATCH ("foo >a, b ], c )",  "foo", NORMAL);
+  CHECK_MATCH ("foo <a, b [, c (", "foo", NORMAL);
+  CHECK_MATCH ("foo >a, b ], c )", "foo", NORMAL);
   CHECK_MATCH ("@!%&\\*", "@!%&\\*", NORMAL);
   CHECK_MATCH ("()", "()", NORMAL);
   CHECK_MATCH ("*(*)*", "*(*)*", NORMAL);
@@ -2926,8 +2890,8 @@ strncmp_iw_with_mode_tests ()
   CHECK_NO_MATCH ("foo2(args\t)", "foo", MATCH_PARAMS);
   CHECK_NO_MATCH ("foo2 (args \t)", "foo", MATCH_PARAMS);
   CHECK_NO_MATCH ("foo2 (args\t )", "foo", MATCH_PARAMS);
-  CHECK_MATCH ("foo[abi:a][abi:b](bar[abi:c][abi:d])", "foo[abi:a][abi:b](bar[abi:c][abi:d])",
-	       MATCH_PARAMS);
+  CHECK_MATCH ("foo[abi:a][abi:b](bar[abi:c][abi:d])",
+               "foo[abi:a][abi:b](bar[abi:c][abi:d])", MATCH_PARAMS);
   CHECK_MATCH ("foo[abi:a][abi:b](bar[abi:c][abi:d])", "foo", MATCH_PARAMS);
 
   /* strncmp_iw_with_mode also supports case insensitivity.  */
@@ -2954,11 +2918,10 @@ strncmp_iw_with_mode_tests ()
     CHECK_MATCH ("foo[abi:abc](xyz)", "FoO[AbI:abC](XyZ)", MATCH_PARAMS);
     CHECK_MATCH ("foo[abi:abc][abi:def](xyz)", "FoO[AbI:abC](XyZ)", NORMAL);
     CHECK_MATCH ("foo[abi:abc][abi:def](xyz)", "FoO[AbI:abC](XyZ)",
-		 MATCH_PARAMS);
+                 MATCH_PARAMS);
+    CHECK_MATCH ("foo<bar<baz>>(bar<baz>)", "FoO<bAr<BaZ>>(bAr<BaZ>)", NORMAL);
     CHECK_MATCH ("foo<bar<baz>>(bar<baz>)", "FoO<bAr<BaZ>>(bAr<BaZ>)",
-		 NORMAL);
-    CHECK_MATCH ("foo<bar<baz>>(bar<baz>)", "FoO<bAr<BaZ>>(bAr<BaZ>)",
-		 MATCH_PARAMS);
+                 MATCH_PARAMS);
   }
 }
 
@@ -2972,7 +2935,7 @@ int
 strncmp_iw (const char *string1, const char *string2, size_t string2_len)
 {
   return strncmp_iw_with_mode (string1, string2, string2_len,
-			       strncmp_iw_mode::NORMAL, language_minimal);
+                               strncmp_iw_mode::NORMAL, language_minimal);
 }
 
 /* See utils.h.  */
@@ -2981,7 +2944,8 @@ int
 strcmp_iw (const char *string1, const char *string2)
 {
   return strncmp_iw_with_mode (string1, string2, strlen (string2),
-			       strncmp_iw_mode::MATCH_PARAMS, language_minimal);
+                               strncmp_iw_mode::MATCH_PARAMS,
+                               language_minimal);
 }
 
 /* This is like strcmp except that it ignores whitespace and treats
@@ -3035,61 +2999,61 @@ strcmp_iw_ordered (const char *string1, const char *string2)
       char c1 = 'X', c2 = 'X';
 
       while (*string1 != '\0' && *string2 != '\0')
-	{
-	  while (ISSPACE (*string1))
-	    string1++;
-	  while (ISSPACE (*string2))
-	    string2++;
+        {
+          while (ISSPACE (*string1))
+            string1++;
+          while (ISSPACE (*string2))
+            string2++;
 
-	  switch (case_pass)
-	  {
-	    case case_sensitive_off:
-	      c1 = TOLOWER ((unsigned char) *string1);
-	      c2 = TOLOWER ((unsigned char) *string2);
-	      break;
-	    case case_sensitive_on:
-	      c1 = *string1;
-	      c2 = *string2;
-	      break;
-	  }
-	  if (c1 != c2)
-	    break;
+          switch (case_pass)
+            {
+            case case_sensitive_off:
+              c1 = TOLOWER ((unsigned char) *string1);
+              c2 = TOLOWER ((unsigned char) *string2);
+              break;
+            case case_sensitive_on:
+              c1 = *string1;
+              c2 = *string2;
+              break;
+            }
+          if (c1 != c2)
+            break;
 
-	  if (*string1 != '\0')
-	    {
-	      string1++;
-	      string2++;
-	    }
-	}
+          if (*string1 != '\0')
+            {
+              string1++;
+              string2++;
+            }
+        }
 
       switch (*string1)
-	{
-	  /* Characters are non-equal unless they're both '\0'; we want to
+        {
+          /* Characters are non-equal unless they're both '\0'; we want to
 	     make sure we get the comparison right according to our
 	     comparison in the cases where one of them is '\0' or '('.  */
-	case '\0':
-	  if (*string2 == '\0')
-	    break;
-	  else
-	    return -1;
-	case '(':
-	  if (*string2 == '\0')
-	    return 1;
-	  else
-	    return -1;
-	default:
-	  if (*string2 == '\0' || *string2 == '(')
-	    return 1;
-	  else if (c1 > c2)
-	    return 1;
-	  else if (c1 < c2)
-	    return -1;
-	  /* PASSTHRU */
-	}
+        case '\0':
+          if (*string2 == '\0')
+            break;
+          else
+            return -1;
+        case '(':
+          if (*string2 == '\0')
+            return 1;
+          else
+            return -1;
+        default:
+          if (*string2 == '\0' || *string2 == '(')
+            return 1;
+          else if (c1 > c2)
+            return 1;
+          else if (c1 < c2)
+            return -1;
+          /* PASSTHRU */
+        }
 
       if (case_pass == case_sensitive_on)
-	return 0;
-      
+        return 0;
+
       /* Otherwise the strings were equal in case insensitive way, make
 	 a more fine grained comparison in a case sensitive way.  */
 
@@ -3107,8 +3071,6 @@ streq (const char *lhs, const char *rhs)
   return !strcmp (lhs, rhs);
 }
 
-
-
 /*
    ** subset_compare()
    **    Answer whether string_to_compare is a full or partial match to
@@ -3122,8 +3084,7 @@ subset_compare (const char *string_to_compare, const char *template_string)
 
   if (template_string != NULL && string_to_compare != NULL
       && strlen (string_to_compare) <= strlen (template_string))
-    match =
-      (startswith (template_string, string_to_compare));
+    match = (startswith (template_string, string_to_compare));
   else
     match = 0;
   return match;
@@ -3131,12 +3092,10 @@ subset_compare (const char *string_to_compare, const char *template_string)
 
 static void
 show_debug_timestamp (struct ui_file *file, int from_tty,
-		      struct cmd_list_element *c, const char *value)
+                      struct cmd_list_element *c, const char *value)
 {
-  gdb_printf (file, _("Timestamping debugging messages is %s.\n"),
-	      value);
+  gdb_printf (file, _ ("Timestamping debugging messages is %s.\n"), value);
 }
-
 
 /* See utils.h.  */
 
@@ -3210,14 +3169,14 @@ string_to_core_addr (const char *my_string)
       int i;
 
       for (i = 2; my_string[i] != '\0'; i++)
-	{
-	  if (ISDIGIT (my_string[i]))
-	    addr = (my_string[i] - '0') + (addr * 16);
-	  else if (ISXDIGIT (my_string[i]))
-	    addr = (TOLOWER (my_string[i]) - 'a' + 0xa) + (addr * 16);
-	  else
-	    error (_("invalid hex \"%s\""), my_string);
-	}
+        {
+          if (ISDIGIT (my_string[i]))
+            addr = (my_string[i] - '0') + (addr * 16);
+          else if (ISXDIGIT (my_string[i]))
+            addr = (TOLOWER (my_string[i]) - 'a' + 0xa) + (addr * 16);
+          else
+            error (_ ("invalid hex \"%s\""), my_string);
+        }
     }
   else
     {
@@ -3225,12 +3184,12 @@ string_to_core_addr (const char *my_string)
       int i;
 
       for (i = 0; my_string[i] != '\0'; i++)
-	{
-	  if (ISDIGIT (my_string[i]))
-	    addr = (my_string[i] - '0') + (addr * 10);
-	  else
-	    error (_("invalid decimal \"%s\""), my_string);
-	}
+        {
+          if (ISDIGIT (my_string[i]))
+            addr = (my_string[i] - '0') + (addr * 10);
+          else
+            error (_ ("invalid decimal \"%s\""), my_string);
+        }
     }
 
   return addr;
@@ -3247,7 +3206,7 @@ gdb_realpath_check_trailer (const char *input, const char *trailer)
   size_t trail_len = strlen (trailer);
 
   SELF_CHECK (len >= trail_len
-	      && strcmp (result.get () + len - trail_len, trailer) == 0);
+              && strcmp (result.get () + len - trail_len, trailer) == 0);
 }
 
 static void
@@ -3261,7 +3220,7 @@ gdb_realpath_tests ()
   gdb_realpath_check_trailer ("./a", "/a");
   /* A file in the root directory.  */
   gdb_realpath_check_trailer ("/root_file_which_should_exist",
-			      "/root_file_which_should_exist");
+                              "/root_file_which_should_exist");
   /* A file which does not have a directory prefix.  */
   gdb_realpath_check_trailer ("xfullpath.exp", "xfullpath.exp");
   /* A one-char filename without any directory prefix.  */
@@ -3332,13 +3291,13 @@ parse_pid_to_attach (const char *args)
   char *dummy;
 
   if (!args)
-    error_no_arg (_("process-id to attach"));
+    error_no_arg (_ ("process-id to attach"));
 
   dummy = (char *) args;
   pid = strtoul (args, &dummy, 0);
   /* Some targets don't set errno on errors, grrr!  */
   if ((pid == 0 && dummy == args) || dummy != &args[strlen (args)])
-    error (_("Illegal process-id: %s."), args);
+    error (_ ("Illegal process-id: %s."), args);
 
   return pid;
 }
@@ -3359,30 +3318,30 @@ substitute_path_component (char **stringp, const char *from, const char *to)
     {
       s = strstr (s, from);
       if (s == NULL)
-	break;
+        break;
 
       if ((s == string || IS_DIR_SEPARATOR (s[-1])
-	   || s[-1] == DIRNAME_SEPARATOR)
-	  && (s[from_len] == '\0' || IS_DIR_SEPARATOR (s[from_len])
-	      || s[from_len] == DIRNAME_SEPARATOR))
-	{
-	  char *string_new;
+           || s[-1] == DIRNAME_SEPARATOR)
+          && (s[from_len] == '\0' || IS_DIR_SEPARATOR (s[from_len])
+              || s[from_len] == DIRNAME_SEPARATOR))
+        {
+          char *string_new;
 
-	  string_new
-	    = (char *) xrealloc (string, (strlen (string) + to_len + 1));
+          string_new
+            = (char *) xrealloc (string, (strlen (string) + to_len + 1));
 
-	  /* Relocate the current S pointer.  */
-	  s = s - string + string_new;
-	  string = string_new;
+          /* Relocate the current S pointer.  */
+          s = s - string + string_new;
+          string = string_new;
 
-	  /* Replace from by to.  */
-	  memmove (&s[to_len], &s[from_len], strlen (&s[from_len]) + 1);
-	  memcpy (s, to, to_len);
+          /* Replace from by to.  */
+          memmove (&s[to_len], &s[from_len], strlen (&s[from_len]) + 1);
+          memcpy (s, to, to_len);
 
-	  s += to_len;
-	}
+          s += to_len;
+        }
       else
-	s++;
+        s++;
     }
 
   *stringp = string;
@@ -3422,7 +3381,7 @@ wait_to_die_with_timeout (pid_t pid, int *status, int timeout)
   if (timeout > 0)
     {
 #ifdef SIGALRM
-#if defined (HAVE_SIGACTION) && defined (SA_RESTART)
+#if defined(HAVE_SIGACTION) && defined(SA_RESTART)
       struct sigaction sa, old_sa;
 
       sa.sa_handler = sigalrm_handler;
@@ -3442,7 +3401,7 @@ wait_to_die_with_timeout (pid_t pid, int *status, int timeout)
 
 #ifdef SIGALRM
       alarm (0);
-#if defined (HAVE_SIGACTION) && defined (SA_RESTART)
+#if defined(HAVE_SIGACTION) && defined(SA_RESTART)
       sigaction (SIGALRM, &old_sa, NULL);
 #else
       signal (SIGALRM, ofunc);
@@ -3485,14 +3444,14 @@ gdb_filename_fnmatch (const char *pattern, const char *string, int flags)
     pattern = pattern_slash;
     for (; *pattern_slash != 0; pattern_slash++)
       if (IS_DIR_SEPARATOR (*pattern_slash))
-	*pattern_slash = '/';
+        *pattern_slash = '/';
 
     string_slash = (char *) alloca (strlen (string) + 1);
     strcpy (string_slash, string);
     string = string_slash;
     for (; *string_slash != 0; string_slash++)
       if (IS_DIR_SEPARATOR (*string_slash))
-	*string_slash = '/';
+        *string_slash = '/';
   }
 #endif /* HAVE_DOS_BASED_FILE_SYSTEM */
 
@@ -3525,7 +3484,7 @@ count_path_elements (const char *path)
   while (*p != '\0')
     {
       if (IS_DIR_SEPARATOR (*p))
-	++count;
+        ++count;
       ++p;
     }
 
@@ -3566,13 +3525,13 @@ strip_leading_path_elements (const char *path, int n)
   while (i < n)
     {
       while (*p != '\0' && !IS_DIR_SEPARATOR (*p))
-	++p;
+        ++p;
       if (*p == '\0')
-	{
-	  if (i + 1 == n)
-	    return "";
-	  return NULL;
-	}
+        {
+          if (i + 1 == n)
+            return "";
+          return NULL;
+        }
       ++p;
       ++i;
     }
@@ -3583,9 +3542,8 @@ strip_leading_path_elements (const char *path, int n)
 /* See utils.h.  */
 
 void
-copy_bitwise (gdb_byte *dest, ULONGEST dest_offset,
-	      const gdb_byte *source, ULONGEST source_offset,
-	      ULONGEST nbits, int bits_big_endian)
+copy_bitwise (gdb_byte *dest, ULONGEST dest_offset, const gdb_byte *source,
+              ULONGEST source_offset, ULONGEST nbits, int bits_big_endian)
 {
   unsigned int buf, avail;
 
@@ -3636,29 +3594,29 @@ copy_bitwise (gdb_byte *dest, ULONGEST dest_offset,
 
       /* Use a faster method for byte-aligned copies.  */
       if (avail == 0)
-	{
-	  if (bits_big_endian)
-	    {
-	      dest -= len;
-	      source -= len;
-	      memcpy (dest + 1, source + 1, len);
-	    }
-	  else
-	    {
-	      memcpy (dest, source, len);
-	      dest += len;
-	      source += len;
-	    }
-	}
+        {
+          if (bits_big_endian)
+            {
+              dest -= len;
+              source -= len;
+              memcpy (dest + 1, source + 1, len);
+            }
+          else
+            {
+              memcpy (dest, source, len);
+              dest += len;
+              source += len;
+            }
+        }
       else
-	{
-	  while (len--)
-	    {
-	      buf |= *(bits_big_endian ? source-- : source++) << avail;
-	      *(bits_big_endian ? dest-- : dest++) = buf;
-	      buf >>= 8;
-	    }
-	}
+        {
+          while (len--)
+            {
+              buf |= *(bits_big_endian ? source-- : source++) << avail;
+              *(bits_big_endian ? dest-- : dest++) = buf;
+              buf >>= 8;
+            }
+        }
       nbits %= 8;
     }
 
@@ -3666,7 +3624,7 @@ copy_bitwise (gdb_byte *dest, ULONGEST dest_offset,
   if (nbits)
     {
       if (avail < nbits)
-	buf |= *source << avail;
+        buf |= *source << avail;
 
       buf &= (1 << nbits) - 1;
       *dest = (*dest & (~0U << nbits)) | buf;
@@ -3677,52 +3635,55 @@ void _initialize_utils ();
 void
 _initialize_utils ()
 {
-  add_setshow_uinteger_cmd ("width", class_support, &chars_per_line, _("\
-Set number of characters where GDB should wrap lines of its output."), _("\
-Show number of characters where GDB should wrap lines of its output."), _("\
+  add_setshow_uinteger_cmd ("width", class_support, &chars_per_line, _ ("\
+Set number of characters where GDB should wrap lines of its output."),
+                            _ ("\
+Show number of characters where GDB should wrap lines of its output."),
+                            _ ("\
 This affects where GDB wraps its output to fit the screen width.\n\
 Setting this to \"unlimited\" or zero prevents GDB from wrapping its output."),
-			    set_width_command,
-			    show_chars_per_line,
-			    &setlist, &showlist);
+                            set_width_command, show_chars_per_line, &setlist,
+                            &showlist);
 
-  add_setshow_uinteger_cmd ("height", class_support, &lines_per_page, _("\
-Set number of lines in a page for GDB output pagination."), _("\
-Show number of lines in a page for GDB output pagination."), _("\
+  add_setshow_uinteger_cmd ("height", class_support, &lines_per_page, _ ("\
+Set number of lines in a page for GDB output pagination."),
+                            _ ("\
+Show number of lines in a page for GDB output pagination."),
+                            _ ("\
 This affects the number of lines after which GDB will pause\n\
 its output and ask you whether to continue.\n\
 Setting this to \"unlimited\" or zero causes GDB never pause during output."),
-			    set_height_command,
-			    show_lines_per_page,
-			    &setlist, &showlist);
+                            set_height_command, show_lines_per_page, &setlist,
+                            &showlist);
 
-  add_setshow_boolean_cmd ("pagination", class_support,
-			   &pagination_enabled, _("\
-Set state of GDB output pagination."), _("\
-Show state of GDB output pagination."), _("\
+  add_setshow_boolean_cmd ("pagination", class_support, &pagination_enabled,
+                           _ ("\
+Set state of GDB output pagination."),
+                           _ ("\
+Show state of GDB output pagination."),
+                           _ ("\
 When pagination is ON, GDB pauses at end of each screenful of\n\
 its output and asks you whether to continue.\n\
 Turning pagination off is an alternative to \"set height unlimited\"."),
-			   NULL,
-			   show_pagination_enabled,
-			   &setlist, &showlist);
+                           NULL, show_pagination_enabled, &setlist, &showlist);
 
   add_setshow_boolean_cmd ("sevenbit-strings", class_support,
-			   &sevenbit_strings, _("\
-Set printing of 8-bit characters in strings as \\nnn."), _("\
-Show printing of 8-bit characters in strings as \\nnn."), NULL,
-			   NULL,
-			   show_sevenbit_strings,
-			   &setprintlist, &showprintlist);
+                           &sevenbit_strings, _ ("\
+Set printing of 8-bit characters in strings as \\nnn."),
+                           _ ("\
+Show printing of 8-bit characters in strings as \\nnn."),
+                           NULL, NULL, show_sevenbit_strings, &setprintlist,
+                           &showprintlist);
 
-  add_setshow_boolean_cmd ("timestamp", class_maintenance,
-			    &debug_timestamp, _("\
-Set timestamping of debugging messages."), _("\
-Show timestamping of debugging messages."), _("\
+  add_setshow_boolean_cmd ("timestamp", class_maintenance, &debug_timestamp,
+                           _ ("\
+Set timestamping of debugging messages."),
+                           _ ("\
+Show timestamping of debugging messages."),
+                           _ ("\
 When set, debugging messages will be marked with seconds and microseconds."),
-			   NULL,
-			   show_debug_timestamp,
-			   &setdebuglist, &showdebuglist);
+                           NULL, show_debug_timestamp, &setdebuglist,
+                           &showdebuglist);
 
   add_internal_problem_command (&internal_error_problem);
   add_internal_problem_command (&internal_warning_problem);
@@ -3730,9 +3691,10 @@ When set, debugging messages will be marked with seconds and microseconds."),
 
 #if GDB_SELF_TEST
   selftests::register_test ("gdb_realpath", gdb_realpath_tests);
-  selftests::register_test ("gdb_argv_array_view", gdb_argv_as_array_view_test);
+  selftests::register_test ("gdb_argv_array_view",
+                            gdb_argv_as_array_view_test);
   selftests::register_test ("strncmp_iw_with_mode",
-			    strncmp_iw_with_mode_tests);
+                            strncmp_iw_with_mode_tests);
   selftests::register_test ("pager", test_pager);
 #endif
 }

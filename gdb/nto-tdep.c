@@ -34,7 +34,7 @@
 #include "source.h"
 #include "gdbsupport/pathstuff.h"
 
-#define QNX_NOTE_NAME	"QNX"
+#define QNX_NOTE_NAME "QNX"
 #define QNX_INFO_SECT_NAME "QNX_info"
 
 #ifdef __CYGWIN__
@@ -91,7 +91,7 @@ nto_map_arch_to_cputype (const char *arch)
 
 int
 nto_find_and_open_solib (const char *solib, unsigned o_flags,
-			 gdb::unique_xmalloc_ptr<char> *temp_pathname)
+                         gdb::unique_xmalloc_ptr<char> *temp_pathname)
 {
   char *buf, *arch_path, *nto_root;
   const char *endian;
@@ -102,15 +102,18 @@ nto_find_and_open_solib (const char *solib, unsigned o_flags,
   "%s/lib:%s/usr/lib:%s/usr/photon/lib:%s/usr/photon/dll:%s/lib/dll"
 
   nto_root = nto_target ();
-  if (strcmp (gdbarch_bfd_arch_info (target_gdbarch ())->arch_name, "i386") == 0)
+  if (strcmp (gdbarch_bfd_arch_info (target_gdbarch ())->arch_name, "i386")
+      == 0)
     {
       arch = "x86";
       endian = "";
     }
   else if (strcmp (gdbarch_bfd_arch_info (target_gdbarch ())->arch_name,
-		   "rs6000") == 0
-	   || strcmp (gdbarch_bfd_arch_info (target_gdbarch ())->arch_name,
-		   "powerpc") == 0)
+                   "rs6000")
+             == 0
+           || strcmp (gdbarch_bfd_arch_info (target_gdbarch ())->arch_name,
+                      "powerpc")
+                == 0)
     {
       arch = "ppc";
       endian = "be";
@@ -118,37 +121,37 @@ nto_find_and_open_solib (const char *solib, unsigned o_flags,
   else
     {
       arch = gdbarch_bfd_arch_info (target_gdbarch ())->arch_name;
-      endian = gdbarch_byte_order (target_gdbarch ())
-	       == BFD_ENDIAN_BIG ? "be" : "le";
+      endian = gdbarch_byte_order (target_gdbarch ()) == BFD_ENDIAN_BIG ? "be"
+                                                                        : "le";
     }
 
   /* In case nto_root is short, add strlen(solib)
      so we can reuse arch_path below.  */
 
   arch_len = (strlen (nto_root) + strlen (arch) + strlen (endian) + 2
-	      + strlen (solib));
+              + strlen (solib));
   arch_path = (char *) alloca (arch_len);
   xsnprintf (arch_path, arch_len, "%s/%s%s", nto_root, arch, endian);
 
   len = strlen (PATH_FMT) + strlen (arch_path) * 5 + 1;
   buf = (char *) alloca (len);
   xsnprintf (buf, len, PATH_FMT, arch_path, arch_path, arch_path, arch_path,
-	     arch_path);
+             arch_path);
 
   base = lbasename (solib);
   ret = openp (buf, OPF_TRY_CWD_FIRST | OPF_RETURN_REALPATH, base, o_flags,
-	       temp_pathname);
+               temp_pathname);
   if (ret < 0 && base != solib)
     {
       xsnprintf (arch_path, arch_len, "/%s", solib);
       ret = open (arch_path, o_flags, 0);
       if (temp_pathname)
-	{
-	  if (ret >= 0)
-	    *temp_pathname = gdb_realpath (arch_path);
-	  else
-	    temp_pathname->reset (NULL);
-	}
+        {
+          if (ret >= 0)
+            *temp_pathname = gdb_realpath (arch_path);
+          else
+            temp_pathname->reset (NULL);
+        }
     }
   return ret;
 }
@@ -162,15 +165,18 @@ nto_init_solib_absolute_prefix (void)
   const char *arch;
 
   nto_root = nto_target ();
-  if (strcmp (gdbarch_bfd_arch_info (target_gdbarch ())->arch_name, "i386") == 0)
+  if (strcmp (gdbarch_bfd_arch_info (target_gdbarch ())->arch_name, "i386")
+      == 0)
     {
       arch = "x86";
       endian = "";
     }
   else if (strcmp (gdbarch_bfd_arch_info (target_gdbarch ())->arch_name,
-		   "rs6000") == 0
-	   || strcmp (gdbarch_bfd_arch_info (target_gdbarch ())->arch_name,
-		   "powerpc") == 0)
+                   "rs6000")
+             == 0
+           || strcmp (gdbarch_bfd_arch_info (target_gdbarch ())->arch_name,
+                      "powerpc")
+                == 0)
     {
       arch = "ppc";
       endian = "be";
@@ -178,8 +184,8 @@ nto_init_solib_absolute_prefix (void)
   else
     {
       arch = gdbarch_bfd_arch_info (target_gdbarch ())->arch_name;
-      endian = gdbarch_byte_order (target_gdbarch ())
-	       == BFD_ENDIAN_BIG ? "be" : "le";
+      endian = gdbarch_byte_order (target_gdbarch ()) == BFD_ENDIAN_BIG ? "be"
+                                                                        : "le";
     }
 
   xsnprintf (arch_path, sizeof (arch_path), "%s/%s%s", nto_root, arch, endian);
@@ -189,14 +195,15 @@ nto_init_solib_absolute_prefix (void)
 }
 
 char **
-nto_parse_redirection (char *pargv[], const char **pin, const char **pout, 
-		       const char **perr)
+nto_parse_redirection (char *pargv[], const char **pin, const char **pout,
+                       const char **perr)
 {
   char **argv;
   const char *in, *out, *err, *p;
   int argc, i, n;
 
-  for (n = 0; pargv[n]; n++);
+  for (n = 0; pargv[n]; n++)
+    ;
   if (n == 0)
     return NULL;
   in = "";
@@ -209,32 +216,32 @@ nto_parse_redirection (char *pargv[], const char **pin, const char **pout,
     {
       p = pargv[n];
       if (*p == '>')
-	{
-	  p++;
-	  if (*p)
-	    out = p;
-	  else
-	    out = pargv[++n];
-	}
+        {
+          p++;
+          if (*p)
+            out = p;
+          else
+            out = pargv[++n];
+        }
       else if (*p == '<')
-	{
-	  p++;
-	  if (*p)
-	    in = p;
-	  else
-	    in = pargv[++n];
-	}
+        {
+          p++;
+          if (*p)
+            in = p;
+          else
+            in = pargv[++n];
+        }
       else if (*p++ == '2' && *p++ == '>')
-	{
-	  if (*p == '&' && *(p + 1) == '1')
-	    err = out;
-	  else if (*p)
-	    err = p;
-	  else
-	    err = pargv[++n];
-	}
+        {
+          if (*p == '&' && *(p + 1) == '1')
+            err = out;
+          else if (*p)
+            err = p;
+          else
+            err = pargv[++n];
+        }
       else
-	argv[i++] = pargv[n];
+        argv[i++] = pargv[n];
     }
   *pin = in;
   *pout = out;
@@ -274,7 +281,7 @@ find_load_phdr (bfd *abfd)
   for (i = 0; i < elf_elfheader (abfd)->e_phnum; i++, phdr++)
     {
       if (phdr->p_type == PT_LOAD && (phdr->p_flags & PF_X))
-	return phdr;
+        return phdr;
     }
   return NULL;
 }
@@ -328,16 +335,16 @@ nto_sniff_abi_note_section (bfd *abfd, asection *sect, void *obj)
   if (sectname != NULL && strstr (sectname, QNX_INFO_SECT_NAME) != NULL)
     *(enum gdb_osabi *) obj = GDB_OSABI_QNXNTO;
   else if (sectname != NULL && strstr (sectname, "note") != NULL
-	   && sectsize > sizeof_Elf_Nhdr)
+           && sectsize > sizeof_Elf_Nhdr)
     {
       note = XNEWVEC (char, sectsize);
       bfd_get_section_contents (abfd, sect, note, 0, sectsize);
       namelen = (unsigned int) bfd_h_get_32 (abfd, note);
       name = note + sizeof_Elf_Nhdr;
       if (sectsize >= namelen + sizeof_Elf_Nhdr
-	  && namelen == sizeof (QNX_NOTE_NAME)
-	  && 0 == strcmp (name, QNX_NOTE_NAME))
-	*(enum gdb_osabi *) obj = GDB_OSABI_QNXNTO;
+          && namelen == sizeof (QNX_NOTE_NAME)
+          && 0 == strcmp (name, QNX_NOTE_NAME))
+        *(enum gdb_osabi *) obj = GDB_OSABI_QNXNTO;
 
       XDELETEVEC (note);
     }
@@ -348,36 +355,33 @@ nto_elf_osabi_sniffer (bfd *abfd)
 {
   enum gdb_osabi osabi = GDB_OSABI_UNKNOWN;
 
-  bfd_map_over_sections (abfd,
-			 nto_sniff_abi_note_section,
-			 &osabi);
+  bfd_map_over_sections (abfd, nto_sniff_abi_note_section, &osabi);
 
   return osabi;
 }
 
-static const char * const nto_thread_state_str[] =
-{
-  "DEAD",		/* 0  0x00 */
-  "RUNNING",	/* 1  0x01 */
-  "READY",	/* 2  0x02 */
-  "STOPPED",	/* 3  0x03 */
-  "SEND",		/* 4  0x04 */
-  "RECEIVE",	/* 5  0x05 */
-  "REPLY",	/* 6  0x06 */
-  "STACK",	/* 7  0x07 */
-  "WAITTHREAD",	/* 8  0x08 */
-  "WAITPAGE",	/* 9  0x09 */
-  "SIGSUSPEND",	/* 10 0x0a */
-  "SIGWAITINFO",	/* 11 0x0b */
-  "NANOSLEEP",	/* 12 0x0c */
-  "MUTEX",	/* 13 0x0d */
-  "CONDVAR",	/* 14 0x0e */
-  "JOIN",		/* 15 0x0f */
-  "INTR",		/* 16 0x10 */
-  "SEM",		/* 17 0x11 */
-  "WAITCTX",	/* 18 0x12 */
-  "NET_SEND",	/* 19 0x13 */
-  "NET_REPLY"	/* 20 0x14 */
+static const char *const nto_thread_state_str[] = {
+  "DEAD",        /* 0  0x00 */
+  "RUNNING",     /* 1  0x01 */
+  "READY",       /* 2  0x02 */
+  "STOPPED",     /* 3  0x03 */
+  "SEND",        /* 4  0x04 */
+  "RECEIVE",     /* 5  0x05 */
+  "REPLY",       /* 6  0x06 */
+  "STACK",       /* 7  0x07 */
+  "WAITTHREAD",  /* 8  0x08 */
+  "WAITPAGE",    /* 9  0x09 */
+  "SIGSUSPEND",  /* 10 0x0a */
+  "SIGWAITINFO", /* 11 0x0b */
+  "NANOSLEEP",   /* 12 0x0c */
+  "MUTEX",       /* 13 0x0d */
+  "CONDVAR",     /* 14 0x0e */
+  "JOIN",        /* 15 0x0f */
+  "INTR",        /* 16 0x10 */
+  "SEM",         /* 17 0x11 */
+  "WAITCTX",     /* 18 0x12 */
+  "NET_SEND",    /* 19 0x13 */
+  "NET_REPLY"    /* 20 0x14 */
 };
 
 const char *
@@ -388,7 +392,7 @@ nto_extra_thread_info (struct target_ops *self, struct thread_info *ti)
       nto_thread_info *priv = get_nto_thread_info (ti);
 
       if (priv->state < ARRAY_SIZE (nto_thread_state_str))
-	return nto_thread_state_str [priv->state];
+        return nto_thread_state_str[priv->state];
     }
   return "";
 }
@@ -419,7 +423,7 @@ nto_initialize_signals (void)
 /* Read AUXV from initial_stack.  */
 LONGEST
 nto_read_auxv_from_initial_stack (CORE_ADDR initial_stack, gdb_byte *readbuf,
-				  LONGEST len, size_t sizeof_auxv_t)
+                                  LONGEST len, size_t sizeof_auxv_t)
 {
   gdb_byte targ32[4]; /* For 32 bit target values.  */
   gdb_byte targ64[8]; /* For 64 bit target values.  */
@@ -466,35 +470,34 @@ nto_read_auxv_from_initial_stack (CORE_ADDR initial_stack, gdb_byte *readbuf,
 
   /* Now loop over env table:  */
   anint = 0;
-  while (target_read_memory (initial_stack + data_ofs, targ64, ptr_size)
-	 == 0)
+  while (target_read_memory (initial_stack + data_ofs, targ64, ptr_size) == 0)
     {
       if (extract_unsigned_integer (targ64, ptr_size, byte_order) == 0)
-	anint = 1; /* Keep looping until non-null entry is found.  */
+        anint = 1; /* Keep looping until non-null entry is found.  */
       else if (anint)
-	break;
+        break;
       data_ofs += ptr_size;
     }
   initial_stack += data_ofs;
 
   memset (readbuf, 0, len);
   buff = readbuf;
-  while (len_read <= len-sizeof_auxv_t)
+  while (len_read <= len - sizeof_auxv_t)
     {
       if (target_read_memory (initial_stack + len_read, buff, sizeof_auxv_t)
-	  == 0)
-	{
-	  /* Both 32 and 64 bit structures have int as the first field.  */
-	  const ULONGEST a_type
-	    = extract_unsigned_integer (buff, sizeof (targ32), byte_order);
+          == 0)
+        {
+          /* Both 32 and 64 bit structures have int as the first field.  */
+          const ULONGEST a_type
+            = extract_unsigned_integer (buff, sizeof (targ32), byte_order);
 
-	  if (a_type == AT_NULL)
-	    break;
-	  buff += sizeof_auxv_t;
-	  len_read += sizeof_auxv_t;
-	}
+          if (a_type == AT_NULL)
+            break;
+          buff += sizeof_auxv_t;
+          len_read += sizeof_auxv_t;
+        }
       else
-	break;
+        break;
     }
   return len_read;
 }

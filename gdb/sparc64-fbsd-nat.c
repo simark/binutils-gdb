@@ -24,7 +24,6 @@
 #include "fbsd-nat.h"
 #include "sparc64-tdep.h"
 #include "sparc-nat.h"
-
 
 /* Support for debugging kernel virtual memory images.  */
 

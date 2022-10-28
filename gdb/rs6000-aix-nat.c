@@ -49,8 +49,8 @@
 #include <sys/stat.h>
 #include "gdb_bfd.h"
 #include <sys/core.h>
-#define __LDINFO_PTRACE32__	/* for __ld_info32 */
-#define __LDINFO_PTRACE64__	/* for __ld_info64 */
+#define __LDINFO_PTRACE32__ /* for __ld_info32 */
+#define __LDINFO_PTRACE64__ /* for __ld_info64 */
 #include <sys/ldr.h>
 #include <sys/systemcfg.h>
 
@@ -61,16 +61,16 @@
 /* In 32-bit compilation mode (which is the only mode from which ptrace()
    works on 4.3), __ld_info32 is #defined as equivalent to ld_info.  */
 
-#if defined (__ld_info32) || defined (__ld_info64)
-# define ARCH3264
+#if defined(__ld_info32) || defined(__ld_info64)
+#define ARCH3264
 #endif
 
 /* Return whether the current architecture is 64-bit.  */
 
 #ifndef ARCH3264
-# define ARCH64() 0
+#define ARCH64() 0
 #else
-# define ARCH64() (register_size (target_gdbarch (), 0) == 8)
+#define ARCH64() (register_size (target_gdbarch (), 0) == 8)
 #endif
 
 class rs6000_nat_target final : public inf_ptrace_target
@@ -80,29 +80,26 @@ public:
   void store_registers (struct regcache *, int) override;
 
   enum target_xfer_status xfer_partial (enum target_object object,
-					const char *annex,
-					gdb_byte *readbuf,
-					const gdb_byte *writebuf,
-					ULONGEST offset, ULONGEST len,
-					ULONGEST *xfered_len) override;
+                                        const char *annex, gdb_byte *readbuf,
+                                        const gdb_byte *writebuf,
+                                        ULONGEST offset, ULONGEST len,
+                                        ULONGEST *xfered_len) override;
 
-  void create_inferior (const char *, const std::string &,
-			char **, int) override;
+  void create_inferior (const char *, const std::string &, char **,
+                        int) override;
 
   ptid_t wait (ptid_t, struct target_waitstatus *, target_wait_flags) override;
 
 protected:
-
   void post_startup_inferior (ptid_t ptid) override
-  { /* Nothing.  */ }
+  { /* Nothing.  */
+  }
 
 private:
   enum target_xfer_status
-    xfer_shared_libraries (enum target_object object,
-			   const char *annex, gdb_byte *readbuf,
-			   const gdb_byte *writebuf,
-			   ULONGEST offset, ULONGEST len,
-			   ULONGEST *xfered_len);
+  xfer_shared_libraries (enum target_object object, const char *annex,
+                         gdb_byte *readbuf, const gdb_byte *writebuf,
+                         ULONGEST offset, ULONGEST len, ULONGEST *xfered_len);
 };
 
 static rs6000_nat_target the_rs6000_nat_target;
@@ -121,9 +118,8 @@ regmap (struct gdbarch *gdbarch, int regno, int *isfloat)
   if (tdep->ppc_gp0_regnum <= regno
       && regno < tdep->ppc_gp0_regnum + ppc_num_gprs)
     return regno;
-  else if (tdep->ppc_fp0_regnum >= 0
-	   && tdep->ppc_fp0_regnum <= regno
-	   && regno < tdep->ppc_fp0_regnum + ppc_num_fprs)
+  else if (tdep->ppc_fp0_regnum >= 0 && tdep->ppc_fp0_regnum <= regno
+           && regno < tdep->ppc_fp0_regnum + ppc_num_fprs)
     {
       *isfloat = 1;
       return regno - tdep->ppc_fp0_regnum + FPR0;
@@ -140,8 +136,7 @@ regmap (struct gdbarch *gdbarch, int regno, int *isfloat)
     return CTR;
   else if (regno == tdep->ppc_xer_regnum)
     return XER;
-  else if (tdep->ppc_fpscr_regnum >= 0
-	   && regno == tdep->ppc_fpscr_regnum)
+  else if (tdep->ppc_fpscr_regnum >= 0 && regno == tdep->ppc_fpscr_regnum)
     return FPSCR;
   else if (tdep->ppc_mq_regnum >= 0 && regno == tdep->ppc_mq_regnum)
     return MQ;
@@ -157,7 +152,7 @@ rs6000_ptrace32 (int req, int id, int *addr, int data, int *buf)
 #ifdef HAVE_PTRACE64
   int ret = ptrace64 (req, id, (uintptr_t) addr, data, buf);
 #else
-  int ret = ptrace (req, id, (int *)addr, data, buf);
+  int ret = ptrace (req, id, (int *) addr, data, buf);
 #endif
 #if 0
   printf ("rs6000_ptrace32 (%d, %d, 0x%x, %08x, 0x%x) = 0x%x\n",
@@ -172,11 +167,11 @@ static int
 rs6000_ptrace64 (int req, int id, long long addr, int data, void *buf)
 {
 #ifdef ARCH3264
-#  ifdef HAVE_PTRACE64
+#ifdef HAVE_PTRACE64
   int ret = ptrace64 (req, id, addr, data, (PTRACE_TYPE_ARG5) buf);
-#  else
+#else
   int ret = ptracex (req, id, addr, data, (PTRACE_TYPE_ARG5) buf);
-#  endif
+#endif
 #else
   int ret = 0;
 #endif
@@ -210,9 +205,8 @@ fetch_register (struct regcache *regcache, int regno)
   else if (nr < 0)
     {
       if (regno >= gdbarch_num_regs (gdbarch))
-	gdb_printf (gdb_stderr,
-		    "gdb error: register no %d not implemented.\n",
-		    regno);
+        gdb_printf (gdb_stderr, "gdb error: register no %d not implemented.\n",
+                    regno);
       return;
     }
 
@@ -220,18 +214,18 @@ fetch_register (struct regcache *regcache, int regno)
   else
     {
       if (!ARCH64 ())
-	*addr = rs6000_ptrace32 (PT_READ_GPR, pid, (int *) nr, 0, 0);
+        *addr = rs6000_ptrace32 (PT_READ_GPR, pid, (int *) nr, 0, 0);
       else
-	{
-	  /* PT_READ_GPR requires the buffer parameter to point to long long,
+        {
+          /* PT_READ_GPR requires the buffer parameter to point to long long,
 	     even if the register is really only 32 bits.  */
-	  long long buf;
-	  rs6000_ptrace64 (PT_READ_GPR, pid, nr, 0, &buf);
-	  if (register_size (gdbarch, regno) == 8)
-	    memcpy (addr, &buf, 8);
-	  else
-	    *addr = buf;
-	}
+          long long buf;
+          rs6000_ptrace64 (PT_READ_GPR, pid, nr, 0, &buf);
+          if (register_size (gdbarch, regno) == 8)
+            memcpy (addr, &buf, 8);
+          else
+            *addr = buf;
+        }
     }
 
   if (!errno)
@@ -272,9 +266,8 @@ store_register (struct regcache *regcache, int regno)
   else if (nr < 0)
     {
       if (regno >= gdbarch_num_regs (gdbarch))
-	gdb_printf (gdb_stderr,
-		    "gdb error: register no %d not implemented.\n",
-		    regno);
+        gdb_printf (gdb_stderr, "gdb error: register no %d not implemented.\n",
+                    regno);
     }
 
   /* Fixed-point registers.  */
@@ -284,23 +277,23 @@ store_register (struct regcache *regcache, int regno)
 	 the register's value is passed by value, but for 64-bit inferiors,
 	 the address of a buffer containing the value is passed.  */
       if (!ARCH64 ())
-	rs6000_ptrace32 (PT_WRITE_GPR, pid, (int *) nr, *addr, 0);
+        rs6000_ptrace32 (PT_WRITE_GPR, pid, (int *) nr, *addr, 0);
       else
-	{
-	  /* PT_WRITE_GPR requires the buffer parameter to point to an 8-byte
+        {
+          /* PT_WRITE_GPR requires the buffer parameter to point to an 8-byte
 	     area, even if the register is really only 32 bits.  */
-	  long long buf;
-	  if (register_size (gdbarch, regno) == 8)
-	    memcpy (&buf, addr, 8);
-	  else
-	    buf = *addr;
-	  rs6000_ptrace64 (PT_WRITE_GPR, pid, nr, 0, &buf);
-	}
+          long long buf;
+          if (register_size (gdbarch, regno) == 8)
+            memcpy (&buf, addr, 8);
+          else
+            buf = *addr;
+          rs6000_ptrace64 (PT_WRITE_GPR, pid, nr, 0, &buf);
+        }
     }
 
   if (errno)
     {
-      perror (_("ptrace write"));
+      perror (_ ("ptrace write"));
       errno = 0;
     }
 }
@@ -321,16 +314,15 @@ rs6000_nat_target::fetch_registers (struct regcache *regcache, int regno)
 
       /* Read 32 general purpose registers.  */
       for (regno = tdep->ppc_gp0_regnum;
-	   regno < tdep->ppc_gp0_regnum + ppc_num_gprs;
-	   regno++)
-	{
-	  fetch_register (regcache, regno);
-	}
+           regno < tdep->ppc_gp0_regnum + ppc_num_gprs; regno++)
+        {
+          fetch_register (regcache, regno);
+        }
 
       /* Read general purpose floating point registers.  */
       if (tdep->ppc_fp0_regnum >= 0)
-	for (regno = 0; regno < ppc_num_fprs; regno++)
-	  fetch_register (regcache, tdep->ppc_fp0_regnum + regno);
+        for (regno = 0; regno < ppc_num_fprs; regno++)
+          fetch_register (regcache, tdep->ppc_fp0_regnum + regno);
 
       /* Read special registers.  */
       fetch_register (regcache, gdbarch_pc_regnum (gdbarch));
@@ -340,9 +332,9 @@ rs6000_nat_target::fetch_registers (struct regcache *regcache, int regno)
       fetch_register (regcache, tdep->ppc_ctr_regnum);
       fetch_register (regcache, tdep->ppc_xer_regnum);
       if (tdep->ppc_fpscr_regnum >= 0)
-	fetch_register (regcache, tdep->ppc_fpscr_regnum);
+        fetch_register (regcache, tdep->ppc_fpscr_regnum);
       if (tdep->ppc_mq_regnum >= 0)
-	fetch_register (regcache, tdep->ppc_mq_regnum);
+        fetch_register (regcache, tdep->ppc_mq_regnum);
     }
 }
 
@@ -363,16 +355,15 @@ rs6000_nat_target::store_registers (struct regcache *regcache, int regno)
 
       /* Write general purpose registers first.  */
       for (regno = tdep->ppc_gp0_regnum;
-	   regno < tdep->ppc_gp0_regnum + ppc_num_gprs;
-	   regno++)
-	{
-	  store_register (regcache, regno);
-	}
+           regno < tdep->ppc_gp0_regnum + ppc_num_gprs; regno++)
+        {
+          store_register (regcache, regno);
+        }
 
       /* Write floating point registers.  */
       if (tdep->ppc_fp0_regnum >= 0)
-	for (regno = 0; regno < ppc_num_fprs; regno++)
-	  store_register (regcache, tdep->ppc_fp0_regnum + regno);
+        for (regno = 0; regno < ppc_num_fprs; regno++)
+          store_register (regcache, tdep->ppc_fp0_regnum + regno);
 
       /* Write special registers.  */
       store_register (regcache, gdbarch_pc_regnum (gdbarch));
@@ -382,20 +373,19 @@ rs6000_nat_target::store_registers (struct regcache *regcache, int regno)
       store_register (regcache, tdep->ppc_ctr_regnum);
       store_register (regcache, tdep->ppc_xer_regnum);
       if (tdep->ppc_fpscr_regnum >= 0)
-	store_register (regcache, tdep->ppc_fpscr_regnum);
+        store_register (regcache, tdep->ppc_fpscr_regnum);
       if (tdep->ppc_mq_regnum >= 0)
-	store_register (regcache, tdep->ppc_mq_regnum);
+        store_register (regcache, tdep->ppc_mq_regnum);
     }
 }
 
 /* Implement the to_xfer_partial target_ops method.  */
 
 enum target_xfer_status
-rs6000_nat_target::xfer_partial (enum target_object object,
-				 const char *annex, gdb_byte *readbuf,
-				 const gdb_byte *writebuf,
-				 ULONGEST offset, ULONGEST len,
-				 ULONGEST *xfered_len)
+rs6000_nat_target::xfer_partial (enum target_object object, const char *annex,
+                                 gdb_byte *readbuf, const gdb_byte *writebuf,
+                                 ULONGEST offset, ULONGEST len,
+                                 ULONGEST *xfered_len)
 {
   pid_t pid = inferior_ptid.pid ();
   int arch64 = ARCH64 ();
@@ -403,89 +393,89 @@ rs6000_nat_target::xfer_partial (enum target_object object,
   switch (object)
     {
     case TARGET_OBJECT_LIBRARIES_AIX:
-      return xfer_shared_libraries (object, annex,
-				    readbuf, writebuf,
-				    offset, len, xfered_len);
+      return xfer_shared_libraries (object, annex, readbuf, writebuf, offset,
+                                    len, xfered_len);
     case TARGET_OBJECT_MEMORY:
       {
-	union
-	{
-	  PTRACE_TYPE_RET word;
-	  gdb_byte byte[sizeof (PTRACE_TYPE_RET)];
-	} buffer;
-	ULONGEST rounded_offset;
-	LONGEST partial_len;
+        union
+        {
+          PTRACE_TYPE_RET word;
+          gdb_byte byte[sizeof (PTRACE_TYPE_RET)];
+        } buffer;
+        ULONGEST rounded_offset;
+        LONGEST partial_len;
 
-	/* Round the start offset down to the next long word
+        /* Round the start offset down to the next long word
 	   boundary.  */
-	rounded_offset = offset & -(ULONGEST) sizeof (PTRACE_TYPE_RET);
+        rounded_offset = offset & -(ULONGEST) sizeof (PTRACE_TYPE_RET);
 
-	/* Since ptrace will transfer a single word starting at that
+        /* Since ptrace will transfer a single word starting at that
 	   rounded_offset the partial_len needs to be adjusted down to
 	   that (remember this function only does a single transfer).
 	   Should the required length be even less, adjust it down
 	   again.  */
-	partial_len = (rounded_offset + sizeof (PTRACE_TYPE_RET)) - offset;
-	if (partial_len > len)
-	  partial_len = len;
+        partial_len = (rounded_offset + sizeof (PTRACE_TYPE_RET)) - offset;
+        if (partial_len > len)
+          partial_len = len;
 
-	if (writebuf)
-	  {
-	    /* If OFFSET:PARTIAL_LEN is smaller than
+        if (writebuf)
+          {
+            /* If OFFSET:PARTIAL_LEN is smaller than
 	       ROUNDED_OFFSET:WORDSIZE then a read/modify write will
 	       be needed.  Read in the entire word.  */
-	    if (rounded_offset < offset
-		|| (offset + partial_len
-		    < rounded_offset + sizeof (PTRACE_TYPE_RET)))
-	      {
-		/* Need part of initial word -- fetch it.  */
-		if (arch64)
-		  buffer.word = rs6000_ptrace64 (PT_READ_I, pid,
-						 rounded_offset, 0, NULL);
-		else
-		  buffer.word = rs6000_ptrace32 (PT_READ_I, pid,
-						 (int *) (uintptr_t)
-						 rounded_offset,
-						 0, NULL);
-	      }
+            if (rounded_offset < offset
+                || (offset + partial_len
+                    < rounded_offset + sizeof (PTRACE_TYPE_RET)))
+              {
+                /* Need part of initial word -- fetch it.  */
+                if (arch64)
+                  buffer.word = rs6000_ptrace64 (PT_READ_I, pid,
+                                                 rounded_offset, 0, NULL);
+                else
+                  buffer.word
+                    = rs6000_ptrace32 (PT_READ_I, pid,
+                                       (int *) (uintptr_t) rounded_offset, 0,
+                                       NULL);
+              }
 
-	    /* Copy data to be written over corresponding part of
+            /* Copy data to be written over corresponding part of
 	       buffer.  */
-	    memcpy (buffer.byte + (offset - rounded_offset),
-		    writebuf, partial_len);
+            memcpy (buffer.byte + (offset - rounded_offset), writebuf,
+                    partial_len);
 
-	    errno = 0;
-	    if (arch64)
-	      rs6000_ptrace64 (PT_WRITE_D, pid,
-			       rounded_offset, buffer.word, NULL);
-	    else
-	      rs6000_ptrace32 (PT_WRITE_D, pid,
-			       (int *) (uintptr_t) rounded_offset,
-			       buffer.word, NULL);
-	    if (errno)
-	      return TARGET_XFER_EOF;
-	  }
+            errno = 0;
+            if (arch64)
+              rs6000_ptrace64 (PT_WRITE_D, pid, rounded_offset, buffer.word,
+                               NULL);
+            else
+              rs6000_ptrace32 (PT_WRITE_D, pid,
+                               (int *) (uintptr_t) rounded_offset, buffer.word,
+                               NULL);
+            if (errno)
+              return TARGET_XFER_EOF;
+          }
 
-	if (readbuf)
-	  {
-	    errno = 0;
-	    if (arch64)
-	      buffer.word = rs6000_ptrace64 (PT_READ_I, pid,
-					     rounded_offset, 0, NULL);
-	    else
-	      buffer.word = rs6000_ptrace32 (PT_READ_I, pid,
-					     (int *)(uintptr_t)rounded_offset,
-					     0, NULL);
-	    if (errno)
-	      return TARGET_XFER_EOF;
+        if (readbuf)
+          {
+            errno = 0;
+            if (arch64)
+              buffer.word
+                = rs6000_ptrace64 (PT_READ_I, pid, rounded_offset, 0, NULL);
+            else
+              buffer.word
+                = rs6000_ptrace32 (PT_READ_I, pid,
+                                   (int *) (uintptr_t) rounded_offset, 0,
+                                   NULL);
+            if (errno)
+              return TARGET_XFER_EOF;
 
-	    /* Copy appropriate bytes out of the buffer.  */
-	    memcpy (readbuf, buffer.byte + (offset - rounded_offset),
-		    partial_len);
-	  }
+            /* Copy appropriate bytes out of the buffer.  */
+            memcpy (readbuf, buffer.byte + (offset - rounded_offset),
+                    partial_len);
+          }
 
-	*xfered_len = (ULONGEST) partial_len;
-	return TARGET_XFER_OK;
+        *xfered_len = (ULONGEST) partial_len;
+        return TARGET_XFER_OK;
       }
 
     default:
@@ -499,7 +489,7 @@ rs6000_nat_target::xfer_partial (enum target_object object,
 
 ptid_t
 rs6000_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
-			 target_wait_flags options)
+                         target_wait_flags options)
 {
   pid_t pid;
   int status, save_errno;
@@ -509,27 +499,27 @@ rs6000_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
       set_sigint_trap ();
 
       do
-	{
-	  pid = waitpid (ptid.pid (), &status, 0);
-	  save_errno = errno;
-	}
+        {
+          pid = waitpid (ptid.pid (), &status, 0);
+          save_errno = errno;
+        }
       while (pid == -1 && errno == EINTR);
 
       clear_sigint_trap ();
 
       if (pid == -1)
-	{
-	  gdb_printf (gdb_stderr,
-		      _("Child process unexpectedly missing: %s.\n"),
-		      safe_strerror (save_errno));
+        {
+          gdb_printf (gdb_stderr,
+                      _ ("Child process unexpectedly missing: %s.\n"),
+                      safe_strerror (save_errno));
 
-	  ourstatus->set_ignore ();
-	  return minus_one_ptid;
-	}
+          ourstatus->set_ignore ();
+          return minus_one_ptid;
+        }
 
       /* Ignore terminated detached child processes.  */
       if (!WIFSTOPPED (status) && find_inferior_pid (this, pid) == nullptr)
-	pid = -1;
+        pid = -1;
     }
   while (pid == -1);
 
@@ -547,15 +537,14 @@ rs6000_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 
   return ptid_t (pid);
 }
-
 
 /* Set the current architecture from the host running GDB.  Called when
    starting a child process.  */
 
 void
 rs6000_nat_target::create_inferior (const char *exec_file,
-				    const std::string &allargs,
-				    char **env, int from_tty)
+                                    const std::string &allargs, char **env,
+                                    int from_tty)
 {
   enum bfd_architecture arch;
   unsigned long mach;
@@ -587,9 +576,9 @@ rs6000_nat_target::create_inferior (const char *exec_file,
       const struct bfd_arch_info *exec_bfd_arch_info;
 
       exec_bfd_arch_info
-	= bfd_get_arch_info (current_program_space->exec_bfd ());
+        = bfd_get_arch_info (current_program_space->exec_bfd ());
       if (arch == exec_bfd_arch_info->arch)
-	return;
+        return;
     }
 
   bfd_default_set_arch_mach (&abfd, arch, mach);
@@ -599,10 +588,9 @@ rs6000_nat_target::create_inferior (const char *exec_file,
   info.abfd = current_program_space->exec_bfd ();
 
   if (!gdbarch_update_p (info))
-    internal_error (_("rs6000_create_inferior: failed "
-		      "to select architecture"));
+    internal_error (_ ("rs6000_create_inferior: failed "
+                       "to select architecture"));
 }
-
 
 /* Shared Object support.  */
 
@@ -619,17 +607,17 @@ rs6000_ptrace_ldinfo (ptid_t ptid)
   while (1)
     {
       if (ARCH64 ())
-	rc = rs6000_ptrace64 (PT_LDINFO, pid, (unsigned long) ldi.data (),
-			      ldi.size (), NULL);
+        rc = rs6000_ptrace64 (PT_LDINFO, pid, (unsigned long) ldi.data (),
+                              ldi.size (), NULL);
       else
-	rc = rs6000_ptrace32 (PT_LDINFO, pid, (int *) ldi.data (),
-			      ldi.size (), NULL);
+        rc = rs6000_ptrace32 (PT_LDINFO, pid, (int *) ldi.data (), ldi.size (),
+                              NULL);
 
       if (rc != -1)
-	break; /* Success, we got the entire ld_info data.  */
+        break; /* Success, we got the entire ld_info data.  */
 
       if (errno != ENOMEM)
-	perror_with_name (_("ptrace ldinfo"));
+        perror_with_name (_ ("ptrace ldinfo"));
 
       /* ldi is not big enough.  Double it and try again.  */
       ldi.resize (ldi.size () * 2);
@@ -642,10 +630,11 @@ rs6000_ptrace_ldinfo (ptid_t ptid)
    TARGET_OBJECT_LIBRARIES_AIX objects.  */
 
 enum target_xfer_status
-rs6000_nat_target::xfer_shared_libraries
-  (enum target_object object,
-   const char *annex, gdb_byte *readbuf, const gdb_byte *writebuf,
-   ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
+rs6000_nat_target::xfer_shared_libraries (enum target_object object,
+                                          const char *annex, gdb_byte *readbuf,
+                                          const gdb_byte *writebuf,
+                                          ULONGEST offset, ULONGEST len,
+                                          ULONGEST *xfered_len)
 {
   ULONGEST result;
 
@@ -658,7 +647,7 @@ rs6000_nat_target::xfer_shared_libraries
 
   gdb::byte_vector ldi_buf = rs6000_ptrace_ldinfo (inferior_ptid);
   result = rs6000_aix_ld_info_to_xml (target_gdbarch (), ldi_buf.data (),
-				      readbuf, offset, len, 1);
+                                      readbuf, offset, len, 1);
 
   if (result == 0)
     return TARGET_XFER_EOF;

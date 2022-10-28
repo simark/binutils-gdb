@@ -32,7 +32,8 @@ class register_dump_regcache : public register_dump
 {
 public:
   register_dump_regcache (regcache *regcache, bool dump_pseudo)
-    : register_dump (regcache->arch ()), m_regcache (regcache),
+    : register_dump (regcache->arch ()),
+      m_regcache (regcache),
       m_dump_pseudo (dump_pseudo)
   {
   }
@@ -42,39 +43,39 @@ protected:
   {
     if (regnum < 0)
       {
-	if (m_dump_pseudo)
-	  gdb_printf (file, "Cooked value");
-	else
-	  gdb_printf (file, "Raw value");
+        if (m_dump_pseudo)
+          gdb_printf (file, "Cooked value");
+        else
+          gdb_printf (file, "Raw value");
       }
     else
       {
-	if (regnum < gdbarch_num_regs (m_gdbarch) || m_dump_pseudo)
-	  {
-	    auto size = register_size (m_gdbarch, regnum);
+        if (regnum < gdbarch_num_regs (m_gdbarch) || m_dump_pseudo)
+          {
+            auto size = register_size (m_gdbarch, regnum);
 
-	    if (size == 0)
-	      return;
+            if (size == 0)
+              return;
 
-	    gdb::def_vector<gdb_byte> buf (size);
-	    auto status = m_regcache->cooked_read (regnum, buf.data ());
+            gdb::def_vector<gdb_byte> buf (size);
+            auto status = m_regcache->cooked_read (regnum, buf.data ());
 
-	    if (status == REG_UNKNOWN)
-	      gdb_printf (file, "<invalid>");
-	    else if (status == REG_UNAVAILABLE)
-	      gdb_printf (file, "<unavailable>");
-	    else
-	      {
-		print_hex_chars (file, buf.data (), size,
-				 gdbarch_byte_order (m_gdbarch), true);
-	      }
-	  }
-	else
-	  {
-	    /* Just print "<cooked>" for pseudo register when
+            if (status == REG_UNKNOWN)
+              gdb_printf (file, "<invalid>");
+            else if (status == REG_UNAVAILABLE)
+              gdb_printf (file, "<unavailable>");
+            else
+              {
+                print_hex_chars (file, buf.data (), size,
+                                 gdbarch_byte_order (m_gdbarch), true);
+              }
+          }
+        else
+          {
+            /* Just print "<cooked>" for pseudo register when
 	       regcache_dump_raw.  */
-	    gdb_printf (file, "<cooked>");
-	  }
+            gdb_printf (file, "<cooked>");
+          }
       }
   }
 
@@ -92,7 +93,8 @@ class register_dump_reg_buffer : public register_dump, reg_buffer
 {
 public:
   register_dump_reg_buffer (gdbarch *gdbarch, bool dump_pseudo)
-    : register_dump (gdbarch), reg_buffer (gdbarch, dump_pseudo)
+    : register_dump (gdbarch),
+      reg_buffer (gdbarch, dump_pseudo)
   {
   }
 
@@ -101,35 +103,35 @@ protected:
   {
     if (regnum < 0)
       {
-	if (m_has_pseudo)
-	  gdb_printf (file, "Cooked value");
-	else
-	  gdb_printf (file, "Raw value");
+        if (m_has_pseudo)
+          gdb_printf (file, "Cooked value");
+        else
+          gdb_printf (file, "Raw value");
       }
     else
       {
-	if (regnum < gdbarch_num_regs (m_gdbarch) || m_has_pseudo)
-	  {
-	    auto size = register_size (m_gdbarch, regnum);
+        if (regnum < gdbarch_num_regs (m_gdbarch) || m_has_pseudo)
+          {
+            auto size = register_size (m_gdbarch, regnum);
 
-	    if (size == 0)
-	      return;
+            if (size == 0)
+              return;
 
-	    auto status = get_register_status (regnum);
+            auto status = get_register_status (regnum);
 
-	    gdb_assert (status != REG_VALID);
+            gdb_assert (status != REG_VALID);
 
-	    if (status == REG_UNKNOWN)
-	      gdb_printf (file, "<invalid>");
-	    else
-	      gdb_printf (file, "<unavailable>");
-	  }
-	else
-	  {
-	    /* Just print "<cooked>" for pseudo register when
+            if (status == REG_UNKNOWN)
+              gdb_printf (file, "<invalid>");
+            else
+              gdb_printf (file, "<unavailable>");
+          }
+        else
+          {
+            /* Just print "<cooked>" for pseudo register when
 	       regcache_dump_raw.  */
-	    gdb_printf (file, "<cooked>");
-	  }
+            gdb_printf (file, "<cooked>");
+          }
       }
   }
 };
@@ -139,13 +141,10 @@ protected:
 class register_dump_none : public register_dump
 {
 public:
-  register_dump_none (gdbarch *arch)
-    : register_dump (arch)
-  {}
+  register_dump_none (gdbarch *arch) : register_dump (arch) {}
 
 protected:
-  void dump_reg (ui_file *file, int regnum) override
-  {}
+  void dump_reg (ui_file *file, int regnum) override {}
 };
 
 /* For "maint print remote-registers".  */
@@ -153,24 +152,22 @@ protected:
 class register_dump_remote : public register_dump
 {
 public:
-  register_dump_remote (gdbarch *arch)
-    : register_dump (arch)
-  {}
+  register_dump_remote (gdbarch *arch) : register_dump (arch) {}
 
 protected:
   void dump_reg (ui_file *file, int regnum) override
   {
     if (regnum < 0)
       {
-	gdb_printf (file, "Rmt Nr  g/G Offset");
+        gdb_printf (file, "Rmt Nr  g/G Offset");
       }
     else if (regnum < gdbarch_num_regs (m_gdbarch))
       {
-	int pnum, poffset;
+        int pnum, poffset;
 
-	if (remote_register_number_and_offset (m_gdbarch, regnum,
-					       &pnum, &poffset))
-	  gdb_printf (file, "%7d %11d", pnum, poffset);
+        if (remote_register_number_and_offset (m_gdbarch, regnum, &pnum,
+                                               &poffset))
+          gdb_printf (file, "%7d %11d", pnum, poffset);
       }
   }
 };
@@ -180,9 +177,7 @@ protected:
 class register_dump_groups : public register_dump
 {
 public:
-  register_dump_groups (gdbarch *arch)
-    : register_dump (arch)
-  {}
+  register_dump_groups (gdbarch *arch) : register_dump (arch) {}
 
 protected:
   void dump_reg (ui_file *file, int regnum) override
@@ -191,23 +186,25 @@ protected:
       gdb_printf (file, "Groups");
     else
       {
-	const char *sep = "";
-	for (const struct reggroup *group : gdbarch_reggroups (m_gdbarch))
-	  {
-	    if (gdbarch_register_reggroup_p (m_gdbarch, regnum, group))
-	      {
-		gdb_printf (file, "%s%s", sep, group->name ());
-		sep = ",";
-	      }
-	  }
+        const char *sep = "";
+        for (const struct reggroup *group : gdbarch_reggroups (m_gdbarch))
+          {
+            if (gdbarch_register_reggroup_p (m_gdbarch, regnum, group))
+              {
+                gdb_printf (file, "%s%s", sep, group->name ());
+                sep = ",";
+              }
+          }
       }
   }
 };
 
 enum regcache_dump_what
 {
-  regcache_dump_none, regcache_dump_raw,
-  regcache_dump_cooked, regcache_dump_groups,
+  regcache_dump_none,
+  regcache_dump_raw,
+  regcache_dump_cooked,
+  regcache_dump_groups,
   regcache_dump_remote
 };
 
@@ -223,7 +220,7 @@ regcache_print (const char *args, enum regcache_dump_what what_to_dump)
   else
     {
       if (!file.open (args, "w"))
-	perror_with_name (_("maintenance print architecture"));
+        perror_with_name (_ ("maintenance print architecture"));
       out = &file;
     }
 
@@ -250,19 +247,19 @@ regcache_print (const char *args, enum regcache_dump_what what_to_dump)
     case regcache_dump_raw:
     case regcache_dump_cooked:
       {
-	auto dump_pseudo = (what_to_dump == regcache_dump_cooked);
+        auto dump_pseudo = (what_to_dump == regcache_dump_cooked);
 
-	if (target_has_registers ())
-	  dump.reset (new register_dump_regcache (get_current_regcache (),
-						  dump_pseudo));
-	else
-	  {
-	    /* For the benefit of "maint print registers" & co when
+        if (target_has_registers ())
+          dump.reset (
+            new register_dump_regcache (get_current_regcache (), dump_pseudo));
+        else
+          {
+            /* For the benefit of "maint print registers" & co when
 	       debugging an executable, allow dumping a regcache even when
 	       there is no thread selected / no registers.  */
-	    dump.reset (new register_dump_reg_buffer (target_gdbarch (),
-						      dump_pseudo));
-	  }
+            dump.reset (
+              new register_dump_reg_buffer (target_gdbarch (), dump_pseudo));
+          }
       }
       break;
     }
@@ -305,28 +302,31 @@ void
 _initialize_regcache_dump ()
 {
   add_cmd ("registers", class_maintenance, maintenance_print_registers,
-	   _("Print the internal register configuration.\n"
-	     "Takes an optional file parameter."), &maintenanceprintlist);
-  add_cmd ("raw-registers", class_maintenance,
-	   maintenance_print_raw_registers,
-	   _("Print the internal register configuration "
-	     "including raw values.\n"
-	     "Takes an optional file parameter."), &maintenanceprintlist);
+           _ ("Print the internal register configuration.\n"
+              "Takes an optional file parameter."),
+           &maintenanceprintlist);
+  add_cmd ("raw-registers", class_maintenance, maintenance_print_raw_registers,
+           _ ("Print the internal register configuration "
+              "including raw values.\n"
+              "Takes an optional file parameter."),
+           &maintenanceprintlist);
   add_cmd ("cooked-registers", class_maintenance,
-	   maintenance_print_cooked_registers,
-	   _("Print the internal register configuration "
-	     "including cooked values.\n"
-	     "Takes an optional file parameter."), &maintenanceprintlist);
+           maintenance_print_cooked_registers,
+           _ ("Print the internal register configuration "
+              "including cooked values.\n"
+              "Takes an optional file parameter."),
+           &maintenanceprintlist);
   add_cmd ("register-groups", class_maintenance,
-	   maintenance_print_register_groups,
-	   _("Print the internal register configuration "
-	     "including each register's group.\n"
-	     "Takes an optional file parameter."),
-	   &maintenanceprintlist);
+           maintenance_print_register_groups,
+           _ ("Print the internal register configuration "
+              "including each register's group.\n"
+              "Takes an optional file parameter."),
+           &maintenanceprintlist);
   add_cmd ("remote-registers", class_maintenance,
-	   maintenance_print_remote_registers, _("\
+           maintenance_print_remote_registers,
+           _ ("\
 Print the internal register configuration including remote register number "
-"and g/G packets offset.\n\
+              "and g/G packets offset.\n\
 Takes an optional file parameter."),
-	   &maintenanceprintlist);
+           &maintenanceprintlist);
 }

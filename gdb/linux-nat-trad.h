@@ -34,8 +34,9 @@ public:
 protected:
   /* Return the offset within the user area where a particular
      register is stored.  */
-  virtual CORE_ADDR register_u_offset (struct gdbarch *gdbarch,
-				       int regnum, int store) = 0;
+  virtual CORE_ADDR register_u_offset (struct gdbarch *gdbarch, int regnum,
+                                       int store)
+    = 0;
 
 private:
   /* Helpers.  See definition.  */

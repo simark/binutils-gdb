@@ -22,8 +22,7 @@
 #include <algorithm>
 
 int
-mem_ranges_overlap (CORE_ADDR start1, int len1,
-		    CORE_ADDR start2, int len2)
+mem_ranges_overlap (CORE_ADDR start1, int len1, CORE_ADDR start2, int len2)
 {
   ULONGEST h, l;
 
@@ -37,8 +36,7 @@ mem_ranges_overlap (CORE_ADDR start1, int len1,
 int
 address_in_mem_range (CORE_ADDR address, const struct mem_range *r)
 {
-  return (r->start <= address
-	  && (address - r->start) < r->length);
+  return (r->start <= address && (address - r->start) < r->length);
 }
 
 void
@@ -52,20 +50,20 @@ normalize_mem_ranges (std::vector<mem_range> *memory)
 
       int a = 0;
       for (int b = 1; b < m.size (); b++)
-	{
-	  /* If mem_range B overlaps or is adjacent to mem_range A,
+        {
+          /* If mem_range B overlaps or is adjacent to mem_range A,
 	     merge them.  */
-	  if (m[b].start <= m[a].start + m[a].length)
-	    {
-	      m[a].length = std::max ((CORE_ADDR) m[a].length,
-				      (m[b].start - m[a].start) + m[b].length);
-	      continue;		/* next b, same a */
-	    }
-	  a++;			/* next a */
+          if (m[b].start <= m[a].start + m[a].length)
+            {
+              m[a].length = std::max ((CORE_ADDR) m[a].length,
+                                      (m[b].start - m[a].start) + m[b].length);
+              continue; /* next b, same a */
+            }
+          a++; /* next a */
 
-	  if (a != b)
-	    m[a] = m[b];
-	}
+          if (a != b)
+            m[a] = m[b];
+        }
 
       m.resize (a + 1);
     }

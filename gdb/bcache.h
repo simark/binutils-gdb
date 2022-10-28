@@ -136,7 +136,8 @@
   
 */
 
-namespace gdb {
+namespace gdb
+{
 
 struct bstring;
 
@@ -162,7 +163,6 @@ struct bcache
   int memory_used ();
 
 protected:
-
   /* Hash function to be used for this bcache object.  Defaults to
      fast_hash.  */
   virtual unsigned long hash (const void *addr, int length);
@@ -172,9 +172,10 @@ protected:
   virtual int compare (const void *left, const void *right, int length);
 
 private:
-
   /* All the bstrings are allocated here.  */
-  struct obstack m_cache {};
+  struct obstack m_cache
+  {
+  };
 
   /* How many hash buckets we're using.  */
   unsigned int m_num_buckets = 0;
@@ -184,11 +185,12 @@ private:
   struct bstring **m_bucket = nullptr;
 
   /* Statistics.  */
-  unsigned long m_unique_count = 0;	/* number of unique strings */
-  long m_total_count = 0;	/* total number of strings cached, including dups */
-  long m_unique_size = 0;	/* size of unique strings, in bytes */
-  long m_total_size = 0;      /* total number of bytes cached, including dups */
-  long m_structure_size = 0;	/* total size of bcache, including infrastructure */
+  unsigned long m_unique_count = 0; /* number of unique strings */
+  long m_total_count = 0; /* total number of strings cached, including dups */
+  long m_unique_size = 0; /* size of unique strings, in bytes */
+  long m_total_size = 0;  /* total number of bytes cached, including dups */
+  long m_structure_size
+    = 0; /* total size of bcache, including infrastructure */
   /* Number of times that the hash table is expanded and hence
      re-built, and the corresponding number of times that a string is
      [re]hashed as part of entering it into the expanded table.  The

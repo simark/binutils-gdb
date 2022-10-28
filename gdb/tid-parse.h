@@ -143,16 +143,16 @@ private:
   /* The possible states of the tid range parser's state machine,
      indicating what sub-component are we expecting.  */
   enum
-    {
-      /* Parsing the inferior number.  */
-      STATE_INFERIOR,
+  {
+    /* Parsing the inferior number.  */
+    STATE_INFERIOR,
 
-      /* Parsing the thread number or thread number range.  */
-      STATE_THREAD_RANGE,
+    /* Parsing the thread number or thread number range.  */
+    STATE_THREAD_RANGE,
 
-      /* Parsing a star wildcard thread range.  E.g., "1.*".  */
-      STATE_STAR_RANGE,
-    } m_state;
+    /* Parsing a star wildcard thread range.  E.g., "1.*".  */
+    STATE_STAR_RANGE,
+  } m_state;
 
   /* The string being parsed.  When parsing has finished, this points
      past the last parsed token.  */
@@ -174,7 +174,6 @@ private:
   int m_default_inferior;
 };
 
-
 /* Accept a string-form list of thread IDs such as is accepted by
    tid_range_parser.  Return true if the INF_NUM.THR.NUM thread is in
    the list.  DEFAULT_INFERIOR is the inferior number to assume if a
@@ -183,7 +182,7 @@ private:
    By definition, an empty list includes all threads.  This is to be
    interpreted as typing a command such as "info threads" with no
    arguments.  */
-extern int tid_is_in_list (const char *list, int default_inferior,
-			   int inf_num, int thr_num);
+extern int tid_is_in_list (const char *list, int default_inferior, int inf_num,
+                           int thr_num);
 
 #endif /* TID_PARSE_H */

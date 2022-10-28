@@ -43,11 +43,10 @@ struct exec_catchpoint : public catchpoint
 
   int insert_location (struct bp_location *) override;
   int remove_location (struct bp_location *,
-		       enum remove_bp_reason reason) override;
+                       enum remove_bp_reason reason) override;
   int breakpoint_hit (const struct bp_location *bl,
-		      const address_space *aspace,
-		      CORE_ADDR bp_addr,
-		      const target_waitstatus &ws) override;
+                      const address_space *aspace, CORE_ADDR bp_addr,
+                      const target_waitstatus &ws) override;
   enum print_stop_action print_it (const bpstat *bs) const override;
   bool print_one (bp_location **) const override;
   void print_mention () const override;
@@ -67,16 +66,16 @@ exec_catchpoint::insert_location (struct bp_location *bl)
 
 int
 exec_catchpoint::remove_location (struct bp_location *bl,
-				  enum remove_bp_reason reason)
+                                  enum remove_bp_reason reason)
 {
   return target_remove_exec_catchpoint (inferior_ptid.pid ());
 }
 
 int
 exec_catchpoint::breakpoint_hit (const struct bp_location *bl,
-				 const address_space *aspace,
-				 CORE_ADDR bp_addr,
-				 const target_waitstatus &ws)
+                                 const address_space *aspace,
+                                 CORE_ADDR bp_addr,
+                                 const target_waitstatus &ws)
 {
   if (ws.kind () != TARGET_WAITKIND_EXECD)
     return 0;
@@ -140,7 +139,7 @@ exec_catchpoint::print_one (bp_location **last_loc) const
 void
 exec_catchpoint::print_mention () const
 {
-  gdb_printf (_("Catchpoint %d (exec)"), number);
+  gdb_printf (_ ("Catchpoint %d (exec)"), number);
 }
 
 /* Implement the "print_recreate" method for exec catchpoints.  */
@@ -188,7 +187,7 @@ ep_parse_optional_if_clause (const char **arg)
 
 static void
 catch_exec_command_1 (const char *arg, int from_tty,
-		      struct cmd_list_element *command)
+                      struct cmd_list_element *command)
 {
   struct gdbarch *gdbarch = get_current_arch ();
   const char *cond_string = NULL;
@@ -206,10 +205,10 @@ catch_exec_command_1 (const char *arg, int from_tty,
   cond_string = ep_parse_optional_if_clause (&arg);
 
   if ((*arg != '\0') && !isspace (*arg))
-    error (_("Junk at end of arguments."));
+    error (_ ("Junk at end of arguments."));
 
-  std::unique_ptr<exec_catchpoint> c
-    (new exec_catchpoint (gdbarch, temp, cond_string));
+  std::unique_ptr<exec_catchpoint> c (
+    new exec_catchpoint (gdbarch, temp, cond_string));
 
   install_breakpoint (0, std::move (c), 1);
 }
@@ -218,9 +217,6 @@ void _initialize_break_catch_exec ();
 void
 _initialize_break_catch_exec ()
 {
-  add_catch_command ("exec", _("Catch calls to exec."),
-		     catch_exec_command_1,
-		     NULL,
-		     CATCH_PERMANENT,
-		     CATCH_TEMPORARY);
+  add_catch_command ("exec", _ ("Catch calls to exec."), catch_exec_command_1,
+                     NULL, CATCH_PERMANENT, CATCH_TEMPORARY);
 }

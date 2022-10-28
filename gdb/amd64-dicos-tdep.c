@@ -27,7 +27,7 @@ static void
 amd64_dicos_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   amd64_init_abi (info, gdbarch,
-		  amd64_target_description (X86_XSTATE_SSE_MASK, true));
+                  amd64_target_description (X86_XSTATE_SSE_MASK, true));
 
   dicos_init_abi (gdbarch);
 }
@@ -51,9 +51,8 @@ void
 _initialize_amd64_dicos_tdep ()
 {
   gdbarch_register_osabi_sniffer (bfd_arch_i386, bfd_target_elf_flavour,
-				  amd64_dicos_osabi_sniffer);
+                                  amd64_dicos_osabi_sniffer);
 
-  gdbarch_register_osabi (bfd_arch_i386, bfd_mach_x86_64,
-			  GDB_OSABI_DICOS,
-			  amd64_dicos_init_abi);
+  gdbarch_register_osabi (bfd_arch_i386, bfd_mach_x86_64, GDB_OSABI_DICOS,
+                          amd64_dicos_init_abi);
 }

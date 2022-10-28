@@ -34,13 +34,10 @@ extern void fbsd_info_proc_files_header ();
    should contain pointers to the corresponding fields in a 'struct
    kinfo_file'. */
 
-extern void fbsd_info_proc_files_entry (int kf_type, int kf_fd, int kf_flags,
-					LONGEST kf_offset, int kf_vnode_type,
-					int kf_sock_domain, int kf_sock_type,
-					int kf_sock_protocol,
-					const void *kf_sa_local,
-					const void *kf_sa_peer,
-					const void *kf_path);
+extern void fbsd_info_proc_files_entry (
+  int kf_type, int kf_fd, int kf_flags, LONGEST kf_offset, int kf_vnode_type,
+  int kf_sock_domain, int kf_sock_type, int kf_sock_protocol,
+  const void *kf_sa_local, const void *kf_sa_peer, const void *kf_path);
 
 /* Output the header for "info proc mappings".  ADDR_BIT is the size
    of a virtual address in bits.  */
@@ -55,10 +52,10 @@ extern void fbsd_info_proc_mappings_header (int addr_bit);
    pointer to the 'kve_path' field in a 'struct kinfo_vmentry'. */
 
 extern void fbsd_info_proc_mappings_entry (int addr_bit, ULONGEST kve_start,
-					   ULONGEST kve_end,
-					   ULONGEST kve_offset,
-					   int kve_flags, int kve_protection,
-					   const void *kve_path);
+                                           ULONGEST kve_end,
+                                           ULONGEST kve_offset, int kve_flags,
+                                           int kve_protection,
+                                           const void *kve_path);
 
 /* Helper function to fetch the address of a thread-local variable.
    DTV_ADDR is the base address of the thread's dtv array.  LM_ADDR is
@@ -67,13 +64,13 @@ extern void fbsd_info_proc_mappings_entry (int addr_bit, ULONGEST kve_start,
    thread-local variable block.  */
 
 extern CORE_ADDR fbsd_get_thread_local_address (struct gdbarch *gdbarch,
-						CORE_ADDR dtv_addr,
-						CORE_ADDR lm_addr,
-						CORE_ADDR offset);
+                                                CORE_ADDR dtv_addr,
+                                                CORE_ADDR lm_addr,
+                                                CORE_ADDR offset);
 
 /* Implement the "skip_solib_resolver" gdbarch method.  */
 
 extern CORE_ADDR fbsd_skip_solib_resolver (struct gdbarch *gdbarch,
-					   CORE_ADDR pc);
+                                           CORE_ADDR pc);
 
 #endif /* fbsd-tdep.h */

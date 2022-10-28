@@ -35,10 +35,12 @@ public:
   ~linux_nat_target () override = 0;
 
   thread_control_capabilities get_thread_control_capabilities () override
-  { return tc_schedlock; }
+  {
+    return tc_schedlock;
+  }
 
-  void create_inferior (const char *, const std::string &,
-			char **, int) override;
+  void create_inferior (const char *, const std::string &, char **,
+                        int) override;
 
   void attach (const char *, int) override;
 
@@ -51,11 +53,10 @@ public:
   void pass_signals (gdb::array_view<const unsigned char>) override;
 
   enum target_xfer_status xfer_partial (enum target_object object,
-					const char *annex,
-					gdb_byte *readbuf,
-					const gdb_byte *writebuf,
-					ULONGEST offset, ULONGEST len,
-					ULONGEST *xfered_len) override;
+                                        const char *annex, gdb_byte *readbuf,
+                                        const gdb_byte *writebuf,
+                                        ULONGEST offset, ULONGEST len,
+                                        ULONGEST *xfered_len) override;
 
   void kill () override;
 
@@ -99,18 +100,16 @@ public:
 
   bool filesystem_is_local () override;
 
-  int fileio_open (struct inferior *inf, const char *filename,
-		   int flags, int mode, int warn_if_slow,
-		   fileio_error *target_errno) override;
+  int fileio_open (struct inferior *inf, const char *filename, int flags,
+                   int mode, int warn_if_slow,
+                   fileio_error *target_errno) override;
 
   gdb::optional<std::string>
-    fileio_readlink (struct inferior *inf,
-		     const char *filename,
-		     fileio_error *target_errno) override;
+  fileio_readlink (struct inferior *inf, const char *filename,
+                   fileio_error *target_errno) override;
 
-  int fileio_unlink (struct inferior *inf,
-		     const char *filename,
-		     fileio_error *target_errno) override;
+  int fileio_unlink (struct inferior *inf, const char *filename,
+                     fileio_error *target_errno) override;
 
   int insert_fork_catchpoint (int) override;
   int remove_fork_catchpoint (int) override;
@@ -120,8 +119,9 @@ public:
   int insert_exec_catchpoint (int) override;
   int remove_exec_catchpoint (int) override;
 
-  int set_syscall_catchpoint (int pid, bool needed, int any_count,
-			      gdb::array_view<const int> syscall_counts) override;
+  int
+  set_syscall_catchpoint (int pid, bool needed, int any_count,
+                          gdb::array_view<const int> syscall_counts) override;
 
   const char *pid_to_exec_file (int pid) override;
 
@@ -130,23 +130,22 @@ public:
   void follow_fork (inferior *, ptid_t, target_waitkind, bool, bool) override;
 
   std::vector<static_tracepoint_marker>
-    static_tracepoint_markers_by_strid (const char *id) override;
+  static_tracepoint_markers_by_strid (const char *id) override;
 
   /* Methods that are meant to overridden by the concrete
      arch-specific target instance.  */
 
   virtual void low_resume (ptid_t ptid, int step, enum gdb_signal sig)
-  { inf_ptrace_target::resume (ptid, step, sig); }
+  {
+    inf_ptrace_target::resume (ptid, step, sig);
+  }
 
-  virtual bool low_stopped_by_watchpoint ()
-  { return false; }
+  virtual bool low_stopped_by_watchpoint () { return false; }
 
-  virtual bool low_stopped_data_address (CORE_ADDR *addr_p)
-  { return false; }
+  virtual bool low_stopped_data_address (CORE_ADDR *addr_p) { return false; }
 
   /* The method to call, if any, when a new thread is attached.  */
-  virtual void low_new_thread (struct lwp_info *)
-  {}
+  virtual void low_new_thread (struct lwp_info *) {}
 
   /* The method to call, if any, when a thread is destroyed.  */
   virtual void low_delete_thread (struct arch_lwp_info *lp)
@@ -155,21 +154,17 @@ public:
   }
 
   /* The method to call, if any, when a new fork is attached.  */
-  virtual void low_new_fork (struct lwp_info *parent, pid_t child_pid)
-  {}
+  virtual void low_new_fork (struct lwp_info *parent, pid_t child_pid) {}
 
   /* The method to call, if any, when a new clone event is detected.  */
-  virtual void low_new_clone (struct lwp_info *parent, pid_t child_lwp)
-  {}
+  virtual void low_new_clone (struct lwp_info *parent, pid_t child_lwp) {}
 
   /* The method to call, if any, when a process is no longer
      attached.  */
-  virtual void low_forget_process (pid_t pid)
-  {}
+  virtual void low_forget_process (pid_t pid) {}
 
   /* Hook to call prior to resuming a thread.  */
-  virtual void low_prepare_to_resume (struct lwp_info *)
-  {}
+  virtual void low_prepare_to_resume (struct lwp_info *) {}
 
   /* Convert a ptrace/host siginfo object, into/from the siginfo in
      the layout of the inferiors' architecture.  Returns true if any
@@ -177,16 +172,17 @@ public:
      does a straight memcpy.  If DIRECTION is 1, then copy from INF to
      PTRACE.  If DIRECTION is 0, copy from PTRACE to INF.  */
   virtual bool low_siginfo_fixup (siginfo_t *ptrace, gdb_byte *inf,
-				  int direction)
-  { return false; }
+                                  int direction)
+  {
+    return false;
+  }
 
   /* SIGTRAP-like breakpoint status events recognizer.  The default
      recognizes SIGTRAP only.  */
   virtual bool low_status_is_event (int status);
 
 protected:
-
-    void post_startup_inferior (ptid_t) override;
+  void post_startup_inferior (ptid_t) override;
 };
 
 /* The final/concrete instance.  */
@@ -198,9 +194,7 @@ struct arch_lwp_info;
 
 struct lwp_info : intrusive_list_node<lwp_info>
 {
-  lwp_info (ptid_t ptid)
-    : ptid (ptid)
-  {}
+  lwp_info (ptid_t ptid) : ptid (ptid) {}
 
   ~lwp_info ();
 
@@ -311,8 +305,8 @@ extern unsigned int lin_thread_get_thread_signal_num (void);
 extern int lin_thread_get_thread_signal (unsigned int i);
 
 /* Find process PID's pending signal set from /proc/pid/status.  */
-void linux_proc_pending_signals (int pid, sigset_t *pending,
-				 sigset_t *blocked, sigset_t *ignored);
+void linux_proc_pending_signals (int pid, sigset_t *pending, sigset_t *blocked,
+                                 sigset_t *ignored);
 
 /* For linux_stop_lwp see nat/linux-nat.h.  */
 

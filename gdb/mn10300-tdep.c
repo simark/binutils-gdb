@@ -22,7 +22,7 @@
 #include "dis-asm.h"
 #include "gdbtypes.h"
 #include "regcache.h"
-#include "gdbcore.h"	/* For write_memory_unsigned_integer.  */
+#include "gdbcore.h" /* For write_memory_unsigned_integer.  */
 #include "value.h"
 #include "frame.h"
 #include "frame-unwind.h"
@@ -36,12 +36,11 @@
 
 #include "mn10300-tdep.h"
 
-
 /* The am33-2 has 64 registers.  */
 #define MN10300_MAX_NUM_REGS 64
 
 /* Big enough to hold the size of the largest register in bytes.  */
-#define MN10300_MAX_REGISTER_SIZE      64
+#define MN10300_MAX_REGISTER_SIZE 64
 
 /* This structure holds the results of a prologue analysis.  */
 struct mn10300_prologue
@@ -80,7 +79,6 @@ struct mn10300_prologue
   int reg_offset[MN10300_MAX_NUM_REGS];
 };
 
-
 /* Compute the alignment required by a type.  */
 
 static int
@@ -108,11 +106,11 @@ mn10300_type_align (struct type *type)
     case TYPE_CODE_STRUCT:
     case TYPE_CODE_UNION:
       for (i = 0; i < type->num_fields (); i++)
-	{
-	  int falign = mn10300_type_align (type->field (i).type ());
-	  while (align < falign)
-	    align <<= 1;
-	}
+        {
+          int falign = mn10300_type_align (type->field (i).type ());
+          while (align < falign)
+            align <<= 1;
+        }
       return align;
 
     case TYPE_CODE_ARRAY:
@@ -124,7 +122,7 @@ mn10300_type_align (struct type *type)
       return mn10300_type_align (check_typedef (type));
 
     default:
-      internal_error (_("bad switch"));
+      internal_error (_ ("bad switch"));
     }
 }
 
@@ -144,12 +142,12 @@ mn10300_use_struct_convention (struct type *type)
       /* Structures with a single field are handled as the field
 	 itself.  */
       if (type->num_fields () == 1)
-	return mn10300_use_struct_convention (type->field (0).type ());
+        return mn10300_use_struct_convention (type->field (0).type ());
 
       /* Structures with word or double-word size are passed in memory, as
 	 long as they require at least word alignment.  */
       if (mn10300_type_align (type) >= 4)
-	return 0;
+        return 0;
 
       return 1;
 
@@ -169,11 +167,11 @@ mn10300_use_struct_convention (struct type *type)
 
 static void
 mn10300_store_return_value (struct gdbarch *gdbarch, struct type *type,
-			    struct regcache *regcache, const gdb_byte *valbuf)
+                            struct regcache *regcache, const gdb_byte *valbuf)
 {
   int len = type->length ();
   int reg, regsz;
-  
+
   if (type->code () == TYPE_CODE_PTR)
     reg = 4;
   else
@@ -190,12 +188,12 @@ mn10300_store_return_value (struct gdbarch *gdbarch, struct type *type,
       regcache->raw_write_part (reg + 1, 0, len - regsz, valbuf + regsz);
     }
   else
-    internal_error (_("Cannot store return value %d bytes long."), len);
+    internal_error (_ ("Cannot store return value %d bytes long."), len);
 }
 
 static void
 mn10300_extract_return_value (struct gdbarch *gdbarch, struct type *type,
-			      struct regcache *regcache, void *valbuf)
+                              struct regcache *regcache, void *valbuf)
 {
   gdb_byte buf[MN10300_MAX_REGISTER_SIZE];
   int len = type->length ();
@@ -222,7 +220,7 @@ mn10300_extract_return_value (struct gdbarch *gdbarch, struct type *type,
       memcpy ((char *) valbuf + regsz, buf, len - regsz);
     }
   else
-    internal_error (_("Cannot extract return value %d bytes long."), len);
+    internal_error (_ ("Cannot extract return value %d bytes long."), len);
 }
 
 /* Determine, for architecture GDBARCH, how a return value of TYPE
@@ -233,8 +231,8 @@ mn10300_extract_return_value (struct gdbarch *gdbarch, struct type *type,
 
 static enum return_value_convention
 mn10300_return_value (struct gdbarch *gdbarch, struct value *function,
-		      struct type *type, struct regcache *regcache,
-		      gdb_byte *readbuf, const gdb_byte *writebuf)
+                      struct type *type, struct regcache *regcache,
+                      gdb_byte *readbuf, const gdb_byte *writebuf)
 {
   if (mn10300_use_struct_convention (type))
     return RETURN_VALUE_STRUCT_CONVENTION;
@@ -257,42 +255,36 @@ register_name (int reg, const char **regs, long num_regs)
 static const char *
 mn10300_generic_register_name (struct gdbarch *gdbarch, int reg)
 {
-  static const char *regs[] =
-  { "d0", "d1", "d2", "d3", "a0", "a1", "a2", "a3",
-    "sp", "pc", "mdr", "psw", "lir", "lar", "", "",
-    "", "", "", "", "", "", "", "",
-    "", "", "", "", "", "", "", "fp"
-  };
+  static const char *regs[]
+    = { "d0",  "d1",  "d2",  "d3", "a0", "a1", "a2", "a3", "sp", "pc", "mdr",
+        "psw", "lir", "lar", "",   "",   "",   "",   "",   "",   "",   "",
+        "",    "",    "",    "",   "",   "",   "",   "",   "",   "fp" };
   return register_name (reg, regs, ARRAY_SIZE (regs));
 }
-
 
 static const char *
 am33_register_name (struct gdbarch *gdbarch, int reg)
 {
-  static const char *regs[] =
-  { "d0", "d1", "d2", "d3", "a0", "a1", "a2", "a3",
-    "sp", "pc", "mdr", "psw", "lir", "lar", "",
-    "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
-    "ssp", "msp", "usp", "mcrh", "mcrl", "mcvf", "", "", ""
-  };
+  static const char *regs[]
+    = { "d0",  "d1",  "d2",   "d3",   "a0",   "a1",  "a2", "a3",
+        "sp",  "pc",  "mdr",  "psw",  "lir",  "lar", "",   "r0",
+        "r1",  "r2",  "r3",   "r4",   "r5",   "r6",  "r7", "ssp",
+        "msp", "usp", "mcrh", "mcrl", "mcvf", "",    "",   "" };
   return register_name (reg, regs, ARRAY_SIZE (regs));
 }
 
 static const char *
 am33_2_register_name (struct gdbarch *gdbarch, int reg)
 {
-  static const char *regs[] =
-  {
-    "d0", "d1", "d2", "d3", "a0", "a1", "a2", "a3",
-    "sp", "pc", "mdr", "psw", "lir", "lar", "mdrq", "r0",
-    "r1", "r2", "r3", "r4", "r5", "r6", "r7", "ssp",
-    "msp", "usp", "mcrh", "mcrl", "mcvf", "fpcr", "", "",
-    "fs0", "fs1", "fs2", "fs3", "fs4", "fs5", "fs6", "fs7",
-    "fs8", "fs9", "fs10", "fs11", "fs12", "fs13", "fs14", "fs15",
-    "fs16", "fs17", "fs18", "fs19", "fs20", "fs21", "fs22", "fs23",
-    "fs24", "fs25", "fs26", "fs27", "fs28", "fs29", "fs30", "fs31"
-  };
+  static const char *regs[]
+    = { "d0",   "d1",   "d2",   "d3",   "a0",   "a1",   "a2",   "a3",
+        "sp",   "pc",   "mdr",  "psw",  "lir",  "lar",  "mdrq", "r0",
+        "r1",   "r2",   "r3",   "r4",   "r5",   "r6",   "r7",   "ssp",
+        "msp",  "usp",  "mcrh", "mcrl", "mcvf", "fpcr", "",     "",
+        "fs0",  "fs1",  "fs2",  "fs3",  "fs4",  "fs5",  "fs6",  "fs7",
+        "fs8",  "fs9",  "fs10", "fs11", "fs12", "fs13", "fs14", "fs15",
+        "fs16", "fs17", "fs18", "fs19", "fs20", "fs21", "fs22", "fs23",
+        "fs24", "fs25", "fs26", "fs27", "fs28", "fs29", "fs30", "fs31" };
   return register_name (reg, regs, ARRAY_SIZE (regs));
 }
 
@@ -308,7 +300,7 @@ mn10300_register_type (struct gdbarch *gdbarch, int reg)
    The Matsushita mn10x00 processors have single byte instructions
    so we need a single byte breakpoint.  Matsushita hasn't defined
    one, so we defined it ourselves.  */
-constexpr gdb_byte mn10300_break_insn[] = {0xff};
+constexpr gdb_byte mn10300_break_insn[] = { 0xff };
 
 typedef BP_MANIPULATION (mn10300_break_insn) mn10300_breakpoint;
 
@@ -327,7 +319,7 @@ push_reg (pv_t *regs, struct pv_area *stack, int regnum)
 static int
 translate_rreg (int rreg)
 {
- /* The higher register numbers actually correspond to the
+  /* The higher register numbers actually correspond to the
      basic machine's address and data registers.  */
   if (rreg > 7 && rreg < 12)
     return E_A0_REGNUM + rreg - 8;
@@ -347,8 +339,7 @@ check_for_saved (void *result_untyped, pv_t addr, CORE_ADDR size, pv_t value)
 {
   struct mn10300_prologue *result = (struct mn10300_prologue *) result_untyped;
 
-  if (value.kind == pvk_register
-      && value.k == 0
+  if (value.kind == pvk_register && value.k == 0
       && pv_is_register (addr, E_SP_REGNUM)
       && size == register_size (result->gdbarch, value.reg))
     result->reg_offset[value.reg] = addr.k;
@@ -359,9 +350,8 @@ check_for_saved (void *result_untyped, pv_t addr, CORE_ADDR size, pv_t value)
    returned in RESULT.  See struct mn10300_prologue above for more
    information.  */
 static void
-mn10300_analyze_prologue (struct gdbarch *gdbarch,
-			  CORE_ADDR start_pc, CORE_ADDR limit_pc,
-			  struct mn10300_prologue *result)
+mn10300_analyze_prologue (struct gdbarch *gdbarch, CORE_ADDR start_pc,
+                          CORE_ADDR limit_pc, struct mn10300_prologue *result)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   CORE_ADDR pc;
@@ -399,608 +389,601 @@ mn10300_analyze_prologue (struct gdbarch *gdbarch,
 	 to begin with.  */
       status = target_read_memory (pc, instr, 2);
       if (status != 0)
-	break;
+        break;
 
       /* movm [regs], sp  */
       if (instr[0] == 0xcf)
-	{
-	  gdb_byte save_mask;
+        {
+          gdb_byte save_mask;
 
-	  save_mask = instr[1];
+          save_mask = instr[1];
 
-	  if ((save_mask & movm_exreg0_bit) && am33_mode)
-	    {
-	      push_reg (regs, &stack, E_E2_REGNUM);
-	      push_reg (regs, &stack, E_E3_REGNUM);
-	    }
-	  if ((save_mask & movm_exreg1_bit) && am33_mode)
-	    {
-	      push_reg (regs, &stack, E_E4_REGNUM);
-	      push_reg (regs, &stack, E_E5_REGNUM);
-	      push_reg (regs, &stack, E_E6_REGNUM);
-	      push_reg (regs, &stack, E_E7_REGNUM);
-	    }
-	  if ((save_mask & movm_exother_bit) && am33_mode)
-	    {
-	      push_reg (regs, &stack, E_E0_REGNUM);
-	      push_reg (regs, &stack, E_E1_REGNUM);
-	      push_reg (regs, &stack, E_MDRQ_REGNUM);
-	      push_reg (regs, &stack, E_MCRH_REGNUM);
-	      push_reg (regs, &stack, E_MCRL_REGNUM);
-	      push_reg (regs, &stack, E_MCVF_REGNUM);
-	    }
-	  if (save_mask & movm_d2_bit)
-	    push_reg (regs, &stack, E_D2_REGNUM);
-	  if (save_mask & movm_d3_bit)
-	    push_reg (regs, &stack, E_D3_REGNUM);
-	  if (save_mask & movm_a2_bit)
-	    push_reg (regs, &stack, E_A2_REGNUM);
-	  if (save_mask & movm_a3_bit)
-	    push_reg (regs, &stack, E_A3_REGNUM);
-	  if (save_mask & movm_other_bit)
-	    {
-	      push_reg (regs, &stack, E_D0_REGNUM);
-	      push_reg (regs, &stack, E_D1_REGNUM);
-	      push_reg (regs, &stack, E_A0_REGNUM);
-	      push_reg (regs, &stack, E_A1_REGNUM);
-	      push_reg (regs, &stack, E_MDR_REGNUM);
-	      push_reg (regs, &stack, E_LIR_REGNUM);
-	      push_reg (regs, &stack, E_LAR_REGNUM);
-	      /* The `other' bit leaves a blank area of four bytes at
+          if ((save_mask & movm_exreg0_bit) && am33_mode)
+            {
+              push_reg (regs, &stack, E_E2_REGNUM);
+              push_reg (regs, &stack, E_E3_REGNUM);
+            }
+          if ((save_mask & movm_exreg1_bit) && am33_mode)
+            {
+              push_reg (regs, &stack, E_E4_REGNUM);
+              push_reg (regs, &stack, E_E5_REGNUM);
+              push_reg (regs, &stack, E_E6_REGNUM);
+              push_reg (regs, &stack, E_E7_REGNUM);
+            }
+          if ((save_mask & movm_exother_bit) && am33_mode)
+            {
+              push_reg (regs, &stack, E_E0_REGNUM);
+              push_reg (regs, &stack, E_E1_REGNUM);
+              push_reg (regs, &stack, E_MDRQ_REGNUM);
+              push_reg (regs, &stack, E_MCRH_REGNUM);
+              push_reg (regs, &stack, E_MCRL_REGNUM);
+              push_reg (regs, &stack, E_MCVF_REGNUM);
+            }
+          if (save_mask & movm_d2_bit)
+            push_reg (regs, &stack, E_D2_REGNUM);
+          if (save_mask & movm_d3_bit)
+            push_reg (regs, &stack, E_D3_REGNUM);
+          if (save_mask & movm_a2_bit)
+            push_reg (regs, &stack, E_A2_REGNUM);
+          if (save_mask & movm_a3_bit)
+            push_reg (regs, &stack, E_A3_REGNUM);
+          if (save_mask & movm_other_bit)
+            {
+              push_reg (regs, &stack, E_D0_REGNUM);
+              push_reg (regs, &stack, E_D1_REGNUM);
+              push_reg (regs, &stack, E_A0_REGNUM);
+              push_reg (regs, &stack, E_A1_REGNUM);
+              push_reg (regs, &stack, E_MDR_REGNUM);
+              push_reg (regs, &stack, E_LIR_REGNUM);
+              push_reg (regs, &stack, E_LAR_REGNUM);
+              /* The `other' bit leaves a blank area of four bytes at
 		 the beginning of its block of saved registers, making
 		 it 32 bytes long in total.  */
-	      regs[E_SP_REGNUM] = pv_add_constant (regs[E_SP_REGNUM], -4);
-	    }
+              regs[E_SP_REGNUM] = pv_add_constant (regs[E_SP_REGNUM], -4);
+            }
 
-	  pc += 2;
-	  after_last_frame_setup_insn = pc;
-	}
+          pc += 2;
+          after_last_frame_setup_insn = pc;
+        }
       /* mov sp, aN */
       else if ((instr[0] & 0xfc) == 0x3c)
-	{
-	  int aN = instr[0] & 0x03;
+        {
+          int aN = instr[0] & 0x03;
 
-	  regs[E_A0_REGNUM + aN] = regs[E_SP_REGNUM];
+          regs[E_A0_REGNUM + aN] = regs[E_SP_REGNUM];
 
-	  pc += 1;
-	  if (aN == 3)
-	    after_last_frame_setup_insn = pc;
-	}
+          pc += 1;
+          if (aN == 3)
+            after_last_frame_setup_insn = pc;
+        }
       /* mov aM, aN */
       else if ((instr[0] & 0xf0) == 0x90
-	       && (instr[0] & 0x03) != ((instr[0] & 0x0c) >> 2))
-	{
-	  int aN = instr[0] & 0x03;
-	  int aM = (instr[0] & 0x0c) >> 2;
+               && (instr[0] & 0x03) != ((instr[0] & 0x0c) >> 2))
+        {
+          int aN = instr[0] & 0x03;
+          int aM = (instr[0] & 0x0c) >> 2;
 
-	  regs[E_A0_REGNUM + aN] = regs[E_A0_REGNUM + aM];
+          regs[E_A0_REGNUM + aN] = regs[E_A0_REGNUM + aM];
 
-	  pc += 1;
-	}
+          pc += 1;
+        }
       /* mov dM, dN */
       else if ((instr[0] & 0xf0) == 0x80
-	       && (instr[0] & 0x03) != ((instr[0] & 0x0c) >> 2))
-	{
-	  int dN = instr[0] & 0x03;
-	  int dM = (instr[0] & 0x0c) >> 2;
+               && (instr[0] & 0x03) != ((instr[0] & 0x0c) >> 2))
+        {
+          int dN = instr[0] & 0x03;
+          int dM = (instr[0] & 0x0c) >> 2;
 
-	  regs[E_D0_REGNUM + dN] = regs[E_D0_REGNUM + dM];
+          regs[E_D0_REGNUM + dN] = regs[E_D0_REGNUM + dM];
 
-	  pc += 1;
-	}
+          pc += 1;
+        }
       /* mov aM, dN */
       else if (instr[0] == 0xf1 && (instr[1] & 0xf0) == 0xd0)
-	{
-	  int dN = instr[1] & 0x03;
-	  int aM = (instr[1] & 0x0c) >> 2;
+        {
+          int dN = instr[1] & 0x03;
+          int aM = (instr[1] & 0x0c) >> 2;
 
-	  regs[E_D0_REGNUM + dN] = regs[E_A0_REGNUM + aM];
+          regs[E_D0_REGNUM + dN] = regs[E_A0_REGNUM + aM];
 
-	  pc += 2;
-	}
+          pc += 2;
+        }
       /* mov dM, aN */
       else if (instr[0] == 0xf1 && (instr[1] & 0xf0) == 0xe0)
-	{
-	  int aN = instr[1] & 0x03;
-	  int dM = (instr[1] & 0x0c) >> 2;
+        {
+          int aN = instr[1] & 0x03;
+          int dM = (instr[1] & 0x0c) >> 2;
 
-	  regs[E_A0_REGNUM + aN] = regs[E_D0_REGNUM + dM];
+          regs[E_A0_REGNUM + aN] = regs[E_D0_REGNUM + dM];
 
-	  pc += 2;
-	}
+          pc += 2;
+        }
       /* add imm8, SP */
       else if (instr[0] == 0xf8 && instr[1] == 0xfe)
-	{
-	  gdb_byte buf[1];
-	  LONGEST imm8;
+        {
+          gdb_byte buf[1];
+          LONGEST imm8;
 
+          status = target_read_memory (pc + 2, buf, 1);
+          if (status != 0)
+            break;
 
-	  status = target_read_memory (pc + 2, buf, 1);
-	  if (status != 0)
-	    break;
+          imm8 = extract_signed_integer (buf, 1, byte_order);
+          regs[E_SP_REGNUM] = pv_add_constant (regs[E_SP_REGNUM], imm8);
 
-	  imm8 = extract_signed_integer (buf, 1, byte_order);
-	  regs[E_SP_REGNUM] = pv_add_constant (regs[E_SP_REGNUM], imm8);
-
-	  pc += 3;
-	  /* Stack pointer adjustments are frame related.  */
-	  after_last_frame_setup_insn = pc;
-	}
+          pc += 3;
+          /* Stack pointer adjustments are frame related.  */
+          after_last_frame_setup_insn = pc;
+        }
       /* add imm16, SP */
       else if (instr[0] == 0xfa && instr[1] == 0xfe)
-	{
-	  gdb_byte buf[2];
-	  LONGEST imm16;
+        {
+          gdb_byte buf[2];
+          LONGEST imm16;
 
-	  status = target_read_memory (pc + 2, buf, 2);
-	  if (status != 0)
-	    break;
+          status = target_read_memory (pc + 2, buf, 2);
+          if (status != 0)
+            break;
 
-	  imm16 = extract_signed_integer (buf, 2, byte_order);
-	  regs[E_SP_REGNUM] = pv_add_constant (regs[E_SP_REGNUM], imm16);
+          imm16 = extract_signed_integer (buf, 2, byte_order);
+          regs[E_SP_REGNUM] = pv_add_constant (regs[E_SP_REGNUM], imm16);
 
-	  pc += 4;
-	  /* Stack pointer adjustments are frame related.  */
-	  after_last_frame_setup_insn = pc;
-	}
+          pc += 4;
+          /* Stack pointer adjustments are frame related.  */
+          after_last_frame_setup_insn = pc;
+        }
       /* add imm32, SP */
       else if (instr[0] == 0xfc && instr[1] == 0xfe)
-	{
-	  gdb_byte buf[4];
-	  LONGEST imm32;
+        {
+          gdb_byte buf[4];
+          LONGEST imm32;
 
-	  status = target_read_memory (pc + 2, buf, 4);
-	  if (status != 0)
-	    break;
+          status = target_read_memory (pc + 2, buf, 4);
+          if (status != 0)
+            break;
 
+          imm32 = extract_signed_integer (buf, 4, byte_order);
+          regs[E_SP_REGNUM] = pv_add_constant (regs[E_SP_REGNUM], imm32);
 
-	  imm32 = extract_signed_integer (buf, 4, byte_order);
-	  regs[E_SP_REGNUM] = pv_add_constant (regs[E_SP_REGNUM], imm32);
-
-	  pc += 6;
-	  /* Stack pointer adjustments are frame related.  */
-	  after_last_frame_setup_insn = pc;
-	}
+          pc += 6;
+          /* Stack pointer adjustments are frame related.  */
+          after_last_frame_setup_insn = pc;
+        }
       /* add imm8, aN  */
       else if ((instr[0] & 0xfc) == 0x20)
-	{
-	  int aN;
-	  LONGEST imm8;
+        {
+          int aN;
+          LONGEST imm8;
 
-	  aN = instr[0] & 0x03;
-	  imm8 = extract_signed_integer (&instr[1], 1, byte_order);
+          aN = instr[0] & 0x03;
+          imm8 = extract_signed_integer (&instr[1], 1, byte_order);
 
-	  regs[E_A0_REGNUM + aN] = pv_add_constant (regs[E_A0_REGNUM + aN],
-						    imm8);
+          regs[E_A0_REGNUM + aN]
+            = pv_add_constant (regs[E_A0_REGNUM + aN], imm8);
 
-	  pc += 2;
-	}
+          pc += 2;
+        }
       /* add imm16, aN  */
       else if (instr[0] == 0xfa && (instr[1] & 0xfc) == 0xd0)
-	{
-	  int aN;
-	  LONGEST imm16;
-	  gdb_byte buf[2];
+        {
+          int aN;
+          LONGEST imm16;
+          gdb_byte buf[2];
 
-	  aN = instr[1] & 0x03;
+          aN = instr[1] & 0x03;
 
-	  status = target_read_memory (pc + 2, buf, 2);
-	  if (status != 0)
-	    break;
+          status = target_read_memory (pc + 2, buf, 2);
+          if (status != 0)
+            break;
 
+          imm16 = extract_signed_integer (buf, 2, byte_order);
 
-	  imm16 = extract_signed_integer (buf, 2, byte_order);
+          regs[E_A0_REGNUM + aN]
+            = pv_add_constant (regs[E_A0_REGNUM + aN], imm16);
 
-	  regs[E_A0_REGNUM + aN] = pv_add_constant (regs[E_A0_REGNUM + aN],
-						    imm16);
-
-	  pc += 4;
-	}
+          pc += 4;
+        }
       /* add imm32, aN  */
       else if (instr[0] == 0xfc && (instr[1] & 0xfc) == 0xd0)
-	{
-	  int aN;
-	  LONGEST imm32;
-	  gdb_byte buf[4];
+        {
+          int aN;
+          LONGEST imm32;
+          gdb_byte buf[4];
 
-	  aN = instr[1] & 0x03;
+          aN = instr[1] & 0x03;
 
-	  status = target_read_memory (pc + 2, buf, 4);
-	  if (status != 0)
-	    break;
+          status = target_read_memory (pc + 2, buf, 4);
+          if (status != 0)
+            break;
 
-	  imm32 = extract_signed_integer (buf, 2, byte_order);
+          imm32 = extract_signed_integer (buf, 2, byte_order);
 
-	  regs[E_A0_REGNUM + aN] = pv_add_constant (regs[E_A0_REGNUM + aN],
-						    imm32);
-	  pc += 6;
-	}
+          regs[E_A0_REGNUM + aN]
+            = pv_add_constant (regs[E_A0_REGNUM + aN], imm32);
+          pc += 6;
+        }
       /* fmov fsM, (rN) */
       else if (instr[0] == 0xf9 && (instr[1] & 0xfd) == 0x30)
-	{
-	  int fsM, sM, Y, rN;
-	  gdb_byte buf[1];
+        {
+          int fsM, sM, Y, rN;
+          gdb_byte buf[1];
 
-	  Y = (instr[1] & 0x02) >> 1;
+          Y = (instr[1] & 0x02) >> 1;
 
-	  status = target_read_memory (pc + 2, buf, 1);
-	  if (status != 0)
-	    break;
+          status = target_read_memory (pc + 2, buf, 1);
+          if (status != 0)
+            break;
 
-	  sM = (buf[0] & 0xf0) >> 4;
-	  rN = buf[0] & 0x0f;
-	  fsM = (Y << 4) | sM;
+          sM = (buf[0] & 0xf0) >> 4;
+          rN = buf[0] & 0x0f;
+          fsM = (Y << 4) | sM;
 
-	  stack.store (regs[translate_rreg (rN)], 4,
-		       regs[E_FS0_REGNUM + fsM]);
+          stack.store (regs[translate_rreg (rN)], 4, regs[E_FS0_REGNUM + fsM]);
 
-	  pc += 3;
-	}
+          pc += 3;
+        }
       /* fmov fsM, (sp) */
       else if (instr[0] == 0xf9 && (instr[1] & 0xfd) == 0x34)
-	{
-	  int fsM, sM, Y;
-	  gdb_byte buf[1];
+        {
+          int fsM, sM, Y;
+          gdb_byte buf[1];
 
-	  Y = (instr[1] & 0x02) >> 1;
+          Y = (instr[1] & 0x02) >> 1;
 
-	  status = target_read_memory (pc + 2, buf, 1);
-	  if (status != 0)
-	    break;
+          status = target_read_memory (pc + 2, buf, 1);
+          if (status != 0)
+            break;
 
-	  sM = (buf[0] & 0xf0) >> 4;
-	  fsM = (Y << 4) | sM;
+          sM = (buf[0] & 0xf0) >> 4;
+          fsM = (Y << 4) | sM;
 
-	  stack.store (regs[E_SP_REGNUM], 4,
-		       regs[E_FS0_REGNUM + fsM]);
+          stack.store (regs[E_SP_REGNUM], 4, regs[E_FS0_REGNUM + fsM]);
 
-	  pc += 3;
-	}
+          pc += 3;
+        }
       /* fmov fsM, (rN, rI) */
       else if (instr[0] == 0xfb && instr[1] == 0x37)
-	{
-	  int fsM, sM, Z, rN, rI;
-	  gdb_byte buf[2];
+        {
+          int fsM, sM, Z, rN, rI;
+          gdb_byte buf[2];
 
+          status = target_read_memory (pc + 2, buf, 2);
+          if (status != 0)
+            break;
 
-	  status = target_read_memory (pc + 2, buf, 2);
-	  if (status != 0)
-	    break;
+          rI = (buf[0] & 0xf0) >> 4;
+          rN = buf[0] & 0x0f;
+          sM = (buf[1] & 0xf0) >> 4;
+          Z = (buf[1] & 0x02) >> 1;
+          fsM = (Z << 4) | sM;
 
-	  rI = (buf[0] & 0xf0) >> 4;
-	  rN = buf[0] & 0x0f;
-	  sM = (buf[1] & 0xf0) >> 4;
-	  Z = (buf[1] & 0x02) >> 1;
-	  fsM = (Z << 4) | sM;
+          stack.store (pv_add (regs[translate_rreg (rN)],
+                               regs[translate_rreg (rI)]),
+                       4, regs[E_FS0_REGNUM + fsM]);
 
-	  stack.store (pv_add (regs[translate_rreg (rN)],
-			       regs[translate_rreg (rI)]),
-		       4, regs[E_FS0_REGNUM + fsM]);
-
-	  pc += 4;
-	}
+          pc += 4;
+        }
       /* fmov fsM, (d8, rN) */
       else if (instr[0] == 0xfb && (instr[1] & 0xfd) == 0x30)
-	{
-	  int fsM, sM, Y, rN;
-	  LONGEST d8;
-	  gdb_byte buf[2];
+        {
+          int fsM, sM, Y, rN;
+          LONGEST d8;
+          gdb_byte buf[2];
 
-	  Y = (instr[1] & 0x02) >> 1;
+          Y = (instr[1] & 0x02) >> 1;
 
-	  status = target_read_memory (pc + 2, buf, 2);
-	  if (status != 0)
-	    break;
+          status = target_read_memory (pc + 2, buf, 2);
+          if (status != 0)
+            break;
 
-	  sM = (buf[0] & 0xf0) >> 4;
-	  rN = buf[0] & 0x0f;
-	  fsM = (Y << 4) | sM;
-	  d8 = extract_signed_integer (&buf[1], 1, byte_order);
+          sM = (buf[0] & 0xf0) >> 4;
+          rN = buf[0] & 0x0f;
+          fsM = (Y << 4) | sM;
+          d8 = extract_signed_integer (&buf[1], 1, byte_order);
 
-	  stack.store (pv_add_constant (regs[translate_rreg (rN)], d8),
-		       4, regs[E_FS0_REGNUM + fsM]);
+          stack.store (pv_add_constant (regs[translate_rreg (rN)], d8), 4,
+                       regs[E_FS0_REGNUM + fsM]);
 
-	  pc += 4;
-	}
+          pc += 4;
+        }
       /* fmov fsM, (d24, rN) */
       else if (instr[0] == 0xfd && (instr[1] & 0xfd) == 0x30)
-	{
-	  int fsM, sM, Y, rN;
-	  LONGEST d24;
-	  gdb_byte buf[4];
+        {
+          int fsM, sM, Y, rN;
+          LONGEST d24;
+          gdb_byte buf[4];
 
-	  Y = (instr[1] & 0x02) >> 1;
+          Y = (instr[1] & 0x02) >> 1;
 
-	  status = target_read_memory (pc + 2, buf, 4);
-	  if (status != 0)
-	    break;
+          status = target_read_memory (pc + 2, buf, 4);
+          if (status != 0)
+            break;
 
-	  sM = (buf[0] & 0xf0) >> 4;
-	  rN = buf[0] & 0x0f;
-	  fsM = (Y << 4) | sM;
-	  d24 = extract_signed_integer (&buf[1], 3, byte_order);
+          sM = (buf[0] & 0xf0) >> 4;
+          rN = buf[0] & 0x0f;
+          fsM = (Y << 4) | sM;
+          d24 = extract_signed_integer (&buf[1], 3, byte_order);
 
-	  stack.store (pv_add_constant (regs[translate_rreg (rN)], d24),
-		       4, regs[E_FS0_REGNUM + fsM]);
+          stack.store (pv_add_constant (regs[translate_rreg (rN)], d24), 4,
+                       regs[E_FS0_REGNUM + fsM]);
 
-	  pc += 6;
-	}
+          pc += 6;
+        }
       /* fmov fsM, (d32, rN) */
       else if (instr[0] == 0xfe && (instr[1] & 0xfd) == 0x30)
-	{
-	  int fsM, sM, Y, rN;
-	  LONGEST d32;
-	  gdb_byte buf[5];
+        {
+          int fsM, sM, Y, rN;
+          LONGEST d32;
+          gdb_byte buf[5];
 
-	  Y = (instr[1] & 0x02) >> 1;
+          Y = (instr[1] & 0x02) >> 1;
 
-	  status = target_read_memory (pc + 2, buf, 5);
-	  if (status != 0)
-	    break;
+          status = target_read_memory (pc + 2, buf, 5);
+          if (status != 0)
+            break;
 
-	  sM = (buf[0] & 0xf0) >> 4;
-	  rN = buf[0] & 0x0f;
-	  fsM = (Y << 4) | sM;
-	  d32 = extract_signed_integer (&buf[1], 4, byte_order);
+          sM = (buf[0] & 0xf0) >> 4;
+          rN = buf[0] & 0x0f;
+          fsM = (Y << 4) | sM;
+          d32 = extract_signed_integer (&buf[1], 4, byte_order);
 
-	  stack.store (pv_add_constant (regs[translate_rreg (rN)], d32),
-		       4, regs[E_FS0_REGNUM + fsM]);
+          stack.store (pv_add_constant (regs[translate_rreg (rN)], d32), 4,
+                       regs[E_FS0_REGNUM + fsM]);
 
-	  pc += 7;
-	}
+          pc += 7;
+        }
       /* fmov fsM, (d8, SP) */
       else if (instr[0] == 0xfb && (instr[1] & 0xfd) == 0x34)
-	{
-	  int fsM, sM, Y;
-	  LONGEST d8;
-	  gdb_byte buf[2];
+        {
+          int fsM, sM, Y;
+          LONGEST d8;
+          gdb_byte buf[2];
 
-	  Y = (instr[1] & 0x02) >> 1;
+          Y = (instr[1] & 0x02) >> 1;
 
-	  status = target_read_memory (pc + 2, buf, 2);
-	  if (status != 0)
-	    break;
+          status = target_read_memory (pc + 2, buf, 2);
+          if (status != 0)
+            break;
 
-	  sM = (buf[0] & 0xf0) >> 4;
-	  fsM = (Y << 4) | sM;
-	  d8 = extract_signed_integer (&buf[1], 1, byte_order);
+          sM = (buf[0] & 0xf0) >> 4;
+          fsM = (Y << 4) | sM;
+          d8 = extract_signed_integer (&buf[1], 1, byte_order);
 
-	  stack.store (pv_add_constant (regs[E_SP_REGNUM], d8),
-		       4, regs[E_FS0_REGNUM + fsM]);
+          stack.store (pv_add_constant (regs[E_SP_REGNUM], d8), 4,
+                       regs[E_FS0_REGNUM + fsM]);
 
-	  pc += 4;
-	}
+          pc += 4;
+        }
       /* fmov fsM, (d24, SP) */
       else if (instr[0] == 0xfd && (instr[1] & 0xfd) == 0x34)
-	{
-	  int fsM, sM, Y;
-	  LONGEST d24;
-	  gdb_byte buf[4];
+        {
+          int fsM, sM, Y;
+          LONGEST d24;
+          gdb_byte buf[4];
 
-	  Y = (instr[1] & 0x02) >> 1;
+          Y = (instr[1] & 0x02) >> 1;
 
-	  status = target_read_memory (pc + 2, buf, 4);
-	  if (status != 0)
-	    break;
+          status = target_read_memory (pc + 2, buf, 4);
+          if (status != 0)
+            break;
 
-	  sM = (buf[0] & 0xf0) >> 4;
-	  fsM = (Y << 4) | sM;
-	  d24 = extract_signed_integer (&buf[1], 3, byte_order);
+          sM = (buf[0] & 0xf0) >> 4;
+          fsM = (Y << 4) | sM;
+          d24 = extract_signed_integer (&buf[1], 3, byte_order);
 
-	  stack.store (pv_add_constant (regs[E_SP_REGNUM], d24),
-		       4, regs[E_FS0_REGNUM + fsM]);
+          stack.store (pv_add_constant (regs[E_SP_REGNUM], d24), 4,
+                       regs[E_FS0_REGNUM + fsM]);
 
-	  pc += 6;
-	}
+          pc += 6;
+        }
       /* fmov fsM, (d32, SP) */
       else if (instr[0] == 0xfe && (instr[1] & 0xfd) == 0x34)
-	{
-	  int fsM, sM, Y;
-	  LONGEST d32;
-	  gdb_byte buf[5];
+        {
+          int fsM, sM, Y;
+          LONGEST d32;
+          gdb_byte buf[5];
 
-	  Y = (instr[1] & 0x02) >> 1;
+          Y = (instr[1] & 0x02) >> 1;
 
-	  status = target_read_memory (pc + 2, buf, 5);
-	  if (status != 0)
-	    break;
+          status = target_read_memory (pc + 2, buf, 5);
+          if (status != 0)
+            break;
 
-	  sM = (buf[0] & 0xf0) >> 4;
-	  fsM = (Y << 4) | sM;
-	  d32 = extract_signed_integer (&buf[1], 4, byte_order);
+          sM = (buf[0] & 0xf0) >> 4;
+          fsM = (Y << 4) | sM;
+          d32 = extract_signed_integer (&buf[1], 4, byte_order);
 
-	  stack.store (pv_add_constant (regs[E_SP_REGNUM], d32),
-		       4, regs[E_FS0_REGNUM + fsM]);
+          stack.store (pv_add_constant (regs[E_SP_REGNUM], d32), 4,
+                       regs[E_FS0_REGNUM + fsM]);
 
-	  pc += 7;
-	}
+          pc += 7;
+        }
       /* fmov fsM, (rN+) */
       else if (instr[0] == 0xf9 && (instr[1] & 0xfd) == 0x31)
-	{
-	  int fsM, sM, Y, rN, rN_regnum;
-	  gdb_byte buf[1];
+        {
+          int fsM, sM, Y, rN, rN_regnum;
+          gdb_byte buf[1];
 
-	  Y = (instr[1] & 0x02) >> 1;
+          Y = (instr[1] & 0x02) >> 1;
 
-	  status = target_read_memory (pc + 2, buf, 1);
-	  if (status != 0)
-	    break;
+          status = target_read_memory (pc + 2, buf, 1);
+          if (status != 0)
+            break;
 
-	  sM = (buf[0] & 0xf0) >> 4;
-	  rN = buf[0] & 0x0f;
-	  fsM = (Y << 4) | sM;
+          sM = (buf[0] & 0xf0) >> 4;
+          rN = buf[0] & 0x0f;
+          fsM = (Y << 4) | sM;
 
-	  rN_regnum = translate_rreg (rN);
+          rN_regnum = translate_rreg (rN);
 
-	  stack.store (regs[rN_regnum], 4,
-		       regs[E_FS0_REGNUM + fsM]);
-	  regs[rN_regnum] = pv_add_constant (regs[rN_regnum], 4);
+          stack.store (regs[rN_regnum], 4, regs[E_FS0_REGNUM + fsM]);
+          regs[rN_regnum] = pv_add_constant (regs[rN_regnum], 4);
 
-	  pc += 3;
-	}
+          pc += 3;
+        }
       /* fmov fsM, (rN+, imm8) */
       else if (instr[0] == 0xfb && (instr[1] & 0xfd) == 0x31)
-	{
-	  int fsM, sM, Y, rN, rN_regnum;
-	  LONGEST imm8;
-	  gdb_byte buf[2];
+        {
+          int fsM, sM, Y, rN, rN_regnum;
+          LONGEST imm8;
+          gdb_byte buf[2];
 
-	  Y = (instr[1] & 0x02) >> 1;
+          Y = (instr[1] & 0x02) >> 1;
 
-	  status = target_read_memory (pc + 2, buf, 2);
-	  if (status != 0)
-	    break;
+          status = target_read_memory (pc + 2, buf, 2);
+          if (status != 0)
+            break;
 
-	  sM = (buf[0] & 0xf0) >> 4;
-	  rN = buf[0] & 0x0f;
-	  fsM = (Y << 4) | sM;
-	  imm8 = extract_signed_integer (&buf[1], 1, byte_order);
+          sM = (buf[0] & 0xf0) >> 4;
+          rN = buf[0] & 0x0f;
+          fsM = (Y << 4) | sM;
+          imm8 = extract_signed_integer (&buf[1], 1, byte_order);
 
-	  rN_regnum = translate_rreg (rN);
+          rN_regnum = translate_rreg (rN);
 
-	  stack.store (regs[rN_regnum], 4, regs[E_FS0_REGNUM + fsM]);
-	  regs[rN_regnum] = pv_add_constant (regs[rN_regnum], imm8);
+          stack.store (regs[rN_regnum], 4, regs[E_FS0_REGNUM + fsM]);
+          regs[rN_regnum] = pv_add_constant (regs[rN_regnum], imm8);
 
-	  pc += 4;
-	}
+          pc += 4;
+        }
       /* fmov fsM, (rN+, imm24) */
       else if (instr[0] == 0xfd && (instr[1] & 0xfd) == 0x31)
-	{
-	  int fsM, sM, Y, rN, rN_regnum;
-	  LONGEST imm24;
-	  gdb_byte buf[4];
+        {
+          int fsM, sM, Y, rN, rN_regnum;
+          LONGEST imm24;
+          gdb_byte buf[4];
 
-	  Y = (instr[1] & 0x02) >> 1;
+          Y = (instr[1] & 0x02) >> 1;
 
-	  status = target_read_memory (pc + 2, buf, 4);
-	  if (status != 0)
-	    break;
+          status = target_read_memory (pc + 2, buf, 4);
+          if (status != 0)
+            break;
 
-	  sM = (buf[0] & 0xf0) >> 4;
-	  rN = buf[0] & 0x0f;
-	  fsM = (Y << 4) | sM;
-	  imm24 = extract_signed_integer (&buf[1], 3, byte_order);
+          sM = (buf[0] & 0xf0) >> 4;
+          rN = buf[0] & 0x0f;
+          fsM = (Y << 4) | sM;
+          imm24 = extract_signed_integer (&buf[1], 3, byte_order);
 
-	  rN_regnum = translate_rreg (rN);
+          rN_regnum = translate_rreg (rN);
 
-	  stack.store (regs[rN_regnum], 4, regs[E_FS0_REGNUM + fsM]);
-	  regs[rN_regnum] = pv_add_constant (regs[rN_regnum], imm24);
+          stack.store (regs[rN_regnum], 4, regs[E_FS0_REGNUM + fsM]);
+          regs[rN_regnum] = pv_add_constant (regs[rN_regnum], imm24);
 
-	  pc += 6;
-	}
+          pc += 6;
+        }
       /* fmov fsM, (rN+, imm32) */
       else if (instr[0] == 0xfe && (instr[1] & 0xfd) == 0x31)
-	{
-	  int fsM, sM, Y, rN, rN_regnum;
-	  LONGEST imm32;
-	  gdb_byte buf[5];
+        {
+          int fsM, sM, Y, rN, rN_regnum;
+          LONGEST imm32;
+          gdb_byte buf[5];
 
-	  Y = (instr[1] & 0x02) >> 1;
+          Y = (instr[1] & 0x02) >> 1;
 
-	  status = target_read_memory (pc + 2, buf, 5);
-	  if (status != 0)
-	    break;
+          status = target_read_memory (pc + 2, buf, 5);
+          if (status != 0)
+            break;
 
-	  sM = (buf[0] & 0xf0) >> 4;
-	  rN = buf[0] & 0x0f;
-	  fsM = (Y << 4) | sM;
-	  imm32 = extract_signed_integer (&buf[1], 4, byte_order);
+          sM = (buf[0] & 0xf0) >> 4;
+          rN = buf[0] & 0x0f;
+          fsM = (Y << 4) | sM;
+          imm32 = extract_signed_integer (&buf[1], 4, byte_order);
 
-	  rN_regnum = translate_rreg (rN);
+          rN_regnum = translate_rreg (rN);
 
-	  stack.store (regs[rN_regnum], 4, regs[E_FS0_REGNUM + fsM]);
-	  regs[rN_regnum] = pv_add_constant (regs[rN_regnum], imm32);
+          stack.store (regs[rN_regnum], 4, regs[E_FS0_REGNUM + fsM]);
+          regs[rN_regnum] = pv_add_constant (regs[rN_regnum], imm32);
 
-	  pc += 7;
-	}
+          pc += 7;
+        }
       /* mov imm8, aN */
       else if ((instr[0] & 0xf0) == 0x90)
-	{
-	  int aN = instr[0] & 0x03;
-	  LONGEST imm8;
+        {
+          int aN = instr[0] & 0x03;
+          LONGEST imm8;
 
-	  imm8 = extract_signed_integer (&instr[1], 1, byte_order);
+          imm8 = extract_signed_integer (&instr[1], 1, byte_order);
 
-	  regs[E_A0_REGNUM + aN] = pv_constant (imm8);
-	  pc += 2;
-	}
+          regs[E_A0_REGNUM + aN] = pv_constant (imm8);
+          pc += 2;
+        }
       /* mov imm16, aN */
       else if ((instr[0] & 0xfc) == 0x24)
-	{
-	  int aN = instr[0] & 0x03;
-	  gdb_byte buf[2];
-	  LONGEST imm16;
+        {
+          int aN = instr[0] & 0x03;
+          gdb_byte buf[2];
+          LONGEST imm16;
 
-	  status = target_read_memory (pc + 1, buf, 2);
-	  if (status != 0)
-	    break;
+          status = target_read_memory (pc + 1, buf, 2);
+          if (status != 0)
+            break;
 
-	  imm16 = extract_signed_integer (buf, 2, byte_order);
-	  regs[E_A0_REGNUM + aN] = pv_constant (imm16);
-	  pc += 3;
-	}
+          imm16 = extract_signed_integer (buf, 2, byte_order);
+          regs[E_A0_REGNUM + aN] = pv_constant (imm16);
+          pc += 3;
+        }
       /* mov imm32, aN */
       else if (instr[0] == 0xfc && ((instr[1] & 0xfc) == 0xdc))
-	{
-	  int aN = instr[1] & 0x03;
-	  gdb_byte buf[4];
-	  LONGEST imm32;
+        {
+          int aN = instr[1] & 0x03;
+          gdb_byte buf[4];
+          LONGEST imm32;
 
-	  status = target_read_memory (pc + 2, buf, 4);
-	  if (status != 0)
-	    break;
+          status = target_read_memory (pc + 2, buf, 4);
+          if (status != 0)
+            break;
 
-	  imm32 = extract_signed_integer (buf, 4, byte_order);
-	  regs[E_A0_REGNUM + aN] = pv_constant (imm32);
-	  pc += 6;
-	}
+          imm32 = extract_signed_integer (buf, 4, byte_order);
+          regs[E_A0_REGNUM + aN] = pv_constant (imm32);
+          pc += 6;
+        }
       /* mov imm8, dN */
       else if ((instr[0] & 0xf0) == 0x80)
-	{
-	  int dN = instr[0] & 0x03;
-	  LONGEST imm8;
+        {
+          int dN = instr[0] & 0x03;
+          LONGEST imm8;
 
-	  imm8 = extract_signed_integer (&instr[1], 1, byte_order);
+          imm8 = extract_signed_integer (&instr[1], 1, byte_order);
 
-	  regs[E_D0_REGNUM + dN] = pv_constant (imm8);
-	  pc += 2;
-	}
+          regs[E_D0_REGNUM + dN] = pv_constant (imm8);
+          pc += 2;
+        }
       /* mov imm16, dN */
       else if ((instr[0] & 0xfc) == 0x2c)
-	{
-	  int dN = instr[0] & 0x03;
-	  gdb_byte buf[2];
-	  LONGEST imm16;
+        {
+          int dN = instr[0] & 0x03;
+          gdb_byte buf[2];
+          LONGEST imm16;
 
-	  status = target_read_memory (pc + 1, buf, 2);
-	  if (status != 0)
-	    break;
+          status = target_read_memory (pc + 1, buf, 2);
+          if (status != 0)
+            break;
 
-	  imm16 = extract_signed_integer (buf, 2, byte_order);
-	  regs[E_D0_REGNUM + dN] = pv_constant (imm16);
-	  pc += 3;
-	}
+          imm16 = extract_signed_integer (buf, 2, byte_order);
+          regs[E_D0_REGNUM + dN] = pv_constant (imm16);
+          pc += 3;
+        }
       /* mov imm32, dN */
       else if (instr[0] == 0xfc && ((instr[1] & 0xfc) == 0xcc))
-	{
-	  int dN = instr[1] & 0x03;
-	  gdb_byte buf[4];
-	  LONGEST imm32;
+        {
+          int dN = instr[1] & 0x03;
+          gdb_byte buf[4];
+          LONGEST imm32;
 
-	  status = target_read_memory (pc + 2, buf, 4);
-	  if (status != 0)
-	    break;
+          status = target_read_memory (pc + 2, buf, 4);
+          if (status != 0)
+            break;
 
-	  imm32 = extract_signed_integer (buf, 4, byte_order);
-	  regs[E_D0_REGNUM + dN] = pv_constant (imm32);
-	  pc += 6;
-	}
+          imm32 = extract_signed_integer (buf, 4, byte_order);
+          regs[E_D0_REGNUM + dN] = pv_constant (imm32);
+          pc += 6;
+        }
       else
-	{
-	  /* We've hit some instruction that we don't recognize.  Hopefully,
+        {
+          /* We've hit some instruction that we don't recognize.  Hopefully,
 	     we have enough to do prologue analysis.  */
-	  break;
-	}
+          break;
+        }
     }
 
   /* Is the frame size (offset, really) a known constant?  */
@@ -1043,7 +1026,7 @@ mn10300_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
    invoke mn10300_analyze_prologue and return its result.  */
 static struct mn10300_prologue *
 mn10300_analyze_frame_prologue (frame_info_ptr this_frame,
-			   void **this_prologue_cache)
+                                void **this_prologue_cache)
 {
   if (!*this_prologue_cache)
     {
@@ -1057,12 +1040,11 @@ mn10300_analyze_frame_prologue (frame_info_ptr this_frame,
       /* If we couldn't find any function containing the PC, then
 	 just initialize the prologue cache, but don't do anything.  */
       if (!func_start)
-	stop_addr = func_start;
+        stop_addr = func_start;
 
-      mn10300_analyze_prologue (get_frame_arch (this_frame),
-				func_start, stop_addr,
-				((struct mn10300_prologue *)
-				 *this_prologue_cache));
+      mn10300_analyze_prologue (
+        get_frame_arch (this_frame), func_start, stop_addr,
+        ((struct mn10300_prologue *) *this_prologue_cache));
     }
 
   return (struct mn10300_prologue *) *this_prologue_cache;
@@ -1095,19 +1077,17 @@ mn10300_frame_base (frame_info_ptr this_frame, void **this_prologue_cache)
 }
 
 static void
-mn10300_frame_this_id (frame_info_ptr this_frame,
-		       void **this_prologue_cache,
-		       struct frame_id *this_id)
+mn10300_frame_this_id (frame_info_ptr this_frame, void **this_prologue_cache,
+                       struct frame_id *this_id)
 {
-  *this_id = frame_id_build (mn10300_frame_base (this_frame,
-						 this_prologue_cache),
-			     get_frame_func (this_frame));
-
+  *this_id
+    = frame_id_build (mn10300_frame_base (this_frame, this_prologue_cache),
+                      get_frame_func (this_frame));
 }
 
 static struct value *
 mn10300_frame_prev_register (frame_info_ptr this_frame,
-			     void **this_prologue_cache, int regnum)
+                             void **this_prologue_cache, int regnum)
 {
   struct mn10300_prologue *p
     = mn10300_analyze_frame_prologue (this_frame, this_prologue_cache);
@@ -1120,22 +1100,21 @@ mn10300_frame_prev_register (frame_info_ptr this_frame,
      return a description of the stack slot holding it.  */
   if (p->reg_offset[regnum] != 1)
     return frame_unwind_got_memory (this_frame, regnum,
-				    frame_base + p->reg_offset[regnum]);
+                                    frame_base + p->reg_offset[regnum]);
 
   /* Otherwise, presume we haven't changed the value of this
      register, and get it from the next frame.  */
   return frame_unwind_got_register (this_frame, regnum, regnum);
 }
 
-static const struct frame_unwind mn10300_frame_unwind = {
-  "mn10300 prologue",
-  NORMAL_FRAME,
-  default_frame_unwind_stop_reason,
-  mn10300_frame_this_id, 
-  mn10300_frame_prev_register,
-  NULL,
-  default_frame_sniffer
-};
+static const struct frame_unwind mn10300_frame_unwind
+  = { "mn10300 prologue",
+      NORMAL_FRAME,
+      default_frame_unwind_stop_reason,
+      mn10300_frame_this_id,
+      mn10300_frame_prev_register,
+      NULL,
+      default_frame_sniffer };
 
 static void
 mn10300_frame_unwind_init (struct gdbarch *gdbarch)
@@ -1152,19 +1131,16 @@ mn10300_frame_unwind_init (struct gdbarch *gdbarch)
  */
 
 static CORE_ADDR
-mn10300_push_dummy_call (struct gdbarch *gdbarch, 
-			 struct value *target_func,
-			 struct regcache *regcache,
-			 CORE_ADDR bp_addr, 
-			 int nargs, struct value **args,
-			 CORE_ADDR sp, 
-			 function_call_return_method return_method,
-			 CORE_ADDR struct_addr)
+mn10300_push_dummy_call (struct gdbarch *gdbarch, struct value *target_func,
+                         struct regcache *regcache, CORE_ADDR bp_addr,
+                         int nargs, struct value **args, CORE_ADDR sp,
+                         function_call_return_method return_method,
+                         CORE_ADDR struct_addr)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   const int push_size = register_size (gdbarch, E_PC_REGNUM);
   int regs_used;
-  int len, arg_len; 
+  int len, arg_len;
   int stack_offset = 0;
   int argnum;
   const gdb_byte *val;
@@ -1183,10 +1159,10 @@ mn10300_push_dummy_call (struct gdbarch *gdbarch,
     {
       arg_len = (value_type (args[argnum])->length () + 3) & ~3;
       while (regs_used < 2 && arg_len > 0)
-	{
-	  regs_used++;
-	  arg_len -= push_size;
-	}
+        {
+          regs_used++;
+          arg_len -= push_size;
+        }
       len += arg_len;
     }
 
@@ -1206,37 +1182,38 @@ mn10300_push_dummy_call (struct gdbarch *gdbarch,
     {
       /* FIXME what about structs?  Unions?  */
       if (value_type (*args)->code () == TYPE_CODE_STRUCT
-	  && value_type (*args)->length () > 8)
-	{
-	  /* Change to pointer-to-type.  */
-	  arg_len = push_size;
-	  gdb_assert (push_size <= MN10300_MAX_REGISTER_SIZE);
-	  store_unsigned_integer (valbuf, push_size, byte_order,
-				  value_address (*args));
-	  val = &valbuf[0];
-	}
+          && value_type (*args)->length () > 8)
+        {
+          /* Change to pointer-to-type.  */
+          arg_len = push_size;
+          gdb_assert (push_size <= MN10300_MAX_REGISTER_SIZE);
+          store_unsigned_integer (valbuf, push_size, byte_order,
+                                  value_address (*args));
+          val = &valbuf[0];
+        }
       else
-	{
-	  arg_len = value_type (*args)->length ();
-	  val = value_contents (*args).data ();
-	}
+        {
+          arg_len = value_type (*args)->length ();
+          val = value_contents (*args).data ();
+        }
 
       while (regs_used < 2 && arg_len > 0)
-	{
-	  regcache_cooked_write_unsigned (regcache, regs_used, 
-		  extract_unsigned_integer (val, push_size, byte_order));
-	  val += push_size;
-	  arg_len -= push_size;
-	  regs_used++;
-	}
+        {
+          regcache_cooked_write_unsigned (
+            regcache, regs_used,
+            extract_unsigned_integer (val, push_size, byte_order));
+          val += push_size;
+          arg_len -= push_size;
+          regs_used++;
+        }
 
       while (arg_len > 0)
-	{
-	  write_memory (sp + stack_offset, val, push_size);
-	  arg_len -= push_size;
-	  val += push_size;
-	  stack_offset += push_size;
-	}
+        {
+          write_memory (sp + stack_offset, val, push_size);
+          arg_len -= push_size;
+          val += push_size;
+          stack_offset += push_size;
+        }
 
       args++;
     }
@@ -1274,11 +1251,11 @@ mn10300_push_dummy_call (struct gdbarch *gdbarch,
      construct the frame ID of the dummy call.  */
   {
     CORE_ADDR func_addr = find_function_addr (target_func, NULL);
-    CORE_ADDR unwound_sp 
+    CORE_ADDR unwound_sp
       = gdbarch_unwind_sp (gdbarch, create_new_frame (sp, func_addr));
     if (sp != unwound_sp)
       regcache_cooked_write_unsigned (regcache, E_SP_REGNUM,
-				      sp - (unwound_sp - sp));
+                                      sp - (unwound_sp - sp));
   }
 
   return sp;
@@ -1298,39 +1275,42 @@ mn10300_dwarf2_reg_to_regnum (struct gdbarch *gdbarch, int dwarf2)
      initializer in gcc/config/mn10300/mn10300.h.  Registers which
      appear in GCC's numbering, but have no counterpart in GDB's
      world, are marked with a -1.  */
-  static int dwarf2_to_gdb[] = {
-    E_D0_REGNUM, E_D1_REGNUM, E_D2_REGNUM, E_D3_REGNUM,
-    E_A0_REGNUM, E_A1_REGNUM, E_A2_REGNUM, E_A3_REGNUM,
-    -1, E_SP_REGNUM,
+  static int dwarf2_to_gdb[]
+    = { E_D0_REGNUM,       E_D1_REGNUM,       E_D2_REGNUM,
+        E_D3_REGNUM,       E_A0_REGNUM,       E_A1_REGNUM,
+        E_A2_REGNUM,       E_A3_REGNUM,       -1,
+        E_SP_REGNUM,
 
-    E_E0_REGNUM, E_E1_REGNUM, E_E2_REGNUM, E_E3_REGNUM,
-    E_E4_REGNUM, E_E5_REGNUM, E_E6_REGNUM, E_E7_REGNUM,
+        E_E0_REGNUM,       E_E1_REGNUM,       E_E2_REGNUM,
+        E_E3_REGNUM,       E_E4_REGNUM,       E_E5_REGNUM,
+        E_E6_REGNUM,       E_E7_REGNUM,
 
-    E_FS0_REGNUM + 0, E_FS0_REGNUM + 1, E_FS0_REGNUM + 2, E_FS0_REGNUM + 3,
-    E_FS0_REGNUM + 4, E_FS0_REGNUM + 5, E_FS0_REGNUM + 6, E_FS0_REGNUM + 7,
+        E_FS0_REGNUM + 0,  E_FS0_REGNUM + 1,  E_FS0_REGNUM + 2,
+        E_FS0_REGNUM + 3,  E_FS0_REGNUM + 4,  E_FS0_REGNUM + 5,
+        E_FS0_REGNUM + 6,  E_FS0_REGNUM + 7,
 
-    E_FS0_REGNUM + 8, E_FS0_REGNUM + 9, E_FS0_REGNUM + 10, E_FS0_REGNUM + 11,
-    E_FS0_REGNUM + 12, E_FS0_REGNUM + 13, E_FS0_REGNUM + 14, E_FS0_REGNUM + 15,
+        E_FS0_REGNUM + 8,  E_FS0_REGNUM + 9,  E_FS0_REGNUM + 10,
+        E_FS0_REGNUM + 11, E_FS0_REGNUM + 12, E_FS0_REGNUM + 13,
+        E_FS0_REGNUM + 14, E_FS0_REGNUM + 15,
 
-    E_FS0_REGNUM + 16, E_FS0_REGNUM + 17, E_FS0_REGNUM + 18, E_FS0_REGNUM + 19,
-    E_FS0_REGNUM + 20, E_FS0_REGNUM + 21, E_FS0_REGNUM + 22, E_FS0_REGNUM + 23,
+        E_FS0_REGNUM + 16, E_FS0_REGNUM + 17, E_FS0_REGNUM + 18,
+        E_FS0_REGNUM + 19, E_FS0_REGNUM + 20, E_FS0_REGNUM + 21,
+        E_FS0_REGNUM + 22, E_FS0_REGNUM + 23,
 
-    E_FS0_REGNUM + 24, E_FS0_REGNUM + 25, E_FS0_REGNUM + 26, E_FS0_REGNUM + 27,
-    E_FS0_REGNUM + 28, E_FS0_REGNUM + 29, E_FS0_REGNUM + 30, E_FS0_REGNUM + 31,
+        E_FS0_REGNUM + 24, E_FS0_REGNUM + 25, E_FS0_REGNUM + 26,
+        E_FS0_REGNUM + 27, E_FS0_REGNUM + 28, E_FS0_REGNUM + 29,
+        E_FS0_REGNUM + 30, E_FS0_REGNUM + 31,
 
-    E_MDR_REGNUM, E_PSW_REGNUM, E_PC_REGNUM
-  };
+        E_MDR_REGNUM,      E_PSW_REGNUM,      E_PC_REGNUM };
 
-  if (dwarf2 < 0
-      || dwarf2 >= ARRAY_SIZE (dwarf2_to_gdb))
+  if (dwarf2 < 0 || dwarf2 >= ARRAY_SIZE (dwarf2_to_gdb))
     return -1;
 
   return dwarf2_to_gdb[dwarf2];
 }
 
 static struct gdbarch *
-mn10300_gdbarch_init (struct gdbarch_info info,
-		      struct gdbarch_list *arches)
+mn10300_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
   struct gdbarch *gdbarch;
   int num_regs;
@@ -1362,7 +1342,7 @@ mn10300_gdbarch_init (struct gdbarch_info info,
       set_gdbarch_fp0_regnum (gdbarch, 32);
       break;
     default:
-      internal_error (_("mn10300_gdbarch_init: Unknown mn10300 variant"));
+      internal_error (_ ("mn10300_gdbarch_init: Unknown mn10300 variant"));
       break;
     }
 
@@ -1381,18 +1361,17 @@ mn10300_gdbarch_init (struct gdbarch_info info,
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
   /* Breakpoints.  */
   set_gdbarch_breakpoint_kind_from_pc (gdbarch,
-				       mn10300_breakpoint::kind_from_pc);
+                                       mn10300_breakpoint::kind_from_pc);
   set_gdbarch_sw_breakpoint_from_kind (gdbarch,
-				       mn10300_breakpoint::bp_from_kind);
+                                       mn10300_breakpoint::bp_from_kind);
   /* decr_pc_after_break?  */
 
   /* Stage 2 */
   set_gdbarch_return_value (gdbarch, mn10300_return_value);
-  
+
   /* Stage 3 -- get target calls working.  */
   set_gdbarch_push_dummy_call (gdbarch, mn10300_push_dummy_call);
   /* set_gdbarch_return_value (store, extract) */
-
 
   mn10300_frame_unwind_init (gdbarch);
 
@@ -1401,15 +1380,14 @@ mn10300_gdbarch_init (struct gdbarch_info info,
 
   return gdbarch;
 }
- 
+
 /* Dump out the mn10300 specific architecture information.  */
 
 static void
 mn10300_dump_tdep (struct gdbarch *gdbarch, struct ui_file *file)
 {
   mn10300_gdbarch_tdep *tdep = gdbarch_tdep<mn10300_gdbarch_tdep> (gdbarch);
-  gdb_printf (file, "mn10300_dump_tdep: am33_mode = %d\n",
-	      tdep->am33_mode);
+  gdb_printf (file, "mn10300_dump_tdep: am33_mode = %d\n", tdep->am33_mode);
 }
 
 void _initialize_mn10300_tdep ();
@@ -1418,4 +1396,3 @@ _initialize_mn10300_tdep ()
 {
   gdbarch_register (bfd_arch_mn10300, mn10300_gdbarch_init, mn10300_dump_tdep);
 }
-

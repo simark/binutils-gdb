@@ -37,10 +37,13 @@
 struct inline_state
 {
   inline_state (thread_info *thread_, int skipped_frames_, CORE_ADDR saved_pc_,
-		std::vector<symbol *> &&skipped_symbols_)
-    : thread (thread_), skipped_frames (skipped_frames_), saved_pc (saved_pc_),
+                std::vector<symbol *> &&skipped_symbols_)
+    : thread (thread_),
+      skipped_frames (skipped_frames_),
+      saved_pc (saved_pc_),
       skipped_symbols (std::move (skipped_symbols_))
-  {}
+  {
+  }
 
   /* The thread this data relates to.  It should be a currently
      stopped thread.  */
@@ -71,10 +74,9 @@ static struct inline_state *
 find_inline_frame_state (thread_info *thread)
 {
   auto state_it = std::find_if (inline_states.begin (), inline_states.end (),
-				[thread] (const inline_state &state)
-				  {
-				    return state.thread == thread;
-				  });
+                                [thread] (const inline_state &state) {
+                                  return state.thread == thread;
+                                });
 
   if (state_it == inline_states.end ())
     return nullptr;
@@ -104,31 +106,27 @@ clear_inline_frame_state (process_stratum_target *target, ptid_t filter_ptid)
 
   if (filter_ptid == minus_one_ptid || filter_ptid.is_pid ())
     {
-      auto matcher = [target, &filter_ptid] (const inline_state &state)
-	{
-	  thread_info *t = state.thread;
-	  return (t->inf->process_target () == target
-		  && t->ptid.matches (filter_ptid));
-	};
+      auto matcher = [target, &filter_ptid] (const inline_state &state) {
+        thread_info *t = state.thread;
+        return (t->inf->process_target () == target
+                && t->ptid.matches (filter_ptid));
+      };
 
       auto it = std::remove_if (inline_states.begin (), inline_states.end (),
-				matcher);
+                                matcher);
 
       inline_states.erase (it, inline_states.end ());
 
       return;
     }
 
+  auto matcher = [target, &filter_ptid] (const inline_state &state) {
+    thread_info *t = state.thread;
+    return (t->inf->process_target () == target && filter_ptid == t->ptid);
+  };
 
-  auto matcher = [target, &filter_ptid] (const inline_state &state)
-    {
-      thread_info *t = state.thread;
-      return (t->inf->process_target () == target
-	      && filter_ptid == t->ptid);
-    };
-
-  auto it = std::find_if (inline_states.begin (), inline_states.end (),
-			  matcher);
+  auto it
+    = std::find_if (inline_states.begin (), inline_states.end (), matcher);
 
   if (it != inline_states.end ())
     unordered_remove (inline_states, it);
@@ -140,19 +138,17 @@ void
 clear_inline_frame_state (thread_info *thread)
 {
   auto it = std::find_if (inline_states.begin (), inline_states.end (),
-			  [thread] (const inline_state &state)
-			    {
-			      return thread == state.thread;
-			    });
+                          [thread] (const inline_state &state) {
+                            return thread == state.thread;
+                          });
 
   if (it != inline_states.end ())
     unordered_remove (inline_states, it);
 }
 
 static void
-inline_frame_this_id (frame_info_ptr this_frame,
-		      void **this_cache,
-		      struct frame_id *this_id)
+inline_frame_this_id (frame_info_ptr this_frame, void **this_cache,
+                      struct frame_id *this_id)
 {
   struct symbol *func;
 
@@ -165,7 +161,7 @@ inline_frame_this_id (frame_info_ptr this_frame,
      comments in get_prev_frame_always_1.  */
   frame_info_ptr prev_frame = get_prev_frame_always (this_frame);
   if (prev_frame == nullptr)
-    error (_("failed to find previous frame when computing inline frame id"));
+    error (_ ("failed to find previous frame when computing inline frame id"));
   *this_id = get_frame_id (prev_frame);
 
   /* We need a valid frame ID, so we need to be based on a valid
@@ -187,7 +183,7 @@ inline_frame_this_id (frame_info_ptr this_frame,
 
 static struct value *
 inline_frame_prev_register (frame_info_ptr this_frame, void **this_cache,
-			    int regnum)
+                            int regnum)
 {
   /* Use get_frame_register_value instead of
      frame_unwind_got_register, to avoid requiring this frame's ID.
@@ -208,8 +204,7 @@ inline_frame_prev_register (frame_info_ptr this_frame, void **this_cache,
 
 static int
 inline_frame_sniffer (const struct frame_unwind *self,
-		      frame_info_ptr this_frame,
-		      void **this_cache)
+                      frame_info_ptr this_frame, void **this_cache)
 {
   CORE_ADDR this_pc;
   const struct block *frame_block, *cur_block;
@@ -229,9 +224,9 @@ inline_frame_sniffer (const struct frame_unwind *self,
   while (cur_block->superblock ())
     {
       if (block_inlined_p (cur_block))
-	depth++;
+        depth++;
       else if (cur_block->function () != NULL)
-	break;
+        break;
 
       cur_block = cur_block->superblock ();
     }
@@ -265,15 +260,14 @@ inline_frame_sniffer (const struct frame_unwind *self,
   return 1;
 }
 
-const struct frame_unwind inline_frame_unwind = {
-  "inline",
-  INLINE_FRAME,
-  default_frame_unwind_stop_reason,
-  inline_frame_this_id,
-  inline_frame_prev_register,
-  NULL,
-  inline_frame_sniffer
-};
+const struct frame_unwind inline_frame_unwind
+  = { "inline",
+      INLINE_FRAME,
+      default_frame_unwind_stop_reason,
+      inline_frame_this_id,
+      inline_frame_prev_register,
+      NULL,
+      inline_frame_sniffer };
 
 /* Return non-zero if BLOCK, an inlined function block containing PC,
    has a group of contiguous instructions starting at PC (but not
@@ -313,25 +307,24 @@ stopped_by_user_bp_inline_frame (const block *frame_block, bpstat *stop_chain)
     {
       struct breakpoint *bpt = s->breakpoint_at;
 
-      if (bpt != NULL
-	  && (user_breakpoint_p (bpt) || bpt->type == bp_until))
-	{
-	  bp_location *loc = s->bp_location_at.get ();
-	  enum bp_loc_type t = loc->loc_type;
+      if (bpt != NULL && (user_breakpoint_p (bpt) || bpt->type == bp_until))
+        {
+          bp_location *loc = s->bp_location_at.get ();
+          enum bp_loc_type t = loc->loc_type;
 
-	  if (t == bp_loc_software_breakpoint
-	      || t == bp_loc_hardware_breakpoint)
-	    {
-	      /* If the location has a function symbol, check whether
+          if (t == bp_loc_software_breakpoint
+              || t == bp_loc_hardware_breakpoint)
+            {
+              /* If the location has a function symbol, check whether
 		 the frame was for that inlined function.  If it has
 		 no function symbol, then assume it is.  I.e., default
 		 to presenting the stop at the innermost inline
 		 function.  */
-	      if (loc->symbol == nullptr
-		  || frame_block == loc->symbol->value_block ())
-		return true;
-	    }
-	}
+              if (loc->symbol == nullptr
+                  || frame_block == loc->symbol->value_block ())
+                return true;
+            }
+        }
     }
 
   return false;
@@ -356,36 +349,36 @@ skip_inline_frames (thread_info *thread, bpstat *stop_chain)
     {
       cur_block = frame_block;
       while (cur_block->superblock ())
-	{
-	  if (block_inlined_p (cur_block))
-	    {
-	      /* See comments in inline_frame_this_id about this use
+        {
+          if (block_inlined_p (cur_block))
+            {
+              /* See comments in inline_frame_this_id about this use
 		 of BLOCK_ENTRY_PC.  */
-	      if (cur_block->entry_pc () == this_pc
-		  || block_starting_point_at (this_pc, cur_block))
-		{
-		  /* Do not skip the inlined frame if execution
+              if (cur_block->entry_pc () == this_pc
+                  || block_starting_point_at (this_pc, cur_block))
+                {
+                  /* Do not skip the inlined frame if execution
 		     stopped in an inlined frame because of a user
 		     breakpoint for this inline function.  */
-		  if (stopped_by_user_bp_inline_frame (cur_block, stop_chain))
-		    break;
+                  if (stopped_by_user_bp_inline_frame (cur_block, stop_chain))
+                    break;
 
-		  skip_count++;
-		  skipped_syms.push_back (cur_block->function ());
-		}
-	      else
-		break;
-	    }
-	  else if (cur_block->function () != NULL)
-	    break;
+                  skip_count++;
+                  skipped_syms.push_back (cur_block->function ());
+                }
+              else
+                break;
+            }
+          else if (cur_block->function () != NULL)
+            break;
 
-	  cur_block = cur_block->superblock ();
-	}
+          cur_block = cur_block->superblock ();
+        }
     }
 
   gdb_assert (find_inline_frame_state (thread) == NULL);
   inline_states.emplace_back (thread, skip_count, this_pc,
-			      std::move (skipped_syms));
+                              std::move (skipped_syms));
 
   if (skip_count != 0)
     reinit_frame_cache ();

@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-
 #ifndef MACROEXP_H
 #define MACROEXP_H
 
@@ -30,7 +29,7 @@ struct macro_scope;
 
    The result is a null-terminated string.  */
 gdb::unique_xmalloc_ptr<char> macro_expand (const char *source,
-					    const macro_scope &scope);
+                                            const macro_scope &scope);
 
 /* Expand all preprocessor macro references that appear explicitly in SOURCE
    (a null-terminated string), but do not expand any new macro references
@@ -40,7 +39,7 @@ gdb::unique_xmalloc_ptr<char> macro_expand (const char *source,
 
    The result is a null-terminated string.  */
 gdb::unique_xmalloc_ptr<char> macro_expand_once (const char *source,
-						 const macro_scope &scope);
+                                                 const macro_scope &scope);
 
 /* If the null-terminated string pointed to by *LEXPTR begins with a
    macro invocation, return the result of expanding that invocation as
@@ -69,14 +68,13 @@ gdb::unique_xmalloc_ptr<char> macro_expand_once (const char *source,
    needs to be macro-expanded.  Our C/C++ tokenizer isn't really
    designed to be called by anything but the yacc parser engine.  */
 gdb::unique_xmalloc_ptr<char> macro_expand_next (const char **lexptr,
-						 const macro_scope &scope);
+                                                 const macro_scope &scope);
 
 /* Functions to classify characters according to cpp rules.  */
 
 int macro_is_whitespace (int c);
 int macro_is_identifier_nondigit (int c);
 int macro_is_digit (int c);
-
 
 /* Stringify STR according to C rules and return a null-terminated string.  */
 gdb::unique_xmalloc_ptr<char> macro_stringify (const char *str);

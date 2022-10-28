@@ -173,7 +173,6 @@ extern struct ui *ui_list;
 class switch_thru_all_uis
 {
 public:
-
   switch_thru_all_uis () : m_iter (ui_list), m_save_ui (&current_ui)
   {
     current_ui = ui_list;
@@ -182,10 +181,7 @@ public:
   DISABLE_COPY_AND_ASSIGN (switch_thru_all_uis);
 
   /* If done iterating, return true; otherwise return false.  */
-  bool done () const
-  {
-    return m_iter == NULL;
-  }
+  bool done () const { return m_iter == NULL; }
 
   /* Move to the next UI, setting current_ui if iteration is not yet
      complete.  */
@@ -196,8 +192,7 @@ public:
       current_ui = m_iter;
   }
 
- private:
-
+private:
   /* Used to iterate through the UIs.  */
   struct ui *m_iter;
 
@@ -205,16 +200,16 @@ public:
   scoped_restore_tmpl<struct ui *> m_save_ui;
 };
 
-  /* Traverse through all UI, and switch the current UI to the one
+/* Traverse through all UI, and switch the current UI to the one
      being iterated.  */
-#define SWITCH_THRU_ALL_UIS()		\
+#define SWITCH_THRU_ALL_UIS() \
   for (switch_thru_all_uis stau_state; !stau_state.done (); stau_state.next ())
 
 using ui_range = next_range<ui>;
 
 /* An adapter that can be used to traverse over all UIs.  */
-static inline
-ui_range all_uis ()
+static inline ui_range
+all_uis ()
 {
   return ui_range (ui_list);
 }
@@ -290,8 +285,8 @@ extern void show_commands (const char *args, int from_tty);
 extern void set_verbose (const char *, int, struct cmd_list_element *);
 
 extern char *handle_line_of_input (struct buffer *cmd_line_buffer,
-				   const char *rl, int repeat,
-				   const char *annotation_suffix);
+                                   const char *rl, int repeat,
+                                   const char *annotation_suffix);
 
 /* Call at startup to see if the user has requested that gdb start up
    quietly.  */

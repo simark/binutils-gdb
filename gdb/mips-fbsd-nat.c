@@ -44,8 +44,7 @@ static mips_fbsd_nat_target the_mips_fbsd_nat_target;
 static bool
 getregs_supplies (struct gdbarch *gdbarch, int regnum)
 {
-  return (regnum >= MIPS_ZERO_REGNUM
-	  && regnum <= mips_regnum (gdbarch)->pc);
+  return (regnum >= MIPS_ZERO_REGNUM && regnum <= mips_regnum (gdbarch)->pc);
 }
 
 /* Determine if PT_GETFPREGS fetches REGNUM.  */
@@ -54,7 +53,7 @@ static bool
 getfpregs_supplies (struct gdbarch *gdbarch, int regnum)
 {
   return (regnum >= mips_regnum (gdbarch)->fp0
-	  && regnum <= mips_regnum (gdbarch)->fp_implementation_revision);
+          && regnum <= mips_regnum (gdbarch)->fp_implementation_revision);
 }
 
 /* Fetch register REGNUM from the inferior.  If REGNUM is -1, do this
@@ -71,7 +70,7 @@ mips_fbsd_nat_target::fetch_registers (struct regcache *regcache, int regnum)
       struct reg regs;
 
       if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
-	perror_with_name (_("Couldn't get registers"));
+        perror_with_name (_ ("Couldn't get registers"));
 
       mips_fbsd_supply_gregs (regcache, regnum, &regs, sizeof (register_t));
     }
@@ -81,10 +80,10 @@ mips_fbsd_nat_target::fetch_registers (struct regcache *regcache, int regnum)
       struct fpreg fpregs;
 
       if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
-	perror_with_name (_("Couldn't get floating point status"));
+        perror_with_name (_ ("Couldn't get floating point status"));
 
       mips_fbsd_supply_fpregs (regcache, regnum, &fpregs,
-			       sizeof (f_register_t));
+                               sizeof (f_register_t));
     }
 }
 
@@ -102,13 +101,13 @@ mips_fbsd_nat_target::store_registers (struct regcache *regcache, int regnum)
       struct reg regs;
 
       if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
-	perror_with_name (_("Couldn't get registers"));
+        perror_with_name (_ ("Couldn't get registers"));
 
       mips_fbsd_collect_gregs (regcache, regnum, (char *) &regs,
-			       sizeof (register_t));
+                               sizeof (register_t));
 
       if (ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
-	perror_with_name (_("Couldn't write registers"));
+        perror_with_name (_ ("Couldn't write registers"));
     }
 
   if (regnum == -1 || getfpregs_supplies (gdbarch, regnum))
@@ -116,13 +115,13 @@ mips_fbsd_nat_target::store_registers (struct regcache *regcache, int regnum)
       struct fpreg fpregs;
 
       if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
-	perror_with_name (_("Couldn't get floating point status"));
+        perror_with_name (_ ("Couldn't get floating point status"));
 
       mips_fbsd_collect_fpregs (regcache, regnum, (char *) &fpregs,
-				sizeof (f_register_t));
+                                sizeof (f_register_t));
 
       if (ptrace (PT_SETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
-	perror_with_name (_("Couldn't write floating point status"));
+        perror_with_name (_ ("Couldn't write floating point status"));
     }
 }
 

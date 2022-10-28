@@ -53,7 +53,7 @@ const struct target_desc *target_current_description (void);
    parent's, since the child really is a copy of the parent.  */
 
 void copy_inferior_target_desc_info (struct inferior *destinf,
-				     struct inferior *srcinf);
+                                     struct inferior *srcinf);
 
 /* Free a target_desc_info object.  */
 
@@ -70,15 +70,15 @@ int target_desc_info_from_user_p (struct target_desc_info *info);
    They are equivalent to the gdbarch methods with similar names,
    except that they will only be called for pseudo registers.  */
 
-void set_tdesc_pseudo_register_name
-  (struct gdbarch *gdbarch, gdbarch_register_name_ftype *pseudo_name);
+void set_tdesc_pseudo_register_name (struct gdbarch *gdbarch,
+                                     gdbarch_register_name_ftype *pseudo_name);
 
-void set_tdesc_pseudo_register_type
-  (struct gdbarch *gdbarch, gdbarch_register_type_ftype *pseudo_type);
+void set_tdesc_pseudo_register_type (struct gdbarch *gdbarch,
+                                     gdbarch_register_type_ftype *pseudo_type);
 
-void set_tdesc_pseudo_register_reggroup_p
-  (struct gdbarch *gdbarch,
-   gdbarch_register_reggroup_p_ftype *pseudo_reggroup_p);
+void set_tdesc_pseudo_register_reggroup_p (
+  struct gdbarch *gdbarch,
+  gdbarch_register_reggroup_p_ftype *pseudo_reggroup_p);
 
 /* Pointer to a function that should be called for each unknown register in
    a target description, used by TDESC_USE_REGISTERS.
@@ -100,9 +100,10 @@ void set_tdesc_pseudo_register_reggroup_p
    appear in the target description.  This means all unknown registers
    within a single feature will be called one after another.  */
 
-typedef int (*tdesc_unknown_register_ftype)
-	(struct gdbarch *gdbarch, tdesc_feature *feature,
-	 const char *reg_name, int possible_regnum);
+typedef int (*tdesc_unknown_register_ftype) (struct gdbarch *gdbarch,
+                                             tdesc_feature *feature,
+                                             const char *reg_name,
+                                             int possible_regnum);
 
 /* A deleter adapter for a target arch data.  */
 
@@ -130,9 +131,9 @@ typedef std::unique_ptr<tdesc_arch_data, tdesc_arch_data_deleter>
    successfully validating the required registers.  */
 
 void tdesc_use_registers (struct gdbarch *gdbarch,
-			  const struct target_desc *target_desc,
-			  tdesc_arch_data_up &&early_data,
-			  tdesc_unknown_register_ftype unk_reg_cb = NULL);
+                          const struct target_desc *target_desc,
+                          tdesc_arch_data_up &&early_data,
+                          tdesc_unknown_register_ftype unk_reg_cb = NULL);
 
 /* Allocate initial data for validation of a target description during
    gdbarch initialization.  */
@@ -145,20 +146,20 @@ tdesc_arch_data_up tdesc_data_alloc ();
    0 if it was not.  */
 
 int tdesc_numbered_register (const struct tdesc_feature *feature,
-			     struct tdesc_arch_data *data,
-			     int regno, const char *name);
+                             struct tdesc_arch_data *data, int regno,
+                             const char *name);
 
 /* Search FEATURE for a register named NAME, but do not assign a fixed
    register number to it.  */
 
 int tdesc_unnumbered_register (const struct tdesc_feature *feature,
-			       const char *name);
+                               const char *name);
 
 /* Search FEATURE for a register named NAME, and return its size in
    bits.  The register must exist.  */
 
 int tdesc_register_bitsize (const struct tdesc_feature *feature,
-			    const char *name);
+                            const char *name);
 
 /* Search FEATURE for a register with any of the names from NAMES
    (NULL-terminated).  Record REGNO and the register in DATA; when
@@ -167,8 +168,8 @@ int tdesc_register_bitsize (const struct tdesc_feature *feature,
    not.  */
 
 int tdesc_numbered_register_choices (const struct tdesc_feature *feature,
-				     struct tdesc_arch_data *data,
-				     int regno, const char *const names[]);
+                                     struct tdesc_arch_data *data, int regno,
+                                     const char *const names[]);
 
 /* Return true if DATA contains an entry for REGNO, a GDB register
    number.  */
@@ -180,8 +181,7 @@ extern bool tdesc_found_register (struct tdesc_arch_data *data, int regno);
 /* Return the BFD architecture associated with this target
    description, or NULL if no architecture was specified.  */
 
-const struct bfd_arch_info *tdesc_architecture
-  (const struct target_desc *);
+const struct bfd_arch_info *tdesc_architecture (const struct target_desc *);
 
 /* Return the OSABI associated with this target description, or
    GDB_OSABI_UNKNOWN if no osabi was specified.  */
@@ -192,13 +192,12 @@ enum gdb_osabi tdesc_osabi (const struct target_desc *);
    with the given BFD architecture.  */
 
 int tdesc_compatible_p (const struct target_desc *,
-			const struct bfd_arch_info *);
+                        const struct bfd_arch_info *);
 
 /* Return the string value of a property named KEY, or NULL if the
    property was not specified.  */
 
-const char *tdesc_property (const struct target_desc *,
-			    const char *key);
+const char *tdesc_property (const struct target_desc *, const char *key);
 
 /* Return 1 if this target description describes any registers.  */
 
@@ -208,7 +207,7 @@ int tdesc_has_registers (const struct target_desc *);
    the named feature is not found.  */
 
 const struct tdesc_feature *tdesc_find_feature (const struct target_desc *,
-						const char *name);
+                                                const char *name);
 
 /* Return the name of FEATURE.  */
 
@@ -233,28 +232,27 @@ struct type *tdesc_find_type (struct gdbarch *gdbarch, const char *id);
    specify a group.  */
 
 int tdesc_register_in_reggroup_p (struct gdbarch *gdbarch, int regno,
-				  const struct reggroup *reggroup);
+                                  const struct reggroup *reggroup);
 
 /* Methods for constructing a target description.  */
 
 void set_tdesc_architecture (struct target_desc *,
-			     const struct bfd_arch_info *);
+                             const struct bfd_arch_info *);
 void set_tdesc_osabi (struct target_desc *, enum gdb_osabi osabi);
-void set_tdesc_property (struct target_desc *,
-			 const char *key, const char *value);
-void tdesc_add_compatible (struct target_desc *,
-			   const struct bfd_arch_info *);
+void set_tdesc_property (struct target_desc *, const char *key,
+                         const char *value);
+void tdesc_add_compatible (struct target_desc *, const struct bfd_arch_info *);
 
 #if GDB_SELF_TEST
-namespace selftests {
+namespace selftests
+{
 
 /* Record that XML_FILE should generate a target description that equals
    TDESC, to be verified by the "maintenance check xml-descriptions"
    command.  This function takes ownership of TDESC.  */
 
-void record_xml_tdesc (const char *xml_file,
-		       const struct target_desc *tdesc);
-}
+void record_xml_tdesc (const char *xml_file, const struct target_desc *tdesc);
+} // namespace selftests
 #endif
 
 #endif /* TARGET_DESCRIPTIONS_H */

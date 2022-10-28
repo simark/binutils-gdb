@@ -68,8 +68,8 @@ mips_sde_frame_cache (frame_info_ptr this_frame, void **this_cache)
      };
   */
 
-  stack_addr = get_frame_register_signed (this_frame,
-					  gdbarch_sp_regnum (gdbarch));
+  stack_addr
+    = get_frame_register_signed (this_frame, gdbarch_sp_regnum (gdbarch));
   switch (abi)
     {
     case MIPS_ABI_O32:
@@ -81,7 +81,7 @@ mips_sde_frame_cache (frame_info_ptr this_frame, void **this_cache)
       break;
     case MIPS_ABI_N32:
     case MIPS_ABI_N64:
-    default:			/* Wild guess.  */
+    default: /* Wild guess.  */
       /* 16: XCPTCONTEXT
 	 16: xcpt_gen() argspace 		( 0 bytes)
 	 00: _xcptcall() saved ra, rounded up	(16 bytes)  */
@@ -89,28 +89,22 @@ mips_sde_frame_cache (frame_info_ptr this_frame, void **this_cache)
       break;
     }
 
-  trad_frame_set_reg_addr (cache,
-			   MIPS_PS_REGNUM + gdbarch_num_regs (gdbarch),
-			   xcpt_frame + 0 * sizeof_reg_t);
-  trad_frame_set_reg_addr (cache,
-			   regs->cause + gdbarch_num_regs (gdbarch),
-			   xcpt_frame + 1 * sizeof_reg_t);
-  trad_frame_set_reg_addr (cache,
-			   regs->pc + gdbarch_num_regs (gdbarch),
-			   xcpt_frame + 2 * sizeof_reg_t);
-  trad_frame_set_reg_addr (cache,
-			   regs->badvaddr + gdbarch_num_regs (gdbarch),
-			   xcpt_frame + 3 * sizeof_reg_t);
+  trad_frame_set_reg_addr (cache, MIPS_PS_REGNUM + gdbarch_num_regs (gdbarch),
+                           xcpt_frame + 0 * sizeof_reg_t);
+  trad_frame_set_reg_addr (cache, regs->cause + gdbarch_num_regs (gdbarch),
+                           xcpt_frame + 1 * sizeof_reg_t);
+  trad_frame_set_reg_addr (cache, regs->pc + gdbarch_num_regs (gdbarch),
+                           xcpt_frame + 2 * sizeof_reg_t);
+  trad_frame_set_reg_addr (cache, regs->badvaddr + gdbarch_num_regs (gdbarch),
+                           xcpt_frame + 3 * sizeof_reg_t);
   for (i = 0; i < MIPS_NUMREGS; i++)
     trad_frame_set_reg_addr (cache,
-			     i + MIPS_ZERO_REGNUM + gdbarch_num_regs (gdbarch),
-			     xcpt_frame + (4 + i) * sizeof_reg_t);
-  trad_frame_set_reg_addr (cache,
-			   regs->lo + gdbarch_num_regs (gdbarch),
-			   xcpt_frame + 36 * sizeof_reg_t);
-  trad_frame_set_reg_addr (cache,
-			   regs->hi + gdbarch_num_regs (gdbarch),
-			   xcpt_frame + 37 * sizeof_reg_t);
+                             i + MIPS_ZERO_REGNUM + gdbarch_num_regs (gdbarch),
+                             xcpt_frame + (4 + i) * sizeof_reg_t);
+  trad_frame_set_reg_addr (cache, regs->lo + gdbarch_num_regs (gdbarch),
+                           xcpt_frame + 36 * sizeof_reg_t);
+  trad_frame_set_reg_addr (cache, regs->hi + gdbarch_num_regs (gdbarch),
+                           xcpt_frame + 37 * sizeof_reg_t);
 
   pc = get_frame_pc (this_frame);
   find_pc_partial_function (pc, NULL, &start_addr, NULL);
@@ -123,7 +117,7 @@ mips_sde_frame_cache (frame_info_ptr this_frame, void **this_cache)
 
 static void
 mips_sde_frame_this_id (frame_info_ptr this_frame, void **this_cache,
-			struct frame_id *this_id)
+                        struct frame_id *this_id)
 {
   struct trad_frame_cache *this_trad_cache
     = mips_sde_frame_cache (this_frame, this_cache);
@@ -134,9 +128,8 @@ mips_sde_frame_this_id (frame_info_ptr this_frame, void **this_cache,
 /* Implement the prev_register function for the SDE frame unwinder.  */
 
 static struct value *
-mips_sde_frame_prev_register (frame_info_ptr this_frame,
-			      void **this_cache,
-			      int prev_regnum)
+mips_sde_frame_prev_register (frame_info_ptr this_frame, void **this_cache,
+                              int prev_regnum)
 {
   struct trad_frame_cache *trad_cache
     = mips_sde_frame_cache (this_frame, this_cache);
@@ -148,30 +141,27 @@ mips_sde_frame_prev_register (frame_info_ptr this_frame,
 
 static int
 mips_sde_frame_sniffer (const struct frame_unwind *self,
-			frame_info_ptr this_frame,
-			void **this_cache)
+                        frame_info_ptr this_frame, void **this_cache)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
   const char *name;
 
   find_pc_partial_function (pc, &name, NULL, NULL);
-  return (name
-	  && (strcmp (name, "_xcptcall") == 0
-	      || strcmp (name, "_sigtramp") == 0));
+  return (
+    name
+    && (strcmp (name, "_xcptcall") == 0 || strcmp (name, "_sigtramp") == 0));
 }
 
 /* Data structure for the SDE frame unwinder.  */
 
-static const struct frame_unwind mips_sde_frame_unwind =
-{
-  "mips sde sigtramp",
-  SIGTRAMP_FRAME,
-  default_frame_unwind_stop_reason,
-  mips_sde_frame_this_id,
-  mips_sde_frame_prev_register,
-  NULL,
-  mips_sde_frame_sniffer
-};
+static const struct frame_unwind mips_sde_frame_unwind
+  = { "mips sde sigtramp",
+      SIGTRAMP_FRAME,
+      default_frame_unwind_stop_reason,
+      mips_sde_frame_this_id,
+      mips_sde_frame_prev_register,
+      NULL,
+      mips_sde_frame_sniffer };
 
 /* Implement the this_base, this_locals, and this_args hooks
    for the normal unwinder.  */
@@ -185,13 +175,9 @@ mips_sde_frame_base_address (frame_info_ptr this_frame, void **this_cache)
   return trad_frame_get_this_base (this_trad_cache);
 }
 
-static const struct frame_base mips_sde_frame_base =
-{
-  &mips_sde_frame_unwind,
-  mips_sde_frame_base_address,
-  mips_sde_frame_base_address,
-  mips_sde_frame_base_address
-};
+static const struct frame_base mips_sde_frame_base
+  = { &mips_sde_frame_unwind, mips_sde_frame_base_address,
+      mips_sde_frame_base_address, mips_sde_frame_base_address };
 
 static const struct frame_base *
 mips_sde_frame_base_sniffer (frame_info_ptr this_frame)
@@ -204,7 +190,7 @@ mips_sde_frame_base_sniffer (frame_info_ptr this_frame)
 
 static void
 mips_sde_elf_osabi_sniff_abi_tag_sections (bfd *abfd, asection *sect,
-					   void *obj)
+                                           void *obj)
 {
   enum gdb_osabi *os_ident_ptr = (enum gdb_osabi *) obj;
   const char *name;
@@ -242,9 +228,8 @@ mips_sde_elf_osabi_sniffer (bfd *abfd)
 	 real OS in use we must look for OS notes that have been added.
 
 	 For SDE, we simply look for sections named with .sde as prefixes.  */
-      bfd_map_over_sections (abfd,
-			     mips_sde_elf_osabi_sniff_abi_tag_sections,
-			     &osabi);
+      bfd_map_over_sections (abfd, mips_sde_elf_osabi_sniff_abi_tag_sections,
+                             &osabi);
     }
   return osabi;
 }
@@ -260,9 +245,8 @@ void _initialize_mips_sde_tdep ();
 void
 _initialize_mips_sde_tdep ()
 {
-  gdbarch_register_osabi_sniffer (bfd_arch_mips,
-				  bfd_target_elf_flavour,
-				  mips_sde_elf_osabi_sniffer);
+  gdbarch_register_osabi_sniffer (bfd_arch_mips, bfd_target_elf_flavour,
+                                  mips_sde_elf_osabi_sniffer);
 
   gdbarch_register_osabi (bfd_arch_mips, 0, GDB_OSABI_SDE, mips_sde_init_abi);
 }

@@ -73,15 +73,13 @@ DEF_ENUM_FLAGS_TYPE (enum record_print_flag, record_print_flags);
    otherwise.  */
 
 extern int
-  record_check_stopped_by_breakpoint (const address_space *aspace,
-				      CORE_ADDR pc,
-				      enum target_stop_reason *reason);
+record_check_stopped_by_breakpoint (const address_space *aspace, CORE_ADDR pc,
+                                    enum target_stop_reason *reason);
 
 /* Wrapper for target_read_memory that prints a debug message if
    reading memory fails.  */
-extern int record_read_memory (struct gdbarch *gdbarch,
-			       CORE_ADDR memaddr, gdb_byte *myaddr,
-			       ssize_t len);
+extern int record_read_memory (struct gdbarch *gdbarch, CORE_ADDR memaddr,
+                               gdb_byte *myaddr, ssize_t len);
 
 /* A wrapper for target_goto_record that parses ARG as a number.  */
 extern void record_goto (const char *arg);
@@ -109,7 +107,7 @@ extern void record_preopen (void);
 /* Start recording with the given METHOD and FORMAT.  NULL means default method
    or format.  Throw on failure or invalid method / format.  */
 extern void record_start (const char *method, const char *format,
-			  int from_tty);
+                          int from_tty);
 
 /* Stop recording.  Throw on failure.  */
 extern void record_stop (int from_tty);

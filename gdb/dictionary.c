@@ -90,16 +90,16 @@
    Used only for debugging.  */
 
 enum dict_type
-  {
-    /* Symbols are stored in a fixed-size hash table.  */
-    DICT_HASHED,
-    /* Symbols are stored in an expandable hash table.  */
-    DICT_HASHED_EXPANDABLE,
-    /* Symbols are stored in a fixed-size array.  */
-    DICT_LINEAR,
-    /* Symbols are stored in an expandable array.  */
-    DICT_LINEAR_EXPANDABLE
-  };
+{
+  /* Symbols are stored in a fixed-size hash table.  */
+  DICT_HASHED,
+  /* Symbols are stored in an expandable hash table.  */
+  DICT_HASHED_EXPANDABLE,
+  /* Symbols are stored in a fixed-size array.  */
+  DICT_LINEAR,
+  /* Symbols are stored in an expandable array.  */
+  DICT_LINEAR_EXPANDABLE
+};
 
 /* The virtual function table.  */
 
@@ -114,14 +114,14 @@ struct dict_vector
   void (*add_symbol) (struct dictionary *dict, struct symbol *sym);
   /* Iterator functions.  */
   struct symbol *(*iterator_first) (const struct dictionary *dict,
-				    struct dict_iterator *iterator);
+                                    struct dict_iterator *iterator);
   struct symbol *(*iterator_next) (struct dict_iterator *iterator);
   /* Functions to iterate over symbols with a given name.  */
   struct symbol *(*iter_match_first) (const struct dictionary *dict,
-				      const lookup_name_info &name,
-				      struct dict_iterator *iterator);
+                                      const lookup_name_info &name,
+                                      struct dict_iterator *iterator);
   struct symbol *(*iter_match_next) (const lookup_name_info &name,
-				     struct dict_iterator *iterator);
+                                     struct dict_iterator *iterator);
   /* A size function, for maint print symtabs.  */
   int (*size) (const struct dictionary *dict);
 };
@@ -174,31 +174,29 @@ struct dictionary
     struct dictionary_hashed_expandable hashed_expandable;
     struct dictionary_linear linear;
     struct dictionary_linear_expandable linear_expandable;
-  }
-  data;
+  } data;
 };
 
 /* Accessor macros.  */
 
-#define DICT_VECTOR(d)			(d)->vector
-#define DICT_LANGUAGE(d)                (d)->language
+#define DICT_VECTOR(d) (d)->vector
+#define DICT_LANGUAGE(d) (d)->language
 
 /* These can be used for DICT_HASHED_EXPANDABLE, too.  */
 
-#define DICT_HASHED_NBUCKETS(d)		(d)->data.hashed.nbuckets
-#define DICT_HASHED_BUCKETS(d)		(d)->data.hashed.buckets
-#define DICT_HASHED_BUCKET(d,i)		DICT_HASHED_BUCKETS (d) [i]
+#define DICT_HASHED_NBUCKETS(d) (d)->data.hashed.nbuckets
+#define DICT_HASHED_BUCKETS(d) (d)->data.hashed.buckets
+#define DICT_HASHED_BUCKET(d, i) DICT_HASHED_BUCKETS (d)[i]
 
-#define DICT_HASHED_EXPANDABLE_NSYMS(d)	(d)->data.hashed_expandable.nsyms
+#define DICT_HASHED_EXPANDABLE_NSYMS(d) (d)->data.hashed_expandable.nsyms
 
 /* These can be used for DICT_LINEAR_EXPANDABLEs, too.  */
 
-#define DICT_LINEAR_NSYMS(d)		(d)->data.linear.nsyms
-#define DICT_LINEAR_SYMS(d)		(d)->data.linear.syms
-#define DICT_LINEAR_SYM(d,i)		DICT_LINEAR_SYMS (d) [i]
+#define DICT_LINEAR_NSYMS(d) (d)->data.linear.nsyms
+#define DICT_LINEAR_SYMS(d) (d)->data.linear.syms
+#define DICT_LINEAR_SYM(d, i) DICT_LINEAR_SYMS (d)[i]
 
-#define DICT_LINEAR_EXPANDABLE_CAPACITY(d) \
-		(d)->data.linear_expandable.capacity
+#define DICT_LINEAR_EXPANDABLE_CAPACITY(d) (d)->data.linear_expandable.capacity
 
 /* The initial size of a DICT_*_EXPANDABLE dictionary.  */
 
@@ -207,27 +205,27 @@ struct dictionary
 /* This calculates the number of buckets we'll use in a hashtable,
    given the number of symbols that it will contain.  */
 
-#define DICT_HASHTABLE_SIZE(n)	((n)/5 + 1)
+#define DICT_HASHTABLE_SIZE(n) ((n) / 5 + 1)
 
 /* Accessor macros for dict_iterators; they're here rather than
    dictionary.h because code elsewhere should treat dict_iterators as
    opaque.  */
 
 /* The dictionary that the iterator is associated to.  */
-#define DICT_ITERATOR_DICT(iter)		(iter)->dict
+#define DICT_ITERATOR_DICT(iter) (iter)->dict
 /* For linear dictionaries, the index of the last symbol returned; for
    hashed dictionaries, the bucket of the last symbol returned.  */
-#define DICT_ITERATOR_INDEX(iter)		(iter)->index
+#define DICT_ITERATOR_INDEX(iter) (iter)->index
 /* For hashed dictionaries, this points to the last symbol returned;
    otherwise, this is unused.  */
-#define DICT_ITERATOR_CURRENT(iter)		(iter)->current
+#define DICT_ITERATOR_CURRENT(iter) (iter)->current
 
 /* Declarations of functions for vectors.  */
 
 /* Functions that might work across a range of dictionary types.  */
 
 static void add_symbol_nonexpandable (struct dictionary *dict,
-				      struct symbol *sym);
+                                      struct symbol *sym);
 
 static void free_obstack (struct dictionary *dict);
 
@@ -235,16 +233,16 @@ static void free_obstack (struct dictionary *dict);
    dictionaries.  */
 
 static struct symbol *iterator_first_hashed (const struct dictionary *dict,
-					     struct dict_iterator *iterator);
+                                             struct dict_iterator *iterator);
 
 static struct symbol *iterator_next_hashed (struct dict_iterator *iterator);
 
 static struct symbol *iter_match_first_hashed (const struct dictionary *dict,
-					       const lookup_name_info &name,
-					      struct dict_iterator *iterator);
+                                               const lookup_name_info &name,
+                                               struct dict_iterator *iterator);
 
 static struct symbol *iter_match_next_hashed (const lookup_name_info &name,
-					      struct dict_iterator *iterator);
+                                              struct dict_iterator *iterator);
 
 /* Functions only for DICT_HASHED.  */
 
@@ -255,7 +253,7 @@ static int size_hashed (const struct dictionary *dict);
 static void free_hashed_expandable (struct dictionary *dict);
 
 static void add_symbol_hashed_expandable (struct dictionary *dict,
-					  struct symbol *sym);
+                                          struct symbol *sym);
 
 static int size_hashed_expandable (const struct dictionary *dict);
 
@@ -263,16 +261,16 @@ static int size_hashed_expandable (const struct dictionary *dict);
    dictionaries.  */
 
 static struct symbol *iterator_first_linear (const struct dictionary *dict,
-					     struct dict_iterator *iterator);
+                                             struct dict_iterator *iterator);
 
 static struct symbol *iterator_next_linear (struct dict_iterator *iterator);
 
 static struct symbol *iter_match_first_linear (const struct dictionary *dict,
-					       const lookup_name_info &name,
-					       struct dict_iterator *iterator);
+                                               const lookup_name_info &name,
+                                               struct dict_iterator *iterator);
 
 static struct symbol *iter_match_next_linear (const lookup_name_info &name,
-					      struct dict_iterator *iterator);
+                                              struct dict_iterator *iterator);
 
 static int size_linear (const struct dictionary *dict);
 
@@ -281,65 +279,60 @@ static int size_linear (const struct dictionary *dict);
 static void free_linear_expandable (struct dictionary *dict);
 
 static void add_symbol_linear_expandable (struct dictionary *dict,
-					  struct symbol *sym);
+                                          struct symbol *sym);
 
 /* Various vectors that we'll actually use.  */
 
-static const struct dict_vector dict_hashed_vector =
-  {
-    DICT_HASHED,			/* type */
-    free_obstack,			/* free */
-    add_symbol_nonexpandable,		/* add_symbol */
-    iterator_first_hashed,		/* iterator_first */
-    iterator_next_hashed,		/* iterator_next */
-    iter_match_first_hashed,		/* iter_name_first */
-    iter_match_next_hashed,		/* iter_name_next */
-    size_hashed,			/* size */
-  };
+static const struct dict_vector dict_hashed_vector = {
+  DICT_HASHED,              /* type */
+  free_obstack,             /* free */
+  add_symbol_nonexpandable, /* add_symbol */
+  iterator_first_hashed,    /* iterator_first */
+  iterator_next_hashed,     /* iterator_next */
+  iter_match_first_hashed,  /* iter_name_first */
+  iter_match_next_hashed,   /* iter_name_next */
+  size_hashed,              /* size */
+};
 
-static const struct dict_vector dict_hashed_expandable_vector =
-  {
-    DICT_HASHED_EXPANDABLE,		/* type */
-    free_hashed_expandable,		/* free */
-    add_symbol_hashed_expandable,	/* add_symbol */
-    iterator_first_hashed,		/* iterator_first */
-    iterator_next_hashed,		/* iterator_next */
-    iter_match_first_hashed,		/* iter_name_first */
-    iter_match_next_hashed,		/* iter_name_next */
-    size_hashed_expandable,		/* size */
-  };
+static const struct dict_vector dict_hashed_expandable_vector = {
+  DICT_HASHED_EXPANDABLE,       /* type */
+  free_hashed_expandable,       /* free */
+  add_symbol_hashed_expandable, /* add_symbol */
+  iterator_first_hashed,        /* iterator_first */
+  iterator_next_hashed,         /* iterator_next */
+  iter_match_first_hashed,      /* iter_name_first */
+  iter_match_next_hashed,       /* iter_name_next */
+  size_hashed_expandable,       /* size */
+};
 
-static const struct dict_vector dict_linear_vector =
-  {
-    DICT_LINEAR,			/* type */
-    free_obstack,			/* free */
-    add_symbol_nonexpandable,		/* add_symbol */
-    iterator_first_linear,		/* iterator_first */
-    iterator_next_linear,		/* iterator_next */
-    iter_match_first_linear,		/* iter_name_first */
-    iter_match_next_linear,		/* iter_name_next */
-    size_linear,			/* size */
-  };
+static const struct dict_vector dict_linear_vector = {
+  DICT_LINEAR,              /* type */
+  free_obstack,             /* free */
+  add_symbol_nonexpandable, /* add_symbol */
+  iterator_first_linear,    /* iterator_first */
+  iterator_next_linear,     /* iterator_next */
+  iter_match_first_linear,  /* iter_name_first */
+  iter_match_next_linear,   /* iter_name_next */
+  size_linear,              /* size */
+};
 
-static const struct dict_vector dict_linear_expandable_vector =
-  {
-    DICT_LINEAR_EXPANDABLE,		/* type */
-    free_linear_expandable,		/* free */
-    add_symbol_linear_expandable,	/* add_symbol */
-    iterator_first_linear,		/* iterator_first */
-    iterator_next_linear,		/* iterator_next */
-    iter_match_first_linear,		/* iter_name_first */
-    iter_match_next_linear,		/* iter_name_next */
-    size_linear,			/* size */
-  };
+static const struct dict_vector dict_linear_expandable_vector = {
+  DICT_LINEAR_EXPANDABLE,       /* type */
+  free_linear_expandable,       /* free */
+  add_symbol_linear_expandable, /* add_symbol */
+  iterator_first_linear,        /* iterator_first */
+  iterator_next_linear,         /* iterator_next */
+  iter_match_first_linear,      /* iter_name_first */
+  iter_match_next_linear,       /* iter_name_next */
+  size_linear,                  /* size */
+};
 
 /* Declarations of helper functions (i.e. ones that don't go into
    vectors).  */
 
 static struct symbol *iterator_hashed_advance (struct dict_iterator *iter);
 
-static void insert_symbol_hashed (struct dictionary *dict,
-				  struct symbol *sym);
+static void insert_symbol_hashed (struct dictionary *dict, struct symbol *sym);
 
 static void expand_hashtable (struct dictionary *dict);
 
@@ -348,9 +341,8 @@ static void expand_hashtable (struct dictionary *dict);
 /* Create a hashed dictionary of a given language.  */
 
 static struct dictionary *
-dict_create_hashed (struct obstack *obstack,
-		    enum language language,
-		    const std::vector<symbol *> &symbol_list)
+dict_create_hashed (struct obstack *obstack, enum language language,
+                    const std::vector<symbol *> &symbol_list)
 {
   /* Allocate the dictionary.  */
   struct dictionary *retval = XOBNEW (obstack, struct dictionary);
@@ -382,8 +374,8 @@ dict_create_hashed_expandable (enum language language)
   DICT_VECTOR (retval) = &dict_hashed_expandable_vector;
   DICT_LANGUAGE (retval) = language_def (language);
   DICT_HASHED_NBUCKETS (retval) = DICT_EXPANDABLE_INITIAL_CAPACITY;
-  DICT_HASHED_BUCKETS (retval) = XCNEWVEC (struct symbol *,
-					   DICT_EXPANDABLE_INITIAL_CAPACITY);
+  DICT_HASHED_BUCKETS (retval)
+    = XCNEWVEC (struct symbol *, DICT_EXPANDABLE_INITIAL_CAPACITY);
   DICT_HASHED_EXPANDABLE_NSYMS (retval) = 0;
 
   return retval;
@@ -392,9 +384,8 @@ dict_create_hashed_expandable (enum language language)
 /* Create a linear dictionary of a given language.  */
 
 static struct dictionary *
-dict_create_linear (struct obstack *obstack,
-		    enum language language,
-		    const std::vector<symbol *> &symbol_list)
+dict_create_linear (struct obstack *obstack, enum language language,
+                    const std::vector<symbol *> &symbol_list)
 {
   struct dictionary *retval = XOBNEW (obstack, struct dictionary);
   DICT_VECTOR (retval) = &dict_linear_vector;
@@ -455,7 +446,7 @@ dict_add_symbol (struct dictionary *dict, struct symbol *sym)
 
 static void
 dict_add_pending (struct dictionary *dict,
-		  const std::vector<symbol *> &symbol_list)
+                  const std::vector<symbol *> &symbol_list)
 {
   /* Preserve ordering by reversing the list.  */
   for (auto sym = symbol_list.rbegin (); sym != symbol_list.rend (); ++sym)
@@ -467,7 +458,7 @@ dict_add_pending (struct dictionary *dict,
 
 static struct symbol *
 dict_iterator_first (const struct dictionary *dict,
-		     struct dict_iterator *iterator)
+                     struct dict_iterator *iterator)
 {
   return (DICT_VECTOR (dict))->iterator_first (dict, iterator);
 }
@@ -484,15 +475,15 @@ dict_iterator_next (struct dict_iterator *iterator)
 
 static struct symbol *
 dict_iter_match_first (const struct dictionary *dict,
-		       const lookup_name_info &name,
-		       struct dict_iterator *iterator)
+                       const lookup_name_info &name,
+                       struct dict_iterator *iterator)
 {
   return (DICT_VECTOR (dict))->iter_match_first (dict, name, iterator);
 }
 
 static struct symbol *
 dict_iter_match_next (const lookup_name_info &name,
-		      struct dict_iterator *iterator)
+                      struct dict_iterator *iterator)
 {
   return (DICT_VECTOR (DICT_ITERATOR_DICT (iterator)))
     ->iter_match_next (name, iterator);
@@ -503,11 +494,10 @@ dict_size (const struct dictionary *dict)
 {
   return (DICT_VECTOR (dict))->size (dict);
 }
- 
+
 /* Now come functions (well, one function, currently) that are
    implemented generically by means of the vtable.  Typically, they're
    rarely used.  */
-
 
 /* The functions implementing the dictionary interface.  */
 
@@ -522,14 +512,14 @@ free_obstack (struct dictionary *dict)
 static void
 add_symbol_nonexpandable (struct dictionary *dict, struct symbol *sym)
 {
-  internal_error (_("dict_add_symbol: non-expandable dictionary"));
+  internal_error (_ ("dict_add_symbol: non-expandable dictionary"));
 }
 
 /* Functions for DICT_HASHED and DICT_HASHED_EXPANDABLE.  */
 
 static struct symbol *
 iterator_first_hashed (const struct dictionary *dict,
-		       struct dict_iterator *iterator)
+                       struct dict_iterator *iterator)
 {
   DICT_ITERATOR_DICT (iterator) = dict;
   DICT_ITERATOR_INDEX (iterator) = -1;
@@ -542,7 +532,7 @@ iterator_next_hashed (struct dict_iterator *iterator)
   struct symbol *next;
 
   next = DICT_ITERATOR_CURRENT (iterator)->hash_next;
-  
+
   if (next == NULL)
     return iterator_hashed_advance (iterator);
   else
@@ -562,13 +552,13 @@ iterator_hashed_advance (struct dict_iterator *iterator)
   for (i = DICT_ITERATOR_INDEX (iterator) + 1; i < nbuckets; ++i)
     {
       struct symbol *sym = DICT_HASHED_BUCKET (dict, i);
-      
+
       if (sym != NULL)
-	{
-	  DICT_ITERATOR_INDEX (iterator) = i;
-	  DICT_ITERATOR_CURRENT (iterator) = sym;
-	  return sym;
-	}
+        {
+          DICT_ITERATOR_INDEX (iterator) = i;
+          DICT_ITERATOR_CURRENT (iterator) = sym;
+          return sym;
+        }
     }
 
   return NULL;
@@ -576,12 +566,12 @@ iterator_hashed_advance (struct dict_iterator *iterator)
 
 static struct symbol *
 iter_match_first_hashed (const struct dictionary *dict,
-			 const lookup_name_info &name,
-			 struct dict_iterator *iterator)
+                         const lookup_name_info &name,
+                         struct dict_iterator *iterator)
 {
   const language_defn *lang = DICT_LANGUAGE (dict);
   unsigned int hash_index = (name.search_name_hash (lang->la_language)
-			     % DICT_HASHED_NBUCKETS (dict));
+                             % DICT_HASHED_NBUCKETS (dict));
   symbol_name_matcher_ftype *matches_name
     = lang->get_symbol_name_matcher (name);
   struct symbol *sym;
@@ -591,14 +581,13 @@ iter_match_first_hashed (const struct dictionary *dict,
   /* Loop through the symbols in the given bucket, breaking when SYM
      first matches.  If SYM never matches, it will be set to NULL;
      either way, we have the right return value.  */
-  
-  for (sym = DICT_HASHED_BUCKET (dict, hash_index);
-       sym != NULL;
+
+  for (sym = DICT_HASHED_BUCKET (dict, hash_index); sym != NULL;
        sym = sym->hash_next)
     {
       /* Warning: the order of arguments to compare matters!  */
       if (matches_name (sym->search_name (), name, NULL))
-	break;
+        break;
     }
 
   DICT_ITERATOR_CURRENT (iterator) = sym;
@@ -607,19 +596,18 @@ iter_match_first_hashed (const struct dictionary *dict,
 
 static struct symbol *
 iter_match_next_hashed (const lookup_name_info &name,
-			struct dict_iterator *iterator)
+                        struct dict_iterator *iterator)
 {
   const language_defn *lang = DICT_LANGUAGE (DICT_ITERATOR_DICT (iterator));
   symbol_name_matcher_ftype *matches_name
     = lang->get_symbol_name_matcher (name);
   struct symbol *next;
 
-  for (next = DICT_ITERATOR_CURRENT (iterator)->hash_next;
-       next != NULL;
+  for (next = DICT_ITERATOR_CURRENT (iterator)->hash_next; next != NULL;
        next = next->hash_next)
     {
       if (matches_name (next->search_name (), name, NULL))
-	break;
+        break;
     }
 
   DICT_ITERATOR_CURRENT (iterator) = next;
@@ -630,8 +618,7 @@ iter_match_next_hashed (const lookup_name_info &name,
 /* Insert SYM into DICT.  */
 
 static void
-insert_symbol_hashed (struct dictionary *dict,
-		      struct symbol *sym)
+insert_symbol_hashed (struct dictionary *dict, struct symbol *sym)
 {
   unsigned int hash_index;
   unsigned int hash;
@@ -663,8 +650,7 @@ free_hashed_expandable (struct dictionary *dict)
 }
 
 static void
-add_symbol_hashed_expandable (struct dictionary *dict,
-			      struct symbol *sym)
+add_symbol_hashed_expandable (struct dictionary *dict, struct symbol *sym)
 {
   int nsyms = ++DICT_HASHED_EXPANDABLE_NSYMS (dict);
 
@@ -698,18 +684,17 @@ expand_hashtable (struct dictionary *dict)
       struct symbol *sym, *next_sym;
 
       sym = old_buckets[i];
-      if (sym != NULL) 
-	{
-	  for (next_sym = sym->hash_next;
-	       next_sym != NULL;
-	       next_sym = sym->hash_next)
-	    {
-	      insert_symbol_hashed (dict, sym);
-	      sym = next_sym;
-	    }
+      if (sym != NULL)
+        {
+          for (next_sym = sym->hash_next; next_sym != NULL;
+               next_sym = sym->hash_next)
+            {
+              insert_symbol_hashed (dict, sym);
+              sym = next_sym;
+            }
 
-	  insert_symbol_hashed (dict, sym);
-	}
+          insert_symbol_hashed (dict, sym);
+        }
     }
 
   xfree (old_buckets);
@@ -735,47 +720,47 @@ language_defn::search_name_hash (const char *string0) const
   if (*string == '_')
     {
       if (startswith (string, "_ada_"))
-	string += 5;
+        string += 5;
       else
-	return msymbol_hash_iw (string0);
+        return msymbol_hash_iw (string0);
     }
 
   hash = 0;
   while (*string)
     {
       switch (*string)
-	{
-	case '$':
-	case '.':
-	case 'X':
-	  if (string0 == string)
-	    return msymbol_hash_iw (string0);
-	  else
-	    return hash;
-	case ' ':
-	case '(':
-	  return msymbol_hash_iw (string0);
-	case '_':
-	  if (string[1] == '_' && string != string0)
-	    {
-	      int c = string[2];
+        {
+        case '$':
+        case '.':
+        case 'X':
+          if (string0 == string)
+            return msymbol_hash_iw (string0);
+          else
+            return hash;
+        case ' ':
+        case '(':
+          return msymbol_hash_iw (string0);
+        case '_':
+          if (string[1] == '_' && string != string0)
+            {
+              int c = string[2];
 
-	      if (c == 'B' && string[3] == '_')
-		{
-		  for (string += 4; ISDIGIT (*string); ++string)
-		    ;
-		  continue;
-		}
+              if (c == 'B' && string[3] == '_')
+                {
+                  for (string += 4; ISDIGIT (*string); ++string)
+                    ;
+                  continue;
+                }
 
-	      if ((c < 'a' || c > 'z') && c != 'O')
-		return hash;
-	      hash = 0;
-	      string += 2;
-	      continue;
-	    }
-	  break;
-	case 'T':
-	  /* Ignore "TKB" suffixes.
+              if ((c < 'a' || c > 'z') && c != 'O')
+                return hash;
+              hash = 0;
+              string += 2;
+              continue;
+            }
+          break;
+        case 'T':
+          /* Ignore "TKB" suffixes.
 
 	     These are used by Ada for subprograms implementing a task body.
 	     For instance for a task T inside package Pck, the name of the
@@ -783,10 +768,10 @@ language_defn::search_name_hash (const char *string0) const
 	     ignore the "TKB" suffix because searches for this task body
 	     subprogram are going to be performed using `pck__t' (the encoded
 	     version of the natural name `pck.t').  */
-	  if (strcmp (string, "TKB") == 0)
-	    return hash;
-	  break;
-	}
+          if (strcmp (string, "TKB") == 0)
+            return hash;
+          break;
+        }
 
       hash = SYMBOL_HASH_NEXT (hash, *string);
       string += 1;
@@ -798,7 +783,7 @@ language_defn::search_name_hash (const char *string0) const
 
 static struct symbol *
 iterator_first_linear (const struct dictionary *dict,
-		       struct dict_iterator *iterator)
+                       struct dict_iterator *iterator)
 {
   DICT_ITERATOR_DICT (iterator) = dict;
   DICT_ITERATOR_INDEX (iterator) = 0;
@@ -818,8 +803,8 @@ iterator_next_linear (struct dict_iterator *iterator)
 
 static struct symbol *
 iter_match_first_linear (const struct dictionary *dict,
-			 const lookup_name_info &name,
-			 struct dict_iterator *iterator)
+                         const lookup_name_info &name,
+                         struct dict_iterator *iterator)
 {
   DICT_ITERATOR_DICT (iterator) = dict;
   DICT_ITERATOR_INDEX (iterator) = -1;
@@ -829,7 +814,7 @@ iter_match_first_linear (const struct dictionary *dict,
 
 static struct symbol *
 iter_match_next_linear (const lookup_name_info &name,
-			struct dict_iterator *iterator)
+                        struct dict_iterator *iterator)
 {
   const struct dictionary *dict = DICT_ITERATOR_DICT (iterator);
   const language_defn *lang = DICT_LANGUAGE (dict);
@@ -844,14 +829,14 @@ iter_match_next_linear (const lookup_name_info &name,
       sym = DICT_LINEAR_SYM (dict, i);
 
       if (matches_name (sym->search_name (), name, NULL))
-	{
-	  retval = sym;
-	  break;
-	}
+        {
+          retval = sym;
+          break;
+        }
     }
 
   DICT_ITERATOR_INDEX (iterator) = i;
-  
+
   return retval;
 }
 
@@ -870,10 +855,8 @@ free_linear_expandable (struct dictionary *dict)
   xfree (dict);
 }
 
-
 static void
-add_symbol_linear_expandable (struct dictionary *dict,
-			      struct symbol *sym)
+add_symbol_linear_expandable (struct dictionary *dict, struct symbol *sym)
 {
   int nsyms = ++DICT_LINEAR_NSYMS (dict);
 
@@ -882,8 +865,8 @@ add_symbol_linear_expandable (struct dictionary *dict,
     {
       DICT_LINEAR_EXPANDABLE_CAPACITY (dict) *= 2;
       DICT_LINEAR_SYMS (dict)
-	= XRESIZEVEC (struct symbol *, DICT_LINEAR_SYMS (dict),
-		      DICT_LINEAR_EXPANDABLE_CAPACITY (dict));
+        = XRESIZEVEC (struct symbol *, DICT_LINEAR_SYMS (dict),
+                      DICT_LINEAR_EXPANDABLE_CAPACITY (dict));
     }
 
   DICT_LINEAR_SYM (dict, nsyms - 1) = sym;
@@ -910,16 +893,17 @@ struct multidictionary
 
 namespace std
 {
-  template<> struct hash<enum language>
-  {
-    typedef enum language argument_type;
-    typedef std::size_t result_type;
+template<>
+struct hash<enum language>
+{
+  typedef enum language argument_type;
+  typedef std::size_t result_type;
 
-    result_type operator() (const argument_type &l) const noexcept
-    {
-      return static_cast<result_type> (l);
-    }
-  };
+  result_type operator() (const argument_type &l) const noexcept
+  {
+    return static_cast<result_type> (l);
+  }
+};
 } /* namespace std */
 
 /* A helper function to collate symbols on the pending list by language.  */
@@ -929,14 +913,14 @@ collate_pending_symbols_by_language (const struct pending *symbol_list)
 {
   std::unordered_map<enum language, std::vector<symbol *>> nsyms;
 
-  for (const pending *list_counter = symbol_list;
-       list_counter != nullptr; list_counter = list_counter->next)
+  for (const pending *list_counter = symbol_list; list_counter != nullptr;
+       list_counter = list_counter->next)
     {
       for (int i = list_counter->nsyms - 1; i >= 0; --i)
-	{
-	  enum language language = list_counter->symbol[i]->language ();
-	  nsyms[language].push_back (list_counter->symbol[i]);
-	}
+        {
+          enum language language = list_counter->symbol[i]->language ();
+          nsyms[language].push_back (list_counter->symbol[i]);
+        }
     }
 
   return nsyms;
@@ -946,10 +930,9 @@ collate_pending_symbols_by_language (const struct pending *symbol_list)
 
 struct multidictionary *
 mdict_create_hashed (struct obstack *obstack,
-		     const struct pending *symbol_list)
+                     const struct pending *symbol_list)
 {
-  struct multidictionary *retval
-    = XOBNEW (obstack, struct multidictionary);
+  struct multidictionary *retval = XOBNEW (obstack, struct multidictionary);
   std::unordered_map<enum language, std::vector<symbol *>> nsyms
     = collate_pending_symbols_by_language (symbol_list);
 
@@ -965,7 +948,7 @@ mdict_create_hashed (struct obstack *obstack,
       std::vector<symbol *> symlist = pair.second;
 
       retval->dictionaries[idx++]
-	= dict_create_hashed (obstack, language, symlist);
+        = dict_create_hashed (obstack, language, symlist);
     }
 
   return retval;
@@ -991,10 +974,9 @@ mdict_create_hashed_expandable (enum language language)
 
 struct multidictionary *
 mdict_create_linear (struct obstack *obstack,
-		     const struct pending *symbol_list)
+                     const struct pending *symbol_list)
 {
-  struct multidictionary *retval
-    = XOBNEW (obstack, struct multidictionary);
+  struct multidictionary *retval = XOBNEW (obstack, struct multidictionary);
   std::unordered_map<enum language, std::vector<symbol *>> nsyms
     = collate_pending_symbols_by_language (symbol_list);
 
@@ -1010,7 +992,7 @@ mdict_create_linear (struct obstack *obstack,
       std::vector<symbol *> symlist = pair.second;
 
       retval->dictionaries[idx++]
-	= dict_create_linear (obstack, language, symlist);
+        = dict_create_linear (obstack, language, symlist);
     }
 
   return retval;
@@ -1064,12 +1046,12 @@ mdict_free (struct multidictionary *mdict)
 
 static struct dictionary *
 find_language_dictionary (const struct multidictionary *mdict,
-			  enum language language)
+                          enum language language)
 {
   for (unsigned short idx = 0; idx < mdict->n_allocated_dictionaries; ++idx)
     {
       if (DICT_LANGUAGE (mdict->dictionaries[idx])->la_language == language)
-	return mdict->dictionaries[idx];
+        return mdict->dictionaries[idx];
     }
 
   return nullptr;
@@ -1082,7 +1064,7 @@ find_language_dictionary (const struct multidictionary *mdict,
 
 static struct dictionary *
 create_new_language_dictionary (struct multidictionary *mdict,
-				enum language language)
+                                enum language language)
 {
   struct dictionary *retval = nullptr;
 
@@ -1093,8 +1075,8 @@ create_new_language_dictionary (struct multidictionary *mdict,
     {
     case DICT_HASHED:
     case DICT_LINEAR:
-      internal_error (_("create_new_language_dictionary: attempted to expand "
-			"non-expandable multidictionary"));
+      internal_error (_ ("create_new_language_dictionary: attempted to expand "
+                         "non-expandable multidictionary"));
 
     case DICT_HASHED_EXPANDABLE:
       retval = dict_create_hashed_expandable (language);
@@ -1108,8 +1090,8 @@ create_new_language_dictionary (struct multidictionary *mdict,
   /* Grow the dictionary vector and save the new dictionary.  */
   mdict->dictionaries
     = (struct dictionary **) xrealloc (mdict->dictionaries,
-				       (++mdict->n_allocated_dictionaries
-					* sizeof (struct dictionary *)));
+                                       (++mdict->n_allocated_dictionaries
+                                        * sizeof (struct dictionary *)));
   mdict->dictionaries[mdict->n_allocated_dictionaries - 1] = retval;
 
   return retval;
@@ -1120,8 +1102,7 @@ create_new_language_dictionary (struct multidictionary *mdict,
 void
 mdict_add_symbol (struct multidictionary *mdict, struct symbol *sym)
 {
-  struct dictionary *dict
-    = find_language_dictionary (mdict, sym->language ());
+  struct dictionary *dict = find_language_dictionary (mdict, sym->language ());
 
   if (dict == nullptr)
     {
@@ -1137,7 +1118,7 @@ mdict_add_symbol (struct multidictionary *mdict, struct symbol *sym)
 
 void
 mdict_add_pending (struct multidictionary *mdict,
-		   const struct pending *symbol_list)
+                   const struct pending *symbol_list)
 {
   std::unordered_map<enum language, std::vector<symbol *>> nsyms
     = collate_pending_symbols_by_language (symbol_list);
@@ -1149,11 +1130,11 @@ mdict_add_pending (struct multidictionary *mdict,
       struct dictionary *dict = find_language_dictionary (mdict, language);
 
       if (dict == nullptr)
-	{
-	  /* The language was not previously seen.  Create a new dictionary
+        {
+          /* The language was not previously seen.  Create a new dictionary
 	     for it.  */
-	  dict = create_new_language_dictionary (mdict, language);
-	}
+          dict = create_new_language_dictionary (mdict, language);
+        }
 
       dict_add_pending (dict, symlist);
     }
@@ -1163,7 +1144,7 @@ mdict_add_pending (struct multidictionary *mdict,
 
 struct symbol *
 mdict_iterator_first (const multidictionary *mdict,
-		      struct mdict_iterator *miterator)
+                      struct mdict_iterator *miterator)
 {
   miterator->mdict = mdict;
   miterator->current_idx = 0;
@@ -1172,13 +1153,13 @@ mdict_iterator_first (const multidictionary *mdict,
        idx < mdict->n_allocated_dictionaries; ++idx)
     {
       struct symbol *result
-	= dict_iterator_first (mdict->dictionaries[idx], &miterator->iterator);
+        = dict_iterator_first (mdict->dictionaries[idx], &miterator->iterator);
 
       if (result != nullptr)
-	{
-	  miterator->current_idx = idx;
-	  return result;
-	}
+        {
+          miterator->current_idx = idx;
+          return result;
+        }
     }
 
   return nullptr;
@@ -1199,14 +1180,13 @@ mdict_iterator_next (struct mdict_iterator *miterator)
   for (unsigned short idx = ++miterator->current_idx;
        idx < miterator->mdict->n_allocated_dictionaries; ++idx)
     {
-      result
-	= dict_iterator_first (miterator->mdict->dictionaries[idx],
-			       &miterator->iterator);
+      result = dict_iterator_first (miterator->mdict->dictionaries[idx],
+                                    &miterator->iterator);
       if (result != nullptr)
-	{
-	  miterator->current_idx = idx;
-	  return result;
-	}
+        {
+          miterator->current_idx = idx;
+          return result;
+        }
     }
 
   return nullptr;
@@ -1216,8 +1196,8 @@ mdict_iterator_next (struct mdict_iterator *miterator)
 
 struct symbol *
 mdict_iter_match_first (const struct multidictionary *mdict,
-			const lookup_name_info &name,
-			struct mdict_iterator *miterator)
+                        const lookup_name_info &name,
+                        struct mdict_iterator *miterator)
 {
   miterator->mdict = mdict;
   miterator->current_idx = 0;
@@ -1226,11 +1206,11 @@ mdict_iter_match_first (const struct multidictionary *mdict,
        idx < mdict->n_allocated_dictionaries; ++idx)
     {
       struct symbol *result
-	= dict_iter_match_first (mdict->dictionaries[idx], name,
-				 &miterator->iterator);
+        = dict_iter_match_first (mdict->dictionaries[idx], name,
+                                 &miterator->iterator);
 
       if (result != nullptr)
-	return result;
+        return result;
     }
 
   return nullptr;
@@ -1240,7 +1220,7 @@ mdict_iter_match_first (const struct multidictionary *mdict,
 
 struct symbol *
 mdict_iter_match_next (const lookup_name_info &name,
-		       struct mdict_iterator *miterator)
+                       struct mdict_iterator *miterator)
 {
   /* Search the current dictionary.  */
   struct symbol *result = dict_iter_match_next (name, &miterator->iterator);
@@ -1253,14 +1233,13 @@ mdict_iter_match_next (const lookup_name_info &name,
   for (unsigned short idx = ++miterator->current_idx;
        idx < miterator->mdict->n_allocated_dictionaries; ++idx)
     {
-      result
-	= dict_iter_match_first (miterator->mdict->dictionaries[idx],
-				 name, &miterator->iterator);
+      result = dict_iter_match_first (miterator->mdict->dictionaries[idx],
+                                      name, &miterator->iterator);
       if (result != nullptr)
-	{
-	  miterator->current_idx = idx;
-	  return result;
-	}
+        {
+          miterator->current_idx = idx;
+          return result;
+        }
     }
 
   return nullptr;

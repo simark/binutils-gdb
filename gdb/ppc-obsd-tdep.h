@@ -30,15 +30,14 @@ extern struct ppc_reg_offsets ppcobsd_fpreg_offsets;
 /* Register sets for OpenBSD/powerpc.  */
 extern const struct regset ppcobsd_gregset;
 extern const struct regset ppcobsd_fpregset;
-
 
 /* Supply register REGNUM in the general-purpose register set REGSET
    from the buffer specified by GREGS and LEN to register cache
    REGCACHE.  If REGNUM is -1, do this for all registers in REGSET.  */
 
 extern void ppcobsd_supply_gregset (const struct regset *regset,
-				    struct regcache *regcache, int regnum,
-				    const void *gregs, size_t len);
+                                    struct regcache *regcache, int regnum,
+                                    const void *gregs, size_t len);
 
 /* Collect register REGNUM in the general-purpose register set
    REGSET, from register cache REGCACHE into the buffer specified by
@@ -46,7 +45,7 @@ extern void ppcobsd_supply_gregset (const struct regset *regset,
    REGSET.  */
 
 extern void ppcobsd_collect_gregset (const struct regset *regset,
-				     const struct regcache *regcache,
-				     int regnum, void *gregs, size_t len);
+                                     const struct regcache *regcache,
+                                     int regnum, void *gregs, size_t len);
 
 #endif /* ppc-obsd-tdep.h */

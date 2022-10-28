@@ -23,6 +23,6 @@
 struct gdbarch;
 
 extern CORE_ADDR glibc_skip_solib_resolver (struct gdbarch *gdbarch,
-					    CORE_ADDR);
+                                            CORE_ADDR);
 
 #endif /* glibc-tdep.h */

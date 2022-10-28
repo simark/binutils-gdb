@@ -43,8 +43,8 @@
 
 void
 go_language::print_type (struct type *type, const char *varstring,
-			 struct ui_file *stream, int show, int level,
-			 const struct type_print_options *flags) const
+                         struct ui_file *stream, int show, int level,
+                         const struct type_print_options *flags) const
 {
   /* Borrowed from c-typeprint.c.  */
   if (show > 0)

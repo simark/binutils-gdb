@@ -40,8 +40,8 @@ extern uint64_t i386_linux_core_read_xcr0 (bfd *abfd);
 /* Handle and display information related to the MPX bound violation
    to the user.  */
 extern void i386_linux_report_signal_info (struct gdbarch *gdbarch,
-					   struct ui_out *uiout,
-					   enum gdb_signal siggnal);
+                                           struct ui_out *uiout,
+                                           enum gdb_signal siggnal);
 
 /* Return the target description according to XCR0.  */
 extern const struct target_desc *i386_linux_read_description (uint64_t xcr0);
@@ -70,7 +70,7 @@ extern const struct target_desc *i386_linux_read_description (uint64_t xcr0);
   0 (the XFEATURE_ENABLED_MASK register), XCR0.  We can use this mask
   together with the mask saved in the xstate_hdr_bytes to determine what
   states the processor/OS supports and what state, used or initialized,
-  the process/thread is in.  */ 
+  the process/thread is in.  */
 #define I386_LINUX_XSAVE_XCR0_OFFSET 464
 
 extern int i386_linux_gregset_reg_offset[];

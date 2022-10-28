@@ -84,11 +84,11 @@ enum thread_state
    STEP_OVER_NONE means don't step over any subroutine calls.  */
 
 enum step_over_calls_kind
-  {
-    STEP_OVER_NONE,
-    STEP_OVER_ALL,
-    STEP_OVER_UNDEBUGGABLE
-  };
+{
+  STEP_OVER_NONE,
+  STEP_OVER_ALL,
+  STEP_OVER_UNDEBUGGABLE
+};
 
 /* Inferior thread specific part of `struct infcall_control_state'.
 
@@ -121,8 +121,8 @@ struct thread_control_state
      wait_for_inferior in a minor way if this were changed to the
      address of the instruction and that address plus one.  But maybe
      not).  */
-  CORE_ADDR step_range_start = 0;	/* Inclusive */
-  CORE_ADDR step_range_end = 0;		/* Exclusive */
+  CORE_ADDR step_range_start = 0; /* Inclusive */
+  CORE_ADDR step_range_end = 0;   /* Exclusive */
 
   /* Function the thread was in as of last it started stepping.  */
   struct symbol *step_start_function = nullptr;
@@ -138,11 +138,15 @@ struct thread_control_state
   /* Stack frame address as of when stepping command was issued.
      This is how we know when we step into a subroutine call, and how
      to set the frame for the breakpoint used to step out.  */
-  struct frame_id step_frame_id {};
+  struct frame_id step_frame_id
+  {
+  };
 
   /* Similarly, the frame ID of the underlying stack frame (skipping
      any inlined frames).  */
-  struct frame_id step_stack_frame_id {};
+  struct frame_id step_stack_frame_id
+  {
+  };
 
   /* True if the the thread is presently stepping over a breakpoint or
      a watchpoint, either with an inline step over or a displaced (out
@@ -242,7 +246,7 @@ struct private_thread_info
    The intrusive_list_node base links threads in a per-inferior list.  */
 
 class thread_info : public refcounted_object,
-		    public intrusive_list_node<thread_info>
+                    public intrusive_list_node<thread_info>
 {
 public:
   explicit thread_info (inferior *inf, ptid_t ptid);
@@ -253,7 +257,7 @@ public:
   /* Mark this thread as running and notify observers.  */
   void set_running (bool running);
 
-  ptid_t ptid;			/* "Actual process id";
+  ptid_t ptid; /* "Actual process id";
 				    In fact, this may be overloaded with 
 				    kernel thread id, etc.  */
 
@@ -300,10 +304,7 @@ public:
   /* The user-given name of the thread.
 
      Returns nullptr if the thread does not have a user-given name.  */
-  const char *name () const
-  {
-    return m_name.get ();
-  }
+  const char *name () const { return m_name.get (); }
 
   /* Set the user-given name of the thread.
 
@@ -313,15 +314,13 @@ public:
     m_name = std::move (name);
   }
 
-  bool executing () const
-  { return m_executing; }
+  bool executing () const { return m_executing; }
 
   /* Set the thread's 'm_executing' field from EXECUTING, and if EXECUTING
      is true also clears the thread's stop_pc.  */
   void set_executing (bool executing);
 
-  bool resumed () const
-  { return m_resumed; }
+  bool resumed () const { return m_resumed; }
 
   /* Set the thread's 'm_resumed' field from RESUMED.  The thread may also
      be added to (when RESUMED is true), or removed from (when RESUMED is
@@ -366,25 +365,16 @@ public:
 
   /* Set this thread's stop PC.  */
 
-  void set_stop_pc (CORE_ADDR stop_pc)
-  {
-    m_suspend.stop_pc = stop_pc;
-  }
+  void set_stop_pc (CORE_ADDR stop_pc) { m_suspend.stop_pc = stop_pc; }
 
   /* Remove the stop_pc stored on this thread.  */
 
-  void clear_stop_pc ()
-  {
-    m_suspend.stop_pc.reset ();
-  }
+  void clear_stop_pc () { m_suspend.stop_pc.reset (); }
 
   /* Return true if this thread has a cached stop pc value, otherwise
      return false.  */
 
-  bool stop_pc_p () const
-  {
-    return m_suspend.stop_pc.has_value ();
-  }
+  bool stop_pc_p () const { return m_suspend.stop_pc.has_value (); }
 
   /* Return true if this thread has a pending wait status.  */
 
@@ -418,24 +408,15 @@ public:
 
   /* Return this thread's stop signal.  */
 
-  gdb_signal stop_signal () const
-  {
-    return m_suspend.stop_signal;
-  }
+  gdb_signal stop_signal () const { return m_suspend.stop_signal; }
 
   /* Set this thread's stop signal.  */
 
-  void set_stop_signal (gdb_signal sig)
-  {
-    m_suspend.stop_signal = sig;
-  }
+  void set_stop_signal (gdb_signal sig) { m_suspend.stop_signal = sig; }
 
   /* Return this thread's stop reason.  */
 
-  target_stop_reason stop_reason () const
-  {
-    return m_suspend.stop_reason;
-  }
+  target_stop_reason stop_reason () const { return m_suspend.stop_reason; }
 
   /* Set this thread's stop reason.  */
 
@@ -446,10 +427,7 @@ public:
 
   /* Get the FSM associated with the thread.  */
 
-  struct thread_fsm *thread_fsm () const
-  {
-    return m_thread_fsm.get ();
-  }
+  struct thread_fsm *thread_fsm () const { return m_thread_fsm.get (); }
 
   /* Get the owning reference to the FSM associated with the thread.
 
@@ -525,7 +503,9 @@ public:
   std::unique_ptr<private_thread_info> priv;
 
   /* Branch trace information for this thread.  */
-  struct btrace_thread_info btrace {};
+  struct btrace_thread_info btrace
+  {
+  };
 
   /* Flag which indicates that the stack temporaries should be stored while
      evaluating expressions.  */
@@ -581,10 +561,10 @@ private:
 
 using thread_info_resumed_with_pending_wait_status_node
   = intrusive_member_node<thread_info,
-			  &thread_info::resumed_with_pending_wait_status_node>;
+                          &thread_info::resumed_with_pending_wait_status_node>;
 using thread_info_resumed_with_pending_wait_status_list
   = intrusive_list<thread_info,
-		   thread_info_resumed_with_pending_wait_status_node>;
+                   thread_info_resumed_with_pending_wait_status_node>;
 
 /* A gdb::ref_ptr pointer to a thread_info.  */
 
@@ -606,17 +586,17 @@ extern void init_thread_list (void);
    the new thread.  Caller my use this pointer to 
    initialize the private thread data.  */
 extern struct thread_info *add_thread (process_stratum_target *targ,
-				       ptid_t ptid);
+                                       ptid_t ptid);
 
 /* Same as add_thread, but does not print a message about new
    thread.  */
 extern struct thread_info *add_thread_silent (process_stratum_target *targ,
-					      ptid_t ptid);
+                                              ptid_t ptid);
 
 /* Same as add_thread, and sets the private info.  */
 extern struct thread_info *add_thread_with_info (process_stratum_target *targ,
-						 ptid_t ptid,
-						 private_thread_info *);
+                                                 ptid_t ptid,
+                                                 private_thread_info *);
 
 /* Delete thread THREAD and notify of thread exit.  If the thread is
    currently not deletable, don't actually delete it but still tag it
@@ -647,8 +627,8 @@ extern int thread_has_single_step_breakpoints_set (struct thread_info *tp);
 /* Check whether the thread has software single stepping breakpoints
    set at PC.  */
 extern int thread_has_single_step_breakpoint_here (struct thread_info *tp,
-						   const address_space *aspace,
-						   CORE_ADDR addr);
+                                                   const address_space *aspace,
+                                                   CORE_ADDR addr);
 
 /* Returns whether to show inferior-qualified thread IDs, or plain
    thread numbers.  Inferior-qualified IDs are shown whenever we have
@@ -673,14 +653,15 @@ extern thread_info *find_thread_ptid (inferior *inf, ptid_t ptid);
 
 /* Search function to lookup a (non-exited) thread by 'ptid'.  */
 extern struct thread_info *find_thread_ptid (process_stratum_target *targ,
-					     ptid_t ptid);
+                                             ptid_t ptid);
 
 /* Find thread by GDB global thread ID.  */
 struct thread_info *find_thread_global_id (int global_id);
 
 /* Find thread by thread library specific handle in inferior INF.  */
-struct thread_info *find_thread_by_handle
-  (gdb::array_view<const gdb_byte> handle, struct inferior *inf);
+struct thread_info *
+find_thread_by_handle (gdb::array_view<const gdb_byte> handle,
+                       struct inferior *inf);
 
 /* Finds the first thread of the specified inferior.  */
 extern struct thread_info *first_thread_of_inferior (inferior *inf);
@@ -694,8 +675,8 @@ extern struct thread_info *any_thread_of_inferior (inferior *inf);
 extern struct thread_info *any_live_thread_of_inferior (inferior *inf);
 
 /* Change the ptid of thread OLD_PTID to NEW_PTID.  */
-void thread_change_ptid (process_stratum_target *targ,
-			 ptid_t old_ptid, ptid_t new_ptid);
+void thread_change_ptid (process_stratum_target *targ, ptid_t old_ptid,
+                         ptid_t new_ptid);
 
 /* Iterator function to call a user-provided callback function
    once for each known thread.  */
@@ -730,7 +711,7 @@ extern struct thread_info *iterate_over_threads (thread_callback_func, void *);
 
 inline all_matching_threads_range
 all_threads (process_stratum_target *proc_target = nullptr,
-	     ptid_t filter_ptid = minus_one_ptid)
+             ptid_t filter_ptid = minus_one_ptid)
 {
   return all_matching_threads_range (proc_target, filter_ptid);
 }
@@ -741,7 +722,7 @@ all_threads (process_stratum_target *proc_target = nullptr,
 
 inline all_non_exited_threads_range
 all_non_exited_threads (process_stratum_target *proc_target = nullptr,
-			ptid_t filter_ptid = minus_one_ptid)
+                        ptid_t filter_ptid = minus_one_ptid)
 {
   return all_non_exited_threads_range (proc_target, filter_ptid);
 }
@@ -780,21 +761,21 @@ extern void switch_to_thread_no_regs (struct thread_info *thread);
    MINUS_ONE_PTID, applies to all threads of TARG.  If
    ptid_is_pid(PTID) is true, applies to all threads of the process
    pointed at by {TARG,PTID}.  */
-extern void set_resumed (process_stratum_target *targ,
-			 ptid_t ptid, bool resumed);
+extern void set_resumed (process_stratum_target *targ, ptid_t ptid,
+                         bool resumed);
 
 /* Marks thread PTID of TARG as running, or as stopped.  If PTID is
    minus_one_ptid, marks all threads of TARG.  */
-extern void set_running (process_stratum_target *targ,
-			 ptid_t ptid, bool running);
+extern void set_running (process_stratum_target *targ, ptid_t ptid,
+                         bool running);
 
 /* Marks or clears thread(s) PTID of TARG as having been requested to
    stop.  If PTID is MINUS_ONE_PTID, applies to all threads of TARG.
    If ptid_is_pid(PTID) is true, applies to all threads of the process
    pointed at by {TARG, PTID}.  If STOP, then the
    THREAD_STOP_REQUESTED observer is called with PTID as argument.  */
-extern void set_stop_requested (process_stratum_target *targ,
-				ptid_t ptid, bool stop);
+extern void set_stop_requested (process_stratum_target *targ, ptid_t ptid,
+                                bool stop);
 
 /* Marks thread PTID of TARG as executing, or not.  If PTID is
    minus_one_ptid, marks all threads of TARG.
@@ -802,8 +783,8 @@ extern void set_stop_requested (process_stratum_target *targ,
    Note that this is different from the running state.  See the
    description of state and executing fields of struct
    thread_info.  */
-extern void set_executing (process_stratum_target *targ,
-			   ptid_t ptid, bool executing);
+extern void set_executing (process_stratum_target *targ, ptid_t ptid,
+                           bool executing);
 
 /* True if any (known or unknown) thread of TARG is or may be
    executing.  */
@@ -823,8 +804,7 @@ extern void finish_thread_state (process_stratum_target *targ, ptid_t ptid);
 
 /* Calls finish_thread_state on scope exit, unless release() is called
    to disengage.  */
-using scoped_finish_thread_state
-  = FORWARD_SCOPE_EXIT (finish_thread_state);
+using scoped_finish_thread_state = FORWARD_SCOPE_EXIT (finish_thread_state);
 
 /* Commands with a prefix of `thread'.  */
 extern struct cmd_list_element *thread_cmd_list;
@@ -843,8 +823,7 @@ extern bool print_thread_events;
    NULL and PID is not -1, then the thread is printed if it belongs to
    the specified process.  Otherwise, an error is raised.  */
 extern void print_thread_info (struct ui_out *uiout,
-			       const char *requested_threads,
-			       int pid);
+                               const char *requested_threads, int pid);
 
 /* Save/restore current inferior/thread/frame.  */
 
@@ -877,7 +856,7 @@ private:
 
 /* Returns a pointer into the thread_info corresponding to
    INFERIOR_PTID.  INFERIOR_PTID *must* be in the thread list.  */
-extern struct thread_info* inferior_thread (void);
+extern struct thread_info *inferior_thread (void);
 
 extern void update_thread_list (void);
 
@@ -901,7 +880,6 @@ int pc_in_thread_step_range (CORE_ADDR pc, struct thread_info *thread);
 class enable_thread_stack_temporaries
 {
 public:
-
   explicit enable_thread_stack_temporaries (struct thread_info *thr)
     : m_thr (thread_info_ref::new_reference (thr))
   {
@@ -918,18 +896,18 @@ public:
   DISABLE_COPY_AND_ASSIGN (enable_thread_stack_temporaries);
 
 private:
-
   thread_info_ref m_thr;
 };
 
 extern bool thread_stack_temporaries_enabled_p (struct thread_info *tp);
 
-extern void push_thread_stack_temporary (struct thread_info *tp, struct value *v);
+extern void push_thread_stack_temporary (struct thread_info *tp,
+                                         struct value *v);
 
 extern value *get_last_thread_stack_temporary (struct thread_info *tp);
 
 extern bool value_in_thread_stack_temporaries (struct value *,
-					       struct thread_info *thr);
+                                               struct thread_info *thr);
 
 /* Thread step-over list type.  */
 using thread_step_over_list_node
@@ -946,11 +924,9 @@ using thread_step_over_list_safe_range
 static inline thread_step_over_list_safe_range
 make_thread_step_over_list_safe_range (thread_step_over_list &list)
 {
-  return thread_step_over_list_safe_range
-    (thread_step_over_list_safe_iterator (list.begin (),
-					  list.end ()),
-     thread_step_over_list_safe_iterator (list.end (),
-					  list.end ()));
+  return thread_step_over_list_safe_range (
+    thread_step_over_list_safe_iterator (list.begin (), list.end ()),
+    thread_step_over_list_safe_iterator (list.end (), list.end ()));
 }
 
 /* Add TP to the end of the global pending step-over chain.  */
@@ -960,8 +936,8 @@ extern void global_thread_step_over_chain_enqueue (thread_info *tp);
 /* Append the thread step over list LIST to the global thread step over
    chain. */
 
-extern void global_thread_step_over_chain_enqueue_chain
-  (thread_step_over_list &&list);
+extern void
+global_thread_step_over_chain_enqueue_chain (thread_step_over_list &&list);
 
 /* Remove TP from the global pending step-over chain.  */
 
@@ -999,7 +975,7 @@ extern int show_thread_that_caused_stop (void);
 
 /* Print the message for a thread or/and frame selected.  */
 extern void print_selected_thread_frame (struct ui_out *uiout,
-					 user_selected_what selection);
+                                         user_selected_what selection);
 
 /* Helper for the CLI's "thread" command and for MI's -thread-select.
    Selects thread THR.  TIDSTR is the original string the thread ID
@@ -1026,9 +1002,8 @@ extern bool switch_to_thread_if_alive (thread_info *thr);
    exception if !FLAGS.SILENT and !FLAGS.CONT and CMD fails.  */
 
 extern void thread_try_catch_cmd (thread_info *thr,
-				  gdb::optional<int> ada_task,
-				  const char *cmd, int from_tty,
-				  const qcs_flags &flags);
+                                  gdb::optional<int> ada_task, const char *cmd,
+                                  int from_tty, const qcs_flags &flags);
 
 /* Return a string representation of STATE.  */
 

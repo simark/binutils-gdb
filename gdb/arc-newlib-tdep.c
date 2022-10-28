@@ -64,7 +64,7 @@ void
 _initialize_arc_newlib_tdep ()
 {
   gdbarch_register_osabi_sniffer (bfd_arch_arc, bfd_target_elf_flavour,
-				  arc_newlib_osabi_sniffer);
+                                  arc_newlib_osabi_sniffer);
   gdbarch_register_osabi (bfd_arch_arc, 0, GDB_OSABI_NEWLIB,
-			  arc_newlib_init_osabi);
+                          arc_newlib_init_osabi);
 }

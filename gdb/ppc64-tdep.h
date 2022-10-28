@@ -25,12 +25,12 @@ class frame_info_ptr;
 struct target_ops;
 
 extern CORE_ADDR ppc64_skip_trampoline_code (frame_info_ptr frame,
-					     CORE_ADDR pc);
+                                             CORE_ADDR pc);
 
 extern CORE_ADDR ppc64_convert_from_func_ptr_addr (struct gdbarch *gdbarch,
-						   CORE_ADDR addr,
-						   struct target_ops *targ);
+                                                   CORE_ADDR addr,
+                                                   struct target_ops *targ);
 
 extern void ppc64_elf_make_msymbol_special (asymbol *,
-					    struct minimal_symbol *);
+                                            struct minimal_symbol *);
 #endif /* PPC64_TDEP_H  */

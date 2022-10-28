@@ -46,12 +46,10 @@ default_frame_args_address (frame_info_ptr this_frame, void **this_cache)
   return default_frame_base_address (this_frame, this_cache);
 }
 
-const struct frame_base default_frame_base = {
-  NULL, /* No parent.  */
-  default_frame_base_address,
-  default_frame_locals_address,
-  default_frame_args_address
-};
+const struct frame_base default_frame_base
+  = { NULL, /* No parent.  */
+      default_frame_base_address, default_frame_locals_address,
+      default_frame_args_address };
 
 struct frame_base_table_entry
 {
@@ -79,7 +77,7 @@ get_frame_base_table (struct gdbarch *gdbarch)
 
 void
 frame_base_append_sniffer (struct gdbarch *gdbarch,
-			   frame_base_sniffer_ftype *sniffer)
+                           frame_base_sniffer_ftype *sniffer)
 {
   struct frame_base_table *table = get_frame_base_table (gdbarch);
 
@@ -91,7 +89,7 @@ frame_base_append_sniffer (struct gdbarch *gdbarch,
 
 void
 frame_base_set_default (struct gdbarch *gdbarch,
-			const struct frame_base *default_base)
+                        const struct frame_base *default_base)
 {
   struct frame_base_table *table = get_frame_base_table (gdbarch);
 
@@ -111,7 +109,7 @@ frame_base_find_by_frame (frame_info_ptr this_frame)
 
       desc = entry->sniffer (this_frame);
       if (desc != NULL)
-	return desc;
+        return desc;
     }
   return table->default_base;
 }

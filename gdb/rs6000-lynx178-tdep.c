@@ -30,20 +30,20 @@
 
 static CORE_ADDR
 rs6000_lynx178_push_dummy_call (struct gdbarch *gdbarch,
-				struct value *function,
-				struct regcache *regcache, CORE_ADDR bp_addr,
-				int nargs, struct value **args, CORE_ADDR sp,
-				function_call_return_method return_method,
-				CORE_ADDR struct_addr)
+                                struct value *function,
+                                struct regcache *regcache, CORE_ADDR bp_addr,
+                                int nargs, struct value **args, CORE_ADDR sp,
+                                function_call_return_method return_method,
+                                CORE_ADDR struct_addr)
 {
   ppc_gdbarch_tdep *tdep = gdbarch_tdep<ppc_gdbarch_tdep> (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   int ii;
   int len = 0;
-  int argno;			/* current argument number */
-  int argbytes;			/* current argument byte */
+  int argno;    /* current argument number */
+  int argbytes; /* current argument byte */
   gdb_byte tmp_buffer[50];
-  int f_argno = 0;		/* current floating point argno */
+  int f_argno = 0; /* current floating point argno */
   int wordsize = tdep->wordsize;
 
   struct value *arg = 0;
@@ -67,7 +67,7 @@ rs6000_lynx178_push_dummy_call (struct gdbarch *gdbarch,
   if (return_method == return_method_struct)
     {
       regcache_raw_write_unsigned (regcache, tdep->ppc_gp0_regnum + 3,
-				   struct_addr);
+                                   struct_addr);
       ii++;
     }
 
@@ -97,64 +97,59 @@ rs6000_lynx178_push_dummy_call (struct gdbarch *gdbarch,
       len = type->length ();
 
       if (type->code () == TYPE_CODE_FLT)
-	{
-
-	  /* Floating point arguments are passed in fpr's, as well as gpr's.
+        {
+          /* Floating point arguments are passed in fpr's, as well as gpr's.
 	     There are 13 fpr's reserved for passing parameters.  At this point
 	     there is no way we would run out of them.
 
 	     Always store the floating point value using the register's
 	     floating-point format.  */
-	  const int fp_regnum = tdep->ppc_fp0_regnum + 1 + f_argno;
-	  gdb_byte reg_val[PPC_MAX_REGISTER_SIZE];
-	  struct type *reg_type = register_type (gdbarch, fp_regnum);
+          const int fp_regnum = tdep->ppc_fp0_regnum + 1 + f_argno;
+          gdb_byte reg_val[PPC_MAX_REGISTER_SIZE];
+          struct type *reg_type = register_type (gdbarch, fp_regnum);
 
-	  gdb_assert (len <= 8);
+          gdb_assert (len <= 8);
 
-	  target_float_convert (value_contents (arg).data (), type, reg_val,
-				reg_type);
-	  regcache->cooked_write (fp_regnum, reg_val);
-	  ++f_argno;
-	}
+          target_float_convert (value_contents (arg).data (), type, reg_val,
+                                reg_type);
+          regcache->cooked_write (fp_regnum, reg_val);
+          ++f_argno;
+        }
 
       if (len > reg_size)
-	{
+        {
+          /* Argument takes more than one register.  */
+          while (argbytes < len)
+            {
+              gdb_byte word[PPC_MAX_REGISTER_SIZE];
+              memset (word, 0, reg_size);
+              memcpy (word, ((char *) value_contents (arg).data ()) + argbytes,
+                      (len - argbytes) > reg_size ? reg_size : len - argbytes);
+              regcache->cooked_write (tdep->ppc_gp0_regnum + 3 + ii, word);
+              ++ii, argbytes += reg_size;
 
-	  /* Argument takes more than one register.  */
-	  while (argbytes < len)
-	    {
-	      gdb_byte word[PPC_MAX_REGISTER_SIZE];
-	      memset (word, 0, reg_size);
-	      memcpy (word,
-		      ((char *) value_contents (arg).data ()) + argbytes,
-		      (len - argbytes) > reg_size
-			? reg_size : len - argbytes);
-	      regcache->cooked_write (tdep->ppc_gp0_regnum + 3 + ii, word);
-	      ++ii, argbytes += reg_size;
-
-	      if (ii >= 8)
-		goto ran_out_of_registers_for_arguments;
-	    }
-	  argbytes = 0;
-	  --ii;
-	}
+              if (ii >= 8)
+                goto ran_out_of_registers_for_arguments;
+            }
+          argbytes = 0;
+          --ii;
+        }
       else
-	{
-	  /* Argument can fit in one register.  No problem.  */
-	  gdb_byte word[PPC_MAX_REGISTER_SIZE];
+        {
+          /* Argument can fit in one register.  No problem.  */
+          gdb_byte word[PPC_MAX_REGISTER_SIZE];
 
-	  memset (word, 0, reg_size);
-	  memcpy (word, value_contents (arg).data (), len);
-	  regcache->cooked_write (tdep->ppc_gp0_regnum + 3 +ii, word);
-	}
+          memset (word, 0, reg_size);
+          memcpy (word, value_contents (arg).data (), len);
+          regcache->cooked_write (tdep->ppc_gp0_regnum + 3 + ii, word);
+        }
       ++argno;
     }
 
 ran_out_of_registers_for_arguments:
 
-  regcache_cooked_read_unsigned (regcache,
-				 gdbarch_sp_regnum (gdbarch),
-				 &saved_sp);
+  regcache_cooked_read_unsigned (regcache, gdbarch_sp_regnum (gdbarch),
+                                 &saved_sp);
 
   /* Location for 8 parameters are always reserved.  */
   sp -= wordsize * 8;
@@ -173,19 +168,19 @@ ran_out_of_registers_for_arguments:
       int space = 0, jj;
 
       if (argbytes)
-	{
-	  space += align_up (len - argbytes, 4);
-	  jj = argno + 1;
-	}
+        {
+          space += align_up (len - argbytes, 4);
+          jj = argno + 1;
+        }
       else
-	jj = argno;
+        jj = argno;
 
       for (; jj < nargs; ++jj)
-	{
-	  struct value *val = args[jj];
+        {
+          struct value *val = args[jj];
 
-	  space += align_up (value_type (val)->length (), 4);
-	}
+          space += align_up (value_type (val)->length (), 4);
+        }
 
       /* Add location required for the rest of the parameters.  */
       space = align_up (space, 16);
@@ -197,45 +192,41 @@ ran_out_of_registers_for_arguments:
 	 to use this area.  So, update %sp first before doing anything
 	 else.  */
 
-      regcache_raw_write_signed (regcache,
-				 gdbarch_sp_regnum (gdbarch), sp);
+      regcache_raw_write_signed (regcache, gdbarch_sp_regnum (gdbarch), sp);
 
       /* If the last argument copied into the registers didn't fit there
 	 completely, push the rest of it into stack.  */
 
       if (argbytes)
-	{
-	  write_memory (sp + 24 + (ii * 4),
-			value_contents (arg).data () + argbytes,
-			len - argbytes);
-	  ++argno;
-	  ii += align_up (len - argbytes, 4) / 4;
-	}
+        {
+          write_memory (sp + 24 + (ii * 4),
+                        value_contents (arg).data () + argbytes,
+                        len - argbytes);
+          ++argno;
+          ii += align_up (len - argbytes, 4) / 4;
+        }
 
       /* Push the rest of the arguments into stack.  */
       for (; argno < nargs; ++argno)
-	{
+        {
+          arg = args[argno];
+          type = check_typedef (value_type (arg));
+          len = type->length ();
 
-	  arg = args[argno];
-	  type = check_typedef (value_type (arg));
-	  len = type->length ();
-
-
-	  /* Float types should be passed in fpr's, as well as in the
+          /* Float types should be passed in fpr's, as well as in the
 	     stack.  */
-	  if (type->code () == TYPE_CODE_FLT && f_argno < 13)
-	    {
+          if (type->code () == TYPE_CODE_FLT && f_argno < 13)
+            {
+              gdb_assert (len <= 8);
 
-	      gdb_assert (len <= 8);
+              regcache->cooked_write (tdep->ppc_fp0_regnum + 1 + f_argno,
+                                      value_contents (arg).data ());
+              ++f_argno;
+            }
 
-	      regcache->cooked_write (tdep->ppc_fp0_regnum + 1 + f_argno,
-				      value_contents (arg).data ());
-	      ++f_argno;
-	    }
-
-	  write_memory (sp + 24 + (ii * 4), value_contents (arg).data (), len);
-	  ii += align_up (len, 4) / 4;
-	}
+          write_memory (sp + 24 + (ii * 4), value_contents (arg).data (), len);
+          ii += align_up (len, 4) / 4;
+        }
     }
 
   /* Set the stack pointer.  According to the ABI, the SP is meant to
@@ -262,8 +253,8 @@ ran_out_of_registers_for_arguments:
 
 static enum return_value_convention
 rs6000_lynx178_return_value (struct gdbarch *gdbarch, struct value *function,
-			     struct type *valtype, struct regcache *regcache,
-			     gdb_byte *readbuf, const gdb_byte *writebuf)
+                             struct type *valtype, struct regcache *regcache,
+                             gdb_byte *readbuf, const gdb_byte *writebuf)
 {
   ppc_gdbarch_tdep *tdep = gdbarch_tdep<ppc_gdbarch_tdep> (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -279,9 +270,9 @@ rs6000_lynx178_return_value (struct gdbarch *gdbarch, struct value *function,
       && valtype->length () == 16)
     {
       if (readbuf)
-	regcache->cooked_read (tdep->ppc_vr0_regnum + 2, readbuf);
+        regcache->cooked_read (tdep->ppc_vr0_regnum + 2, readbuf);
       if (writebuf)
-	regcache->cooked_write (tdep->ppc_vr0_regnum + 2, writebuf);
+        regcache->cooked_write (tdep->ppc_vr0_regnum + 2, writebuf);
 
       return RETURN_VALUE_REGISTER_CONVENTION;
     }
@@ -310,18 +301,18 @@ rs6000_lynx178_return_value (struct gdbarch *gdbarch, struct value *function,
 	 precision and complex.  */
 
       if (readbuf)
-	{
-	  regcache->cooked_read (tdep->ppc_fp0_regnum + 1, regval);
-	  target_float_convert (regval, regtype, readbuf, valtype);
-	}
+        {
+          regcache->cooked_read (tdep->ppc_fp0_regnum + 1, regval);
+          target_float_convert (regval, regtype, readbuf, valtype);
+        }
       if (writebuf)
-	{
-	  target_float_convert (writebuf, valtype, regval, regtype);
-	  regcache->cooked_write (tdep->ppc_fp0_regnum + 1, regval);
-	}
+        {
+          target_float_convert (writebuf, valtype, regval, regtype);
+          regcache->cooked_write (tdep->ppc_fp0_regnum + 1, regval);
+        }
 
       return RETURN_VALUE_REGISTER_CONVENTION;
-  }
+    }
 
   /* Values of the types int, long, short, pointer, and char (length
      is less than or equal to four bytes), as well as bit values of
@@ -331,22 +322,22 @@ rs6000_lynx178_return_value (struct gdbarch *gdbarch, struct value *function,
   if (valtype->length () <= tdep->wordsize)
     {
       if (readbuf)
-	{
-	  ULONGEST regval;
+        {
+          ULONGEST regval;
 
-	  /* For reading we don't have to worry about sign extension.  */
-	  regcache_cooked_read_unsigned (regcache, tdep->ppc_gp0_regnum + 3,
-					 &regval);
-	  store_unsigned_integer (readbuf, valtype->length (), byte_order,
-				  regval);
-	}
+          /* For reading we don't have to worry about sign extension.  */
+          regcache_cooked_read_unsigned (regcache, tdep->ppc_gp0_regnum + 3,
+                                         &regval);
+          store_unsigned_integer (readbuf, valtype->length (), byte_order,
+                                  regval);
+        }
       if (writebuf)
-	{
-	  /* For writing, use unpack_long since that should handle any
+        {
+          /* For writing, use unpack_long since that should handle any
 	     required sign extension.  */
-	  regcache_cooked_write_unsigned (regcache, tdep->ppc_gp0_regnum + 3,
-					  unpack_long (valtype, writebuf));
-	}
+          regcache_cooked_write_unsigned (regcache, tdep->ppc_gp0_regnum + 3,
+                                          unpack_long (valtype, writebuf));
+        }
 
       return RETURN_VALUE_REGISTER_CONVENTION;
     }
@@ -360,18 +351,18 @@ rs6000_lynx178_return_value (struct gdbarch *gdbarch, struct value *function,
       gdb_assert (tdep->wordsize == 4);
 
       if (readbuf)
-	{
-	  gdb_byte regval[8];
+        {
+          gdb_byte regval[8];
 
-	  regcache->cooked_read (tdep->ppc_gp0_regnum + 3, regval);
-	  regcache->cooked_read (tdep->ppc_gp0_regnum + 4, regval + 4);
-	  memcpy (readbuf, regval, 8);
-	}
+          regcache->cooked_read (tdep->ppc_gp0_regnum + 3, regval);
+          regcache->cooked_read (tdep->ppc_gp0_regnum + 4, regval + 4);
+          memcpy (readbuf, regval, 8);
+        }
       if (writebuf)
-	{
-	  regcache->cooked_write (tdep->ppc_gp0_regnum + 3, writebuf);
-	  regcache->cooked_write (tdep->ppc_gp0_regnum + 4, writebuf + 4);
-	}
+        {
+          regcache->cooked_write (tdep->ppc_gp0_regnum + 3, writebuf);
+          regcache->cooked_write (tdep->ppc_gp0_regnum + 4, writebuf + 4);
+        }
 
       return RETURN_VALUE_REGISTER_CONVENTION;
     }
@@ -411,10 +402,8 @@ void _initialize_rs6000_lynx178_tdep ();
 void
 _initialize_rs6000_lynx178_tdep ()
 {
-  gdbarch_register_osabi_sniffer (bfd_arch_rs6000,
-				  bfd_target_xcoff_flavour,
-				  rs6000_lynx178_osabi_sniffer);
+  gdbarch_register_osabi_sniffer (bfd_arch_rs6000, bfd_target_xcoff_flavour,
+                                  rs6000_lynx178_osabi_sniffer);
   gdbarch_register_osabi (bfd_arch_rs6000, 0, GDB_OSABI_LYNXOS178,
-			  rs6000_lynx178_init_osabi);
+                          rs6000_lynx178_init_osabi);
 }
-

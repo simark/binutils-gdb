@@ -44,7 +44,7 @@ LONGEST
 f77_get_lowerbound (struct type *type)
 {
   if (type->bounds ()->low.kind () != PROP_CONST)
-    error (_("Lower bound may not be '*' in F77"));
+    error (_ ("Lower bound may not be '*' in F77"));
 
   return type->bounds ()->low.const_val ();
 }
@@ -92,7 +92,7 @@ f77_get_dynamic_length_of_aggregate (struct type *type)
 
   /* Patch in a valid length value.  */
   type->set_length ((upper_bound - lower_bound + 1)
-		    * check_typedef (type->target_type ())->length ());
+                    * check_typedef (type->target_type ())->length ());
 }
 
 /* Per-dimension statistics.  */
@@ -117,12 +117,10 @@ public:
      the GDB value (of TYPE) being printed.  STREAM is where to print to,
      RECOURSE is passed through (and prevents infinite recursion), and
      OPTIONS are the printing control options.  */
-  explicit fortran_array_printer_impl (struct type *type,
-				       CORE_ADDR address,
-				       struct value *val,
-				       struct ui_file *stream,
-				       int recurse,
-				       const struct value_print_options *options)
+  explicit fortran_array_printer_impl (
+    struct type *type, CORE_ADDR address, struct value *val,
+    struct ui_file *stream, int recurse,
+    const struct value_print_options *options)
     : m_elts (0),
       m_val (val),
       m_stream (stream),
@@ -131,7 +129,8 @@ public:
       m_dimension (0),
       m_nrepeats (0),
       m_stats (0)
-  { /* Nothing.  */ }
+  { /* Nothing.  */
+  }
 
   /* Called while iterating over the array bounds.  When SHOULD_CONTINUE is
      false then we must return false, as we have reached the end of the
@@ -155,9 +154,9 @@ public:
     m_elt_type_prev = nullptr;
     if (m_stats.size () < m_dimension)
       {
-	m_stats.resize (m_dimension);
-	m_stats[dim_indx].index_type = index_type;
-	m_stats[dim_indx].nelts = nelts;
+        m_stats.resize (m_dimension);
+        m_stats[dim_indx].index_type = index_type;
+        m_stats[dim_indx].nelts = nelts;
       }
 
     gdb_puts ("(", m_stream);
@@ -184,67 +183,64 @@ public:
      index in the dimension currently being walked and LAST_P is true
      only when this is the last element that will be processed in this
      dimension.  */
-  void process_dimension (gdb::function_view<void (struct type *,
-						   int, bool)> walk_1,
-			  struct type *elt_type, LONGEST elt_off,
-			  LONGEST index, bool last_p)
+  void process_dimension (
+    gdb::function_view<void (struct type *, int, bool)> walk_1,
+    struct type *elt_type, LONGEST elt_off, LONGEST index, bool last_p)
   {
     size_t dim_indx = m_dimension - 1;
     struct type *elt_type_prev = m_elt_type_prev;
     LONGEST elt_off_prev = m_elt_off_prev;
-    bool repeated = (m_options->repeat_count_threshold < UINT_MAX
-		     && elt_type_prev != nullptr
-		     && (m_elts + ((m_nrepeats + 1)
-				   * m_stats[dim_indx + 1].nelts)
-			 <= m_options->print_max)
-		     && dimension_contents_eq (m_val, elt_type,
-					       elt_off_prev, elt_off));
+    bool repeated
+      = (m_options->repeat_count_threshold < UINT_MAX
+         && elt_type_prev != nullptr
+         && (m_elts + ((m_nrepeats + 1) * m_stats[dim_indx + 1].nelts)
+             <= m_options->print_max)
+         && dimension_contents_eq (m_val, elt_type, elt_off_prev, elt_off));
 
     if (repeated)
       m_nrepeats++;
     if (!repeated || last_p)
       {
-	LONGEST nrepeats = m_nrepeats;
+        LONGEST nrepeats = m_nrepeats;
 
-	m_nrepeats = 0;
-	if (nrepeats >= m_options->repeat_count_threshold)
-	  {
-	    annotate_elt_rep (nrepeats + 1);
-	    gdb_printf (m_stream, "%p[<repeats %s times>%p]",
-			metadata_style.style ().ptr (),
-			plongest (nrepeats + 1),
-			nullptr);
-	    annotate_elt_rep_end ();
-	    if (!repeated)
-	      gdb_puts (" ", m_stream);
-	    m_elts += nrepeats * m_stats[dim_indx + 1].nelts;
-	  }
-	else
-	  for (LONGEST i = nrepeats; i > 0; i--)
-	    {
-	      maybe_print_array_index (m_stats[dim_indx].index_type,
-				       index - nrepeats + repeated,
-				       m_stream, m_options);
-	      walk_1 (elt_type_prev, elt_off_prev, repeated && i == 1);
-	    }
+        m_nrepeats = 0;
+        if (nrepeats >= m_options->repeat_count_threshold)
+          {
+            annotate_elt_rep (nrepeats + 1);
+            gdb_printf (m_stream, "%p[<repeats %s times>%p]",
+                        metadata_style.style ().ptr (),
+                        plongest (nrepeats + 1), nullptr);
+            annotate_elt_rep_end ();
+            if (!repeated)
+              gdb_puts (" ", m_stream);
+            m_elts += nrepeats * m_stats[dim_indx + 1].nelts;
+          }
+        else
+          for (LONGEST i = nrepeats; i > 0; i--)
+            {
+              maybe_print_array_index (m_stats[dim_indx].index_type,
+                                       index - nrepeats + repeated, m_stream,
+                                       m_options);
+              walk_1 (elt_type_prev, elt_off_prev, repeated && i == 1);
+            }
 
-	if (!repeated)
-	  {
-	    /* We need to specially handle the case of hitting `print_max'
+        if (!repeated)
+          {
+            /* We need to specially handle the case of hitting `print_max'
 	       exactly as recursing would cause lone `(...)' to be printed.
 	       And we need to print `...' by hand if the skipped element
 	       would be the last one processed, because the subsequent call
 	       to `continue_walking' from our caller won't do that.  */
-	    if (m_elts < m_options->print_max)
-	      {
-		maybe_print_array_index (m_stats[dim_indx].index_type, index,
-					 m_stream, m_options);
-		walk_1 (elt_type, elt_off, last_p);
-		nrepeats++;
-	      }
-	    else if (last_p)
-	      gdb_puts ("...", m_stream);
-	  }
+            if (m_elts < m_options->print_max)
+              {
+                maybe_print_array_index (m_stats[dim_indx].index_type, index,
+                                         m_stream, m_options);
+                walk_1 (elt_type, elt_off, last_p);
+                nrepeats++;
+              }
+            else if (last_p)
+              gdb_puts ("...", m_stream);
+          }
       }
 
     m_elt_type_prev = elt_type;
@@ -255,71 +251,70 @@ public:
      start of the parent object, where INDEX is the value of the element's
      index in the dimension currently being walked and LAST_P is true only
      when this is the last element to be processed in this dimension.  */
-  void process_element (struct type *elt_type, LONGEST elt_off,
-			LONGEST index, bool last_p)
+  void process_element (struct type *elt_type, LONGEST elt_off, LONGEST index,
+                        bool last_p)
   {
     size_t dim_indx = m_dimension - 1;
     struct type *elt_type_prev = m_elt_type_prev;
     LONGEST elt_off_prev = m_elt_off_prev;
     bool repeated = (m_options->repeat_count_threshold < UINT_MAX
-		     && elt_type_prev != nullptr
-		     && value_contents_eq (m_val, elt_off_prev, m_val, elt_off,
-					   elt_type->length ()));
+                     && elt_type_prev != nullptr
+                     && value_contents_eq (m_val, elt_off_prev, m_val, elt_off,
+                                           elt_type->length ()));
 
     if (repeated)
       m_nrepeats++;
     if (!repeated || last_p || m_elts + 1 == m_options->print_max)
       {
-	LONGEST nrepeats = m_nrepeats;
-	bool printed = false;
+        LONGEST nrepeats = m_nrepeats;
+        bool printed = false;
 
-	if (nrepeats != 0)
-	  {
-	    m_nrepeats = 0;
-	    if (nrepeats >= m_options->repeat_count_threshold)
-	      {
-		annotate_elt_rep (nrepeats + 1);
-		gdb_printf (m_stream, "%p[<repeats %s times>%p]",
-			    metadata_style.style ().ptr (),
-			    plongest (nrepeats + 1),
-			    nullptr);
-		annotate_elt_rep_end ();
-	      }
-	    else
-	      {
-		/* Extract the element value from the parent value.  */
-		struct value *e_val
-		  = value_from_component (m_val, elt_type, elt_off_prev);
+        if (nrepeats != 0)
+          {
+            m_nrepeats = 0;
+            if (nrepeats >= m_options->repeat_count_threshold)
+              {
+                annotate_elt_rep (nrepeats + 1);
+                gdb_printf (m_stream, "%p[<repeats %s times>%p]",
+                            metadata_style.style ().ptr (),
+                            plongest (nrepeats + 1), nullptr);
+                annotate_elt_rep_end ();
+              }
+            else
+              {
+                /* Extract the element value from the parent value.  */
+                struct value *e_val
+                  = value_from_component (m_val, elt_type, elt_off_prev);
 
-		for (LONGEST i = nrepeats; i > 0; i--)
-		  {
-		    maybe_print_array_index (m_stats[dim_indx].index_type,
-					     index - i + 1,
-					     m_stream, m_options);
-		    common_val_print (e_val, m_stream, m_recurse, m_options,
-				      current_language);
-		    if (i > 1)
-		      gdb_puts (", ", m_stream);
-		  }
-	      }
-	    printed = true;
-	  }
+                for (LONGEST i = nrepeats; i > 0; i--)
+                  {
+                    maybe_print_array_index (m_stats[dim_indx].index_type,
+                                             index - i + 1, m_stream,
+                                             m_options);
+                    common_val_print (e_val, m_stream, m_recurse, m_options,
+                                      current_language);
+                    if (i > 1)
+                      gdb_puts (", ", m_stream);
+                  }
+              }
+            printed = true;
+          }
 
-	if (!repeated)
-	  {
-	    /* Extract the element value from the parent value.  */
-	    struct value *e_val
-	      = value_from_component (m_val, elt_type, elt_off);
+        if (!repeated)
+          {
+            /* Extract the element value from the parent value.  */
+            struct value *e_val
+              = value_from_component (m_val, elt_type, elt_off);
 
-	    if (printed)
-	      gdb_puts (", ", m_stream);
-	    maybe_print_array_index (m_stats[dim_indx].index_type, index,
-				     m_stream, m_options);
-	    common_val_print (e_val, m_stream, m_recurse, m_options,
-			      current_language);
-	  }
-	if (!last_p)
-	  gdb_puts (", ", m_stream);
+            if (printed)
+              gdb_puts (", ", m_stream);
+            maybe_print_array_index (m_stats[dim_indx].index_type, index,
+                                     m_stream, m_options);
+            common_val_print (e_val, m_stream, m_recurse, m_options,
+                              current_language);
+          }
+        if (!last_p)
+          gdb_puts (", ", m_stream);
       }
 
     m_elt_type_prev = elt_type;
@@ -332,38 +327,36 @@ private:
      and OFFSET2 each.  Handle subarrays recursively, because they may
      have been sliced and we do not want to compare any memory contents
      present between the slices requested.  */
-  bool
-  dimension_contents_eq (const struct value *val, struct type *type,
-			 LONGEST offset1, LONGEST offset2)
+  bool dimension_contents_eq (const struct value *val, struct type *type,
+                              LONGEST offset1, LONGEST offset2)
   {
     if (type->code () == TYPE_CODE_ARRAY
-	&& type->target_type ()->code () != TYPE_CODE_CHAR)
+        && type->target_type ()->code () != TYPE_CODE_CHAR)
       {
-	/* Extract the range, and get lower and upper bounds.  */
-	struct type *range_type = check_typedef (type)->index_type ();
-	LONGEST lowerbound, upperbound;
-	if (!get_discrete_bounds (range_type, &lowerbound, &upperbound))
-	  error ("failed to get range bounds");
+        /* Extract the range, and get lower and upper bounds.  */
+        struct type *range_type = check_typedef (type)->index_type ();
+        LONGEST lowerbound, upperbound;
+        if (!get_discrete_bounds (range_type, &lowerbound, &upperbound))
+          error ("failed to get range bounds");
 
-	/* CALC is used to calculate the offsets for each element.  */
-	fortran_array_offset_calculator calc (type);
+        /* CALC is used to calculate the offsets for each element.  */
+        fortran_array_offset_calculator calc (type);
 
-	struct type *subarray_type = check_typedef (type->target_type ());
-	for (LONGEST i = lowerbound; i < upperbound + 1; i++)
-	  {
-	    /* Use the index and the stride to work out a new offset.  */
-	    LONGEST index_offset = calc.index_offset (i);
+        struct type *subarray_type = check_typedef (type->target_type ());
+        for (LONGEST i = lowerbound; i < upperbound + 1; i++)
+          {
+            /* Use the index and the stride to work out a new offset.  */
+            LONGEST index_offset = calc.index_offset (i);
 
-	    if (!dimension_contents_eq (val, subarray_type,
-					offset1 + index_offset,
-					offset2 + index_offset))
-	      return false;
-	  }
-	return true;
+            if (!dimension_contents_eq (val, subarray_type,
+                                        offset1 + index_offset,
+                                        offset2 + index_offset))
+              return false;
+          }
+        return true;
       }
     else
-      return value_contents_eq (val, offset1, val, offset2,
-				type->length ());
+      return value_contents_eq (val, offset1, val, offset2, type->length ());
   }
 
   /* The number of elements printed so far.  */
@@ -401,36 +394,28 @@ private:
 
 static void
 fortran_print_array (struct type *type, CORE_ADDR address,
-		     struct ui_file *stream, int recurse,
-		     const struct value *val,
-		     const struct value_print_options *options)
+                     struct ui_file *stream, int recurse,
+                     const struct value *val,
+                     const struct value_print_options *options)
 {
-  fortran_array_walker<fortran_array_printer_impl> p
-    (type, address, (struct value *) val, stream, recurse, options);
+  fortran_array_walker<fortran_array_printer_impl> p (type, address,
+                                                      (struct value *) val,
+                                                      stream, recurse,
+                                                      options);
   p.walk ();
 }
-
 
 /* Decorations for Fortran.  */
 
-static const struct generic_val_print_decorations f_decorations =
-{
-  "(",
-  ",",
-  ")",
-  ".TRUE.",
-  ".FALSE.",
-  "void",
-  "{",
-  "}"
-};
+static const struct generic_val_print_decorations f_decorations
+  = { "(", ",", ")", ".TRUE.", ".FALSE.", "void", "{", "}" };
 
 /* See f-lang.h.  */
 
 void
 f_language::value_print_inner (struct value *val, struct ui_file *stream,
-			       int recurse,
-			       const struct value_print_options *options) const
+                               int recurse,
+                               const struct value_print_options *options) const
 {
   struct type *type = check_typedef (value_type (val));
   struct gdbarch *gdbarch = type->arch ();
@@ -446,66 +431,63 @@ f_language::value_print_inner (struct value *val, struct ui_file *stream,
     case TYPE_CODE_STRING:
       f77_get_dynamic_length_of_aggregate (type);
       printstr (stream, builtin_type (gdbarch)->builtin_char, valaddr,
-		type->length (), NULL, 0, options);
+                type->length (), NULL, 0, options);
       break;
 
     case TYPE_CODE_ARRAY:
       if (type->target_type ()->code () != TYPE_CODE_CHAR)
-	fortran_print_array (type, address, stream, recurse, val, options);
+        fortran_print_array (type, address, stream, recurse, val, options);
       else
-	{
-	  struct type *ch_type = type->target_type ();
+        {
+          struct type *ch_type = type->target_type ();
 
-	  f77_get_dynamic_length_of_aggregate (type);
-	  printstr (stream, ch_type, valaddr,
-		    type->length () / ch_type->length (), NULL, 0,
-		    options);
-	}
+          f77_get_dynamic_length_of_aggregate (type);
+          printstr (stream, ch_type, valaddr,
+                    type->length () / ch_type->length (), NULL, 0, options);
+        }
       break;
 
     case TYPE_CODE_PTR:
       if (options->format && options->format != 's')
-	{
-	  value_print_scalar_formatted (val, options, 0, stream);
-	  break;
-	}
+        {
+          value_print_scalar_formatted (val, options, 0, stream);
+          break;
+        }
       else
-	{
-	  int want_space = 0;
+        {
+          int want_space = 0;
 
-	  addr = unpack_pointer (type, valaddr);
-	  elttype = check_typedef (type->target_type ());
+          addr = unpack_pointer (type, valaddr);
+          elttype = check_typedef (type->target_type ());
 
-	  if (elttype->code () == TYPE_CODE_FUNC)
-	    {
-	      /* Try to print what function it points to.  */
-	      print_function_pointer_address (options, gdbarch, addr, stream);
-	      return;
-	    }
+          if (elttype->code () == TYPE_CODE_FUNC)
+            {
+              /* Try to print what function it points to.  */
+              print_function_pointer_address (options, gdbarch, addr, stream);
+              return;
+            }
 
-	  if (options->symbol_print)
-	    want_space = print_address_demangle (options, gdbarch, addr,
-						 stream, demangle);
-	  else if (options->addressprint && options->format != 's')
-	    {
-	      gdb_puts (paddress (gdbarch, addr), stream);
-	      want_space = 1;
-	    }
+          if (options->symbol_print)
+            want_space = print_address_demangle (options, gdbarch, addr,
+                                                 stream, demangle);
+          else if (options->addressprint && options->format != 's')
+            {
+              gdb_puts (paddress (gdbarch, addr), stream);
+              want_space = 1;
+            }
 
-	  /* For a pointer to char or unsigned char, also print the string
+          /* For a pointer to char or unsigned char, also print the string
 	     pointed to, unless pointer is null.  */
-	  if (elttype->length () == 1
-	      && elttype->code () == TYPE_CODE_INT
-	      && (options->format == 0 || options->format == 's')
-	      && addr != 0)
-	    {
-	      if (want_space)
-		gdb_puts (" ", stream);
-	      val_print_string (type->target_type (), NULL, addr, -1,
-				stream, options);
-	    }
-	  return;
-	}
+          if (elttype->length () == 1 && elttype->code () == TYPE_CODE_INT
+              && (options->format == 0 || options->format == 's') && addr != 0)
+            {
+              if (want_space)
+                gdb_puts (" ", stream);
+              val_print_string (type->target_type (), NULL, addr, -1, stream,
+                                options);
+            }
+          return;
+        }
       break;
 
     case TYPE_CODE_STRUCT:
@@ -515,68 +497,69 @@ f_language::value_print_inner (struct value *val, struct ui_file *stream,
 	 types.  */
       gdb_printf (stream, "( ");
       for (index = 0; index < type->num_fields (); index++)
-	{
-	  struct type *field_type
-	    = check_typedef (type->field (index).type ());
+        {
+          struct type *field_type
+            = check_typedef (type->field (index).type ());
 
-	  if (field_type->code () != TYPE_CODE_FUNC)
-	    {
-	      const char *field_name = type->field (index).name ();
-	      struct value *field;
+          if (field_type->code () != TYPE_CODE_FUNC)
+            {
+              const char *field_name = type->field (index).name ();
+              struct value *field;
 
-	      if (type->code () == TYPE_CODE_NAMELIST)
-		{
-		  /* While printing namelist items, fetch the appropriate
+              if (type->code () == TYPE_CODE_NAMELIST)
+                {
+                  /* While printing namelist items, fetch the appropriate
 		     value field before printing its value.  */
-		  struct block_symbol sym
-		    = lookup_symbol (field_name, get_selected_block (nullptr),
-				     VAR_DOMAIN, nullptr);
-		  if (sym.symbol == nullptr)
-		    error (_("failed to find symbol for name list component %s"),
-			   field_name);
-		  field = value_of_variable (sym.symbol, sym.block);
-		}
-	      else
-		field = value_field (val, index);
+                  struct block_symbol sym
+                    = lookup_symbol (field_name, get_selected_block (nullptr),
+                                     VAR_DOMAIN, nullptr);
+                  if (sym.symbol == nullptr)
+                    error (
+                      _ ("failed to find symbol for name list component %s"),
+                      field_name);
+                  field = value_of_variable (sym.symbol, sym.block);
+                }
+              else
+                field = value_field (val, index);
 
-	      if (printed_field > 0)
-		gdb_puts (", ", stream);
+              if (printed_field > 0)
+                gdb_puts (", ", stream);
 
-	      if (field_name != NULL)
-		{
-		  fputs_styled (field_name, variable_name_style.style (),
-				stream);
-		  gdb_puts (" = ", stream);
-		}
+              if (field_name != NULL)
+                {
+                  fputs_styled (field_name, variable_name_style.style (),
+                                stream);
+                  gdb_puts (" = ", stream);
+                }
 
-	      common_val_print (field, stream, recurse + 1,
-				options, current_language);
+              common_val_print (field, stream, recurse + 1, options,
+                                current_language);
 
-	      ++printed_field;
-	    }
-	 }
+              ++printed_field;
+            }
+        }
       gdb_printf (stream, " )");
-      break;     
+      break;
 
     case TYPE_CODE_BOOL:
       if (options->format || options->output_format)
-	{
-	  struct value_print_options opts = *options;
-	  opts.format = (options->format ? options->format
-			 : options->output_format);
-	  value_print_scalar_formatted (val, &opts, 0, stream);
-	}
+        {
+          struct value_print_options opts = *options;
+          opts.format
+            = (options->format ? options->format : options->output_format);
+          value_print_scalar_formatted (val, &opts, 0, stream);
+        }
       else
-	{
-	  LONGEST longval = value_as_long (val);
-	  /* The Fortran standard doesn't specify how logical types are
+        {
+          LONGEST longval = value_as_long (val);
+          /* The Fortran standard doesn't specify how logical types are
 	     represented.  Different compilers use different non zero
 	     values to represent logical true.  */
-	  if (longval == 0)
-	    gdb_puts (f_decorations.false_name, stream);
-	  else
-	    gdb_puts (f_decorations.true_name, stream);
-	}
+          if (longval == 0)
+            gdb_puts (f_decorations.false_name, stream);
+          else
+            gdb_puts (f_decorations.true_name, stream);
+        }
       break;
 
     case TYPE_CODE_INT:
@@ -598,7 +581,7 @@ f_language::value_print_inner (struct value *val, struct ui_file *stream,
 
 static void
 info_common_command_for_block (const struct block *block, const char *comname,
-			       int *any_printed)
+                               int *any_printed)
 {
   struct block_iterator iter;
   struct symbol *sym;
@@ -609,47 +592,47 @@ info_common_command_for_block (const struct block *block, const char *comname,
   ALL_BLOCK_SYMBOLS (block, iter, sym)
     if (sym->domain () == COMMON_BLOCK_DOMAIN)
       {
-	const struct common_block *common = sym->value_common_block ();
-	size_t index;
+        const struct common_block *common = sym->value_common_block ();
+        size_t index;
 
-	gdb_assert (sym->aclass () == LOC_COMMON_BLOCK);
+        gdb_assert (sym->aclass () == LOC_COMMON_BLOCK);
 
-	if (comname && (!sym->linkage_name ()
-			|| strcmp (comname, sym->linkage_name ()) != 0))
-	  continue;
+        if (comname
+            && (!sym->linkage_name ()
+                || strcmp (comname, sym->linkage_name ()) != 0))
+          continue;
 
-	if (*any_printed)
-	  gdb_putc ('\n');
-	else
-	  *any_printed = 1;
-	if (sym->print_name ())
-	  gdb_printf (_("Contents of F77 COMMON block '%s':\n"),
-		      sym->print_name ());
-	else
-	  gdb_printf (_("Contents of blank COMMON block:\n"));
-	
-	for (index = 0; index < common->n_entries; index++)
-	  {
-	    struct value *val = NULL;
+        if (*any_printed)
+          gdb_putc ('\n');
+        else
+          *any_printed = 1;
+        if (sym->print_name ())
+          gdb_printf (_ ("Contents of F77 COMMON block '%s':\n"),
+                      sym->print_name ());
+        else
+          gdb_printf (_ ("Contents of blank COMMON block:\n"));
 
-	    gdb_printf ("%s = ",
-			common->contents[index]->print_name ());
+        for (index = 0; index < common->n_entries; index++)
+          {
+            struct value *val = NULL;
 
-	    try
-	      {
-		val = value_of_variable (common->contents[index], block);
-		value_print (val, gdb_stdout, &opts);
-	      }
+            gdb_printf ("%s = ", common->contents[index]->print_name ());
 
-	    catch (const gdb_exception_error &except)
-	      {
-		fprintf_styled (gdb_stdout, metadata_style.style (),
-				"<error reading variable: %s>",
-				except.what ());
-	      }
+            try
+              {
+                val = value_of_variable (common->contents[index], block);
+                value_print (val, gdb_stdout, &opts);
+              }
 
-	    gdb_putc ('\n');
-	  }
+            catch (const gdb_exception_error &except)
+              {
+                fprintf_styled (gdb_stdout, metadata_style.style (),
+                                "<error reading variable: %s>",
+                                except.what ());
+              }
+
+            gdb_putc ('\n');
+          }
       }
 }
 
@@ -669,7 +652,7 @@ info_common_command (const char *comname, int from_tty)
      first make sure that it is visible and if so, let 
      us display its contents.  */
 
-  fi = get_selected_frame (_("No frame selected"));
+  fi = get_selected_frame (_ ("No frame selected"));
 
   /* The following is generally ripped off from stack.c's routine 
      print_frame_info().  */
@@ -677,7 +660,7 @@ info_common_command (const char *comname, int from_tty)
   block = get_frame_block (fi, 0);
   if (block == NULL)
     {
-      gdb_printf (_("No symbol table info available.\n"));
+      gdb_printf (_ ("No symbol table info available.\n"));
       return;
     }
 
@@ -687,16 +670,16 @@ info_common_command (const char *comname, int from_tty)
       /* After handling the function's top-level block, stop.  Don't
 	 continue to its superblock, the block of per-file symbols.  */
       if (block->function ())
-	break;
+        break;
       block = block->superblock ();
     }
 
   if (!values_printed)
     {
       if (comname)
-	gdb_printf (_("No common block '%s'.\n"), comname);
+        gdb_printf (_ ("No common block '%s'.\n"), comname);
       else
-	gdb_printf (_("No common blocks.\n"));
+        gdb_printf (_ ("No common blocks.\n"));
     }
 }
 
@@ -705,5 +688,5 @@ void
 _initialize_f_valprint ()
 {
   add_info ("common", info_common_command,
-	    _("Print out the values contained in a Fortran COMMON block."));
+            _ ("Print out the values contained in a Fortran COMMON block."));
 }

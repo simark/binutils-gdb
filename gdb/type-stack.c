@@ -32,15 +32,14 @@ type_stack::insert (enum type_pieces tp)
   int slot;
 
   gdb_assert (tp == tp_pointer || tp == tp_reference
-	      || tp == tp_rvalue_reference || tp == tp_const
-	      || tp == tp_volatile || tp == tp_restrict
-	      || tp == tp_atomic);
+              || tp == tp_rvalue_reference || tp == tp_const
+              || tp == tp_volatile || tp == tp_restrict || tp == tp_atomic);
 
   /* If there is anything on the stack (we know it will be a
      tp_pointer), insert the qualifier above it.  Otherwise, simply
      push this on the top of the stack.  */
-  if (!m_elements.empty () && (tp == tp_const || tp == tp_volatile
-			       || tp == tp_restrict))
+  if (!m_elements.empty ()
+      && (tp == tp_const || tp == tp_volatile || tp == tp_restrict))
     slot = 1;
   else
     slot = 0;
@@ -68,8 +67,7 @@ type_stack::insert (struct expr_builder *pstate, const char *string)
   element.piece = tp_space_identifier;
   insert_into (slot, element);
   element.int_val
-    = address_space_name_to_type_instance_flags (pstate->gdbarch (),
-						 string);
+    = address_space_name_to_type_instance_flags (pstate->gdbarch (), string);
   insert_into (slot, element);
 }
 
@@ -84,21 +82,21 @@ type_stack::follow_type_instance_flags ()
     switch (pop ())
       {
       case tp_end:
-	return flags;
+        return flags;
       case tp_const:
-	flags |= TYPE_INSTANCE_FLAG_CONST;
-	break;
+        flags |= TYPE_INSTANCE_FLAG_CONST;
+        break;
       case tp_volatile:
-	flags |= TYPE_INSTANCE_FLAG_VOLATILE;
-	break;
+        flags |= TYPE_INSTANCE_FLAG_VOLATILE;
+        break;
       case tp_atomic:
-	flags |= TYPE_INSTANCE_FLAG_ATOMIC;
-	break;
+        flags |= TYPE_INSTANCE_FLAG_ATOMIC;
+        break;
       case tp_restrict:
-	flags |= TYPE_INSTANCE_FLAG_RESTRICT;
-	break;
+        flags |= TYPE_INSTANCE_FLAG_RESTRICT;
+        break;
       default:
-	gdb_assert_not_reached ("unrecognized tp_ value in follow_types");
+        gdb_assert_not_reached ("unrecognized tp_ value in follow_types");
       }
 }
 
@@ -119,87 +117,84 @@ type_stack::follow_types (struct type *follow_type)
     switch (pop ())
       {
       case tp_end:
-	done = 1;
-	goto process_qualifiers;
-	break;
+        done = 1;
+        goto process_qualifiers;
+        break;
       case tp_const:
-	make_const = 1;
-	break;
+        make_const = 1;
+        break;
       case tp_volatile:
-	make_volatile = 1;
-	break;
+        make_volatile = 1;
+        break;
       case tp_space_identifier:
-	make_addr_space = (enum type_instance_flag_value) pop_int ();
-	break;
+        make_addr_space = (enum type_instance_flag_value) pop_int ();
+        break;
       case tp_atomic:
-	make_atomic = true;
-	break;
+        make_atomic = true;
+        break;
       case tp_restrict:
-	make_restrict = true;
-	break;
+        make_restrict = true;
+        break;
       case tp_pointer:
-	follow_type = lookup_pointer_type (follow_type);
-	goto process_qualifiers;
+        follow_type = lookup_pointer_type (follow_type);
+        goto process_qualifiers;
       case tp_reference:
-	follow_type = lookup_lvalue_reference_type (follow_type);
-	goto process_qualifiers;
+        follow_type = lookup_lvalue_reference_type (follow_type);
+        goto process_qualifiers;
       case tp_rvalue_reference:
-	follow_type = lookup_rvalue_reference_type (follow_type);
+        follow_type = lookup_rvalue_reference_type (follow_type);
       process_qualifiers:
-	if (make_const)
-	  follow_type = make_cv_type (make_const,
-				      TYPE_VOLATILE (follow_type),
-				      follow_type, 0);
-	if (make_volatile)
-	  follow_type = make_cv_type (TYPE_CONST (follow_type),
-				      make_volatile,
-				      follow_type, 0);
-	if (make_addr_space)
-	  follow_type = make_type_with_address_space (follow_type,
-						      make_addr_space);
-	if (make_restrict)
-	  follow_type = make_restrict_type (follow_type);
-	if (make_atomic)
-	  follow_type = make_atomic_type (follow_type);
-	make_const = make_volatile = 0;
-	make_addr_space = 0;
-	make_restrict = make_atomic = false;
-	break;
+        if (make_const)
+          follow_type = make_cv_type (make_const, TYPE_VOLATILE (follow_type),
+                                      follow_type, 0);
+        if (make_volatile)
+          follow_type = make_cv_type (TYPE_CONST (follow_type), make_volatile,
+                                      follow_type, 0);
+        if (make_addr_space)
+          follow_type
+            = make_type_with_address_space (follow_type, make_addr_space);
+        if (make_restrict)
+          follow_type = make_restrict_type (follow_type);
+        if (make_atomic)
+          follow_type = make_atomic_type (follow_type);
+        make_const = make_volatile = 0;
+        make_addr_space = 0;
+        make_restrict = make_atomic = false;
+        break;
       case tp_array:
-	array_size = pop_int ();
-	/* FIXME-type-allocation: need a way to free this type when we are
+        array_size = pop_int ();
+        /* FIXME-type-allocation: need a way to free this type when we are
 	   done with it.  */
-	follow_type =
-	  lookup_array_range_type (follow_type,
-				   0, array_size >= 0 ? array_size - 1 : 0);
-	if (array_size < 0)
-	  follow_type->bounds ()->high.set_undefined ();
-	break;
+        follow_type
+          = lookup_array_range_type (follow_type, 0,
+                                     array_size >= 0 ? array_size - 1 : 0);
+        if (array_size < 0)
+          follow_type->bounds ()->high.set_undefined ();
+        break;
       case tp_function:
-	/* FIXME-type-allocation: need a way to free this type when we are
+        /* FIXME-type-allocation: need a way to free this type when we are
 	   done with it.  */
-	follow_type = lookup_function_type (follow_type);
-	break;
+        follow_type = lookup_function_type (follow_type);
+        break;
 
       case tp_function_with_arguments:
-	{
-	  std::vector<struct type *> *args = pop_typelist ();
+        {
+          std::vector<struct type *> *args = pop_typelist ();
 
-	  follow_type
-	    = lookup_function_type_with_arguments (follow_type,
-						   args->size (),
-						   args->data ());
-	}
-	break;
+          follow_type
+            = lookup_function_type_with_arguments (follow_type, args->size (),
+                                                   args->data ());
+        }
+        break;
 
       case tp_type_stack:
-	{
-	  struct type_stack *stack = pop_type_stack ();
-	  follow_type = stack->follow_types (follow_type);
-	}
-	break;
+        {
+          struct type_stack *stack = pop_type_stack ();
+          follow_type = stack->follow_types (follow_type);
+        }
+        break;
       default:
-	gdb_assert_not_reached ("unrecognized tp_ value in follow_types");
+        gdb_assert_not_reached ("unrecognized tp_ value in follow_types");
       }
   return follow_type;
 }

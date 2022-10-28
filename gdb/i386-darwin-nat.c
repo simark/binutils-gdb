@@ -67,102 +67,99 @@ i386_darwin_nat_target::fetch_registers (struct regcache *regcache, int regno)
   if (gdbarch_ptr_bit (gdbarch) == 64)
     {
       if (regno == -1 || amd64_native_gregset_supplies_p (gdbarch, regno))
-	{
-	  x86_thread_state_t gp_regs;
-	  unsigned int gp_count = x86_THREAD_STATE_COUNT;
-	  kern_return_t ret;
+        {
+          x86_thread_state_t gp_regs;
+          unsigned int gp_count = x86_THREAD_STATE_COUNT;
+          kern_return_t ret;
 
-	  ret = thread_get_state
-	    (current_thread, x86_THREAD_STATE, (thread_state_t) & gp_regs,
-	     &gp_count);
-	  if (ret != KERN_SUCCESS)
-	    {
-	      warning (_("Error calling thread_get_state for "
-			 "GP registers for thread 0x%lx\n"),
-		       (unsigned long) current_thread);
-	      MACH_CHECK_ERROR (ret);
-	    }
+          ret = thread_get_state (current_thread, x86_THREAD_STATE,
+                                  (thread_state_t) &gp_regs, &gp_count);
+          if (ret != KERN_SUCCESS)
+            {
+              warning (_ ("Error calling thread_get_state for "
+                          "GP registers for thread 0x%lx\n"),
+                       (unsigned long) current_thread);
+              MACH_CHECK_ERROR (ret);
+            }
 
-	  /* Some kernels don't sanitize the values.  */
-	  gp_regs.uts.ts64.__fs &= 0xffff;
-	  gp_regs.uts.ts64.__gs &= 0xffff;
+          /* Some kernels don't sanitize the values.  */
+          gp_regs.uts.ts64.__fs &= 0xffff;
+          gp_regs.uts.ts64.__gs &= 0xffff;
 
-	  amd64_supply_native_gregset (regcache, &gp_regs.uts, -1);
-	  fetched++;
-	}
+          amd64_supply_native_gregset (regcache, &gp_regs.uts, -1);
+          fetched++;
+        }
 
       if (regno == -1 || !amd64_native_gregset_supplies_p (gdbarch, regno))
-	{
-	  x86_float_state_t fp_regs;
-	  unsigned int fp_count = x86_FLOAT_STATE_COUNT;
-	  kern_return_t ret;
+        {
+          x86_float_state_t fp_regs;
+          unsigned int fp_count = x86_FLOAT_STATE_COUNT;
+          kern_return_t ret;
 
-	  ret = thread_get_state
-	    (current_thread, x86_FLOAT_STATE, (thread_state_t) & fp_regs,
-	     &fp_count);
-	  if (ret != KERN_SUCCESS)
-	    {
-	      warning (_("Error calling thread_get_state for "
-			 "float registers for thread 0x%lx\n"),
-		       (unsigned long) current_thread);
-	      MACH_CHECK_ERROR (ret);
-	    }
-	  amd64_supply_fxsave (regcache, -1, &fp_regs.ufs.fs64.__fpu_fcw);
-	  fetched++;
-	}
+          ret = thread_get_state (current_thread, x86_FLOAT_STATE,
+                                  (thread_state_t) &fp_regs, &fp_count);
+          if (ret != KERN_SUCCESS)
+            {
+              warning (_ ("Error calling thread_get_state for "
+                          "float registers for thread 0x%lx\n"),
+                       (unsigned long) current_thread);
+              MACH_CHECK_ERROR (ret);
+            }
+          amd64_supply_fxsave (regcache, -1, &fp_regs.ufs.fs64.__fpu_fcw);
+          fetched++;
+        }
     }
   else
 #endif
     {
       if (regno == -1 || regno < I386_NUM_GREGS)
-	{
-	  x86_thread_state32_t gp_regs;
-	  unsigned int gp_count = x86_THREAD_STATE32_COUNT;
-	  kern_return_t ret;
-	  int i;
+        {
+          x86_thread_state32_t gp_regs;
+          unsigned int gp_count = x86_THREAD_STATE32_COUNT;
+          kern_return_t ret;
+          int i;
 
-	  ret = thread_get_state
-	    (current_thread, x86_THREAD_STATE32, (thread_state_t) &gp_regs,
-	     &gp_count);
-	  if (ret != KERN_SUCCESS)
-	    {
-	      warning (_("Error calling thread_get_state for "
-			 "GP registers for thread 0x%lx\n"),
-		       (unsigned long) current_thread);
-	      MACH_CHECK_ERROR (ret);
-	    }
-	  for (i = 0; i < I386_NUM_GREGS; i++)
-	    regcache->raw_supply
-	      (i, (char *) &gp_regs + i386_darwin_thread_state_reg_offset[i]);
+          ret = thread_get_state (current_thread, x86_THREAD_STATE32,
+                                  (thread_state_t) &gp_regs, &gp_count);
+          if (ret != KERN_SUCCESS)
+            {
+              warning (_ ("Error calling thread_get_state for "
+                          "GP registers for thread 0x%lx\n"),
+                       (unsigned long) current_thread);
+              MACH_CHECK_ERROR (ret);
+            }
+          for (i = 0; i < I386_NUM_GREGS; i++)
+            regcache->raw_supply (i,
+                                  (char *) &gp_regs
+                                    + i386_darwin_thread_state_reg_offset[i]);
 
-	  fetched++;
-	}
+          fetched++;
+        }
 
       if (regno == -1
-	  || (regno >= I386_ST0_REGNUM && regno < I386_SSE_NUM_REGS))
-	{
-	  x86_float_state32_t fp_regs;
-	  unsigned int fp_count = x86_FLOAT_STATE32_COUNT;
-	  kern_return_t ret;
+          || (regno >= I386_ST0_REGNUM && regno < I386_SSE_NUM_REGS))
+        {
+          x86_float_state32_t fp_regs;
+          unsigned int fp_count = x86_FLOAT_STATE32_COUNT;
+          kern_return_t ret;
 
-	  ret = thread_get_state
-	    (current_thread, x86_FLOAT_STATE32, (thread_state_t) &fp_regs,
-	     &fp_count);
-	  if (ret != KERN_SUCCESS)
-	    {
-	      warning (_("Error calling thread_get_state for "
-			 "float registers for thread 0x%lx\n"),
-		       (unsigned long) current_thread);
-	      MACH_CHECK_ERROR (ret);
-	    }
-	  i387_supply_fxsave (regcache, -1, &fp_regs.__fpu_fcw);
-	  fetched++;
-	}
+          ret = thread_get_state (current_thread, x86_FLOAT_STATE32,
+                                  (thread_state_t) &fp_regs, &fp_count);
+          if (ret != KERN_SUCCESS)
+            {
+              warning (_ ("Error calling thread_get_state for "
+                          "float registers for thread 0x%lx\n"),
+                       (unsigned long) current_thread);
+              MACH_CHECK_ERROR (ret);
+            }
+          i387_supply_fxsave (regcache, -1, &fp_regs.__fpu_fcw);
+          fetched++;
+        }
     }
 
-  if (! fetched)
+  if (!fetched)
     {
-      warning (_("unknown register %d"), regno);
+      warning (_ ("unknown register %d"), regno);
       regcache->raw_supply (regno, NULL);
     }
 }
@@ -172,8 +169,7 @@ i386_darwin_nat_target::fetch_registers (struct regcache *regcache, int regno)
    Otherwise, REGNO specifies which register (so we can save time).  */
 
 void
-i386_darwin_nat_target::store_registers (struct regcache *regcache,
-					 int regno)
+i386_darwin_nat_target::store_registers (struct regcache *regcache, int regno)
 {
   thread_t current_thread = regcache->ptid ().tid ();
   struct gdbarch *gdbarch = regcache->arch ();
@@ -182,96 +178,93 @@ i386_darwin_nat_target::store_registers (struct regcache *regcache,
   if (gdbarch_ptr_bit (gdbarch) == 64)
     {
       if (regno == -1 || amd64_native_gregset_supplies_p (gdbarch, regno))
-	{
-	  x86_thread_state_t gp_regs;
-	  kern_return_t ret;
-	  unsigned int gp_count = x86_THREAD_STATE_COUNT;
+        {
+          x86_thread_state_t gp_regs;
+          kern_return_t ret;
+          unsigned int gp_count = x86_THREAD_STATE_COUNT;
 
-	  ret = thread_get_state
-	    (current_thread, x86_THREAD_STATE, (thread_state_t) &gp_regs,
-	     &gp_count);
-	  MACH_CHECK_ERROR (ret);
-	  gdb_assert (gp_regs.tsh.flavor == x86_THREAD_STATE64);
-	  gdb_assert (gp_regs.tsh.count == x86_THREAD_STATE64_COUNT);
+          ret = thread_get_state (current_thread, x86_THREAD_STATE,
+                                  (thread_state_t) &gp_regs, &gp_count);
+          MACH_CHECK_ERROR (ret);
+          gdb_assert (gp_regs.tsh.flavor == x86_THREAD_STATE64);
+          gdb_assert (gp_regs.tsh.count == x86_THREAD_STATE64_COUNT);
 
-	  amd64_collect_native_gregset (regcache, &gp_regs.uts, regno);
+          amd64_collect_native_gregset (regcache, &gp_regs.uts, regno);
 
-	  /* Some kernels don't sanitize the values.  */
-	  gp_regs.uts.ts64.__fs &= 0xffff;
-	  gp_regs.uts.ts64.__gs &= 0xffff;
+          /* Some kernels don't sanitize the values.  */
+          gp_regs.uts.ts64.__fs &= 0xffff;
+          gp_regs.uts.ts64.__gs &= 0xffff;
 
-	  ret = thread_set_state (current_thread, x86_THREAD_STATE,
-				  (thread_state_t) &gp_regs,
-				  x86_THREAD_STATE_COUNT);
-	  MACH_CHECK_ERROR (ret);
-	}
+          ret = thread_set_state (current_thread, x86_THREAD_STATE,
+                                  (thread_state_t) &gp_regs,
+                                  x86_THREAD_STATE_COUNT);
+          MACH_CHECK_ERROR (ret);
+        }
 
       if (regno == -1 || !amd64_native_gregset_supplies_p (gdbarch, regno))
-	{
-	  x86_float_state_t fp_regs;
-	  kern_return_t ret;
-	  unsigned int fp_count = x86_FLOAT_STATE_COUNT;
+        {
+          x86_float_state_t fp_regs;
+          kern_return_t ret;
+          unsigned int fp_count = x86_FLOAT_STATE_COUNT;
 
-	  ret = thread_get_state
-	    (current_thread, x86_FLOAT_STATE, (thread_state_t) & fp_regs,
-	     &fp_count);
-	  MACH_CHECK_ERROR (ret);
-	  gdb_assert (fp_regs.fsh.flavor == x86_FLOAT_STATE64);
-	  gdb_assert (fp_regs.fsh.count == x86_FLOAT_STATE64_COUNT);
+          ret = thread_get_state (current_thread, x86_FLOAT_STATE,
+                                  (thread_state_t) &fp_regs, &fp_count);
+          MACH_CHECK_ERROR (ret);
+          gdb_assert (fp_regs.fsh.flavor == x86_FLOAT_STATE64);
+          gdb_assert (fp_regs.fsh.count == x86_FLOAT_STATE64_COUNT);
 
-	  amd64_collect_fxsave (regcache, regno, &fp_regs.ufs.fs64.__fpu_fcw);
+          amd64_collect_fxsave (regcache, regno, &fp_regs.ufs.fs64.__fpu_fcw);
 
-	  ret = thread_set_state (current_thread, x86_FLOAT_STATE,
-				  (thread_state_t) & fp_regs,
-				  x86_FLOAT_STATE_COUNT);
-	  MACH_CHECK_ERROR (ret);
-	}
+          ret = thread_set_state (current_thread, x86_FLOAT_STATE,
+                                  (thread_state_t) &fp_regs,
+                                  x86_FLOAT_STATE_COUNT);
+          MACH_CHECK_ERROR (ret);
+        }
     }
   else
 #endif
     {
       if (regno == -1 || regno < I386_NUM_GREGS)
-	{
-	  x86_thread_state32_t gp_regs;
-	  kern_return_t ret;
-	  unsigned int gp_count = x86_THREAD_STATE32_COUNT;
-	  int i;
+        {
+          x86_thread_state32_t gp_regs;
+          kern_return_t ret;
+          unsigned int gp_count = x86_THREAD_STATE32_COUNT;
+          int i;
 
-	  ret = thread_get_state
-	    (current_thread, x86_THREAD_STATE32, (thread_state_t) &gp_regs,
-	     &gp_count);
-	  MACH_CHECK_ERROR (ret);
+          ret = thread_get_state (current_thread, x86_THREAD_STATE32,
+                                  (thread_state_t) &gp_regs, &gp_count);
+          MACH_CHECK_ERROR (ret);
 
-	  for (i = 0; i < I386_NUM_GREGS; i++)
-	    if (regno == -1 || regno == i)
-	      regcache->raw_collect
-		(i, (char *) &gp_regs + i386_darwin_thread_state_reg_offset[i]);
+          for (i = 0; i < I386_NUM_GREGS; i++)
+            if (regno == -1 || regno == i)
+              regcache
+                ->raw_collect (i, (char *) &gp_regs
+                                    + i386_darwin_thread_state_reg_offset[i]);
 
-	  ret = thread_set_state (current_thread, x86_THREAD_STATE32,
-				  (thread_state_t) &gp_regs,
-				  x86_THREAD_STATE32_COUNT);
-	  MACH_CHECK_ERROR (ret);
-	}
+          ret = thread_set_state (current_thread, x86_THREAD_STATE32,
+                                  (thread_state_t) &gp_regs,
+                                  x86_THREAD_STATE32_COUNT);
+          MACH_CHECK_ERROR (ret);
+        }
 
       if (regno == -1
-	  || (regno >= I386_ST0_REGNUM && regno < I386_SSE_NUM_REGS))
-	{
-	  x86_float_state32_t fp_regs;
-	  unsigned int fp_count = x86_FLOAT_STATE32_COUNT;
-	  kern_return_t ret;
+          || (regno >= I386_ST0_REGNUM && regno < I386_SSE_NUM_REGS))
+        {
+          x86_float_state32_t fp_regs;
+          unsigned int fp_count = x86_FLOAT_STATE32_COUNT;
+          kern_return_t ret;
 
-	  ret = thread_get_state
-	    (current_thread, x86_FLOAT_STATE32, (thread_state_t) & fp_regs,
-	     &fp_count);
-	  MACH_CHECK_ERROR (ret);
+          ret = thread_get_state (current_thread, x86_FLOAT_STATE32,
+                                  (thread_state_t) &fp_regs, &fp_count);
+          MACH_CHECK_ERROR (ret);
 
-	  i387_collect_fxsave (regcache, regno, &fp_regs.__fpu_fcw);
+          i387_collect_fxsave (regcache, regno, &fp_regs.__fpu_fcw);
 
-	  ret = thread_set_state (current_thread, x86_FLOAT_STATE32,
-				  (thread_state_t) &fp_regs,
-				  x86_FLOAT_STATE32_COUNT);
-	  MACH_CHECK_ERROR (ret);
-	}
+          ret = thread_set_state (current_thread, x86_FLOAT_STATE32,
+                                  (thread_state_t) &fp_regs,
+                                  x86_FLOAT_STATE32_COUNT);
+          MACH_CHECK_ERROR (ret);
+        }
     }
 }
 
@@ -293,75 +286,75 @@ i386_darwin_dr_set (int regnum, CORE_ADDR value)
   dr_regs.dsh.count = x86_DEBUG_STATE_COUNT;
   dr_count = x86_DEBUG_STATE_COUNT;
   ret = thread_get_state (current_thread, x86_DEBUG_STATE,
-			  (thread_state_t) &dr_regs, &dr_count);
+                          (thread_state_t) &dr_regs, &dr_count);
   MACH_CHECK_ERROR (ret);
 
   switch (dr_regs.dsh.flavor)
     {
     case x86_DEBUG_STATE32:
       switch (regnum)
-	{
-	case 0:
-	  dr_regs.uds.ds32.__dr0 = value;
-	  break;
-	case 1:
-	  dr_regs.uds.ds32.__dr1 = value;
-	  break;
-	case 2:
-	  dr_regs.uds.ds32.__dr2 = value;
-	  break;
-	case 3:
-	  dr_regs.uds.ds32.__dr3 = value;
-	  break;
-	case 4:
-	  dr_regs.uds.ds32.__dr4 = value;
-	  break;
-	case 5:
-	  dr_regs.uds.ds32.__dr5 = value;
-	  break;
-	case 6:
-	  dr_regs.uds.ds32.__dr6 = value;
-	  break;
-	case 7:
-	  dr_regs.uds.ds32.__dr7 = value;
-	  break;
-	}
+        {
+        case 0:
+          dr_regs.uds.ds32.__dr0 = value;
+          break;
+        case 1:
+          dr_regs.uds.ds32.__dr1 = value;
+          break;
+        case 2:
+          dr_regs.uds.ds32.__dr2 = value;
+          break;
+        case 3:
+          dr_regs.uds.ds32.__dr3 = value;
+          break;
+        case 4:
+          dr_regs.uds.ds32.__dr4 = value;
+          break;
+        case 5:
+          dr_regs.uds.ds32.__dr5 = value;
+          break;
+        case 6:
+          dr_regs.uds.ds32.__dr6 = value;
+          break;
+        case 7:
+          dr_regs.uds.ds32.__dr7 = value;
+          break;
+        }
       break;
 #ifdef BFD64
     case x86_DEBUG_STATE64:
       switch (regnum)
-	{
-	case 0:
-	  dr_regs.uds.ds64.__dr0 = value;
-	  break;
-	case 1:
-	  dr_regs.uds.ds64.__dr1 = value;
-	  break;
-	case 2:
-	  dr_regs.uds.ds64.__dr2 = value;
-	  break;
-	case 3:
-	  dr_regs.uds.ds64.__dr3 = value;
-	  break;
-	case 4:
-	  dr_regs.uds.ds64.__dr4 = value;
-	  break;
-	case 5:
-	  dr_regs.uds.ds64.__dr5 = value;
-	  break;
-	case 6:
-	  dr_regs.uds.ds64.__dr6 = value;
-	  break;
-	case 7:
-	  dr_regs.uds.ds64.__dr7 = value;
-	  break;
-	}
+        {
+        case 0:
+          dr_regs.uds.ds64.__dr0 = value;
+          break;
+        case 1:
+          dr_regs.uds.ds64.__dr1 = value;
+          break;
+        case 2:
+          dr_regs.uds.ds64.__dr2 = value;
+          break;
+        case 3:
+          dr_regs.uds.ds64.__dr3 = value;
+          break;
+        case 4:
+          dr_regs.uds.ds64.__dr4 = value;
+          break;
+        case 5:
+          dr_regs.uds.ds64.__dr5 = value;
+          break;
+        case 6:
+          dr_regs.uds.ds64.__dr6 = value;
+          break;
+        case 7:
+          dr_regs.uds.ds64.__dr7 = value;
+          break;
+        }
       break;
 #endif
     }
 
   ret = thread_set_state (current_thread, dr_regs.dsh.flavor,
-			  (thread_state_t) &dr_regs.uds, dr_count);
+                          (thread_state_t) &dr_regs.uds, dr_count);
 
   MACH_CHECK_ERROR (ret);
 }
@@ -382,57 +375,57 @@ i386_darwin_dr_get (int regnum)
   dr_regs.dsh.count = x86_DEBUG_STATE_COUNT;
   dr_count = x86_DEBUG_STATE_COUNT;
   ret = thread_get_state (current_thread, x86_DEBUG_STATE,
-			  (thread_state_t) &dr_regs, &dr_count);
+                          (thread_state_t) &dr_regs, &dr_count);
   MACH_CHECK_ERROR (ret);
 
   switch (dr_regs.dsh.flavor)
     {
     case x86_DEBUG_STATE32:
       switch (regnum)
-	{
-	case 0:
-	  return dr_regs.uds.ds32.__dr0;
-	case 1:
-	  return dr_regs.uds.ds32.__dr1;
-	case 2:
-	  return dr_regs.uds.ds32.__dr2;
-	case 3:
-	  return dr_regs.uds.ds32.__dr3;
-	case 4:
-	  return dr_regs.uds.ds32.__dr4;
-	case 5:
-	  return dr_regs.uds.ds32.__dr5;
-	case 6:
-	  return dr_regs.uds.ds32.__dr6;
-	case 7:
-	  return dr_regs.uds.ds32.__dr7;
-	default:
-	  return -1;
-	}
+        {
+        case 0:
+          return dr_regs.uds.ds32.__dr0;
+        case 1:
+          return dr_regs.uds.ds32.__dr1;
+        case 2:
+          return dr_regs.uds.ds32.__dr2;
+        case 3:
+          return dr_regs.uds.ds32.__dr3;
+        case 4:
+          return dr_regs.uds.ds32.__dr4;
+        case 5:
+          return dr_regs.uds.ds32.__dr5;
+        case 6:
+          return dr_regs.uds.ds32.__dr6;
+        case 7:
+          return dr_regs.uds.ds32.__dr7;
+        default:
+          return -1;
+        }
       break;
 #ifdef BFD64
     case x86_DEBUG_STATE64:
       switch (regnum)
-	{
-	case 0:
-	  return dr_regs.uds.ds64.__dr0;
-	case 1:
-	  return dr_regs.uds.ds64.__dr1;
-	case 2:
-	  return dr_regs.uds.ds64.__dr2;
-	case 3:
-	  return dr_regs.uds.ds64.__dr3;
-	case 4:
-	  return dr_regs.uds.ds64.__dr4;
-	case 5:
-	  return dr_regs.uds.ds64.__dr5;
-	case 6:
-	  return dr_regs.uds.ds64.__dr6;
-	case 7:
-	  return dr_regs.uds.ds64.__dr7;
-	default:
-	  return -1;
-	}
+        {
+        case 0:
+          return dr_regs.uds.ds64.__dr0;
+        case 1:
+          return dr_regs.uds.ds64.__dr1;
+        case 2:
+          return dr_regs.uds.ds64.__dr2;
+        case 3:
+          return dr_regs.uds.ds64.__dr3;
+        case 4:
+          return dr_regs.uds.ds64.__dr4;
+        case 5:
+          return dr_regs.uds.ds64.__dr5;
+        case 6:
+          return dr_regs.uds.ds64.__dr6;
+        case 7:
+          return dr_regs.uds.ds64.__dr7;
+        default:
+          return -1;
+        }
       break;
 #endif
     default:
@@ -483,23 +476,22 @@ darwin_check_osabi (darwin_inferior *inf, thread_t thread)
       kern_return_t ret;
 
       ret = thread_get_state (thread, x86_THREAD_STATE,
-			      (thread_state_t) &gp_regs, &gp_count);
+                              (thread_state_t) &gp_regs, &gp_count);
       if (ret != KERN_SUCCESS)
-	{
-	  MACH_CHECK_ERROR (ret);
-	  return;
-	}
+        {
+          MACH_CHECK_ERROR (ret);
+          return;
+        }
 
       gdbarch_info info;
       gdbarch_info_fill (&info);
       info.byte_order = gdbarch_byte_order (target_gdbarch ());
       info.osabi = GDB_OSABI_DARWIN;
       if (gp_regs.tsh.flavor == x86_THREAD_STATE64)
-	info.bfd_arch_info = bfd_lookup_arch (bfd_arch_i386,
-					      bfd_mach_x86_64);
+        info.bfd_arch_info = bfd_lookup_arch (bfd_arch_i386, bfd_mach_x86_64);
       else
-	info.bfd_arch_info = bfd_lookup_arch (bfd_arch_i386,
-					      bfd_mach_i386_i386);
+        info.bfd_arch_info
+          = bfd_lookup_arch (bfd_arch_i386, bfd_mach_i386_i386);
       gdbarch_update_p (info);
     }
 }
@@ -530,10 +522,9 @@ i386_darwin_sstep_at_sigreturn (x86_thread_state_t *regs)
       ULONGEST flags_addr;
       unsigned int eflags;
 
-      uctx_addr = read_memory_unsigned_integer
-		    (regs->uts.ts32.__esp + 4, 4, byte_order);
-      mctx_addr = read_memory_unsigned_integer
-		    (uctx_addr + 28, 4, byte_order);
+      uctx_addr = read_memory_unsigned_integer (regs->uts.ts32.__esp + 4, 4,
+                                                byte_order);
+      mctx_addr = read_memory_unsigned_integer (uctx_addr + 28, 4, byte_order);
 
       flags_addr = mctx_addr + 12 + 9 * 4;
       read_memory (flags_addr, (gdb_byte *) &eflags, 4);
@@ -562,8 +553,8 @@ amd64_darwin_sstep_at_sigreturn (x86_thread_state_t *regs)
       ULONGEST flags_addr;
       unsigned int rflags;
 
-      mctx_addr = read_memory_unsigned_integer
-		    (regs->uts.ts64.__rdi + 48, 8, byte_order);
+      mctx_addr = read_memory_unsigned_integer (regs->uts.ts64.__rdi + 48, 8,
+                                                byte_order);
       flags_addr = mctx_addr + 16 + 17 * 8;
 
       /* AMD64 is little endian.  */
@@ -584,12 +575,11 @@ darwin_set_sstep (thread_t thread, int enable)
   unsigned int count = x86_THREAD_STATE_COUNT;
   kern_return_t kret;
 
-  kret = thread_get_state (thread, x86_THREAD_STATE,
-			   (thread_state_t) &regs, &count);
+  kret = thread_get_state (thread, x86_THREAD_STATE, (thread_state_t) &regs,
+                           &count);
   if (kret != KERN_SUCCESS)
     {
-      warning (_("darwin_set_sstep: error %x, thread=%x\n"),
-	       kret, thread);
+      warning (_ ("darwin_set_sstep: error %x, thread=%x\n"), kret, thread);
       return;
     }
 
@@ -597,38 +587,38 @@ darwin_set_sstep (thread_t thread, int enable)
     {
     case x86_THREAD_STATE32:
       {
-	__uint32_t bit = enable ? X86_EFLAGS_T : 0;
+        __uint32_t bit = enable ? X86_EFLAGS_T : 0;
 
-	if (enable && i386_darwin_sstep_at_sigreturn (&regs))
-	  return;
-	if ((regs.uts.ts32.__eflags & X86_EFLAGS_T) == bit)
-	  return;
-	regs.uts.ts32.__eflags
-	  = (regs.uts.ts32.__eflags & ~X86_EFLAGS_T) | bit;
-	kret = thread_set_state (thread, x86_THREAD_STATE,
-				 (thread_state_t) &regs, count);
-	MACH_CHECK_ERROR (kret);
+        if (enable && i386_darwin_sstep_at_sigreturn (&regs))
+          return;
+        if ((regs.uts.ts32.__eflags & X86_EFLAGS_T) == bit)
+          return;
+        regs.uts.ts32.__eflags
+          = (regs.uts.ts32.__eflags & ~X86_EFLAGS_T) | bit;
+        kret = thread_set_state (thread, x86_THREAD_STATE,
+                                 (thread_state_t) &regs, count);
+        MACH_CHECK_ERROR (kret);
       }
       break;
 #ifdef BFD64
     case x86_THREAD_STATE64:
       {
-	__uint64_t bit = enable ? X86_EFLAGS_T : 0;
+        __uint64_t bit = enable ? X86_EFLAGS_T : 0;
 
-	if (enable && amd64_darwin_sstep_at_sigreturn (&regs))
-	  return;
-	if ((regs.uts.ts64.__rflags & X86_EFLAGS_T) == bit)
-	  return;
-	regs.uts.ts64.__rflags
-	  = (regs.uts.ts64.__rflags & ~X86_EFLAGS_T) | bit;
-	kret = thread_set_state (thread, x86_THREAD_STATE,
-				 (thread_state_t) &regs, count);
-	MACH_CHECK_ERROR (kret);
+        if (enable && amd64_darwin_sstep_at_sigreturn (&regs))
+          return;
+        if ((regs.uts.ts64.__rflags & X86_EFLAGS_T) == bit)
+          return;
+        regs.uts.ts64.__rflags
+          = (regs.uts.ts64.__rflags & ~X86_EFLAGS_T) | bit;
+        kret = thread_set_state (thread, x86_THREAD_STATE,
+                                 (thread_state_t) &regs, count);
+        MACH_CHECK_ERROR (kret);
       }
       break;
 #endif
     default:
-      error (_("darwin_set_sstep: unknown flavour: %d"), regs.tsh.flavor);
+      error (_ ("darwin_set_sstep: unknown flavour: %d"), regs.tsh.flavor);
     }
 }
 

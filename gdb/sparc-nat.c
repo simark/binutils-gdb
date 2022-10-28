@@ -53,7 +53,7 @@
 #ifdef HAVE_STRUCT_REG
 typedef struct reg gregset_t;
 typedef struct fpreg fpregset_t;
-#else 
+#else
 typedef struct regs gregset_t;
 typedef struct fp_status fpregset_t;
 #endif
@@ -94,14 +94,14 @@ gdb_ptrace (PTRACE_TYPE_ARG1 request, ptid_t ptid, PTRACE_TYPE_ARG3 addr)
 /* Register set description.  */
 const struct sparc_gregmap *sparc_gregmap;
 const struct sparc_fpregmap *sparc_fpregmap;
-void (*sparc_supply_gregset) (const struct sparc_gregmap *,
-			      struct regcache *, int , const void *);
+void (*sparc_supply_gregset) (const struct sparc_gregmap *, struct regcache *,
+                              int, const void *);
 void (*sparc_collect_gregset) (const struct sparc_gregmap *,
-			       const struct regcache *, int, void *);
+                               const struct regcache *, int, void *);
 void (*sparc_supply_fpregset) (const struct sparc_fpregmap *,
-			       struct regcache *, int , const void *);
+                               struct regcache *, int, const void *);
 void (*sparc_collect_fpregset) (const struct sparc_fpregmap *,
-				const struct regcache *, int , void *);
+                                const struct regcache *, int, void *);
 int (*sparc_gregset_supplies_p) (struct gdbarch *, int);
 int (*sparc_fpregset_supplies_p) (struct gdbarch *, int);
 
@@ -118,10 +118,8 @@ sparc32_gregset_supplies_p (struct gdbarch *gdbarch, int regnum)
     return 1;
 
   /* Control registers.  */
-  if (regnum == SPARC32_PC_REGNUM
-      || regnum == SPARC32_NPC_REGNUM
-      || regnum == SPARC32_PSR_REGNUM
-      || regnum == SPARC32_Y_REGNUM)
+  if (regnum == SPARC32_PC_REGNUM || regnum == SPARC32_NPC_REGNUM
+      || regnum == SPARC32_PSR_REGNUM || regnum == SPARC32_Y_REGNUM)
     return 1;
 
   return 0;
@@ -148,7 +146,7 @@ sparc32_fpregset_supplies_p (struct gdbarch *gdbarch, int regnum)
 
 void
 sparc_fetch_inferior_registers (process_stratum_target *proc_target,
-				regcache *regcache, int regnum)
+                                regcache *regcache, int regnum)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   ptid_t ptid = regcache->ptid ();
@@ -166,24 +164,25 @@ sparc_fetch_inferior_registers (process_stratum_target *proc_target,
       gregset_t regs;
 
       if (gdb_ptrace (PTRACE_GETREGS, ptid, (PTRACE_TYPE_ARG3) &regs) == -1)
-	perror_with_name (_("Couldn't get registers"));
+        perror_with_name (_ ("Couldn't get registers"));
 
       /* Deep down, sparc_supply_rwindow reads memory, so needs the global
 	 thread context to be set.  */
       scoped_restore restore_inferior_ptid
-	= make_scoped_restore (&inferior_ptid, ptid);
+        = make_scoped_restore (&inferior_ptid, ptid);
 
       sparc_supply_gregset (sparc_gregmap, regcache, -1, &regs);
       if (regnum != -1)
-	return;
+        return;
     }
 
   if (regnum == -1 || sparc_fpregset_supplies_p (gdbarch, regnum))
     {
       fpregset_t fpregs;
 
-      if (gdb_ptrace (PTRACE_GETFPREGS, ptid, (PTRACE_TYPE_ARG3) &fpregs) == -1)
-	perror_with_name (_("Couldn't get floating point status"));
+      if (gdb_ptrace (PTRACE_GETFPREGS, ptid, (PTRACE_TYPE_ARG3) &fpregs)
+          == -1)
+        perror_with_name (_ ("Couldn't get floating point status"));
 
       sparc_supply_fpregset (sparc_fpregmap, regcache, -1, &fpregs);
     }
@@ -191,7 +190,7 @@ sparc_fetch_inferior_registers (process_stratum_target *proc_target,
 
 void
 sparc_store_inferior_registers (process_stratum_target *proc_target,
-				regcache *regcache, int regnum)
+                                regcache *regcache, int regnum)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   ptid_t ptid = regcache->ptid ();
@@ -201,39 +200,40 @@ sparc_store_inferior_registers (process_stratum_target *proc_target,
       gregset_t regs;
 
       if (gdb_ptrace (PTRACE_GETREGS, ptid, (PTRACE_TYPE_ARG3) &regs) == -1)
-	perror_with_name (_("Couldn't get registers"));
+        perror_with_name (_ ("Couldn't get registers"));
 
       sparc_collect_gregset (sparc_gregmap, regcache, regnum, &regs);
 
       if (gdb_ptrace (PTRACE_SETREGS, ptid, (PTRACE_TYPE_ARG3) &regs) == -1)
-	perror_with_name (_("Couldn't write registers"));
+        perror_with_name (_ ("Couldn't write registers"));
 
       /* Deal with the stack regs.  */
       if (regnum == -1 || regnum == SPARC_SP_REGNUM
-	  || (regnum >= SPARC_L0_REGNUM && regnum <= SPARC_I7_REGNUM))
-	{
-	  ULONGEST sp;
+          || (regnum >= SPARC_L0_REGNUM && regnum <= SPARC_I7_REGNUM))
+        {
+          ULONGEST sp;
 
-	  regcache_cooked_read_unsigned (regcache, SPARC_SP_REGNUM, &sp);
+          regcache_cooked_read_unsigned (regcache, SPARC_SP_REGNUM, &sp);
 
-	  /* Deep down, sparc_collect_rwindow writes memory, so needs the global
+          /* Deep down, sparc_collect_rwindow writes memory, so needs the global
 	     thread context to be set.  */
-	  scoped_restore restore_inferior_ptid
-	    = make_scoped_restore (&inferior_ptid, ptid);
+          scoped_restore restore_inferior_ptid
+            = make_scoped_restore (&inferior_ptid, ptid);
 
-	  sparc_collect_rwindow (regcache, sp, regnum);
-	}
+          sparc_collect_rwindow (regcache, sp, regnum);
+        }
 
       if (regnum != -1)
-	return;
+        return;
     }
 
   if (regnum == -1 || sparc_fpregset_supplies_p (gdbarch, regnum))
     {
       fpregset_t fpregs, saved_fpregs;
 
-      if (gdb_ptrace (PTRACE_GETFPREGS, ptid, (PTRACE_TYPE_ARG3) &fpregs) == -1)
-	perror_with_name (_("Couldn't get floating-point registers"));
+      if (gdb_ptrace (PTRACE_GETFPREGS, ptid, (PTRACE_TYPE_ARG3) &fpregs)
+          == -1)
+        perror_with_name (_ ("Couldn't get floating-point registers"));
 
       memcpy (&saved_fpregs, &fpregs, sizeof (fpregs));
       sparc_collect_fpregset (sparc_fpregmap, regcache, regnum, &fpregs);
@@ -243,35 +243,33 @@ sparc_store_inferior_registers (process_stratum_target *proc_target,
 	 (i.e. if it didn't use the FPU yet).  Therefore we don't try
 	 to write the registers if nothing changed.  */
       if (memcmp (&saved_fpregs, &fpregs, sizeof (fpregs)) != 0)
-	{
-	  if (gdb_ptrace (PTRACE_SETFPREGS, ptid,
-			  (PTRACE_TYPE_ARG3) &fpregs) == -1)
-	    perror_with_name (_("Couldn't write floating-point registers"));
-	}
+        {
+          if (gdb_ptrace (PTRACE_SETFPREGS, ptid, (PTRACE_TYPE_ARG3) &fpregs)
+              == -1)
+            perror_with_name (_ ("Couldn't write floating-point registers"));
+        }
 
       if (regnum != -1)
-	return;
+        return;
     }
 }
 
-
 /* Implement the to_xfer_partial target_ops method for
    TARGET_OBJECT_WCOOKIE.  Fetch StackGhost Per-Process XOR cookie.  */
 
 enum target_xfer_status
-sparc_xfer_wcookie (enum target_object object,
-		    const char *annex, gdb_byte *readbuf,
-		    const gdb_byte *writebuf, ULONGEST offset, ULONGEST len,
-		    ULONGEST *xfered_len)
+sparc_xfer_wcookie (enum target_object object, const char *annex,
+                    gdb_byte *readbuf, const gdb_byte *writebuf,
+                    ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
   unsigned long wcookie = 0;
-  char *buf = (char *)&wcookie;
+  char *buf = (char *) &wcookie;
 
   gdb_assert (object == TARGET_OBJECT_WCOOKIE);
   gdb_assert (readbuf && writebuf == NULL);
 
   if (offset == sizeof (unsigned long))
-    return TARGET_XFER_EOF;			/* Signal EOF.  */
+    return TARGET_XFER_EOF; /* Signal EOF.  */
   if (offset > sizeof (unsigned long))
     return TARGET_XFER_E_IO;
 
@@ -291,14 +289,14 @@ sparc_xfer_wcookie (enum target_object object,
     /* Fetch the cookie.  */
     if (ptrace (PT_WCOOKIE, pid, (PTRACE_TYPE_ARG3) &wcookie, 0) == -1)
       {
-	if (errno != EINVAL)
-	  perror_with_name (_("Couldn't get StackGhost cookie"));
+        if (errno != EINVAL)
+          perror_with_name (_ ("Couldn't get StackGhost cookie"));
 
-	/* Although PT_WCOOKIE is defined on OpenBSD 3.1 and later,
+        /* Although PT_WCOOKIE is defined on OpenBSD 3.1 and later,
 	   the request wasn't implemented until after OpenBSD 3.4.  If
 	   the kernel doesn't support the PT_WCOOKIE request, assume
 	   we're running on a kernel that uses non-randomized cookies.  */
-	wcookie = 0x3;
+        wcookie = 0x3;
       }
   }
 #endif /* PT_WCOOKIE */
@@ -310,7 +308,6 @@ sparc_xfer_wcookie (enum target_object object,
   *xfered_len = (ULONGEST) len;
   return TARGET_XFER_OK;
 }
-
 
 void _initialize_sparc_nat ();
 void

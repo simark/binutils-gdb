@@ -38,9 +38,9 @@ static int pipe_open (struct serial *scb, const char *name);
 static void pipe_close (struct serial *scb);
 
 struct pipe_state
-  {
-    int pid;
-  };
+{
+  int pid;
+};
 
 /* Open up a raw pipe.  */
 
@@ -82,7 +82,7 @@ pipe_open (struct serial *scb, const char *name)
      fork() due to the fact that autoconf will ``#define vfork fork''
      on certain platforms.  */
   pid = vfork ();
-  
+
   /* Error.  */
   if (pid == -1)
     {
@@ -107,7 +107,7 @@ pipe_open (struct serial *scb, const char *name)
 #ifdef HAVE_SETSID
       pid_t sid = setsid ();
       if (sid == -1)
-	signal (SIGINT, SIG_IGN);
+        signal (SIGINT, SIG_IGN);
 #else
       signal (SIGINT, SIG_IGN);
 #endif
@@ -115,18 +115,18 @@ pipe_open (struct serial *scb, const char *name)
       /* Re-wire pdes[1] to stdin/stdout.  */
       close (pdes[0]);
       if (pdes[1] != STDOUT_FILENO)
-	{
-	  dup2 (pdes[1], STDOUT_FILENO);
-	  close (pdes[1]);
-	}
+        {
+          dup2 (pdes[1], STDOUT_FILENO);
+          close (pdes[1]);
+        }
       dup2 (STDOUT_FILENO, STDIN_FILENO);
 
       if (err_pdes[0] != -1)
-	{
-	  close (err_pdes[0]);
-	  dup2 (err_pdes[1], STDERR_FILENO);
-	  close (err_pdes[1]);
-	}
+        {
+          close (err_pdes[0]);
+          dup2 (err_pdes[1], STDERR_FILENO);
+          close (err_pdes[1]);
+        }
 
       close_most_fds ();
 
@@ -175,19 +175,19 @@ pipe_close (struct serial *scb)
 
       wait_result = -1;
 #ifdef HAVE_WAITPID
-      wait_result = wait_to_die_with_timeout (state->pid, &status,
-					      PIPE_CLOSE_TIMEOUT);
+      wait_result
+        = wait_to_die_with_timeout (state->pid, &status, PIPE_CLOSE_TIMEOUT);
 #endif
       if (wait_result == -1)
-	{
-	  kill (state->pid, SIGTERM);
+        {
+          kill (state->pid, SIGTERM);
 #ifdef HAVE_WAITPID
-	  wait_to_die_with_timeout (state->pid, &status, SIGTERM_TIMEOUT);
+          wait_to_die_with_timeout (state->pid, &status, SIGTERM_TIMEOUT);
 #endif
-	}
+        }
 
       if (scb->error_fd != -1)
-	close (scb->error_fd);
+        close (scb->error_fd);
       scb->error_fd = -1;
       xfree (state);
       scb->state = NULL;
@@ -212,30 +212,27 @@ gdb_pipe (int pdes[2])
 #endif
 }
 
-static const struct serial_ops pipe_ops =
-{
-  "pipe",
-  pipe_open,
-  pipe_close,
-  NULL,
-  ser_base_readchar,
-  ser_base_write,
-  ser_base_flush_output,
-  ser_base_flush_input,
-  ser_base_send_break,
-  ser_base_raw,
-  ser_base_get_tty_state,
-  ser_base_copy_tty_state,
-  ser_base_set_tty_state,
-  ser_base_print_tty_state,
-  ser_base_setbaudrate,
-  ser_base_setstopbits,
-  ser_base_setparity,
-  ser_base_drain_output,
-  ser_base_async,
-  ser_unix_read_prim,
-  ser_unix_write_prim
-};
+static const struct serial_ops pipe_ops = { "pipe",
+                                            pipe_open,
+                                            pipe_close,
+                                            NULL,
+                                            ser_base_readchar,
+                                            ser_base_write,
+                                            ser_base_flush_output,
+                                            ser_base_flush_input,
+                                            ser_base_send_break,
+                                            ser_base_raw,
+                                            ser_base_get_tty_state,
+                                            ser_base_copy_tty_state,
+                                            ser_base_set_tty_state,
+                                            ser_base_print_tty_state,
+                                            ser_base_setbaudrate,
+                                            ser_base_setstopbits,
+                                            ser_base_setparity,
+                                            ser_base_drain_output,
+                                            ser_base_async,
+                                            ser_unix_read_prim,
+                                            ser_unix_write_prim };
 
 void _initialize_ser_pipe ();
 void

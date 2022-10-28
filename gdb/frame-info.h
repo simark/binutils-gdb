@@ -44,40 +44,32 @@ class frame_info_ptr : public intrusive_list_node<frame_info_ptr>
 {
 public:
   /* Create a frame_info_ptr from a raw pointer.  */
-  explicit frame_info_ptr (struct frame_info *ptr)
-    : m_ptr (ptr)
+  explicit frame_info_ptr (struct frame_info *ptr) : m_ptr (ptr)
   {
     frame_list.push_back (*this);
   }
 
   /* Create a null frame_info_ptr.  */
-  frame_info_ptr ()
-  {
-    frame_list.push_back (*this);
-  }
+  frame_info_ptr () { frame_list.push_back (*this); }
 
-  frame_info_ptr (std::nullptr_t)
-  {
-    frame_list.push_back (*this);
-  }
+  frame_info_ptr (std::nullptr_t) { frame_list.push_back (*this); }
 
   frame_info_ptr (const frame_info_ptr &other)
-    : m_ptr (other.m_ptr), m_cached_id (other.m_cached_id)
+    : m_ptr (other.m_ptr),
+      m_cached_id (other.m_cached_id)
   {
     frame_list.push_back (*this);
   }
 
   frame_info_ptr (frame_info_ptr &&other)
-    : m_ptr (other.m_ptr), m_cached_id (other.m_cached_id)
+    : m_ptr (other.m_ptr),
+      m_cached_id (other.m_cached_id)
   {
     other.m_ptr = nullptr;
     frame_list.push_back (*this);
   }
 
-  ~frame_info_ptr ()
-  {
-    frame_list.erase (frame_list.iterator_to (*this));
-  }
+  ~frame_info_ptr () { frame_list.erase (frame_list.iterator_to (*this)); }
 
   frame_info_ptr &operator= (const frame_info_ptr &other)
   {
@@ -102,43 +94,25 @@ public:
     return *this;
   }
 
-  frame_info *operator-> () const
-  {
-    return m_ptr;
-  }
+  frame_info *operator->() const { return m_ptr; }
 
   /* Fetch the underlying pointer.  Note that new code should
      generally not use this -- avoid it if at all possible.  */
-  frame_info *get () const
-  {
-    return m_ptr;
-  }
+  frame_info *get () const { return m_ptr; }
 
   /* This exists for compatibility with pre-existing code that checked
      a "frame_info *" using "!".  */
-  bool operator! () const
-  {
-    return m_ptr == nullptr;
-  }
+  bool operator!() const { return m_ptr == nullptr; }
 
   /* This exists for compatibility with pre-existing code that checked
      a "frame_info *" like "if (ptr)".  */
-  explicit operator bool () const
-  {
-    return m_ptr != nullptr;
-  }
+  explicit operator bool () const { return m_ptr != nullptr; }
 
   /* Invalidate this pointer.  */
-  void invalidate ()
-  {
-    m_ptr = nullptr;
-  }
+  void invalidate () { m_ptr = nullptr; }
 
   /* Cache the frame_id that the pointer will use to reinflate.  */
-  void prepare_reinflate ()
-  {
-    m_cached_id = get_frame_id (*this);
-  }
+  void prepare_reinflate () { m_cached_id = get_frame_id (*this); }
 
   /* Use the cached frame_id to reinflate the pointer.  */
   void reinflate ()
@@ -151,7 +125,6 @@ public:
   }
 
 private:
-
   /* The underlying pointer.  */
   frame_info *m_ptr = nullptr;
 

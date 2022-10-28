@@ -75,11 +75,8 @@ x86_linux_nat_target::low_new_fork (struct lwp_info *parent, pid_t child_pid)
   child_state = x86_debug_reg_state (child_pid);
   *child_state = *parent_state;
 }
-
 
-x86_linux_nat_target::~x86_linux_nat_target ()
-{
-}
+x86_linux_nat_target::~x86_linux_nat_target () {}
 
 /* Implement the virtual inf_ptrace_target::post_startup_inferior method.  */
 
@@ -124,24 +121,24 @@ x86_linux_nat_target::read_description ()
 
     /* Get CS register.  */
     errno = 0;
-    cs = ptrace (PTRACE_PEEKUSER, tid,
-		 offsetof (struct user_regs_struct, cs), 0);
+    cs = ptrace (PTRACE_PEEKUSER, tid, offsetof (struct user_regs_struct, cs),
+                 0);
     if (errno != 0)
-      perror_with_name (_("Couldn't get CS register"));
+      perror_with_name (_ ("Couldn't get CS register"));
 
     is_64bit = cs == AMD64_LINUX_USER64_CS;
 
     /* Get DS register.  */
     errno = 0;
-    ds = ptrace (PTRACE_PEEKUSER, tid,
-		 offsetof (struct user_regs_struct, ds), 0);
+    ds = ptrace (PTRACE_PEEKUSER, tid, offsetof (struct user_regs_struct, ds),
+                 0);
     if (errno != 0)
-      perror_with_name (_("Couldn't get DS register"));
+      perror_with_name (_ ("Couldn't get DS register"));
 
     is_x32 = ds == AMD64_LINUX_X32_DS;
 
     if (sizeof (void *) == 4 && is_64bit && !is_x32)
-      error (_("Can't debug 64-bit process with 32-bit GDB"));
+      error (_ ("Can't debug 64-bit process with 32-bit GDB"));
   }
 #elif HAVE_PTRACE_GETFPXREGS
   if (have_ptrace_getfpxregs == -1)
@@ -149,11 +146,11 @@ x86_linux_nat_target::read_description ()
       elf_fpxregset_t fpxregs;
 
       if (ptrace (PTRACE_GETFPXREGS, tid, 0, (int) &fpxregs) < 0)
-	{
-	  have_ptrace_getfpxregs = 0;
-	  have_ptrace_getregset = TRIBOOL_FALSE;
-	  return i386_linux_read_description (X86_XSTATE_X87_MASK);
-	}
+        {
+          have_ptrace_getfpxregs = 0;
+          have_ptrace_getregset = TRIBOOL_FALSE;
+          return i386_linux_read_description (X86_XSTATE_X87_MASK);
+        }
     }
 #endif
 
@@ -166,17 +163,17 @@ x86_linux_nat_target::read_description ()
       iov.iov_len = sizeof (xstateregs);
 
       /* Check if PTRACE_GETREGSET works.  */
-      if (ptrace (PTRACE_GETREGSET, tid,
-		  (unsigned int) NT_X86_XSTATE, &iov) < 0)
-	have_ptrace_getregset = TRIBOOL_FALSE;
+      if (ptrace (PTRACE_GETREGSET, tid, (unsigned int) NT_X86_XSTATE, &iov)
+          < 0)
+        have_ptrace_getregset = TRIBOOL_FALSE;
       else
-	{
-	  have_ptrace_getregset = TRIBOOL_TRUE;
+        {
+          have_ptrace_getregset = TRIBOOL_TRUE;
 
-	  /* Get XCR0 from XSAVE extended state.  */
-	  xcr0 = xstateregs[(I386_LINUX_XSAVE_XCR0_OFFSET
-			     / sizeof (uint64_t))];
-	}
+          /* Get XCR0 from XSAVE extended state.  */
+          xcr0
+            = xstateregs[(I386_LINUX_XSAVE_XCR0_OFFSET / sizeof (uint64_t))];
+        }
     }
 
   /* Check the native XCR0 only if PTRACE_GETREGSET is available.  If
@@ -196,24 +193,23 @@ x86_linux_nat_target::read_description ()
     }
   else
     {
-      const struct target_desc * tdesc
-	= i386_linux_read_description (xcr0_features_bits);
+      const struct target_desc *tdesc
+        = i386_linux_read_description (xcr0_features_bits);
 
       if (tdesc == NULL)
-	tdesc = i386_linux_read_description (X86_XSTATE_SSE_MASK);
+        tdesc = i386_linux_read_description (X86_XSTATE_SSE_MASK);
 
       return tdesc;
     }
 
   gdb_assert_not_reached ("failed to return tdesc");
 }
-
 
 /* Enable branch tracing.  */
 
 struct btrace_target_info *
 x86_linux_nat_target::enable_btrace (thread_info *tp,
-				     const struct btrace_config *conf)
+                                     const struct btrace_config *conf)
 {
   struct btrace_target_info *tinfo = nullptr;
   ptid_t ptid = tp->ptid;
@@ -223,8 +219,8 @@ x86_linux_nat_target::enable_btrace (thread_info *tp,
     }
   catch (const gdb_exception_error &exception)
     {
-      error (_("Could not enable branch tracing for %s: %s"),
-	     target_pid_to_str (ptid).c_str (), exception.what ());
+      error (_ ("Could not enable branch tracing for %s: %s"),
+             target_pid_to_str (ptid).c_str (), exception.what ());
     }
 
   return tinfo;
@@ -238,7 +234,7 @@ x86_linux_nat_target::disable_btrace (struct btrace_target_info *tinfo)
   enum btrace_error errcode = linux_disable_btrace (tinfo);
 
   if (errcode != BTRACE_ERR_NONE)
-    error (_("Could not disable branch tracing."));
+    error (_ ("Could not disable branch tracing."));
 }
 
 /* Teardown branch tracing.  */
@@ -252,8 +248,8 @@ x86_linux_nat_target::teardown_btrace (struct btrace_target_info *tinfo)
 
 enum btrace_error
 x86_linux_nat_target::read_btrace (struct btrace_data *data,
-				   struct btrace_target_info *btinfo,
-				   enum btrace_read_type type)
+                                   struct btrace_target_info *btinfo,
+                                   enum btrace_read_type type)
 {
   return linux_read_btrace (data, btinfo, type);
 }
@@ -265,8 +261,6 @@ x86_linux_nat_target::btrace_conf (const struct btrace_target_info *btinfo)
 {
   return linux_btrace_conf (btinfo);
 }
-
-
 
 /* Helper for ps_get_thread_area.  Sets BASE_ADDR to a pointer to
    the thread local storage (or its descriptor) and returns PS_OK
@@ -308,7 +302,6 @@ x86_linux_get_thread_area (pid_t pid, void *addr, unsigned int *base_addr)
   *base_addr = desc[1];
   return PS_OK;
 }
-
 
 void _initialize_x86_linux_nat ();
 void

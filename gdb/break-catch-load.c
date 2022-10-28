@@ -36,24 +36,22 @@
 struct solib_catchpoint : public catchpoint
 {
   solib_catchpoint (struct gdbarch *gdbarch, bool temp,
-		    const char *cond_string,
-		    bool is_load_, const char *arg)
+                    const char *cond_string, bool is_load_, const char *arg)
     : catchpoint (gdbarch, temp, cond_string),
       is_load (is_load_),
       regex (arg == nullptr ? nullptr : make_unique_xstrdup (arg)),
       compiled (arg == nullptr
-		? nullptr
-		: new compiled_regex (arg, REG_NOSUB, _("Invalid regexp")))
+                  ? nullptr
+                  : new compiled_regex (arg, REG_NOSUB, _ ("Invalid regexp")))
   {
   }
 
   int insert_location (struct bp_location *) override;
   int remove_location (struct bp_location *,
-		       enum remove_bp_reason reason) override;
+                       enum remove_bp_reason reason) override;
   int breakpoint_hit (const struct bp_location *bl,
-		      const address_space *aspace,
-		      CORE_ADDR bp_addr,
-		      const target_waitstatus &ws) override;
+                      const address_space *aspace, CORE_ADDR bp_addr,
+                      const target_waitstatus &ws) override;
   void check_status (struct bpstat *bs) override;
   enum print_stop_action print_it (const bpstat *bs) const override;
   bool print_one (bp_location **) const override;
@@ -77,16 +75,16 @@ solib_catchpoint::insert_location (struct bp_location *ignore)
 
 int
 solib_catchpoint::remove_location (struct bp_location *ignore,
-				   enum remove_bp_reason reason)
+                                   enum remove_bp_reason reason)
 {
   return 0;
 }
 
 int
 solib_catchpoint::breakpoint_hit (const struct bp_location *bl,
-				  const address_space *aspace,
-				  CORE_ADDR bp_addr,
-				  const target_waitstatus &ws)
+                                  const address_space *aspace,
+                                  CORE_ADDR bp_addr,
+                                  const target_waitstatus &ws)
 {
   if (ws.kind () == TARGET_WAITKIND_LOADED)
     return 1;
@@ -94,19 +92,19 @@ solib_catchpoint::breakpoint_hit (const struct bp_location *bl,
   for (breakpoint *other : all_breakpoints ())
     {
       if (other == bl->owner)
-	continue;
+        continue;
 
       if (other->type != bp_shlib_event)
-	continue;
+        continue;
 
       if (pspace != NULL && other->pspace != pspace)
-	continue;
+        continue;
 
       for (bp_location *other_bl : other->locations ())
-	{
-	  if (other->breakpoint_hit (other_bl, aspace, bp_addr, ws))
-	    return 1;
-	}
+        {
+          if (other->breakpoint_hit (other_bl, aspace, bp_addr, ws))
+            return 1;
+        }
     }
 
   return 0;
@@ -118,20 +116,18 @@ solib_catchpoint::check_status (struct bpstat *bs)
   if (is_load)
     {
       for (so_list *iter : current_program_space->added_solibs)
-	{
-	  if (!regex
-	      || compiled->exec (iter->so_name, 0, NULL, 0) == 0)
-	    return;
-	}
+        {
+          if (!regex || compiled->exec (iter->so_name, 0, NULL, 0) == 0)
+            return;
+        }
     }
   else
     {
       for (const std::string &iter : current_program_space->deleted_solibs)
-	{
-	  if (!regex
-	      || compiled->exec (iter.c_str (), 0, NULL, 0) == 0)
-	    return;
-	}
+        {
+          if (!regex || compiled->exec (iter.c_str (), 0, NULL, 0) == 0)
+            return;
+        }
     }
 
   bs->stop = 0;
@@ -179,18 +175,17 @@ solib_catchpoint::print_one (bp_location **locs) const
   if (is_load)
     {
       if (regex)
-	msg = string_printf (_("load of library matching %s"),
-			     regex.get ());
+        msg = string_printf (_ ("load of library matching %s"), regex.get ());
       else
-	msg = _("load of library");
+        msg = _ ("load of library");
     }
   else
     {
       if (regex)
-	msg = string_printf (_("unload of library matching %s"),
-			     regex.get ());
+        msg
+          = string_printf (_ ("unload of library matching %s"), regex.get ());
       else
-	msg = _("unload of library");
+        msg = _ ("unload of library");
     }
   uiout->field_string ("what", msg);
 
@@ -203,16 +198,14 @@ solib_catchpoint::print_one (bp_location **locs) const
 void
 solib_catchpoint::print_mention () const
 {
-  gdb_printf (_("Catchpoint %d (%s)"), number,
-	      is_load ? "load" : "unload");
+  gdb_printf (_ ("Catchpoint %d (%s)"), number, is_load ? "load" : "unload");
 }
 
 void
 solib_catchpoint::print_recreate (struct ui_file *fp) const
 {
-  gdb_printf (fp, "%s %s",
-	      disposition == disp_del ? "tcatch" : "catch",
-	      is_load ? "load" : "unload");
+  gdb_printf (fp, "%s %s", disposition == disp_del ? "tcatch" : "catch",
+              is_load ? "load" : "unload");
   if (regex)
     gdb_printf (fp, " %s", regex.get ());
   gdb_printf (fp, "\n");
@@ -221,7 +214,8 @@ solib_catchpoint::print_recreate (struct ui_file *fp) const
 /* See breakpoint.h.  */
 
 void
-add_solib_catchpoint (const char *arg, bool is_load, bool is_temp, bool enabled)
+add_solib_catchpoint (const char *arg, bool is_load, bool is_temp,
+                      bool enabled)
 {
   struct gdbarch *gdbarch = get_current_arch ();
 
@@ -231,9 +225,8 @@ add_solib_catchpoint (const char *arg, bool is_load, bool is_temp, bool enabled)
   if (*arg == '\0')
     arg = nullptr;
 
-  std::unique_ptr<solib_catchpoint> c (new solib_catchpoint (gdbarch, is_temp,
-							     nullptr,
-							     is_load, arg));
+  std::unique_ptr<solib_catchpoint> c (
+    new solib_catchpoint (gdbarch, is_temp, nullptr, is_load, arg));
 
   c->enable_state = enabled ? bp_enabled : bp_disabled;
 
@@ -245,7 +238,7 @@ add_solib_catchpoint (const char *arg, bool is_load, bool is_temp, bool enabled)
 
 static void
 catch_load_or_unload (const char *arg, int from_tty, int is_load,
-		      struct cmd_list_element *command)
+                      struct cmd_list_element *command)
 {
   const int enabled = 1;
   bool temp = command->context () == CATCH_TEMPORARY;
@@ -255,14 +248,14 @@ catch_load_or_unload (const char *arg, int from_tty, int is_load,
 
 static void
 catch_load_command_1 (const char *arg, int from_tty,
-		      struct cmd_list_element *command)
+                      struct cmd_list_element *command)
 {
   catch_load_or_unload (arg, from_tty, 1, command);
 }
 
 static void
 catch_unload_command_1 (const char *arg, int from_tty,
-			struct cmd_list_element *command)
+                        struct cmd_list_element *command)
 {
   catch_load_or_unload (arg, from_tty, 0, command);
 }
@@ -271,18 +264,14 @@ void _initialize_break_catch_load ();
 void
 _initialize_break_catch_load ()
 {
-  add_catch_command ("load", _("Catch loads of shared libraries.\n\
+  add_catch_command ("load", _ ("Catch loads of shared libraries.\n\
 Usage: catch load [REGEX]\n\
 If REGEX is given, only stop for libraries matching the regular expression."),
-		     catch_load_command_1,
-		     NULL,
-		     CATCH_PERMANENT,
-		     CATCH_TEMPORARY);
-  add_catch_command ("unload", _("Catch unloads of shared libraries.\n\
+                     catch_load_command_1, NULL, CATCH_PERMANENT,
+                     CATCH_TEMPORARY);
+  add_catch_command ("unload", _ ("Catch unloads of shared libraries.\n\
 Usage: catch unload [REGEX]\n\
 If REGEX is given, only stop for libraries matching the regular expression."),
-		     catch_unload_command_1,
-		     NULL,
-		     CATCH_PERMANENT,
-		     CATCH_TEMPORARY);
+                     catch_unload_command_1, NULL, CATCH_PERMANENT,
+                     CATCH_TEMPORARY);
 }

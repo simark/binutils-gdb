@@ -109,11 +109,7 @@ public:
   /* A range adapter that makes it possible to iterate over all
      psymtabs in one objfile.  */
 
-  partial_symtab_range range ()
-  {
-    return partial_symtab_range (psymtabs);
-  }
-
+  partial_symtab_range range () { return partial_symtab_range (psymtabs); }
 
   /* Each objfile points to a linked list of partial symtabs derived from
      this file, one partial symtab structure for each compilation unit
@@ -127,7 +123,6 @@ public:
   psymbol_bcache psymbol_cache;
 
 private:
-
   /* The obstack where allocations are made.  This is lazily allocated
      so that we don't waste memory when there are no psymtabs.  */
 

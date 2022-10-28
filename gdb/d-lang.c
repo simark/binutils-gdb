@@ -62,19 +62,17 @@ d_demangle (const char *symbol, int options)
 class d_language : public language_defn
 {
 public:
-  d_language ()
-    : language_defn (language_d)
-  { /* Nothing.  */ }
+  d_language () : language_defn (language_d)
+  { /* Nothing.  */
+  }
 
   /* See language.h.  */
 
-  const char *name () const override
-  { return "d"; }
+  const char *name () const override { return "d"; }
 
   /* See language.h.  */
 
-  const char *natural_name () const override
-  { return "D"; }
+  const char *natural_name () const override { return "D"; }
 
   /* See language.h.  */
 
@@ -86,15 +84,12 @@ public:
 
   /* See language.h.  */
   void language_arch_info (struct gdbarch *gdbarch,
-			   struct language_arch_info *lai) const override
+                           struct language_arch_info *lai) const override
   {
     const struct builtin_d_type *builtin = builtin_d_type (gdbarch);
 
     /* Helper function to allow shorter lines below.  */
-    auto add  = [&] (struct type * t)
-    {
-      lai->add_primitive_type (t);
-    };
+    auto add = [&] (struct type *t) { lai->add_primitive_type (t); };
 
     add (builtin->builtin_void);
     add (builtin->builtin_bool);
@@ -126,9 +121,9 @@ public:
   }
 
   /* See language.h.  */
-  bool sniff_from_mangled_name
-       (const char *mangled,
-	gdb::unique_xmalloc_ptr<char> *demangled) const override
+  bool sniff_from_mangled_name (
+    const char *mangled,
+    gdb::unique_xmalloc_ptr<char> *demangled) const override
   {
     *demangled = d_demangle (mangled, 0);
     return *demangled != NULL;
@@ -137,7 +132,7 @@ public:
   /* See language.h.  */
 
   gdb::unique_xmalloc_ptr<char> demangle_symbol (const char *mangled,
-						 int options) const override
+                                                 int options) const override
   {
     return d_demangle (mangled, options);
   }
@@ -145,41 +140,37 @@ public:
   /* See language.h.  */
 
   void print_type (struct type *type, const char *varstring,
-		   struct ui_file *stream, int show, int level,
-		   const struct type_print_options *flags) const override
+                   struct ui_file *stream, int show, int level,
+                   const struct type_print_options *flags) const override
   {
     c_print_type (type, varstring, stream, show, level, la_language, flags);
   }
 
   /* See language.h.  */
 
-  void value_print_inner
-	(struct value *val, struct ui_file *stream, int recurse,
-	 const struct value_print_options *options) const override
+  void
+  value_print_inner (struct value *val, struct ui_file *stream, int recurse,
+                     const struct value_print_options *options) const override
   {
     return d_value_print_inner (val, stream, recurse, options);
   }
 
   /* See language.h.  */
 
-  struct block_symbol lookup_symbol_nonlocal
-	(const char *name, const struct block *block,
-	 const domain_enum domain) const override
+  struct block_symbol
+  lookup_symbol_nonlocal (const char *name, const struct block *block,
+                          const domain_enum domain) const override
   {
     return d_lookup_symbol_nonlocal (this, name, block, domain);
   }
 
   /* See language.h.  */
 
-  int parser (struct parser_state *ps) const override
-  {
-    return d_parse (ps);
-  }
+  int parser (struct parser_state *ps) const override { return d_parse (ps); }
 
   /* See language.h.  */
 
-  const char *name_of_this () const override
-  { return "this"; }
+  const char *name_of_this () const override { return "this"; }
 };
 
 /* Single instance of the D language class.  */
@@ -196,56 +187,46 @@ build_d_types (struct gdbarch *gdbarch)
   /* Basic types.  */
   builtin_d_type->builtin_void
     = arch_type (gdbarch, TYPE_CODE_VOID, TARGET_CHAR_BIT, "void");
-  builtin_d_type->builtin_bool
-    = arch_boolean_type (gdbarch, 8, 1, "bool");
-  builtin_d_type->builtin_byte
-    = arch_integer_type (gdbarch, 8, 0, "byte");
-  builtin_d_type->builtin_ubyte
-    = arch_integer_type (gdbarch, 8, 1, "ubyte");
-  builtin_d_type->builtin_short
-    = arch_integer_type (gdbarch, 16, 0, "short");
+  builtin_d_type->builtin_bool = arch_boolean_type (gdbarch, 8, 1, "bool");
+  builtin_d_type->builtin_byte = arch_integer_type (gdbarch, 8, 0, "byte");
+  builtin_d_type->builtin_ubyte = arch_integer_type (gdbarch, 8, 1, "ubyte");
+  builtin_d_type->builtin_short = arch_integer_type (gdbarch, 16, 0, "short");
   builtin_d_type->builtin_ushort
     = arch_integer_type (gdbarch, 16, 1, "ushort");
-  builtin_d_type->builtin_int
-    = arch_integer_type (gdbarch, 32, 0, "int");
-  builtin_d_type->builtin_uint
-    = arch_integer_type (gdbarch, 32, 1, "uint");
-  builtin_d_type->builtin_long
-    = arch_integer_type (gdbarch, 64, 0, "long");
-  builtin_d_type->builtin_ulong
-    = arch_integer_type (gdbarch, 64, 1, "ulong");
-  builtin_d_type->builtin_cent
-    = arch_integer_type (gdbarch, 128, 0, "cent");
-  builtin_d_type->builtin_ucent
-    = arch_integer_type (gdbarch, 128, 1, "ucent");
+  builtin_d_type->builtin_int = arch_integer_type (gdbarch, 32, 0, "int");
+  builtin_d_type->builtin_uint = arch_integer_type (gdbarch, 32, 1, "uint");
+  builtin_d_type->builtin_long = arch_integer_type (gdbarch, 64, 0, "long");
+  builtin_d_type->builtin_ulong = arch_integer_type (gdbarch, 64, 1, "ulong");
+  builtin_d_type->builtin_cent = arch_integer_type (gdbarch, 128, 0, "cent");
+  builtin_d_type->builtin_ucent = arch_integer_type (gdbarch, 128, 1, "ucent");
   builtin_d_type->builtin_float
-    = arch_float_type (gdbarch, gdbarch_float_bit (gdbarch),
-		       "float", gdbarch_float_format (gdbarch));
+    = arch_float_type (gdbarch, gdbarch_float_bit (gdbarch), "float",
+                       gdbarch_float_format (gdbarch));
   builtin_d_type->builtin_double
-    = arch_float_type (gdbarch, gdbarch_double_bit (gdbarch),
-		       "double", gdbarch_double_format (gdbarch));
+    = arch_float_type (gdbarch, gdbarch_double_bit (gdbarch), "double",
+                       gdbarch_double_format (gdbarch));
   builtin_d_type->builtin_real
-    = arch_float_type (gdbarch, gdbarch_long_double_bit (gdbarch),
-		       "real", gdbarch_long_double_format (gdbarch));
+    = arch_float_type (gdbarch, gdbarch_long_double_bit (gdbarch), "real",
+                       gdbarch_long_double_format (gdbarch));
 
-  builtin_d_type->builtin_byte->set_instance_flags
-    (builtin_d_type->builtin_byte->instance_flags ()
-     | TYPE_INSTANCE_FLAG_NOTTEXT);
+  builtin_d_type->builtin_byte->set_instance_flags (
+    builtin_d_type->builtin_byte->instance_flags ()
+    | TYPE_INSTANCE_FLAG_NOTTEXT);
 
-  builtin_d_type->builtin_ubyte->set_instance_flags
-    (builtin_d_type->builtin_ubyte->instance_flags ()
-     | TYPE_INSTANCE_FLAG_NOTTEXT);
+  builtin_d_type->builtin_ubyte->set_instance_flags (
+    builtin_d_type->builtin_ubyte->instance_flags ()
+    | TYPE_INSTANCE_FLAG_NOTTEXT);
 
   /* Imaginary and complex types.  */
   builtin_d_type->builtin_ifloat
-    = arch_float_type (gdbarch, gdbarch_float_bit (gdbarch),
-		       "ifloat", gdbarch_float_format (gdbarch));
+    = arch_float_type (gdbarch, gdbarch_float_bit (gdbarch), "ifloat",
+                       gdbarch_float_format (gdbarch));
   builtin_d_type->builtin_idouble
-    = arch_float_type (gdbarch, gdbarch_double_bit (gdbarch),
-		       "idouble", gdbarch_double_format (gdbarch));
+    = arch_float_type (gdbarch, gdbarch_double_bit (gdbarch), "idouble",
+                       gdbarch_double_format (gdbarch));
   builtin_d_type->builtin_ireal
-    = arch_float_type (gdbarch, gdbarch_long_double_bit (gdbarch),
-		       "ireal", gdbarch_long_double_format (gdbarch));
+    = arch_float_type (gdbarch, gdbarch_long_double_bit (gdbarch), "ireal",
+                       gdbarch_long_double_format (gdbarch));
   builtin_d_type->builtin_cfloat
     = init_complex_type ("cfloat", builtin_d_type->builtin_float);
   builtin_d_type->builtin_cdouble
@@ -254,8 +235,7 @@ build_d_types (struct gdbarch *gdbarch)
     = init_complex_type ("creal", builtin_d_type->builtin_real);
 
   /* Character types.  */
-  builtin_d_type->builtin_char
-    = arch_character_type (gdbarch, 8, 1, "char");
+  builtin_d_type->builtin_char = arch_character_type (gdbarch, 8, 1, "char");
   builtin_d_type->builtin_wchar
     = arch_character_type (gdbarch, 16, 1, "wchar");
   builtin_d_type->builtin_dchar

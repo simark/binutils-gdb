@@ -29,14 +29,12 @@
 #include "source.h"
 #include "objfiles.h"
 #include "source-cache.h"
-
 
 /* Prototypes for local functions.  */
 
 static void print_value_flags (struct type *);
 
 static void breakpoint_changed (struct breakpoint *b);
-
 
 void (*deprecated_annotate_signalled_hook) (void);
 void (*deprecated_annotate_signal_hook) (void);
@@ -62,7 +60,7 @@ annotate_breakpoints_invalid (void)
 {
   if (annotation_level == 2
       && (!breakpoints_invalid_emitted
-	  || current_ui->prompt_state != PROMPT_BLOCKED))
+          || current_ui->prompt_state != PROMPT_BLOCKED))
     {
       target_terminal::scoped_restore_terminal_state term_state;
       target_terminal::ours_for_output ();
@@ -161,7 +159,7 @@ annotate_signal (void)
   if (annotation_level > 1)
     printf_unfiltered (("\n\032\032signal\n"));
 }
-
+
 void
 annotate_breakpoints_headers (void)
 {
@@ -202,7 +200,7 @@ annotate_frames_invalid (void)
 {
   if (annotation_level == 2
       && (!frames_invalid_emitted
-	  || current_ui->prompt_state != PROMPT_BLOCKED))
+          || current_ui->prompt_state != PROMPT_BLOCKED))
     {
       target_terminal::scoped_restore_terminal_state term_state;
       target_terminal::ours_for_output ();
@@ -238,8 +236,8 @@ annotate_thread_exited (struct thread_info *t, int silent)
   if (annotation_level > 1)
     {
       printf_unfiltered (("\n\032\032thread-exited,"
-			  "id=\"%d\",group-id=\"i%d\"\n"),
-			 t->global_num, t->inf->num);
+                          "id=\"%d\",group-id=\"i%d\"\n"),
+                         t->global_num, t->inf->num);
     }
 }
 
@@ -274,7 +272,7 @@ annotate_field_end (void)
   if (annotation_level == 2)
     printf_unfiltered (("\n\032\032field-end\n"));
 }
-
+
 void
 annotate_quit (void)
 {
@@ -422,7 +420,7 @@ annotate_arg_end (void)
 
 static void
 annotate_source (const char *filename, int line, int character, int mid,
-		 struct gdbarch *gdbarch, CORE_ADDR pc)
+                 struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   if (annotation_level > 1)
     printf_unfiltered (("\n\032\032source "));
@@ -430,26 +428,25 @@ annotate_source (const char *filename, int line, int character, int mid,
     printf_unfiltered (("\032\032"));
 
   printf_unfiltered (("%s:%d:%d:%s:%s\n"), filename, line, character,
-		     mid ? "middle" : "beg", paddress (gdbarch, pc));
+                     mid ? "middle" : "beg", paddress (gdbarch, pc));
 }
 
 /* See annotate.h.  */
 
 bool
 annotate_source_line (struct symtab *s, int line, int mid_statement,
-		      CORE_ADDR pc)
+                      CORE_ADDR pc)
 {
   if (annotation_level > 0)
     {
       const std::vector<off_t> *offsets;
       if (!g_source_cache.get_line_charpos (s, &offsets))
-	return false;
+        return false;
       if (line > offsets->size ())
-	return false;
+        return false;
 
       annotate_source (s->fullname, line, (int) (*offsets)[line - 1],
-		       mid_statement, s->compunit ()->objfile ()->arch (),
-		       pc);
+                       mid_statement, s->compunit ()->objfile ()->arch (), pc);
 
       /* Update the current symtab and line.  */
       symtab_and_line sal;
@@ -464,13 +461,12 @@ annotate_source_line (struct symtab *s, int line, int mid_statement,
   return false;
 }
 
-
 void
 annotate_frame_begin (int level, struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   if (annotation_level > 1)
-    printf_unfiltered (("\n\032\032frame-begin %d %s\n"),
-		       level, paddress (gdbarch, pc));
+    printf_unfiltered (("\n\032\032frame-begin %d %s\n"), level,
+                       paddress (gdbarch, pc));
 }
 
 void
@@ -563,7 +559,7 @@ annotate_frame_end (void)
   if (annotation_level == 2)
     printf_unfiltered (("\n\032\032frame-end\n"));
 }
-
+
 void
 annotate_array_section_begin (int idx, struct type *elttype)
 {

@@ -40,6 +40,6 @@ enum class split_style
    which style of splitting to use.  */
 
 extern std::vector<gdb::string_view> split_name (const char *name,
-						 split_style style);
+                                                 split_style style);
 
 #endif /* GDB_SPLIT_NAME_H */

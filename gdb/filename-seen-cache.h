@@ -47,13 +47,12 @@ public:
      filename is passed as argument to CALLBACK.  */
   void traverse (gdb::function_view<void (const char *filename)> callback)
   {
-    auto erased_cb = [] (void **slot, void *info) -> int
-      {
-	auto filename = (const char *) *slot;
-	auto restored_cb = (decltype (callback) *) info;
-	(*restored_cb) (filename);
-	return 1;
-      };
+    auto erased_cb = [] (void **slot, void *info) -> int {
+      auto filename = (const char *) *slot;
+      auto restored_cb = (decltype (callback) *) info;
+      (*restored_cb) (filename);
+      return 1;
+    };
 
     htab_traverse_noresize (m_tab.get (), erased_cb, &callback);
   }

@@ -37,7 +37,7 @@
 
 void
 f_language::print_typedef (struct type *type, struct symbol *new_symbol,
-			   struct ui_file *stream) const
+                           struct ui_file *stream) const
 {
   type = check_typedef (type);
   print_type (type, "", stream, 0, 0, &type_print_raw_options);
@@ -47,8 +47,8 @@ f_language::print_typedef (struct type *type, struct symbol *new_symbol,
 
 void
 f_language::print_type (struct type *type, const char *varstring,
-			struct ui_file *stream, int show, int level,
-			const struct type_print_options *flags) const
+                        struct ui_file *stream, int show, int level,
+                        const struct type_print_options *flags) const
 {
   enum type_code code;
 
@@ -57,18 +57,14 @@ f_language::print_type (struct type *type, const char *varstring,
   if ((varstring != NULL && *varstring != '\0')
       /* Need a space if going to print stars or brackets; but not if we
 	 will print just a type name.  */
-      || ((show > 0
-	   || type->name () == 0)
-	  && (code == TYPE_CODE_FUNC
-	      || code == TYPE_CODE_METHOD
-	      || code == TYPE_CODE_ARRAY
-	      || ((code == TYPE_CODE_PTR
-		   || code == TYPE_CODE_REF)
-		  && (type->target_type ()->code () == TYPE_CODE_FUNC
-		      || (type->target_type ()->code ()
-			  == TYPE_CODE_METHOD)
-		      || (type->target_type ()->code ()
-			  == TYPE_CODE_ARRAY))))))
+      || ((show > 0 || type->name () == 0)
+          && (code == TYPE_CODE_FUNC || code == TYPE_CODE_METHOD
+              || code == TYPE_CODE_ARRAY
+              || ((code == TYPE_CODE_PTR || code == TYPE_CODE_REF)
+                  && (type->target_type ()->code () == TYPE_CODE_FUNC
+                      || (type->target_type ()->code () == TYPE_CODE_METHOD)
+                      || (type->target_type ()->code ()
+                          == TYPE_CODE_ARRAY))))))
     gdb_puts (" ", stream);
   f_type_print_varspec_prefix (type, stream, show, 0);
 
@@ -81,18 +77,19 @@ f_language::print_type (struct type *type, const char *varstring,
       /* For demangled function names, we have the arglist as part of the name,
 	 so don't print an additional pair of ()'s.  */
 
-      demangled_args = (*varstring != '\0'
-			&& varstring[strlen (varstring) - 1] == ')');
-      f_type_print_varspec_suffix (type, stream, show, 0, demangled_args, 0, false);
-   }
+      demangled_args
+        = (*varstring != '\0' && varstring[strlen (varstring) - 1] == ')');
+      f_type_print_varspec_suffix (type, stream, show, 0, demangled_args, 0,
+                                   false);
+    }
 }
 
 /* See f-lang.h.  */
 
 void
 f_language::f_type_print_varspec_prefix (struct type *type,
-					 struct ui_file *stream,
-					 int show, int passed_a_ptr) const
+                                         struct ui_file *stream, int show,
+                                         int passed_a_ptr) const
 {
   if (type == 0)
     return;
@@ -111,7 +108,7 @@ f_language::f_type_print_varspec_prefix (struct type *type,
     case TYPE_CODE_FUNC:
       f_type_print_varspec_prefix (type->target_type (), stream, 0, 0);
       if (passed_a_ptr)
-	gdb_printf (stream, "(");
+        gdb_printf (stream, "(");
       break;
 
     case TYPE_CODE_ARRAY:
@@ -146,11 +143,10 @@ f_language::f_type_print_varspec_prefix (struct type *type,
 
 void
 f_language::f_type_print_varspec_suffix (struct type *type,
-					 struct ui_file *stream,
-					 int show, int passed_a_ptr,
-					 int demangled_args,
-					 int arrayprint_recurse_level,
-					 bool print_rank_only) const
+                                         struct ui_file *stream, int show,
+                                         int passed_a_ptr, int demangled_args,
+                                         int arrayprint_recurse_level,
+                                         bool print_rank_only) const
 {
   /* No static variables are permitted as an error call may occur during
      execution of this function.  */
@@ -169,93 +165,93 @@ f_language::f_type_print_varspec_suffix (struct type *type,
       arrayprint_recurse_level++;
 
       if (arrayprint_recurse_level == 1)
-	gdb_printf (stream, "(");
+        gdb_printf (stream, "(");
 
       if (type_not_associated (type))
-	print_rank_only = true;
+        print_rank_only = true;
       else if (type_not_allocated (type))
-	print_rank_only = true;
+        print_rank_only = true;
       else if ((TYPE_ASSOCIATED_PROP (type)
-		&& PROP_CONST != TYPE_ASSOCIATED_PROP (type)->kind ())
-	       || (TYPE_ALLOCATED_PROP (type)
-		   && PROP_CONST != TYPE_ALLOCATED_PROP (type)->kind ())
-	       || (TYPE_DATA_LOCATION (type)
-		   && PROP_CONST != TYPE_DATA_LOCATION (type)->kind ()))
-	{
-	  /* This case exist when we ptype a typename which has the dynamic
+                && PROP_CONST != TYPE_ASSOCIATED_PROP (type)->kind ())
+               || (TYPE_ALLOCATED_PROP (type)
+                   && PROP_CONST != TYPE_ALLOCATED_PROP (type)->kind ())
+               || (TYPE_DATA_LOCATION (type)
+                   && PROP_CONST != TYPE_DATA_LOCATION (type)->kind ()))
+        {
+          /* This case exist when we ptype a typename which has the dynamic
 	     properties but cannot be resolved as there is no object.  */
-	  print_rank_only = true;
-	}
+          print_rank_only = true;
+        }
 
       if (type->target_type ()->code () == TYPE_CODE_ARRAY)
-	f_type_print_varspec_suffix (type->target_type (), stream, 0,
-				     0, 0, arrayprint_recurse_level,
-				     print_rank_only);
+        f_type_print_varspec_suffix (type->target_type (), stream, 0, 0, 0,
+                                     arrayprint_recurse_level,
+                                     print_rank_only);
 
       if (print_rank_only)
-	gdb_printf (stream, ":");
+        gdb_printf (stream, ":");
       else
-	{
-	  LONGEST lower_bound = f77_get_lowerbound (type);
-	  if (lower_bound != 1)	/* Not the default.  */
-	    gdb_printf (stream, "%s:", plongest (lower_bound));
+        {
+          LONGEST lower_bound = f77_get_lowerbound (type);
+          if (lower_bound != 1) /* Not the default.  */
+            gdb_printf (stream, "%s:", plongest (lower_bound));
 
-	  /* Make sure that, if we have an assumed size array, we
+          /* Make sure that, if we have an assumed size array, we
 	       print out a warning and print the upperbound as '*'.  */
 
-	  if (type->bounds ()->high.kind () == PROP_UNDEFINED)
-	    gdb_printf (stream, "*");
-	  else
-	    {
-	      LONGEST upper_bound = f77_get_upperbound (type);
+          if (type->bounds ()->high.kind () == PROP_UNDEFINED)
+            gdb_printf (stream, "*");
+          else
+            {
+              LONGEST upper_bound = f77_get_upperbound (type);
 
-	      gdb_puts (plongest (upper_bound), stream);
-	    }
-	}
+              gdb_puts (plongest (upper_bound), stream);
+            }
+        }
 
       if (type->target_type ()->code () != TYPE_CODE_ARRAY)
-	f_type_print_varspec_suffix (type->target_type (), stream, 0,
-				     0, 0, arrayprint_recurse_level,
-				     print_rank_only);
+        f_type_print_varspec_suffix (type->target_type (), stream, 0, 0, 0,
+                                     arrayprint_recurse_level,
+                                     print_rank_only);
 
       if (arrayprint_recurse_level == 1)
-	gdb_printf (stream, ")");
+        gdb_printf (stream, ")");
       else
-	gdb_printf (stream, ",");
+        gdb_printf (stream, ",");
       arrayprint_recurse_level--;
       break;
 
     case TYPE_CODE_PTR:
     case TYPE_CODE_REF:
       f_type_print_varspec_suffix (type->target_type (), stream, 0, 1, 0,
-				   arrayprint_recurse_level, false);
+                                   arrayprint_recurse_level, false);
       gdb_printf (stream, " )");
       break;
 
     case TYPE_CODE_FUNC:
       {
-	int i, nfields = type->num_fields ();
+        int i, nfields = type->num_fields ();
 
-	f_type_print_varspec_suffix (type->target_type (), stream, 0,
-				     passed_a_ptr, 0,
-				     arrayprint_recurse_level, false);
-	if (passed_a_ptr)
-	  gdb_printf (stream, ") ");
-	gdb_printf (stream, "(");
-	if (nfields == 0 && type->is_prototyped ())
-	  print_type (builtin_f_type (type->arch ())->builtin_void,
-		      "", stream, -1, 0, 0);
-	else
-	  for (i = 0; i < nfields; i++)
-	    {
-	      if (i > 0)
-		{
-		  gdb_puts (", ", stream);
-		  stream->wrap_here (4);
-		}
-	      print_type (type->field (i).type (), "", stream, -1, 0, 0);
-	    }
-	gdb_printf (stream, ")");
+        f_type_print_varspec_suffix (type->target_type (), stream, 0,
+                                     passed_a_ptr, 0, arrayprint_recurse_level,
+                                     false);
+        if (passed_a_ptr)
+          gdb_printf (stream, ") ");
+        gdb_printf (stream, "(");
+        if (nfields == 0 && type->is_prototyped ())
+          print_type (builtin_f_type (type->arch ())->builtin_void, "", stream,
+                      -1, 0, 0);
+        else
+          for (i = 0; i < nfields; i++)
+            {
+              if (i > 0)
+                {
+                  gdb_puts (", ", stream);
+                  stream->wrap_here (4);
+                }
+              print_type (type->field (i).type (), "", stream, -1, 0, 0);
+            }
+        gdb_printf (stream, ")");
       }
       break;
 
@@ -286,7 +282,7 @@ f_language::f_type_print_varspec_suffix (struct type *type,
 
 void
 f_language::f_type_print_derivation_info (struct type *type,
-					  struct ui_file *stream) const
+                                          struct ui_file *stream) const
 {
   /* Fortran doesn't support multiple inheritance.  */
   const int i = 0;
@@ -299,7 +295,7 @@ f_language::f_type_print_derivation_info (struct type *type,
 
 void
 f_language::f_type_print_base (struct type *type, struct ui_file *stream,
-			       int show, int level) const
+                               int show, int level) const
 {
   int index;
 
@@ -319,10 +315,10 @@ f_language::f_type_print_base (struct type *type, struct ui_file *stream,
     {
       const char *prefix = "";
       if (type->code () == TYPE_CODE_UNION)
-	prefix = "Type, C_Union :: ";
+        prefix = "Type, C_Union :: ";
       else if (type->code () == TYPE_CODE_STRUCT
                || type->code () == TYPE_CODE_NAMELIST)
-	prefix = "Type ";
+        prefix = "Type ";
       gdb_printf (stream, "%*s%s%s", level, "", prefix, type->name ());
       return;
     }
@@ -341,9 +337,9 @@ f_language::f_type_print_base (struct type *type, struct ui_file *stream,
       break;
     case TYPE_CODE_FUNC:
       if (type->target_type () == NULL)
-	type_print_unknown_return_type (stream);
+        type_print_unknown_return_type (stream);
       else
-	f_type_print_base (type->target_type (), stream, show, level);
+        f_type_print_base (type->target_type (), stream, show, level);
       break;
 
     case TYPE_CODE_PTR:
@@ -358,8 +354,8 @@ f_language::f_type_print_base (struct type *type, struct ui_file *stream,
 
     case TYPE_CODE_VOID:
       {
-	struct type *void_type = builtin_f_type (type->arch ())->builtin_void;
-	gdb_printf (stream, "%*s%s", level, "", void_type->name ());
+        struct type *void_type = builtin_f_type (type->arch ())->builtin_void;
+        gdb_printf (stream, "%*s%s", level, "", void_type->name ());
       }
       break;
 
@@ -383,9 +379,9 @@ f_language::f_type_print_base (struct type *type, struct ui_file *stream,
 	 C-oriented, we must change these to "character" from "char".  */
 
       if (strcmp (type->name (), "char") == 0)
-	gdb_printf (stream, "%*scharacter", level, "");
+        gdb_printf (stream, "%*scharacter", level, "");
       else
-	goto default_case;
+        goto default_case;
       break;
 
     case TYPE_CODE_STRING:
@@ -396,25 +392,25 @@ f_language::f_type_print_base (struct type *type, struct ui_file *stream,
 	 bounds will not have been resolved.  */
 
       if (type->bounds ()->high.kind () == PROP_CONST)
-	{
-	  LONGEST upper_bound = f77_get_upperbound (type);
+        {
+          LONGEST upper_bound = f77_get_upperbound (type);
 
-	  gdb_printf (stream, "character*%s", pulongest (upper_bound));
-	}
+          gdb_printf (stream, "character*%s", pulongest (upper_bound));
+        }
       else
-	gdb_printf (stream, "%*scharacter*(*)", level, "");
+        gdb_printf (stream, "%*scharacter*(*)", level, "");
       break;
 
     case TYPE_CODE_STRUCT:
     case TYPE_CODE_UNION:
     case TYPE_CODE_NAMELIST:
       if (type->code () == TYPE_CODE_UNION)
-	gdb_printf (stream, "%*sType, C_Union ::", level, "");
+        gdb_printf (stream, "%*sType, C_Union ::", level, "");
       else
-	gdb_printf (stream, "%*sType", level, "");
+        gdb_printf (stream, "%*sType", level, "");
 
       if (show > 0)
-	f_type_print_derivation_info (type, stream);
+        f_type_print_derivation_info (type, stream);
 
       gdb_puts (" ", stream);
 
@@ -423,22 +419,22 @@ f_language::f_type_print_base (struct type *type, struct ui_file *stream,
       /* According to the definition,
 	 we only print structure elements in case show > 0.  */
       if (show > 0)
-	{
-	  gdb_puts ("\n", stream);
-	  for (index = 0; index < type->num_fields (); index++)
-	    {
-	      f_type_print_base (type->field (index).type (), stream,
-				 show - 1, level + 4);
-	      gdb_puts (" :: ", stream);
-	      fputs_styled (type->field (index).name (),
-			    variable_name_style.style (), stream);
-	      f_type_print_varspec_suffix (type->field (index).type (),
-					   stream, show - 1, 0, 0, 0, false);
-	      gdb_puts ("\n", stream);
-	    }
-	  gdb_printf (stream, "%*sEnd Type ", level, "");
-	  gdb_puts (type->name (), stream);
-	}
+        {
+          gdb_puts ("\n", stream);
+          for (index = 0; index < type->num_fields (); index++)
+            {
+              f_type_print_base (type->field (index).type (), stream, show - 1,
+                                 level + 4);
+              gdb_puts (" :: ", stream);
+              fputs_styled (type->field (index).name (),
+                            variable_name_style.style (), stream);
+              f_type_print_varspec_suffix (type->field (index).type (), stream,
+                                           show - 1, 0, 0, 0, false);
+              gdb_puts ("\n", stream);
+            }
+          gdb_printf (stream, "%*sEnd Type ", level, "");
+          gdb_puts (type->name (), stream);
+        }
       break;
 
     case TYPE_CODE_MODULE:
@@ -452,9 +448,9 @@ f_language::f_type_print_base (struct type *type, struct ui_file *stream,
 	 the type name is, as recorded in the type itself.  If there
 	 is no type name, then complain.  */
       if (type->name () != NULL)
-	gdb_printf (stream, "%*s%s", level, "", type->name ());
+        gdb_printf (stream, "%*s%s", level, "", type->name ());
       else
-	error (_("Invalid type code (%d) in symbol table."), type->code ());
+        error (_ ("Invalid type code (%d) in symbol table."), type->code ());
       break;
     }
 

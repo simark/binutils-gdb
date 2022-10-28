@@ -28,19 +28,17 @@
    TYPE is a dynamic array, non-zero otherwise.  */
 
 static int
-dynamic_array_type (struct type *type,
-		    LONGEST embedded_offset, CORE_ADDR address,
-		    struct ui_file *stream, int recurse,
-		    struct value *val,
-		    const struct value_print_options *options)
+dynamic_array_type (struct type *type, LONGEST embedded_offset,
+                    CORE_ADDR address, struct ui_file *stream, int recurse,
+                    struct value *val,
+                    const struct value_print_options *options)
 {
   if (type->num_fields () == 2
       && type->field (0).type ()->code () == TYPE_CODE_INT
       && strcmp (type->field (0).name (), "length") == 0
       && strcmp (type->field (1).name (), "ptr") == 0
-      && !value_bits_any_optimized_out (val,
-					TARGET_CHAR_BIT * embedded_offset,
-					TARGET_CHAR_BIT * type->length ()))
+      && !value_bits_any_optimized_out (val, TARGET_CHAR_BIT * embedded_offset,
+                                        TARGET_CHAR_BIT * type->length ()))
     {
       CORE_ADDR addr;
       struct type *elttype;
@@ -54,9 +52,9 @@ dynamic_array_type (struct type *type,
 
       ptr_type = type->field (1).type ();
       elttype = check_typedef (ptr_type->target_type ());
-      addr = unpack_pointer (ptr_type,
-			     valaddr + type->field (1).loc_bitpos () / 8
-			     + embedded_offset);
+      addr
+        = unpack_pointer (ptr_type, valaddr + type->field (1).loc_bitpos () / 8
+                                      + embedded_offset);
       true_type = check_typedef (elttype);
 
       true_type = lookup_array_range_type (true_type, 0, length - 1);
@@ -73,22 +71,22 @@ dynamic_array_type (struct type *type,
 
 void
 d_value_print_inner (struct value *val, struct ui_file *stream, int recurse,
-		     const struct value_print_options *options)
+                     const struct value_print_options *options)
 {
   int ret;
 
   struct type *type = check_typedef (value_type (val));
   switch (type->code ())
     {
-      case TYPE_CODE_STRUCT:
-	ret = dynamic_array_type (type, value_embedded_offset (val),
-				  value_address (val),
-				  stream, recurse, val, options);
-	if (ret == 0)
-	  break;
-	/* Fall through.  */
-      default:
-	c_value_print_inner (val, stream, recurse, options);
-	break;
+    case TYPE_CODE_STRUCT:
+      ret = dynamic_array_type (type, value_embedded_offset (val),
+                                value_address (val), stream, recurse, val,
+                                options);
+      if (ret == 0)
+        break;
+      /* Fall through.  */
+    default:
+      c_value_print_inner (val, stream, recurse, options);
+      break;
     }
 }

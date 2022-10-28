@@ -55,8 +55,8 @@ arm_pikeos_osabi_sniffer (bfd *abfd)
   if (storage_needed <= 0)
     return GDB_OSABI_UNKNOWN;
 
-  gdb::unique_xmalloc_ptr<asymbol *> symbol_table
-    ((asymbol **) xmalloc (storage_needed));
+  gdb::unique_xmalloc_ptr<asymbol *> symbol_table (
+    (asymbol **) xmalloc (storage_needed));
   number_of_symbols = bfd_canonicalize_symtab (abfd, symbol_table.get ());
 
   if (number_of_symbols <= 0)
@@ -66,13 +66,12 @@ arm_pikeos_osabi_sniffer (bfd *abfd)
     {
       const char *name = bfd_asymbol_name (symbol_table.get ()[i]);
 
-      if (strcmp (name, "_vm_stack") == 0
-	  || strcmp (name, "__p4_stack") == 0)
-	pikeos_stack_found = 1;
+      if (strcmp (name, "_vm_stack") == 0 || strcmp (name, "__p4_stack") == 0)
+        pikeos_stack_found = 1;
 
       if (strcmp (name, "_vm_stack_size") == 0
-	  || strcmp (name, "__p4_stack_end") == 0)
-	pikeos_stack_size_found = 1;
+          || strcmp (name, "__p4_stack_end") == 0)
+        pikeos_stack_size_found = 1;
     }
 
   if (pikeos_stack_found && pikeos_stack_size_found)
@@ -87,7 +86,7 @@ _initialize_arm_pikeos_tdep ()
 {
   /* Register the sniffer for the PikeOS targets.  */
   gdbarch_register_osabi_sniffer (bfd_arch_arm, bfd_target_elf_flavour,
-				  arm_pikeos_osabi_sniffer);
+                                  arm_pikeos_osabi_sniffer);
   gdbarch_register_osabi (bfd_arch_arm, 0, GDB_OSABI_PIKEOS,
-			  arm_pikeos_init_abi);
+                          arm_pikeos_init_abi);
 }

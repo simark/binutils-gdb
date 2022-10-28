@@ -49,7 +49,6 @@
 class scoped_free_pendings
 {
 public:
-
   scoped_free_pendings () = default;
   ~scoped_free_pendings ();
 
@@ -57,10 +56,9 @@ public:
 };
 
 extern struct block *finish_block (struct symbol *symbol,
-				   struct pending_block *old_blocks,
-				   const struct dynamic_prop *static_link,
-				   CORE_ADDR start,
-				   CORE_ADDR end);
+                                   struct pending_block *old_blocks,
+                                   const struct dynamic_prop *static_link,
+                                   CORE_ADDR start, CORE_ADDR end);
 
 extern void start_subfile (const char *name);
 
@@ -71,7 +69,7 @@ extern void push_subfile ();
 extern const char *pop_subfile ();
 
 extern struct compunit_symtab *end_compunit_symtab (CORE_ADDR end_addr,
-						    int section);
+                                                    int section);
 
 extern struct context_stack *push_context (int desc, CORE_ADDR valu);
 
@@ -80,10 +78,10 @@ extern struct context_stack pop_context ();
 extern void record_line (struct subfile *subfile, int line, CORE_ADDR pc);
 
 extern struct compunit_symtab *start_compunit_symtab (struct objfile *objfile,
-						      const char *name,
-						      const char *comp_dir,
-						      CORE_ADDR start_addr,
-						      enum language language);
+                                                      const char *name,
+                                                      const char *comp_dir,
+                                                      CORE_ADDR start_addr,
+                                                      enum language language);
 
 /* Record the name of the debug format in the current pending symbol
    table.  FORMAT must be a string with a lifetime at least as long as

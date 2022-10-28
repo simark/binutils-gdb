@@ -26,24 +26,23 @@
 #include "solib-svr4.h"
 
 /* From <ia32/sys/reg.h>.  */
-static int i386_sol2_gregset_reg_offset[] =
-{
-  11 * 4,			/* %eax */
-  10 * 4,			/* %ecx */
-  9 * 4,			/* %edx */
-  8 * 4,			/* %ebx */
-  17 * 4,			/* %esp */
-  6 * 4,			/* %ebp */
-  5 * 4,			/* %esi */
-  4 * 4,			/* %edi */
-  14 * 4,			/* %eip */
-  16 * 4,			/* %eflags */
-  15 * 4,			/* %cs */
-  18 * 4,			/* %ss */
-  3 * 4,			/* %ds */
-  2 * 4,			/* %es */
-  1 * 4,			/* %fs */
-  0 * 4				/* %gs */
+static int i386_sol2_gregset_reg_offset[] = {
+  11 * 4, /* %eax */
+  10 * 4, /* %ecx */
+  9 * 4,  /* %edx */
+  8 * 4,  /* %ebx */
+  17 * 4, /* %esp */
+  6 * 4,  /* %ebp */
+  5 * 4,  /* %esi */
+  4 * 4,  /* %edi */
+  14 * 4, /* %eip */
+  16 * 4, /* %eflags */
+  15 * 4, /* %cs */
+  18 * 4, /* %ss */
+  3 * 4,  /* %ds */
+  2 * 4,  /* %es */
+  1 * 4,  /* %fs */
+  0 * 4   /* %gs */
 };
 
 /* Solaris doesn't have a `struct sigcontext', but it does have a
@@ -87,10 +86,9 @@ i386_sol2_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tdep->sc_num_regs = tdep->gregset_num_regs;
 
   /* Solaris has SVR4-style shared libraries.  */
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, svr4_ilp32_fetch_link_map_offsets);
+  set_solib_svr4_fetch_link_map_offsets (gdbarch,
+                                         svr4_ilp32_fetch_link_map_offsets);
 }
-
 
 static enum gdb_osabi
 i386_sol2_osabi_sniffer (bfd *abfd)
@@ -109,8 +107,8 @@ _initialize_i386_sol2_tdep ()
 {
   /* Register an ELF OS ABI sniffer for Solaris 2 binaries.  */
   gdbarch_register_osabi_sniffer (bfd_arch_i386, bfd_target_elf_flavour,
-				  i386_sol2_osabi_sniffer);
+                                  i386_sol2_osabi_sniffer);
 
   gdbarch_register_osabi (bfd_arch_i386, 0, GDB_OSABI_SOLARIS,
-			  i386_sol2_init_abi);
+                          i386_sol2_init_abi);
 }

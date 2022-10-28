@@ -32,8 +32,8 @@
 
 static void
 loongarch_supply_gregset (const struct regset *regset,
-			  struct regcache *regcache, int regnum,
-			  const void *gprs, size_t len)
+                          struct regcache *regcache, int regnum,
+                          const void *gprs, size_t len)
 {
   int regsize = register_size (regcache->arch (), 0);
   const gdb_byte *buf = nullptr;
@@ -43,28 +43,26 @@ loongarch_supply_gregset (const struct regset *regset,
       regcache->raw_supply_zeroed (0);
 
       for (int i = 1; i < 32; i++)
-	{
-	  buf = (const gdb_byte*) gprs + regsize * i;
-	  regcache->raw_supply (i, (const void *) buf);
-	}
+        {
+          buf = (const gdb_byte *) gprs + regsize * i;
+          regcache->raw_supply (i, (const void *) buf);
+        }
 
-      buf = (const gdb_byte*) gprs + regsize * LOONGARCH_ORIG_A0_REGNUM;
+      buf = (const gdb_byte *) gprs + regsize * LOONGARCH_ORIG_A0_REGNUM;
       regcache->raw_supply (LOONGARCH_ORIG_A0_REGNUM, (const void *) buf);
 
-      buf = (const gdb_byte*) gprs + regsize * LOONGARCH_PC_REGNUM;
+      buf = (const gdb_byte *) gprs + regsize * LOONGARCH_PC_REGNUM;
       regcache->raw_supply (LOONGARCH_PC_REGNUM, (const void *) buf);
 
-      buf = (const gdb_byte*) gprs + regsize * LOONGARCH_BADV_REGNUM;
+      buf = (const gdb_byte *) gprs + regsize * LOONGARCH_BADV_REGNUM;
       regcache->raw_supply (LOONGARCH_BADV_REGNUM, (const void *) buf);
     }
   else if (regnum == 0)
     regcache->raw_supply_zeroed (0);
-  else if ((regnum > 0 && regnum < 32)
-	   || regnum == LOONGARCH_ORIG_A0_REGNUM
-	   || regnum == LOONGARCH_PC_REGNUM
-	   || regnum == LOONGARCH_BADV_REGNUM)
+  else if ((regnum > 0 && regnum < 32) || regnum == LOONGARCH_ORIG_A0_REGNUM
+           || regnum == LOONGARCH_PC_REGNUM || regnum == LOONGARCH_BADV_REGNUM)
     {
-      buf = (const gdb_byte*) gprs + regsize * regnum;
+      buf = (const gdb_byte *) gprs + regsize * regnum;
       regcache->raw_supply (regnum, (const void *) buf);
     }
 }
@@ -73,8 +71,8 @@ loongarch_supply_gregset (const struct regset *regset,
 
 static void
 loongarch_fill_gregset (const struct regset *regset,
-			const struct regcache *regcache, int regnum,
-			void *gprs, size_t len)
+                        const struct regcache *regcache, int regnum,
+                        void *gprs, size_t len)
 {
   int regsize = register_size (regcache->arch (), 0);
   gdb_byte *buf = nullptr;
@@ -82,10 +80,10 @@ loongarch_fill_gregset (const struct regset *regset,
   if (regnum == -1)
     {
       for (int i = 0; i < 32; i++)
-	{
-	  buf = (gdb_byte *) gprs + regsize * i;
-	  regcache->raw_collect (i, (void *) buf);
-	}
+        {
+          buf = (gdb_byte *) gprs + regsize * i;
+          regcache->raw_collect (i, (void *) buf);
+        }
 
       buf = (gdb_byte *) gprs + regsize * LOONGARCH_ORIG_A0_REGNUM;
       regcache->raw_collect (LOONGARCH_ORIG_A0_REGNUM, (void *) buf);
@@ -96,10 +94,8 @@ loongarch_fill_gregset (const struct regset *regset,
       buf = (gdb_byte *) gprs + regsize * LOONGARCH_BADV_REGNUM;
       regcache->raw_collect (LOONGARCH_BADV_REGNUM, (void *) buf);
     }
-  else if ((regnum >= 0 && regnum < 32)
-	   || regnum == LOONGARCH_ORIG_A0_REGNUM
-	   || regnum == LOONGARCH_PC_REGNUM
-	   || regnum == LOONGARCH_BADV_REGNUM)
+  else if ((regnum >= 0 && regnum < 32) || regnum == LOONGARCH_ORIG_A0_REGNUM
+           || regnum == LOONGARCH_PC_REGNUM || regnum == LOONGARCH_BADV_REGNUM)
     {
       buf = (gdb_byte *) gprs + regsize * regnum;
       regcache->raw_collect (regnum, (void *) buf);
@@ -108,8 +104,7 @@ loongarch_fill_gregset (const struct regset *regset,
 
 /* Define the general register regset.  */
 
-const struct regset loongarch_gregset =
-{
+const struct regset loongarch_gregset = {
   nullptr,
   loongarch_supply_gregset,
   loongarch_fill_gregset,
@@ -117,9 +112,8 @@ const struct regset loongarch_gregset =
 
 /* Unpack an elf_fpregset_t into GDB's register cache.  */
 static void
-loongarch_supply_fpregset (const struct regset *r,
-			   struct regcache *regcache, int regnum,
-			   const void *fprs, size_t len)
+loongarch_supply_fpregset (const struct regset *r, struct regcache *regcache,
+                           int regnum, const void *fprs, size_t len)
 {
   const gdb_byte *buf = nullptr;
   int fprsize = register_size (regcache->arch (), LOONGARCH_FIRST_FP_REGNUM);
@@ -128,44 +122,49 @@ loongarch_supply_fpregset (const struct regset *r,
   if (regnum == -1)
     {
       for (int i = 0; i < LOONGARCH_LINUX_NUM_FPREGSET; i++)
-	{
-	  buf = (const gdb_byte *)fprs + fprsize * i;
-	  regcache->raw_supply (LOONGARCH_FIRST_FP_REGNUM + i, (const void *)buf);
-	}
+        {
+          buf = (const gdb_byte *) fprs + fprsize * i;
+          regcache->raw_supply (LOONGARCH_FIRST_FP_REGNUM + i,
+                                (const void *) buf);
+        }
       for (int i = 0; i < LOONGARCH_LINUX_NUM_FCC; i++)
-	{
-	  buf = (const gdb_byte *)fprs + fprsize * LOONGARCH_LINUX_NUM_FPREGSET +
-	    fccsize * i;
-	  regcache->raw_supply (LOONGARCH_FIRST_FCC_REGNUM + i, (const void *)buf);
-	}
-      buf = (const gdb_byte *)fprs + fprsize * LOONGARCH_LINUX_NUM_FPREGSET +
-	fccsize * LOONGARCH_LINUX_NUM_FCC;
-      regcache->raw_supply (LOONGARCH_FCSR_REGNUM, (const void *)buf);
+        {
+          buf = (const gdb_byte *) fprs
+                + fprsize * LOONGARCH_LINUX_NUM_FPREGSET + fccsize * i;
+          regcache->raw_supply (LOONGARCH_FIRST_FCC_REGNUM + i,
+                                (const void *) buf);
+        }
+      buf = (const gdb_byte *) fprs + fprsize * LOONGARCH_LINUX_NUM_FPREGSET
+            + fccsize * LOONGARCH_LINUX_NUM_FCC;
+      regcache->raw_supply (LOONGARCH_FCSR_REGNUM, (const void *) buf);
     }
-  else if (regnum >= LOONGARCH_FIRST_FP_REGNUM && regnum < LOONGARCH_FIRST_FCC_REGNUM)
+  else if (regnum >= LOONGARCH_FIRST_FP_REGNUM
+           && regnum < LOONGARCH_FIRST_FCC_REGNUM)
     {
-      buf = (const gdb_byte *)fprs + fprsize * (regnum - LOONGARCH_FIRST_FP_REGNUM);
-      regcache->raw_supply (regnum, (const void *)buf);
+      buf = (const gdb_byte *) fprs
+            + fprsize * (regnum - LOONGARCH_FIRST_FP_REGNUM);
+      regcache->raw_supply (regnum, (const void *) buf);
     }
-  else if (regnum >= LOONGARCH_FIRST_FCC_REGNUM && regnum < LOONGARCH_FCSR_REGNUM)
+  else if (regnum >= LOONGARCH_FIRST_FCC_REGNUM
+           && regnum < LOONGARCH_FCSR_REGNUM)
     {
-      buf = (const gdb_byte *)fprs + fprsize * LOONGARCH_LINUX_NUM_FPREGSET +
-	fccsize * (regnum - LOONGARCH_FIRST_FCC_REGNUM);
-      regcache->raw_supply (regnum, (const void *)buf);
+      buf = (const gdb_byte *) fprs + fprsize * LOONGARCH_LINUX_NUM_FPREGSET
+            + fccsize * (regnum - LOONGARCH_FIRST_FCC_REGNUM);
+      regcache->raw_supply (regnum, (const void *) buf);
     }
   else if (regnum == LOONGARCH_FCSR_REGNUM)
     {
-      buf = (const gdb_byte *)fprs + fprsize * LOONGARCH_LINUX_NUM_FPREGSET +
-	fccsize * LOONGARCH_LINUX_NUM_FCC;
-      regcache->raw_supply (regnum, (const void *)buf);
+      buf = (const gdb_byte *) fprs + fprsize * LOONGARCH_LINUX_NUM_FPREGSET
+            + fccsize * LOONGARCH_LINUX_NUM_FCC;
+      regcache->raw_supply (regnum, (const void *) buf);
     }
 }
 
 /* Pack the GDB's register cache value into an elf_fpregset_t.  */
 static void
 loongarch_fill_fpregset (const struct regset *r,
-			 const struct regcache *regcache, int regnum,
-			 void *fprs, size_t len)
+                         const struct regcache *regcache, int regnum,
+                         void *fprs, size_t len)
 {
   gdb_byte *buf = nullptr;
   int fprsize = register_size (regcache->arch (), LOONGARCH_FIRST_FP_REGNUM);
@@ -174,42 +173,43 @@ loongarch_fill_fpregset (const struct regset *r,
   if (regnum == -1)
     {
       for (int i = 0; i < LOONGARCH_LINUX_NUM_FPREGSET; i++)
-	{
-	  buf = (gdb_byte *)fprs + fprsize * i;
-	  regcache->raw_collect (LOONGARCH_FIRST_FP_REGNUM + i, (void *)buf);
-	}
+        {
+          buf = (gdb_byte *) fprs + fprsize * i;
+          regcache->raw_collect (LOONGARCH_FIRST_FP_REGNUM + i, (void *) buf);
+        }
       for (int i = 0; i < LOONGARCH_LINUX_NUM_FCC; i++)
-	{
-	  buf = (gdb_byte *)fprs + fprsize * LOONGARCH_LINUX_NUM_FPREGSET +
-	    fccsize * i;
-	  regcache->raw_collect (LOONGARCH_FIRST_FCC_REGNUM + i, (void *)buf);
-	}
-      buf = (gdb_byte *)fprs + fprsize * LOONGARCH_LINUX_NUM_FPREGSET +
-	fccsize * LOONGARCH_LINUX_NUM_FCC;
-      regcache->raw_collect (LOONGARCH_FCSR_REGNUM, (void *)buf);
+        {
+          buf = (gdb_byte *) fprs + fprsize * LOONGARCH_LINUX_NUM_FPREGSET
+                + fccsize * i;
+          regcache->raw_collect (LOONGARCH_FIRST_FCC_REGNUM + i, (void *) buf);
+        }
+      buf = (gdb_byte *) fprs + fprsize * LOONGARCH_LINUX_NUM_FPREGSET
+            + fccsize * LOONGARCH_LINUX_NUM_FCC;
+      regcache->raw_collect (LOONGARCH_FCSR_REGNUM, (void *) buf);
     }
-  else if (regnum >= LOONGARCH_FIRST_FP_REGNUM && regnum < LOONGARCH_FIRST_FCC_REGNUM)
+  else if (regnum >= LOONGARCH_FIRST_FP_REGNUM
+           && regnum < LOONGARCH_FIRST_FCC_REGNUM)
     {
-      buf = (gdb_byte *)fprs + fprsize * (regnum - LOONGARCH_FIRST_FP_REGNUM);
-      regcache->raw_collect (regnum, (void *)buf);
+      buf = (gdb_byte *) fprs + fprsize * (regnum - LOONGARCH_FIRST_FP_REGNUM);
+      regcache->raw_collect (regnum, (void *) buf);
     }
-  else if (regnum >= LOONGARCH_FIRST_FCC_REGNUM && regnum < LOONGARCH_FCSR_REGNUM)
+  else if (regnum >= LOONGARCH_FIRST_FCC_REGNUM
+           && regnum < LOONGARCH_FCSR_REGNUM)
     {
-      buf = (gdb_byte *)fprs + fprsize * LOONGARCH_LINUX_NUM_FPREGSET +
-	fccsize * (regnum - LOONGARCH_FIRST_FCC_REGNUM);
-      regcache->raw_collect (regnum, (void *)buf);
+      buf = (gdb_byte *) fprs + fprsize * LOONGARCH_LINUX_NUM_FPREGSET
+            + fccsize * (regnum - LOONGARCH_FIRST_FCC_REGNUM);
+      regcache->raw_collect (regnum, (void *) buf);
     }
   else if (regnum == LOONGARCH_FCSR_REGNUM)
     {
-      buf = (gdb_byte *)fprs + fprsize * LOONGARCH_LINUX_NUM_FPREGSET +
-	fccsize * LOONGARCH_LINUX_NUM_FCC;
-      regcache->raw_collect (regnum, (void *)buf);
+      buf = (gdb_byte *) fprs + fprsize * LOONGARCH_LINUX_NUM_FPREGSET
+            + fccsize * LOONGARCH_LINUX_NUM_FCC;
+      regcache->raw_collect (regnum, (void *) buf);
     }
 }
 
 /* Define the FP register regset.  */
-const struct regset loongarch_fpregset =
-{
+const struct regset loongarch_fpregset = {
   nullptr,
   loongarch_supply_fpregset,
   loongarch_fill_fpregset,
@@ -217,18 +217,18 @@ const struct regset loongarch_fpregset =
 
 /* Implement the "init" method of struct tramp_frame.  */
 
-#define LOONGARCH_RT_SIGFRAME_UCONTEXT_OFFSET	128
-#define LOONGARCH_UCONTEXT_SIGCONTEXT_OFFSET	176
+#define LOONGARCH_RT_SIGFRAME_UCONTEXT_OFFSET 128
+#define LOONGARCH_UCONTEXT_SIGCONTEXT_OFFSET 176
 
 static void
 loongarch_linux_rt_sigframe_init (const struct tramp_frame *self,
-				  frame_info_ptr this_frame,
-				  struct trad_frame_cache *this_cache,
-				  CORE_ADDR func)
+                                  frame_info_ptr this_frame,
+                                  struct trad_frame_cache *this_cache,
+                                  CORE_ADDR func)
 {
   CORE_ADDR frame_sp = get_frame_sp (this_frame);
   CORE_ADDR sigcontext_base = (frame_sp + LOONGARCH_RT_SIGFRAME_UCONTEXT_OFFSET
-			       + LOONGARCH_UCONTEXT_SIGCONTEXT_OFFSET);
+                               + LOONGARCH_UCONTEXT_SIGCONTEXT_OFFSET);
 
   trad_frame_set_reg_addr (this_cache, LOONGARCH_PC_REGNUM, sigcontext_base);
   for (int i = 0; i < 32; i++)
@@ -238,47 +238,44 @@ loongarch_linux_rt_sigframe_init (const struct tramp_frame *self,
 }
 
 /* li.w    a7, __NR_rt_sigreturn  */
-#define LOONGARCH_INST_LIW_A7_RT_SIGRETURN	0x03822c0b
+#define LOONGARCH_INST_LIW_A7_RT_SIGRETURN 0x03822c0b
 /* syscall 0  */
-#define LOONGARCH_INST_SYSCALL			0x002b0000
+#define LOONGARCH_INST_SYSCALL 0x002b0000
 
-static const struct tramp_frame loongarch_linux_rt_sigframe =
-{
-  SIGTRAMP_FRAME,
-  4,
-  {
-    { LOONGARCH_INST_LIW_A7_RT_SIGRETURN, ULONGEST_MAX },
-    { LOONGARCH_INST_SYSCALL, ULONGEST_MAX },
-    { TRAMP_SENTINEL_INSN, ULONGEST_MAX }
-  },
-  loongarch_linux_rt_sigframe_init,
-  nullptr
-};
+static const struct tramp_frame loongarch_linux_rt_sigframe
+  = { SIGTRAMP_FRAME,
+      4,
+      { { LOONGARCH_INST_LIW_A7_RT_SIGRETURN, ULONGEST_MAX },
+        { LOONGARCH_INST_SYSCALL, ULONGEST_MAX },
+        { TRAMP_SENTINEL_INSN, ULONGEST_MAX } },
+      loongarch_linux_rt_sigframe_init,
+      nullptr };
 
 /* Implement the "iterate_over_regset_sections" gdbarch method.  */
 
 static void
 loongarch_iterate_over_regset_sections (struct gdbarch *gdbarch,
-					iterate_over_regset_sections_cb *cb,
-					void *cb_data,
-					const struct regcache *regcache)
+                                        iterate_over_regset_sections_cb *cb,
+                                        void *cb_data,
+                                        const struct regcache *regcache)
 {
   int gprsize = register_size (gdbarch, 0);
   int fprsize = register_size (gdbarch, LOONGARCH_FIRST_FP_REGNUM);
   int fccsize = register_size (gdbarch, LOONGARCH_FIRST_FCC_REGNUM);
   int fcsrsize = register_size (gdbarch, LOONGARCH_FCSR_REGNUM);
-  int fpsize = fprsize * LOONGARCH_LINUX_NUM_FPREGSET +
-    fccsize * LOONGARCH_LINUX_NUM_FCC + fcsrsize;
+  int fpsize = fprsize * LOONGARCH_LINUX_NUM_FPREGSET
+               + fccsize * LOONGARCH_LINUX_NUM_FCC + fcsrsize;
 
   cb (".reg", LOONGARCH_LINUX_NUM_GREGSET * gprsize,
-      LOONGARCH_LINUX_NUM_GREGSET * gprsize, &loongarch_gregset, nullptr, cb_data);
+      LOONGARCH_LINUX_NUM_GREGSET * gprsize, &loongarch_gregset, nullptr,
+      cb_data);
   cb (".reg2", fpsize, fpsize, &loongarch_fpregset, nullptr, cb_data);
 }
 
 /* The following value is derived from __NR_rt_sigreturn in
    <include/uapi/asm-generic/unistd.h> from the Linux source tree.  */
 
-#define LOONGARCH_NR_rt_sigreturn	139
+#define LOONGARCH_NR_rt_sigreturn 139
 
 /* When FRAME is at a syscall instruction, return the PC of the next
    instruction to be executed.  */
@@ -302,14 +299,15 @@ loongarch_linux_syscall_next_pc (frame_info_ptr frame)
 static void
 loongarch_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  loongarch_gdbarch_tdep *tdep = gdbarch_tdep<loongarch_gdbarch_tdep> (gdbarch);
+  loongarch_gdbarch_tdep *tdep
+    = gdbarch_tdep<loongarch_gdbarch_tdep> (gdbarch);
 
   linux_init_abi (info, gdbarch, 0);
 
-  set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					 info.bfd_arch_info->bits_per_address == 32
-					 ? linux_ilp32_fetch_link_map_offsets
-					 : linux_lp64_fetch_link_map_offsets);
+  set_solib_svr4_fetch_link_map_offsets (
+    gdbarch, info.bfd_arch_info->bits_per_address == 32
+               ? linux_ilp32_fetch_link_map_offsets
+               : linux_lp64_fetch_link_map_offsets);
 
   /* GNU/Linux uses SVR4-style shared libraries.  */
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
@@ -318,13 +316,15 @@ loongarch_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_skip_solib_resolver (gdbarch, glibc_skip_solib_resolver);
 
   /* Enable TLS support.  */
-  set_gdbarch_fetch_tls_load_module_address (gdbarch, svr4_fetch_objfile_link_map);
+  set_gdbarch_fetch_tls_load_module_address (gdbarch,
+                                             svr4_fetch_objfile_link_map);
 
   /* Prepend tramp frame unwinder for signal.  */
   tramp_frame_prepend_unwinder (gdbarch, &loongarch_linux_rt_sigframe);
 
   /* Core file support.  */
-  set_gdbarch_iterate_over_regset_sections (gdbarch, loongarch_iterate_over_regset_sections);
+  set_gdbarch_iterate_over_regset_sections (
+    gdbarch, loongarch_iterate_over_regset_sections);
 
   tdep->syscall_next_pc = loongarch_linux_syscall_next_pc;
 }

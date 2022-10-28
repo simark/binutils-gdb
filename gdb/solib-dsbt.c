@@ -16,7 +16,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-
 #include "defs.h"
 #include "inferior.h"
 #include "gdbcore.h"
@@ -37,7 +36,10 @@
 static unsigned int solib_dsbt_debug = 0;
 
 /* TIC6X pointers are four bytes wide.  */
-enum { TIC6X_PTR_SIZE = 4 };
+enum
+{
+  TIC6X_PTR_SIZE = 4
+};
 
 /* Representation of loadmap and related structs for the TIC6X DSBT.  */
 
@@ -58,7 +60,8 @@ struct ext_elf32_dsbt_loadseg
   ext_Elf32_Word p_memsz;
 };
 
-struct ext_elf32_dsbt_loadmap {
+struct ext_elf32_dsbt_loadmap
+{
   /* Protocol version number, must be zero.  */
   ext_Elf32_Word version;
   /* A pointer to the DSBT table; the DSBT size and the index of this
@@ -105,7 +108,7 @@ typedef gdb_byte ext_ptr[4];
 
 struct ext_elf32_dsbt_loadaddr
 {
-  ext_ptr map;			/* struct elf32_dsbt_loadmap *map; */
+  ext_ptr map; /* struct elf32_dsbt_loadmap *map; */
 };
 
 struct dbst_ext_link_map
@@ -113,23 +116,20 @@ struct dbst_ext_link_map
   struct ext_elf32_dsbt_loadaddr l_addr;
 
   /* Absolute file name object was found in.  */
-  ext_ptr l_name;		/* char *l_name; */
+  ext_ptr l_name; /* char *l_name; */
 
   /* Dynamic section of the shared object.  */
-  ext_ptr l_ld;			/* ElfW(Dyn) *l_ld; */
+  ext_ptr l_ld; /* ElfW(Dyn) *l_ld; */
 
   /* Chain of loaded objects.  */
-  ext_ptr l_next, l_prev;	/* struct link_map *l_next, *l_prev; */
+  ext_ptr l_next, l_prev; /* struct link_map *l_next, *l_prev; */
 };
 
 /* Link map info to include in an allocated so_list entry */
 
 struct lm_info_dsbt : public lm_info_base
 {
-  ~lm_info_dsbt ()
-  {
-    xfree (this->map);
-  }
+  ~lm_info_dsbt () { xfree (this->map); }
 
   /* The loadmap, digested into an easier to use form.  */
   int_elf32_dsbt_loadmap *map = NULL;
@@ -182,7 +182,6 @@ get_dsbt_info (void)
   return solib_dsbt_pspace_data.emplace (current_program_space);
 }
 
-
 static void
 dsbt_print_loadmap (struct int_elf32_dsbt_loadmap *map)
 {
@@ -191,21 +190,22 @@ dsbt_print_loadmap (struct int_elf32_dsbt_loadmap *map)
   if (map == NULL)
     gdb_printf ("(null)\n");
   else if (map->version != 0)
-    gdb_printf (_("Unsupported map version: %d\n"), map->version);
+    gdb_printf (_ ("Unsupported map version: %d\n"), map->version);
   else
     {
       gdb_printf ("version %d\n", map->version);
 
       for (i = 0; i < map->nsegs; i++)
-	gdb_printf ("%s:%s -> %s:%s\n",
-		    print_core_address (target_gdbarch (),
-					map->segs[i].p_vaddr),
-		    print_core_address (target_gdbarch (),
-					map->segs[i].p_vaddr
-					+ map->segs[i].p_memsz),
-		    print_core_address (target_gdbarch (), map->segs[i].addr),
-		    print_core_address (target_gdbarch (), map->segs[i].addr
-					+ map->segs[i].p_memsz));
+        gdb_printf ("%s:%s -> %s:%s\n",
+                    print_core_address (target_gdbarch (),
+                                        map->segs[i].p_vaddr),
+                    print_core_address (target_gdbarch (),
+                                        map->segs[i].p_vaddr
+                                          + map->segs[i].p_memsz),
+                    print_core_address (target_gdbarch (), map->segs[i].addr),
+                    print_core_address (target_gdbarch (),
+                                        map->segs[i].addr
+                                          + map->segs[i].p_memsz));
     }
 }
 
@@ -225,8 +225,7 @@ decode_loadmap (const gdb_byte *buf)
 
   /* Extract the version.  */
   version = extract_unsigned_integer (ext_ldmbuf->version,
-				      sizeof ext_ldmbuf->version,
-				      byte_order);
+                                      sizeof ext_ldmbuf->version, byte_order);
   if (version != 0)
     {
       /* We only handle version 0.  */
@@ -235,8 +234,7 @@ decode_loadmap (const gdb_byte *buf)
 
   /* Extract the number of segments.  */
   nsegs = extract_unsigned_integer (ext_ldmbuf->nsegs,
-				    sizeof ext_ldmbuf->nsegs,
-				    byte_order);
+                                    sizeof ext_ldmbuf->nsegs, byte_order);
 
   if (nsegs <= 0)
     return NULL;
@@ -244,7 +242,7 @@ decode_loadmap (const gdb_byte *buf)
   /* Allocate space into which to put information extract from the
      external loadsegs.  I.e, allocate the internal loadsegs.  */
   int_ldmbuf_size = (sizeof (struct int_elf32_dsbt_loadmap)
-		     + (nsegs - 1) * sizeof (struct int_elf32_dsbt_loadseg));
+                     + (nsegs - 1) * sizeof (struct int_elf32_dsbt_loadseg));
   int_ldmbuf = (struct int_elf32_dsbt_loadmap *) xmalloc (int_ldmbuf_size);
 
   /* Place extracted information in internal structs.  */
@@ -253,22 +251,21 @@ decode_loadmap (const gdb_byte *buf)
   for (seg = 0; seg < nsegs; seg++)
     {
       int_ldmbuf->segs[seg].addr
-	= extract_unsigned_integer (ext_ldmbuf->segs[seg].addr,
-				    sizeof (ext_ldmbuf->segs[seg].addr),
-				    byte_order);
+        = extract_unsigned_integer (ext_ldmbuf->segs[seg].addr,
+                                    sizeof (ext_ldmbuf->segs[seg].addr),
+                                    byte_order);
       int_ldmbuf->segs[seg].p_vaddr
-	= extract_unsigned_integer (ext_ldmbuf->segs[seg].p_vaddr,
-				    sizeof (ext_ldmbuf->segs[seg].p_vaddr),
-				    byte_order);
+        = extract_unsigned_integer (ext_ldmbuf->segs[seg].p_vaddr,
+                                    sizeof (ext_ldmbuf->segs[seg].p_vaddr),
+                                    byte_order);
       int_ldmbuf->segs[seg].p_memsz
-	= extract_unsigned_integer (ext_ldmbuf->segs[seg].p_memsz,
-				    sizeof (ext_ldmbuf->segs[seg].p_memsz),
-				    byte_order);
+        = extract_unsigned_integer (ext_ldmbuf->segs[seg].p_memsz,
+                                    sizeof (ext_ldmbuf->segs[seg].p_memsz),
+                                    byte_order);
     }
 
   return int_ldmbuf;
 }
-
 
 static struct dsbt_info *get_dsbt_info (void);
 
@@ -282,23 +279,23 @@ dsbt_get_initial_loadmaps (void)
   struct dsbt_info *info = get_dsbt_info ();
   gdb::optional<gdb::byte_vector> buf
     = target_read_alloc (current_inferior ()->top_target (),
-			 TARGET_OBJECT_FDPIC, "exec");
+                         TARGET_OBJECT_FDPIC, "exec");
 
   if (!buf || buf->empty ())
     {
       info->exec_loadmap = NULL;
-      error (_("Error reading DSBT exec loadmap"));
+      error (_ ("Error reading DSBT exec loadmap"));
     }
   info->exec_loadmap = decode_loadmap (buf->data ());
   if (solib_dsbt_debug)
     dsbt_print_loadmap (info->exec_loadmap);
 
   buf = target_read_alloc (current_inferior ()->top_target (),
-			   TARGET_OBJECT_FDPIC, "exec");
+                           TARGET_OBJECT_FDPIC, "exec");
   if (!buf || buf->empty ())
     {
       info->interp_loadmap = NULL;
-      error (_("Error reading DSBT interp loadmap"));
+      error (_ ("Error reading DSBT interp loadmap"));
     }
   info->interp_loadmap = decode_loadmap (buf->data ());
   if (solib_dsbt_debug)
@@ -323,16 +320,16 @@ fetch_loadmap (CORE_ADDR ldmaddr)
 
   /* Fetch initial portion of the loadmap.  */
   if (target_read_memory (ldmaddr, (gdb_byte *) &ext_ldmbuf_partial,
-			  sizeof ext_ldmbuf_partial))
+                          sizeof ext_ldmbuf_partial))
     {
       /* Problem reading the target's memory.  */
       return NULL;
     }
 
   /* Extract the version.  */
-  version = extract_unsigned_integer (ext_ldmbuf_partial.version,
-				      sizeof ext_ldmbuf_partial.version,
-				      byte_order);
+  version
+    = extract_unsigned_integer (ext_ldmbuf_partial.version,
+                                sizeof ext_ldmbuf_partial.version, byte_order);
   if (version != 0)
     {
       /* We only handle version 0.  */
@@ -340,16 +337,16 @@ fetch_loadmap (CORE_ADDR ldmaddr)
     }
 
   /* Extract the number of segments.  */
-  nsegs = extract_unsigned_integer (ext_ldmbuf_partial.nsegs,
-				    sizeof ext_ldmbuf_partial.nsegs,
-				    byte_order);
+  nsegs
+    = extract_unsigned_integer (ext_ldmbuf_partial.nsegs,
+                                sizeof ext_ldmbuf_partial.nsegs, byte_order);
 
   if (nsegs <= 0)
     return NULL;
 
   /* Allocate space for the complete (external) loadmap.  */
   ext_ldmbuf_size = sizeof (struct ext_elf32_dsbt_loadmap)
-    + (nsegs - 1) * sizeof (struct ext_elf32_dsbt_loadseg);
+                    + (nsegs - 1) * sizeof (struct ext_elf32_dsbt_loadseg);
   ext_ldmbuf = (struct ext_elf32_dsbt_loadmap *) xmalloc (ext_ldmbuf_size);
 
   /* Copy over the portion of the loadmap that's already been read.  */
@@ -357,8 +354,8 @@ fetch_loadmap (CORE_ADDR ldmaddr)
 
   /* Read the rest of the loadmap from the target.  */
   if (target_read_memory (ldmaddr + sizeof ext_ldmbuf_partial,
-			  (gdb_byte *) ext_ldmbuf + sizeof ext_ldmbuf_partial,
-			  ext_ldmbuf_size - sizeof ext_ldmbuf_partial))
+                          (gdb_byte *) ext_ldmbuf + sizeof ext_ldmbuf_partial,
+                          ext_ldmbuf_size - sizeof ext_ldmbuf_partial))
     {
       /* Couldn't read rest of the loadmap.  */
       xfree (ext_ldmbuf);
@@ -368,7 +365,7 @@ fetch_loadmap (CORE_ADDR ldmaddr)
   /* Allocate space into which to put information extract from the
      external loadsegs.  I.e, allocate the internal loadsegs.  */
   int_ldmbuf_size = sizeof (struct int_elf32_dsbt_loadmap)
-    + (nsegs - 1) * sizeof (struct int_elf32_dsbt_loadseg);
+                    + (nsegs - 1) * sizeof (struct int_elf32_dsbt_loadseg);
   int_ldmbuf = (struct int_elf32_dsbt_loadmap *) xmalloc (int_ldmbuf_size);
 
   /* Place extracted information in internal structs.  */
@@ -377,17 +374,17 @@ fetch_loadmap (CORE_ADDR ldmaddr)
   for (seg = 0; seg < nsegs; seg++)
     {
       int_ldmbuf->segs[seg].addr
-	= extract_unsigned_integer (ext_ldmbuf->segs[seg].addr,
-				    sizeof (ext_ldmbuf->segs[seg].addr),
-				    byte_order);
+        = extract_unsigned_integer (ext_ldmbuf->segs[seg].addr,
+                                    sizeof (ext_ldmbuf->segs[seg].addr),
+                                    byte_order);
       int_ldmbuf->segs[seg].p_vaddr
-	= extract_unsigned_integer (ext_ldmbuf->segs[seg].p_vaddr,
-				    sizeof (ext_ldmbuf->segs[seg].p_vaddr),
-				    byte_order);
+        = extract_unsigned_integer (ext_ldmbuf->segs[seg].p_vaddr,
+                                    sizeof (ext_ldmbuf->segs[seg].p_vaddr),
+                                    byte_order);
       int_ldmbuf->segs[seg].p_memsz
-	= extract_unsigned_integer (ext_ldmbuf->segs[seg].p_memsz,
-				    sizeof (ext_ldmbuf->segs[seg].p_memsz),
-				    byte_order);
+        = extract_unsigned_integer (ext_ldmbuf->segs[seg].p_memsz,
+                                    sizeof (ext_ldmbuf->segs[seg].p_memsz),
+                                    byte_order);
     }
 
   xfree (ext_ldmbuf);
@@ -410,14 +407,13 @@ open_symbol_file_object (int from_tty)
    to relocate the address.  */
 
 static CORE_ADDR
-displacement_from_map (struct int_elf32_dsbt_loadmap *map,
-		       CORE_ADDR addr)
+displacement_from_map (struct int_elf32_dsbt_loadmap *map, CORE_ADDR addr)
 {
   int seg;
 
   for (seg = 0; seg < map->nsegs; seg++)
     if (map->segs[seg].p_vaddr <= addr
-	&& addr < map->segs[seg].p_vaddr + map->segs[seg].p_memsz)
+        && addr < map->segs[seg].p_vaddr + map->segs[seg].p_memsz)
       return map->segs[seg].addr - map->segs[seg].p_vaddr;
 
   return 0;
@@ -456,19 +452,19 @@ lm_base (void)
     return info->lm_base_cache;
 
   got_sym = lookup_minimal_symbol ("_GLOBAL_OFFSET_TABLE_", NULL,
-				   current_program_space->symfile_object_file);
+                                   current_program_space->symfile_object_file);
 
   if (got_sym.minsym != 0)
     {
       addr = got_sym.value_address ();
       if (solib_dsbt_debug)
-	gdb_printf (gdb_stdlog,
-		    "lm_base: get addr %x by _GLOBAL_OFFSET_TABLE_.\n",
-		    (unsigned int) addr);
+        gdb_printf (gdb_stdlog,
+                    "lm_base: get addr %x by _GLOBAL_OFFSET_TABLE_.\n",
+                    (unsigned int) addr);
     }
   else if (gdb_bfd_scan_elf_dyntag (DT_PLTGOT,
-				    current_program_space->exec_bfd (),
-				    &addr, NULL))
+                                    current_program_space->exec_bfd (), &addr,
+                                    NULL))
     {
       struct int_elf32_dsbt_loadmap *ldm;
 
@@ -476,36 +472,31 @@ lm_base (void)
       ldm = info->exec_loadmap;
       addr += displacement_from_map (ldm, addr);
       if (solib_dsbt_debug)
-	gdb_printf (gdb_stdlog,
-		    "lm_base: get addr %x by DT_PLTGOT.\n",
-		    (unsigned int) addr);
+        gdb_printf (gdb_stdlog, "lm_base: get addr %x by DT_PLTGOT.\n",
+                    (unsigned int) addr);
     }
   else
     {
       if (solib_dsbt_debug)
-	gdb_printf (gdb_stdlog,
-		    "lm_base: _GLOBAL_OFFSET_TABLE_ not found.\n");
+        gdb_printf (gdb_stdlog, "lm_base: _GLOBAL_OFFSET_TABLE_ not found.\n");
       return 0;
     }
   addr += GOT_MODULE_OFFSET;
 
   if (solib_dsbt_debug)
-    gdb_printf (gdb_stdlog,
-		"lm_base: _GLOBAL_OFFSET_TABLE_ + %d = %s\n",
-		GOT_MODULE_OFFSET, hex_string_custom (addr, 8));
+    gdb_printf (gdb_stdlog, "lm_base: _GLOBAL_OFFSET_TABLE_ + %d = %s\n",
+                GOT_MODULE_OFFSET, hex_string_custom (addr, 8));
 
   if (target_read_memory (addr, buf, sizeof buf) != 0)
     return 0;
   info->lm_base_cache = extract_unsigned_integer (buf, sizeof buf, byte_order);
 
   if (solib_dsbt_debug)
-    gdb_printf (gdb_stdlog,
-		"lm_base: lm_base_cache = %s\n",
-		hex_string_custom (info->lm_base_cache, 8));
+    gdb_printf (gdb_stdlog, "lm_base: lm_base_cache = %s\n",
+                hex_string_custom (info->lm_base_cache, 8));
 
   return info->lm_base_cache;
 }
-
 
 /* Build a list of `struct so_list' objects describing the shared
    objects currently loaded in the inferior.  This list does not
@@ -554,85 +545,85 @@ dsbt_current_sos (void)
       int ret;
 
       if (solib_dsbt_debug)
-	gdb_printf (gdb_stdlog,
-		    "current_sos: reading link_map entry at %s\n",
-		    hex_string_custom (lm_addr, 8));
+        gdb_printf (gdb_stdlog, "current_sos: reading link_map entry at %s\n",
+                    hex_string_custom (lm_addr, 8));
 
-      ret = target_read_memory (lm_addr, (gdb_byte *) &lm_buf, sizeof (lm_buf));
+      ret
+        = target_read_memory (lm_addr, (gdb_byte *) &lm_buf, sizeof (lm_buf));
       if (ret)
-	{
-	  warning (_("dsbt_current_sos: Unable to read link map entry."
-		     "  Shared object chain may be incomplete."));
-	  break;
-	}
+        {
+          warning (_ ("dsbt_current_sos: Unable to read link map entry."
+                      "  Shared object chain may be incomplete."));
+          break;
+        }
 
       /* Fetch the load map address.  */
-      map_addr = extract_unsigned_integer (lm_buf.l_addr.map,
-					   sizeof lm_buf.l_addr.map,
-					   byte_order);
+      map_addr
+        = extract_unsigned_integer (lm_buf.l_addr.map,
+                                    sizeof lm_buf.l_addr.map, byte_order);
 
       ret = target_read_memory (map_addr + 12, (gdb_byte *) &indexword,
-				sizeof indexword);
+                                sizeof indexword);
       if (ret)
-	{
-	  warning (_("dsbt_current_sos: Unable to read dsbt index."
-		     "  Shared object chain may be incomplete."));
-	  break;
-	}
-      dsbt_index = extract_unsigned_integer (indexword, sizeof indexword,
-					     byte_order);
+        {
+          warning (_ ("dsbt_current_sos: Unable to read dsbt index."
+                      "  Shared object chain may be incomplete."));
+          break;
+        }
+      dsbt_index
+        = extract_unsigned_integer (indexword, sizeof indexword, byte_order);
 
       /* If the DSBT index is zero, then we're looking at the entry
 	 for the main executable.  By convention, we don't include
 	 this in the list of shared objects.  */
       if (dsbt_index != 0)
-	{
-	  struct int_elf32_dsbt_loadmap *loadmap;
-	  struct so_list *sop;
-	  CORE_ADDR addr;
+        {
+          struct int_elf32_dsbt_loadmap *loadmap;
+          struct so_list *sop;
+          CORE_ADDR addr;
 
-	  loadmap = fetch_loadmap (map_addr);
-	  if (loadmap == NULL)
-	    {
-	      warning (_("dsbt_current_sos: Unable to fetch load map."
-			 "  Shared object chain may be incomplete."));
-	      break;
-	    }
+          loadmap = fetch_loadmap (map_addr);
+          if (loadmap == NULL)
+            {
+              warning (_ ("dsbt_current_sos: Unable to fetch load map."
+                          "  Shared object chain may be incomplete."));
+              break;
+            }
 
-	  sop = XCNEW (struct so_list);
-	  lm_info_dsbt *li = new lm_info_dsbt;
-	  sop->lm_info = li;
-	  li->map = loadmap;
-	  /* Fetch the name.  */
-	  addr = extract_unsigned_integer (lm_buf.l_name,
-					   sizeof (lm_buf.l_name),
-					   byte_order);
-	  gdb::unique_xmalloc_ptr<char> name_buf
-	    = target_read_string (addr, SO_NAME_MAX_PATH_SIZE - 1);
+          sop = XCNEW (struct so_list);
+          lm_info_dsbt *li = new lm_info_dsbt;
+          sop->lm_info = li;
+          li->map = loadmap;
+          /* Fetch the name.  */
+          addr = extract_unsigned_integer (lm_buf.l_name,
+                                           sizeof (lm_buf.l_name), byte_order);
+          gdb::unique_xmalloc_ptr<char> name_buf
+            = target_read_string (addr, SO_NAME_MAX_PATH_SIZE - 1);
 
-	  if (name_buf == nullptr)
-	    warning (_("Can't read pathname for link map entry."));
-	  else
-	    {
-	      if (solib_dsbt_debug)
-		gdb_printf (gdb_stdlog, "current_sos: name = %s\n",
-			    name_buf.get ());
+          if (name_buf == nullptr)
+            warning (_ ("Can't read pathname for link map entry."));
+          else
+            {
+              if (solib_dsbt_debug)
+                gdb_printf (gdb_stdlog, "current_sos: name = %s\n",
+                            name_buf.get ());
 
-	      strncpy (sop->so_name, name_buf.get (), SO_NAME_MAX_PATH_SIZE - 1);
-	      sop->so_name[SO_NAME_MAX_PATH_SIZE - 1] = '\0';
-	      strcpy (sop->so_original_name, sop->so_name);
-	    }
+              strncpy (sop->so_name, name_buf.get (),
+                       SO_NAME_MAX_PATH_SIZE - 1);
+              sop->so_name[SO_NAME_MAX_PATH_SIZE - 1] = '\0';
+              strcpy (sop->so_original_name, sop->so_name);
+            }
 
-	  *sos_next_ptr = sop;
-	  sos_next_ptr = &sop->next;
-	}
+          *sos_next_ptr = sop;
+          sos_next_ptr = &sop->next;
+        }
       else
-	{
-	  info->main_lm_addr = lm_addr;
-	}
+        {
+          info->main_lm_addr = lm_addr;
+        }
 
       lm_addr = extract_unsigned_integer (lm_buf.l_next,
-					  sizeof (lm_buf.l_next), byte_order);
+                                          sizeof (lm_buf.l_next), byte_order);
     }
 
   return sos_head;
@@ -646,9 +637,10 @@ dsbt_in_dynsym_resolve_code (CORE_ADDR pc)
 {
   struct dsbt_info *info = get_dsbt_info ();
 
-  return ((pc >= info->interp_text_sect_low && pc < info->interp_text_sect_high)
-	  || (pc >= info->interp_plt_sect_low && pc < info->interp_plt_sect_high)
-	  || in_plt_section (pc));
+  return (
+    (pc >= info->interp_text_sect_low && pc < info->interp_text_sect_high)
+    || (pc >= info->interp_plt_sect_low && pc < info->interp_plt_sect_high)
+    || in_plt_section (pc));
 }
 
 /* Print a warning about being unable to set the dynamic linker
@@ -657,9 +649,9 @@ dsbt_in_dynsym_resolve_code (CORE_ADDR pc)
 static void
 enable_break_failure_warning (void)
 {
-  warning (_("Unable to find dynamic linker breakpoint function.\n"
-	     "GDB will be unable to debug shared library initializers\n"
-	     "and track explicitly loaded dynamic code."));
+  warning (_ ("Unable to find dynamic linker breakpoint function.\n"
+              "GDB will be unable to debug shared library initializers\n"
+              "and track explicitly loaded dynamic code."));
 }
 
 /* Helper function for gdb_bfd_lookup_symbol.  */
@@ -699,8 +691,8 @@ enable_break (void)
 
   /* Find the .interp section; if not found, warn the user and drop
      into the old breakpoint at symbol code.  */
-  interp_sect = bfd_get_section_by_name (current_program_space->exec_bfd (),
-					 ".interp");
+  interp_sect
+    = bfd_get_section_by_name (current_program_space->exec_bfd (), ".interp");
   if (interp_sect)
     {
       unsigned int interp_sect_size;
@@ -714,7 +706,7 @@ enable_break (void)
       interp_sect_size = bfd_section_size (interp_sect);
       buf = (char *) alloca (interp_sect_size);
       bfd_get_section_contents (current_program_space->exec_bfd (),
-				interp_sect, buf, 0, interp_sect_size);
+                                interp_sect, buf, 0, interp_sect_size);
 
       /* Now we need to figure out where the dynamic linker was
 	 loaded so that we can load its symbols and place a breakpoint
@@ -722,18 +714,18 @@ enable_break (void)
 
       gdb_bfd_ref_ptr tmp_bfd;
       try
-	{
-	  tmp_bfd = solib_bfd_open (buf);
-	}
+        {
+          tmp_bfd = solib_bfd_open (buf);
+        }
       catch (const gdb_exception &ex)
-	{
-	}
+        {
+        }
 
       if (tmp_bfd == NULL)
-	{
-	  enable_break_failure_warning ();
-	  return 0;
-	}
+        {
+          enable_break_failure_warning ();
+          return 0;
+        }
 
       dsbt_get_initial_loadmaps ();
       ldm = info->interp_loadmap;
@@ -742,50 +734,52 @@ enable_break (void)
 	 text and plt section for dsbt_in_dynsym_resolve_code.  */
       interp_sect = bfd_get_section_by_name (tmp_bfd.get (), ".text");
       if (interp_sect)
-	{
-	  info->interp_text_sect_low = bfd_section_vma (interp_sect);
-	  info->interp_text_sect_low
-	    += displacement_from_map (ldm, info->interp_text_sect_low);
-	  info->interp_text_sect_high
-	    = info->interp_text_sect_low + bfd_section_size (interp_sect);
-	}
+        {
+          info->interp_text_sect_low = bfd_section_vma (interp_sect);
+          info->interp_text_sect_low
+            += displacement_from_map (ldm, info->interp_text_sect_low);
+          info->interp_text_sect_high
+            = info->interp_text_sect_low + bfd_section_size (interp_sect);
+        }
       interp_sect = bfd_get_section_by_name (tmp_bfd.get (), ".plt");
       if (interp_sect)
-	{
-	  info->interp_plt_sect_low = bfd_section_vma (interp_sect);
-	  info->interp_plt_sect_low
-	    += displacement_from_map (ldm, info->interp_plt_sect_low);
-	  info->interp_plt_sect_high
-	    = info->interp_plt_sect_low + bfd_section_size (interp_sect);
-	}
+        {
+          info->interp_plt_sect_low = bfd_section_vma (interp_sect);
+          info->interp_plt_sect_low
+            += displacement_from_map (ldm, info->interp_plt_sect_low);
+          info->interp_plt_sect_high
+            = info->interp_plt_sect_low + bfd_section_size (interp_sect);
+        }
 
-      addr = gdb_bfd_lookup_symbol (tmp_bfd.get (), cmp_name,
-				    "_dl_debug_state");
+      addr
+        = gdb_bfd_lookup_symbol (tmp_bfd.get (), cmp_name, "_dl_debug_state");
       if (addr != 0)
-	{
-	  if (solib_dsbt_debug)
-	    gdb_printf (gdb_stdlog,
-			"enable_break: _dl_debug_state (prior to relocation) = %s\n",
-			hex_string_custom (addr, 8));
-	  addr += displacement_from_map (ldm, addr);
+        {
+          if (solib_dsbt_debug)
+            gdb_printf (
+              gdb_stdlog,
+              "enable_break: _dl_debug_state (prior to relocation) = %s\n",
+              hex_string_custom (addr, 8));
+          addr += displacement_from_map (ldm, addr);
 
-	  if (solib_dsbt_debug)
-	    gdb_printf (gdb_stdlog,
-			"enable_break: _dl_debug_state (after relocation) = %s\n",
-			hex_string_custom (addr, 8));
+          if (solib_dsbt_debug)
+            gdb_printf (
+              gdb_stdlog,
+              "enable_break: _dl_debug_state (after relocation) = %s\n",
+              hex_string_custom (addr, 8));
 
-	  /* Now (finally!) create the solib breakpoint.  */
-	  create_solib_event_breakpoint (target_gdbarch (), addr);
+          /* Now (finally!) create the solib breakpoint.  */
+          create_solib_event_breakpoint (target_gdbarch (), addr);
 
-	  ret = 1;
-	}
+          ret = 1;
+        }
       else
-	{
-	  if (solib_dsbt_debug)
-	    gdb_printf (gdb_stdlog,
-			"enable_break: _dl_debug_state is not found\n");
-	  ret = 0;
-	}
+        {
+          if (solib_dsbt_debug)
+            gdb_printf (gdb_stdlog,
+                        "enable_break: _dl_debug_state is not found\n");
+          ret = 0;
+        }
 
       /* We're done with the loadmap.  */
       xfree (ldm);
@@ -820,34 +814,34 @@ dsbt_relocate_main_executable (void)
   changed = 0;
 
   ALL_OBJFILE_OSECTIONS (objf, osect)
-    {
-      CORE_ADDR orig_addr, addr, offset;
-      int osect_idx;
-      int seg;
+  {
+    CORE_ADDR orig_addr, addr, offset;
+    int osect_idx;
+    int seg;
 
-      osect_idx = osect - objf->sections;
+    osect_idx = osect - objf->sections;
 
-      /* Current address of section.  */
-      addr = osect->addr ();
-      /* Offset from where this section started.  */
-      offset = objf->section_offsets[osect_idx];
-      /* Original address prior to any past relocations.  */
-      orig_addr = addr - offset;
+    /* Current address of section.  */
+    addr = osect->addr ();
+    /* Offset from where this section started.  */
+    offset = objf->section_offsets[osect_idx];
+    /* Original address prior to any past relocations.  */
+    orig_addr = addr - offset;
 
-      for (seg = 0; seg < ldm->nsegs; seg++)
-	{
-	  if (ldm->segs[seg].p_vaddr <= orig_addr
-	      && orig_addr < ldm->segs[seg].p_vaddr + ldm->segs[seg].p_memsz)
-	    {
-	      new_offsets[osect_idx]
-		= ldm->segs[seg].addr - ldm->segs[seg].p_vaddr;
+    for (seg = 0; seg < ldm->nsegs; seg++)
+      {
+        if (ldm->segs[seg].p_vaddr <= orig_addr
+            && orig_addr < ldm->segs[seg].p_vaddr + ldm->segs[seg].p_memsz)
+          {
+            new_offsets[osect_idx]
+              = ldm->segs[seg].addr - ldm->segs[seg].p_vaddr;
 
-	      if (new_offsets[osect_idx] != offset)
-		changed = 1;
-	      break;
-	    }
-	}
-    }
+            if (new_offsets[osect_idx] != offset)
+              changed = 1;
+            break;
+          }
+      }
+  }
 
   if (changed)
     objfile_relocate (objf, new_offsets);
@@ -872,7 +866,7 @@ dsbt_solib_create_inferior_hook (int from_tty)
   /* Enable shared library breakpoints.  */
   if (!enable_break ())
     {
-      warning (_("shared library handler failed to enable breakpoint"));
+      warning (_ ("shared library handler failed to enable breakpoint"));
       return;
     }
 }
@@ -899,7 +893,7 @@ dsbt_free_so (struct so_list *so)
 
 static void
 dsbt_relocate_section_addresses (struct so_list *so,
-				 struct target_section *sec)
+                                 struct target_section *sec)
 {
   int seg;
   lm_info_dsbt *li = (lm_info_dsbt *) so->lm_info;
@@ -908,25 +902,24 @@ dsbt_relocate_section_addresses (struct so_list *so,
   for (seg = 0; seg < map->nsegs; seg++)
     {
       if (map->segs[seg].p_vaddr <= sec->addr
-	  && sec->addr < map->segs[seg].p_vaddr + map->segs[seg].p_memsz)
-	{
-	  CORE_ADDR displ = map->segs[seg].addr - map->segs[seg].p_vaddr;
+          && sec->addr < map->segs[seg].p_vaddr + map->segs[seg].p_memsz)
+        {
+          CORE_ADDR displ = map->segs[seg].addr - map->segs[seg].p_vaddr;
 
-	  sec->addr += displ;
-	  sec->endaddr += displ;
-	  break;
-	}
+          sec->addr += displ;
+          sec->endaddr += displ;
+          break;
+        }
     }
 }
 static void
 show_dsbt_debug (struct ui_file *file, int from_tty,
-		 struct cmd_list_element *c, const char *value)
+                 struct cmd_list_element *c, const char *value)
 {
-  gdb_printf (file, _("solib-dsbt debugging is %s.\n"), value);
+  gdb_printf (file, _ ("solib-dsbt debugging is %s.\n"), value);
 }
 
-const struct target_so_ops dsbt_so_ops =
-{
+const struct target_so_ops dsbt_so_ops = {
   dsbt_relocate_section_addresses,
   dsbt_free_so,
   nullptr,
@@ -944,11 +937,12 @@ _initialize_dsbt_solib ()
 {
   /* Debug this file's internals.  */
   add_setshow_zuinteger_cmd ("solib-dsbt", class_maintenance,
-			     &solib_dsbt_debug, _("\
-Set internal debugging of shared library code for DSBT ELF."), _("\
-Show internal debugging of shared library code for DSBT ELF."), _("\
+                             &solib_dsbt_debug, _ ("\
+Set internal debugging of shared library code for DSBT ELF."),
+                             _ ("\
+Show internal debugging of shared library code for DSBT ELF."),
+                             _ ("\
 When non-zero, DSBT solib specific internal debugging is enabled."),
-			     NULL,
-			     show_dsbt_debug,
-			     &setdebuglist, &showdebuglist);
+                             NULL, show_dsbt_debug, &setdebuglist,
+                             &showdebuglist);
 }

@@ -36,10 +36,10 @@
 /* Core file support.  */
 
 /* Sizeof `struct reg' in <machine/reg.h>.  */
-#define ALPHANBSD_SIZEOF_GREGS	(32 * 8)
+#define ALPHANBSD_SIZEOF_GREGS (32 * 8)
 
 /* Sizeof `struct fpreg' in <machine/reg.h.  */
-#define ALPHANBSD_SIZEOF_FPREGS	((32 * 8) + 8)
+#define ALPHANBSD_SIZEOF_FPREGS ((32 * 8) + 8)
 
 /* Supply register REGNUM from the buffer specified by FPREGS and LEN
    in the floating-point register set REGSET to register cache
@@ -47,8 +47,8 @@
 
 static void
 alphanbsd_supply_fpregset (const struct regset *regset,
-			   struct regcache *regcache,
-			   int regnum, const void *fpregs, size_t len)
+                           struct regcache *regcache, int regnum,
+                           const void *fpregs, size_t len)
 {
   const gdb_byte *regs = (const gdb_byte *) fpregs;
   int i;
@@ -58,7 +58,7 @@ alphanbsd_supply_fpregset (const struct regset *regset,
   for (i = ALPHA_FP0_REGNUM; i < ALPHA_FP0_REGNUM + 31; i++)
     {
       if (regnum == i || regnum == -1)
-	regcache->raw_supply (i, regs + (i - ALPHA_FP0_REGNUM) * 8);
+        regcache->raw_supply (i, regs + (i - ALPHA_FP0_REGNUM) * 8);
     }
 
   if (regnum == ALPHA_FPCR_REGNUM || regnum == -1)
@@ -71,31 +71,23 @@ alphanbsd_supply_fpregset (const struct regset *regset,
 
 static void
 alphanbsd_aout_supply_gregset (const struct regset *regset,
-			       struct regcache *regcache,
-			       int regnum, const void *gregs, size_t len)
+                               struct regcache *regcache, int regnum,
+                               const void *gregs, size_t len)
 {
   const gdb_byte *regs = (const gdb_byte *) gregs;
   int i;
 
   /* Table to map a GDB register number to a trapframe register index.  */
-  static const int regmap[] =
-  {
-     0,   1,   2,   3,
-     4,   5,   6,   7,
-     8,   9,  10,  11,
-    12,  13,  14,  15, 
-    30,  31,  32,  16, 
-    17,  18,  19,  20,
-    21,  22,  23,  24,
-    25,  29,  26
-  };
+  static const int regmap[]
+    = { 0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15,
+        30, 31, 32, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 29, 26 };
 
   gdb_assert (len >= ALPHANBSD_SIZEOF_GREGS);
 
-  for (i = 0; i < ARRAY_SIZE(regmap); i++)
+  for (i = 0; i < ARRAY_SIZE (regmap); i++)
     {
       if (regnum == i || regnum == -1)
-	regcache->raw_supply (i, regs + regmap[i] * 8);
+        regcache->raw_supply (i, regs + regmap[i] * 8);
     }
 
   if (regnum == ALPHA_PC_REGNUM || regnum == -1)
@@ -115,8 +107,8 @@ alphanbsd_aout_supply_gregset (const struct regset *regset,
 
 static void
 alphanbsd_supply_gregset (const struct regset *regset,
-			  struct regcache *regcache,
-			  int regnum, const void *gregs, size_t len)
+                          struct regcache *regcache, int regnum,
+                          const void *gregs, size_t len)
 {
   const gdb_byte *regs = (const gdb_byte *) gregs;
   int i;
@@ -130,7 +122,7 @@ alphanbsd_supply_gregset (const struct regset *regset,
   for (i = 0; i < ALPHA_ZERO_REGNUM; i++)
     {
       if (regnum == i || regnum == -1)
-	regcache->raw_supply (i, regs + i * 8);
+        regcache->raw_supply (i, regs + i * 8);
     }
 
   if (regnum == ALPHA_PC_REGNUM || regnum == -1)
@@ -139,34 +131,25 @@ alphanbsd_supply_gregset (const struct regset *regset,
 
 /* NetBSD/alpha register sets.  */
 
-static const struct regset alphanbsd_gregset =
-{
-  NULL,
-  alphanbsd_supply_gregset,
-  NULL,
-  REGSET_VARIABLE_SIZE
-};
+static const struct regset alphanbsd_gregset
+  = { NULL, alphanbsd_supply_gregset, NULL, REGSET_VARIABLE_SIZE };
 
-static const struct regset alphanbsd_fpregset =
-{
-  NULL,
-  alphanbsd_supply_fpregset
-};
+static const struct regset alphanbsd_fpregset
+  = { NULL, alphanbsd_supply_fpregset };
 
 /* Iterate over supported core file register note sections. */
 
 void
 alphanbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
-					iterate_over_regset_sections_cb *cb,
-					void *cb_data,
-					const struct regcache *regcache)
+                                        iterate_over_regset_sections_cb *cb,
+                                        void *cb_data,
+                                        const struct regcache *regcache)
 {
   cb (".reg", ALPHANBSD_SIZEOF_GREGS, ALPHANBSD_SIZEOF_GREGS,
       &alphanbsd_gregset, NULL, cb_data);
   cb (".reg2", ALPHANBSD_SIZEOF_FPREGS, ALPHANBSD_SIZEOF_FPREGS,
       &alphanbsd_fpregset, NULL, cb_data);
 }
-
 
 /* Signal trampolines.  */
 
@@ -186,15 +169,14 @@ alphanbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
    sequence and can then check whether we really are executing in the
    signal trampoline.  If not, -1 is returned, otherwise the offset from the
    start of the return sequence is returned.  */
-static const gdb_byte sigtramp_retcode[] =
-{
-  0x00, 0x00, 0x1e, 0xa6,	/* ldq a0, 0(sp) */
-  0x10, 0x00, 0xde, 0x23,	/* lda sp, 16(sp) */
-  0x27, 0x01, 0x1f, 0x20,	/* lda v0, 295(zero) */
-  0x83, 0x00, 0x00, 0x00,	/* call_pal callsys */
+static const gdb_byte sigtramp_retcode[] = {
+  0x00, 0x00, 0x1e, 0xa6, /* ldq a0, 0(sp) */
+  0x10, 0x00, 0xde, 0x23, /* lda sp, 16(sp) */
+  0x27, 0x01, 0x1f, 0x20, /* lda v0, 295(zero) */
+  0x83, 0x00, 0x00, 0x00, /* call_pal callsys */
 };
-#define RETCODE_NWORDS		4
-#define RETCODE_SIZE		(RETCODE_NWORDS * 4)
+#define RETCODE_NWORDS 4
+#define RETCODE_SIZE (RETCODE_NWORDS * 4)
 
 static LONGEST
 alphanbsd_sigtramp_offset (struct gdbarch *gdbarch, CORE_ADDR pc)
@@ -209,7 +191,7 @@ alphanbsd_sigtramp_offset (struct gdbarch *gdbarch, CORE_ADDR pc)
   for (i = 0; i < RETCODE_NWORDS; i++)
     {
       if (memcmp (w, sigtramp_retcode + (i * 4), 4) == 0)
-	break;
+        break;
     }
   if (i == RETCODE_NWORDS)
     return (-1);
@@ -227,11 +209,11 @@ alphanbsd_sigtramp_offset (struct gdbarch *gdbarch, CORE_ADDR pc)
 }
 
 static int
-alphanbsd_pc_in_sigtramp (struct gdbarch *gdbarch,
-		 	  CORE_ADDR pc, const char *func_name)
+alphanbsd_pc_in_sigtramp (struct gdbarch *gdbarch, CORE_ADDR pc,
+                          const char *func_name)
 {
   return (nbsd_pc_in_sigtramp (pc, func_name)
-	  || alphanbsd_sigtramp_offset (gdbarch, pc) >= 0);
+          || alphanbsd_sigtramp_offset (gdbarch, pc) >= 0);
 }
 
 static CORE_ADDR
@@ -244,11 +226,9 @@ alphanbsd_sigcontext_addr (frame_info_ptr frame)
     return 0;
   return get_frame_base (get_next_frame (frame));
 }
-
 
 static void
-alphanbsd_init_abi (struct gdbarch_info info,
-		    struct gdbarch *gdbarch)
+alphanbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   alpha_gdbarch_tdep *tdep = gdbarch_tdep<alpha_gdbarch_tdep> (gdbarch);
 
@@ -265,8 +245,8 @@ alphanbsd_init_abi (struct gdbarch_info info,
   set_gdbarch_software_single_step (gdbarch, alpha_software_single_step);
 
   /* NetBSD/alpha has SVR4-style shared libraries.  */
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, svr4_lp64_fetch_link_map_offsets);
+  set_solib_svr4_fetch_link_map_offsets (gdbarch,
+                                         svr4_lp64_fetch_link_map_offsets);
 
   tdep->dynamic_sigtramp_offset = alphanbsd_sigtramp_offset;
   tdep->pc_in_sigtramp = alphanbsd_pc_in_sigtramp;
@@ -275,10 +255,9 @@ alphanbsd_init_abi (struct gdbarch_info info,
   tdep->jb_pc = 2;
   tdep->jb_elt_size = 8;
 
-  set_gdbarch_iterate_over_regset_sections
-    (gdbarch, alphanbsd_iterate_over_regset_sections);
+  set_gdbarch_iterate_over_regset_sections (
+    gdbarch, alphanbsd_iterate_over_regset_sections);
 }
-
 
 void _initialize_alphanbsd_tdep ();
 void
@@ -288,5 +267,5 @@ _initialize_alphanbsd_tdep ()
      traditional a.out-style core dump format before NetBSD 1.6, but
      we don't support those.  */
   gdbarch_register_osabi (bfd_arch_alpha, 0, GDB_OSABI_NETBSD,
-			  alphanbsd_init_abi);
+                          alphanbsd_init_abi);
 }

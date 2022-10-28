@@ -44,7 +44,7 @@ struct memtag_section_info
    about such section.  Otherwise leave it unchanged.  */
 
 bool get_next_core_memtag_section (bfd *abfd, asection *section,
-				   CORE_ADDR address,
-				   memtag_section_info &info);
+                                   CORE_ADDR address,
+                                   memtag_section_info &info);
 
 #endif /* MEMTAG_H */

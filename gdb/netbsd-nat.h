@@ -43,17 +43,16 @@ struct nbsd_nat_target : public inf_ptrace_target
   ptid_t wait (ptid_t, struct target_waitstatus *, target_wait_flags) override;
   int insert_exec_catchpoint (int pid) override;
   int remove_exec_catchpoint (int pid) override;
-  int set_syscall_catchpoint (int pid, bool needed, int any_count,
-			      gdb::array_view<const int> syscall_counts)
-    override;
+  int
+  set_syscall_catchpoint (int pid, bool needed, int any_count,
+                          gdb::array_view<const int> syscall_counts) override;
 
   bool supports_multi_process () override;
   enum target_xfer_status xfer_partial (enum target_object object,
-					const char *annex,
-					gdb_byte *readbuf,
-					const gdb_byte *writebuf,
-					ULONGEST offset, ULONGEST len,
-					ULONGEST *xfered_len) override;
+                                        const char *annex, gdb_byte *readbuf,
+                                        const gdb_byte *writebuf,
+                                        ULONGEST offset, ULONGEST len,
+                                        ULONGEST *xfered_len) override;
   bool supports_dumpcore () override;
   void dumpcore (const char *filename) override;
 

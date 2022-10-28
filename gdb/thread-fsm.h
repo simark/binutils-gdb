@@ -30,8 +30,7 @@ struct thread_fsm_ops;
 
 struct thread_fsm
 {
-  explicit thread_fsm (struct interp *cmd_interp)
-    : command_interp (cmd_interp)
+  explicit thread_fsm (struct interp *cmd_interp) : command_interp (cmd_interp)
   {
   }
 
@@ -45,9 +44,7 @@ struct thread_fsm
   /* Called to clean up target resources after the FSM.  E.g., if the
      FSM created internal breakpoints, this is where they should be
      deleted.  */
-  virtual void clean_up (struct thread_info *thread)
-  {
-  }
+  virtual void clean_up (struct thread_info *thread) {}
 
   /* Called after handle_inferior_event decides the target is done
      (that is, after stop_waiting).  The FSM is given a chance to
@@ -60,10 +57,7 @@ struct thread_fsm
 
   /* If this FSM saved a function's return value, you can use this
      method to retrieve it.  Otherwise, this returns NULL.  */
-  virtual struct return_value_info *return_value ()
-  {
-    return nullptr;
-  }
+  virtual struct return_value_info *return_value () { return nullptr; }
 
   enum async_reply_reason async_reply_reason ()
   {
@@ -74,20 +68,11 @@ struct thread_fsm
   }
 
   /* Whether the stop should be notified to the user/frontend.  */
-  virtual bool should_notify_stop ()
-  {
-    return true;
-  }
+  virtual bool should_notify_stop () { return true; }
 
-  void set_finished ()
-  {
-    finished = true;
-  }
+  void set_finished () { finished = true; }
 
-  bool finished_p () const
-  {
-    return finished;
-  }
+  bool finished_p () const { return finished; }
 
   /* The interpreter that issued the execution command that caused
      this thread to resume.  If the top level interpreter is MI/async,
@@ -98,7 +83,6 @@ struct thread_fsm
   struct interp *command_interp = nullptr;
 
 protected:
-
   /* Whether the FSM is done successfully.  */
   bool finished = false;
 

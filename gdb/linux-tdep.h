@@ -36,57 +36,56 @@ enum linux_siginfo_extra_field_values
 
 /* Defines a type for the values defined in linux_siginfo_extra_field_values.  */
 DEF_ENUM_FLAGS_TYPE (enum linux_siginfo_extra_field_values,
-		     linux_siginfo_extra_fields);
+                     linux_siginfo_extra_fields);
 
 /* This function is suitable for architectures that
    extend/override the standard siginfo in a specific way.  */
 struct type *linux_get_siginfo_type_with_fields (struct gdbarch *gdbarch,
-						 linux_siginfo_extra_fields);
+                                                 linux_siginfo_extra_fields);
 
 /* Return true if ADDRESS is within the boundaries of a page mapped with
    memory tagging protection.  */
 bool linux_address_in_memtag_page (CORE_ADDR address);
 
 typedef char *(*linux_collect_thread_registers_ftype) (const struct regcache *,
-						       ptid_t,
-						       bfd *, char *, int *,
-						       enum gdb_signal);
+                                                       ptid_t, bfd *, char *,
+                                                       int *, enum gdb_signal);
 
 extern enum gdb_signal linux_gdb_signal_from_target (struct gdbarch *gdbarch,
-						     int signal);
+                                                     int signal);
 
 extern int linux_gdb_signal_to_target (struct gdbarch *gdbarch,
-				       enum gdb_signal signal);
+                                       enum gdb_signal signal);
 
 /* Default GNU/Linux implementation of `displaced_step_location', as
    defined in gdbarch.h.  Determines the entry point from AT_ENTRY in
    the target auxiliary vector.  */
 extern CORE_ADDR linux_displaced_step_location (struct gdbarch *gdbarch);
 
-
 /* Implementation of gdbarch_displaced_step_prepare.  */
 
-extern displaced_step_prepare_status linux_displaced_step_prepare
-  (gdbarch *arch, thread_info *thread, CORE_ADDR &displaced_pc);
+extern displaced_step_prepare_status
+linux_displaced_step_prepare (gdbarch *arch, thread_info *thread,
+                              CORE_ADDR &displaced_pc);
 
 /* Implementation of gdbarch_displaced_step_finish.  */
 
-extern displaced_step_finish_status linux_displaced_step_finish
-  (gdbarch *arch, thread_info *thread, gdb_signal sig);
+extern displaced_step_finish_status
+linux_displaced_step_finish (gdbarch *arch, thread_info *thread,
+                             gdb_signal sig);
 
 /* Implementation of gdbarch_displaced_step_copy_insn_closure_by_addr.  */
 
 extern const displaced_step_copy_insn_closure *
-  linux_displaced_step_copy_insn_closure_by_addr
-    (inferior *inf, CORE_ADDR addr);
+linux_displaced_step_copy_insn_closure_by_addr (inferior *inf, CORE_ADDR addr);
 
 /* Implementation of gdbarch_displaced_step_restore_all_in_ptid.  */
 
 extern void linux_displaced_step_restore_all_in_ptid (inferior *parent_inf,
-						      ptid_t ptid);
+                                                      ptid_t ptid);
 
 extern void linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch,
-			    int num_disp_step_buffers);
+                            int num_disp_step_buffers);
 
 extern int linux_is_uclinux (void);
 
@@ -95,7 +94,7 @@ extern int linux_is_uclinux (void);
 
    On error, 0 is returned.  */
 extern CORE_ADDR linux_get_hwcap (const gdb::optional<gdb::byte_vector> &auxv,
-				  struct target_ops *target, gdbarch *gdbarch);
+                                  struct target_ops *target, gdbarch *gdbarch);
 
 /* Same as the above, but obtain all the inputs from the current inferior.  */
 
@@ -106,7 +105,8 @@ extern CORE_ADDR linux_get_hwcap ();
 
    On error, 0 is returned.  */
 extern CORE_ADDR linux_get_hwcap2 (const gdb::optional<gdb::byte_vector> &auxv,
-				   struct target_ops *target, gdbarch *gdbarch);
+                                   struct target_ops *target,
+                                   gdbarch *gdbarch);
 
 /* Same as the above, but obtain all the inputs from the current inferior.  */
 

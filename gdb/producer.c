@@ -29,7 +29,7 @@ producer_is_gcc_ge_4 (const char *producer)
 {
   int major, minor;
 
-  if (! producer_is_gcc (producer, &major, &minor))
+  if (!producer_is_gcc (producer, &major, &minor))
     return -1;
   if (major < 4)
     return -1;
@@ -50,9 +50,9 @@ producer_is_gcc (const char *producer, int *major, int *minor)
       int maj, min;
 
       if (major == NULL)
-	major = &maj;
+        major = &maj;
       if (minor == NULL)
-	minor = &min;
+        minor = &min;
 
       /* Skip any identifier after "GNU " - such as "C11" "C++" or "Java".
 	 A full producer string might look like:
@@ -62,11 +62,11 @@ producer_is_gcc (const char *producer, int *major, int *minor)
       */
       cs = &producer[strlen ("GNU ")];
       while (*cs && !isspace (*cs))
-	cs++;
+        cs++;
       if (*cs && isspace (*cs))
-	cs++;
+        cs++;
       if (sscanf (cs, "%d.%d", major, minor) == 2)
-	return 1;
+        return 1;
     }
 
   /* Not recognized as GCC.  */
@@ -80,7 +80,7 @@ producer_is_icc_ge_19 (const char *producer)
 {
   int major, minor;
 
-  if (! producer_is_icc (producer, &major, &minor))
+  if (!producer_is_icc (producer, &major, &minor))
     return false;
 
   return major >= 19;
@@ -123,13 +123,16 @@ producer_is_icc (const char *producer, int *major, int *minor)
 bool
 producer_is_llvm (const char *producer)
 {
-  return ((producer != NULL) && (startswith (producer, "clang ")
-				 || startswith (producer, " F90 Flang ")));
+  return ((producer != NULL)
+          && (startswith (producer, "clang ")
+              || startswith (producer, " F90 Flang ")));
 }
 
 #if defined GDB_SELF_TEST
-namespace selftests {
-namespace producer {
+namespace selftests
+{
+namespace producer
+{
 
 static void
 producer_parsing_tests ()
@@ -151,8 +154,8 @@ Intel(R) 64, \
 Version 14.0.1.074 Build 20130716";
 
     int major = 0, minor = 0;
-    SELF_CHECK (producer_is_icc (extern_f_14_0, &major, &minor)
-		&& major == 14 && minor == 0);
+    SELF_CHECK (producer_is_icc (extern_f_14_0, &major, &minor) && major == 14
+                && minor == 0);
     SELF_CHECK (!producer_is_gcc (extern_f_14_0, &major, &minor));
   }
 
@@ -163,8 +166,8 @@ Intel(R) 64, \
 Version 14.0";
 
     int major = 0, minor = 0;
-    SELF_CHECK (producer_is_icc (intern_f_14, &major, &minor)
-		&& major == 14 && minor == 0);
+    SELF_CHECK (producer_is_icc (intern_f_14, &major, &minor) && major == 14
+                && minor == 0);
     SELF_CHECK (!producer_is_gcc (intern_f_14, &major, &minor));
   }
 
@@ -174,8 +177,8 @@ Intel(R) C++ Intel(R) 64 Compiler XE for applications running on \
 Intel(R) 64, \
 Version 14.0";
     int major = 0, minor = 0;
-    SELF_CHECK (producer_is_icc (intern_c_14, &major, &minor)
-		&& major == 14 && minor == 0);
+    SELF_CHECK (producer_is_icc (intern_c_14, &major, &minor) && major == 14
+                && minor == 0);
     SELF_CHECK (!producer_is_gcc (intern_c_14, &major, &minor));
   }
 
@@ -185,8 +188,8 @@ Intel(R) C++ Intel(R) 64 Compiler for applications running on \
 Intel(R) 64, \
 Version 18.0 Beta";
     int major = 0, minor = 0;
-    SELF_CHECK (producer_is_icc (intern_c_18, &major, &minor)
-		&& major == 18 && minor == 0);
+    SELF_CHECK (producer_is_icc (intern_c_18, &major, &minor) && major == 18
+                && minor == 0);
   }
 
   {
@@ -194,16 +197,16 @@ Version 18.0 Beta";
     SELF_CHECK (!producer_is_icc (gnu, NULL, NULL));
 
     int major = 0, minor = 0;
-    SELF_CHECK (producer_is_gcc (gnu, &major, &minor)
-		&& major == 4 && minor == 7);
+    SELF_CHECK (producer_is_gcc (gnu, &major, &minor) && major == 4
+                && minor == 7);
   }
 
   {
     static const char gnu_exp[] = "GNU C++14 5.0.0 20150123 (experimental)";
     int major = 0, minor = 0;
     SELF_CHECK (!producer_is_icc (gnu_exp, NULL, NULL));
-    SELF_CHECK (producer_is_gcc (gnu_exp, &major, &minor)
-		&& major == 5 && minor == 0);
+    SELF_CHECK (producer_is_gcc (gnu_exp, &major, &minor) && major == 5
+                && minor == 0);
   }
 
   {
@@ -222,8 +225,8 @@ Version 18.0 Beta";
     SELF_CHECK (producer_is_llvm (flang_llvm_exp));
   }
 }
-}
-}
+} // namespace producer
+} // namespace selftests
 #endif
 
 void _initialize_producer ();
@@ -231,7 +234,7 @@ void
 _initialize_producer ()
 {
 #if defined GDB_SELF_TEST
-  selftests::register_test
-    ("producer-parser", selftests::producer::producer_parsing_tests);
+  selftests::register_test ("producer-parser",
+                            selftests::producer::producer_parsing_tests);
 #endif
 }

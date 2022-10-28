@@ -33,7 +33,6 @@ struct varobj_item
 struct varobj_iter
 {
 public:
-
   virtual ~varobj_iter () = default;
 
   virtual std::unique_ptr<varobj_item> next () = 0;

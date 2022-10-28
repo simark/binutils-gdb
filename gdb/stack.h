@@ -21,17 +21,17 @@
 #define STACK_H
 
 gdb::unique_xmalloc_ptr<char> find_frame_funname (frame_info_ptr frame,
-						  enum language *funlang,
-						  struct symbol **funcp);
+                                                  enum language *funlang,
+                                                  struct symbol **funcp);
 
 typedef gdb::function_view<void (const char *print_name, struct symbol *sym)>
-     iterate_over_block_arg_local_vars_cb;
+  iterate_over_block_arg_local_vars_cb;
 
 void iterate_over_block_arg_vars (const struct block *block,
-				  iterate_over_block_arg_local_vars_cb cb);
+                                  iterate_over_block_arg_local_vars_cb cb);
 
 void iterate_over_block_local_vars (const struct block *block,
-				    iterate_over_block_arg_local_vars_cb cb);
+                                    iterate_over_block_arg_local_vars_cb cb);
 
 /* Initialize *WHAT to be a copy of the user desired print what frame info.
    If !WHAT.has_value (), the printing function chooses a default set of
@@ -57,7 +57,7 @@ bool last_displayed_sal_is_valid (void);
 /* Get the pspace of the last sal we displayed, if it's valid, otherwise
    return nullptr.  */
 
-struct program_space* get_last_displayed_pspace (void);
+struct program_space *get_last_displayed_pspace (void);
 
 /* Get the address of the last sal we displayed, if it's valid, otherwise
    return an address of 0.  */
@@ -67,7 +67,7 @@ CORE_ADDR get_last_displayed_addr (void);
 /* Get the symtab of the last sal we displayed, if it's valid, otherwise
    return nullptr.  */
 
-struct symtab* get_last_displayed_symtab (void);
+struct symtab *get_last_displayed_symtab (void);
 
 /* Get the line of the last sal we displayed, if it's valid, otherwise
    return 0.  */
@@ -81,7 +81,7 @@ symtab_and_line get_last_displayed_sal ();
 
 /* Completer for the "frame apply all" command.  */
 void frame_apply_all_cmd_completer (struct cmd_list_element *ignore,
-				    completion_tracker &tracker,
-				    const char *text, const char */*word*/);
+                                    completion_tracker &tracker,
+                                    const char *text, const char * /*word*/);
 
 #endif /* #ifndef STACK_H */

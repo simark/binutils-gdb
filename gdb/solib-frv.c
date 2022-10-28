@@ -16,7 +16,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-
 #include "defs.h"
 #include "inferior.h"
 #include "gdbcore.h"
@@ -35,7 +34,10 @@
 static unsigned int solib_frv_debug;
 
 /* FR-V pointers are four bytes wide.  */
-enum { FRV_PTR_SIZE = 4 };
+enum
+{
+  FRV_PTR_SIZE = 4
+};
 
 /* Representation of loadmap and related structs for the FR-V FDPIC ABI.  */
 
@@ -56,7 +58,8 @@ struct ext_elf32_fdpic_loadseg
   ext_Elf32_Word p_memsz;
 };
 
-struct ext_elf32_fdpic_loadmap {
+struct ext_elf32_fdpic_loadmap
+{
   /* Protocol version number, must be zero.  */
   ext_Elf32_Half version;
   /* Number of segments in this map.  */
@@ -78,7 +81,8 @@ struct int_elf32_fdpic_loadseg
   long p_memsz;
 };
 
-struct int_elf32_fdpic_loadmap {
+struct int_elf32_fdpic_loadmap
+{
   /* Protocol version number, must be zero.  */
   int version;
   /* Number of segments in this map.  */
@@ -105,16 +109,16 @@ fetch_loadmap (CORE_ADDR ldmaddr)
 
   /* Fetch initial portion of the loadmap.  */
   if (target_read_memory (ldmaddr, (gdb_byte *) &ext_ldmbuf_partial,
-			  sizeof ext_ldmbuf_partial))
+                          sizeof ext_ldmbuf_partial))
     {
       /* Problem reading the target's memory.  */
       return NULL;
     }
 
   /* Extract the version.  */
-  version = extract_unsigned_integer (ext_ldmbuf_partial.version,
-				      sizeof ext_ldmbuf_partial.version,
-				      byte_order);
+  version
+    = extract_unsigned_integer (ext_ldmbuf_partial.version,
+                                sizeof ext_ldmbuf_partial.version, byte_order);
   if (version != 0)
     {
       /* We only handle version 0.  */
@@ -122,16 +126,16 @@ fetch_loadmap (CORE_ADDR ldmaddr)
     }
 
   /* Extract the number of segments.  */
-  nsegs = extract_unsigned_integer (ext_ldmbuf_partial.nsegs,
-				    sizeof ext_ldmbuf_partial.nsegs,
-				    byte_order);
+  nsegs
+    = extract_unsigned_integer (ext_ldmbuf_partial.nsegs,
+                                sizeof ext_ldmbuf_partial.nsegs, byte_order);
 
   if (nsegs <= 0)
     return NULL;
 
   /* Allocate space for the complete (external) loadmap.  */
   ext_ldmbuf_size = sizeof (struct ext_elf32_fdpic_loadmap)
-	       + (nsegs - 1) * sizeof (struct ext_elf32_fdpic_loadseg);
+                    + (nsegs - 1) * sizeof (struct ext_elf32_fdpic_loadseg);
   ext_ldmbuf = (struct ext_elf32_fdpic_loadmap *) xmalloc (ext_ldmbuf_size);
 
   /* Copy over the portion of the loadmap that's already been read.  */
@@ -139,8 +143,8 @@ fetch_loadmap (CORE_ADDR ldmaddr)
 
   /* Read the rest of the loadmap from the target.  */
   if (target_read_memory (ldmaddr + sizeof ext_ldmbuf_partial,
-			  (gdb_byte *) ext_ldmbuf + sizeof ext_ldmbuf_partial,
-			  ext_ldmbuf_size - sizeof ext_ldmbuf_partial))
+                          (gdb_byte *) ext_ldmbuf + sizeof ext_ldmbuf_partial,
+                          ext_ldmbuf_size - sizeof ext_ldmbuf_partial))
     {
       /* Couldn't read rest of the loadmap.  */
       xfree (ext_ldmbuf);
@@ -150,7 +154,7 @@ fetch_loadmap (CORE_ADDR ldmaddr)
   /* Allocate space into which to put information extract from the
      external loadsegs.  I.e, allocate the internal loadsegs.  */
   int_ldmbuf_size = sizeof (struct int_elf32_fdpic_loadmap)
-	       + (nsegs - 1) * sizeof (struct int_elf32_fdpic_loadseg);
+                    + (nsegs - 1) * sizeof (struct int_elf32_fdpic_loadseg);
   int_ldmbuf = (struct int_elf32_fdpic_loadmap *) xmalloc (int_ldmbuf_size);
 
   /* Place extracted information in internal structs.  */
@@ -159,17 +163,17 @@ fetch_loadmap (CORE_ADDR ldmaddr)
   for (seg = 0; seg < nsegs; seg++)
     {
       int_ldmbuf->segs[seg].addr
-	= extract_unsigned_integer (ext_ldmbuf->segs[seg].addr,
-				    sizeof (ext_ldmbuf->segs[seg].addr),
-				    byte_order);
+        = extract_unsigned_integer (ext_ldmbuf->segs[seg].addr,
+                                    sizeof (ext_ldmbuf->segs[seg].addr),
+                                    byte_order);
       int_ldmbuf->segs[seg].p_vaddr
-	= extract_unsigned_integer (ext_ldmbuf->segs[seg].p_vaddr,
-				    sizeof (ext_ldmbuf->segs[seg].p_vaddr),
-				    byte_order);
+        = extract_unsigned_integer (ext_ldmbuf->segs[seg].p_vaddr,
+                                    sizeof (ext_ldmbuf->segs[seg].p_vaddr),
+                                    byte_order);
       int_ldmbuf->segs[seg].p_memsz
-	= extract_unsigned_integer (ext_ldmbuf->segs[seg].p_memsz,
-				    sizeof (ext_ldmbuf->segs[seg].p_memsz),
-				    byte_order);
+        = extract_unsigned_integer (ext_ldmbuf->segs[seg].p_memsz,
+                                    sizeof (ext_ldmbuf->segs[seg].p_memsz),
+                                    byte_order);
     }
 
   xfree (ext_ldmbuf);
@@ -182,8 +186,8 @@ typedef gdb_byte ext_ptr[4];
 
 struct ext_elf32_fdpic_loadaddr
 {
-  ext_ptr map;			/* struct elf32_fdpic_loadmap *map; */
-  ext_ptr got_value;		/* void *got_value; */
+  ext_ptr map;       /* struct elf32_fdpic_loadmap *map; */
+  ext_ptr got_value; /* void *got_value; */
 };
 
 struct ext_link_map
@@ -191,13 +195,13 @@ struct ext_link_map
   struct ext_elf32_fdpic_loadaddr l_addr;
 
   /* Absolute file name object was found in.  */
-  ext_ptr l_name;		/* char *l_name; */
+  ext_ptr l_name; /* char *l_name; */
 
   /* Dynamic section of the shared object.  */
-  ext_ptr l_ld;			/* ElfW(Dyn) *l_ld; */
+  ext_ptr l_ld; /* ElfW(Dyn) *l_ld; */
 
   /* Chain of loaded objects.  */
-  ext_ptr l_next, l_prev;	/* struct link_map *l_next, *l_prev; */
+  ext_ptr l_next, l_prev; /* struct link_map *l_next, *l_prev; */
 };
 
 /* Link map info to include in an allocated so_list entry.  */
@@ -230,7 +234,7 @@ struct lm_info_frv : public lm_info_base
      caching of the dynamic relocations could be dispensed with.  */
   asymbol **dyn_syms = NULL;
   arelent **dyn_relocs = NULL;
-  int dyn_reloc_count = 0;	/* Number of dynamic relocs.  */
+  int dyn_reloc_count = 0; /* Number of dynamic relocs.  */
 };
 
 /* The load map, got value, etc. are not available from the chain
@@ -287,34 +291,30 @@ lm_base (void)
     return lm_base_cache;
 
   got_sym = lookup_minimal_symbol ("_GLOBAL_OFFSET_TABLE_", NULL,
-				   current_program_space->symfile_object_file);
+                                   current_program_space->symfile_object_file);
   if (got_sym.minsym == 0)
     {
       if (solib_frv_debug)
-	gdb_printf (gdb_stdlog,
-		    "lm_base: _GLOBAL_OFFSET_TABLE_ not found.\n");
+        gdb_printf (gdb_stdlog, "lm_base: _GLOBAL_OFFSET_TABLE_ not found.\n");
       return 0;
     }
 
   addr = got_sym.value_address () + 8;
 
   if (solib_frv_debug)
-    gdb_printf (gdb_stdlog,
-		"lm_base: _GLOBAL_OFFSET_TABLE_ + 8 = %s\n",
-		hex_string_custom (addr, 8));
+    gdb_printf (gdb_stdlog, "lm_base: _GLOBAL_OFFSET_TABLE_ + 8 = %s\n",
+                hex_string_custom (addr, 8));
 
   if (target_read_memory (addr, buf, sizeof buf) != 0)
     return 0;
   lm_base_cache = extract_unsigned_integer (buf, sizeof buf, byte_order);
 
   if (solib_frv_debug)
-    gdb_printf (gdb_stdlog,
-		"lm_base: lm_base_cache = %s\n",
-		hex_string_custom (lm_base_cache, 8));
+    gdb_printf (gdb_stdlog, "lm_base: lm_base_cache = %s\n",
+                hex_string_custom (lm_base_cache, 8));
 
   return lm_base_cache;
 }
-
 
 /* Implement the "current_sos" target_so_ops method.  */
 
@@ -355,87 +355,83 @@ frv_current_sos (void)
       CORE_ADDR got_addr;
 
       if (solib_frv_debug)
-	gdb_printf (gdb_stdlog,
-		    "current_sos: reading link_map entry at %s\n",
-		    hex_string_custom (lm_addr, 8));
+        gdb_printf (gdb_stdlog, "current_sos: reading link_map entry at %s\n",
+                    hex_string_custom (lm_addr, 8));
 
-      if (target_read_memory (lm_addr, (gdb_byte *) &lm_buf,
-			      sizeof (lm_buf)) != 0)
-	{
-	  warning (_("frv_current_sos: Unable to read link map entry.  "
-		     "Shared object chain may be incomplete."));
-	  break;
-	}
+      if (target_read_memory (lm_addr, (gdb_byte *) &lm_buf, sizeof (lm_buf))
+          != 0)
+        {
+          warning (_ ("frv_current_sos: Unable to read link map entry.  "
+                      "Shared object chain may be incomplete."));
+          break;
+        }
 
-      got_addr
-	= extract_unsigned_integer (lm_buf.l_addr.got_value,
-				    sizeof (lm_buf.l_addr.got_value),
-				    byte_order);
+      got_addr = extract_unsigned_integer (lm_buf.l_addr.got_value,
+                                           sizeof (lm_buf.l_addr.got_value),
+                                           byte_order);
       /* If the got_addr is the same as mgotr, then we're looking at the
 	 entry for the main executable.  By convention, we don't include
 	 this in the list of shared objects.  */
       if (got_addr != mgot)
-	{
-	  struct int_elf32_fdpic_loadmap *loadmap;
-	  struct so_list *sop;
-	  CORE_ADDR addr;
+        {
+          struct int_elf32_fdpic_loadmap *loadmap;
+          struct so_list *sop;
+          CORE_ADDR addr;
 
-	  /* Fetch the load map address.  */
-	  addr = extract_unsigned_integer (lm_buf.l_addr.map,
-					   sizeof lm_buf.l_addr.map,
-					   byte_order);
-	  loadmap = fetch_loadmap (addr);
-	  if (loadmap == NULL)
-	    {
-	      warning (_("frv_current_sos: Unable to fetch load map.  "
-			 "Shared object chain may be incomplete."));
-	      break;
-	    }
+          /* Fetch the load map address.  */
+          addr
+            = extract_unsigned_integer (lm_buf.l_addr.map,
+                                        sizeof lm_buf.l_addr.map, byte_order);
+          loadmap = fetch_loadmap (addr);
+          if (loadmap == NULL)
+            {
+              warning (_ ("frv_current_sos: Unable to fetch load map.  "
+                          "Shared object chain may be incomplete."));
+              break;
+            }
 
-	  sop = XCNEW (struct so_list);
-	  lm_info_frv *li = new lm_info_frv;
-	  sop->lm_info = li;
-	  li->map = loadmap;
-	  li->got_value = got_addr;
-	  li->lm_addr = lm_addr;
-	  /* Fetch the name.  */
-	  addr = extract_unsigned_integer (lm_buf.l_name,
-					   sizeof (lm_buf.l_name),
-					   byte_order);
-	  gdb::unique_xmalloc_ptr<char> name_buf
-	    = target_read_string (addr, SO_NAME_MAX_PATH_SIZE - 1);
+          sop = XCNEW (struct so_list);
+          lm_info_frv *li = new lm_info_frv;
+          sop->lm_info = li;
+          li->map = loadmap;
+          li->got_value = got_addr;
+          li->lm_addr = lm_addr;
+          /* Fetch the name.  */
+          addr = extract_unsigned_integer (lm_buf.l_name,
+                                           sizeof (lm_buf.l_name), byte_order);
+          gdb::unique_xmalloc_ptr<char> name_buf
+            = target_read_string (addr, SO_NAME_MAX_PATH_SIZE - 1);
 
-	  if (solib_frv_debug)
-	    gdb_printf (gdb_stdlog, "current_sos: name = %s\n",
-			name_buf.get ());
-	  
-	  if (name_buf == nullptr)
-	    warning (_("Can't read pathname for link map entry."));
-	  else
-	    {
-	      strncpy (sop->so_name, name_buf.get (),
-		       SO_NAME_MAX_PATH_SIZE - 1);
-	      sop->so_name[SO_NAME_MAX_PATH_SIZE - 1] = '\0';
-	      strcpy (sop->so_original_name, sop->so_name);
-	    }
+          if (solib_frv_debug)
+            gdb_printf (gdb_stdlog, "current_sos: name = %s\n",
+                        name_buf.get ());
 
-	  *sos_next_ptr = sop;
-	  sos_next_ptr = &sop->next;
-	}
+          if (name_buf == nullptr)
+            warning (_ ("Can't read pathname for link map entry."));
+          else
+            {
+              strncpy (sop->so_name, name_buf.get (),
+                       SO_NAME_MAX_PATH_SIZE - 1);
+              sop->so_name[SO_NAME_MAX_PATH_SIZE - 1] = '\0';
+              strcpy (sop->so_original_name, sop->so_name);
+            }
+
+          *sos_next_ptr = sop;
+          sos_next_ptr = &sop->next;
+        }
       else
-	{
-	  main_lm_addr = lm_addr;
-	}
+        {
+          main_lm_addr = lm_addr;
+        }
 
       lm_addr = extract_unsigned_integer (lm_buf.l_next,
-					  sizeof (lm_buf.l_next), byte_order);
+                                          sizeof (lm_buf.l_next), byte_order);
     }
 
   enable_break2 ();
 
   return sos_head;
 }
-
 
 /* Return 1 if PC lies in the dynamic symbol resolution code of the
    run time loader.  */
@@ -449,26 +445,25 @@ static int
 frv_in_dynsym_resolve_code (CORE_ADDR pc)
 {
   return ((pc >= interp_text_sect_low && pc < interp_text_sect_high)
-	  || (pc >= interp_plt_sect_low && pc < interp_plt_sect_high)
-	  || in_plt_section (pc));
+          || (pc >= interp_plt_sect_low && pc < interp_plt_sect_high)
+          || in_plt_section (pc));
 }
 
 /* Given a loadmap and an address, return the displacement needed
    to relocate the address.  */
 
 static CORE_ADDR
-displacement_from_map (struct int_elf32_fdpic_loadmap *map,
-		       CORE_ADDR addr)
+displacement_from_map (struct int_elf32_fdpic_loadmap *map, CORE_ADDR addr)
 {
   int seg;
 
   for (seg = 0; seg < map->nsegs; seg++)
     {
       if (map->segs[seg].p_vaddr <= addr
-	  && addr < map->segs[seg].p_vaddr + map->segs[seg].p_memsz)
-	{
-	  return map->segs[seg].addr - map->segs[seg].p_vaddr;
-	}
+          && addr < map->segs[seg].p_vaddr + map->segs[seg].p_memsz)
+        {
+          return map->segs[seg].addr - map->segs[seg].p_vaddr;
+        }
     }
 
   return 0;
@@ -480,9 +475,9 @@ displacement_from_map (struct int_elf32_fdpic_loadmap *map,
 static void
 enable_break_failure_warning (void)
 {
-  warning (_("Unable to find dynamic linker breakpoint function.\n"
-	   "GDB will be unable to debug shared library initializers\n"
-	   "and track explicitly loaded dynamic code."));
+  warning (_ ("Unable to find dynamic linker breakpoint function.\n"
+              "GDB will be unable to debug shared library initializers\n"
+              "and track explicitly loaded dynamic code."));
 }
 
 /* Helper function for gdb_bfd_lookup_symbol.  */
@@ -531,8 +526,8 @@ enable_break2 (void)
 
   /* Find the .interp section; if not found, warn the user and drop
      into the old breakpoint at symbol code.  */
-  interp_sect = bfd_get_section_by_name (current_program_space->exec_bfd (),
-					 ".interp");
+  interp_sect
+    = bfd_get_section_by_name (current_program_space->exec_bfd (), ".interp");
   if (interp_sect)
     {
       unsigned int interp_sect_size;
@@ -547,7 +542,7 @@ enable_break2 (void)
       interp_sect_size = bfd_section_size (interp_sect);
       buf = (char *) alloca (interp_sect_size);
       bfd_get_section_contents (current_program_space->exec_bfd (),
-				interp_sect, buf, 0, interp_sect_size);
+                                interp_sect, buf, 0, interp_sect_size);
 
       /* Now we need to figure out where the dynamic linker was
 	 loaded so that we can load its symbols and place a breakpoint
@@ -560,133 +555,132 @@ enable_break2 (void)
 
       gdb_bfd_ref_ptr tmp_bfd;
       try
-	{
-	  tmp_bfd = solib_bfd_open (buf);
-	}
+        {
+          tmp_bfd = solib_bfd_open (buf);
+        }
       catch (const gdb_exception &ex)
-	{
-	}
+        {
+        }
 
       if (tmp_bfd == NULL)
-	{
-	  enable_break_failure_warning ();
-	  return 0;
-	}
+        {
+          enable_break_failure_warning ();
+          return 0;
+        }
 
       status = frv_fdpic_loadmap_addresses (target_gdbarch (),
-					    &interp_loadmap_addr, 0);
+                                            &interp_loadmap_addr, 0);
       if (status < 0)
-	{
-	  warning (_("Unable to determine dynamic linker loadmap address."));
-	  enable_break_failure_warning ();
-	  return 0;
-	}
+        {
+          warning (_ ("Unable to determine dynamic linker loadmap address."));
+          enable_break_failure_warning ();
+          return 0;
+        }
 
       if (solib_frv_debug)
-	gdb_printf (gdb_stdlog,
-		    "enable_break: interp_loadmap_addr = %s\n",
-		    hex_string_custom (interp_loadmap_addr, 8));
+        gdb_printf (gdb_stdlog, "enable_break: interp_loadmap_addr = %s\n",
+                    hex_string_custom (interp_loadmap_addr, 8));
 
       ldm = fetch_loadmap (interp_loadmap_addr);
       if (ldm == NULL)
-	{
-	  warning (_("Unable to load dynamic linker loadmap at address %s."),
-		   hex_string_custom (interp_loadmap_addr, 8));
-	  enable_break_failure_warning ();
-	  return 0;
-	}
+        {
+          warning (_ ("Unable to load dynamic linker loadmap at address %s."),
+                   hex_string_custom (interp_loadmap_addr, 8));
+          enable_break_failure_warning ();
+          return 0;
+        }
 
       /* Record the relocated start and end address of the dynamic linker
 	 text and plt section for svr4_in_dynsym_resolve_code.  */
       interp_sect = bfd_get_section_by_name (tmp_bfd.get (), ".text");
       if (interp_sect)
-	{
-	  interp_text_sect_low = bfd_section_vma (interp_sect);
-	  interp_text_sect_low
-	    += displacement_from_map (ldm, interp_text_sect_low);
-	  interp_text_sect_high
-	    = interp_text_sect_low + bfd_section_size (interp_sect);
-	}
+        {
+          interp_text_sect_low = bfd_section_vma (interp_sect);
+          interp_text_sect_low
+            += displacement_from_map (ldm, interp_text_sect_low);
+          interp_text_sect_high
+            = interp_text_sect_low + bfd_section_size (interp_sect);
+        }
       interp_sect = bfd_get_section_by_name (tmp_bfd.get (), ".plt");
       if (interp_sect)
-	{
-	  interp_plt_sect_low = bfd_section_vma (interp_sect);
-	  interp_plt_sect_low
-	    += displacement_from_map (ldm, interp_plt_sect_low);
-	  interp_plt_sect_high =
-	    interp_plt_sect_low + bfd_section_size (interp_sect);
-	}
+        {
+          interp_plt_sect_low = bfd_section_vma (interp_sect);
+          interp_plt_sect_low
+            += displacement_from_map (ldm, interp_plt_sect_low);
+          interp_plt_sect_high
+            = interp_plt_sect_low + bfd_section_size (interp_sect);
+        }
 
-      addr = gdb_bfd_lookup_symbol (tmp_bfd.get (), cmp_name, "_dl_debug_addr");
+      addr
+        = gdb_bfd_lookup_symbol (tmp_bfd.get (), cmp_name, "_dl_debug_addr");
 
       if (addr == 0)
-	{
-	  warning (_("Could not find symbol _dl_debug_addr "
-		     "in dynamic linker"));
-	  enable_break_failure_warning ();
-	  return 0;
-	}
+        {
+          warning (_ ("Could not find symbol _dl_debug_addr "
+                      "in dynamic linker"));
+          enable_break_failure_warning ();
+          return 0;
+        }
 
       if (solib_frv_debug)
-	gdb_printf (gdb_stdlog,
-		    "enable_break: _dl_debug_addr "
-		    "(prior to relocation) = %s\n",
-		    hex_string_custom (addr, 8));
+        gdb_printf (gdb_stdlog,
+                    "enable_break: _dl_debug_addr "
+                    "(prior to relocation) = %s\n",
+                    hex_string_custom (addr, 8));
 
       addr += displacement_from_map (ldm, addr);
 
       if (solib_frv_debug)
-	gdb_printf (gdb_stdlog,
-		    "enable_break: _dl_debug_addr "
-		    "(after relocation) = %s\n",
-		    hex_string_custom (addr, 8));
+        gdb_printf (gdb_stdlog,
+                    "enable_break: _dl_debug_addr "
+                    "(after relocation) = %s\n",
+                    hex_string_custom (addr, 8));
 
       /* Fetch the address of the r_debug struct.  */
       if (target_read_memory (addr, addr_buf, sizeof addr_buf) != 0)
-	{
-	  warning (_("Unable to fetch contents of _dl_debug_addr "
-		     "(at address %s) from dynamic linker"),
-		   hex_string_custom (addr, 8));
-	}
+        {
+          warning (_ ("Unable to fetch contents of _dl_debug_addr "
+                      "(at address %s) from dynamic linker"),
+                   hex_string_custom (addr, 8));
+        }
       addr = extract_unsigned_integer (addr_buf, sizeof addr_buf, byte_order);
 
       if (solib_frv_debug)
-	gdb_printf (gdb_stdlog,
-		    "enable_break: _dl_debug_addr[0..3] = %s\n",
-		    hex_string_custom (addr, 8));
+        gdb_printf (gdb_stdlog, "enable_break: _dl_debug_addr[0..3] = %s\n",
+                    hex_string_custom (addr, 8));
 
       /* If it's zero, then the ldso hasn't initialized yet, and so
 	 there are no shared libs yet loaded.  */
       if (addr == 0)
-	{
-	  if (solib_frv_debug)
-	    gdb_printf (gdb_stdlog,
-			"enable_break: ldso not yet initialized\n");
-	  /* Do not warn, but mark to run again.  */
-	  return 0;
-	}
+        {
+          if (solib_frv_debug)
+            gdb_printf (gdb_stdlog,
+                        "enable_break: ldso not yet initialized\n");
+          /* Do not warn, but mark to run again.  */
+          return 0;
+        }
 
       /* Fetch the r_brk field.  It's 8 bytes from the start of
 	 _dl_debug_addr.  */
       if (target_read_memory (addr + 8, addr_buf, sizeof addr_buf) != 0)
-	{
-	  warning (_("Unable to fetch _dl_debug_addr->r_brk "
-		     "(at address %s) from dynamic linker"),
-		   hex_string_custom (addr + 8, 8));
-	  enable_break_failure_warning ();
-	  return 0;
-	}
+        {
+          warning (_ ("Unable to fetch _dl_debug_addr->r_brk "
+                      "(at address %s) from dynamic linker"),
+                   hex_string_custom (addr + 8, 8));
+          enable_break_failure_warning ();
+          return 0;
+        }
       addr = extract_unsigned_integer (addr_buf, sizeof addr_buf, byte_order);
 
       /* Now fetch the function entry point.  */
       if (target_read_memory (addr, addr_buf, sizeof addr_buf) != 0)
-	{
-	  warning (_("Unable to fetch _dl_debug_addr->.r_brk entry point "
-		     "(at address %s) from dynamic linker"),
-		   hex_string_custom (addr, 8));
-	  enable_break_failure_warning ();
-	  return 0;
-	}
+        {
+          warning (_ ("Unable to fetch _dl_debug_addr->.r_brk entry point "
+                      "(at address %s) from dynamic linker"),
+                   hex_string_custom (addr, 8));
+          enable_break_failure_warning ();
+          return 0;
+        }
       addr = extract_unsigned_integer (addr_buf, sizeof addr_buf, byte_order);
 
       /* We're done with the loadmap.  */
@@ -720,30 +714,28 @@ enable_break (void)
   if (current_program_space->symfile_object_file == NULL)
     {
       if (solib_frv_debug)
-	gdb_printf (gdb_stdlog,
-		    "enable_break: No symbol file found.\n");
+        gdb_printf (gdb_stdlog, "enable_break: No symbol file found.\n");
       return 0;
     }
 
   if (!entry_point_address_query (&entry_point))
     {
       if (solib_frv_debug)
-	gdb_printf (gdb_stdlog,
-		    "enable_break: Symbol file has no entry point.\n");
+        gdb_printf (gdb_stdlog,
+                    "enable_break: Symbol file has no entry point.\n");
       return 0;
     }
 
   /* Check for the presence of a .interp section.  If there is no
      such section, the executable is statically linked.  */
 
-  interp_sect = bfd_get_section_by_name (current_program_space->exec_bfd (),
-					 ".interp");
+  interp_sect
+    = bfd_get_section_by_name (current_program_space->exec_bfd (), ".interp");
 
   if (interp_sect == NULL)
     {
       if (solib_frv_debug)
-	gdb_printf (gdb_stdlog,
-		    "enable_break: No .interp section found.\n");
+        gdb_printf (gdb_stdlog, "enable_break: No .interp section found.\n");
       return 0;
     }
 
@@ -751,9 +743,9 @@ enable_break (void)
 
   if (solib_frv_debug)
     gdb_printf (gdb_stdlog,
-		"enable_break: solib event breakpoint "
-		"placed at entry point: %s\n",
-		hex_string_custom (entry_point, 8));
+                "enable_break: solib event breakpoint "
+                "placed at entry point: %s\n",
+                hex_string_custom (entry_point, 8));
   return 1;
 }
 
@@ -766,8 +758,8 @@ frv_relocate_main_executable (void)
   int changed;
   struct obj_section *osect;
 
-  status = frv_fdpic_loadmap_addresses (target_gdbarch (),
-					&interp_addr, &exec_addr);
+  status = frv_fdpic_loadmap_addresses (target_gdbarch (), &interp_addr,
+                                        &exec_addr);
 
   if (status < 0 || (exec_addr == 0 && interp_addr == 0))
     {
@@ -778,7 +770,7 @@ frv_relocate_main_executable (void)
   /* Fetch the loadmap located at ``exec_addr''.  */
   ldm = fetch_loadmap (exec_addr);
   if (ldm == NULL)
-    error (_("Unable to load the executable's loadmap."));
+    error (_ ("Unable to load the executable's loadmap."));
 
   delete main_executable_lm_info;
   main_executable_lm_info = new lm_info_frv;
@@ -789,34 +781,34 @@ frv_relocate_main_executable (void)
   changed = 0;
 
   ALL_OBJFILE_OSECTIONS (objf, osect)
-    {
-      CORE_ADDR orig_addr, addr, offset;
-      int osect_idx;
-      int seg;
-      
-      osect_idx = osect - objf->sections;
+  {
+    CORE_ADDR orig_addr, addr, offset;
+    int osect_idx;
+    int seg;
 
-      /* Current address of section.  */
-      addr = osect->addr ();
-      /* Offset from where this section started.  */
-      offset = objf->section_offsets[osect_idx];
-      /* Original address prior to any past relocations.  */
-      orig_addr = addr - offset;
+    osect_idx = osect - objf->sections;
 
-      for (seg = 0; seg < ldm->nsegs; seg++)
-	{
-	  if (ldm->segs[seg].p_vaddr <= orig_addr
-	      && orig_addr < ldm->segs[seg].p_vaddr + ldm->segs[seg].p_memsz)
-	    {
-	      new_offsets[osect_idx]
-		= ldm->segs[seg].addr - ldm->segs[seg].p_vaddr;
+    /* Current address of section.  */
+    addr = osect->addr ();
+    /* Offset from where this section started.  */
+    offset = objf->section_offsets[osect_idx];
+    /* Original address prior to any past relocations.  */
+    orig_addr = addr - offset;
 
-	      if (new_offsets[osect_idx] != offset)
-		changed = 1;
-	      break;
-	    }
-	}
-    }
+    for (seg = 0; seg < ldm->nsegs; seg++)
+      {
+        if (ldm->segs[seg].p_vaddr <= orig_addr
+            && orig_addr < ldm->segs[seg].p_vaddr + ldm->segs[seg].p_memsz)
+          {
+            new_offsets[osect_idx]
+              = ldm->segs[seg].addr - ldm->segs[seg].p_vaddr;
+
+            if (new_offsets[osect_idx] != offset)
+              changed = 1;
+            break;
+          }
+      }
+  }
 
   if (changed)
     objfile_relocate (objf, new_offsets);
@@ -841,7 +833,7 @@ frv_solib_create_inferior_hook (int from_tty)
   /* Enable shared library breakpoints.  */
   if (!enable_break ())
     {
-      warning (_("shared library handler failed to enable breakpoint"));
+      warning (_ ("shared library handler failed to enable breakpoint"));
       return;
     }
 }
@@ -866,8 +858,7 @@ frv_free_so (struct so_list *so)
 }
 
 static void
-frv_relocate_section_addresses (struct so_list *so,
-				 struct target_section *sec)
+frv_relocate_section_addresses (struct so_list *so, struct target_section *sec)
 {
   int seg;
   lm_info_frv *li = (lm_info_frv *) so->lm_info;
@@ -876,14 +867,14 @@ frv_relocate_section_addresses (struct so_list *so,
   for (seg = 0; seg < map->nsegs; seg++)
     {
       if (map->segs[seg].p_vaddr <= sec->addr
-	  && sec->addr < map->segs[seg].p_vaddr + map->segs[seg].p_memsz)
-	{
-	  CORE_ADDR displ = map->segs[seg].addr - map->segs[seg].p_vaddr;
+          && sec->addr < map->segs[seg].p_vaddr + map->segs[seg].p_memsz)
+        {
+          CORE_ADDR displ = map->segs[seg].addr - map->segs[seg].p_vaddr;
 
-	  sec->addr += displ;
-	  sec->endaddr += displ;
-	  break;
-	}
+          sec->addr += displ;
+          sec->endaddr += displ;
+          break;
+        }
     }
 }
 
@@ -915,11 +906,11 @@ frv_fdpic_find_global_pointer (CORE_ADDR addr)
       int_elf32_fdpic_loadmap *map = li->map;
 
       for (seg = 0; seg < map->nsegs; seg++)
-	{
-	  if (map->segs[seg].addr <= addr
-	      && addr < map->segs[seg].addr + map->segs[seg].p_memsz)
-	    return li->got_value;
-	}
+        {
+          if (map->segs[seg].addr <= addr
+              && addr < map->segs[seg].addr + map->segs[seg].p_memsz)
+            return li->got_value;
+        }
     }
 
   /* Didn't find it in any of the shared objects.  So assume it's in the
@@ -928,8 +919,10 @@ frv_fdpic_find_global_pointer (CORE_ADDR addr)
 }
 
 /* Forward declarations for frv_fdpic_find_canonical_descriptor().  */
-static CORE_ADDR find_canonical_descriptor_in_load_object
-  (CORE_ADDR, CORE_ADDR, const char *, bfd *, lm_info_frv *);
+static CORE_ADDR find_canonical_descriptor_in_load_object (CORE_ADDR,
+                                                           CORE_ADDR,
+                                                           const char *, bfd *,
+                                                           lm_info_frv *);
 
 /* Given a function entry point, attempt to find the canonical descriptor
    associated with that entry point.  Return 0 if no canonical descriptor
@@ -957,33 +950,35 @@ frv_fdpic_find_canonical_descriptor (CORE_ADDR entry_point)
 
   /* Check the main executable.  */
   objfile *objf = current_program_space->symfile_object_file;
-  addr = find_canonical_descriptor_in_load_object
-	   (entry_point, got_value, name, objf->obfd.get (),
-	    main_executable_lm_info);
+  addr = find_canonical_descriptor_in_load_object (entry_point, got_value,
+                                                   name, objf->obfd.get (),
+                                                   main_executable_lm_info);
 
   /* If descriptor not found via main executable, check each load object
      in list of shared objects.  */
   if (addr == 0)
     {
       for (struct so_list *so : current_program_space->solibs ())
-	{
-	  lm_info_frv *li = (lm_info_frv *) so->lm_info;
+        {
+          lm_info_frv *li = (lm_info_frv *) so->lm_info;
 
-	  addr = find_canonical_descriptor_in_load_object
-		   (entry_point, got_value, name, so->abfd, li);
+          addr
+            = find_canonical_descriptor_in_load_object (entry_point, got_value,
+                                                        name, so->abfd, li);
 
-	  if (addr != 0)
-	    break;
-	}
+          if (addr != 0)
+            break;
+        }
     }
 
   return addr;
 }
 
 static CORE_ADDR
-find_canonical_descriptor_in_load_object
-  (CORE_ADDR entry_point, CORE_ADDR got_value, const char *name, bfd *abfd,
-   lm_info_frv *lm)
+find_canonical_descriptor_in_load_object (CORE_ADDR entry_point,
+                                          CORE_ADDR got_value,
+                                          const char *name, bfd *abfd,
+                                          lm_info_frv *lm)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
   arelent *rel;
@@ -1014,7 +1009,7 @@ find_canonical_descriptor_in_load_object
 
       /* If there are no dynamic symbols, there's nothing to do.  */
       if (storage_needed <= 0)
-	return 0;
+        return 0;
 
       /* Allocate space for the dynamic symbol table.  */
       lm->dyn_syms = (asymbol **) xmalloc (storage_needed);
@@ -1023,7 +1018,7 @@ find_canonical_descriptor_in_load_object
       number_of_symbols = bfd_canonicalize_dynamic_symtab (abfd, lm->dyn_syms);
 
       if (number_of_symbols == 0)
-	return 0;
+        return 0;
     }
 
   /* Fetch the dynamic relocations if not already cached.  */
@@ -1036,14 +1031,14 @@ find_canonical_descriptor_in_load_object
 
       /* Bail out if there are no dynamic relocs.  */
       if (storage_needed <= 0)
-	return 0;
+        return 0;
 
       /* Allocate space for the relocs.  */
       lm->dyn_relocs = (arelent **) xmalloc (storage_needed);
 
       /* Fetch the dynamic relocs.  */
-      lm->dyn_reloc_count 
-	= bfd_canonicalize_dynamic_reloc (abfd, lm->dyn_relocs, lm->dyn_syms);
+      lm->dyn_reloc_count
+        = bfd_canonicalize_dynamic_reloc (abfd, lm->dyn_relocs, lm->dyn_syms);
     }
 
   /* Search the dynamic relocs.  */
@@ -1068,35 +1063,35 @@ find_canonical_descriptor_in_load_object
 	 this address (which is a GOT entry) to obtain a descriptor
 	 address.  */
       if ((name == 0 || strcmp (name, (*rel->sym_ptr_ptr)->name) == 0)
-	  && rel->howto->type == R_FRV_FUNCDESC)
-	{
-	  gdb_byte buf [FRV_PTR_SIZE];
+          && rel->howto->type == R_FRV_FUNCDESC)
+        {
+          gdb_byte buf[FRV_PTR_SIZE];
 
-	  /* Compute address of address of candidate descriptor.  */
-	  addr = rel->address + displacement_from_map (lm->map, rel->address);
+          /* Compute address of address of candidate descriptor.  */
+          addr = rel->address + displacement_from_map (lm->map, rel->address);
 
-	  /* Fetch address of candidate descriptor.  */
-	  if (target_read_memory (addr, buf, sizeof buf) != 0)
-	    continue;
-	  addr = extract_unsigned_integer (buf, sizeof buf, byte_order);
+          /* Fetch address of candidate descriptor.  */
+          if (target_read_memory (addr, buf, sizeof buf) != 0)
+            continue;
+          addr = extract_unsigned_integer (buf, sizeof buf, byte_order);
 
-	  /* Check for matching entry point.  */
-	  if (target_read_memory (addr, buf, sizeof buf) != 0)
-	    continue;
-	  if (extract_unsigned_integer (buf, sizeof buf, byte_order)
-	      != entry_point)
-	    continue;
+          /* Check for matching entry point.  */
+          if (target_read_memory (addr, buf, sizeof buf) != 0)
+            continue;
+          if (extract_unsigned_integer (buf, sizeof buf, byte_order)
+              != entry_point)
+            continue;
 
-	  /* Check for matching got value.  */
-	  if (target_read_memory (addr + 4, buf, sizeof buf) != 0)
-	    continue;
-	  if (extract_unsigned_integer (buf, sizeof buf, byte_order)
-	      != got_value)
-	    continue;
+          /* Check for matching got value.  */
+          if (target_read_memory (addr + 4, buf, sizeof buf) != 0)
+            continue;
+          if (extract_unsigned_integer (buf, sizeof buf, byte_order)
+              != got_value)
+            continue;
 
-	  /* Match was successful!  Exit loop.  */
-	  break;
-	}
+          /* Match was successful!  Exit loop.  */
+          break;
+        }
     }
 
   return addr;
@@ -1122,15 +1117,14 @@ frv_fetch_objfile_link_map (struct objfile *objfile)
       lm_info_frv *li = (lm_info_frv *) so->lm_info;
 
       if (so->objfile == objfile)
-	return li->lm_addr;
+        return li->lm_addr;
     }
 
   /* Not found!  */
   return 0;
 }
 
-const struct target_so_ops frv_so_ops =
-{
+const struct target_so_ops frv_so_ops = {
   frv_relocate_section_addresses,
   frv_free_so,
   nullptr,
@@ -1147,12 +1141,13 @@ void
 _initialize_frv_solib ()
 {
   /* Debug this file's internals.  */
-  add_setshow_zuinteger_cmd ("solib-frv", class_maintenance,
-			     &solib_frv_debug, _("\
-Set internal debugging of shared library code for FR-V."), _("\
-Show internal debugging of shared library code for FR-V."), _("\
+  add_setshow_zuinteger_cmd ("solib-frv", class_maintenance, &solib_frv_debug,
+                             _ ("\
+Set internal debugging of shared library code for FR-V."),
+                             _ ("\
+Show internal debugging of shared library code for FR-V."),
+                             _ ("\
 When non-zero, FR-V solib specific internal debugging is enabled."),
-			     NULL,
-			     NULL, /* FIXME: i18n: */
-			     &setdebuglist, &showdebuglist);
+                             NULL, NULL, /* FIXME: i18n: */
+                             &setdebuglist, &showdebuglist);
 }

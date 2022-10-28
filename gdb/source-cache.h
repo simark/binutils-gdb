@@ -36,10 +36,7 @@
 class source_cache
 {
 public:
-
-  source_cache ()
-  {
-  }
+  source_cache () {}
 
   /* This returns the vector of file offsets for the symtab S,
      computing the vector first if needed.
@@ -49,8 +46,7 @@ public:
      On success, returns true and sets *OFFSETS.  This pointer is not
      guaranteed to remain valid across other calls to get_source_lines
      or get_line_charpos.  */
-  bool get_line_charpos (struct symtab *s,
-			 const std::vector<off_t> **offsets);
+  bool get_line_charpos (struct symtab *s, const std::vector<off_t> **offsets);
 
   /* Get the source text for the source file in symtab S.  FIRST_LINE
      and LAST_LINE are the first and last lines to return; line
@@ -58,8 +54,8 @@ public:
      numbers are out of range, false is returned.  Otherwise,
      LINES_OUT is set to the desired text.  The returned text may
      include ANSI terminal escapes.  */
-  bool get_source_lines (struct symtab *s, int first_line,
-			 int last_line, std::string *lines_out);
+  bool get_source_lines (struct symtab *s, int first_line, int last_line,
+                         std::string *lines_out);
 
   /* Remove all the items from the source cache.  */
   void clear ()
@@ -69,7 +65,6 @@ public:
   }
 
 private:
-
   /* One element in the cache.  */
   struct source_text
   {
@@ -83,7 +78,7 @@ private:
      Returns the contents of the file; or throws an exception on
      error.  This also updates m_offset_cache.  */
   std::string get_plain_source_lines (struct symtab *s,
-				      const std::string &fullname);
+                                      const std::string &fullname);
 
   /* A helper function that the data for the given symtab is entered
      into both caches.  Returns false on error.  */

@@ -82,19 +82,19 @@ gccgo_string_p (struct type *type)
       type1 = check_typedef (type1);
 
       if (type0->code () == TYPE_CODE_PTR
-	  && strcmp (type->field (0).name (), "__data") == 0
-	  && type1->code () == TYPE_CODE_INT
-	  && strcmp (type->field (1).name (), "__length") == 0)
-	{
-	  struct type *target_type = type0->target_type ();
+          && strcmp (type->field (0).name (), "__data") == 0
+          && type1->code () == TYPE_CODE_INT
+          && strcmp (type->field (1).name (), "__length") == 0)
+        {
+          struct type *target_type = type0->target_type ();
 
-	  target_type = check_typedef (target_type);
+          target_type = check_typedef (target_type);
 
-	  if (target_type->code () == TYPE_CODE_INT
-	      && target_type->length () == 1
-	      && strcmp (target_type->name (), "uint8") == 0)
-	    return 1;
-	}
+          if (target_type->code () == TYPE_CODE_INT
+              && target_type->length () == 1
+              && strcmp (target_type->name (), "uint8") == 0)
+            return 1;
+        }
     }
 
   return 0;
@@ -106,8 +106,7 @@ gccgo_string_p (struct type *type)
 static int
 sixg_string_p (struct type *type)
 {
-  if (type->num_fields () == 2
-      && type->name () != NULL
+  if (type->num_fields () == 2 && type->name () != NULL
       && strcmp (type->name (), "string") == 0)
     return 1;
 
@@ -124,8 +123,7 @@ go_classify_struct_type (struct type *type)
 
   /* Recognize strings as they're useful to be able to print without
      pretty-printers.  */
-  if (gccgo_string_p (type)
-      || sixg_string_p (type))
+  if (gccgo_string_p (type) || sixg_string_p (type))
     return GO_TYPE_STRING;
 
   return GO_TYPE_NONE;
@@ -137,8 +135,8 @@ go_classify_struct_type (struct type *type)
    The caller is responsible for memory management.  */
 
 static void
-unpack_package_and_object (char *buf,
-			   const char **packagep, const char **objectp)
+unpack_package_and_object (char *buf, const char **packagep,
+                           const char **objectp)
 {
   char *last_dot;
 
@@ -181,12 +179,11 @@ unpack_package_and_object (char *buf,
    for that too.  */
 
 static char *
-unpack_mangled_go_symbol (const char *mangled_name,
-			  const char **packagep,
-			  const char **objectp,
-			  const char **method_type_packagep,
-			  const char **method_type_objectp,
-			  int *method_type_is_pointerp)
+unpack_mangled_go_symbol (const char *mangled_name, const char **packagep,
+                          const char **objectp,
+                          const char **method_type_packagep,
+                          const char **method_type_objectp,
+                          int *method_type_is_pointerp)
 {
   char *buf;
   char *p;
@@ -255,7 +252,7 @@ unpack_mangled_go_symbol (const char *mangled_name,
     return NULL;
 
   /* More quick checks.  */
-  if (last_dot[1] == '\0' /* foo. */
+  if (last_dot[1] == '\0'     /* foo. */
       || last_dot[-1] == '.') /* foo..bar */
     return NULL;
 
@@ -273,45 +270,45 @@ unpack_mangled_go_symbol (const char *mangled_name,
       int current_is_digit = isdigit (current);
 
       if (saw_digit)
-	{
-	  if (current_is_digit)
-	    continue;
-	  if (current == 'N'
-	      && ((p > buf && p[-1] == '.')
-		  || (p > buf + 1 && p[-1] == 'p' && p[-2] == '.')))
-	    {
-	      if (atoi (p + 1) == strlen (saw_digit + 2))
-		{
-		  if (p[-1] == '.')
-		    method_type = p - 1;
-		  else
-		    {
-		      gdb_assert (p[-1] == 'p');
-		      saw_pointer = 1;
-		      method_type = p - 2;
-		    }
-		  break;
-		}
-	    }
-	  /* Not what we're looking for, reset and keep looking.  */
-	  saw_digit = NULL;
-	  saw_pointer = 0;
-	  continue;
-	}
+        {
+          if (current_is_digit)
+            continue;
+          if (current == 'N'
+              && ((p > buf && p[-1] == '.')
+                  || (p > buf + 1 && p[-1] == 'p' && p[-2] == '.')))
+            {
+              if (atoi (p + 1) == strlen (saw_digit + 2))
+                {
+                  if (p[-1] == '.')
+                    method_type = p - 1;
+                  else
+                    {
+                      gdb_assert (p[-1] == 'p');
+                      saw_pointer = 1;
+                      method_type = p - 2;
+                    }
+                  break;
+                }
+            }
+          /* Not what we're looking for, reset and keep looking.  */
+          saw_digit = NULL;
+          saw_pointer = 0;
+          continue;
+        }
       if (current_is_digit && p[1] == '_')
-	{
-	  /* Possible start of method "this" [sic] type.  */
-	  saw_digit = p;
-	  continue;
-	}
+        {
+          /* Possible start of method "this" [sic] type.  */
+          saw_digit = p;
+          continue;
+        }
     }
 
   if (method_type != NULL
       /* Ensure not something like "..foo".  */
       && (method_type > buf && method_type[-1] != '.'))
     {
-      unpack_package_and_object (saw_digit + 2,
-				 method_type_packagep, method_type_objectp);
+      unpack_package_and_object (saw_digit + 2, method_type_packagep,
+                                 method_type_objectp);
       *method_type = '\0';
       *method_type_is_pointerp = saw_pointer;
     }
@@ -345,12 +342,11 @@ go_language::demangle_symbol (const char *mangled_name, int options) const
   if (mangled_name == NULL)
     return NULL;
 
-  gdb::unique_xmalloc_ptr<char> name_buf
-    (unpack_mangled_go_symbol (mangled_name,
-			       &package_name, &object_name,
-			       &method_type_package_name,
-			       &method_type_object_name,
-			       &method_type_is_pointer));
+  gdb::unique_xmalloc_ptr<char> name_buf (
+    unpack_mangled_go_symbol (mangled_name, &package_name, &object_name,
+                              &method_type_package_name,
+                              &method_type_object_name,
+                              &method_type_is_pointer));
   if (name_buf == NULL)
     return NULL;
 
@@ -361,12 +357,12 @@ go_language::demangle_symbol (const char *mangled_name, int options) const
     {
       /* FIXME: Seems like we should include package_name here somewhere.  */
       if (method_type_is_pointer)
-	  obstack_grow_str (&tempbuf, "(*");
+        obstack_grow_str (&tempbuf, "(*");
       obstack_grow_str (&tempbuf, method_type_package_name);
       obstack_grow_str (&tempbuf, ".");
       obstack_grow_str (&tempbuf, method_type_object_name);
       if (method_type_is_pointer)
-	obstack_grow_str (&tempbuf, ")");
+        obstack_grow_str (&tempbuf, ")");
       obstack_grow_str (&tempbuf, ".");
       obstack_grow_str (&tempbuf, object_name);
     }
@@ -397,11 +393,10 @@ go_symbol_package_name (const struct symbol *sym)
   char *result;
 
   gdb_assert (sym->language () == language_go);
-  name_buf = unpack_mangled_go_symbol (mangled_name,
-				       &package_name, &object_name,
-				       &method_type_package_name,
-				       &method_type_object_name,
-				       &method_type_is_pointer);
+  name_buf = unpack_mangled_go_symbol (mangled_name, &package_name,
+                                       &object_name, &method_type_package_name,
+                                       &method_type_object_name,
+                                       &method_type_is_pointer);
   /* Some Go symbols don't have mangled form we interpret (yet).  */
   if (name_buf == NULL)
     return NULL;
@@ -421,17 +416,17 @@ go_block_package_name (const struct block *block)
       struct symbol *function = block->function ();
 
       if (function != NULL)
-	{
-	  char *package_name = go_symbol_package_name (function);
+        {
+          char *package_name = go_symbol_package_name (function);
 
-	  if (package_name != NULL)
-	    return package_name;
+          if (package_name != NULL)
+            return package_name;
 
-	  /* Stop looking if we find a function without a package name.
+          /* Stop looking if we find a function without a package name.
 	     We're most likely outside of Go and thus the concept of the
 	     "current" package is gone.  */
-	  return NULL;
-	}
+          return NULL;
+        }
 
       block = block->superblock ();
     }
@@ -443,12 +438,12 @@ go_block_package_name (const struct block *block)
 
 void
 go_language::language_arch_info (struct gdbarch *gdbarch,
-				 struct language_arch_info *lai) const
+                                 struct language_arch_info *lai) const
 {
   const struct builtin_go_type *builtin = builtin_go_type (gdbarch);
 
   /* Helper function to allow shorter lines below.  */
-  auto add  = [&] (struct type * t) -> struct type *
+  auto add = [&](struct type * t) -> struct type *
   {
     lai->add_primitive_type (t);
     return t;
@@ -488,26 +483,19 @@ build_go_types (struct gdbarch *gdbarch)
 
   builtin_go_type->builtin_void
     = arch_type (gdbarch, TYPE_CODE_VOID, TARGET_CHAR_BIT, "void");
-  builtin_go_type->builtin_char
-    = arch_character_type (gdbarch, 8, 1, "char");
-  builtin_go_type->builtin_bool
-    = arch_boolean_type (gdbarch, 8, 0, "bool");
+  builtin_go_type->builtin_char = arch_character_type (gdbarch, 8, 1, "char");
+  builtin_go_type->builtin_bool = arch_boolean_type (gdbarch, 8, 0, "bool");
   builtin_go_type->builtin_int
     = arch_integer_type (gdbarch, gdbarch_int_bit (gdbarch), 0, "int");
   builtin_go_type->builtin_uint
     = arch_integer_type (gdbarch, gdbarch_int_bit (gdbarch), 1, "uint");
   builtin_go_type->builtin_uintptr
     = arch_integer_type (gdbarch, gdbarch_ptr_bit (gdbarch), 1, "uintptr");
-  builtin_go_type->builtin_int8
-    = arch_integer_type (gdbarch, 8, 0, "int8");
-  builtin_go_type->builtin_int16
-    = arch_integer_type (gdbarch, 16, 0, "int16");
-  builtin_go_type->builtin_int32
-    = arch_integer_type (gdbarch, 32, 0, "int32");
-  builtin_go_type->builtin_int64
-    = arch_integer_type (gdbarch, 64, 0, "int64");
-  builtin_go_type->builtin_uint8
-    = arch_integer_type (gdbarch, 8, 1, "uint8");
+  builtin_go_type->builtin_int8 = arch_integer_type (gdbarch, 8, 0, "int8");
+  builtin_go_type->builtin_int16 = arch_integer_type (gdbarch, 16, 0, "int16");
+  builtin_go_type->builtin_int32 = arch_integer_type (gdbarch, 32, 0, "int32");
+  builtin_go_type->builtin_int64 = arch_integer_type (gdbarch, 64, 0, "int64");
+  builtin_go_type->builtin_uint8 = arch_integer_type (gdbarch, 8, 1, "uint8");
   builtin_go_type->builtin_uint16
     = arch_integer_type (gdbarch, 16, 1, "uint16");
   builtin_go_type->builtin_uint32

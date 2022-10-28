@@ -72,7 +72,7 @@ public:
      in a new inferior), push this process target to FOLLOW_INF's target stack
      and add an initial thread to FOLLOW_INF.  */
   void follow_exec (inferior *follow_inf, ptid_t ptid,
-		    const char *execd_pathname) override;
+                    const char *execd_pathname) override;
 
   /* Default implementation of follow_fork.
 
@@ -80,8 +80,8 @@ public:
      (CHILD_INF is non-nullptr), push this target on CHILD_INF's target stack
      and add an initial thread with ptid CHILD_PTID.  */
   void follow_fork (inferior *child_inf, ptid_t child_ptid,
-		    target_waitkind fork_kind, bool follow_child,
-		    bool detach_on_fork) override;
+                    target_waitkind fork_kind, bool follow_child,
+                    bool detach_on_fork) override;
 
   /* True if any thread is, or may be executing.  We need to track
      this separately because until we fully sync the thread list, we
@@ -101,12 +101,14 @@ public:
   /* Return true if this target has at least one resumed thread with a pending
      wait status.  */
   bool has_resumed_with_pending_wait_status () const
-  { return !m_resumed_with_pending_wait_status.empty (); }
+  {
+    return !m_resumed_with_pending_wait_status.empty ();
+  }
 
   /* Return a random resumed thread with pending wait status belonging to INF
      and matching FILTER_PTID.  */
-  thread_info *random_resumed_with_pending_wait_status
-    (inferior *inf, ptid_t filter_ptid);
+  thread_info *random_resumed_with_pending_wait_status (inferior *inf,
+                                                        ptid_t filter_ptid);
 
   /* The connection number.  Visible in "info connections".  */
   int connection_number = 0;

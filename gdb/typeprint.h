@@ -63,7 +63,7 @@ struct print_offset_data
 {
   /* Indicate if the offset an d size fields should be printed in decimal
      (default) or hexadecimal.  */
-  bool print_in_hex  = false;
+  bool print_in_hex = false;
 
   /* The offset to be applied to bitpos when PRINT_OFFSETS is true.
      This is needed for when we are printing nested structs and want
@@ -84,7 +84,7 @@ struct print_offset_data
 
      The output is strongly based on pahole(1).  */
   void update (struct type *type, unsigned int field_idx,
-	       struct ui_file *stream);
+               struct ui_file *stream);
 
   /* Call when all fields have been printed.  This will print
      information about any padding that may exist.  LEVEL is the
@@ -102,14 +102,13 @@ struct print_offset_data
   explicit print_offset_data (const struct type_print_options *flags);
 
 private:
-
   /* Helper function for ptype/o implementation that prints
      information about a hole, if necessary.  STREAM is where to
      print.  BITPOS is the bitpos of the current field.  FOR_WHAT is a
      string describing the purpose of the hole.  */
 
   void maybe_print_hole (struct ui_file *stream, unsigned int bitpos,
-			 const char *for_what);
+                         const char *for_what);
 };
 
 extern const struct type_print_options type_print_raw_options;
@@ -121,7 +120,6 @@ extern const struct type_print_options type_print_raw_options;
 class typedef_hash_table
 {
 public:
-
   /* Create a new typedef-lookup hash table.  */
   typedef_hash_table ();
 
@@ -142,13 +140,11 @@ public:
      table, return its short (class-relative) typedef name.  Otherwise
      return NULL.  */
   static const char *find_typedef (const struct type_print_options *flags,
-				   struct type *t);
+                                   struct type *t);
 
 private:
-
-  static const char *find_global_typedef (const struct type_print_options *flags,
-					  struct type *t);
-
+  static const char *
+  find_global_typedef (const struct type_print_options *flags, struct type *t);
 
   /* The actual hash table.  */
   htab_up m_table;
@@ -157,8 +153,7 @@ private:
   auto_obstack m_storage;
 };
 
-
-void print_type_scalar (struct type * type, LONGEST, struct ui_file *);
+void print_type_scalar (struct type *type, LONGEST, struct ui_file *);
 
 /* Assuming the TYPE is a fixed point type, print its type description
    on STREAM.  */
@@ -166,7 +161,7 @@ void print_type_scalar (struct type * type, LONGEST, struct ui_file *);
 void print_type_fixed_point (struct type *type, struct ui_file *stream);
 
 void c_type_print_args (struct type *, struct ui_file *, int, enum language,
-			const struct type_print_options *);
+                        const struct type_print_options *);
 
 /* Print <unknown return type> to stream STREAM.  */
 

@@ -63,8 +63,8 @@ struct gdb_user_regs
 
 static void
 append_user_reg (struct gdb_user_regs *regs, const char *name,
-		 user_reg_read_ftype *xread, const void *baton,
-		 struct user_reg *reg)
+                 user_reg_read_ftype *xread, const void *baton,
+                 struct user_reg *reg)
 {
   /* The caller is responsible for allocating memory needed to store
      the register.  By doing this, the function can operate on a
@@ -86,10 +86,10 @@ static struct gdb_user_regs builtin_user_regs;
 
 void
 user_reg_add_builtin (const char *name, user_reg_read_ftype *xread,
-		      const void *baton)
+                      const void *baton)
 {
   append_user_reg (&builtin_user_regs, name, xread, baton,
-		   XNEW (struct user_reg));
+                   XNEW (struct user_reg));
 }
 
 /* Per-architecture user registers.  Start with the builtin user
@@ -107,11 +107,10 @@ get_user_regs (struct gdbarch *gdbarch)
 
       struct obstack *obstack = gdbarch_obstack (gdbarch);
       regs->last = &regs->first;
-      for (user_reg *reg = builtin_user_regs.first;
-	   reg != NULL;
-	   reg = reg->next)
-	append_user_reg (regs, reg->name, reg->xread, reg->baton,
-			 OBSTACK_ZALLOC (obstack, struct user_reg));
+      for (user_reg *reg = builtin_user_regs.first; reg != NULL;
+           reg = reg->next)
+        append_user_reg (regs, reg->name, reg->xread, reg->baton,
+                         OBSTACK_ZALLOC (obstack, struct user_reg));
       user_regs_data.set (gdbarch, regs);
     }
 
@@ -120,17 +119,17 @@ get_user_regs (struct gdbarch *gdbarch)
 
 void
 user_reg_add (struct gdbarch *gdbarch, const char *name,
-	      user_reg_read_ftype *xread, const void *baton)
+              user_reg_read_ftype *xread, const void *baton)
 {
   struct gdb_user_regs *regs = get_user_regs (gdbarch);
   gdb_assert (regs != NULL);
   append_user_reg (regs, name, xread, baton,
-		   GDBARCH_OBSTACK_ZALLOC (gdbarch, struct user_reg));
+                   GDBARCH_OBSTACK_ZALLOC (gdbarch, struct user_reg));
 }
 
 int
 user_reg_map_name_to_regnum (struct gdbarch *gdbarch, const char *name,
-			     int len)
+                             int len)
 {
   /* Make life easy, set the len to something reasonable.  */
   if (len < 0)
@@ -143,10 +142,10 @@ user_reg_map_name_to_regnum (struct gdbarch *gdbarch, const char *name,
 
     for (int i = 0; i < maxregs; i++)
       {
-	const char *regname = gdbarch_register_name (gdbarch, i);
+        const char *regname = gdbarch_register_name (gdbarch, i);
 
-	if (len == strlen (regname) && strncmp (regname, name, len) == 0)
-	  return i;
+        if (len == strlen (regname) && strncmp (regname, name, len) == 0)
+          return i;
       }
   }
 
@@ -158,10 +157,10 @@ user_reg_map_name_to_regnum (struct gdbarch *gdbarch, const char *name,
 
     for (nr = 0, reg = regs->first; reg != NULL; reg = reg->next, nr++)
       {
-	if ((len < 0 && strcmp (reg->name, name))
-	    || (len == strlen (reg->name)
-		&& strncmp (reg->name, name, len) == 0))
-	  return gdbarch_num_cooked_regs (gdbarch) + nr;
+        if ((len < 0 && strcmp (reg->name, name))
+            || (len == strlen (reg->name)
+                && strncmp (reg->name, name, len) == 0))
+          return gdbarch_num_cooked_regs (gdbarch) + nr;
       }
   }
 
@@ -177,7 +176,7 @@ usernum_to_user_reg (struct gdbarch *gdbarch, int usernum)
   for (reg = regs->first; reg != NULL; reg = reg->next)
     {
       if (usernum == 0)
-	return reg;
+        return reg;
       usernum--;
     }
   return NULL;
@@ -196,9 +195,9 @@ user_reg_map_regnum_to_name (struct gdbarch *gdbarch, int regnum)
     {
       struct user_reg *reg = usernum_to_user_reg (gdbarch, regnum - maxregs);
       if (reg == NULL)
-	return NULL;
+        return NULL;
       else
-	return reg->name;
+        return reg->name;
     }
 }
 
@@ -233,7 +232,7 @@ void
 _initialize_user_regs ()
 {
   add_cmd ("user-registers", class_maintenance,
-	   maintenance_print_user_registers,
-	   _("List the names of the current user registers."),
-	   &maintenanceprintlist);
+           maintenance_print_user_registers,
+           _ ("List the names of the current user registers."),
+           &maintenanceprintlist);
 }

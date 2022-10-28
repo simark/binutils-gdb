@@ -41,8 +41,7 @@
 struct signal_catchpoint : public catchpoint
 {
   signal_catchpoint (struct gdbarch *gdbarch, bool temp,
-		     std::vector<gdb_signal> &&sigs,
-		     bool catch_all_)
+                     std::vector<gdb_signal> &&sigs, bool catch_all_)
     : catchpoint (gdbarch, temp, nullptr),
       signals_to_be_caught (std::move (sigs)),
       catch_all (catch_all_)
@@ -51,11 +50,10 @@ struct signal_catchpoint : public catchpoint
 
   int insert_location (struct bp_location *) override;
   int remove_location (struct bp_location *,
-		       enum remove_bp_reason reason) override;
+                       enum remove_bp_reason reason) override;
   int breakpoint_hit (const struct bp_location *bl,
-		      const address_space *aspace,
-		      CORE_ADDR bp_addr,
-		      const target_waitstatus &ws) override;
+                      const address_space *aspace, CORE_ADDR bp_addr,
+                      const target_waitstatus &ws) override;
   enum print_stop_action print_it (const bpstat *bs) const override;
   bool print_one (bp_location **) const override;
   void print_mention () const override;
@@ -80,8 +78,6 @@ struct signal_catchpoint : public catchpoint
 
 static unsigned int signal_catch_counts[GDB_SIGNAL_LAST];
 
-
-
 /* A convenience wrapper for gdb_signal_to_name that returns the
    integer value if the name is not known.  */
 
@@ -96,8 +92,6 @@ signal_to_name_or_int (enum gdb_signal sig)
   return result;
 }
 
-
-
 /* Implement the "insert_location" method for signal catchpoints.  */
 
 int
@@ -108,15 +102,15 @@ signal_catchpoint::insert_location (struct bp_location *bl)
   if (!c->signals_to_be_caught.empty ())
     {
       for (gdb_signal iter : c->signals_to_be_caught)
-	++signal_catch_counts[iter];
+        ++signal_catch_counts[iter];
     }
   else
     {
       for (int i = 0; i < GDB_SIGNAL_LAST; ++i)
-	{
-	  if (c->catch_all || !INTERNAL_SIGNAL (i))
-	    ++signal_catch_counts[i];
-	}
+        {
+          if (c->catch_all || !INTERNAL_SIGNAL (i))
+            ++signal_catch_counts[i];
+        }
     }
 
   signal_catch_update (signal_catch_counts);
@@ -128,28 +122,28 @@ signal_catchpoint::insert_location (struct bp_location *bl)
 
 int
 signal_catchpoint::remove_location (struct bp_location *bl,
-				    enum remove_bp_reason reason)
+                                    enum remove_bp_reason reason)
 {
   struct signal_catchpoint *c = (struct signal_catchpoint *) bl->owner;
 
   if (!c->signals_to_be_caught.empty ())
     {
       for (gdb_signal iter : c->signals_to_be_caught)
-	{
-	  gdb_assert (signal_catch_counts[iter] > 0);
-	  --signal_catch_counts[iter];
-	}
+        {
+          gdb_assert (signal_catch_counts[iter] > 0);
+          --signal_catch_counts[iter];
+        }
     }
   else
     {
       for (int i = 0; i < GDB_SIGNAL_LAST; ++i)
-	{
-	  if (c->catch_all || !INTERNAL_SIGNAL (i))
-	    {
-	      gdb_assert (signal_catch_counts[i] > 0);
-	      --signal_catch_counts[i];
-	    }
-	}
+        {
+          if (c->catch_all || !INTERNAL_SIGNAL (i))
+            {
+              gdb_assert (signal_catch_counts[i] > 0);
+              --signal_catch_counts[i];
+            }
+        }
     }
 
   signal_catch_update (signal_catch_counts);
@@ -161,9 +155,9 @@ signal_catchpoint::remove_location (struct bp_location *bl,
 
 int
 signal_catchpoint::breakpoint_hit (const struct bp_location *bl,
-				   const address_space *aspace,
-				   CORE_ADDR bp_addr,
-				   const target_waitstatus &ws)
+                                   const address_space *aspace,
+                                   CORE_ADDR bp_addr,
+                                   const target_waitstatus &ws)
 {
   const struct signal_catchpoint *c
     = (const struct signal_catchpoint *) bl->owner;
@@ -180,8 +174,8 @@ signal_catchpoint::breakpoint_hit (const struct bp_location *bl,
   if (!c->signals_to_be_caught.empty ())
     {
       for (gdb_signal iter : c->signals_to_be_caught)
-	if (signal_number == iter)
-	  return 1;
+        if (signal_number == iter)
+          return 1;
       /* Not the same.  */
       return 0;
     }
@@ -205,7 +199,7 @@ signal_catchpoint::print_it (const bpstat *bs) const
   annotate_catchpoint (number);
   maybe_print_thread_hit_breakpoint (uiout);
 
-  gdb_printf (_("Catchpoint %d (signal %s), "), number, signal_name);
+  gdb_printf (_ ("Catchpoint %d (signal %s), "), number, signal_name);
 
   return PRINT_SRC_AND_LOC;
 }
@@ -238,21 +232,21 @@ signal_catchpoint::print_one (bp_location **last_loc) const
 
       bool first = true;
       for (gdb_signal iter : signals_to_be_caught)
-	{
-	  const char *name = signal_to_name_or_int (iter);
+        {
+          const char *name = signal_to_name_or_int (iter);
 
-	  if (!first)
-	    text += " ";
-	  first = false;
+          if (!first)
+            text += " ";
+          first = false;
 
-	  text += name;
-	}
+          text += name;
+        }
       uiout->field_string ("what", text);
     }
   else
     uiout->field_string ("what",
-			 catch_all ? "<any signal>" : "<standard signals>",
-			 metadata_style.style ());
+                         catch_all ? "<any signal>" : "<standard signals>",
+                         metadata_style.style ());
   uiout->text ("\" ");
 
   if (uiout->is_mi_like_p ())
@@ -269,22 +263,22 @@ signal_catchpoint::print_mention () const
   if (!signals_to_be_caught.empty ())
     {
       if (signals_to_be_caught.size () > 1)
-	gdb_printf (_("Catchpoint %d (signals"), number);
+        gdb_printf (_ ("Catchpoint %d (signals"), number);
       else
-	gdb_printf (_("Catchpoint %d (signal"), number);
+        gdb_printf (_ ("Catchpoint %d (signal"), number);
 
       for (gdb_signal iter : signals_to_be_caught)
-	{
-	  const char *name = signal_to_name_or_int (iter);
+        {
+          const char *name = signal_to_name_or_int (iter);
 
-	  gdb_printf (" %s", name);
-	}
+          gdb_printf (" %s", name);
+        }
       gdb_printf (")");
     }
   else if (catch_all)
-    gdb_printf (_("Catchpoint %d (any signal)"), number);
+    gdb_printf (_ ("Catchpoint %d (any signal)"), number);
   else
-    gdb_printf (_("Catchpoint %d (standard signals)"), number);
+    gdb_printf (_ ("Catchpoint %d (standard signals)"), number);
 }
 
 /* Implement the "print_recreate" method for signal catchpoints.  */
@@ -297,7 +291,7 @@ signal_catchpoint::print_recreate (struct ui_file *fp) const
   if (!signals_to_be_caught.empty ())
     {
       for (gdb_signal iter : signals_to_be_caught)
-	gdb_printf (fp, " %s", signal_to_name_or_int (iter));
+        gdb_printf (fp, " %s", signal_to_name_or_int (iter));
     }
   else if (catch_all)
     gdb_printf (fp, " all");
@@ -321,16 +315,15 @@ signal_catchpoint::explains_signal (enum gdb_signal sig)
 
 static void
 create_signal_catchpoint (int tempflag, std::vector<gdb_signal> &&filter,
-			  bool catch_all)
+                          bool catch_all)
 {
   struct gdbarch *gdbarch = get_current_arch ();
 
-  std::unique_ptr<signal_catchpoint> c
-    (new signal_catchpoint (gdbarch, tempflag, std::move (filter), catch_all));
+  std::unique_ptr<signal_catchpoint> c (
+    new signal_catchpoint (gdbarch, tempflag, std::move (filter), catch_all));
 
   install_breakpoint (0, std::move (c), 1);
 }
-
 
 /* Splits the argument using space as delimiter.  Returns a filter
    list, which is empty if no filtering is required.  */
@@ -349,31 +342,31 @@ catch_signal_split_args (const char *arg, bool *catch_all)
 
       std::string one_arg = extract_arg (&arg);
       if (one_arg.empty ())
-	break;
+        break;
 
       /* Check for the special flag "all".  */
       if (one_arg == "all")
-	{
-	  arg = skip_spaces (arg);
-	  if (*arg != '\0' || !first)
-	    error (_("'all' cannot be caught with other signals"));
-	  *catch_all = true;
-	  gdb_assert (result.empty ());
-	  return result;
-	}
+        {
+          arg = skip_spaces (arg);
+          if (*arg != '\0' || !first)
+            error (_ ("'all' cannot be caught with other signals"));
+          *catch_all = true;
+          gdb_assert (result.empty ());
+          return result;
+        }
 
       first = false;
 
       /* Check if the user provided a signal name or a number.  */
       num = (int) strtol (one_arg.c_str (), &endptr, 0);
       if (*endptr == '\0')
-	signal_number = gdb_signal_from_command (num);
+        signal_number = gdb_signal_from_command (num);
       else
-	{
-	  signal_number = gdb_signal_from_name (one_arg.c_str ());
-	  if (signal_number == GDB_SIGNAL_UNKNOWN)
-	    error (_("Unknown signal name '%s'."), one_arg.c_str ());
-	}
+        {
+          signal_number = gdb_signal_from_name (one_arg.c_str ());
+          if (signal_number == GDB_SIGNAL_UNKNOWN)
+            error (_ ("Unknown signal name '%s'."), one_arg.c_str ());
+        }
 
       result.push_back (signal_number);
     }
@@ -386,7 +379,7 @@ catch_signal_split_args (const char *arg, bool *catch_all)
 
 static void
 catch_signal_command (const char *arg, int from_tty,
-		      struct cmd_list_element *command)
+                      struct cmd_list_element *command)
 {
   int tempflag;
   bool catch_all = false;
@@ -412,7 +405,7 @@ void _initialize_break_catch_sig ();
 void
 _initialize_break_catch_sig ()
 {
-  add_catch_command ("signal", _("\
+  add_catch_command ("signal", _ ("\
 Catch signals by their names and/or numbers.\n\
 Usage: catch signal [[NAME|NUMBER] [NAME|NUMBER]...|all]\n\
 Arguments say which signals to catch.  If no arguments\n\
@@ -420,8 +413,6 @@ are given, every \"normal\" signal will be caught.\n\
 The argument \"all\" means to also catch signals used by GDB.\n\
 Arguments, if given, should be one or more signal names\n\
 (if your system supports that), or signal numbers."),
-		     catch_signal_command,
-		     signal_completer,
-		     CATCH_PERMANENT,
-		     CATCH_TEMPORARY);
+                     catch_signal_command, signal_completer, CATCH_PERMANENT,
+                     CATCH_TEMPORARY);
 }

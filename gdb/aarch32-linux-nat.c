@@ -29,7 +29,7 @@
 
 void
 aarch32_gp_regcache_supply (struct regcache *regcache, uint32_t *regs,
-			    int arm_apcs_32)
+                            int arm_apcs_32)
 {
   int regno;
 
@@ -45,8 +45,8 @@ aarch32_gp_regcache_supply (struct regcache *regcache, uint32_t *regs,
   else
     regcache->raw_supply (ARM_PS_REGNUM, &regs[ARM_PC_REGNUM]);
 
-  regs[ARM_PC_REGNUM] = gdbarch_addr_bits_remove
-			  (regcache->arch (), regs[ARM_PC_REGNUM]);
+  regs[ARM_PC_REGNUM]
+    = gdbarch_addr_bits_remove (regcache->arch (), regs[ARM_PC_REGNUM]);
   regcache->raw_supply (ARM_PC_REGNUM, &regs[ARM_PC_REGNUM]);
 }
 
@@ -55,14 +55,14 @@ aarch32_gp_regcache_supply (struct regcache *regcache, uint32_t *regs,
 
 void
 aarch32_gp_regcache_collect (const struct regcache *regcache, uint32_t *regs,
-			     int arm_apcs_32)
+                             int arm_apcs_32)
 {
   int regno;
 
   for (regno = ARM_A1_REGNUM; regno <= ARM_PC_REGNUM; regno++)
     {
       if (REG_VALID == regcache->get_register_status (regno))
-	regcache->raw_collect (regno, &regs[regno]);
+        regcache->raw_collect (regno, &regs[regno]);
     }
 
   if (arm_apcs_32
@@ -72,8 +72,8 @@ aarch32_gp_regcache_collect (const struct regcache *regcache, uint32_t *regs,
 
       regcache->raw_collect (ARM_PS_REGNUM, &regs[ARM_CPSR_GREGNUM]);
       /* Keep reserved bits bit 20 to bit 23.  */
-      regs[ARM_CPSR_GREGNUM] = ((regs[ARM_CPSR_GREGNUM] & 0xff0fffff)
-				| (cpsr & 0x00f00000));
+      regs[ARM_CPSR_GREGNUM]
+        = ((regs[ARM_CPSR_GREGNUM] & 0xff0fffff) | (cpsr & 0x00f00000));
     }
 }
 
@@ -82,7 +82,7 @@ aarch32_gp_regcache_collect (const struct regcache *regcache, uint32_t *regs,
 
 void
 aarch32_vfp_regcache_supply (struct regcache *regcache, gdb_byte *regs,
-			     const int vfp_register_count)
+                             const int vfp_register_count)
 {
   int regno;
 
@@ -97,7 +97,7 @@ aarch32_vfp_regcache_supply (struct regcache *regcache, gdb_byte *regs,
 
 void
 aarch32_vfp_regcache_collect (const struct regcache *regcache, gdb_byte *regs,
-			      const int vfp_register_count)
+                              const int vfp_register_count)
 {
   int regno;
 

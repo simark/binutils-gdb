@@ -34,11 +34,9 @@
 #include "utils.h"
 #include "gdbarch.h"
 
-
-
 static PTRACE_TYPE_RET
 gdb_ptrace (PTRACE_TYPE_ARG1 request, ptid_t ptid, PTRACE_TYPE_ARG3 addr,
-	    PTRACE_TYPE_ARG4 data)
+            PTRACE_TYPE_ARG4 data)
 {
 #ifdef __NetBSD__
   return ptrace (request, ptid.pid (), addr, data);
@@ -51,10 +49,7 @@ gdb_ptrace (PTRACE_TYPE_ARG1 request, ptid_t ptid, PTRACE_TYPE_ARG3 addr,
 /* The event pipe registered as a waitable file in the event loop.  */
 event_pipe inf_ptrace_target::m_event_pipe;
 
-inf_ptrace_target::~inf_ptrace_target ()
-{}
-
-
+inf_ptrace_target::~inf_ptrace_target () {}
 
 /* Prepare to be traced.  */
 
@@ -73,8 +68,8 @@ inf_ptrace_me (void)
 
 void
 inf_ptrace_target::create_inferior (const char *exec_file,
-				    const std::string &allargs,
-				    char **env, int from_tty)
+                                    const std::string &allargs, char **env,
+                                    int from_tty)
 {
   inferior *inf = current_inferior ();
 
@@ -83,7 +78,7 @@ inf_ptrace_target::create_inferior (const char *exec_file,
   int ops_already_pushed = inf->target_is_pushed (this);
 
   target_unpush_up unpusher;
-  if (! ops_already_pushed)
+  if (!ops_already_pushed)
     {
       /* Clear possible core file with its process_stratum.  */
       inf->push_target (this);
@@ -91,7 +86,7 @@ inf_ptrace_target::create_inferior (const char *exec_file,
     }
 
   pid_t pid = fork_inferior (exec_file, allargs, env, inf_ptrace_me, NULL,
-			     NULL, NULL, NULL);
+                             NULL, NULL, NULL);
 
   ptid_t ptid (pid);
   /* We have something that executes now.  We'll be running through
@@ -139,11 +134,11 @@ inf_ptrace_target::attach (const char *args, int from_tty)
 
   pid_t pid = parse_pid_to_attach (args);
 
-  if (pid == getpid ())		/* Trying to masturbate?  */
-    error (_("I refuse to debug myself!"));
+  if (pid == getpid ()) /* Trying to masturbate?  */
+    error (_ ("I refuse to debug myself!"));
 
   target_unpush_up unpusher;
-  if (! ops_already_pushed)
+  if (!ops_already_pushed)
     {
       /* target_pid_to_str already uses the target.  Also clear possible core
 	 file with its process_stratum.  */
@@ -155,11 +150,11 @@ inf_ptrace_target::attach (const char *args, int from_tty)
 
 #ifdef PT_ATTACH
   errno = 0;
-  ptrace (PT_ATTACH, pid, (PTRACE_TYPE_ARG3)0, 0);
+  ptrace (PT_ATTACH, pid, (PTRACE_TYPE_ARG3) 0, 0);
   if (errno != 0)
     perror_with_name (("ptrace"));
 #else
-  error (_("This system does not support attaching to a process"));
+  error (_ ("This system does not support attaching to a process"));
 #endif
 
   inferior_appeared (inf, pid);
@@ -192,11 +187,11 @@ inf_ptrace_target::detach (inferior *inf, int from_tty)
      previously attached to the inferior.  It *might* work if we
      started the process ourselves.  */
   errno = 0;
-  ptrace (PT_DETACH, pid, (PTRACE_TYPE_ARG3)1, 0);
+  ptrace (PT_DETACH, pid, (PTRACE_TYPE_ARG3) 1, 0);
   if (errno != 0)
     perror_with_name (("ptrace"));
 #else
-  error (_("This system does not support detaching from a process"));
+  error (_ ("This system does not support detaching from a process"));
 #endif
 
   detach_success (inf);
@@ -224,7 +219,7 @@ inf_ptrace_target::kill ()
   if (pid == 0)
     return;
 
-  ptrace (PT_KILL, pid, (PTRACE_TYPE_ARG3)0, 0);
+  ptrace (PT_KILL, pid, (PTRACE_TYPE_ARG3) 0, 0);
   waitpid (pid, &status, 0);
 
   target_mourn_inferior (inferior_ptid);
@@ -281,7 +276,8 @@ inf_ptrace_target::resume (ptid_t ptid, int step, enum gdb_signal signal)
      where it was.  If GDB wanted it to start some other way, we have
      already written a new program counter value to the child.  */
   errno = 0;
-  gdb_ptrace (request, ptid, (PTRACE_TYPE_ARG3)1, gdb_signal_to_host (signal));
+  gdb_ptrace (request, ptid, (PTRACE_TYPE_ARG3) 1,
+              gdb_signal_to_host (signal));
   if (errno != 0)
     perror_with_name (("ptrace"));
 }
@@ -292,7 +288,7 @@ inf_ptrace_target::resume (ptid_t ptid, int step, enum gdb_signal signal)
 
 ptid_t
 inf_ptrace_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
-			 target_wait_flags target_options)
+                         target_wait_flags target_options)
 {
   pid_t pid;
   int options, status, save_errno;
@@ -306,44 +302,44 @@ inf_ptrace_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
       set_sigint_trap ();
 
       do
-	{
-	  pid = waitpid (ptid.pid (), &status, options);
-	  save_errno = errno;
-	}
+        {
+          pid = waitpid (ptid.pid (), &status, options);
+          save_errno = errno;
+        }
       while (pid == -1 && errno == EINTR);
 
       clear_sigint_trap ();
 
       if (pid == 0)
-	{
-	  gdb_assert (target_options & TARGET_WNOHANG);
-	  ourstatus->set_ignore ();
-	  return minus_one_ptid;
-	}
+        {
+          gdb_assert (target_options & TARGET_WNOHANG);
+          ourstatus->set_ignore ();
+          return minus_one_ptid;
+        }
 
       if (pid == -1)
-	{
-	  /* In async mode the SIGCHLD might have raced and triggered
+        {
+          /* In async mode the SIGCHLD might have raced and triggered
 	     a check for an event that had already been reported.  If
 	     the event was the exit of the only remaining child,
 	     waitpid() will fail with ECHILD.  */
-	  if (ptid == minus_one_ptid && save_errno == ECHILD)
-	    {
-	      ourstatus->set_no_resumed ();
-	      return minus_one_ptid;
-	    }
+          if (ptid == minus_one_ptid && save_errno == ECHILD)
+            {
+              ourstatus->set_no_resumed ();
+              return minus_one_ptid;
+            }
 
-	  gdb_printf (gdb_stderr,
-		      _("Child process unexpectedly missing: %s.\n"),
-		      safe_strerror (save_errno));
+          gdb_printf (gdb_stderr,
+                      _ ("Child process unexpectedly missing: %s.\n"),
+                      safe_strerror (save_errno));
 
-	  ourstatus->set_ignore ();
-	  return minus_one_ptid;
-	}
+          ourstatus->set_ignore ();
+          return minus_one_ptid;
+        }
 
       /* Ignore terminated detached child processes.  */
       if (!WIFSTOPPED (status) && find_inferior_pid (this, pid) == nullptr)
-	pid = -1;
+        pid = -1;
     }
   while (pid == -1);
 
@@ -358,9 +354,8 @@ inf_ptrace_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
    be non-null.  Return the number of transferred bytes.  */
 
 static ULONGEST
-inf_ptrace_peek_poke (ptid_t ptid, gdb_byte *readbuf,
-		      const gdb_byte *writebuf,
-		      ULONGEST addr, ULONGEST len)
+inf_ptrace_peek_poke (ptid_t ptid, gdb_byte *readbuf, const gdb_byte *writebuf,
+                      ULONGEST addr, ULONGEST len)
 {
   ULONGEST n;
   unsigned int chunk;
@@ -371,9 +366,7 @@ inf_ptrace_peek_poke (ptid_t ptid, gdb_byte *readbuf,
   ULONGEST skip = addr & (sizeof (PTRACE_TYPE_RET) - 1);
   addr -= skip;
 
-  for (n = 0;
-       n < len;
-       n += chunk, addr += sizeof (PTRACE_TYPE_RET), skip = 0)
+  for (n = 0; n < len; n += chunk, addr += sizeof (PTRACE_TYPE_RET), skip = 0)
     {
       /* Restrict to a chunk that fits in the current word.  */
       chunk = std::min (sizeof (PTRACE_TYPE_RET) - skip, len - n);
@@ -381,38 +374,38 @@ inf_ptrace_peek_poke (ptid_t ptid, gdb_byte *readbuf,
       /* Use a union for type punning.  */
       union
       {
-	PTRACE_TYPE_RET word;
-	gdb_byte byte[sizeof (PTRACE_TYPE_RET)];
+        PTRACE_TYPE_RET word;
+        gdb_byte byte[sizeof (PTRACE_TYPE_RET)];
       } buf;
 
       /* Read the word, also when doing a partial word write.  */
       if (readbuf != NULL || chunk < sizeof (PTRACE_TYPE_RET))
-	{
-	  errno = 0;
-	  buf.word = gdb_ptrace (PT_READ_I, ptid,
-				 (PTRACE_TYPE_ARG3)(uintptr_t) addr, 0);
-	  if (errno != 0)
-	    break;
-	  if (readbuf != NULL)
-	    memcpy (readbuf + n, buf.byte + skip, chunk);
-	}
+        {
+          errno = 0;
+          buf.word = gdb_ptrace (PT_READ_I, ptid,
+                                 (PTRACE_TYPE_ARG3) (uintptr_t) addr, 0);
+          if (errno != 0)
+            break;
+          if (readbuf != NULL)
+            memcpy (readbuf + n, buf.byte + skip, chunk);
+        }
       if (writebuf != NULL)
-	{
-	  memcpy (buf.byte + skip, writebuf + n, chunk);
-	  errno = 0;
-	  gdb_ptrace (PT_WRITE_D, ptid, (PTRACE_TYPE_ARG3)(uintptr_t) addr,
-		  buf.word);
-	  if (errno != 0)
-	    {
-	      /* Using the appropriate one (I or D) is necessary for
+        {
+          memcpy (buf.byte + skip, writebuf + n, chunk);
+          errno = 0;
+          gdb_ptrace (PT_WRITE_D, ptid, (PTRACE_TYPE_ARG3) (uintptr_t) addr,
+                      buf.word);
+          if (errno != 0)
+            {
+              /* Using the appropriate one (I or D) is necessary for
 		 Gould NP1, at least.  */
-	      errno = 0;
-	      gdb_ptrace (PT_WRITE_I, ptid, (PTRACE_TYPE_ARG3)(uintptr_t) addr,
-			  buf.word);
-	      if (errno != 0)
-		break;
-	    }
-	}
+              errno = 0;
+              gdb_ptrace (PT_WRITE_I, ptid,
+                          (PTRACE_TYPE_ARG3) (uintptr_t) addr, buf.word);
+              if (errno != 0)
+                break;
+            }
+        }
     }
 
   return n;
@@ -421,10 +414,10 @@ inf_ptrace_peek_poke (ptid_t ptid, gdb_byte *readbuf,
 /* Implement the to_xfer_partial target_ops method.  */
 
 enum target_xfer_status
-inf_ptrace_target::xfer_partial (enum target_object object,
-				 const char *annex, gdb_byte *readbuf,
-				 const gdb_byte *writebuf,
-				 ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
+inf_ptrace_target::xfer_partial (enum target_object object, const char *annex,
+                                 gdb_byte *readbuf, const gdb_byte *writebuf,
+                                 ULONGEST offset, ULONGEST len,
+                                 ULONGEST *xfered_len)
 {
   ptid_t ptid = inferior_ptid;
 
@@ -436,62 +429,62 @@ inf_ptrace_target::xfer_partial (enum target_object object,
 	 request that promises to be much more efficient in reading
 	 and writing data in the traced process's address space.  */
       {
-	struct ptrace_io_desc piod;
+        struct ptrace_io_desc piod;
 
-	/* NOTE: We assume that there are no distinct address spaces
+        /* NOTE: We assume that there are no distinct address spaces
 	   for instruction and data.  However, on OpenBSD 3.9 and
 	   later, PIOD_WRITE_D doesn't allow changing memory that's
 	   mapped read-only.  Since most code segments will be
 	   read-only, using PIOD_WRITE_D will prevent us from
 	   inserting breakpoints, so we use PIOD_WRITE_I instead.  */
-	piod.piod_op = writebuf ? PIOD_WRITE_I : PIOD_READ_D;
-	piod.piod_addr = writebuf ? (void *) writebuf : readbuf;
-	piod.piod_offs = (void *) (long) offset;
-	piod.piod_len = len;
+        piod.piod_op = writebuf ? PIOD_WRITE_I : PIOD_READ_D;
+        piod.piod_addr = writebuf ? (void *) writebuf : readbuf;
+        piod.piod_offs = (void *) (long) offset;
+        piod.piod_len = len;
 
-	errno = 0;
-	if (gdb_ptrace (PT_IO, ptid, (caddr_t)&piod, 0) == 0)
-	  {
-	    /* Return the actual number of bytes read or written.  */
-	    *xfered_len = piod.piod_len;
-	    return (piod.piod_len == 0) ? TARGET_XFER_EOF : TARGET_XFER_OK;
-	  }
-	/* If the PT_IO request is somehow not supported, fallback on
+        errno = 0;
+        if (gdb_ptrace (PT_IO, ptid, (caddr_t) &piod, 0) == 0)
+          {
+            /* Return the actual number of bytes read or written.  */
+            *xfered_len = piod.piod_len;
+            return (piod.piod_len == 0) ? TARGET_XFER_EOF : TARGET_XFER_OK;
+          }
+        /* If the PT_IO request is somehow not supported, fallback on
 	   using PT_WRITE_D/PT_READ_D.  Otherwise we will return zero
 	   to indicate failure.  */
-	if (errno != EINVAL)
-	  return TARGET_XFER_EOF;
+        if (errno != EINVAL)
+          return TARGET_XFER_EOF;
       }
 #endif
-      *xfered_len = inf_ptrace_peek_poke (ptid, readbuf, writebuf,
-					  offset, len);
+      *xfered_len
+        = inf_ptrace_peek_poke (ptid, readbuf, writebuf, offset, len);
       return *xfered_len != 0 ? TARGET_XFER_OK : TARGET_XFER_EOF;
 
     case TARGET_OBJECT_UNWIND_TABLE:
       return TARGET_XFER_E_IO;
 
     case TARGET_OBJECT_AUXV:
-#if defined (PT_IO) && defined (PIOD_READ_AUXV)
+#if defined(PT_IO) && defined(PIOD_READ_AUXV)
       /* OpenBSD 4.5 has a new PIOD_READ_AUXV operation for the PT_IO
 	 request that allows us to read the auxilliary vector.  Other
 	 BSD's may follow if they feel the need to support PIE.  */
       {
-	struct ptrace_io_desc piod;
+        struct ptrace_io_desc piod;
 
-	if (writebuf)
-	  return TARGET_XFER_E_IO;
-	piod.piod_op = PIOD_READ_AUXV;
-	piod.piod_addr = readbuf;
-	piod.piod_offs = (void *) (long) offset;
-	piod.piod_len = len;
+        if (writebuf)
+          return TARGET_XFER_E_IO;
+        piod.piod_op = PIOD_READ_AUXV;
+        piod.piod_addr = readbuf;
+        piod.piod_offs = (void *) (long) offset;
+        piod.piod_len = len;
 
-	errno = 0;
-	if (gdb_ptrace (PT_IO, ptid, (caddr_t)&piod, 0) == 0)
-	  {
-	    /* Return the actual number of bytes read or written.  */
-	    *xfered_len = piod.piod_len;
-	    return (piod.piod_len == 0) ? TARGET_XFER_EOF : TARGET_XFER_OK;
-	  }
+        errno = 0;
+        if (gdb_ptrace (PT_IO, ptid, (caddr_t) &piod, 0) == 0)
+          {
+            /* Return the actual number of bytes read or written.  */
+            *xfered_len = piod.piod_len;
+            return (piod.piod_len == 0) ? TARGET_XFER_EOF : TARGET_XFER_OK;
+          }
       }
 #endif
       return TARGET_XFER_E_IO;
@@ -520,9 +513,9 @@ inf_ptrace_target::files_info ()
 {
   struct inferior *inf = current_inferior ();
 
-  gdb_printf (_("\tUsing the running image of %s %s.\n"),
-	      inf->attach_flag ? "attached" : "child",
-	      target_pid_to_str (inferior_ptid).c_str ());
+  gdb_printf (_ ("\tUsing the running image of %s %s.\n"),
+              inf->attach_flag ? "attached" : "child",
+              target_pid_to_str (inferior_ptid).c_str ());
 }
 
 std::string

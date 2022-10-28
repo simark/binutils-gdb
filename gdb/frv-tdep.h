@@ -21,14 +21,15 @@
 
 /* Enumerate the possible ABIs for FR-V.  */
 enum frv_abi
-  {
-    FRV_ABI_EABI,
-    FRV_ABI_FDPIC
-  };
+{
+  FRV_ABI_EABI,
+  FRV_ABI_FDPIC
+};
 
 /* Register numbers.  The order in which these appear define the
    remote protocol, so take care in changing them.  */
-enum {
+enum
+{
   /* Register numbers 0 -- 63 are always reserved for general-purpose
      registers.  The chip at hand may have less.  */
   first_gpr_regnum = 0,
@@ -102,7 +103,7 @@ enum frv_abi frv_abi (struct gdbarch *gdbarch);
    library support) for the FDPIC ABI.  Return 0 if successful, -1 if
    not.  (E.g, -1 will be returned if the ABI isn't the FDPIC ABI.)  */
 int frv_fdpic_loadmap_addresses (struct gdbarch *gdbarch,
-				 CORE_ADDR *interp_addr, CORE_ADDR *exec_addr);
+                                 CORE_ADDR *interp_addr, CORE_ADDR *exec_addr);
 
 /* Given a function entry point, find and return the GOT address for the
    containing load module.  */
@@ -112,7 +113,6 @@ CORE_ADDR frv_fdpic_find_global_pointer (CORE_ADDR addr);
    for that function, if one exists.  If no canonical descriptor could
    be found, return 0.  */
 CORE_ADDR frv_fdpic_find_canonical_descriptor (CORE_ADDR entry_point);
-
 
 /* Given an objfile, return the address of its link map.  This value is
    needed for TLS support.  */

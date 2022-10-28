@@ -22,10 +22,10 @@
 
 boolean_t exc_server (mach_msg_header_t *InHeadP, mach_msg_header_t *OutHeadP);
 boolean_t msg_reply_server (mach_msg_header_t *InHeadP,
-			    mach_msg_header_t *OutHeadP);
+                            mach_msg_header_t *OutHeadP);
 boolean_t notify_server (mach_msg_header_t *InHeadP,
-			 mach_msg_header_t *OutHeadP);
+                         mach_msg_header_t *OutHeadP);
 boolean_t process_reply_server (mach_msg_header_t *InHeadP,
-				mach_msg_header_t *OutHeadP);
+                                mach_msg_header_t *OutHeadP);
 
 #endif /* GNU_NAT_MIG_H */

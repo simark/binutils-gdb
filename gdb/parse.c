@@ -41,7 +41,7 @@
 #include "language.h"
 #include "parser-defs.h"
 #include "gdbcmd.h"
-#include "symfile.h"		/* for overlay functions */
+#include "symfile.h" /* for overlay functions */
 #include "inferior.h"
 #include "target-float.h"
 #include "block.h"
@@ -55,58 +55,51 @@
 static unsigned int expressiondebug = 0;
 static void
 show_expressiondebug (struct ui_file *file, int from_tty,
-		      struct cmd_list_element *c, const char *value)
+                      struct cmd_list_element *c, const char *value)
 {
-  gdb_printf (file, _("Expression debugging is %s.\n"), value);
+  gdb_printf (file, _ ("Expression debugging is %s.\n"), value);
 }
-
 
 /* True if an expression parser should set yydebug.  */
 bool parser_debug;
 
 static void
 show_parserdebug (struct ui_file *file, int from_tty,
-		  struct cmd_list_element *c, const char *value)
+                  struct cmd_list_element *c, const char *value)
 {
-  gdb_printf (file, _("Parser debugging is %s.\n"), value);
+  gdb_printf (file, _ ("Parser debugging is %s.\n"), value);
 }
 
-
-static expression_up parse_exp_in_context
-     (const char **, CORE_ADDR,
-      const struct block *, int,
-      bool, innermost_block_tracker *,
-      std::unique_ptr<expr_completion_base> *);
+static expression_up
+parse_exp_in_context (const char **, CORE_ADDR, const struct block *, int,
+                      bool, innermost_block_tracker *,
+                      std::unique_ptr<expr_completion_base> *);
 
 /* Documented at it's declaration.  */
 
 void
 innermost_block_tracker::update (const struct block *b,
-				 innermost_block_tracker_types t)
+                                 innermost_block_tracker_types t)
 {
   if ((m_types & t) != 0
-      && (m_innermost_block == NULL
-	  || contained_in (b, m_innermost_block)))
+      && (m_innermost_block == NULL || contained_in (b, m_innermost_block)))
     m_innermost_block = b;
 }
-
-
 
 /* Return the type of MSYMBOL, a minimal symbol of OBJFILE.  If
    ADDRESS_P is not NULL, set it to the MSYMBOL's resolved
    address.  */
 
 type *
-find_minsym_type_and_address (minimal_symbol *msymbol,
-			      struct objfile *objfile,
-			      CORE_ADDR *address_p)
+find_minsym_type_and_address (minimal_symbol *msymbol, struct objfile *objfile,
+                              CORE_ADDR *address_p)
 {
-  bound_minimal_symbol bound_msym = {msymbol, objfile};
+  bound_minimal_symbol bound_msym = { msymbol, objfile };
   struct obj_section *section = msymbol->obj_section (objfile);
   enum minimal_symbol_type type = msymbol->type ();
 
-  bool is_tls = (section != NULL
-		 && section->the_bfd_section->flags & SEC_THREAD_LOCAL);
+  bool is_tls
+    = (section != NULL && section->the_bfd_section->flags & SEC_THREAD_LOCAL);
 
   /* The minimal symbol might point to a function descriptor;
      resolve it to the actual code address instead.  */
@@ -120,16 +113,16 @@ find_minsym_type_and_address (minimal_symbol *msymbol,
   else if (msymbol_is_function (objfile, msymbol, &addr))
     {
       if (addr != bound_msym.value_address ())
-	{
-	  /* This means we resolved a function descriptor, and we now
+        {
+          /* This means we resolved a function descriptor, and we now
 	     have an address for a code/text symbol instead of a data
 	     symbol.  */
-	  if (msymbol->type () == mst_data_gnu_ifunc)
-	    type = mst_text_gnu_ifunc;
-	  else
-	    type = mst_text;
-	  section = NULL;
-	}
+          if (msymbol->type () == mst_data_gnu_ifunc)
+            type = mst_text_gnu_ifunc;
+          else
+            type = mst_text;
+          section = NULL;
+        }
     }
   else
     addr = bound_msym.value_address ();
@@ -141,7 +134,7 @@ find_minsym_type_and_address (minimal_symbol *msymbol,
     {
       /* Skip translation if caller does not need the address.  */
       if (address_p != NULL)
-	*address_p = target_translate_tls_address (objfile, addr);
+        *address_p = target_translate_tls_address (objfile, addr);
       return objfile_type (objfile)->nodebug_tls_symbol;
     }
 
@@ -174,10 +167,10 @@ find_minsym_type_and_address (minimal_symbol *msymbol,
 
 bool
 expr_complete_tag::complete (struct expression *exp,
-			     completion_tracker &tracker)
+                             completion_tracker &tracker)
 {
   collect_symbol_completion_matches_type (tracker, m_name.get (),
-					  m_name.get (), m_code);
+                                          m_name.get (), m_code);
   return true;
 }
 
@@ -196,14 +189,13 @@ parser_state::mark_struct_expression (expr::structop_base_operation *op)
 
 void
 parser_state::mark_completion_tag (enum type_code tag, const char *ptr,
-				   int length)
+                                   int length)
 {
   gdb_assert (parse_completion && m_completion_state == nullptr);
-  gdb_assert (tag == TYPE_CODE_UNION
-	      || tag == TYPE_CODE_STRUCT
-	      || tag == TYPE_CODE_ENUM);
-  m_completion_state.reset
-    (new expr_complete_tag (tag, make_unique_xstrndup (ptr, length)));
+  gdb_assert (tag == TYPE_CODE_UNION || tag == TYPE_CODE_STRUCT
+              || tag == TYPE_CODE_ENUM);
+  m_completion_state.reset (
+    new expr_complete_tag (tag, make_unique_xstrndup (ptr, length)));
 }
 
 /* See parser-defs.h.  */
@@ -216,7 +208,7 @@ parser_state::push_c_string (int kind, struct stoken_vector *vec)
     data[i] = std::string (vec->tokens[i].ptr, vec->tokens[i].length);
 
   push_new<expr::c_string_operation> ((enum c_string_type_values) kind,
-				      std::move (data));
+                                      std::move (data));
 }
 
 /* See parser-defs.h.  */
@@ -227,18 +219,18 @@ parser_state::push_symbol (const char *name, block_symbol sym)
   if (sym.symbol != nullptr)
     {
       if (symbol_read_needs_frame (sym.symbol))
-	block_tracker->update (sym);
+        block_tracker->update (sym);
       push_new<expr::var_value_operation> (sym);
     }
   else
     {
       struct bound_minimal_symbol msymbol = lookup_bound_minimal_symbol (name);
       if (msymbol.minsym != NULL)
-	push_new<expr::var_msym_value_operation> (msymbol);
+        push_new<expr::var_msym_value_operation> (msymbol);
       else if (!have_full_symbols () && !have_partial_symbols ())
-	error (_("No symbol table is loaded.  Use the \"file\" command."));
+        error (_ ("No symbol table is loaded.  Use the \"file\" command."));
       else
-	error (_("No symbol \"%s\" in current context."), name);
+        error (_ ("No symbol \"%s\" in current context."), name);
     }
 }
 
@@ -278,14 +270,13 @@ parser_state::push_dollar (struct stoken str)
     {
       i = atoi (str.ptr + 1 + negate);
       if (negate)
-	i = -i;
+        i = -i;
       goto handle_last;
     }
 
   /* Handle tokens that refer to machine registers:
      $ followed by a register name.  */
-  i = user_reg_map_name_to_regnum (gdbarch (),
-				   str.ptr + 1, str.length - 1);
+  i = user_reg_map_name_to_regnum (gdbarch (), str.ptr + 1, str.length - 1);
   if (i >= 0)
     goto handle_register;
 
@@ -317,8 +308,8 @@ parser_state::push_dollar (struct stoken str)
 
   /* Any other names are assumed to be debugger internal variables.  */
 
-  push_new<expr::internalvar_operation>
-    (create_internalvar (copy.c_str () + 1));
+  push_new<expr::internalvar_operation> (
+    create_internalvar (copy.c_str () + 1));
   return;
 handle_last:
   push_new<expr::last_operation> (i);
@@ -328,11 +319,9 @@ handle_register:
   str.ptr++;
   push_new<expr::register_operation> (copy_name (str));
   block_tracker->update (expression_context_block,
-			 INNERMOST_BLOCK_FOR_REGISTERS);
+                         INNERMOST_BLOCK_FOR_REGISTERS);
   return;
 }
-
-
 
 const char *
 find_template_name_end (const char *p)
@@ -348,52 +337,50 @@ find_template_name_end (const char *p)
   while (*++p)
     {
       switch (*p)
-	{
-	case '\'':
-	case '\"':
-	case '{':
-	case '}':
-	  /* In future, may want to allow these??  */
-	  return 0;
-	case '<':
-	  depth++;		/* start nested template */
-	  if (just_seen_colon || just_seen_right || just_seen_space)
-	    return 0;		/* but not after : or :: or > or space */
-	  break;
-	case '>':
-	  if (just_seen_colon || just_seen_right)
-	    return 0;		/* end a (nested?) template */
-	  just_seen_right = 1;	/* but not after : or :: */
-	  if (--depth == 0)	/* also disallow >>, insist on > > */
-	    return ++p;		/* if outermost ended, return */
-	  break;
-	case ':':
-	  if (just_seen_space || (just_seen_colon > 1))
-	    return 0;		/* nested class spec coming up */
-	  just_seen_colon++;	/* we allow :: but not :::: */
-	  break;
-	case ' ':
-	  break;
-	default:
-	  if (!((*p >= 'a' && *p <= 'z') ||	/* allow token chars */
-		(*p >= 'A' && *p <= 'Z') ||
-		(*p >= '0' && *p <= '9') ||
-		(*p == '_') || (*p == ',') ||	/* commas for template args */
-		(*p == '&') || (*p == '*') ||	/* pointer and ref types */
-		(*p == '(') || (*p == ')') ||	/* function types */
-		(*p == '[') || (*p == ']')))	/* array types */
-	    return 0;
-	}
+        {
+        case '\'':
+        case '\"':
+        case '{':
+        case '}':
+          /* In future, may want to allow these??  */
+          return 0;
+        case '<':
+          depth++; /* start nested template */
+          if (just_seen_colon || just_seen_right || just_seen_space)
+            return 0; /* but not after : or :: or > or space */
+          break;
+        case '>':
+          if (just_seen_colon || just_seen_right)
+            return 0;          /* end a (nested?) template */
+          just_seen_right = 1; /* but not after : or :: */
+          if (--depth == 0)    /* also disallow >>, insist on > > */
+            return ++p;        /* if outermost ended, return */
+          break;
+        case ':':
+          if (just_seen_space || (just_seen_colon > 1))
+            return 0;        /* nested class spec coming up */
+          just_seen_colon++; /* we allow :: but not :::: */
+          break;
+        case ' ':
+          break;
+        default:
+          if (!((*p >= 'a' && *p <= 'z') || /* allow token chars */
+                (*p >= 'A' && *p <= 'Z') || (*p >= '0' && *p <= '9')
+                || (*p == '_') || (*p == ',') || /* commas for template args */
+                (*p == '&') || (*p == '*') ||    /* pointer and ref types */
+                (*p == '(') || (*p == ')') ||    /* function types */
+                (*p == '[') || (*p == ']')))     /* array types */
+            return 0;
+        }
       if (*p != ' ')
-	just_seen_space = 0;
+        just_seen_space = 0;
       if (*p != ':')
-	just_seen_colon = 0;
+        just_seen_colon = 0;
       if (*p != '>')
-	just_seen_right = 0;
+        just_seen_right = 0;
     }
   return 0;
 }
-
 
 /* Return a null-terminated temporary copy of the name of a string token.
 
@@ -408,7 +395,6 @@ copy_name (struct stoken token)
 {
   return std::string (token.ptr, token.length);
 }
-
 
 /* Read an expression from the string *STRINGPTR points to,
    parse it, and return a pointer to a struct expression that we malloc.
@@ -422,10 +408,10 @@ copy_name (struct stoken token)
 
 expression_up
 parse_exp_1 (const char **stringptr, CORE_ADDR pc, const struct block *block,
-	     int comma, innermost_block_tracker *tracker)
+             int comma, innermost_block_tracker *tracker)
 {
-  return parse_exp_in_context (stringptr, pc, block, comma, false,
-			       tracker, nullptr);
+  return parse_exp_in_context (stringptr, pc, block, comma, false, tracker,
+                               nullptr);
 }
 
 /* As for parse_exp_1, except that if VOID_CONTEXT_P, then
@@ -433,15 +419,14 @@ parse_exp_1 (const char **stringptr, CORE_ADDR pc, const struct block *block,
 
 static expression_up
 parse_exp_in_context (const char **stringptr, CORE_ADDR pc,
-		      const struct block *block,
-		      int comma, bool void_context_p,
-		      innermost_block_tracker *tracker,
-		      std::unique_ptr<expr_completion_base> *completer)
+                      const struct block *block, int comma,
+                      bool void_context_p, innermost_block_tracker *tracker,
+                      std::unique_ptr<expr_completion_base> *completer)
 {
   const struct language_defn *lang = NULL;
 
   if (*stringptr == 0 || **stringptr == 0)
-    error_no_arg (_("expression to compute"));
+    error_no_arg (_ ("expression to compute"));
 
   const struct block *expression_context_block = block;
   CORE_ADDR expression_context_pc = 0;
@@ -465,11 +450,11 @@ parse_exp_in_context (const char **stringptr, CORE_ADDR pc,
       struct symtab_and_line cursal = get_current_source_symtab_and_line ();
 
       if (cursal.symtab)
-	expression_context_block
-	  = cursal.symtab->compunit ()->blockvector ()->static_block ();
+        expression_context_block
+          = cursal.symtab->compunit ()->blockvector ()->static_block ();
 
       if (expression_context_block)
-	expression_context_pc = expression_context_block->entry_pc ();
+        expression_context_pc = expression_context_block->entry_pc ();
     }
 
   if (language_mode == language_mode_auto && block != NULL)
@@ -491,9 +476,9 @@ parse_exp_in_context (const char **stringptr, CORE_ADDR pc,
       struct symbol *func = block_linkage_function (block);
 
       if (func != NULL)
-	lang = language_def (func->language ());
+        lang = language_def (func->language ());
       if (lang == NULL || lang->la_language == language_unknown)
-	lang = current_language;
+        lang = current_language;
     }
   else
     lang = current_language;
@@ -504,8 +489,8 @@ parse_exp_in_context (const char **stringptr, CORE_ADDR pc,
      to the value matching SELECTED_FRAME as set by get_current_arch.  */
 
   parser_state ps (lang, get_current_arch (), expression_context_block,
-		   expression_context_pc, comma, *stringptr,
-		   completer != nullptr, tracker, void_context_p);
+                   expression_context_pc, comma, *stringptr,
+                   completer != nullptr, tracker, void_context_p);
 
   scoped_restore_current_language lang_saver;
   set_language (lang->la_language);
@@ -519,8 +504,8 @@ parse_exp_in_context (const char **stringptr, CORE_ADDR pc,
       /* If parsing for completion, allow this to succeed; but if no
 	 expression elements have been written, then there's nothing
 	 to do, so fail.  */
-      if (! ps.parse_completion || ps.expout->op == nullptr)
-	throw;
+      if (!ps.parse_completion || ps.expout->op == nullptr)
+        throw;
     }
 
   expression_up result = ps.release ();
@@ -544,13 +529,12 @@ parse_exp_in_context (const char **stringptr, CORE_ADDR pc,
 
 expression_up
 parse_expression (const char *string, innermost_block_tracker *tracker,
-		  bool void_context_p)
+                  bool void_context_p)
 {
   expression_up exp = parse_exp_in_context (&string, 0, nullptr, 0,
-					    void_context_p,
-					    tracker, nullptr);
+                                            void_context_p, tracker, nullptr);
   if (*string)
-    error (_("Junk after end of expression."));
+    error (_ ("Junk after end of expression."));
   return exp;
 }
 
@@ -575,9 +559,8 @@ parse_expression_with_language (const char *string, enum language lang)
    cases, return NULL.  */
 
 expression_up
-parse_expression_for_completion
-     (const char *string,
-      std::unique_ptr<expr_completion_base> *completer)
+parse_expression_for_completion (
+  const char *string, std::unique_ptr<expr_completion_base> *completer)
 {
   expression_up exp;
 
@@ -606,8 +589,7 @@ parse_expression_for_completion
    NOTE: This accepts the floating point syntax that sscanf accepts.  */
 
 bool
-parse_float (const char *p, int len,
-	     const struct type *type, gdb_byte *data)
+parse_float (const char *p, int len, const struct type *type, gdb_byte *data)
 {
   return target_float_from_string (data, type, std::string (p, len));
 }
@@ -629,7 +611,7 @@ fits_in_type (int n_sign, ULONGEST n, int type_bits, bool type_signed_p)
   if (type_bits > sizeof (ULONGEST) * 8)
     return true;
 
-  ULONGEST smax = (ULONGEST)1 << (type_bits - 1);
+  ULONGEST smax = (ULONGEST) 1 << (type_bits - 1);
   if (n_sign == -1)
     {
       /* Negative number, signed type.  */
@@ -648,17 +630,17 @@ fits_in_type (int n_sign, ULONGEST n, int type_bits, bool type_signed_p)
   else
     gdb_assert_not_reached ("");
 }
-
+
 /* This function avoids direct calls to fprintf 
    in the parser generated debug code.  */
 void
 parser_fprintf (FILE *x, const char *y, ...)
-{ 
+{
   va_list args;
 
   va_start (args, y);
   if (x == stderr)
-    gdb_vprintf (gdb_stderr, y, args); 
+    gdb_vprintf (gdb_stderr, y, args);
   else
     {
       gdb_printf (gdb_stderr, " Unknown FILE used.\n");
@@ -683,22 +665,18 @@ void _initialize_parse ();
 void
 _initialize_parse ()
 {
-  add_setshow_zuinteger_cmd ("expression", class_maintenance,
-			     &expressiondebug,
-			     _("Set expression debugging."),
-			     _("Show expression debugging."),
-			     _("When non-zero, the internal representation "
-			       "of expressions will be printed."),
-			     NULL,
-			     show_expressiondebug,
-			     &setdebuglist, &showdebuglist);
-  add_setshow_boolean_cmd ("parser", class_maintenance,
-			    &parser_debug,
-			   _("Set parser debugging."),
-			   _("Show parser debugging."),
-			   _("When non-zero, expression parser "
-			     "tracing will be enabled."),
-			    NULL,
-			    show_parserdebug,
-			    &setdebuglist, &showdebuglist);
+  add_setshow_zuinteger_cmd ("expression", class_maintenance, &expressiondebug,
+                             _ ("Set expression debugging."),
+                             _ ("Show expression debugging."),
+                             _ ("When non-zero, the internal representation "
+                                "of expressions will be printed."),
+                             NULL, show_expressiondebug, &setdebuglist,
+                             &showdebuglist);
+  add_setshow_boolean_cmd ("parser", class_maintenance, &parser_debug,
+                           _ ("Set parser debugging."),
+                           _ ("Show parser debugging."),
+                           _ ("When non-zero, expression parser "
+                              "tracing will be enabled."),
+                           NULL, show_parserdebug, &setdebuglist,
+                           &showdebuglist);
 }

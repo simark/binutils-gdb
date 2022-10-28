@@ -77,13 +77,13 @@ print_exception (struct ui_file *file, const struct gdb_exception &e)
     {
       end = strchr (start, '\n');
       if (end == NULL)
-	gdb_puts (start, file);
+        gdb_puts (start, file);
       else
-	{
-	  end++;
-	  file->write (start, end - start);
-	}
-    }					    
+        {
+          end++;
+          file->write (start, end - start);
+        }
+    }
   gdb_printf (file, "\n");
 
   /* Now append the annotation.  */
@@ -97,7 +97,7 @@ print_exception (struct ui_file *file, const struct gdb_exception &e)
       annotate_error ();
       break;
     default:
-      internal_error (_("Bad switch."));
+      internal_error (_ ("Bad switch."));
     }
 }
 
@@ -113,7 +113,7 @@ exception_print (struct ui_file *file, const struct gdb_exception &e)
 
 void
 exception_fprintf (struct ui_file *file, const struct gdb_exception &e,
-		   const char *prefix, ...)
+                   const char *prefix, ...)
 {
   if (e.reason < 0 && e.message != NULL)
     {

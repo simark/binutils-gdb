@@ -34,19 +34,19 @@ extern int amd64_native_gregset64_num_regs;
    register REGNUM.  */
 
 extern int amd64_native_gregset_supplies_p (struct gdbarch *gdbarch,
-					    int regnum);
+                                            int regnum);
 
 /* Supply register REGNUM, whose contents are store in BUF, to
    REGCACHE.  If REGNUM is -1, supply all appropriate registers.  */
 
 extern void amd64_supply_native_gregset (struct regcache *regcache,
-					 const void *gregs, int regnum);
+                                         const void *gregs, int regnum);
 
 /* Collect register REGNUM from REGCACHE and store its contents in
    GREGS.  If REGNUM is -1, collect and store all appropriate
    registers.  */
 
 extern void amd64_collect_native_gregset (const struct regcache *regcache,
-					  void *gregs, int regnum);
+                                          void *gregs, int regnum);
 
 #endif /* amd64-nat.h */

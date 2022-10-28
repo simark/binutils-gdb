@@ -27,7 +27,7 @@
 struct target_section
 {
   target_section (CORE_ADDR addr_, CORE_ADDR end_, struct bfd_section *sect_,
-		  void *owner_ = nullptr)
+                  void *owner_ = nullptr)
     : addr (addr_),
       endaddr (end_),
       the_bfd_section (sect_),

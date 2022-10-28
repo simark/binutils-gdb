@@ -37,21 +37,20 @@ public:
 
   /* Create an iterator pointing at HEAD.  */
   all_inferiors_iterator (process_stratum_target *proc_target,
-			  const intrusive_list<inferior> &list)
-    : m_proc_target (proc_target), m_inf_iter (list.begin ())
+                          const intrusive_list<inferior> &list)
+    : m_proc_target (proc_target),
+      m_inf_iter (list.begin ())
   {
     intrusive_list<inferior>::iterator end;
 
     /* Advance M_INF to the first inferior's position.  */
     for (; m_inf_iter != end; ++m_inf_iter)
       if (m_inf_matches ())
-	return;
+        return;
   }
 
   /* Create a one-past-end iterator.  */
-  all_inferiors_iterator ()
-    : m_proc_target (nullptr)
-  {}
+  all_inferiors_iterator () : m_proc_target (nullptr) {}
 
   all_inferiors_iterator &operator++ ()
   {
@@ -59,11 +58,12 @@ public:
     return *this;
   }
 
-  inferior *operator* () const
-  { return &*m_inf_iter; }
+  inferior *operator* () const { return &*m_inf_iter; }
 
   bool operator!= (const all_inferiors_iterator &other) const
-  { return m_inf_iter != other.m_inf_iter; }
+  {
+    return m_inf_iter != other.m_inf_iter;
+  }
 
 private:
   /* Advance to next inferior, skipping filtered inferiors.  */
@@ -78,17 +78,17 @@ private:
 
     while (m_inf_iter != end)
       {
-	if (m_inf_matches ())
-	  return;
+        if (m_inf_matches ())
+          return;
       start:
-	++m_inf_iter;
+        ++m_inf_iter;
       }
   }
 
   bool m_inf_matches ()
   {
     return (m_proc_target == nullptr
-	    || m_proc_target == m_inf_iter->process_target ());
+            || m_proc_target == m_inf_iter->process_target ());
   }
 
   process_stratum_target *m_proc_target;
@@ -104,10 +104,7 @@ using all_inferiors_range = iterator_range<all_inferiors_iterator>;
 
 struct exited_inferior_filter
 {
-  bool operator() (inferior *inf)
-  {
-    return inf->pid != 0;
-  }
+  bool operator() (inferior *inf) { return inf->pid != 0; }
 };
 
 /* Iterate over all non-exited inferiors.  */

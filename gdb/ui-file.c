@@ -30,11 +30,9 @@
 
 null_file null_stream;
 
-ui_file::ui_file ()
-{}
+ui_file::ui_file () {}
 
-ui_file::~ui_file ()
-{}
+ui_file::~ui_file () {}
 
 void
 ui_file::printf (const char *format, ...)
@@ -106,50 +104,50 @@ ui_file::printchar (int c, int quoter, bool async_safe)
   char buf[4];
   int out = 0;
 
-  c &= 0xFF;			/* Avoid sign bit follies */
+  c &= 0xFF; /* Avoid sign bit follies */
 
-  if (c < 0x20			 /* Low control chars */
+  if (c < 0x20                   /* Low control chars */
       || (c >= 0x7F && c < 0xA0) /* DEL, High controls */
       || (sevenbit_strings && c >= 0x80))
-    {				/* high order bit set */
+    { /* high order bit set */
       buf[out++] = '\\';
 
       switch (c)
-	{
-	case '\n':
-	  buf[out++] = 'n';
-	  break;
-	case '\b':
-	  buf[out++] = 'b';
-	  break;
-	case '\t':
-	  buf[out++] = 't';
-	  break;
-	case '\f':
-	  buf[out++] = 'f';
-	  break;
-	case '\r':
-	  buf[out++] = 'r';
-	  break;
-	case '\033':
-	  buf[out++] = 'e';
-	  break;
-	case '\007':
-	  buf[out++] = 'a';
-	  break;
-	default:
-	  {
-	    buf[out++] = '0' + ((c >> 6) & 0x7);
-	    buf[out++] = '0' + ((c >> 3) & 0x7);
-	    buf[out++] = '0' + ((c >> 0) & 0x7);
-	    break;
-	  }
-	}
+        {
+        case '\n':
+          buf[out++] = 'n';
+          break;
+        case '\b':
+          buf[out++] = 'b';
+          break;
+        case '\t':
+          buf[out++] = 't';
+          break;
+        case '\f':
+          buf[out++] = 'f';
+          break;
+        case '\r':
+          buf[out++] = 'r';
+          break;
+        case '\033':
+          buf[out++] = 'e';
+          break;
+        case '\007':
+          buf[out++] = 'a';
+          break;
+        default:
+          {
+            buf[out++] = '0' + ((c >> 6) & 0x7);
+            buf[out++] = '0' + ((c >> 3) & 0x7);
+            buf[out++] = '0' + ((c >> 0) & 0x7);
+            break;
+          }
+        }
     }
   else
     {
       if (quoter != 0 && (c == '\\' || c == quoter))
-	buf[out++] = '\\';
+        buf[out++] = '\\';
       buf[out++] = c;
     }
 
@@ -158,8 +156,6 @@ ui_file::printchar (int c, int quoter, bool async_safe)
   else
     this->write (buf, out);
 }
-
-
 
 void
 null_file::write (const char *buf, long sizeof_buf)
@@ -178,8 +174,6 @@ null_file::write_async_safe (const char *buf, long sizeof_buf)
 {
   /* Discard the request.  */
 }
-
-
 
 /* true if the gdb terminal supports styling, and styling is enabled.  */
 
@@ -205,10 +199,7 @@ term_cli_styling ()
   return true;
 }
 
-
-
-string_file::~string_file ()
-{}
+string_file::~string_file () {}
 
 void
 string_file::write (const char *buf, long length_buf)
@@ -232,19 +223,13 @@ string_file::can_emit_style_escape ()
   return m_term_out && term_cli_styling ();
 }
 
-
-
 stdio_file::stdio_file (FILE *file, bool close_p)
 {
   set_stream (file);
   m_close_p = close_p;
 }
 
-stdio_file::stdio_file ()
-  : m_file (NULL),
-    m_fd (-1),
-    m_close_p (false)
-{}
+stdio_file::stdio_file () : m_file (NULL), m_fd (-1), m_close_p (false) {}
 
 stdio_file::~stdio_file ()
 {
@@ -352,11 +337,8 @@ stdio_file::isatty ()
 bool
 stdio_file::can_emit_style_escape ()
 {
-  return (this->isatty ()
-	  && term_cli_styling ());
+  return (this->isatty () && term_cli_styling ());
 }
-
-
 
 /* This is the implementation of ui_file method 'write' for stderr.
    gdb_stdout is flushed before writing to gdb_stderr.  */
@@ -378,20 +360,15 @@ stderr_file::puts (const char *linebuffer)
   stdio_file::puts (linebuffer);
 }
 
-stderr_file::stderr_file (FILE *stream)
-  : stdio_file (stream)
-{}
-
-
+stderr_file::stderr_file (FILE *stream) : stdio_file (stream) {}
 
 tee_file::tee_file (ui_file *one, ui_file_up &&two)
   : m_one (one),
     m_two (std::move (two))
-{}
-
-tee_file::~tee_file ()
 {
 }
+
+tee_file::~tee_file () {}
 
 void
 tee_file::flush ()
@@ -440,8 +417,7 @@ tee_file::term_out ()
 bool
 tee_file::can_emit_style_escape ()
 {
-  return (m_one->term_out ()
-	  && term_cli_styling ());
+  return (m_one->term_out () && term_cli_styling ());
 }
 
 /* See ui-file.h.  */
@@ -462,11 +438,11 @@ no_terminal_escape_file::puts (const char *buf)
     {
       const char *esc = strchr (buf, '\033');
       if (esc == nullptr)
-	break;
+        break;
 
       int n_read = 0;
       if (!skip_ansi_escape (esc, &n_read))
-	++esc;
+        ++esc;
 
       this->stdio_file::write (buf, esc - buf);
       buf = esc + n_read;
@@ -483,17 +459,18 @@ timestamped_file::write (const char *buf, long len)
     {
       /* Print timestamp if previous print ended with a \n.  */
       if (m_needs_timestamp)
-	{
-	  using namespace std::chrono;
+        {
+          using namespace std::chrono;
 
-	  steady_clock::time_point now = steady_clock::now ();
-	  seconds s = duration_cast<seconds> (now.time_since_epoch ());
-	  microseconds us = duration_cast<microseconds> (now.time_since_epoch () - s);
-	  std::string timestamp = string_printf ("%ld.%06ld ",
-						 (long) s.count (),
-						 (long) us.count ());
-	  m_stream->puts (timestamp.c_str ());
-	}
+          steady_clock::time_point now = steady_clock::now ();
+          seconds s = duration_cast<seconds> (now.time_since_epoch ());
+          microseconds us
+            = duration_cast<microseconds> (now.time_since_epoch () - s);
+          std::string timestamp
+            = string_printf ("%ld.%06ld ", (long) s.count (),
+                             (long) us.count ());
+          m_stream->puts (timestamp.c_str ());
+        }
 
       /* Print the message.  */
       m_stream->write (buf, len);

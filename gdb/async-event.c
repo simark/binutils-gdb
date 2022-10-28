@@ -85,8 +85,7 @@ static struct
 
   /* Pointer to last in handler list.  */
   async_signal_handler *last_handler;
-}
-sighandler_list;
+} sighandler_list;
 
 /* All the async_event_handlers gdb is interested in are kept onto
    this list.  */
@@ -97,9 +96,7 @@ static struct
 
   /* Pointer to last in handler list.  */
   async_event_handler *last_handler;
-}
-async_event_handler_list;
-
+} async_event_handler_list;
 
 /* This event is signalled whenever an asynchronous handler needs to
    defer an action to the event loop.  */
@@ -120,10 +117,8 @@ initialize_async_signal_handlers (void)
   async_signal_handlers_serial_event = make_serial_event ();
 
   add_file_handler (serial_event_fd (async_signal_handlers_serial_event),
-		    async_signals_handler, NULL, "async-signals");
+                    async_signals_handler, NULL, "async-signals");
 }
-
-
 
 /* Create an asynchronous handler, allocating memory for it.
    Return a pointer to the newly created handler.
@@ -132,9 +127,8 @@ initialize_async_signal_handlers (void)
    PROC is the function to call with CLIENT_DATA argument 
    whenever the handler is invoked.  */
 async_signal_handler *
-create_async_signal_handler (sig_handler_func * proc,
-			     gdb_client_data client_data,
-			     const char *name)
+create_async_signal_handler (sig_handler_func *proc,
+                             gdb_client_data client_data, const char *name)
 {
   async_signal_handler *async_handler_ptr;
 
@@ -164,11 +158,11 @@ mark_async_signal_handler (async_signal_handler *async_handler_ptr)
       /* This is called by signal handlers, so we print it "by hand" using
 	 the async-signal-safe methods.  */
       const char head[] = ("[event-loop] mark_async_signal_handler: marking"
-			   "async signal handler `");
+                           "async signal handler `");
       gdb_stdlog->write_async_safe (head, strlen (head));
 
       gdb_stdlog->write_async_safe (async_handler_ptr->name,
-				    strlen (async_handler_ptr->name));
+                                    strlen (async_handler_ptr->name));
 
       const char tail[] = "`\n";
       gdb_stdlog->write_async_safe (tail, strlen (tail));
@@ -184,7 +178,7 @@ void
 clear_async_signal_handler (async_signal_handler *async_handler_ptr)
 {
   event_loop_debug_printf ("clearing async signal handler `%s`",
-			   async_handler_ptr->name);
+                           async_handler_ptr->name);
   async_handler_ptr->ready = 0;
 }
 
@@ -215,21 +209,21 @@ invoke_async_signal_handlers (void)
   while (1)
     {
       for (async_handler_ptr = sighandler_list.first_handler;
-	   async_handler_ptr != NULL;
-	   async_handler_ptr = async_handler_ptr->next_handler)
-	{
-	  if (async_handler_ptr->ready)
-	    break;
-	}
+           async_handler_ptr != NULL;
+           async_handler_ptr = async_handler_ptr->next_handler)
+        {
+          if (async_handler_ptr->ready)
+            break;
+        }
       if (async_handler_ptr == NULL)
-	break;
+        break;
       any_ready = 1;
       async_handler_ptr->ready = 0;
       /* Async signal handlers have no connection to whichever was the
 	 current UI, and thus always run on the main one.  */
       current_ui = main_ui;
       event_loop_debug_printf ("invoking async signal handler `%s`",
-			       async_handler_ptr->name);
+                               async_handler_ptr->name);
       (*async_handler_ptr->proc) (async_handler_ptr->client_data);
     }
 
@@ -239,7 +233,7 @@ invoke_async_signal_handlers (void)
 /* Delete an asynchronous handler (ASYNC_HANDLER_PTR).
    Free the space allocated for it.  */
 void
-delete_async_signal_handler (async_signal_handler ** async_handler_ptr)
+delete_async_signal_handler (async_signal_handler **async_handler_ptr)
 {
   async_signal_handler *prev_ptr;
 
@@ -247,17 +241,17 @@ delete_async_signal_handler (async_signal_handler ** async_handler_ptr)
     {
       sighandler_list.first_handler = (*async_handler_ptr)->next_handler;
       if (sighandler_list.first_handler == NULL)
-	sighandler_list.last_handler = NULL;
+        sighandler_list.last_handler = NULL;
     }
   else
     {
       prev_ptr = sighandler_list.first_handler;
       while (prev_ptr && prev_ptr->next_handler != (*async_handler_ptr))
-	prev_ptr = prev_ptr->next_handler;
+        prev_ptr = prev_ptr->next_handler;
       gdb_assert (prev_ptr);
       prev_ptr->next_handler = (*async_handler_ptr)->next_handler;
       if (sighandler_list.last_handler == (*async_handler_ptr))
-	sighandler_list.last_handler = prev_ptr;
+        sighandler_list.last_handler = prev_ptr;
     }
   xfree ((*async_handler_ptr));
   (*async_handler_ptr) = NULL;
@@ -267,8 +261,7 @@ delete_async_signal_handler (async_signal_handler ** async_handler_ptr)
 
 async_event_handler *
 create_async_event_handler (async_event_handler_func *proc,
-			    gdb_client_data client_data,
-			    const char *name)
+                            gdb_client_data client_data, const char *name)
 {
   async_event_handler *h;
 
@@ -294,9 +287,8 @@ void
 mark_async_event_handler (async_event_handler *async_handler_ptr)
 {
   event_loop_debug_printf ("marking async event handler `%s` "
-			   "(previous state was %d)",
-			   async_handler_ptr->name,
-			   async_handler_ptr->ready);
+                           "(previous state was %d)",
+                           async_handler_ptr->name, async_handler_ptr->ready);
   async_handler_ptr->ready = 1;
 }
 
@@ -306,7 +298,7 @@ void
 clear_async_event_handler (async_event_handler *async_handler_ptr)
 {
   event_loop_debug_printf ("clearing async event handler `%s`",
-			   async_handler_ptr->name);
+                           async_handler_ptr->name);
   async_handler_ptr->ready = 0;
 }
 
@@ -331,12 +323,12 @@ check_async_event_handlers ()
        async_handler_ptr = async_handler_ptr->next_handler)
     {
       if (async_handler_ptr->ready)
-	{
-	  event_loop_debug_printf ("invoking async event handler `%s`",
-				   async_handler_ptr->name);
-	  (*async_handler_ptr->proc) (async_handler_ptr->client_data);
-	  return 1;
-	}
+        {
+          event_loop_debug_printf ("invoking async event handler `%s`",
+                                   async_handler_ptr->name);
+          (*async_handler_ptr->proc) (async_handler_ptr->client_data);
+          return 1;
+        }
     }
 
   return 0;
@@ -352,19 +344,19 @@ delete_async_event_handler (async_event_handler **async_handler_ptr)
   if (async_event_handler_list.first_handler == *async_handler_ptr)
     {
       async_event_handler_list.first_handler
-	= (*async_handler_ptr)->next_handler;
+        = (*async_handler_ptr)->next_handler;
       if (async_event_handler_list.first_handler == NULL)
-	async_event_handler_list.last_handler = NULL;
+        async_event_handler_list.last_handler = NULL;
     }
   else
     {
       prev_ptr = async_event_handler_list.first_handler;
       while (prev_ptr && prev_ptr->next_handler != *async_handler_ptr)
-	prev_ptr = prev_ptr->next_handler;
+        prev_ptr = prev_ptr->next_handler;
       gdb_assert (prev_ptr);
       prev_ptr->next_handler = (*async_handler_ptr)->next_handler;
       if (async_event_handler_list.last_handler == (*async_handler_ptr))
-	async_event_handler_list.last_handler = prev_ptr;
+        async_event_handler_list.last_handler = prev_ptr;
     }
   xfree (*async_handler_ptr);
   *async_handler_ptr = NULL;

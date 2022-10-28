@@ -27,10 +27,10 @@
 /* Core file support.  */
 
 /* Sizeof `struct reg' in <machine/reg.h>.  */
-#define ARMBSD_SIZEOF_GREGS	(17 * 4)
+#define ARMBSD_SIZEOF_GREGS (17 * 4)
 
 /* Sizeof `struct fpreg' in <machine/reg.h.  */
-#define ARMBSD_SIZEOF_FPREGS	((1 + (8 * 3)) * 4)
+#define ARMBSD_SIZEOF_FPREGS ((1 + (8 * 3)) * 4)
 
 static int
 armbsd_fpreg_offset (int regnum)
@@ -46,9 +46,8 @@ armbsd_fpreg_offset (int regnum)
    REGCACHE.  If REGNUM is -1, do this for all registers in REGSET.  */
 
 static void
-armbsd_supply_fpregset (const struct regset *regset,
-			struct regcache *regcache,
-			int regnum, const void *fpregs, size_t len)
+armbsd_supply_fpregset (const struct regset *regset, struct regcache *regcache,
+                        int regnum, const void *fpregs, size_t len)
 {
   const gdb_byte *regs = (const gdb_byte *) fpregs;
   int i;
@@ -58,7 +57,7 @@ armbsd_supply_fpregset (const struct regset *regset,
   for (i = ARM_F0_REGNUM; i <= ARM_FPS_REGNUM; i++)
     {
       if (regnum == i || regnum == -1)
-	regcache->raw_supply (i, regs + armbsd_fpreg_offset (i));
+        regcache->raw_supply (i, regs + armbsd_fpreg_offset (i));
     }
 }
 
@@ -67,9 +66,8 @@ armbsd_supply_fpregset (const struct regset *regset,
    REGCACHE.  If REGNUM is -1, do this for all registers in REGSET.  */
 
 static void
-armbsd_supply_gregset (const struct regset *regset,
-		       struct regcache *regcache,
-		       int regnum, const void *gregs, size_t len)
+armbsd_supply_gregset (const struct regset *regset, struct regcache *regcache,
+                       int regnum, const void *gregs, size_t len)
 {
   const gdb_byte *regs = (const gdb_byte *) gregs;
   int i;
@@ -79,7 +77,7 @@ armbsd_supply_gregset (const struct regset *regset,
   for (i = ARM_A1_REGNUM; i <= ARM_PC_REGNUM; i++)
     {
       if (regnum == i || regnum == -1)
-	regcache->raw_supply (i, regs + i * 4);
+        regcache->raw_supply (i, regs + i * 4);
     }
 
   if (regnum == ARM_PS_REGNUM || regnum == -1)
@@ -95,27 +93,18 @@ armbsd_supply_gregset (const struct regset *regset,
 
 /* ARM register sets.  */
 
-static const struct regset armbsd_gregset =
-{
-  NULL,
-  armbsd_supply_gregset,
-  NULL,
-  REGSET_VARIABLE_SIZE
-};
+static const struct regset armbsd_gregset
+  = { NULL, armbsd_supply_gregset, NULL, REGSET_VARIABLE_SIZE };
 
-static const struct regset armbsd_fpregset =
-{
-  NULL,
-  armbsd_supply_fpregset
-};
+static const struct regset armbsd_fpregset = { NULL, armbsd_supply_fpregset };
 
 /* Iterate over supported core file register note sections. */
 
 void
 armbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
-				     iterate_over_regset_sections_cb *cb,
-				     void *cb_data,
-				     const struct regcache *regcache)
+                                     iterate_over_regset_sections_cb *cb,
+                                     void *cb_data,
+                                     const struct regcache *regcache)
 {
   cb (".reg", ARMBSD_SIZEOF_GREGS, ARMBSD_SIZEOF_GREGS, &armbsd_gregset, NULL,
       cb_data);

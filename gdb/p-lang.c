@@ -87,58 +87,56 @@ pascal_main_name (void)
 /* See p-lang.h.  */
 
 int
-pascal_is_string_type (struct type *type,int *length_pos, int *length_size,
-		       int *string_pos, struct type **char_type,
-		       const char **arrayname)
+pascal_is_string_type (struct type *type, int *length_pos, int *length_size,
+                       int *string_pos, struct type **char_type,
+                       const char **arrayname)
 {
   if (type != NULL && type->code () == TYPE_CODE_STRUCT)
     {
       /* Old Borland type pascal strings from Free Pascal Compiler.  */
       /* Two fields: length and st.  */
-      if (type->num_fields () == 2
-	  && type->field (0).name ()
-	  && strcmp (type->field (0).name (), "length") == 0
-	  && type->field (1).name ()
-	  && strcmp (type->field (1).name (), "st") == 0)
-	{
-	  if (length_pos)
-	    *length_pos = type->field (0).loc_bitpos () / TARGET_CHAR_BIT;
-	  if (length_size)
-	    *length_size = type->field (0).type ()->length ();
-	  if (string_pos)
-	    *string_pos = type->field (1).loc_bitpos () / TARGET_CHAR_BIT;
-	  if (char_type)
-	    *char_type = type->field (1).type ()->target_type ();
-	  if (arrayname)
-	    *arrayname = type->field (1).name ();
-	 return 2;
-	};
+      if (type->num_fields () == 2 && type->field (0).name ()
+          && strcmp (type->field (0).name (), "length") == 0
+          && type->field (1).name ()
+          && strcmp (type->field (1).name (), "st") == 0)
+        {
+          if (length_pos)
+            *length_pos = type->field (0).loc_bitpos () / TARGET_CHAR_BIT;
+          if (length_size)
+            *length_size = type->field (0).type ()->length ();
+          if (string_pos)
+            *string_pos = type->field (1).loc_bitpos () / TARGET_CHAR_BIT;
+          if (char_type)
+            *char_type = type->field (1).type ()->target_type ();
+          if (arrayname)
+            *arrayname = type->field (1).name ();
+          return 2;
+        };
       /* GNU pascal strings.  */
       /* Three fields: Capacity, length and schema$ or _p_schema.  */
-      if (type->num_fields () == 3
-	  && type->field (0).name ()
-	  && strcmp (type->field (0).name (), "Capacity") == 0
-	  && type->field (1).name ()
-	  && strcmp (type->field (1).name (), "length") == 0)
-	{
-	  if (length_pos)
-	    *length_pos = type->field (1).loc_bitpos () / TARGET_CHAR_BIT;
-	  if (length_size)
-	    *length_size = type->field (1).type ()->length ();
-	  if (string_pos)
-	    *string_pos = type->field (2).loc_bitpos () / TARGET_CHAR_BIT;
-	  /* FIXME: how can I detect wide chars in GPC ??  */
-	  if (char_type)
-	    {
-	      *char_type = type->field (2).type ()->target_type ();
+      if (type->num_fields () == 3 && type->field (0).name ()
+          && strcmp (type->field (0).name (), "Capacity") == 0
+          && type->field (1).name ()
+          && strcmp (type->field (1).name (), "length") == 0)
+        {
+          if (length_pos)
+            *length_pos = type->field (1).loc_bitpos () / TARGET_CHAR_BIT;
+          if (length_size)
+            *length_size = type->field (1).type ()->length ();
+          if (string_pos)
+            *string_pos = type->field (2).loc_bitpos () / TARGET_CHAR_BIT;
+          /* FIXME: how can I detect wide chars in GPC ??  */
+          if (char_type)
+            {
+              *char_type = type->field (2).type ()->target_type ();
 
-	      if ((*char_type)->code () == TYPE_CODE_ARRAY)
-		*char_type = (*char_type)->target_type ();
-	    }
-	  if (arrayname)
-	    *arrayname = type->field (2).name ();
-	 return 3;
-	};
+              if ((*char_type)->code () == TYPE_CODE_ARRAY)
+                *char_type = (*char_type)->target_type ();
+            }
+          if (arrayname)
+            *arrayname = type->field (2).name ();
+          return 3;
+        };
     }
   return 0;
 }
@@ -147,24 +145,24 @@ pascal_is_string_type (struct type *type,int *length_pos, int *length_size,
 
 void
 pascal_language::print_one_char (int c, struct ui_file *stream,
-				 int *in_quotes) const
+                                 int *in_quotes) const
 {
   if (c == '\'' || ((unsigned int) c <= 0xff && (PRINT_LITERAL_FORM (c))))
     {
       if (!(*in_quotes))
-	gdb_puts ("'", stream);
+        gdb_puts ("'", stream);
       *in_quotes = 1;
       if (c == '\'')
-	{
-	  gdb_puts ("''", stream);
-	}
+        {
+          gdb_puts ("''", stream);
+        }
       else
-	gdb_printf (stream, "%c", c);
+        gdb_printf (stream, "%c", c);
     }
   else
     {
       if (*in_quotes)
-	gdb_puts ("'", stream);
+        gdb_puts ("'", stream);
       *in_quotes = 0;
       gdb_printf (stream, "#%d", (unsigned int) c);
     }
@@ -174,7 +172,7 @@ pascal_language::print_one_char (int c, struct ui_file *stream,
 
 void
 pascal_language::printchar (int c, struct type *type,
-			    struct ui_file *stream) const
+                            struct ui_file *stream) const
 {
   int in_quotes = 0;
 
@@ -183,20 +181,16 @@ pascal_language::printchar (int c, struct type *type,
     gdb_puts ("'", stream);
 }
 
-
-
 /* See language.h.  */
 
-void pascal_language::language_arch_info
-	(struct gdbarch *gdbarch, struct language_arch_info *lai) const
+void
+pascal_language::language_arch_info (struct gdbarch *gdbarch,
+                                     struct language_arch_info *lai) const
 {
   const struct builtin_type *builtin = builtin_type (gdbarch);
 
   /* Helper function to allow shorter lines below.  */
-  auto add  = [&] (struct type * t)
-  {
-    lai->add_primitive_type (t);
-  };
+  auto add = [&] (struct type *t) { lai->add_primitive_type (t); };
 
   add (builtin->builtin_int);
   add (builtin->builtin_long);
@@ -224,9 +218,9 @@ void pascal_language::language_arch_info
 
 void
 pascal_language::printstr (struct ui_file *stream, struct type *elttype,
-			   const gdb_byte *string, unsigned int length,
-			   const char *encoding, int force_ellipses,
-			   const struct value_print_options *options) const
+                           const gdb_byte *string, unsigned int length,
+                           const char *encoding, int force_ellipses,
+                           const struct value_print_options *options) const
 {
   enum bfd_endian byte_order = type_byte_order (elttype);
   unsigned int i;
@@ -244,7 +238,8 @@ pascal_language::printstr (struct ui_file *stream, struct type *elttype,
      style.  */
   if ((!force_ellipses) && length > 0
       && extract_unsigned_integer (string + (length - 1) * width, width,
-				   byte_order) == 0)
+                                   byte_order)
+           == 0)
     length--;
 
   if (length == 0)
@@ -265,49 +260,49 @@ pascal_language::printstr (struct ui_file *stream, struct type *elttype,
       QUIT;
 
       if (need_comma)
-	{
-	  gdb_puts (", ", stream);
-	  need_comma = 0;
-	}
+        {
+          gdb_puts (", ", stream);
+          need_comma = 0;
+        }
 
-      current_char = extract_unsigned_integer (string + i * width, width,
-					       byte_order);
+      current_char
+        = extract_unsigned_integer (string + i * width, width, byte_order);
 
       rep1 = i + 1;
       reps = 1;
-      while (rep1 < length
-	     && extract_unsigned_integer (string + rep1 * width, width,
-					  byte_order) == current_char)
-	{
-	  ++rep1;
-	  ++reps;
-	}
+      while (
+        rep1 < length
+        && extract_unsigned_integer (string + rep1 * width, width, byte_order)
+             == current_char)
+        {
+          ++rep1;
+          ++reps;
+        }
 
       if (reps > options->repeat_count_threshold)
-	{
-	  if (in_quotes)
-	    {
-	      gdb_puts ("', ", stream);
-	      in_quotes = 0;
-	    }
-	  printchar (current_char, elttype, stream);
-	  gdb_printf (stream, " %p[<repeats %u times>%p]",
-		      metadata_style.style ().ptr (),
-		      reps, nullptr);
-	  i = rep1 - 1;
-	  things_printed += options->repeat_count_threshold;
-	  need_comma = 1;
-	}
+        {
+          if (in_quotes)
+            {
+              gdb_puts ("', ", stream);
+              in_quotes = 0;
+            }
+          printchar (current_char, elttype, stream);
+          gdb_printf (stream, " %p[<repeats %u times>%p]",
+                      metadata_style.style ().ptr (), reps, nullptr);
+          i = rep1 - 1;
+          things_printed += options->repeat_count_threshold;
+          need_comma = 1;
+        }
       else
-	{
-	  if ((!in_quotes) && (PRINT_LITERAL_FORM (current_char)))
-	    {
-	      gdb_puts ("'", stream);
-	      in_quotes = 1;
-	    }
-	  print_one_char (current_char, stream, &in_quotes);
-	  ++things_printed;
-	}
+        {
+          if ((!in_quotes) && (PRINT_LITERAL_FORM (current_char)))
+            {
+              gdb_puts ("'", stream);
+              in_quotes = 1;
+            }
+          print_one_char (current_char, stream, &in_quotes);
+          ++things_printed;
+        }
     }
 
   /* Terminate the quotes if necessary.  */

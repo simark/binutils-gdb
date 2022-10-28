@@ -34,14 +34,11 @@
    but the pointed to characters are not copied.  */
 
 void
-add_using_directive (struct using_direct **using_directives,
-		     const char *dest,
-		     const char *src,
-		     const char *alias,
-		     const char *declaration,
-		     const std::vector<const char *> &excludes,
-		     int copy_names,
-		     struct obstack *obstack)
+add_using_directive (struct using_direct **using_directives, const char *dest,
+                     const char *src, const char *alias,
+                     const char *declaration,
+                     const std::vector<const char *> &excludes, int copy_names,
+                     struct obstack *obstack)
 {
   struct using_direct *current;
   struct using_direct *newobj;
@@ -54,34 +51,34 @@ add_using_directive (struct using_direct **using_directives,
       int ix;
 
       if (strcmp (current->import_src, src) != 0)
-	continue;
+        continue;
       if (strcmp (current->import_dest, dest) != 0)
-	continue;
+        continue;
       if ((alias == NULL && current->alias != NULL)
-	  || (alias != NULL && current->alias == NULL)
-	  || (alias != NULL && current->alias != NULL
-	      && strcmp (alias, current->alias) != 0))
-	continue;
+          || (alias != NULL && current->alias == NULL)
+          || (alias != NULL && current->alias != NULL
+              && strcmp (alias, current->alias) != 0))
+        continue;
       if ((declaration == NULL && current->declaration != NULL)
-	  || (declaration != NULL && current->declaration == NULL)
-	  || (declaration != NULL && current->declaration != NULL
-	      && strcmp (declaration, current->declaration) != 0))
-	continue;
+          || (declaration != NULL && current->declaration == NULL)
+          || (declaration != NULL && current->declaration != NULL
+              && strcmp (declaration, current->declaration) != 0))
+        continue;
 
       /* Compare the contents of EXCLUDES.  */
       for (ix = 0; ix < excludes.size (); ++ix)
-	if (current->excludes[ix] == NULL
-	    || strcmp (excludes[ix], current->excludes[ix]) != 0)
-	  break;
+        if (current->excludes[ix] == NULL
+            || strcmp (excludes[ix], current->excludes[ix]) != 0)
+          break;
       if (ix < excludes.size () || current->excludes[ix] != NULL)
-	continue;
+        continue;
 
       /* Parameters exactly match CURRENT.  */
       return;
     }
 
-  alloc_len = (sizeof(*newobj)
-	       + (excludes.size () * sizeof(*newobj->excludes)));
+  alloc_len
+    = (sizeof (*newobj) + (excludes.size () * sizeof (*newobj->excludes)));
   newobj = (struct using_direct *) obstack_alloc (obstack, alloc_len);
   memset (newobj, 0, sizeof (*newobj));
 
@@ -108,7 +105,7 @@ add_using_directive (struct using_direct **using_directives,
 
   if (!excludes.empty ())
     memcpy (newobj->excludes, excludes.data (),
-	    excludes.size () * sizeof (*newobj->excludes));
+            excludes.size () * sizeof (*newobj->excludes));
   newobj->excludes[excludes.size ()] = NULL;
 
   newobj->next = *using_directives;

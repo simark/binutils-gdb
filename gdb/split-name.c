@@ -33,42 +33,40 @@ split_name (const char *name, split_style style)
     {
     case split_style::CXX:
       for (unsigned int current_len = cp_find_first_component (name);
-	   name[current_len] != '\0';
-	   current_len += cp_find_first_component (name + current_len))
-	{
-	  gdb_assert (name[current_len] == ':');
-	  result.emplace_back (&name[previous_len],
-			       current_len - previous_len);
-	  /* Skip the '::'.  */
-	  current_len += 2;
-	  previous_len = current_len;
-	}
+           name[current_len] != '\0';
+           current_len += cp_find_first_component (name + current_len))
+        {
+          gdb_assert (name[current_len] == ':');
+          result.emplace_back (&name[previous_len],
+                               current_len - previous_len);
+          /* Skip the '::'.  */
+          current_len += 2;
+          previous_len = current_len;
+        }
       break;
 
     case split_style::UNDERSCORE:
       /* Handle the Ada encoded (aka mangled) form here.  */
-      for (const char *iter = strstr (name, "__");
-	   iter != nullptr;
-	   iter = strstr (iter, "__"))
-	{
-	  result.emplace_back (&name[previous_len],
-			       iter - &name[previous_len]);
-	  iter += 2;
-	  previous_len = iter - name;
-	}
+      for (const char *iter = strstr (name, "__"); iter != nullptr;
+           iter = strstr (iter, "__"))
+        {
+          result.emplace_back (&name[previous_len],
+                               iter - &name[previous_len]);
+          iter += 2;
+          previous_len = iter - name;
+        }
       break;
 
     case split_style::DOT:
       /* D and Go-style names.  */
-      for (const char *iter = strchr (name, '.');
-	   iter != nullptr;
-	   iter = strchr (iter, '.'))
-	{
-	  result.emplace_back (&name[previous_len],
-			       iter - &name[previous_len]);
-	  ++iter;
-	  previous_len = iter - name;
-	}
+      for (const char *iter = strchr (name, '.'); iter != nullptr;
+           iter = strchr (iter, '.'))
+        {
+          result.emplace_back (&name[previous_len],
+                               iter - &name[previous_len]);
+          ++iter;
+          previous_len = iter - name;
+        }
       break;
 
     default:
@@ -78,4 +76,3 @@ split_name (const char *name, split_style style)
   result.emplace_back (&name[previous_len]);
   return result;
 }
-

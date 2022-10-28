@@ -72,91 +72,54 @@
 
 /* Register names.  */
 
-static const char * const i386_register_names[] =
-{
-  "eax",   "ecx",    "edx",   "ebx",
-  "esp",   "ebp",    "esi",   "edi",
-  "eip",   "eflags", "cs",    "ss",
-  "ds",    "es",     "fs",    "gs",
-  "st0",   "st1",    "st2",   "st3",
-  "st4",   "st5",    "st6",   "st7",
-  "fctrl", "fstat",  "ftag",  "fiseg",
-  "fioff", "foseg",  "fooff", "fop",
-  "xmm0",  "xmm1",   "xmm2",  "xmm3",
-  "xmm4",  "xmm5",   "xmm6",  "xmm7",
-  "mxcsr"
+static const char *const i386_register_names[]
+  = { "eax",   "ecx",   "edx",    "ebx",   "esp",   "ebp",  "esi",
+      "edi",   "eip",   "eflags", "cs",    "ss",    "ds",   "es",
+      "fs",    "gs",    "st0",    "st1",   "st2",   "st3",  "st4",
+      "st5",   "st6",   "st7",    "fctrl", "fstat", "ftag", "fiseg",
+      "fioff", "foseg", "fooff",  "fop",   "xmm0",  "xmm1", "xmm2",
+      "xmm3",  "xmm4",  "xmm5",   "xmm6",  "xmm7",  "mxcsr" };
+
+static const char *const i386_zmm_names[]
+  = { "zmm0", "zmm1", "zmm2", "zmm3", "zmm4", "zmm5", "zmm6", "zmm7" };
+
+static const char *const i386_zmmh_names[]
+  = { "zmm0h", "zmm1h", "zmm2h", "zmm3h", "zmm4h", "zmm5h", "zmm6h", "zmm7h" };
+
+static const char *const i386_k_names[]
+  = { "k0", "k1", "k2", "k3", "k4", "k5", "k6", "k7" };
+
+static const char *const i386_ymm_names[] = {
+  "ymm0", "ymm1", "ymm2", "ymm3", "ymm4", "ymm5", "ymm6", "ymm7",
 };
 
-static const char * const i386_zmm_names[] =
-{
-  "zmm0",  "zmm1",   "zmm2",  "zmm3",
-  "zmm4",  "zmm5",   "zmm6",  "zmm7"
+static const char *const i386_ymmh_names[] = {
+  "ymm0h", "ymm1h", "ymm2h", "ymm3h", "ymm4h", "ymm5h", "ymm6h", "ymm7h",
 };
 
-static const char * const i386_zmmh_names[] =
-{
-  "zmm0h",  "zmm1h",   "zmm2h",  "zmm3h",
-  "zmm4h",  "zmm5h",   "zmm6h",  "zmm7h"
-};
+static const char *const i386_mpx_names[]
+  = { "bnd0raw", "bnd1raw", "bnd2raw", "bnd3raw", "bndcfgu", "bndstatus" };
 
-static const char * const i386_k_names[] =
-{
-  "k0",  "k1",   "k2",  "k3",
-  "k4",  "k5",   "k6",  "k7"
-};
-
-static const char * const i386_ymm_names[] =
-{
-  "ymm0",  "ymm1",   "ymm2",  "ymm3",
-  "ymm4",  "ymm5",   "ymm6",  "ymm7",
-};
-
-static const char * const i386_ymmh_names[] =
-{
-  "ymm0h",  "ymm1h",   "ymm2h",  "ymm3h",
-  "ymm4h",  "ymm5h",   "ymm6h",  "ymm7h",
-};
-
-static const char * const i386_mpx_names[] =
-{
-  "bnd0raw", "bnd1raw", "bnd2raw", "bnd3raw", "bndcfgu", "bndstatus"
-};
-
-static const char * const i386_pkeys_names[] =
-{
-  "pkru"
-};
+static const char *const i386_pkeys_names[] = { "pkru" };
 
 /* Register names for MPX pseudo-registers.  */
 
-static const char * const i386_bnd_names[] =
-{
-  "bnd0", "bnd1", "bnd2", "bnd3"
-};
+static const char *const i386_bnd_names[] = { "bnd0", "bnd1", "bnd2", "bnd3" };
 
 /* Register names for MMX pseudo-registers.  */
 
-static const char * const i386_mmx_names[] =
-{
-  "mm0", "mm1", "mm2", "mm3",
-  "mm4", "mm5", "mm6", "mm7"
-};
+static const char *const i386_mmx_names[]
+  = { "mm0", "mm1", "mm2", "mm3", "mm4", "mm5", "mm6", "mm7" };
 
 /* Register names for byte pseudo-registers.  */
 
-static const char * const i386_byte_names[] =
-{
-  "al", "cl", "dl", "bl", 
-  "ah", "ch", "dh", "bh"
-};
+static const char *const i386_byte_names[]
+  = { "al", "cl", "dl", "bl", "ah", "ch", "dh", "bh" };
 
 /* Register names for word pseudo-registers.  */
 
-static const char * const i386_word_names[] =
-{
-  "ax", "cx", "dx", "bx",
-  "", "bp", "si", "di"
-};
+static const char *const i386_word_names[]
+  = { "ax", "cx", "dx", "bx", "", "bp", "si", "di" };
 
 /* Constant used for reading/writing pseudo registers.  In 64-bit mode, we have
    16 lower ZMM regs that extend corresponding xmm/ymm registers.  In addition,
@@ -378,7 +341,7 @@ i386_fp_regnum_p (struct gdbarch *gdbarch, int regnum)
     return 0;
 
   return (I387_ST0_REGNUM (tdep) <= regnum
-	  && regnum < I387_FCTRL_REGNUM (tdep));
+          && regnum < I387_FCTRL_REGNUM (tdep));
 }
 
 int
@@ -389,8 +352,8 @@ i386_fpc_regnum_p (struct gdbarch *gdbarch, int regnum)
   if (I387_ST0_REGNUM (tdep) < 0)
     return 0;
 
-  return (I387_FCTRL_REGNUM (tdep) <= regnum 
-	  && regnum < I387_XMM0_REGNUM (tdep));
+  return (I387_FCTRL_REGNUM (tdep) <= regnum
+          && regnum < I387_XMM0_REGNUM (tdep));
 }
 
 /* BNDr (raw) register?  */
@@ -400,8 +363,8 @@ i386_bndr_regnum_p (struct gdbarch *gdbarch, int regnum)
 {
   i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
 
-   if (I387_BND0R_REGNUM (tdep) < 0)
-     return 0;
+  if (I387_BND0R_REGNUM (tdep) < 0)
+    return 0;
 
   regnum -= tdep->bnd0r_regnum;
   return regnum >= 0 && regnum < I387_NUM_BND_REGS;
@@ -414,8 +377,8 @@ i386_mpx_ctrl_regnum_p (struct gdbarch *gdbarch, int regnum)
 {
   i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
 
-   if (I387_BNDCFGU_REGNUM (tdep) < 0)
-     return 0;
+  if (I387_BNDCFGU_REGNUM (tdep) < 0)
+    return 0;
 
   regnum -= I387_BNDCFGU_REGNUM (tdep);
   return regnum >= 0 && regnum < I387_NUM_MPX_CTRL_REGS;
@@ -476,7 +439,7 @@ i386_pseudo_register_name (struct gdbarch *gdbarch, int regnum)
   else if (i386_word_regnum_p (gdbarch, regnum))
     return i386_word_names[regnum - tdep->ax_regnum];
 
-  internal_error (_("invalid regnum"));
+  internal_error (_ ("invalid regnum"));
 }
 
 /* Convert a dbx register number REG to the appropriate register
@@ -495,10 +458,11 @@ i386_dbx_reg_to_regnum (struct gdbarch *gdbarch, int reg)
       /* General-purpose registers.  The debug info calls %ebp
 	 register 4, and %esp register 5.  */
       if (reg == 4)
-	return 5;
+        return 5;
       else if (reg == 5)
-	return 4;
-      else return reg;
+        return 4;
+      else
+        return reg;
     }
   else if (reg >= 12 && reg <= 19)
     {
@@ -510,11 +474,10 @@ i386_dbx_reg_to_regnum (struct gdbarch *gdbarch, int reg)
       /* SSE registers.  */
       int ymm0_regnum = tdep->ymm0_regnum;
 
-      if (ymm0_regnum >= 0
-	  && i386_xmm_regnum_p (gdbarch, reg))
-	return reg - 21 + ymm0_regnum;
+      if (ymm0_regnum >= 0 && i386_xmm_regnum_p (gdbarch, reg))
+        return reg - 21 + ymm0_regnum;
       else
-	return reg - 21 + I387_XMM0_REGNUM (tdep);
+        return reg - 21 + I387_XMM0_REGNUM (tdep);
     }
   else if (reg >= 29 && reg <= 36)
     {
@@ -557,15 +520,24 @@ i386_svr4_dwarf_reg_to_regnum (struct gdbarch *gdbarch, int reg)
 
   switch (reg)
     {
-    case 37: return I387_FCTRL_REGNUM (tdep);
-    case 38: return I387_FSTAT_REGNUM (tdep);
-    case 39: return I387_MXCSR_REGNUM (tdep);
-    case 40: return I386_ES_REGNUM;
-    case 41: return I386_CS_REGNUM;
-    case 42: return I386_SS_REGNUM;
-    case 43: return I386_DS_REGNUM;
-    case 44: return I386_FS_REGNUM;
-    case 45: return I386_GS_REGNUM;
+    case 37:
+      return I387_FCTRL_REGNUM (tdep);
+    case 38:
+      return I387_FSTAT_REGNUM (tdep);
+    case 39:
+      return I387_MXCSR_REGNUM (tdep);
+    case 40:
+      return I386_ES_REGNUM;
+    case 41:
+      return I386_CS_REGNUM;
+    case 42:
+      return I386_SS_REGNUM;
+    case 43:
+      return I386_DS_REGNUM;
+    case 44:
+      return I386_FS_REGNUM;
+    case 45:
+      return I386_GS_REGNUM;
     }
 
   return -1;
@@ -584,20 +556,12 @@ i386_svr4_reg_to_regnum (struct gdbarch *gdbarch, int reg)
   return regnum;
 }
 
-
-
 /* This is the variable that is set with "set disassembly-flavor", and
    its legitimate values.  */
 static const char att_flavor[] = "att";
 static const char intel_flavor[] = "intel";
-static const char *const valid_flavors[] =
-{
-  att_flavor,
-  intel_flavor,
-  NULL
-};
+static const char *const valid_flavors[] = { att_flavor, intel_flavor, NULL };
 static const char *disassembly_flavor = att_flavor;
-
 
 /* Use the program counter to determine the contents and size of a
    breakpoint instruction.  Return a pointer to a string of bytes that
@@ -614,7 +578,6 @@ constexpr gdb_byte i386_break_insn[] = { 0xcc }; /* int 3 */
 
 typedef BP_MANIPULATION (i386_break_insn) i386_breakpoint;
 
-
 /* Displaced instruction handling.  */
 
 /* Skip the legacy instruction prefixes in INSN.
@@ -631,23 +594,23 @@ i386_skip_prefixes (gdb_byte *insn, size_t max_len)
   while (insn < end)
     {
       switch (*insn)
-	{
-	case DATA_PREFIX_OPCODE:
-	case ADDR_PREFIX_OPCODE:
-	case CS_PREFIX_OPCODE:
-	case DS_PREFIX_OPCODE:
-	case ES_PREFIX_OPCODE:
-	case FS_PREFIX_OPCODE:
-	case GS_PREFIX_OPCODE:
-	case SS_PREFIX_OPCODE:
-	case LOCK_PREFIX_OPCODE:
-	case REPE_PREFIX_OPCODE:
-	case REPNE_PREFIX_OPCODE:
-	  ++insn;
-	  continue;
-	default:
-	  return insn;
-	}
+        {
+        case DATA_PREFIX_OPCODE:
+        case ADDR_PREFIX_OPCODE:
+        case CS_PREFIX_OPCODE:
+        case DS_PREFIX_OPCODE:
+        case ES_PREFIX_OPCODE:
+        case FS_PREFIX_OPCODE:
+        case GS_PREFIX_OPCODE:
+        case SS_PREFIX_OPCODE:
+        case LOCK_PREFIX_OPCODE:
+        case REPE_PREFIX_OPCODE:
+        case REPNE_PREFIX_OPCODE:
+          ++insn;
+          continue;
+        default:
+          return insn;
+        }
     }
 
   return NULL;
@@ -664,11 +627,11 @@ i386_absolute_jmp_p (const gdb_byte *insn)
     {
       /* jump near, absolute indirect (/4).  */
       if ((insn[1] & 0x38) == 0x20)
-	return 1;
+        return 1;
 
       /* jump far, absolute indirect (/5).  */
       if ((insn[1] & 0x38) == 0x28)
-	return 1;
+        return 1;
     }
 
   return 0;
@@ -701,11 +664,11 @@ i386_absolute_call_p (const gdb_byte *insn)
     {
       /* Call near, absolute indirect (/2).  */
       if ((insn[1] & 0x38) == 0x10)
-	return 1;
+        return 1;
 
       /* Call far, absolute indirect (/3).  */
       if ((insn[1] & 0x38) == 0x18)
-	return 1;
+        return 1;
     }
 
   return 0;
@@ -803,13 +766,12 @@ i386_insn_is_jump (struct gdbarch *gdbarch, CORE_ADDR addr)
 /* Some kernels may run one past a syscall insn, so we have to cope.  */
 
 displaced_step_copy_insn_closure_up
-i386_displaced_step_copy_insn (struct gdbarch *gdbarch,
-			       CORE_ADDR from, CORE_ADDR to,
-			       struct regcache *regs)
+i386_displaced_step_copy_insn (struct gdbarch *gdbarch, CORE_ADDR from,
+                               CORE_ADDR to, struct regcache *regs)
 {
   size_t len = gdbarch_max_insn_length (gdbarch);
-  std::unique_ptr<i386_displaced_step_copy_insn_closure> closure
-    (new i386_displaced_step_copy_insn_closure (len));
+  std::unique_ptr<i386_displaced_step_copy_insn_closure> closure (
+    new i386_displaced_step_copy_insn_closure (len));
   gdb_byte *buf = closure->buf.data ();
 
   read_memory (from, buf, len);
@@ -828,9 +790,9 @@ i386_displaced_step_copy_insn (struct gdbarch *gdbarch,
 
   write_memory (to, buf, len);
 
-  displaced_debug_printf ("%s->%s: %s",
-			  paddress (gdbarch, from), paddress (gdbarch, to),
-			  displaced_step_dump_bytes (buf, len).c_str ());
+  displaced_debug_printf ("%s->%s: %s", paddress (gdbarch, from),
+                          paddress (gdbarch, to),
+                          displaced_step_dump_bytes (buf, len).c_str ());
 
   /* This is a work around for a problem with g++ 4.8.  */
   return displaced_step_copy_insn_closure_up (closure.release ());
@@ -841,9 +803,8 @@ i386_displaced_step_copy_insn (struct gdbarch *gdbarch,
 
 void
 i386_displaced_step_fixup (struct gdbarch *gdbarch,
-			   struct displaced_step_copy_insn_closure *closure_,
-			   CORE_ADDR from, CORE_ADDR to,
-			   struct regcache *regs)
+                           struct displaced_step_copy_insn_closure *closure_,
+                           CORE_ADDR from, CORE_ADDR to, struct regcache *regs)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
 
@@ -860,8 +821,8 @@ i386_displaced_step_fixup (struct gdbarch *gdbarch,
   gdb_byte *insn_start = insn;
 
   displaced_debug_printf ("fixup (%s, %s), insn = 0x%02x 0x%02x ...",
-			  paddress (gdbarch, from), paddress (gdbarch, to),
-			  insn[0], insn[1]);
+                          paddress (gdbarch, from), paddress (gdbarch, to),
+                          insn[0], insn[1]);
 
   /* The list of issues to contend with here is taken from
      resume_execution in arch/i386/kernel/kprobes.c, Linux 2.6.20.
@@ -886,9 +847,8 @@ i386_displaced_step_fixup (struct gdbarch *gdbarch,
      the displaced instruction; make it relative.  Well, signal
      handler returns don't need relocation either, but we use the
      value of %eip to recognize those; see below.  */
-  if (! i386_absolute_jmp_p (insn)
-      && ! i386_absolute_call_p (insn)
-      && ! i386_ret_p (insn))
+  if (!i386_absolute_jmp_p (insn) && !i386_absolute_call_p (insn)
+      && !i386_ret_p (insn))
     {
       ULONGEST orig_eip;
       int insn_len;
@@ -910,27 +870,27 @@ i386_displaced_step_fixup (struct gdbarch *gdbarch,
 	 it unrelocated.  Goodness help us if there are PC-relative
 	 system calls.  */
       if (i386_syscall_p (insn, &insn_len)
-	  && orig_eip != to + (insn - insn_start) + insn_len
-	  /* GDB can get control back after the insn after the syscall.
+          && orig_eip != to + (insn - insn_start) + insn_len
+          /* GDB can get control back after the insn after the syscall.
 	     Presumably this is a kernel bug.
 	     i386_displaced_step_copy_insn ensures its a nop,
 	     we add one to the length for it.  */
-	  && orig_eip != to + (insn - insn_start) + insn_len + 1)
-	displaced_debug_printf ("syscall changed %%eip; not relocating");
+          && orig_eip != to + (insn - insn_start) + insn_len + 1)
+        displaced_debug_printf ("syscall changed %%eip; not relocating");
       else
-	{
-	  ULONGEST eip = (orig_eip - insn_offset) & 0xffffffffUL;
+        {
+          ULONGEST eip = (orig_eip - insn_offset) & 0xffffffffUL;
 
-	  /* If we just stepped over a breakpoint insn, we don't backup
+          /* If we just stepped over a breakpoint insn, we don't backup
 	     the pc on purpose; this is to match behaviour without
 	     stepping.  */
 
-	  regcache_cooked_write_unsigned (regs, I386_EIP_REGNUM, eip);
+          regcache_cooked_write_unsigned (regs, I386_EIP_REGNUM, eip);
 
-	  displaced_debug_printf ("relocated %%eip from %s to %s",
-				  paddress (gdbarch, orig_eip),
-				  paddress (gdbarch, eip));
-	}
+          displaced_debug_printf ("relocated %%eip from %s to %s",
+                                  paddress (gdbarch, orig_eip),
+                                  paddress (gdbarch, eip));
+        }
     }
 
   /* If the instruction was PUSHFL, then the TF bit will be set in the
@@ -953,8 +913,8 @@ i386_displaced_step_fixup (struct gdbarch *gdbarch,
       write_memory_unsigned_integer (esp, retaddr_len, byte_order, retaddr);
 
       displaced_debug_printf ("relocated return addr at %s to %s",
-			      paddress (gdbarch, esp),
-			      paddress (gdbarch, retaddr));
+                              paddress (gdbarch, esp),
+                              paddress (gdbarch, retaddr));
     }
 }
 
@@ -966,8 +926,8 @@ append_insns (CORE_ADDR *to, ULONGEST len, const gdb_byte *buf)
 }
 
 static void
-i386_relocate_instruction (struct gdbarch *gdbarch,
-			   CORE_ADDR *to, CORE_ADDR oldloc)
+i386_relocate_instruction (struct gdbarch *gdbarch, CORE_ADDR *to,
+                           CORE_ADDR oldloc)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   gdb_byte buf[I386_MAX_INSN_LEN];
@@ -977,8 +937,8 @@ i386_relocate_instruction (struct gdbarch *gdbarch,
 
   read_memory (oldloc, buf, I386_MAX_INSN_LEN);
 
-  insn_length = gdb_buffered_insn_length (gdbarch, insn,
-					  I386_MAX_INSN_LEN, oldloc);
+  insn_length
+    = gdb_buffered_insn_length (gdbarch, insn, I386_MAX_INSN_LEN, oldloc);
 
   /* Get past the prefixes.  */
   insn = i386_skip_prefixes (insn, I386_MAX_INSN_LEN);
@@ -1007,8 +967,8 @@ i386_relocate_instruction (struct gdbarch *gdbarch,
       store_signed_integer (insn + 1, 4, byte_order, newrel);
 
       displaced_debug_printf ("adjusted insn rel32=%s at %s to rel32=%s at %s",
-			      hex_string (rel32), paddress (gdbarch, oldloc),
-			      hex_string (newrel), paddress (gdbarch, *to));
+                              hex_string (rel32), paddress (gdbarch, oldloc),
+                              hex_string (newrel), paddress (gdbarch, *to));
 
       /* Write the adjusted jump into its displaced location.  */
       append_insns (to, 5, insn);
@@ -1029,8 +989,8 @@ i386_relocate_instruction (struct gdbarch *gdbarch,
       newrel = (oldloc - *to) + rel32;
       store_signed_integer (insn + offset, 4, byte_order, newrel);
       displaced_debug_printf ("adjusted insn rel32=%s at %s to rel32=%s at %s",
-			      hex_string (rel32), paddress (gdbarch, oldloc),
-			      hex_string (newrel), paddress (gdbarch, *to));
+                              hex_string (rel32), paddress (gdbarch, oldloc),
+                              hex_string (newrel), paddress (gdbarch, *to));
     }
 
   /* Write the adjusted instructions into their displaced
@@ -1038,7 +998,6 @@ i386_relocate_instruction (struct gdbarch *gdbarch,
   append_insns (to, insn_length, buf);
 }
 
-
 #ifdef I386_REGNO_TO_SYMMETRY
 #error "The Sequent Symmetry is no longer supported."
 #endif
@@ -1049,7 +1008,7 @@ i386_relocate_instruction (struct gdbarch *gdbarch,
 
 /* The maximum number of saved registers.  This should include all
    registers mentioned above, and %eip.  */
-#define I386_NUM_SAVED_REGS	I386_NUM_GREGS
+#define I386_NUM_SAVED_REGS I386_NUM_GREGS
 
 struct i386_frame_cache
 {
@@ -1125,20 +1084,20 @@ i386_follow_jump (struct gdbarch *gdbarch, CORE_ADDR pc)
     case 0xe9:
       /* Relative jump: if data16 == 0, disp32, else disp16.  */
       if (data16)
-	{
-	  delta = read_memory_integer (pc + 2, 2, byte_order);
+        {
+          delta = read_memory_integer (pc + 2, 2, byte_order);
 
-	  /* Include the size of the jmp instruction (including the
+          /* Include the size of the jmp instruction (including the
 	     0x66 prefix).  */
-	  delta += 4;
-	}
+          delta += 4;
+        }
       else
-	{
-	  delta = read_memory_integer (pc + 1, 4, byte_order);
+        {
+          delta = read_memory_integer (pc + 1, 4, byte_order);
 
-	  /* Include the size of the jmp instruction.  */
-	  delta += 5;
-	}
+          /* Include the size of the jmp instruction.  */
+          delta += 5;
+        }
       break;
     case 0xeb:
       /* Relative jump, disp8 (ignore data16).  */
@@ -1159,7 +1118,7 @@ i386_follow_jump (struct gdbarch *gdbarch, CORE_ADDR pc)
 
 static CORE_ADDR
 i386_analyze_struct_return (CORE_ADDR pc, CORE_ADDR current_pc,
-			    struct i386_frame_cache *cache)
+                            struct i386_frame_cache *cache)
 {
   /* Functions that return a structure or union start with:
 
@@ -1182,7 +1141,7 @@ i386_analyze_struct_return (CORE_ADDR pc, CORE_ADDR current_pc,
   if (target_read_code (pc, &op, 1))
     return pc;
 
-  if (op != 0x58)		/* popl %eax */
+  if (op != 0x58) /* popl %eax */
     return pc;
 
   if (target_read_code (pc + 1, buf, 4))
@@ -1202,7 +1161,7 @@ i386_analyze_struct_return (CORE_ADDR pc, CORE_ADDR current_pc,
       cache->pc_in_eax = 1;
       return current_pc;
     }
-  
+
   if (buf[1] == proto1[1])
     return pc + 4;
   else
@@ -1236,15 +1195,15 @@ i386_skip_probe (CORE_ADDR pc)
       /* Skip past the `pushl' instruction; it has either a one-byte or a
 	 four-byte operand, depending on the opcode.  */
       if (op == 0x68)
-	delta = 5;
+        delta = 5;
       else
-	delta = 2;
+        delta = 2;
 
       /* Read the following 8 bytes, which should be `call _probe' (6
 	 bytes) followed by `addl $4,%esp' (2 bytes).  */
       read_memory (pc + delta, buf, sizeof (buf));
       if (buf[0] == 0xe8 && buf[6] == 0xc4 && buf[7] == 0x4)
-	pc += delta + sizeof (buf);
+        pc += delta + sizeof (buf);
     }
 
   return pc;
@@ -1258,7 +1217,7 @@ i386_skip_probe (CORE_ADDR pc)
 
 static CORE_ADDR
 i386_analyze_stack_align (CORE_ADDR pc, CORE_ADDR current_pc,
-			  struct i386_frame_cache *cache)
+                          struct i386_frame_cache *cache)
 {
   /* There are 2 code sequences to re-align stack before the frame
      gets set up:
@@ -1286,14 +1245,14 @@ i386_analyze_stack_align (CORE_ADDR pc, CORE_ADDR current_pc,
   int reg;
   int offset, offset_and;
   static int regnums[8] = {
-    I386_EAX_REGNUM,		/* %eax */
-    I386_ECX_REGNUM,		/* %ecx */
-    I386_EDX_REGNUM,		/* %edx */
-    I386_EBX_REGNUM,		/* %ebx */
-    I386_ESP_REGNUM,		/* %esp */
-    I386_EBP_REGNUM,		/* %ebp */
-    I386_ESI_REGNUM,		/* %esi */
-    I386_EDI_REGNUM		/* %edi */
+    I386_EAX_REGNUM, /* %eax */
+    I386_ECX_REGNUM, /* %ecx */
+    I386_EDX_REGNUM, /* %edx */
+    I386_EBX_REGNUM, /* %ebx */
+    I386_ESP_REGNUM, /* %esp */
+    I386_EBP_REGNUM, /* %ebp */
+    I386_ESI_REGNUM, /* %esi */
+    I386_EDI_REGNUM  /* %edi */
   };
 
   if (target_read_code (pc, buf, sizeof buf))
@@ -1305,7 +1264,7 @@ i386_analyze_stack_align (CORE_ADDR pc, CORE_ADDR current_pc,
     {
       /* MOD must be binary 10 and R/M must be binary 100.  */
       if ((buf[1] & 0xc7) != 0x44)
-	return pc;
+        return pc;
 
       /* REG has register number.  */
       reg = (buf[1] >> 3) & 7;
@@ -1316,23 +1275,23 @@ i386_analyze_stack_align (CORE_ADDR pc, CORE_ADDR current_pc,
       /* Check callee-saved saved register.  The first instruction
 	 has to be "pushl %reg".  */
       if ((buf[0] & 0xf8) != 0x50)
-	return pc;
+        return pc;
 
       /* Get register.  */
       reg = buf[0] & 0x7;
 
       /* The next instruction has to be "leal 8(%esp), %reg".  */
       if (buf[1] != 0x8d || buf[3] != 0x24 || buf[4] != 0x8)
-	return pc;
+        return pc;
 
       /* MOD must be binary 10 and R/M must be binary 100.  */
       if ((buf[2] & 0xc7) != 0x44)
-	return pc;
-      
+        return pc;
+
       /* REG has register number.  Registers in pushl and leal have to
 	 be the same.  */
       if (reg != ((buf[2] >> 3) & 7))
-	return pc;
+        return pc;
 
       offset = 5;
     }
@@ -1342,8 +1301,7 @@ i386_analyze_stack_align (CORE_ADDR pc, CORE_ADDR current_pc,
     return pc;
 
   /* The next instruction has to be "andl $-XXX, %esp".  */
-  if (buf[offset + 1] != 0xe4
-      || (buf[offset] != 0x81 && buf[offset] != 0x83))
+  if (buf[offset + 1] != 0xe4 || (buf[offset] != 0x81 && buf[offset] != 0x83))
     return pc;
 
   offset_and = offset;
@@ -1351,8 +1309,7 @@ i386_analyze_stack_align (CORE_ADDR pc, CORE_ADDR current_pc,
 
   /* The next instruction has to be "pushl -4(%reg)".  8bit -4 is
      0xfc.  REG must be binary 110 and MOD must be binary 01.  */
-  if (buf[offset] != 0xff
-      || buf[offset + 2] != 0xfc
+  if (buf[offset] != 0xff || buf[offset + 2] != 0xfc
       || (buf[offset + 1] & 0xf8) != 0x70)
     return pc;
 
@@ -1368,7 +1325,7 @@ i386_analyze_stack_align (CORE_ADDR pc, CORE_ADDR current_pc,
 }
 
 /* Maximum instruction length we need to handle.  */
-#define I386_MAX_MATCHED_INSN_LEN	6
+#define I386_MAX_MATCHED_INSN_LEN 6
 
 /* Instruction description.  */
 struct i386_insn
@@ -1398,13 +1355,13 @@ i386_match_pattern (CORE_ADDR pc, struct i386_insn pattern)
       gdb_assert (pattern.len <= I386_MAX_MATCHED_INSN_LEN);
 
       if (target_read_code (pc + 1, buf, pattern.len - 1))
-	return 0;
+        return 0;
 
       for (i = 1; i < pattern.len; i++)
-	{
-	  if ((buf[i - 1] & pattern.mask[i]) != pattern.insn[i])
-	    insn_matched = 0;
-	}
+        {
+          if ((buf[i - 1] & pattern.mask[i]) != pattern.insn[i])
+            insn_matched = 0;
+        }
       return insn_matched;
     }
   return 0;
@@ -1422,7 +1379,7 @@ i386_match_insn (CORE_ADDR pc, struct i386_insn *insn_patterns)
   for (pattern = insn_patterns; pattern->len > 0; pattern++)
     {
       if (i386_match_pattern (pc, *pattern))
-	return pattern;
+        return pattern;
     }
 
   return NULL;
@@ -1449,14 +1406,14 @@ i386_match_insn_block (CORE_ADDR pc, struct i386_insn *insn_patterns)
       current_pc -= insn_patterns[i].len;
 
       if (!i386_match_pattern (current_pc, insn_patterns[i]))
-	return 0;
+        return 0;
     }
 
   current_pc = pc + insn->len;
   for (insn = insn_patterns + ix + 1; insn->len > 0; insn++)
     {
       if (!i386_match_pattern (current_pc, *insn))
-	return 0;
+        return 0;
 
       current_pc += insn->len;
     }
@@ -1470,8 +1427,7 @@ i386_match_insn_block (CORE_ADDR pc, struct i386_insn *insn_patterns)
    yet, and only the scratch registers %eax, %ecx and %edx can be
    touched.  */
 
-static i386_insn i386_frame_setup_skip_insns[] =
-{
+static i386_insn i386_frame_setup_skip_insns[] = {
   /* Check for `movb imm8, r' and `movl imm32, r'.
     
      ??? Should we handle 16-bit operand-sizes here?  */
@@ -1495,9 +1451,9 @@ static i386_insn i386_frame_setup_skip_insns[] =
   /* `movl m32, %eax' */
   { 5, { 0xa1 }, { 0xff } },
   /* `movl m32, %eax' and `mov; m32, %ecx' */
-  { 6, { 0x89, 0x05 }, {0xff, 0xf7 } },
+  { 6, { 0x89, 0x05 }, { 0xff, 0xf7 } },
   /* `movl m32, %edx' */
-  { 6, { 0x89, 0x15 }, {0xff, 0xff } },
+  { 6, { 0x89, 0x15 }, { 0xff, 0xff } },
 
   /* Check for `xorl r32, r32' and the equivalent `subl r32, r32'.
      Because of the symmetry, there are actually two ways to encode
@@ -1548,17 +1504,17 @@ i386_skip_noop (CORE_ADDR pc)
   if (target_read_code (pc, &op, 1))
     return pc;
 
-  while (check) 
+  while (check)
     {
       check = 0;
       /* Ignore `nop' instruction.  */
-      if (op == 0x90) 
-	{
-	  pc += 1;
-	  if (target_read_code (pc, &op, 1))
-	    return pc;
-	  check = 1;
-	}
+      if (op == 0x90)
+        {
+          pc += 1;
+          if (target_read_code (pc, &op, 1))
+            return pc;
+          check = 1;
+        }
       /* Ignore no-op instruction `mov %edi, %edi'.
 	 Microsoft system dlls often start with
 	 a `mov %edi,%edi' instruction.
@@ -1571,21 +1527,21 @@ i386_skip_noop (CORE_ADDR pc)
 	 in the 32-bit address space.  */
 
       else if (op == 0x8b)
-	{
-	  if (target_read_code (pc + 1, &op, 1))
-	    return pc;
+        {
+          if (target_read_code (pc + 1, &op, 1))
+            return pc;
 
-	  if (op == 0xff)
-	    {
-	      pc += 2;
-	      if (target_read_code (pc, &op, 1))
-		return pc;
+          if (op == 0xff)
+            {
+              pc += 2;
+              if (target_read_code (pc, &op, 1))
+                return pc;
 
-	      check = 1;
-	    }
-	}
+              check = 1;
+            }
+        }
     }
-  return pc; 
+  return pc;
 }
 
 /* Check whether PC points at a code that sets up a new stack frame.
@@ -1594,9 +1550,8 @@ i386_skip_noop (CORE_ADDR pc)
    whichever is smaller.  If we don't recognize the code, return PC.  */
 
 static CORE_ADDR
-i386_analyze_frame_setup (struct gdbarch *gdbarch,
-			  CORE_ADDR pc, CORE_ADDR limit,
-			  struct i386_frame_cache *cache)
+i386_analyze_frame_setup (struct gdbarch *gdbarch, CORE_ADDR pc,
+                          CORE_ADDR limit, struct i386_frame_cache *cache)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   struct i386_insn *insn;
@@ -1609,7 +1564,7 @@ i386_analyze_frame_setup (struct gdbarch *gdbarch,
   if (target_read_code (pc, &op, 1))
     return pc;
 
-  if (op == 0x55)		/* pushl %ebp */
+  if (op == 0x55) /* pushl %ebp */
     {
       /* Take into account that we've executed the `pushl %ebp' that
 	 starts this instruction sequence.  */
@@ -1619,7 +1574,7 @@ i386_analyze_frame_setup (struct gdbarch *gdbarch,
 
       /* If that's all, return now.  */
       if (limit <= pc)
-	return limit;
+        return limit;
 
       /* Check for some special instructions that might be migrated by
 	 GCC into the prologue and skip them.  At this point in the
@@ -1630,20 +1585,20 @@ i386_analyze_frame_setup (struct gdbarch *gdbarch,
 	 Make sure we only skip these instructions if we later see the
 	 `movl %esp, %ebp' that actually sets up the frame.  */
       while (pc + skip < limit)
-	{
-	  insn = i386_match_insn (pc + skip, i386_frame_setup_skip_insns);
-	  if (insn == NULL)
-	    break;
+        {
+          insn = i386_match_insn (pc + skip, i386_frame_setup_skip_insns);
+          if (insn == NULL)
+            break;
 
-	  skip += insn->len;
-	}
+          skip += insn->len;
+        }
 
       /* If that's all, return now.  */
       if (limit <= pc + skip)
-	return limit;
+        return limit;
 
       if (target_read_code (pc + skip, &op, 1))
-	return pc + skip;
+        return pc + skip;
 
       /* The i386 prologue looks like
 
@@ -1660,29 +1615,29 @@ i386_analyze_frame_setup (struct gdbarch *gdbarch,
 	 We handle both of them here.  */
 
       switch (op)
-	{
-	  /* Check for `movl %esp, %ebp' -- can be written in two ways.  */
-	case 0x8b:
-	  if (read_code_unsigned_integer (pc + skip + 1, 1, byte_order)
-	      != 0xec)
-	    return pc;
-	  pc += (skip + 2);
-	  break;
-	case 0x89:
-	  if (read_code_unsigned_integer (pc + skip + 1, 1, byte_order)
-	      != 0xe5)
-	    return pc;
-	  pc += (skip + 2);
-	  break;
-	case 0x8d: /* Check for 'lea (%ebp), %ebp'.  */
-	  if (read_code_unsigned_integer (pc + skip + 1, 2, byte_order)
-	      != 0x242c)
-	    return pc;
-	  pc += (skip + 3);
-	  break;
-	default:
-	  return pc;
-	}
+        {
+          /* Check for `movl %esp, %ebp' -- can be written in two ways.  */
+        case 0x8b:
+          if (read_code_unsigned_integer (pc + skip + 1, 1, byte_order)
+              != 0xec)
+            return pc;
+          pc += (skip + 2);
+          break;
+        case 0x89:
+          if (read_code_unsigned_integer (pc + skip + 1, 1, byte_order)
+              != 0xe5)
+            return pc;
+          pc += (skip + 2);
+          break;
+        case 0x8d: /* Check for 'lea (%ebp), %ebp'.  */
+          if (read_code_unsigned_integer (pc + skip + 1, 2, byte_order)
+              != 0x242c)
+            return pc;
+          pc += (skip + 3);
+          break;
+        default:
+          return pc;
+        }
 
       /* OK, we actually have a frame.  We just don't know how large
 	 it is yet.  Set its size to zero.  We'll adjust it if
@@ -1692,7 +1647,7 @@ i386_analyze_frame_setup (struct gdbarch *gdbarch,
 
       /* If that's all, return now.  */
       if (limit <= pc)
-	return limit;
+        return limit;
 
       /* Check for stack adjustment 
 
@@ -1703,46 +1658,46 @@ i386_analyze_frame_setup (struct gdbarch *gdbarch,
 	 NOTE: You can't subtract a 16-bit immediate from a 32-bit
 	 reg, so we don't have to worry about a data16 prefix.  */
       if (target_read_code (pc, &op, 1))
-	return pc;
+        return pc;
       if (op == 0x83)
-	{
-	  /* `subl' with 8-bit immediate.  */
-	  if (read_code_unsigned_integer (pc + 1, 1, byte_order) != 0xec)
-	    /* Some instruction starting with 0x83 other than `subl'.  */
-	    return pc;
+        {
+          /* `subl' with 8-bit immediate.  */
+          if (read_code_unsigned_integer (pc + 1, 1, byte_order) != 0xec)
+            /* Some instruction starting with 0x83 other than `subl'.  */
+            return pc;
 
-	  /* `subl' with signed 8-bit immediate (though it wouldn't
+          /* `subl' with signed 8-bit immediate (though it wouldn't
 	     make sense to be negative).  */
-	  cache->locals = read_code_integer (pc + 2, 1, byte_order);
-	  return pc + 3;
-	}
+          cache->locals = read_code_integer (pc + 2, 1, byte_order);
+          return pc + 3;
+        }
       else if (op == 0x81)
-	{
-	  /* Maybe it is `subl' with a 32-bit immediate.  */
-	  if (read_code_unsigned_integer (pc + 1, 1, byte_order) != 0xec)
-	    /* Some instruction starting with 0x81 other than `subl'.  */
-	    return pc;
+        {
+          /* Maybe it is `subl' with a 32-bit immediate.  */
+          if (read_code_unsigned_integer (pc + 1, 1, byte_order) != 0xec)
+            /* Some instruction starting with 0x81 other than `subl'.  */
+            return pc;
 
-	  /* It is `subl' with a 32-bit immediate.  */
-	  cache->locals = read_code_integer (pc + 2, 4, byte_order);
-	  return pc + 6;
-	}
+          /* It is `subl' with a 32-bit immediate.  */
+          cache->locals = read_code_integer (pc + 2, 4, byte_order);
+          return pc + 6;
+        }
       else if (op == 0x8d)
-	{
-	  /* The ModR/M byte is 0x64.  */
-	  if (read_code_unsigned_integer (pc + 1, 1, byte_order) != 0x64)
-	    return pc;
-	  /* 'lea' with 8-bit displacement.  */
-	  cache->locals = -1 * read_code_integer (pc + 3, 1, byte_order);
-	  return pc + 4;
-	}
+        {
+          /* The ModR/M byte is 0x64.  */
+          if (read_code_unsigned_integer (pc + 1, 1, byte_order) != 0x64)
+            return pc;
+          /* 'lea' with 8-bit displacement.  */
+          cache->locals = -1 * read_code_integer (pc + 3, 1, byte_order);
+          return pc + 4;
+        }
       else
-	{
-	  /* Some instruction other than `subl' nor 'lea'.  */
-	  return pc;
-	}
+        {
+          /* Some instruction other than `subl' nor 'lea'.  */
+          return pc;
+        }
     }
-  else if (op == 0xc8)		/* enter */
+  else if (op == 0xc8) /* enter */
     {
       cache->locals = read_code_unsigned_integer (pc + 1, 2, byte_order);
       return pc + 4;
@@ -1758,7 +1713,7 @@ i386_analyze_frame_setup (struct gdbarch *gdbarch,
 
 static CORE_ADDR
 i386_analyze_register_saves (CORE_ADDR pc, CORE_ADDR current_pc,
-			     struct i386_frame_cache *cache)
+                             struct i386_frame_cache *cache)
 {
   CORE_ADDR offset = 0;
   gdb_byte op;
@@ -1769,9 +1724,9 @@ i386_analyze_register_saves (CORE_ADDR pc, CORE_ADDR current_pc,
   for (i = 0; i < 8 && pc < current_pc; i++)
     {
       if (target_read_code (pc, &op, 1))
-	return pc;
+        return pc;
       if (op < 0x50 || op > 0x57)
-	break;
+        break;
 
       offset -= 4;
       cache->saved_regs[op - 0x50] = offset;
@@ -1810,9 +1765,8 @@ i386_analyze_register_saves (CORE_ADDR pc, CORE_ADDR current_pc,
    instruction will be a branch back to the start.  */
 
 static CORE_ADDR
-i386_analyze_prologue (struct gdbarch *gdbarch,
-		       CORE_ADDR pc, CORE_ADDR current_pc,
-		       struct i386_frame_cache *cache)
+i386_analyze_prologue (struct gdbarch *gdbarch, CORE_ADDR pc,
+                       CORE_ADDR current_pc, struct i386_frame_cache *cache)
 {
   pc = i386_skip_endbr (pc);
   pc = i386_skip_noop (pc);
@@ -1831,10 +1785,9 @@ i386_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR start_pc)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
 
-  static gdb_byte pic_pat[6] =
-  {
-    0xe8, 0, 0, 0, 0,		/* call 0x0 */
-    0x5b,			/* popl %ebx */
+  static gdb_byte pic_pat[6] = {
+    0xe8, 0, 0, 0, 0, /* call 0x0 */
+    0x5b,             /* popl %ebx */
   };
   struct i386_frame_cache cache;
   CORE_ADDR pc;
@@ -1845,20 +1798,19 @@ i386_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR start_pc)
   if (find_pc_partial_function (start_pc, NULL, &func_addr, NULL))
     {
       CORE_ADDR post_prologue_pc
-	= skip_prologue_using_sal (gdbarch, func_addr);
+        = skip_prologue_using_sal (gdbarch, func_addr);
       struct compunit_symtab *cust = find_pc_compunit_symtab (func_addr);
 
       /* LLVM backend (Clang/Flang) always emits a line note before the
 	 prologue and another one after.  We trust clang and newer Intel
 	 compilers to emit usable line notes.  */
       if (post_prologue_pc
-	  && (cust != NULL
-	      && cust->producer () != NULL
-	      && (producer_is_llvm (cust->producer ())
-	      || producer_is_icc_ge_19 (cust->producer ()))))
+          && (cust != NULL && cust->producer () != NULL
+              && (producer_is_llvm (cust->producer ())
+                  || producer_is_icc_ge_19 (cust->producer ()))))
         return std::max (start_pc, post_prologue_pc);
     }
- 
+
   cache.locals = -1;
   pc = i386_analyze_prologue (gdbarch, start_pc, 0xffffffff, &cache);
   if (cache.locals < 0)
@@ -1882,40 +1834,40 @@ i386_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR start_pc)
   for (i = 0; i < 6; i++)
     {
       if (target_read_code (pc + i, &op, 1))
-	return pc;
+        return pc;
 
       if (pic_pat[i] != op)
-	break;
+        break;
     }
   if (i == 6)
     {
       int delta = 6;
 
       if (target_read_code (pc + delta, &op, 1))
-	return pc;
+        return pc;
 
-      if (op == 0x89)		/* movl %ebx, x(%ebp) */
-	{
-	  op = read_code_unsigned_integer (pc + delta + 1, 1, byte_order);
+      if (op == 0x89) /* movl %ebx, x(%ebp) */
+        {
+          op = read_code_unsigned_integer (pc + delta + 1, 1, byte_order);
 
-	  if (op == 0x5d)	/* One byte offset from %ebp.  */
-	    delta += 3;
-	  else if (op == 0x9d)	/* Four byte offset from %ebp.  */
-	    delta += 6;
-	  else			/* Unexpected instruction.  */
-	    delta = 0;
+          if (op == 0x5d) /* One byte offset from %ebp.  */
+            delta += 3;
+          else if (op == 0x9d) /* Four byte offset from %ebp.  */
+            delta += 6;
+          else /* Unexpected instruction.  */
+            delta = 0;
 
-	  if (target_read_code (pc + delta, &op, 1))
-	    return pc;
-	}
+          if (target_read_code (pc + delta, &op, 1))
+            return pc;
+        }
 
       /* addl y,%ebx */
       if (delta > 0 && op == 0x81
-	  && read_code_unsigned_integer (pc + delta + 1, 1, byte_order)
-	     == 0xc3)
-	{
-	  pc += delta + 6;
-	}
+          && read_code_unsigned_integer (pc + delta + 1, 1, byte_order)
+               == 0xc3)
+        {
+          pc += delta + 6;
+        }
     }
 
   /* If the function starts with a branch (to startup code at the end)
@@ -1943,20 +1895,19 @@ i386_skip_main_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
       gdb_byte buf[4];
 
       if (target_read_code (pc + 1, buf, sizeof buf) == 0)
-	{
-	  /* Make sure address is computed correctly as a 32bit
+        {
+          /* Make sure address is computed correctly as a 32bit
 	     integer even if CORE_ADDR is 64 bit wide.  */
-	  struct bound_minimal_symbol s;
-	  CORE_ADDR call_dest;
+          struct bound_minimal_symbol s;
+          CORE_ADDR call_dest;
 
-	  call_dest = pc + 5 + extract_signed_integer (buf, 4, byte_order);
-	  call_dest = call_dest & 0xffffffffU;
-	  s = lookup_minimal_symbol_by_pc (call_dest);
-	  if (s.minsym != NULL
-	      && s.minsym->linkage_name () != NULL
-	      && strcmp (s.minsym->linkage_name (), "__main") == 0)
-	    pc += 5;
-	}
+          call_dest = pc + 5 + extract_signed_integer (buf, 4, byte_order);
+          call_dest = call_dest & 0xffffffffU;
+          s = lookup_minimal_symbol_by_pc (call_dest);
+          if (s.minsym != NULL && s.minsym->linkage_name () != NULL
+              && strcmp (s.minsym->linkage_name (), "__main") == 0)
+            pc += 5;
+        }
     }
 
   return pc;
@@ -1972,13 +1923,11 @@ i386_unwind_pc (struct gdbarch *gdbarch, frame_info_ptr next_frame)
   frame_unwind_register (next_frame, gdbarch_pc_regnum (gdbarch), buf);
   return extract_typed_address (buf, builtin_type (gdbarch)->builtin_func_ptr);
 }
-
 
 /* Normal frames.  */
 
 static void
-i386_frame_cache_1 (frame_info_ptr this_frame,
-		    struct i386_frame_cache *cache)
+i386_frame_cache_1 (frame_info_ptr this_frame, struct i386_frame_cache *cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -2009,7 +1958,7 @@ i386_frame_cache_1 (frame_info_ptr this_frame,
 
   if (cache->pc != 0)
     i386_analyze_prologue (gdbarch, cache->pc, get_frame_pc (this_frame),
-			   cache);
+                           cache);
 
   if (cache->locals < 0)
     {
@@ -2022,36 +1971,36 @@ i386_frame_cache_1 (frame_info_ptr this_frame,
 	 functions this might work too.  */
 
       if (cache->saved_sp_reg != -1)
-	{
-	  /* Saved stack pointer has been saved.  */
-	  get_frame_register (this_frame, cache->saved_sp_reg, buf);
-	  cache->saved_sp = extract_unsigned_integer (buf, 4, byte_order);
+        {
+          /* Saved stack pointer has been saved.  */
+          get_frame_register (this_frame, cache->saved_sp_reg, buf);
+          cache->saved_sp = extract_unsigned_integer (buf, 4, byte_order);
 
-	  /* We're halfway aligning the stack.  */
-	  cache->base = ((cache->saved_sp - 4) & 0xfffffff0) - 4;
-	  cache->saved_regs[I386_EIP_REGNUM] = cache->saved_sp - 4;
+          /* We're halfway aligning the stack.  */
+          cache->base = ((cache->saved_sp - 4) & 0xfffffff0) - 4;
+          cache->saved_regs[I386_EIP_REGNUM] = cache->saved_sp - 4;
 
-	  /* This will be added back below.  */
-	  cache->saved_regs[I386_EIP_REGNUM] -= cache->base;
-	}
+          /* This will be added back below.  */
+          cache->saved_regs[I386_EIP_REGNUM] -= cache->base;
+        }
       else if (cache->pc != 0
-	       || target_read_code (get_frame_pc (this_frame), buf, 1))
-	{
-	  /* We're in a known function, but did not find a frame
+               || target_read_code (get_frame_pc (this_frame), buf, 1))
+        {
+          /* We're in a known function, but did not find a frame
 	     setup.  Assume that the function does not use %ebp.
 	     Alternatively, we may have jumped to an invalid
 	     address; in that case there is definitely no new
 	     frame in %ebp.  */
-	  get_frame_register (this_frame, I386_ESP_REGNUM, buf);
-	  cache->base = extract_unsigned_integer (buf, 4, byte_order)
-			+ cache->sp_offset;
-	}
+          get_frame_register (this_frame, I386_ESP_REGNUM, buf);
+          cache->base
+            = extract_unsigned_integer (buf, 4, byte_order) + cache->sp_offset;
+        }
       else
-	/* We're in an unknown function.  We could not find the start
+        /* We're in an unknown function.  We could not find the start
 	   of the function to analyze the prologue; our best option is
 	   to assume a typical frame layout with the caller's %ebp
 	   saved.  */
-	cache->saved_regs[I386_EBP_REGNUM] = 0;
+        cache->saved_regs[I386_EBP_REGNUM] = 0;
     }
 
   if (cache->saved_sp_reg != -1)
@@ -2059,9 +2008,9 @@ i386_frame_cache_1 (frame_info_ptr this_frame,
       /* Saved stack pointer has been saved (but the SAVED_SP_REG
 	 register may be unavailable).  */
       if (cache->saved_sp == 0
-	  && deprecated_frame_register_read (this_frame,
-					     cache->saved_sp_reg, buf))
-	cache->saved_sp = extract_unsigned_integer (buf, 4, byte_order);
+          && deprecated_frame_register_read (this_frame, cache->saved_sp_reg,
+                                             buf))
+        cache->saved_sp = extract_unsigned_integer (buf, 4, byte_order);
     }
   /* Now that we have the base address for the stack frame we can
      calculate the value of %esp in the calling frame.  */
@@ -2095,7 +2044,7 @@ i386_frame_cache (frame_info_ptr this_frame, void **this_cache)
   catch (const gdb_exception_error &ex)
     {
       if (ex.error != NOT_AVAILABLE_ERROR)
-	throw;
+        throw;
     }
 
   return cache;
@@ -2103,7 +2052,7 @@ i386_frame_cache (frame_info_ptr this_frame, void **this_cache)
 
 static void
 i386_frame_this_id (frame_info_ptr this_frame, void **this_cache,
-		    struct frame_id *this_id)
+                    struct frame_id *this_id)
 {
   struct i386_frame_cache *cache = i386_frame_cache (this_frame, this_cache);
 
@@ -2121,8 +2070,7 @@ i386_frame_this_id (frame_info_ptr this_frame, void **this_cache,
 }
 
 static enum unwind_stop_reason
-i386_frame_unwind_stop_reason (frame_info_ptr this_frame,
-			       void **this_cache)
+i386_frame_unwind_stop_reason (frame_info_ptr this_frame, void **this_cache)
 {
   struct i386_frame_cache *cache = i386_frame_cache (this_frame, this_cache);
 
@@ -2138,7 +2086,7 @@ i386_frame_unwind_stop_reason (frame_info_ptr this_frame,
 
 static struct value *
 i386_frame_prev_register (frame_info_ptr this_frame, void **this_cache,
-			  int regnum)
+                          int regnum)
 {
   struct i386_frame_cache *cache = i386_frame_cache (this_frame, this_cache);
 
@@ -2182,30 +2130,27 @@ i386_frame_prev_register (frame_info_ptr this_frame, void **this_cache,
 	 means that SAVED_SP_REG register was found unavailable back
 	 when we built the cache.  */
       if (cache->saved_sp == 0)
-	return frame_unwind_got_register (this_frame, regnum,
-					  cache->saved_sp_reg);
+        return frame_unwind_got_register (this_frame, regnum,
+                                          cache->saved_sp_reg);
       else
-	return frame_unwind_got_constant (this_frame, regnum,
-					  cache->saved_sp);
+        return frame_unwind_got_constant (this_frame, regnum, cache->saved_sp);
     }
 
   if (regnum < I386_NUM_SAVED_REGS && cache->saved_regs[regnum] != -1)
     return frame_unwind_got_memory (this_frame, regnum,
-				    cache->saved_regs[regnum]);
+                                    cache->saved_regs[regnum]);
 
   return frame_unwind_got_register (this_frame, regnum, regnum);
 }
 
-static const struct frame_unwind i386_frame_unwind =
-{
-  "i386 prologue",
-  NORMAL_FRAME,
-  i386_frame_unwind_stop_reason,
-  i386_frame_this_id,
-  i386_frame_prev_register,
-  NULL,
-  default_frame_sniffer
-};
+static const struct frame_unwind i386_frame_unwind
+  = { "i386 prologue",
+      NORMAL_FRAME,
+      i386_frame_unwind_stop_reason,
+      i386_frame_this_id,
+      i386_frame_prev_register,
+      NULL,
+      default_frame_sniffer };
 
 /* Normal frames, but in a function epilogue.  */
 
@@ -2226,9 +2171,9 @@ i386_stack_frame_destroyed_p (struct gdbarch *gdbarch, CORE_ADDR pc)
     return 0;
 
   if (target_read_memory (pc, &insn, 1))
-    return 0;	/* Can't read memory at pc.  */
+    return 0; /* Can't read memory at pc.  */
 
-  if (insn != 0xc3)	/* 'ret' instruction.  */
+  if (insn != 0xc3) /* 'ret' instruction.  */
     return 0;
 
   return 1;
@@ -2236,12 +2181,12 @@ i386_stack_frame_destroyed_p (struct gdbarch *gdbarch, CORE_ADDR pc)
 
 static int
 i386_epilogue_frame_sniffer (const struct frame_unwind *self,
-			     frame_info_ptr this_frame,
-			     void **this_prologue_cache)
+                             frame_info_ptr this_frame,
+                             void **this_prologue_cache)
 {
   if (frame_relative_level (this_frame) == 0)
     return i386_stack_frame_destroyed_p (get_frame_arch (this_frame),
-					 get_frame_pc (this_frame));
+                                         get_frame_pc (this_frame));
   else
     return 0;
 }
@@ -2275,7 +2220,7 @@ i386_epilogue_frame_cache (frame_info_ptr this_frame, void **this_cache)
   catch (const gdb_exception_error &ex)
     {
       if (ex.error != NOT_AVAILABLE_ERROR)
-	throw;
+        throw;
     }
 
   return cache;
@@ -2283,10 +2228,10 @@ i386_epilogue_frame_cache (frame_info_ptr this_frame, void **this_cache)
 
 static enum unwind_stop_reason
 i386_epilogue_frame_unwind_stop_reason (frame_info_ptr this_frame,
-					void **this_cache)
+                                        void **this_cache)
 {
-  struct i386_frame_cache *cache =
-    i386_epilogue_frame_cache (this_frame, this_cache);
+  struct i386_frame_cache *cache
+    = i386_epilogue_frame_cache (this_frame, this_cache);
 
   if (!cache->base_p)
     return UNWIND_UNAVAILABLE;
@@ -2295,12 +2240,11 @@ i386_epilogue_frame_unwind_stop_reason (frame_info_ptr this_frame,
 }
 
 static void
-i386_epilogue_frame_this_id (frame_info_ptr this_frame,
-			     void **this_cache,
-			     struct frame_id *this_id)
+i386_epilogue_frame_this_id (frame_info_ptr this_frame, void **this_cache,
+                             struct frame_id *this_id)
 {
-  struct i386_frame_cache *cache =
-    i386_epilogue_frame_cache (this_frame, this_cache);
+  struct i386_frame_cache *cache
+    = i386_epilogue_frame_cache (this_frame, this_cache);
 
   if (!cache->base_p)
     (*this_id) = frame_id_build_unavailable_stack (cache->pc);
@@ -2310,7 +2254,7 @@ i386_epilogue_frame_this_id (frame_info_ptr this_frame,
 
 static struct value *
 i386_epilogue_frame_prev_register (frame_info_ptr this_frame,
-				   void **this_cache, int regnum)
+                                   void **this_cache, int regnum)
 {
   /* Make sure we've initialized the cache.  */
   i386_epilogue_frame_cache (this_frame, this_cache);
@@ -2318,17 +2262,14 @@ i386_epilogue_frame_prev_register (frame_info_ptr this_frame,
   return i386_frame_prev_register (this_frame, this_cache, regnum);
 }
 
-static const struct frame_unwind i386_epilogue_frame_unwind =
-{
-  "i386 epilogue",
-  NORMAL_FRAME,
-  i386_epilogue_frame_unwind_stop_reason,
-  i386_epilogue_frame_this_id,
-  i386_epilogue_frame_prev_register,
-  NULL, 
-  i386_epilogue_frame_sniffer
-};
-
+static const struct frame_unwind i386_epilogue_frame_unwind
+  = { "i386 epilogue",
+      NORMAL_FRAME,
+      i386_epilogue_frame_unwind_stop_reason,
+      i386_epilogue_frame_this_id,
+      i386_epilogue_frame_prev_register,
+      NULL,
+      i386_epilogue_frame_sniffer };
 
 /* Stack-based trampolines.  */
 
@@ -2339,28 +2280,26 @@ static const struct frame_unwind i386_epilogue_frame_unwind =
 
 /* Static chain passed in register.  */
 
-static i386_insn i386_tramp_chain_in_reg_insns[] =
-{
+static i386_insn i386_tramp_chain_in_reg_insns[] = {
   /* `movl imm32, %eax' and `movl imm32, %ecx' */
   { 5, { 0xb8 }, { 0xfe } },
 
   /* `jmp imm32' */
   { 5, { 0xe9 }, { 0xff } },
 
-  {0}
+  { 0 }
 };
 
 /* Static chain passed on stack (when regparm=3).  */
 
-static i386_insn i386_tramp_chain_on_stack_insns[] =
-{
+static i386_insn i386_tramp_chain_on_stack_insns[] = {
   /* `push imm32' */
   { 5, { 0x68 }, { 0xff } },
 
   /* `jmp imm32' */
   { 5, { 0xe9 }, { 0xff } },
 
-  {0}
+  { 0 }
 };
 
 /* Return whether PC points inside a stack trampoline.   */
@@ -2391,8 +2330,7 @@ i386_in_stack_tramp_p (CORE_ADDR pc)
 
 static int
 i386_stack_tramp_frame_sniffer (const struct frame_unwind *self,
-				frame_info_ptr this_frame,
-				void **this_cache)
+                                frame_info_ptr this_frame, void **this_cache)
 {
   if (frame_relative_level (this_frame) == 0)
     return i386_in_stack_tramp_p (get_frame_pc (this_frame));
@@ -2400,23 +2338,20 @@ i386_stack_tramp_frame_sniffer (const struct frame_unwind *self,
     return 0;
 }
 
-static const struct frame_unwind i386_stack_tramp_frame_unwind =
-{
-  "i386 stack tramp",
-  NORMAL_FRAME,
-  i386_epilogue_frame_unwind_stop_reason,
-  i386_epilogue_frame_this_id,
-  i386_epilogue_frame_prev_register,
-  NULL, 
-  i386_stack_tramp_frame_sniffer
-};
-
+static const struct frame_unwind i386_stack_tramp_frame_unwind
+  = { "i386 stack tramp",
+      NORMAL_FRAME,
+      i386_epilogue_frame_unwind_stop_reason,
+      i386_epilogue_frame_this_id,
+      i386_epilogue_frame_prev_register,
+      NULL,
+      i386_stack_tramp_frame_sniffer };
+
 /* Generate a bytecode expression to get the value of the saved PC.  */
 
 static void
-i386_gen_return_address (struct gdbarch *gdbarch,
-			 struct agent_expr *ax, struct axs_value *value,
-			 CORE_ADDR scope)
+i386_gen_return_address (struct gdbarch *gdbarch, struct agent_expr *ax,
+                         struct axs_value *value, CORE_ADDR scope)
 {
   /* The following sequence assumes the traditional use of the base
      register.  */
@@ -2426,7 +2361,6 @@ i386_gen_return_address (struct gdbarch *gdbarch,
   value->type = register_type (gdbarch, I386_EIP_REGNUM);
   value->kind = axs_lvalue_memory;
 }
-
 
 /* Signal trampolines.  */
 
@@ -2452,27 +2386,27 @@ i386_sigtramp_frame_cache (frame_info_ptr this_frame, void **this_cache)
 
       addr = tdep->sigcontext_addr (this_frame);
       if (tdep->sc_reg_offset)
-	{
-	  int i;
+        {
+          int i;
 
-	  gdb_assert (tdep->sc_num_regs <= I386_NUM_SAVED_REGS);
+          gdb_assert (tdep->sc_num_regs <= I386_NUM_SAVED_REGS);
 
-	  for (i = 0; i < tdep->sc_num_regs; i++)
-	    if (tdep->sc_reg_offset[i] != -1)
-	      cache->saved_regs[i] = addr + tdep->sc_reg_offset[i];
-	}
+          for (i = 0; i < tdep->sc_num_regs; i++)
+            if (tdep->sc_reg_offset[i] != -1)
+              cache->saved_regs[i] = addr + tdep->sc_reg_offset[i];
+        }
       else
-	{
-	  cache->saved_regs[I386_EIP_REGNUM] = addr + tdep->sc_pc_offset;
-	  cache->saved_regs[I386_ESP_REGNUM] = addr + tdep->sc_sp_offset;
-	}
+        {
+          cache->saved_regs[I386_EIP_REGNUM] = addr + tdep->sc_pc_offset;
+          cache->saved_regs[I386_ESP_REGNUM] = addr + tdep->sc_sp_offset;
+        }
 
       cache->base_p = 1;
     }
   catch (const gdb_exception_error &ex)
     {
       if (ex.error != NOT_AVAILABLE_ERROR)
-	throw;
+        throw;
     }
 
   *this_cache = cache;
@@ -2481,10 +2415,10 @@ i386_sigtramp_frame_cache (frame_info_ptr this_frame, void **this_cache)
 
 static enum unwind_stop_reason
 i386_sigtramp_frame_unwind_stop_reason (frame_info_ptr this_frame,
-					void **this_cache)
+                                        void **this_cache)
 {
-  struct i386_frame_cache *cache =
-    i386_sigtramp_frame_cache (this_frame, this_cache);
+  struct i386_frame_cache *cache
+    = i386_sigtramp_frame_cache (this_frame, this_cache);
 
   if (!cache->base_p)
     return UNWIND_UNAVAILABLE;
@@ -2494,10 +2428,10 @@ i386_sigtramp_frame_unwind_stop_reason (frame_info_ptr this_frame,
 
 static void
 i386_sigtramp_frame_this_id (frame_info_ptr this_frame, void **this_cache,
-			     struct frame_id *this_id)
+                             struct frame_id *this_id)
 {
-  struct i386_frame_cache *cache =
-    i386_sigtramp_frame_cache (this_frame, this_cache);
+  struct i386_frame_cache *cache
+    = i386_sigtramp_frame_cache (this_frame, this_cache);
 
   if (!cache->base_p)
     (*this_id) = frame_id_build_unavailable_stack (get_frame_pc (this_frame));
@@ -2510,7 +2444,7 @@ i386_sigtramp_frame_this_id (frame_info_ptr this_frame, void **this_cache,
 
 static struct value *
 i386_sigtramp_frame_prev_register (frame_info_ptr this_frame,
-				   void **this_cache, int regnum)
+                                   void **this_cache, int regnum)
 {
   /* Make sure we've initialized the cache.  */
   i386_sigtramp_frame_cache (this_frame, this_cache);
@@ -2520,8 +2454,8 @@ i386_sigtramp_frame_prev_register (frame_info_ptr this_frame,
 
 static int
 i386_sigtramp_frame_sniffer (const struct frame_unwind *self,
-			     frame_info_ptr this_frame,
-			     void **this_prologue_cache)
+                             frame_info_ptr this_frame,
+                             void **this_prologue_cache)
 {
   gdbarch *arch = get_frame_arch (this_frame);
   i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (arch);
@@ -2534,7 +2468,7 @@ i386_sigtramp_frame_sniffer (const struct frame_unwind *self,
   if (tdep->sigtramp_p != NULL)
     {
       if (tdep->sigtramp_p (this_frame))
-	return 1;
+        return 1;
     }
 
   if (tdep->sigtramp_start != 0)
@@ -2543,23 +2477,20 @@ i386_sigtramp_frame_sniffer (const struct frame_unwind *self,
 
       gdb_assert (tdep->sigtramp_end != 0);
       if (pc >= tdep->sigtramp_start && pc < tdep->sigtramp_end)
-	return 1;
+        return 1;
     }
 
   return 0;
 }
 
-static const struct frame_unwind i386_sigtramp_frame_unwind =
-{
-  "i386 sigtramp",
-  SIGTRAMP_FRAME,
-  i386_sigtramp_frame_unwind_stop_reason,
-  i386_sigtramp_frame_this_id,
-  i386_sigtramp_frame_prev_register,
-  NULL,
-  i386_sigtramp_frame_sniffer
-};
-
+static const struct frame_unwind i386_sigtramp_frame_unwind
+  = { "i386 sigtramp",
+      SIGTRAMP_FRAME,
+      i386_sigtramp_frame_unwind_stop_reason,
+      i386_sigtramp_frame_this_id,
+      i386_sigtramp_frame_prev_register,
+      NULL,
+      i386_sigtramp_frame_sniffer };
 
 static CORE_ADDR
 i386_frame_base_address (frame_info_ptr this_frame, void **this_cache)
@@ -2569,13 +2500,9 @@ i386_frame_base_address (frame_info_ptr this_frame, void **this_cache)
   return cache->base;
 }
 
-static const struct frame_base i386_frame_base =
-{
-  &i386_frame_unwind,
-  i386_frame_base_address,
-  i386_frame_base_address,
-  i386_frame_base_address
-};
+static const struct frame_base i386_frame_base
+  = { &i386_frame_unwind, i386_frame_base_address, i386_frame_base_address,
+      i386_frame_base_address };
 
 static struct frame_id
 i386_dummy_id (struct gdbarch *gdbarch, frame_info_ptr this_frame)
@@ -2594,9 +2521,8 @@ i386_dummy_id (struct gdbarch *gdbarch, frame_info_ptr this_frame)
 static CORE_ADDR
 i386_frame_align (struct gdbarch *gdbarch, CORE_ADDR sp)
 {
-  return sp & -(CORE_ADDR)16;
+  return sp & -(CORE_ADDR) 16;
 }
-
 
 /* Figure out where the longjmp will land.  Slurp the args out of the
    stack.  We expect the first arg to be a pointer to the jmp_buf
@@ -2631,7 +2557,6 @@ i386_get_longjmp_target (frame_info_ptr frame, CORE_ADDR *pc)
   *pc = extract_unsigned_integer (buf, 4, byte_order);
   return 1;
 }
-
 
 /* Check whether TYPE must be 16-byte-aligned when passed as a
    function argument.  16-byte vectors, _Decimal128 and structures or
@@ -2648,17 +2573,16 @@ i386_16_byte_align_p (struct type *type)
     return 1;
   if (type->code () == TYPE_CODE_ARRAY)
     return i386_16_byte_align_p (type->target_type ());
-  if (type->code () == TYPE_CODE_STRUCT
-      || type->code () == TYPE_CODE_UNION)
+  if (type->code () == TYPE_CODE_STRUCT || type->code () == TYPE_CODE_UNION)
     {
       int i;
       for (i = 0; i < type->num_fields (); i++)
-	{
-	  if (field_is_static (&type->field (i)))
-	    continue;
-	  if (i386_16_byte_align_p (type->field (i).type ()))
-	    return 1;
-	}
+        {
+          if (field_is_static (&type->field (i)))
+            continue;
+          if (i386_16_byte_align_p (type->field (i).type ()))
+            return 1;
+        }
     }
   return 0;
 }
@@ -2667,9 +2591,9 @@ i386_16_byte_align_p (struct type *type)
 
 static CORE_ADDR
 i386_push_dummy_code (struct gdbarch *gdbarch, CORE_ADDR sp, CORE_ADDR funaddr,
-		      struct value **args, int nargs, struct type *value_type,
-		      CORE_ADDR *real_pc, CORE_ADDR *bp_addr,
-		      struct regcache *regcache)
+                      struct value **args, int nargs, struct type *value_type,
+                      CORE_ADDR *real_pc, CORE_ADDR *bp_addr,
+                      struct regcache *regcache)
 {
   /* Use 0xcc breakpoint - 1 byte.  */
   *bp_addr = sp - 1;
@@ -2684,10 +2608,10 @@ i386_push_dummy_code (struct gdbarch *gdbarch, CORE_ADDR sp, CORE_ADDR funaddr,
 
 CORE_ADDR
 i386_thiscall_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
-			       struct regcache *regcache, CORE_ADDR bp_addr,
-			       int nargs, struct value **args, CORE_ADDR sp,
-			       function_call_return_method return_method,
-			       CORE_ADDR struct_addr, bool thiscall)
+                               struct regcache *regcache, CORE_ADDR bp_addr,
+                               int nargs, struct value **args, CORE_ADDR sp,
+                               function_call_return_method return_method,
+                               CORE_ADDR struct_addr, bool thiscall)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   gdb_byte buf[4];
@@ -2711,56 +2635,56 @@ i386_thiscall_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
       int args_space_used = 0;
 
       if (return_method == return_method_struct)
-	{
-	  if (write_pass)
-	    {
-	      /* Push value address.  */
-	      store_unsigned_integer (buf, 4, byte_order, struct_addr);
-	      write_memory (sp, buf, 4);
-	      args_space_used += 4;
-	    }
-	  else
-	    args_space += 4;
-	}
+        {
+          if (write_pass)
+            {
+              /* Push value address.  */
+              store_unsigned_integer (buf, 4, byte_order, struct_addr);
+              write_memory (sp, buf, 4);
+              args_space_used += 4;
+            }
+          else
+            args_space += 4;
+        }
 
       for (i = thiscall ? 1 : 0; i < nargs; i++)
-	{
-	  int len = value_enclosing_type (args[i])->length ();
+        {
+          int len = value_enclosing_type (args[i])->length ();
 
-	  if (write_pass)
-	    {
-	      if (i386_16_byte_align_p (value_enclosing_type (args[i])))
-		args_space_used = align_up (args_space_used, 16);
+          if (write_pass)
+            {
+              if (i386_16_byte_align_p (value_enclosing_type (args[i])))
+                args_space_used = align_up (args_space_used, 16);
 
-	      write_memory (sp + args_space_used,
-			    value_contents_all (args[i]).data (), len);
-	      /* The System V ABI says that:
+              write_memory (sp + args_space_used,
+                            value_contents_all (args[i]).data (), len);
+              /* The System V ABI says that:
 
 	      "An argument's size is increased, if necessary, to make it a
 	      multiple of [32-bit] words.  This may require tail padding,
 	      depending on the size of the argument."
 
 	      This makes sure the stack stays word-aligned.  */
-	      args_space_used += align_up (len, 4);
-	    }
-	  else
-	    {
-	      if (i386_16_byte_align_p (value_enclosing_type (args[i])))
-		args_space = align_up (args_space, 16);
-	      args_space += align_up (len, 4);
-	    }
-	}
+              args_space_used += align_up (len, 4);
+            }
+          else
+            {
+              if (i386_16_byte_align_p (value_enclosing_type (args[i])))
+                args_space = align_up (args_space, 16);
+              args_space += align_up (len, 4);
+            }
+        }
 
       if (!write_pass)
-	{
-	  sp -= args_space;
+        {
+          sp -= args_space;
 
-	  /* The original System V ABI only requires word alignment,
+          /* The original System V ABI only requires word alignment,
 	     but modern incarnations need 16-byte alignment in order
 	     to support SSE.  Since wasting a few bytes here isn't
 	     harmful we unconditionally enforce 16-byte alignment.  */
-	  sp &= ~0xf;
-	}
+          sp &= ~0xf;
+        }
     }
 
   /* Store return address.  */
@@ -2778,7 +2702,7 @@ i386_thiscall_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   /* The 'this' pointer needs to be in ECX.  */
   if (thiscall)
     regcache->cooked_write (I386_ECX_REGNUM,
-			    value_contents_all (args[0]).data ());
+                            value_contents_all (args[0]).data ());
 
   /* If the PLT is position-independent, the SYSTEM V ABI requires %ebx to be
      set to the address of the GOT when doing a call to a PLT address.
@@ -2794,32 +2718,32 @@ i386_thiscall_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
       /* Get object file containing func_addr.  */
       obj_section *func_section = find_pc_section (func_addr);
       if (func_section != nullptr)
-	objf = func_section->objfile;
+        objf = func_section->objfile;
 
       if (objf != nullptr)
-	{
-	  /* Get corresponding .got.plt or .got section.  */
-	  asect = bfd_get_section_by_name (objf->obfd.get (), ".got.plt");
-	  if (asect == nullptr)
-	    asect = bfd_get_section_by_name (objf->obfd.get (), ".got");
-	}
+        {
+          /* Get corresponding .got.plt or .got section.  */
+          asect = bfd_get_section_by_name (objf->obfd.get (), ".got.plt");
+          if (asect == nullptr)
+            asect = bfd_get_section_by_name (objf->obfd.get (), ".got");
+        }
 
       if (asect != nullptr)
-	/* Translate asection to obj_section.  */
-	osect = maint_obj_section_from_bfd_section (objf->obfd.get (),
-						    asect, objf);
+        /* Translate asection to obj_section.  */
+        osect = maint_obj_section_from_bfd_section (objf->obfd.get (), asect,
+                                                    objf);
 
       if (osect != nullptr)
-	{
-	  /* Store the section address in %ebx.  */
-	  store_unsigned_integer (buf, 4, byte_order, osect->addr ());
-	  regcache->cooked_write (I386_EBX_REGNUM, buf);
-	}
+        {
+          /* Store the section address in %ebx.  */
+          store_unsigned_integer (buf, 4, byte_order, osect->addr ());
+          regcache->cooked_write (I386_EBX_REGNUM, buf);
+        }
       else
-	{
-	  /* If we would only do this for a position-independent PLT, it would
+        {
+          /* If we would only do this for a position-independent PLT, it would
 	     make sense to issue a warning here.  */
-	}
+        }
     }
 
   /* MarkK wrote: This "+ 8" is all over the place:
@@ -2838,28 +2762,28 @@ i386_thiscall_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
 static CORE_ADDR
 i386_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
-		      struct regcache *regcache, CORE_ADDR bp_addr, int nargs,
-		      struct value **args, CORE_ADDR sp,
-		      function_call_return_method return_method,
-		      CORE_ADDR struct_addr)
+                      struct regcache *regcache, CORE_ADDR bp_addr, int nargs,
+                      struct value **args, CORE_ADDR sp,
+                      function_call_return_method return_method,
+                      CORE_ADDR struct_addr)
 {
   return i386_thiscall_push_dummy_call (gdbarch, function, regcache, bp_addr,
-					nargs, args, sp, return_method,
-					struct_addr, false);
+                                        nargs, args, sp, return_method,
+                                        struct_addr, false);
 }
 
 /* These registers are used for returning integers (and on some
    targets also for returning `struct' and `union' values when their
    size and alignment match an integer type).  */
-#define LOW_RETURN_REGNUM	I386_EAX_REGNUM /* %eax */
-#define HIGH_RETURN_REGNUM	I386_EDX_REGNUM /* %edx */
+#define LOW_RETURN_REGNUM I386_EAX_REGNUM  /* %eax */
+#define HIGH_RETURN_REGNUM I386_EDX_REGNUM /* %edx */
 
 /* Read, for architecture GDBARCH, a function return value of TYPE
    from REGCACHE, and copy that into VALBUF.  */
 
 static void
 i386_extract_return_value (struct gdbarch *gdbarch, struct type *type,
-			   struct regcache *regcache, gdb_byte *valbuf)
+                           struct regcache *regcache, gdb_byte *valbuf)
 {
   i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
   int len = type->length ();
@@ -2869,17 +2793,17 @@ i386_extract_return_value (struct gdbarch *gdbarch, struct type *type,
   if (((type->code () == TYPE_CODE_FLT) && len == 2)
       || ((type->code () == TYPE_CODE_COMPLEX) && len == 4))
     {
-	regcache->raw_read (I387_XMM0_REGNUM (tdep), valbuf);
-	return;
+      regcache->raw_read (I387_XMM0_REGNUM (tdep), valbuf);
+      return;
     }
   else if (type->code () == TYPE_CODE_FLT)
     {
       if (tdep->st0_regnum < 0)
-	{
-	  warning (_("Cannot find floating-point return value."));
-	  memset (valbuf, 0, len);
-	  return;
-	}
+        {
+          warning (_ ("Cannot find floating-point return value."));
+          memset (valbuf, 0, len);
+          return;
+        }
 
       /* Floating-point return values can be found in %st(0).  Convert
 	 its contents to the desired type.  This is probably not
@@ -2894,20 +2818,20 @@ i386_extract_return_value (struct gdbarch *gdbarch, struct type *type,
       int high_size = register_size (gdbarch, HIGH_RETURN_REGNUM);
 
       if (len <= low_size)
-	{
-	  regcache->raw_read (LOW_RETURN_REGNUM, buf);
-	  memcpy (valbuf, buf, len);
-	}
+        {
+          regcache->raw_read (LOW_RETURN_REGNUM, buf);
+          memcpy (valbuf, buf, len);
+        }
       else if (len <= (low_size + high_size))
-	{
-	  regcache->raw_read (LOW_RETURN_REGNUM, buf);
-	  memcpy (valbuf, buf, low_size);
-	  regcache->raw_read (HIGH_RETURN_REGNUM, buf);
-	  memcpy (valbuf + low_size, buf, len - low_size);
-	}
+        {
+          regcache->raw_read (LOW_RETURN_REGNUM, buf);
+          memcpy (valbuf, buf, low_size);
+          regcache->raw_read (HIGH_RETURN_REGNUM, buf);
+          memcpy (valbuf + low_size, buf, len - low_size);
+        }
       else
-	internal_error (_("Cannot extract return value of %d bytes long."),
-			len);
+        internal_error (_ ("Cannot extract return value of %d bytes long."),
+                        len);
     }
 }
 
@@ -2916,7 +2840,7 @@ i386_extract_return_value (struct gdbarch *gdbarch, struct type *type,
 
 static void
 i386_store_return_value (struct gdbarch *gdbarch, struct type *type,
-			 struct regcache *regcache, const gdb_byte *valbuf)
+                         struct regcache *regcache, const gdb_byte *valbuf)
 {
   i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
   int len = type->length ();
@@ -2927,10 +2851,10 @@ i386_store_return_value (struct gdbarch *gdbarch, struct type *type,
       gdb_byte buf[I386_MAX_REGISTER_SIZE];
 
       if (tdep->st0_regnum < 0)
-	{
-	  warning (_("Cannot set floating-point return value."));
-	  return;
-	}
+        {
+          warning (_ ("Cannot set floating-point return value."));
+          return;
+        }
 
       /* Returning floating-point values is a bit tricky.  Apart from
 	 storing the return value in %st(0), we have to simulate the
@@ -2962,31 +2886,27 @@ i386_store_return_value (struct gdbarch *gdbarch, struct type *type,
       int high_size = register_size (gdbarch, HIGH_RETURN_REGNUM);
 
       if (len <= low_size)
-	regcache->raw_write_part (LOW_RETURN_REGNUM, 0, len, valbuf);
+        regcache->raw_write_part (LOW_RETURN_REGNUM, 0, len, valbuf);
       else if (len <= (low_size + high_size))
-	{
-	  regcache->raw_write (LOW_RETURN_REGNUM, valbuf);
-	  regcache->raw_write_part (HIGH_RETURN_REGNUM, 0, len - low_size,
-				    valbuf + low_size);
-	}
+        {
+          regcache->raw_write (LOW_RETURN_REGNUM, valbuf);
+          regcache->raw_write_part (HIGH_RETURN_REGNUM, 0, len - low_size,
+                                    valbuf + low_size);
+        }
       else
-	internal_error (_("Cannot store return value of %d bytes long."), len);
+        internal_error (_ ("Cannot store return value of %d bytes long."),
+                        len);
     }
 }
-
 
 /* This is the variable that is set with "set struct-convention", and
    its legitimate values.  */
 static const char default_struct_convention[] = "default";
 static const char pcc_struct_convention[] = "pcc";
 static const char reg_struct_convention[] = "reg";
-static const char *const valid_conventions[] =
-{
-  default_struct_convention,
-  pcc_struct_convention,
-  reg_struct_convention,
-  NULL
-};
+static const char *const valid_conventions[]
+  = { default_struct_convention, pcc_struct_convention, reg_struct_convention,
+      NULL };
 static const char *struct_convention = default_struct_convention;
 
 /* Return non-zero if TYPE, which is assumed to be a structure,
@@ -3000,13 +2920,12 @@ i386_reg_struct_return_p (struct gdbarch *gdbarch, struct type *type)
   enum type_code code = type->code ();
   int len = type->length ();
 
-  gdb_assert (code == TYPE_CODE_STRUCT
-	      || code == TYPE_CODE_UNION
-	      || code == TYPE_CODE_ARRAY);
+  gdb_assert (code == TYPE_CODE_STRUCT || code == TYPE_CODE_UNION
+              || code == TYPE_CODE_ARRAY);
 
   if (struct_convention == pcc_struct_convention
       || (struct_convention == default_struct_convention
-	  && tdep->struct_return == pcc_struct_return))
+          && tdep->struct_return == pcc_struct_return))
     return 0;
 
   /* Structures consisting of a single `float', `double' or 'long
@@ -3015,7 +2934,7 @@ i386_reg_struct_return_p (struct gdbarch *gdbarch, struct type *type)
     {
       type = check_typedef (type->field (0).type ());
       if (type->code () == TYPE_CODE_FLT)
-	return (len == 4 || len == 8 || len == 12);
+        return (len == 4 || len == 8 || len == 12);
     }
 
   return (len == 1 || len == 2 || len == 4 || len == 8);
@@ -3029,14 +2948,13 @@ i386_reg_struct_return_p (struct gdbarch *gdbarch, struct type *type)
 
 static enum return_value_convention
 i386_return_value (struct gdbarch *gdbarch, struct value *function,
-		   struct type *type, struct regcache *regcache,
-		   gdb_byte *readbuf, const gdb_byte *writebuf)
+                   struct type *type, struct regcache *regcache,
+                   gdb_byte *readbuf, const gdb_byte *writebuf)
 {
   enum type_code code = type->code ();
 
-  if (((code == TYPE_CODE_STRUCT
-	|| code == TYPE_CODE_UNION
-	|| code == TYPE_CODE_ARRAY)
+  if (((code == TYPE_CODE_STRUCT || code == TYPE_CODE_UNION
+        || code == TYPE_CODE_ARRAY)
        && !i386_reg_struct_return_p (gdbarch, type))
       /* Complex double and long double uses the struct return convention.  */
       || (code == TYPE_CODE_COMPLEX && type->length () == 16)
@@ -3062,12 +2980,12 @@ i386_return_value (struct gdbarch *gdbarch, struct value *function,
 	 to arrays.  */
 
       if (readbuf)
-	{
-	  ULONGEST addr;
+        {
+          ULONGEST addr;
 
-	  regcache_raw_read_unsigned (regcache, I386_EAX_REGNUM, &addr);
-	  read_memory (addr, readbuf, type->length ());
-	}
+          regcache_raw_read_unsigned (regcache, I386_EAX_REGNUM, &addr);
+          read_memory (addr, readbuf, type->length ());
+        }
 
       return RETURN_VALUE_ABI_RETURNS_ADDRESS;
     }
@@ -3082,8 +3000,8 @@ i386_return_value (struct gdbarch *gdbarch, struct value *function,
   if (code == TYPE_CODE_STRUCT && type->num_fields () == 1)
     {
       type = check_typedef (type->field (0).type ());
-      return i386_return_value (gdbarch, function, type, regcache,
-				readbuf, writebuf);
+      return i386_return_value (gdbarch, function, type, regcache, readbuf,
+                                writebuf);
     }
 
   if (readbuf)
@@ -3093,7 +3011,6 @@ i386_return_value (struct gdbarch *gdbarch, struct value *function,
 
   return RETURN_VALUE_REGISTER_CONVENTION;
 }
-
 
 struct type *
 i387_ext_type (struct gdbarch *gdbarch)
@@ -3118,7 +3035,6 @@ i386_bnd_type (struct gdbarch *gdbarch)
 {
   i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
 
-
   if (!tdep->i386_bnd_type)
     {
       struct type *t;
@@ -3133,8 +3049,8 @@ i386_bnd_type (struct gdbarch *gdbarch)
       };
 #endif
 
-      t = arch_composite_type (gdbarch,
-			       "__gdb_builtin_type_bound128", TYPE_CODE_STRUCT);
+      t = arch_composite_type (gdbarch, "__gdb_builtin_type_bound128",
+                               TYPE_CODE_STRUCT);
 
       append_composite_type_field (t, "lbound", bt->builtin_data_ptr);
       append_composite_type_field (t, "ubound", bt->builtin_data_ptr);
@@ -3176,26 +3092,27 @@ i386_zmm_type (struct gdbarch *gdbarch)
 
       struct type *t;
 
-      t = arch_composite_type (gdbarch,
-			       "__gdb_builtin_type_vec512i", TYPE_CODE_UNION);
+      t = arch_composite_type (gdbarch, "__gdb_builtin_type_vec512i",
+                               TYPE_CODE_UNION);
       append_composite_type_field (t, "v32_bfloat16",
-				   init_vector_type (bt->builtin_bfloat16, 32));
+                                   init_vector_type (bt->builtin_bfloat16,
+                                                     32));
       append_composite_type_field (t, "v32_half",
-				   init_vector_type (bt->builtin_half, 32));
+                                   init_vector_type (bt->builtin_half, 32));
       append_composite_type_field (t, "v16_float",
-				   init_vector_type (bt->builtin_float, 16));
+                                   init_vector_type (bt->builtin_float, 16));
       append_composite_type_field (t, "v8_double",
-				   init_vector_type (bt->builtin_double, 8));
+                                   init_vector_type (bt->builtin_double, 8));
       append_composite_type_field (t, "v64_int8",
-				   init_vector_type (bt->builtin_int8, 64));
+                                   init_vector_type (bt->builtin_int8, 64));
       append_composite_type_field (t, "v32_int16",
-				   init_vector_type (bt->builtin_int16, 32));
+                                   init_vector_type (bt->builtin_int16, 32));
       append_composite_type_field (t, "v16_int32",
-				   init_vector_type (bt->builtin_int32, 16));
+                                   init_vector_type (bt->builtin_int32, 16));
       append_composite_type_field (t, "v8_int64",
-				   init_vector_type (bt->builtin_int64, 8));
+                                   init_vector_type (bt->builtin_int64, 8));
       append_composite_type_field (t, "v4_int128",
-				   init_vector_type (bt->builtin_int128, 4));
+                                   init_vector_type (bt->builtin_int128, 4));
 
       t->set_is_vector (true);
       t->set_name ("builtin_type_vec512i");
@@ -3235,26 +3152,27 @@ i386_ymm_type (struct gdbarch *gdbarch)
 
       struct type *t;
 
-      t = arch_composite_type (gdbarch,
-			       "__gdb_builtin_type_vec256i", TYPE_CODE_UNION);
+      t = arch_composite_type (gdbarch, "__gdb_builtin_type_vec256i",
+                               TYPE_CODE_UNION);
       append_composite_type_field (t, "v16_bfloat16",
-				   init_vector_type (bt->builtin_bfloat16, 16));
+                                   init_vector_type (bt->builtin_bfloat16,
+                                                     16));
       append_composite_type_field (t, "v16_half",
-				   init_vector_type (bt->builtin_half, 16));
+                                   init_vector_type (bt->builtin_half, 16));
       append_composite_type_field (t, "v8_float",
-				   init_vector_type (bt->builtin_float, 8));
+                                   init_vector_type (bt->builtin_float, 8));
       append_composite_type_field (t, "v4_double",
-				   init_vector_type (bt->builtin_double, 4));
+                                   init_vector_type (bt->builtin_double, 4));
       append_composite_type_field (t, "v32_int8",
-				   init_vector_type (bt->builtin_int8, 32));
+                                   init_vector_type (bt->builtin_int8, 32));
       append_composite_type_field (t, "v16_int16",
-				   init_vector_type (bt->builtin_int16, 16));
+                                   init_vector_type (bt->builtin_int16, 16));
       append_composite_type_field (t, "v8_int32",
-				   init_vector_type (bt->builtin_int32, 8));
+                                   init_vector_type (bt->builtin_int32, 8));
       append_composite_type_field (t, "v4_int64",
-				   init_vector_type (bt->builtin_int64, 4));
+                                   init_vector_type (bt->builtin_int64, 4));
       append_composite_type_field (t, "v2_int128",
-				   init_vector_type (bt->builtin_int128, 2));
+                                   init_vector_type (bt->builtin_int128, 2));
 
       t->set_is_vector (true);
       t->set_name ("builtin_type_vec256i");
@@ -3287,16 +3205,16 @@ i386_mmx_type (struct gdbarch *gdbarch)
 
       struct type *t;
 
-      t = arch_composite_type (gdbarch,
-			       "__gdb_builtin_type_vec64i", TYPE_CODE_UNION);
+      t = arch_composite_type (gdbarch, "__gdb_builtin_type_vec64i",
+                               TYPE_CODE_UNION);
 
       append_composite_type_field (t, "uint64", bt->builtin_int64);
       append_composite_type_field (t, "v2_int32",
-				   init_vector_type (bt->builtin_int32, 2));
+                                   init_vector_type (bt->builtin_int32, 2));
       append_composite_type_field (t, "v4_int16",
-				   init_vector_type (bt->builtin_int16, 4));
+                                   init_vector_type (bt->builtin_int16, 4));
       append_composite_type_field (t, "v8_int8",
-				   init_vector_type (bt->builtin_int8, 8));
+                                   init_vector_type (bt->builtin_int8, 8));
 
       t->set_is_vector (true);
       t->set_name ("builtin_type_vec64i");
@@ -3326,16 +3244,16 @@ i386_pseudo_register_type (struct gdbarch *gdbarch, int regnum)
     {
       const struct builtin_type *bt = builtin_type (gdbarch);
       if (i386_byte_regnum_p (gdbarch, regnum))
-	return bt->builtin_int8;
+        return bt->builtin_int8;
       else if (i386_word_regnum_p (gdbarch, regnum))
-	return bt->builtin_int16;
+        return bt->builtin_int16;
       else if (i386_dword_regnum_p (gdbarch, regnum))
-	return bt->builtin_int32;
+        return bt->builtin_int32;
       else if (i386_k_regnum_p (gdbarch, regnum))
-	return bt->builtin_int64;
+        return bt->builtin_int64;
     }
 
-  internal_error (_("invalid regnum"));
+  internal_error (_ ("invalid regnum"));
 }
 
 /* Map a cooked register onto a raw register or memory.  For the i386,
@@ -3364,9 +3282,8 @@ i386_mmx_regnum_to_fp_regnum (readable_regcache *regcache, int regnum)
 
 void
 i386_pseudo_register_read_into_value (struct gdbarch *gdbarch,
-				      readable_regcache *regcache,
-				      int regnum,
-				      struct value *result_value)
+                                      readable_regcache *regcache, int regnum,
+                                      struct value *result_value)
 {
   gdb_byte raw_buf[I386_MAX_REGISTER_SIZE];
   enum register_status status;
@@ -3379,172 +3296,169 @@ i386_pseudo_register_read_into_value (struct gdbarch *gdbarch,
       /* Extract (always little endian).  */
       status = regcache->raw_read (fpnum, raw_buf);
       if (status != REG_VALID)
-	mark_value_bytes_unavailable (result_value, 0,
-				      value_type (result_value)->length ());
+        mark_value_bytes_unavailable (result_value, 0,
+                                      value_type (result_value)->length ());
       else
-	memcpy (buf, raw_buf, register_size (gdbarch, regnum));
+        memcpy (buf, raw_buf, register_size (gdbarch, regnum));
     }
   else
     {
       i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
       if (i386_bnd_regnum_p (gdbarch, regnum))
-	{
-	  regnum -= tdep->bnd0_regnum;
+        {
+          regnum -= tdep->bnd0_regnum;
 
-	  /* Extract (always little endian).  Read lower 128bits.  */
-	  status = regcache->raw_read (I387_BND0R_REGNUM (tdep) + regnum,
-				       raw_buf);
-	  if (status != REG_VALID)
-	    mark_value_bytes_unavailable (result_value, 0, 16);
-	  else
-	    {
-	      enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
-	      LONGEST upper, lower;
-	      int size = builtin_type (gdbarch)->builtin_data_ptr->length ();
+          /* Extract (always little endian).  Read lower 128bits.  */
+          status
+            = regcache->raw_read (I387_BND0R_REGNUM (tdep) + regnum, raw_buf);
+          if (status != REG_VALID)
+            mark_value_bytes_unavailable (result_value, 0, 16);
+          else
+            {
+              enum bfd_endian byte_order
+                = gdbarch_byte_order (target_gdbarch ());
+              LONGEST upper, lower;
+              int size = builtin_type (gdbarch)->builtin_data_ptr->length ();
 
-	      lower = extract_unsigned_integer (raw_buf, 8, byte_order);
-	      upper = extract_unsigned_integer (raw_buf + 8, 8, byte_order);
-	      upper = ~upper;
+              lower = extract_unsigned_integer (raw_buf, 8, byte_order);
+              upper = extract_unsigned_integer (raw_buf + 8, 8, byte_order);
+              upper = ~upper;
 
-	      memcpy (buf, &lower, size);
-	      memcpy (buf + size, &upper, size);
-	    }
-	}
+              memcpy (buf, &lower, size);
+              memcpy (buf + size, &upper, size);
+            }
+        }
       else if (i386_k_regnum_p (gdbarch, regnum))
-	{
-	  regnum -= tdep->k0_regnum;
+        {
+          regnum -= tdep->k0_regnum;
 
-	  /* Extract (always little endian).  */
-	  status = regcache->raw_read (tdep->k0_regnum + regnum, raw_buf);
-	  if (status != REG_VALID)
-	    mark_value_bytes_unavailable (result_value, 0, 8);
-	  else
-	    memcpy (buf, raw_buf, 8);
-	}
+          /* Extract (always little endian).  */
+          status = regcache->raw_read (tdep->k0_regnum + regnum, raw_buf);
+          if (status != REG_VALID)
+            mark_value_bytes_unavailable (result_value, 0, 8);
+          else
+            memcpy (buf, raw_buf, 8);
+        }
       else if (i386_zmm_regnum_p (gdbarch, regnum))
-	{
-	  regnum -= tdep->zmm0_regnum;
+        {
+          regnum -= tdep->zmm0_regnum;
 
-	  if (regnum < num_lower_zmm_regs)
-	    {
-	      /* Extract (always little endian).  Read lower 128bits.  */
-	      status = regcache->raw_read (I387_XMM0_REGNUM (tdep) + regnum,
-					   raw_buf);
-	      if (status != REG_VALID)
-		mark_value_bytes_unavailable (result_value, 0, 16);
-	      else
-		memcpy (buf, raw_buf, 16);
+          if (regnum < num_lower_zmm_regs)
+            {
+              /* Extract (always little endian).  Read lower 128bits.  */
+              status = regcache->raw_read (I387_XMM0_REGNUM (tdep) + regnum,
+                                           raw_buf);
+              if (status != REG_VALID)
+                mark_value_bytes_unavailable (result_value, 0, 16);
+              else
+                memcpy (buf, raw_buf, 16);
 
-	      /* Extract (always little endian).  Read upper 128bits.  */
-	      status = regcache->raw_read (tdep->ymm0h_regnum + regnum,
-					   raw_buf);
-	      if (status != REG_VALID)
-		mark_value_bytes_unavailable (result_value, 16, 16);
-	      else
-		memcpy (buf + 16, raw_buf, 16);
-	    }
-	  else
-	    {
-	      /* Extract (always little endian).  Read lower 128bits.  */
-	      status = regcache->raw_read (I387_XMM16_REGNUM (tdep) + regnum
-					   - num_lower_zmm_regs,
-					   raw_buf);
-	      if (status != REG_VALID)
-		mark_value_bytes_unavailable (result_value, 0, 16);
-	      else
-		memcpy (buf, raw_buf, 16);
+              /* Extract (always little endian).  Read upper 128bits.  */
+              status
+                = regcache->raw_read (tdep->ymm0h_regnum + regnum, raw_buf);
+              if (status != REG_VALID)
+                mark_value_bytes_unavailable (result_value, 16, 16);
+              else
+                memcpy (buf + 16, raw_buf, 16);
+            }
+          else
+            {
+              /* Extract (always little endian).  Read lower 128bits.  */
+              status = regcache->raw_read (I387_XMM16_REGNUM (tdep) + regnum
+                                             - num_lower_zmm_regs,
+                                           raw_buf);
+              if (status != REG_VALID)
+                mark_value_bytes_unavailable (result_value, 0, 16);
+              else
+                memcpy (buf, raw_buf, 16);
 
-	      /* Extract (always little endian).  Read upper 128bits.  */
-	      status = regcache->raw_read (I387_YMM16H_REGNUM (tdep) + regnum
-					   - num_lower_zmm_regs,
-					   raw_buf);
-	      if (status != REG_VALID)
-		mark_value_bytes_unavailable (result_value, 16, 16);
-	      else
-		memcpy (buf + 16, raw_buf, 16);
-	    }
+              /* Extract (always little endian).  Read upper 128bits.  */
+              status = regcache->raw_read (I387_YMM16H_REGNUM (tdep) + regnum
+                                             - num_lower_zmm_regs,
+                                           raw_buf);
+              if (status != REG_VALID)
+                mark_value_bytes_unavailable (result_value, 16, 16);
+              else
+                memcpy (buf + 16, raw_buf, 16);
+            }
 
-	  /* Read upper 256bits.  */
-	  status = regcache->raw_read (tdep->zmm0h_regnum + regnum,
-				       raw_buf);
-	  if (status != REG_VALID)
-	    mark_value_bytes_unavailable (result_value, 32, 32);
-	  else
-	    memcpy (buf + 32, raw_buf, 32);
-	}
+          /* Read upper 256bits.  */
+          status = regcache->raw_read (tdep->zmm0h_regnum + regnum, raw_buf);
+          if (status != REG_VALID)
+            mark_value_bytes_unavailable (result_value, 32, 32);
+          else
+            memcpy (buf + 32, raw_buf, 32);
+        }
       else if (i386_ymm_regnum_p (gdbarch, regnum))
-	{
-	  regnum -= tdep->ymm0_regnum;
+        {
+          regnum -= tdep->ymm0_regnum;
 
-	  /* Extract (always little endian).  Read lower 128bits.  */
-	  status = regcache->raw_read (I387_XMM0_REGNUM (tdep) + regnum,
-				       raw_buf);
-	  if (status != REG_VALID)
-	    mark_value_bytes_unavailable (result_value, 0, 16);
-	  else
-	    memcpy (buf, raw_buf, 16);
-	  /* Read upper 128bits.  */
-	  status = regcache->raw_read (tdep->ymm0h_regnum + regnum,
-				       raw_buf);
-	  if (status != REG_VALID)
-	    mark_value_bytes_unavailable (result_value, 16, 32);
-	  else
-	    memcpy (buf + 16, raw_buf, 16);
-	}
+          /* Extract (always little endian).  Read lower 128bits.  */
+          status
+            = regcache->raw_read (I387_XMM0_REGNUM (tdep) + regnum, raw_buf);
+          if (status != REG_VALID)
+            mark_value_bytes_unavailable (result_value, 0, 16);
+          else
+            memcpy (buf, raw_buf, 16);
+          /* Read upper 128bits.  */
+          status = regcache->raw_read (tdep->ymm0h_regnum + regnum, raw_buf);
+          if (status != REG_VALID)
+            mark_value_bytes_unavailable (result_value, 16, 32);
+          else
+            memcpy (buf + 16, raw_buf, 16);
+        }
       else if (i386_ymm_avx512_regnum_p (gdbarch, regnum))
-	{
-	  regnum -= tdep->ymm16_regnum;
-	  /* Extract (always little endian).  Read lower 128bits.  */
-	  status = regcache->raw_read (I387_XMM16_REGNUM (tdep) + regnum,
-				       raw_buf);
-	  if (status != REG_VALID)
-	    mark_value_bytes_unavailable (result_value, 0, 16);
-	  else
-	    memcpy (buf, raw_buf, 16);
-	  /* Read upper 128bits.  */
-	  status = regcache->raw_read (tdep->ymm16h_regnum + regnum,
-				       raw_buf);
-	  if (status != REG_VALID)
-	    mark_value_bytes_unavailable (result_value, 16, 16);
-	  else
-	    memcpy (buf + 16, raw_buf, 16);
-	}
+        {
+          regnum -= tdep->ymm16_regnum;
+          /* Extract (always little endian).  Read lower 128bits.  */
+          status
+            = regcache->raw_read (I387_XMM16_REGNUM (tdep) + regnum, raw_buf);
+          if (status != REG_VALID)
+            mark_value_bytes_unavailable (result_value, 0, 16);
+          else
+            memcpy (buf, raw_buf, 16);
+          /* Read upper 128bits.  */
+          status = regcache->raw_read (tdep->ymm16h_regnum + regnum, raw_buf);
+          if (status != REG_VALID)
+            mark_value_bytes_unavailable (result_value, 16, 16);
+          else
+            memcpy (buf + 16, raw_buf, 16);
+        }
       else if (i386_word_regnum_p (gdbarch, regnum))
-	{
-	  int gpnum = regnum - tdep->ax_regnum;
+        {
+          int gpnum = regnum - tdep->ax_regnum;
 
-	  /* Extract (always little endian).  */
-	  status = regcache->raw_read (gpnum, raw_buf);
-	  if (status != REG_VALID)
-	    mark_value_bytes_unavailable (result_value, 0,
-					  value_type (result_value)->length ());
-	  else
-	    memcpy (buf, raw_buf, 2);
-	}
+          /* Extract (always little endian).  */
+          status = regcache->raw_read (gpnum, raw_buf);
+          if (status != REG_VALID)
+            mark_value_bytes_unavailable (
+              result_value, 0, value_type (result_value)->length ());
+          else
+            memcpy (buf, raw_buf, 2);
+        }
       else if (i386_byte_regnum_p (gdbarch, regnum))
-	{
-	  int gpnum = regnum - tdep->al_regnum;
+        {
+          int gpnum = regnum - tdep->al_regnum;
 
-	  /* Extract (always little endian).  We read both lower and
+          /* Extract (always little endian).  We read both lower and
 	     upper registers.  */
-	  status = regcache->raw_read (gpnum % 4, raw_buf);
-	  if (status != REG_VALID)
-	    mark_value_bytes_unavailable (result_value, 0,
-					  value_type (result_value)->length ());
-	  else if (gpnum >= 4)
-	    memcpy (buf, raw_buf + 1, 1);
-	  else
-	    memcpy (buf, raw_buf, 1);
-	}
+          status = regcache->raw_read (gpnum % 4, raw_buf);
+          if (status != REG_VALID)
+            mark_value_bytes_unavailable (
+              result_value, 0, value_type (result_value)->length ());
+          else if (gpnum >= 4)
+            memcpy (buf, raw_buf + 1, 1);
+          else
+            memcpy (buf, raw_buf, 1);
+        }
       else
-	internal_error (_("invalid regnum"));
+        internal_error (_ ("invalid regnum"));
     }
 }
 
 static struct value *
 i386_pseudo_register_read_value (struct gdbarch *gdbarch,
-				 readable_regcache *regcache,
-				 int regnum)
+                                 readable_regcache *regcache, int regnum)
 {
   struct value *result;
 
@@ -3559,7 +3473,7 @@ i386_pseudo_register_read_value (struct gdbarch *gdbarch,
 
 void
 i386_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
-			    int regnum, const gdb_byte *buf)
+                            int regnum, const gdb_byte *buf)
 {
   gdb_byte raw_buf[I386_MAX_REGISTER_SIZE];
 
@@ -3579,102 +3493,103 @@ i386_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
       i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
 
       if (i386_bnd_regnum_p (gdbarch, regnum))
-	{
-	  ULONGEST upper, lower;
-	  int size = builtin_type (gdbarch)->builtin_data_ptr->length ();
-	  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
+        {
+          ULONGEST upper, lower;
+          int size = builtin_type (gdbarch)->builtin_data_ptr->length ();
+          enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
 
-	  /* New values from input value.  */
-	  regnum -= tdep->bnd0_regnum;
-	  lower = extract_unsigned_integer (buf, size, byte_order);
-	  upper = extract_unsigned_integer (buf + size, size, byte_order);
+          /* New values from input value.  */
+          regnum -= tdep->bnd0_regnum;
+          lower = extract_unsigned_integer (buf, size, byte_order);
+          upper = extract_unsigned_integer (buf + size, size, byte_order);
 
-	  /* Fetching register buffer.  */
-	  regcache->raw_read (I387_BND0R_REGNUM (tdep) + regnum,
-			      raw_buf);
+          /* Fetching register buffer.  */
+          regcache->raw_read (I387_BND0R_REGNUM (tdep) + regnum, raw_buf);
 
-	  upper = ~upper;
+          upper = ~upper;
 
-	  /* Set register bits.  */
-	  memcpy (raw_buf, &lower, 8);
-	  memcpy (raw_buf + 8, &upper, 8);
+          /* Set register bits.  */
+          memcpy (raw_buf, &lower, 8);
+          memcpy (raw_buf + 8, &upper, 8);
 
-	  regcache->raw_write (I387_BND0R_REGNUM (tdep) + regnum, raw_buf);
-	}
+          regcache->raw_write (I387_BND0R_REGNUM (tdep) + regnum, raw_buf);
+        }
       else if (i386_k_regnum_p (gdbarch, regnum))
-	{
-	  regnum -= tdep->k0_regnum;
+        {
+          regnum -= tdep->k0_regnum;
 
-	  regcache->raw_write (tdep->k0_regnum + regnum, buf);
-	}
+          regcache->raw_write (tdep->k0_regnum + regnum, buf);
+        }
       else if (i386_zmm_regnum_p (gdbarch, regnum))
-	{
-	  regnum -= tdep->zmm0_regnum;
+        {
+          regnum -= tdep->zmm0_regnum;
 
-	  if (regnum < num_lower_zmm_regs)
-	    {
-	      /* Write lower 128bits.  */
-	      regcache->raw_write (I387_XMM0_REGNUM (tdep) + regnum, buf);
-	      /* Write upper 128bits.  */
-	      regcache->raw_write (I387_YMM0_REGNUM (tdep) + regnum, buf + 16);
-	    }
-	  else
-	    {
-	      /* Write lower 128bits.  */
-	      regcache->raw_write (I387_XMM16_REGNUM (tdep) + regnum
-				   - num_lower_zmm_regs, buf);
-	      /* Write upper 128bits.  */
-	      regcache->raw_write (I387_YMM16H_REGNUM (tdep) + regnum
-				   - num_lower_zmm_regs, buf + 16);
-	    }
-	  /* Write upper 256bits.  */
-	  regcache->raw_write (tdep->zmm0h_regnum + regnum, buf + 32);
-	}
+          if (regnum < num_lower_zmm_regs)
+            {
+              /* Write lower 128bits.  */
+              regcache->raw_write (I387_XMM0_REGNUM (tdep) + regnum, buf);
+              /* Write upper 128bits.  */
+              regcache->raw_write (I387_YMM0_REGNUM (tdep) + regnum, buf + 16);
+            }
+          else
+            {
+              /* Write lower 128bits.  */
+              regcache->raw_write (I387_XMM16_REGNUM (tdep) + regnum
+                                     - num_lower_zmm_regs,
+                                   buf);
+              /* Write upper 128bits.  */
+              regcache->raw_write (I387_YMM16H_REGNUM (tdep) + regnum
+                                     - num_lower_zmm_regs,
+                                   buf + 16);
+            }
+          /* Write upper 256bits.  */
+          regcache->raw_write (tdep->zmm0h_regnum + regnum, buf + 32);
+        }
       else if (i386_ymm_regnum_p (gdbarch, regnum))
-	{
-	  regnum -= tdep->ymm0_regnum;
+        {
+          regnum -= tdep->ymm0_regnum;
 
-	  /* ... Write lower 128bits.  */
-	  regcache->raw_write (I387_XMM0_REGNUM (tdep) + regnum, buf);
-	  /* ... Write upper 128bits.  */
-	  regcache->raw_write (tdep->ymm0h_regnum + regnum, buf + 16);
-	}
+          /* ... Write lower 128bits.  */
+          regcache->raw_write (I387_XMM0_REGNUM (tdep) + regnum, buf);
+          /* ... Write upper 128bits.  */
+          regcache->raw_write (tdep->ymm0h_regnum + regnum, buf + 16);
+        }
       else if (i386_ymm_avx512_regnum_p (gdbarch, regnum))
-	{
-	  regnum -= tdep->ymm16_regnum;
+        {
+          regnum -= tdep->ymm16_regnum;
 
-	  /* ... Write lower 128bits.  */
-	  regcache->raw_write (I387_XMM16_REGNUM (tdep) + regnum, buf);
-	  /* ... Write upper 128bits.  */
-	  regcache->raw_write (tdep->ymm16h_regnum + regnum, buf + 16);
-	}
+          /* ... Write lower 128bits.  */
+          regcache->raw_write (I387_XMM16_REGNUM (tdep) + regnum, buf);
+          /* ... Write upper 128bits.  */
+          regcache->raw_write (tdep->ymm16h_regnum + regnum, buf + 16);
+        }
       else if (i386_word_regnum_p (gdbarch, regnum))
-	{
-	  int gpnum = regnum - tdep->ax_regnum;
+        {
+          int gpnum = regnum - tdep->ax_regnum;
 
-	  /* Read ...  */
-	  regcache->raw_read (gpnum, raw_buf);
-	  /* ... Modify ... (always little endian).  */
-	  memcpy (raw_buf, buf, 2);
-	  /* ... Write.  */
-	  regcache->raw_write (gpnum, raw_buf);
-	}
+          /* Read ...  */
+          regcache->raw_read (gpnum, raw_buf);
+          /* ... Modify ... (always little endian).  */
+          memcpy (raw_buf, buf, 2);
+          /* ... Write.  */
+          regcache->raw_write (gpnum, raw_buf);
+        }
       else if (i386_byte_regnum_p (gdbarch, regnum))
-	{
-	  int gpnum = regnum - tdep->al_regnum;
+        {
+          int gpnum = regnum - tdep->al_regnum;
 
-	  /* Read ...  We read both lower and upper registers.  */
-	  regcache->raw_read (gpnum % 4, raw_buf);
-	  /* ... Modify ... (always little endian).  */
-	  if (gpnum >= 4)
-	    memcpy (raw_buf + 1, buf, 1);
-	  else
-	    memcpy (raw_buf, buf, 1);
-	  /* ... Write.  */
-	  regcache->raw_write (gpnum % 4, raw_buf);
-	}
+          /* Read ...  We read both lower and upper registers.  */
+          regcache->raw_read (gpnum % 4, raw_buf);
+          /* ... Modify ... (always little endian).  */
+          if (gpnum >= 4)
+            memcpy (raw_buf + 1, buf, 1);
+          else
+            memcpy (raw_buf, buf, 1);
+          /* ... Write.  */
+          regcache->raw_write (gpnum % 4, raw_buf);
+        }
       else
-	internal_error (_("invalid regnum"));
+        internal_error (_ ("invalid regnum"));
     }
 }
 
@@ -3682,7 +3597,7 @@ i386_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
 
 int
 i386_ax_pseudo_register_collect (struct gdbarch *gdbarch,
-				 struct agent_expr *ax, int regnum)
+                                 struct agent_expr *ax, int regnum)
 {
   i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
 
@@ -3694,7 +3609,7 @@ i386_ax_pseudo_register_collect (struct gdbarch *gdbarch,
 
       ax_reg_mask (ax, I387_FSTAT_REGNUM (tdep));
       for (i = 0; i < 8; i++)
-	ax_reg_mask (ax, I387_ST0_REGNUM (tdep) + i);
+        ax_reg_mask (ax, I387_ST0_REGNUM (tdep) + i);
       return 0;
     }
   else if (i386_bnd_regnum_p (gdbarch, regnum))
@@ -3713,17 +3628,17 @@ i386_ax_pseudo_register_collect (struct gdbarch *gdbarch,
     {
       regnum -= tdep->zmm0_regnum;
       if (regnum < num_lower_zmm_regs)
-	{
-	  ax_reg_mask (ax, I387_XMM0_REGNUM (tdep) + regnum);
-	  ax_reg_mask (ax, tdep->ymm0h_regnum + regnum);
-	}
+        {
+          ax_reg_mask (ax, I387_XMM0_REGNUM (tdep) + regnum);
+          ax_reg_mask (ax, tdep->ymm0h_regnum + regnum);
+        }
       else
-	{
-	  ax_reg_mask (ax, I387_XMM16_REGNUM (tdep) + regnum
-			   - num_lower_zmm_regs);
-	  ax_reg_mask (ax, I387_YMM16H_REGNUM (tdep) + regnum
-			   - num_lower_zmm_regs);
-	}
+        {
+          ax_reg_mask (ax,
+                       I387_XMM16_REGNUM (tdep) + regnum - num_lower_zmm_regs);
+          ax_reg_mask (ax, I387_YMM16H_REGNUM (tdep) + regnum
+                             - num_lower_zmm_regs);
+        }
       ax_reg_mask (ax, tdep->zmm0h_regnum + regnum);
       return 0;
     }
@@ -3756,10 +3671,9 @@ i386_ax_pseudo_register_collect (struct gdbarch *gdbarch,
       return 0;
     }
   else
-    internal_error (_("invalid regnum"));
+    internal_error (_ ("invalid regnum"));
   return 1;
 }
-
 
 /* Return the register number of the register allocated by GCC after
    REGNUM, or -1 if there is no such register.  */
@@ -3773,15 +3687,15 @@ i386_next_regnum (int regnum)
 
      Since storing a variable in %esp doesn't make any sense we return
      -1 for %ebp and for %esp itself.  */
-  static int next_regnum[] =
-  {
-    I386_EDX_REGNUM,		/* Slot for %eax.  */
-    I386_EBX_REGNUM,		/* Slot for %ecx.  */
-    I386_ECX_REGNUM,		/* Slot for %edx.  */
-    I386_ESI_REGNUM,		/* Slot for %ebx.  */
-    -1, -1,			/* Slots for %esp and %ebp.  */
-    I386_EDI_REGNUM,		/* Slot for %esi.  */
-    I386_EBP_REGNUM		/* Slot for %edi.  */
+  static int next_regnum[] = {
+    I386_EDX_REGNUM, /* Slot for %eax.  */
+    I386_EBX_REGNUM, /* Slot for %ecx.  */
+    I386_ECX_REGNUM, /* Slot for %edx.  */
+    I386_ESI_REGNUM, /* Slot for %ebx.  */
+    -1,
+    -1,              /* Slots for %esp and %ebp.  */
+    I386_EDI_REGNUM, /* Slot for %esi.  */
+    I386_EBP_REGNUM  /* Slot for %edi.  */
   };
 
   if (regnum >= 0 && regnum < sizeof (next_regnum) / sizeof (next_regnum[0]))
@@ -3794,8 +3708,8 @@ i386_next_regnum (int regnum)
    needs any special handling.  */
 
 static int
-i386_convert_register_p (struct gdbarch *gdbarch,
-			 int regnum, struct type *type)
+i386_convert_register_p (struct gdbarch *gdbarch, int regnum,
+                         struct type *type)
 {
   int len = type->length ();
 
@@ -3809,13 +3723,13 @@ i386_convert_register_p (struct gdbarch *gdbarch,
       int last_regnum = regnum;
 
       while (len > 4)
-	{
-	  last_regnum = i386_next_regnum (last_regnum);
-	  len -= 4;
-	}
+        {
+          last_regnum = i386_next_regnum (last_regnum);
+          len -= 4;
+        }
 
       if (last_regnum != -1)
-	return 1;
+        return 1;
     }
 
   return i387_convert_register_p (gdbarch, regnum, type);
@@ -3825,16 +3739,15 @@ i386_convert_register_p (struct gdbarch *gdbarch,
    return its contents in TO.  */
 
 static int
-i386_register_to_value (frame_info_ptr frame, int regnum,
-			struct type *type, gdb_byte *to,
-			int *optimizedp, int *unavailablep)
+i386_register_to_value (frame_info_ptr frame, int regnum, struct type *type,
+                        gdb_byte *to, int *optimizedp, int *unavailablep)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
   int len = type->length ();
 
   if (i386_fp_regnum_p (gdbarch, regnum))
-    return i387_register_to_value (frame, regnum, type, to,
-				   optimizedp, unavailablep);
+    return i387_register_to_value (frame, regnum, type, to, optimizedp,
+                                   unavailablep);
 
   /* Read a value spread across multiple registers.  */
 
@@ -3845,12 +3758,11 @@ i386_register_to_value (frame_info_ptr frame, int regnum,
       gdb_assert (regnum != -1);
       gdb_assert (register_size (gdbarch, regnum) == 4);
 
-      if (!get_frame_register_bytes (frame, regnum, 0,
-				     gdb::make_array_view (to,
-							register_size (gdbarch,
-								       regnum)),
-				     optimizedp, unavailablep))
-	return 0;
+      if (!get_frame_register_bytes (
+            frame, regnum, 0,
+            gdb::make_array_view (to, register_size (gdbarch, regnum)),
+            optimizedp, unavailablep))
+        return 0;
 
       regnum = i386_next_regnum (regnum);
       len -= 4;
@@ -3865,8 +3777,8 @@ i386_register_to_value (frame_info_ptr frame, int regnum,
    REGNUM in frame FRAME.  */
 
 static void
-i386_value_to_register (frame_info_ptr frame, int regnum,
-			struct type *type, const gdb_byte *from)
+i386_value_to_register (frame_info_ptr frame, int regnum, struct type *type,
+                        const gdb_byte *from)
 {
   int len = type->length ();
 
@@ -3891,14 +3803,14 @@ i386_value_to_register (frame_info_ptr frame, int regnum,
       from += 4;
     }
 }
-
+
 /* Supply register REGNUM from the buffer specified by GREGS and LEN
    in the general-purpose register set REGSET to register cache
    REGCACHE.  If REGNUM is -1, do this for all registers in REGSET.  */
 
 void
 i386_supply_gregset (const struct regset *regset, struct regcache *regcache,
-		     int regnum, const void *gregs, size_t len)
+                     int regnum, const void *gregs, size_t len)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   const i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
@@ -3909,9 +3821,8 @@ i386_supply_gregset (const struct regset *regset, struct regcache *regcache,
 
   for (i = 0; i < tdep->gregset_num_regs; i++)
     {
-      if ((regnum == i || regnum == -1)
-	  && tdep->gregset_reg_offset[i] != -1)
-	regcache->raw_supply (i, regs + tdep->gregset_reg_offset[i]);
+      if ((regnum == i || regnum == -1) && tdep->gregset_reg_offset[i] != -1)
+        regcache->raw_supply (i, regs + tdep->gregset_reg_offset[i]);
     }
 }
 
@@ -3922,8 +3833,8 @@ i386_supply_gregset (const struct regset *regset, struct regcache *regcache,
 
 static void
 i386_collect_gregset (const struct regset *regset,
-		      const struct regcache *regcache,
-		      int regnum, void *gregs, size_t len)
+                      const struct regcache *regcache, int regnum, void *gregs,
+                      size_t len)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   const i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
@@ -3934,9 +3845,8 @@ i386_collect_gregset (const struct regset *regset,
 
   for (i = 0; i < tdep->gregset_num_regs; i++)
     {
-      if ((regnum == i || regnum == -1)
-	  && tdep->gregset_reg_offset[i] != -1)
-	regcache->raw_collect (i, regs + tdep->gregset_reg_offset[i]);
+      if ((regnum == i || regnum == -1) && tdep->gregset_reg_offset[i] != -1)
+        regcache->raw_collect (i, regs + tdep->gregset_reg_offset[i]);
     }
 }
 
@@ -3946,7 +3856,7 @@ i386_collect_gregset (const struct regset *regset,
 
 static void
 i386_supply_fpregset (const struct regset *regset, struct regcache *regcache,
-		      int regnum, const void *fpregs, size_t len)
+                      int regnum, const void *fpregs, size_t len)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   const i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
@@ -3968,8 +3878,8 @@ i386_supply_fpregset (const struct regset *regset, struct regcache *regcache,
 
 static void
 i386_collect_fpregset (const struct regset *regset,
-		       const struct regcache *regcache,
-		       int regnum, void *fpregs, size_t len)
+                       const struct regcache *regcache, int regnum,
+                       void *fpregs, size_t len)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   const i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
@@ -3986,23 +3896,19 @@ i386_collect_fpregset (const struct regset *regset,
 
 /* Register set definitions.  */
 
-const struct regset i386_gregset =
-  {
-    NULL, i386_supply_gregset, i386_collect_gregset
-  };
+const struct regset i386_gregset
+  = { NULL, i386_supply_gregset, i386_collect_gregset };
 
-const struct regset i386_fpregset =
-  {
-    NULL, i386_supply_fpregset, i386_collect_fpregset
-  };
+const struct regset i386_fpregset
+  = { NULL, i386_supply_fpregset, i386_collect_fpregset };
 
 /* Default iterator over core file register note sections.  */
 
 void
 i386_iterate_over_regset_sections (struct gdbarch *gdbarch,
-				   iterate_over_regset_sections_cb *cb,
-				   void *cb_data,
-				   const struct regcache *regcache)
+                                   iterate_over_regset_sections_cb *cb,
+                                   void *cb_data,
+                                   const struct regcache *regcache)
 {
   i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
 
@@ -4010,15 +3916,13 @@ i386_iterate_over_regset_sections (struct gdbarch *gdbarch,
       cb_data);
   if (tdep->sizeof_fpregset)
     cb (".reg2", tdep->sizeof_fpregset, tdep->sizeof_fpregset, tdep->fpregset,
-	NULL, cb_data);
+        NULL, cb_data);
 }
-
 
 /* Stuff for WIN32 PE style DLL's but is pretty generic really.  */
 
 CORE_ADDR
-i386_pe_skip_trampoline_code (frame_info_ptr frame,
-			      CORE_ADDR pc, char *name)
+i386_pe_skip_trampoline_code (frame_info_ptr frame, CORE_ADDR pc, char *name)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -4026,23 +3930,22 @@ i386_pe_skip_trampoline_code (frame_info_ptr frame,
   /* jmp *(dest) */
   if (pc && read_memory_unsigned_integer (pc, 2, byte_order) == 0x25ff)
     {
-      unsigned long indirect =
-	read_memory_unsigned_integer (pc + 2, 4, byte_order);
-      struct minimal_symbol *indsym =
-	indirect ? lookup_minimal_symbol_by_pc (indirect).minsym : 0;
+      unsigned long indirect
+        = read_memory_unsigned_integer (pc + 2, 4, byte_order);
+      struct minimal_symbol *indsym
+        = indirect ? lookup_minimal_symbol_by_pc (indirect).minsym : 0;
       const char *symname = indsym ? indsym->linkage_name () : 0;
 
       if (symname)
-	{
-	  if (startswith (symname, "__imp_")
-	      || startswith (symname, "_imp_"))
-	    return name ? 1 :
-		   read_memory_unsigned_integer (indirect, 4, byte_order);
-	}
+        {
+          if (startswith (symname, "__imp_") || startswith (symname, "_imp_"))
+            return name
+                     ? 1
+                     : read_memory_unsigned_integer (indirect, 4, byte_order);
+        }
     }
-  return 0;			/* Not a trampoline.  */
+  return 0; /* Not a trampoline.  */
 }
-
 
 /* Return whether the THIS_FRAME corresponds to a sigtramp
    routine.  */
@@ -4056,7 +3959,6 @@ i386_sigtramp_p (frame_info_ptr this_frame)
   find_pc_partial_function (pc, &name, NULL, NULL);
   return (name && strcmp ("_sigtramp", name) == 0);
 }
-
 
 /* We have two flavours of disassembly.  The machinery on this page
    deals with switching between those.  */
@@ -4065,13 +3967,12 @@ static int
 i386_print_insn (bfd_vma pc, struct disassemble_info *info)
 {
   gdb_assert (disassembly_flavor == att_flavor
-	      || disassembly_flavor == intel_flavor);
+              || disassembly_flavor == intel_flavor);
 
   info->disassembler_options = disassembly_flavor;
 
   return default_print_insn (pc, info);
 }
-
 
 /* There are a few i386 architecture variants that differ only
    slightly from the generic i386 target.  For now, we don't give them
@@ -4091,8 +3992,9 @@ i386_svr4_sigtramp_p (frame_info_ptr this_frame)
 
   /* The origin of these symbols is currently unknown.  */
   find_pc_partial_function (pc, &name, NULL, NULL);
-  return (name && (strcmp ("_sigreturn", name) == 0
-		   || strcmp ("sigvechandler", name) == 0));
+  return (name
+          && (strcmp ("_sigreturn", name) == 0
+              || strcmp ("sigvechandler", name) == 0));
 }
 
 /* Assuming THIS_FRAME is for a SVR4 sigtramp routine, return the
@@ -4112,8 +4014,6 @@ i386_svr4_sigcontext_addr (frame_info_ptr this_frame)
   return read_memory_unsigned_integer (sp + 8, 4, byte_order);
 }
 
-
-
 /* Implementation of `gdbarch_stap_is_single_operand', as defined in
    gdbarch.h.  */
 
@@ -4121,9 +4021,9 @@ int
 i386_stap_is_single_operand (struct gdbarch *gdbarch, const char *s)
 {
   return (*s == '$' /* Literal number.  */
-	  || (isdigit (*s) && s[1] == '(' && s[2] == '%') /* Displacement.  */
-	  || (*s == '(' && s[1] == '%') /* Register indirection.  */
-	  || (*s == '%' && isalpha (s[1]))); /* Register access.  */
+          || (isdigit (*s) && s[1] == '(' && s[2] == '%') /* Displacement.  */
+          || (*s == '(' && s[1] == '%')      /* Register indirection.  */
+          || (*s == '%' && isalpha (s[1]))); /* Register access.  */
 }
 
 /* Helper function for i386_stap_parse_special_token.
@@ -4136,7 +4036,7 @@ i386_stap_is_single_operand (struct gdbarch *gdbarch, const char *s)
 
 static expr::operation_up
 i386_stap_parse_special_token_triplet (struct gdbarch *gdbarch,
-				       struct stap_parse_info *p)
+                                       struct stap_parse_info *p)
 {
   const char *s = p->arg;
 
@@ -4151,88 +4051,88 @@ i386_stap_parse_special_token_triplet (struct gdbarch *gdbarch,
 
       got_minus[0] = false;
       if (*s == '+')
-	++s;
+        ++s;
       else if (*s == '-')
-	{
-	  ++s;
-	  got_minus[0] = true;
-	}
+        {
+          ++s;
+          got_minus[0] = true;
+        }
 
       if (!isdigit ((unsigned char) *s))
-	return {};
+        return {};
 
       displacements[0] = strtol (s, &endp, 10);
       s = endp;
 
       if (*s != '+' && *s != '-')
-	{
-	  /* We are not dealing with a triplet.  */
-	  return {};
-	}
+        {
+          /* We are not dealing with a triplet.  */
+          return {};
+        }
 
       got_minus[1] = false;
       if (*s == '+')
-	++s;
+        ++s;
       else
-	{
-	  ++s;
-	  got_minus[1] = true;
-	}
+        {
+          ++s;
+          got_minus[1] = true;
+        }
 
       if (!isdigit ((unsigned char) *s))
-	return {};
+        return {};
 
       displacements[1] = strtol (s, &endp, 10);
       s = endp;
 
       if (*s != '+' && *s != '-')
-	{
-	  /* We are not dealing with a triplet.  */
-	  return {};
-	}
+        {
+          /* We are not dealing with a triplet.  */
+          return {};
+        }
 
       got_minus[2] = false;
       if (*s == '+')
-	++s;
+        ++s;
       else
-	{
-	  ++s;
-	  got_minus[2] = true;
-	}
+        {
+          ++s;
+          got_minus[2] = true;
+        }
 
       if (!isdigit ((unsigned char) *s))
-	return {};
+        return {};
 
       displacements[2] = strtol (s, &endp, 10);
       s = endp;
 
       if (*s != '(' || s[1] != '%')
-	return {};
+        return {};
 
       s += 2;
       start = s;
 
       while (isalnum (*s))
-	++s;
+        ++s;
 
       if (*s++ != ')')
-	return {};
+        return {};
 
       len = s - start - 1;
       std::string regname (start, len);
 
       if (user_reg_map_name_to_regnum (gdbarch, regname.c_str (), len) == -1)
-	error (_("Invalid register name `%s' on expression `%s'."),
-	       regname.c_str (), p->saved_arg);
+        error (_ ("Invalid register name `%s' on expression `%s'."),
+               regname.c_str (), p->saved_arg);
 
       LONGEST value = 0;
       for (i = 0; i < 3; i++)
-	{
-	  LONGEST this_val = displacements[i];
-	  if (got_minus[i])
-	    this_val = -this_val;
-	  value += this_val;
-	}
+        {
+          LONGEST this_val = displacements[i];
+          if (got_minus[i])
+            this_val = -this_val;
+          value += this_val;
+        }
 
       p->arg = s;
 
@@ -4240,18 +4140,18 @@ i386_stap_parse_special_token_triplet (struct gdbarch *gdbarch,
 
       struct type *long_type = builtin_type (gdbarch)->builtin_long;
       operation_up offset
-	= make_operation<long_const_operation> (long_type, value);
+        = make_operation<long_const_operation> (long_type, value);
 
       operation_up reg
-	= make_operation<register_operation> (std::move (regname));
+        = make_operation<register_operation> (std::move (regname));
       struct type *void_ptr = builtin_type (gdbarch)->builtin_data_ptr;
       reg = make_operation<unop_cast_operation> (std::move (reg), void_ptr);
 
       operation_up sum
-	= make_operation<add_operation> (std::move (reg), std::move (offset));
+        = make_operation<add_operation> (std::move (reg), std::move (offset));
       struct type *arg_ptr_type = lookup_pointer_type (p->arg_type);
-      sum = make_operation<unop_cast_operation> (std::move (sum),
-						 arg_ptr_type);
+      sum
+        = make_operation<unop_cast_operation> (std::move (sum), arg_ptr_type);
       return make_operation<unop_ind_operation> (std::move (sum));
     }
 
@@ -4269,7 +4169,7 @@ i386_stap_parse_special_token_triplet (struct gdbarch *gdbarch,
 
 static expr::operation_up
 i386_stap_parse_special_token_three_arg_disp (struct gdbarch *gdbarch,
-					      struct stap_parse_info *p)
+                                              struct stap_parse_info *p)
 {
   const char *s = p->arg;
 
@@ -4284,79 +4184,79 @@ i386_stap_parse_special_token_three_arg_disp (struct gdbarch *gdbarch,
       int len_index;
 
       if (*s == '+')
-	++s;
+        ++s;
       else if (*s == '-')
-	{
-	  ++s;
-	  offset_minus = true;
-	}
+        {
+          ++s;
+          offset_minus = true;
+        }
 
       if (offset_minus && !isdigit (*s))
-	return {};
+        return {};
 
       if (isdigit (*s))
-	{
-	  char *endp;
+        {
+          char *endp;
 
-	  offset = strtol (s, &endp, 10);
-	  s = endp;
-	}
+          offset = strtol (s, &endp, 10);
+          s = endp;
+        }
 
       if (*s != '(' || s[1] != '%')
-	return {};
+        return {};
 
       s += 2;
       start = s;
 
       while (isalnum (*s))
-	++s;
+        ++s;
 
       if (*s != ',' || s[1] != '%')
-	return {};
+        return {};
 
       len_base = s - start;
       std::string base (start, len_base);
 
       if (user_reg_map_name_to_regnum (gdbarch, base.c_str (), len_base) == -1)
-	error (_("Invalid register name `%s' on expression `%s'."),
-	       base.c_str (), p->saved_arg);
+        error (_ ("Invalid register name `%s' on expression `%s'."),
+               base.c_str (), p->saved_arg);
 
       s += 2;
       start = s;
 
       while (isalnum (*s))
-	++s;
+        ++s;
 
       len_index = s - start;
       std::string index (start, len_index);
 
-      if (user_reg_map_name_to_regnum (gdbarch, index.c_str (),
-				       len_index) == -1)
-	error (_("Invalid register name `%s' on expression `%s'."),
-	       index.c_str (), p->saved_arg);
+      if (user_reg_map_name_to_regnum (gdbarch, index.c_str (), len_index)
+          == -1)
+        error (_ ("Invalid register name `%s' on expression `%s'."),
+               index.c_str (), p->saved_arg);
 
       if (*s != ',' && *s != ')')
-	return {};
+        return {};
 
       if (*s == ',')
-	{
-	  char *endp;
+        {
+          char *endp;
 
-	  ++s;
-	  if (*s == '+')
-	    ++s;
-	  else if (*s == '-')
-	    {
-	      ++s;
-	      size_minus = true;
-	    }
+          ++s;
+          if (*s == '+')
+            ++s;
+          else if (*s == '-')
+            {
+              ++s;
+              size_minus = true;
+            }
 
-	  size = strtol (s, &endp, 10);
-	  s = endp;
+          size = strtol (s, &endp, 10);
+          s = endp;
 
-	  if (*s != ')')
-	    return {};
-	}
+          if (*s != ')')
+            return {};
+        }
 
       ++s;
       p->arg = s;
@@ -4367,35 +4267,34 @@ i386_stap_parse_special_token_three_arg_disp (struct gdbarch *gdbarch,
       operation_up reg = make_operation<register_operation> (std::move (base));
 
       if (offset != 0)
-	{
-	  if (offset_minus)
-	    offset = -offset;
-	  operation_up value
-	    = make_operation<long_const_operation> (long_type, offset);
-	  reg = make_operation<add_operation> (std::move (reg),
-					       std::move (value));
-	}
+        {
+          if (offset_minus)
+            offset = -offset;
+          operation_up value
+            = make_operation<long_const_operation> (long_type, offset);
+          reg = make_operation<add_operation> (std::move (reg),
+                                               std::move (value));
+        }
 
       operation_up ind_reg
-	= make_operation<register_operation> (std::move (index));
+        = make_operation<register_operation> (std::move (index));
 
       if (size != 0)
-	{
-	  if (size_minus)
-	    size = -size;
-	  operation_up value
-	    = make_operation<long_const_operation> (long_type, size);
-	  ind_reg = make_operation<mul_operation> (std::move (ind_reg),
-						   std::move (value));
-	}
+        {
+          if (size_minus)
+            size = -size;
+          operation_up value
+            = make_operation<long_const_operation> (long_type, size);
+          ind_reg = make_operation<mul_operation> (std::move (ind_reg),
+                                                   std::move (value));
+        }
 
       operation_up sum
-	= make_operation<add_operation> (std::move (reg),
-					 std::move (ind_reg));
+        = make_operation<add_operation> (std::move (reg), std::move (ind_reg));
 
       struct type *arg_ptr_type = lookup_pointer_type (p->arg_type);
-      sum = make_operation<unop_cast_operation> (std::move (sum),
-						 arg_ptr_type);
+      sum
+        = make_operation<unop_cast_operation> (std::move (sum), arg_ptr_type);
       return make_operation<unop_ind_operation> (std::move (sum));
     }
 
@@ -4407,7 +4306,7 @@ i386_stap_parse_special_token_three_arg_disp (struct gdbarch *gdbarch,
 
 expr::operation_up
 i386_stap_parse_special_token (struct gdbarch *gdbarch,
-			       struct stap_parse_info *p)
+                               struct stap_parse_info *p)
 {
   /* The special tokens to be parsed here are:
 
@@ -4431,11 +4330,10 @@ i386_stap_parse_special_token (struct gdbarch *gdbarch,
 
 static std::string
 i386_stap_adjust_register (struct gdbarch *gdbarch, struct stap_parse_info *p,
-			   const std::string &regname, int regnum)
+                           const std::string &regname, int regnum)
 {
   static const std::unordered_set<std::string> reg_assoc
-    = { "ax", "bx", "cx", "dx",
-	"si", "di", "bp", "sp" };
+    = { "ax", "bx", "cx", "dx", "si", "di", "bp", "sp" };
 
   /* If we are dealing with a register whose size is less than the size
      specified by the "[-]N@" prefix, and it is one of the registers that
@@ -4449,8 +4347,6 @@ i386_stap_adjust_register (struct gdbarch *gdbarch, struct stap_parse_info *p,
   return regname;
 }
 
-
-
 /* gdbarch gnu_triplet_regexp method.  Both arches are acceptable as GDB always
    also supplies -m64 or -m32 by gdbarch_gcc_target_options.  */
 
@@ -4460,15 +4356,13 @@ i386_gnu_triplet_regexp (struct gdbarch *gdbarch)
   return "(x86_64|i.86)";
 }
 
-
-
 /* Implement the "in_indirect_branch_thunk" gdbarch function.  */
 
 static bool
 i386_in_indirect_branch_thunk (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   return x86_in_indirect_branch_thunk (pc, i386_register_names,
-				       I386_EAX_REGNUM, I386_EIP_REGNUM);
+                                       I386_EAX_REGNUM, I386_EIP_REGNUM);
 }
 
 /* Generic ELF.  */
@@ -4478,10 +4372,10 @@ i386_elf_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   static const char *const stap_integer_prefixes[] = { "$", NULL };
   static const char *const stap_register_prefixes[] = { "%", NULL };
-  static const char *const stap_register_indirection_prefixes[] = { "(",
-								    NULL };
-  static const char *const stap_register_indirection_suffixes[] = { ")",
-								    NULL };
+  static const char *const stap_register_indirection_prefixes[]
+    = { "(", NULL };
+  static const char *const stap_register_indirection_suffixes[]
+    = { ")", NULL };
 
   /* We typically use stabs-in-ELF with the SVR4 register numbering.  */
   set_gdbarch_stab_reg_to_regnum (gdbarch, i386_svr4_reg_to_regnum);
@@ -4489,19 +4383,17 @@ i386_elf_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* Registering SystemTap handlers.  */
   set_gdbarch_stap_integer_prefixes (gdbarch, stap_integer_prefixes);
   set_gdbarch_stap_register_prefixes (gdbarch, stap_register_prefixes);
-  set_gdbarch_stap_register_indirection_prefixes (gdbarch,
-					  stap_register_indirection_prefixes);
-  set_gdbarch_stap_register_indirection_suffixes (gdbarch,
-					  stap_register_indirection_suffixes);
-  set_gdbarch_stap_is_single_operand (gdbarch,
-				      i386_stap_is_single_operand);
+  set_gdbarch_stap_register_indirection_prefixes (
+    gdbarch, stap_register_indirection_prefixes);
+  set_gdbarch_stap_register_indirection_suffixes (
+    gdbarch, stap_register_indirection_suffixes);
+  set_gdbarch_stap_is_single_operand (gdbarch, i386_stap_is_single_operand);
   set_gdbarch_stap_parse_special_token (gdbarch,
-					i386_stap_parse_special_token);
-  set_gdbarch_stap_adjust_register (gdbarch,
-				    i386_stap_adjust_register);
+                                        i386_stap_parse_special_token);
+  set_gdbarch_stap_adjust_register (gdbarch, i386_stap_adjust_register);
 
   set_gdbarch_in_indirect_branch_thunk (gdbarch,
-					i386_in_indirect_branch_thunk);
+                                        i386_in_indirect_branch_thunk);
 }
 
 /* System V Release 4 (SVR4).  */
@@ -4525,8 +4417,6 @@ i386_svr4_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tdep->jb_pc_offset = 20;
 }
 
-
-
 /* i386 register groups.  In addition to the normal groups, add "mmx"
    and "sse".  */
 
@@ -4549,14 +4439,13 @@ i386_add_reggroups (struct gdbarch *gdbarch)
 
 int
 i386_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
-			  const struct reggroup *group)
+                          const struct reggroup *group)
 {
   const i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
-  int fp_regnum_p, mmx_regnum_p, xmm_regnum_p, mxcsr_regnum_p,
-      ymm_regnum_p, ymmh_regnum_p, ymm_avx512_regnum_p, ymmh_avx512_regnum_p,
-      bndr_regnum_p, bnd_regnum_p, zmm_regnum_p, zmmh_regnum_p,
-      mpx_ctrl_regnum_p, xmm_avx512_regnum_p,
-      avx512_p, avx_p, sse_p, pkru_regnum_p;
+  int fp_regnum_p, mmx_regnum_p, xmm_regnum_p, mxcsr_regnum_p, ymm_regnum_p,
+    ymmh_regnum_p, ymm_avx512_regnum_p, ymmh_avx512_regnum_p, bndr_regnum_p,
+    bnd_regnum_p, zmm_regnum_p, zmmh_regnum_p, mpx_ctrl_regnum_p,
+    xmm_avx512_regnum_p, avx512_p, avx_p, sse_p, pkru_regnum_p;
 
   /* Don't include pseudo registers, except for MMX, in any register
      groups.  */
@@ -4573,7 +4462,7 @@ i386_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
   if (group == i386_mmx_reggroup)
     return mmx_regnum_p;
 
-  pkru_regnum_p = i386_pkru_regnum_p(gdbarch, regnum);
+  pkru_regnum_p = i386_pkru_regnum_p (gdbarch, regnum);
   xmm_regnum_p = i386_xmm_regnum_p (gdbarch, regnum);
   xmm_avx512_regnum_p = i386_xmm_avx512_regnum_p (gdbarch, regnum);
   mxcsr_regnum_p = i386_mxcsr_regnum_p (gdbarch, regnum);
@@ -4585,21 +4474,20 @@ i386_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
   zmm_regnum_p = i386_zmm_regnum_p (gdbarch, regnum);
 
   avx512_p = ((tdep->xcr0 & X86_XSTATE_AVX_AVX512_MASK)
-	      == X86_XSTATE_AVX_AVX512_MASK);
-  avx_p = ((tdep->xcr0 & X86_XSTATE_AVX_AVX512_MASK)
-	   == X86_XSTATE_AVX_MASK) && !avx512_p;
-  sse_p = ((tdep->xcr0 & X86_XSTATE_AVX_AVX512_MASK)
-	   == X86_XSTATE_SSE_MASK) && !avx512_p && ! avx_p;
+              == X86_XSTATE_AVX_AVX512_MASK);
+  avx_p = ((tdep->xcr0 & X86_XSTATE_AVX_AVX512_MASK) == X86_XSTATE_AVX_MASK)
+          && !avx512_p;
+  sse_p = ((tdep->xcr0 & X86_XSTATE_AVX_AVX512_MASK) == X86_XSTATE_SSE_MASK)
+          && !avx512_p && !avx_p;
 
   if (group == vector_reggroup)
-    return (mmx_regnum_p
-	    || (zmm_regnum_p && avx512_p)
-	    || ((ymm_regnum_p || ymm_avx512_regnum_p) && avx_p)
-	    || ((xmm_regnum_p || xmm_avx512_regnum_p) && sse_p)
-	    || mxcsr_regnum_p);
+    return (mmx_regnum_p || (zmm_regnum_p && avx512_p)
+            || ((ymm_regnum_p || ymm_avx512_regnum_p) && avx_p)
+            || ((xmm_regnum_p || xmm_avx512_regnum_p) && sse_p)
+            || mxcsr_regnum_p);
 
   fp_regnum_p = (i386_fp_regnum_p (gdbarch, regnum)
-		 || i386_fpc_regnum_p (gdbarch, regnum));
+                 || i386_fpc_regnum_p (gdbarch, regnum));
   if (group == float_reggroup)
     return fp_regnum_p;
 
@@ -4610,10 +4498,8 @@ i386_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
   zmmh_regnum_p = i386_zmmh_regnum_p (gdbarch, regnum);
   if (group == all_reggroup
       && (((xmm_regnum_p || xmm_avx512_regnum_p) && !sse_p)
-	  || ((ymm_regnum_p || ymm_avx512_regnum_p) && !avx_p)
-	  || ymmh_regnum_p
-	  || ymmh_avx512_regnum_p
-	  || zmmh_regnum_p))
+          || ((ymm_regnum_p || ymm_avx512_regnum_p) && !avx_p) || ymmh_regnum_p
+          || ymmh_avx512_regnum_p || zmmh_regnum_p))
     return 0;
 
   bnd_regnum_p = i386_bnd_regnum_p (gdbarch, regnum);
@@ -4632,31 +4518,19 @@ i386_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
     return mpx_ctrl_regnum_p;
 
   if (group == general_reggroup)
-    return (!fp_regnum_p
-	    && !mmx_regnum_p
-	    && !mxcsr_regnum_p
-	    && !xmm_regnum_p
-	    && !xmm_avx512_regnum_p
-	    && !ymm_regnum_p
-	    && !ymmh_regnum_p
-	    && !ymm_avx512_regnum_p
-	    && !ymmh_avx512_regnum_p
-	    && !bndr_regnum_p
-	    && !bnd_regnum_p
-	    && !mpx_ctrl_regnum_p
-	    && !zmm_regnum_p
-	    && !zmmh_regnum_p
-	    && !pkru_regnum_p);
+    return (!fp_regnum_p && !mmx_regnum_p && !mxcsr_regnum_p && !xmm_regnum_p
+            && !xmm_avx512_regnum_p && !ymm_regnum_p && !ymmh_regnum_p
+            && !ymm_avx512_regnum_p && !ymmh_avx512_regnum_p && !bndr_regnum_p
+            && !bnd_regnum_p && !mpx_ctrl_regnum_p && !zmm_regnum_p
+            && !zmmh_regnum_p && !pkru_regnum_p);
 
   return default_register_reggroup_p (gdbarch, regnum, group);
 }
-
 
 /* Get the ARGIth function argument for the current function.  */
 
 static CORE_ADDR
-i386_fetch_pointer_argument (frame_info_ptr frame, int argi, 
-			     struct type *type)
+i386_fetch_pointer_argument (frame_info_ptr frame, int argi, struct type *type)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -4664,11 +4538,11 @@ i386_fetch_pointer_argument (frame_info_ptr frame, int argi,
   return read_memory_unsigned_integer (sp + (4 * (argi + 1)), 4, byte_order);
 }
 
-#define PREFIX_REPZ	0x01
-#define PREFIX_REPNZ	0x02
-#define PREFIX_LOCK	0x04
-#define PREFIX_DATA	0x08
-#define PREFIX_ADDR	0x10
+#define PREFIX_REPZ 0x01
+#define PREFIX_REPNZ 0x02
+#define PREFIX_LOCK 0x04
+#define PREFIX_DATA 0x08
+#define PREFIX_ADDR 0x10
 
 /* operand size */
 enum
@@ -4753,178 +4627,178 @@ i386_record_lea_modrm_addr (struct i386_record_s *irp, uint64_t *addr)
       uint8_t base = irp->rm;
 
       if (base == 4)
-	{
-	  havesib = 1;
-	  if (record_read_memory (gdbarch, irp->addr, &byte, 1))
-	    return -1;
-	  irp->addr++;
-	  scale = (byte >> 6) & 3;
-	  index = ((byte >> 3) & 7) | irp->rex_x;
-	  base = (byte & 7);
-	}
+        {
+          havesib = 1;
+          if (record_read_memory (gdbarch, irp->addr, &byte, 1))
+            return -1;
+          irp->addr++;
+          scale = (byte >> 6) & 3;
+          index = ((byte >> 3) & 7) | irp->rex_x;
+          base = (byte & 7);
+        }
       base |= irp->rex_b;
 
       switch (irp->mod)
-	{
-	case 0:
-	  if ((base & 7) == 5)
-	    {
-	      base = 0xff;
-	      if (record_read_memory (gdbarch, irp->addr, buf, 4))
-		return -1;
-	      irp->addr += 4;
-	      *addr = extract_signed_integer (buf, 4, byte_order);
-	      if (irp->regmap[X86_RECORD_R8_REGNUM] && !havesib)
-		*addr += irp->addr + irp->rip_offset;
-	    }
-	  break;
-	case 1:
-	  if (record_read_memory (gdbarch, irp->addr, buf, 1))
-	    return -1;
-	  irp->addr++;
-	  *addr = (int8_t) buf[0];
-	  break;
-	case 2:
-	  if (record_read_memory (gdbarch, irp->addr, buf, 4))
-	    return -1;
-	  *addr = extract_signed_integer (buf, 4, byte_order);
-	  irp->addr += 4;
-	  break;
-	}
+        {
+        case 0:
+          if ((base & 7) == 5)
+            {
+              base = 0xff;
+              if (record_read_memory (gdbarch, irp->addr, buf, 4))
+                return -1;
+              irp->addr += 4;
+              *addr = extract_signed_integer (buf, 4, byte_order);
+              if (irp->regmap[X86_RECORD_R8_REGNUM] && !havesib)
+                *addr += irp->addr + irp->rip_offset;
+            }
+          break;
+        case 1:
+          if (record_read_memory (gdbarch, irp->addr, buf, 1))
+            return -1;
+          irp->addr++;
+          *addr = (int8_t) buf[0];
+          break;
+        case 2:
+          if (record_read_memory (gdbarch, irp->addr, buf, 4))
+            return -1;
+          *addr = extract_signed_integer (buf, 4, byte_order);
+          irp->addr += 4;
+          break;
+        }
 
       offset64 = 0;
       if (base != 0xff)
-	{
-	  if (base == 4 && irp->popl_esp_hack)
-	    *addr += irp->popl_esp_hack;
-	  regcache_raw_read_unsigned (irp->regcache, irp->regmap[base],
-				      &offset64);
-	}
+        {
+          if (base == 4 && irp->popl_esp_hack)
+            *addr += irp->popl_esp_hack;
+          regcache_raw_read_unsigned (irp->regcache, irp->regmap[base],
+                                      &offset64);
+        }
       if (irp->aflag == 2)
-	{
-	  *addr += offset64;
-	}
+        {
+          *addr += offset64;
+        }
       else
-	*addr = (uint32_t) (offset64 + *addr);
+        *addr = (uint32_t) (offset64 + *addr);
 
       if (havesib && (index != 4 || scale != 0))
-	{
-	  regcache_raw_read_unsigned (irp->regcache, irp->regmap[index],
-				      &offset64);
-	  if (irp->aflag == 2)
-	    *addr += offset64 << scale;
-	  else
-	    *addr = (uint32_t) (*addr + (offset64 << scale));
-	}
+        {
+          regcache_raw_read_unsigned (irp->regcache, irp->regmap[index],
+                                      &offset64);
+          if (irp->aflag == 2)
+            *addr += offset64 << scale;
+          else
+            *addr = (uint32_t) (*addr + (offset64 << scale));
+        }
 
       if (!irp->aflag)
-	{
-	  /* Since we are in 64-bit mode with ADDR32 prefix, zero-extend
+        {
+          /* Since we are in 64-bit mode with ADDR32 prefix, zero-extend
 	     address from 32-bit to 64-bit.  */
-	    *addr = (uint32_t) *addr;
-	}
+          *addr = (uint32_t) *addr;
+        }
     }
   else
     {
       /* 16 bits */
       switch (irp->mod)
-	{
-	case 0:
-	  if (irp->rm == 6)
-	    {
-	      if (record_read_memory (gdbarch, irp->addr, buf, 2))
-		return -1;
-	      irp->addr += 2;
-	      *addr = extract_signed_integer (buf, 2, byte_order);
-	      irp->rm = 0;
-	      goto no_rm;
-	    }
-	  break;
-	case 1:
-	  if (record_read_memory (gdbarch, irp->addr, buf, 1))
-	    return -1;
-	  irp->addr++;
-	  *addr = (int8_t) buf[0];
-	  break;
-	case 2:
-	  if (record_read_memory (gdbarch, irp->addr, buf, 2))
-	    return -1;
-	  irp->addr += 2;
-	  *addr = extract_signed_integer (buf, 2, byte_order);
-	  break;
-	}
+        {
+        case 0:
+          if (irp->rm == 6)
+            {
+              if (record_read_memory (gdbarch, irp->addr, buf, 2))
+                return -1;
+              irp->addr += 2;
+              *addr = extract_signed_integer (buf, 2, byte_order);
+              irp->rm = 0;
+              goto no_rm;
+            }
+          break;
+        case 1:
+          if (record_read_memory (gdbarch, irp->addr, buf, 1))
+            return -1;
+          irp->addr++;
+          *addr = (int8_t) buf[0];
+          break;
+        case 2:
+          if (record_read_memory (gdbarch, irp->addr, buf, 2))
+            return -1;
+          irp->addr += 2;
+          *addr = extract_signed_integer (buf, 2, byte_order);
+          break;
+        }
 
       switch (irp->rm)
-	{
-	case 0:
-	  regcache_raw_read_unsigned (irp->regcache,
-				      irp->regmap[X86_RECORD_REBX_REGNUM],
-				      &offset64);
-	  *addr = (uint32_t) (*addr + offset64);
-	  regcache_raw_read_unsigned (irp->regcache,
-				      irp->regmap[X86_RECORD_RESI_REGNUM],
-				      &offset64);
-	  *addr = (uint32_t) (*addr + offset64);
-	  break;
-	case 1:
-	  regcache_raw_read_unsigned (irp->regcache,
-				      irp->regmap[X86_RECORD_REBX_REGNUM],
-				      &offset64);
-	  *addr = (uint32_t) (*addr + offset64);
-	  regcache_raw_read_unsigned (irp->regcache,
-				      irp->regmap[X86_RECORD_REDI_REGNUM],
-				      &offset64);
-	  *addr = (uint32_t) (*addr + offset64);
-	  break;
-	case 2:
-	  regcache_raw_read_unsigned (irp->regcache,
-				      irp->regmap[X86_RECORD_REBP_REGNUM],
-				      &offset64);
-	  *addr = (uint32_t) (*addr + offset64);
-	  regcache_raw_read_unsigned (irp->regcache,
-				      irp->regmap[X86_RECORD_RESI_REGNUM],
-				      &offset64);
-	  *addr = (uint32_t) (*addr + offset64);
-	  break;
-	case 3:
-	  regcache_raw_read_unsigned (irp->regcache,
-				      irp->regmap[X86_RECORD_REBP_REGNUM],
-				      &offset64);
-	  *addr = (uint32_t) (*addr + offset64);
-	  regcache_raw_read_unsigned (irp->regcache,
-				      irp->regmap[X86_RECORD_REDI_REGNUM],
-				      &offset64);
-	  *addr = (uint32_t) (*addr + offset64);
-	  break;
-	case 4:
-	  regcache_raw_read_unsigned (irp->regcache,
-				      irp->regmap[X86_RECORD_RESI_REGNUM],
-				      &offset64);
-	  *addr = (uint32_t) (*addr + offset64);
-	  break;
-	case 5:
-	  regcache_raw_read_unsigned (irp->regcache,
-				      irp->regmap[X86_RECORD_REDI_REGNUM],
-				      &offset64);
-	  *addr = (uint32_t) (*addr + offset64);
-	  break;
-	case 6:
-	  regcache_raw_read_unsigned (irp->regcache,
-				      irp->regmap[X86_RECORD_REBP_REGNUM],
-				      &offset64);
-	  *addr = (uint32_t) (*addr + offset64);
-	  break;
-	case 7:
-	  regcache_raw_read_unsigned (irp->regcache,
-				      irp->regmap[X86_RECORD_REBX_REGNUM],
-				      &offset64);
-	  *addr = (uint32_t) (*addr + offset64);
-	  break;
-	}
+        {
+        case 0:
+          regcache_raw_read_unsigned (irp->regcache,
+                                      irp->regmap[X86_RECORD_REBX_REGNUM],
+                                      &offset64);
+          *addr = (uint32_t) (*addr + offset64);
+          regcache_raw_read_unsigned (irp->regcache,
+                                      irp->regmap[X86_RECORD_RESI_REGNUM],
+                                      &offset64);
+          *addr = (uint32_t) (*addr + offset64);
+          break;
+        case 1:
+          regcache_raw_read_unsigned (irp->regcache,
+                                      irp->regmap[X86_RECORD_REBX_REGNUM],
+                                      &offset64);
+          *addr = (uint32_t) (*addr + offset64);
+          regcache_raw_read_unsigned (irp->regcache,
+                                      irp->regmap[X86_RECORD_REDI_REGNUM],
+                                      &offset64);
+          *addr = (uint32_t) (*addr + offset64);
+          break;
+        case 2:
+          regcache_raw_read_unsigned (irp->regcache,
+                                      irp->regmap[X86_RECORD_REBP_REGNUM],
+                                      &offset64);
+          *addr = (uint32_t) (*addr + offset64);
+          regcache_raw_read_unsigned (irp->regcache,
+                                      irp->regmap[X86_RECORD_RESI_REGNUM],
+                                      &offset64);
+          *addr = (uint32_t) (*addr + offset64);
+          break;
+        case 3:
+          regcache_raw_read_unsigned (irp->regcache,
+                                      irp->regmap[X86_RECORD_REBP_REGNUM],
+                                      &offset64);
+          *addr = (uint32_t) (*addr + offset64);
+          regcache_raw_read_unsigned (irp->regcache,
+                                      irp->regmap[X86_RECORD_REDI_REGNUM],
+                                      &offset64);
+          *addr = (uint32_t) (*addr + offset64);
+          break;
+        case 4:
+          regcache_raw_read_unsigned (irp->regcache,
+                                      irp->regmap[X86_RECORD_RESI_REGNUM],
+                                      &offset64);
+          *addr = (uint32_t) (*addr + offset64);
+          break;
+        case 5:
+          regcache_raw_read_unsigned (irp->regcache,
+                                      irp->regmap[X86_RECORD_REDI_REGNUM],
+                                      &offset64);
+          *addr = (uint32_t) (*addr + offset64);
+          break;
+        case 6:
+          regcache_raw_read_unsigned (irp->regcache,
+                                      irp->regmap[X86_RECORD_REBP_REGNUM],
+                                      &offset64);
+          *addr = (uint32_t) (*addr + offset64);
+          break;
+        case 7:
+          regcache_raw_read_unsigned (irp->regcache,
+                                      irp->regmap[X86_RECORD_REBX_REGNUM],
+                                      &offset64);
+          *addr = (uint32_t) (*addr + offset64);
+          break;
+        }
       *addr &= 0xffff;
     }
 
- no_rm:
+no_rm:
   return 0;
 }
 
@@ -4941,14 +4815,14 @@ i386_record_lea_modrm (struct i386_record_s *irp)
   if (irp->override >= 0)
     {
       if (record_full_memory_query)
-	{
-	  if (yquery (_("\
+        {
+          if (yquery (_ ("\
 Process record ignores the memory change of instruction at address %s\n\
 because it can't get the value of the segment register.\n\
 Do you want to stop the program?"),
-		      paddress (gdbarch, irp->orig_addr)))
-	    return -1;
-	}
+                      paddress (gdbarch, irp->orig_addr)))
+            return -1;
+        }
 
       return 0;
     }
@@ -4971,30 +4845,28 @@ i386_record_push (struct i386_record_s *irp, int size)
   ULONGEST addr;
 
   if (record_full_arch_list_add_reg (irp->regcache,
-				     irp->regmap[X86_RECORD_RESP_REGNUM]))
+                                     irp->regmap[X86_RECORD_RESP_REGNUM]))
     return -1;
   regcache_raw_read_unsigned (irp->regcache,
-			      irp->regmap[X86_RECORD_RESP_REGNUM],
-			      &addr);
+                              irp->regmap[X86_RECORD_RESP_REGNUM], &addr);
   if (record_full_arch_list_add_mem ((CORE_ADDR) addr - size, size))
     return -1;
 
   return 0;
 }
 
-
 /* Defines contents to record.  */
-#define I386_SAVE_FPU_REGS              0xfffd
-#define I386_SAVE_FPU_ENV               0xfffe
-#define I386_SAVE_FPU_ENV_REG_STACK     0xffff
+#define I386_SAVE_FPU_REGS 0xfffd
+#define I386_SAVE_FPU_ENV 0xfffe
+#define I386_SAVE_FPU_ENV_REG_STACK 0xffff
 
 /* Record the values of the floating point registers which will be
    changed by the current instruction.  Returns -1 if something is
    wrong, 0 otherwise.  */
 
-static int i386_record_floats (struct gdbarch *gdbarch,
-			       struct i386_record_s *ir,
-			       uint32_t iregnum)
+static int
+i386_record_floats (struct gdbarch *gdbarch, struct i386_record_s *ir,
+                    uint32_t iregnum)
 {
   i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
   int i;
@@ -5007,43 +4879,43 @@ static int i386_record_floats (struct gdbarch *gdbarch,
   if (I386_SAVE_FPU_REGS == iregnum)
     {
       for (i = I387_ST0_REGNUM (tdep); i <= I387_ST0_REGNUM (tdep) + 7; i++)
-	{
-	  if (record_full_arch_list_add_reg (ir->regcache, i))
-	    return -1;
-	}
+        {
+          if (record_full_arch_list_add_reg (ir->regcache, i))
+            return -1;
+        }
     }
   else if (I386_SAVE_FPU_ENV == iregnum)
     {
       for (i = I387_FCTRL_REGNUM (tdep); i <= I387_FOP_REGNUM (tdep); i++)
-	      {
-	      if (record_full_arch_list_add_reg (ir->regcache, i))
-		return -1;
-	      }
+        {
+          if (record_full_arch_list_add_reg (ir->regcache, i))
+            return -1;
+        }
     }
   else if (I386_SAVE_FPU_ENV_REG_STACK == iregnum)
     {
       for (i = I387_ST0_REGNUM (tdep); i <= I387_FOP_REGNUM (tdep); i++)
-	if (record_full_arch_list_add_reg (ir->regcache, i))
-	  return -1;
+        if (record_full_arch_list_add_reg (ir->regcache, i))
+          return -1;
     }
-  else if ((iregnum >= I387_ST0_REGNUM (tdep)) &&
-	   (iregnum <= I387_FOP_REGNUM (tdep)))
+  else if ((iregnum >= I387_ST0_REGNUM (tdep))
+           && (iregnum <= I387_FOP_REGNUM (tdep)))
     {
-      if (record_full_arch_list_add_reg (ir->regcache,iregnum))
-	return -1;
+      if (record_full_arch_list_add_reg (ir->regcache, iregnum))
+        return -1;
     }
   else
     {
       /* Parameter error.  */
       return -1;
     }
-  if(I386_SAVE_FPU_ENV != iregnum)
+  if (I386_SAVE_FPU_ENV != iregnum)
     {
-    for (i = I387_FCTRL_REGNUM (tdep); i <= I387_FOP_REGNUM (tdep); i++)
-      {
-      if (record_full_arch_list_add_reg (ir->regcache, i))
-	return -1;
-      }
+      for (i = I387_FCTRL_REGNUM (tdep); i <= I387_FOP_REGNUM (tdep); i++)
+        {
+          if (record_full_arch_list_add_reg (ir->regcache, i))
+            return -1;
+        }
     }
   return 0;
 }
@@ -5053,11 +4925,11 @@ static int i386_record_floats (struct gdbarch *gdbarch,
    instruction.  Returns -1 if something goes wrong, 0 otherwise.  */
 
 #define I386_RECORD_FULL_ARCH_LIST_ADD_REG(regnum) \
-    record_full_arch_list_add_reg (ir.regcache, ir.regmap[(regnum)])
+  record_full_arch_list_add_reg (ir.regcache, ir.regmap[(regnum)])
 
 int
 i386_process_record (struct gdbarch *gdbarch, struct regcache *regcache,
-		     CORE_ADDR input_addr)
+                     CORE_ADDR input_addr)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   int prefixes = 0;
@@ -5083,84 +4955,85 @@ i386_process_record (struct gdbarch *gdbarch, struct regcache *regcache,
   ir.gdbarch = gdbarch;
 
   if (record_debug > 1)
-    gdb_printf (gdb_stdlog, "Process record: i386_process_record "
-		"addr = %s\n",
-		paddress (gdbarch, ir.addr));
+    gdb_printf (gdb_stdlog,
+                "Process record: i386_process_record "
+                "addr = %s\n",
+                paddress (gdbarch, ir.addr));
 
   /* prefixes */
   while (1)
     {
       if (record_read_memory (gdbarch, ir.addr, &opcode8, 1))
-	return -1;
+        return -1;
       ir.addr++;
-      switch (opcode8)	/* Instruction prefixes */
-	{
-	case REPE_PREFIX_OPCODE:
-	  prefixes |= PREFIX_REPZ;
-	  break;
-	case REPNE_PREFIX_OPCODE:
-	  prefixes |= PREFIX_REPNZ;
-	  break;
-	case LOCK_PREFIX_OPCODE:
-	  prefixes |= PREFIX_LOCK;
-	  break;
-	case CS_PREFIX_OPCODE:
-	  ir.override = X86_RECORD_CS_REGNUM;
-	  break;
-	case SS_PREFIX_OPCODE:
-	  ir.override = X86_RECORD_SS_REGNUM;
-	  break;
-	case DS_PREFIX_OPCODE:
-	  ir.override = X86_RECORD_DS_REGNUM;
-	  break;
-	case ES_PREFIX_OPCODE:
-	  ir.override = X86_RECORD_ES_REGNUM;
-	  break;
-	case FS_PREFIX_OPCODE:
-	  ir.override = X86_RECORD_FS_REGNUM;
-	  break;
-	case GS_PREFIX_OPCODE:
-	  ir.override = X86_RECORD_GS_REGNUM;
-	  break;
-	case DATA_PREFIX_OPCODE:
-	  prefixes |= PREFIX_DATA;
-	  break;
-	case ADDR_PREFIX_OPCODE:
-	  prefixes |= PREFIX_ADDR;
-	  break;
-	case 0x40:	/* i386 inc %eax */
-	case 0x41:	/* i386 inc %ecx */
-	case 0x42:	/* i386 inc %edx */
-	case 0x43:	/* i386 inc %ebx */
-	case 0x44:	/* i386 inc %esp */
-	case 0x45:	/* i386 inc %ebp */
-	case 0x46:	/* i386 inc %esi */
-	case 0x47:	/* i386 inc %edi */
-	case 0x48:	/* i386 dec %eax */
-	case 0x49:	/* i386 dec %ecx */
-	case 0x4a:	/* i386 dec %edx */
-	case 0x4b:	/* i386 dec %ebx */
-	case 0x4c:	/* i386 dec %esp */
-	case 0x4d:	/* i386 dec %ebp */
-	case 0x4e:	/* i386 dec %esi */
-	case 0x4f:	/* i386 dec %edi */
-	  if (ir.regmap[X86_RECORD_R8_REGNUM])	/* 64 bit target */
-	    {
-	       /* REX */
-	       rex_w = (opcode8 >> 3) & 1;
-	       rex_r = (opcode8 & 0x4) << 1;
-	       ir.rex_x = (opcode8 & 0x2) << 2;
-	       ir.rex_b = (opcode8 & 0x1) << 3;
-	    }
-	  else					/* 32 bit target */
-	    goto out_prefixes;
-	  break;
-	default:
-	  goto out_prefixes;
-	  break;
-	}
+      switch (opcode8) /* Instruction prefixes */
+        {
+        case REPE_PREFIX_OPCODE:
+          prefixes |= PREFIX_REPZ;
+          break;
+        case REPNE_PREFIX_OPCODE:
+          prefixes |= PREFIX_REPNZ;
+          break;
+        case LOCK_PREFIX_OPCODE:
+          prefixes |= PREFIX_LOCK;
+          break;
+        case CS_PREFIX_OPCODE:
+          ir.override = X86_RECORD_CS_REGNUM;
+          break;
+        case SS_PREFIX_OPCODE:
+          ir.override = X86_RECORD_SS_REGNUM;
+          break;
+        case DS_PREFIX_OPCODE:
+          ir.override = X86_RECORD_DS_REGNUM;
+          break;
+        case ES_PREFIX_OPCODE:
+          ir.override = X86_RECORD_ES_REGNUM;
+          break;
+        case FS_PREFIX_OPCODE:
+          ir.override = X86_RECORD_FS_REGNUM;
+          break;
+        case GS_PREFIX_OPCODE:
+          ir.override = X86_RECORD_GS_REGNUM;
+          break;
+        case DATA_PREFIX_OPCODE:
+          prefixes |= PREFIX_DATA;
+          break;
+        case ADDR_PREFIX_OPCODE:
+          prefixes |= PREFIX_ADDR;
+          break;
+        case 0x40:                             /* i386 inc %eax */
+        case 0x41:                             /* i386 inc %ecx */
+        case 0x42:                             /* i386 inc %edx */
+        case 0x43:                             /* i386 inc %ebx */
+        case 0x44:                             /* i386 inc %esp */
+        case 0x45:                             /* i386 inc %ebp */
+        case 0x46:                             /* i386 inc %esi */
+        case 0x47:                             /* i386 inc %edi */
+        case 0x48:                             /* i386 dec %eax */
+        case 0x49:                             /* i386 dec %ecx */
+        case 0x4a:                             /* i386 dec %edx */
+        case 0x4b:                             /* i386 dec %ebx */
+        case 0x4c:                             /* i386 dec %esp */
+        case 0x4d:                             /* i386 dec %ebp */
+        case 0x4e:                             /* i386 dec %esi */
+        case 0x4f:                             /* i386 dec %edi */
+          if (ir.regmap[X86_RECORD_R8_REGNUM]) /* 64 bit target */
+            {
+              /* REX */
+              rex_w = (opcode8 >> 3) & 1;
+              rex_r = (opcode8 & 0x4) << 1;
+              ir.rex_x = (opcode8 & 0x2) << 2;
+              ir.rex_b = (opcode8 & 0x1) << 3;
+            }
+          else /* 32 bit target */
+            goto out_prefixes;
+          break;
+        default:
+          goto out_prefixes;
+          break;
+        }
     }
- out_prefixes:
+out_prefixes:
   if (ir.regmap[X86_RECORD_R8_REGNUM] && rex_w == 1)
     {
       ir.dflag = 2;
@@ -5168,7 +5041,7 @@ i386_process_record (struct gdbarch *gdbarch, struct regcache *regcache,
   else
     {
       if (prefixes & PREFIX_DATA)
-	ir.dflag ^= 1;
+        ir.dflag ^= 1;
     }
   if (prefixes & PREFIX_ADDR)
     ir.aflag ^= 1;
@@ -5177,18 +5050,18 @@ i386_process_record (struct gdbarch *gdbarch, struct regcache *regcache,
 
   /* Now check op code.  */
   opcode = (uint32_t) opcode8;
- reswitch:
+reswitch:
   switch (opcode)
     {
     case 0x0f:
       if (record_read_memory (gdbarch, ir.addr, &opcode8, 1))
-	return -1;
+        return -1;
       ir.addr++;
       opcode = (uint32_t) opcode8 | 0x0f00;
       goto reswitch;
       break;
 
-    case 0x00:    /* arith & logic */
+    case 0x00: /* arith & logic */
     case 0x01:
     case 0x02:
     case 0x03:
@@ -5237,76 +5110,76 @@ i386_process_record (struct gdbarch *gdbarch, struct regcache *regcache,
     case 0x3c:
     case 0x3d:
       if (((opcode >> 3) & 7) != OP_CMPL)
-	{
-	  if ((opcode & 1) == 0)
-	    ir.ot = OT_BYTE;
-	  else
-	    ir.ot = ir.dflag + OT_WORD;
+        {
+          if ((opcode & 1) == 0)
+            ir.ot = OT_BYTE;
+          else
+            ir.ot = ir.dflag + OT_WORD;
 
-	  switch ((opcode >> 1) & 3)
-	    {
-	    case 0:    /* OP Ev, Gv */
-	      if (i386_record_modrm (&ir))
-		return -1;
-	      if (ir.mod != 3)
-		{
-		  if (i386_record_lea_modrm (&ir))
-		    return -1;
-		}
-	      else
-		{
-		  ir.rm |= ir.rex_b;
-		  if (ir.ot == OT_BYTE && !ir.regmap[X86_RECORD_R8_REGNUM])
-		    ir.rm &= 0x3;
-		  I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm);
-		}
-	      break;
-	    case 1:    /* OP Gv, Ev */
-	      if (i386_record_modrm (&ir))
-		return -1;
-	      ir.reg |= rex_r;
-	      if (ir.ot == OT_BYTE && !ir.regmap[X86_RECORD_R8_REGNUM])
-		ir.reg &= 0x3;
-	      I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.reg);
-	      break;
-	    case 2:    /* OP A, Iv */
-	      I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REAX_REGNUM);
-	      break;
-	    }
-	}
+          switch ((opcode >> 1) & 3)
+            {
+            case 0: /* OP Ev, Gv */
+              if (i386_record_modrm (&ir))
+                return -1;
+              if (ir.mod != 3)
+                {
+                  if (i386_record_lea_modrm (&ir))
+                    return -1;
+                }
+              else
+                {
+                  ir.rm |= ir.rex_b;
+                  if (ir.ot == OT_BYTE && !ir.regmap[X86_RECORD_R8_REGNUM])
+                    ir.rm &= 0x3;
+                  I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm);
+                }
+              break;
+            case 1: /* OP Gv, Ev */
+              if (i386_record_modrm (&ir))
+                return -1;
+              ir.reg |= rex_r;
+              if (ir.ot == OT_BYTE && !ir.regmap[X86_RECORD_R8_REGNUM])
+                ir.reg &= 0x3;
+              I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.reg);
+              break;
+            case 2: /* OP A, Iv */
+              I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REAX_REGNUM);
+              break;
+            }
+        }
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
-    case 0x80:    /* GRP1 */
+    case 0x80: /* GRP1 */
     case 0x81:
     case 0x82:
     case 0x83:
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
 
       if (ir.reg != OP_CMPL)
-	{
-	  if ((opcode & 1) == 0)
-	    ir.ot = OT_BYTE;
-	  else
-	    ir.ot = ir.dflag + OT_WORD;
+        {
+          if ((opcode & 1) == 0)
+            ir.ot = OT_BYTE;
+          else
+            ir.ot = ir.dflag + OT_WORD;
 
-	  if (ir.mod != 3)
-	    {
-	      if (opcode == 0x83)
-		ir.rip_offset = 1;
-	      else
-		ir.rip_offset = (ir.ot > OT_LONG) ? 4 : (1 << ir.ot);
-	      if (i386_record_lea_modrm (&ir))
-		return -1;
-	    }
-	  else
-	    I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm | ir.rex_b);
-	}
+          if (ir.mod != 3)
+            {
+              if (opcode == 0x83)
+                ir.rip_offset = 1;
+              else
+                ir.rip_offset = (ir.ot > OT_LONG) ? 4 : (1 << ir.ot);
+              if (i386_record_lea_modrm (&ir))
+                return -1;
+            }
+          else
+            I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm | ir.rex_b);
+        }
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
-    case 0x40:      /* inc */
+    case 0x40: /* inc */
     case 0x41:
     case 0x42:
     case 0x43:
@@ -5315,7 +5188,7 @@ i386_process_record (struct gdbarch *gdbarch, struct regcache *regcache,
     case 0x46:
     case 0x47:
 
-    case 0x48:      /* dec */
+    case 0x48: /* dec */
     case 0x49:
     case 0x4a:
     case 0x4b:
@@ -5328,218 +5201,218 @@ i386_process_record (struct gdbarch *gdbarch, struct regcache *regcache,
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
-    case 0xf6:    /* GRP3 */
+    case 0xf6: /* GRP3 */
     case 0xf7:
       if ((opcode & 1) == 0)
-	ir.ot = OT_BYTE;
+        ir.ot = OT_BYTE;
       else
-	ir.ot = ir.dflag + OT_WORD;
+        ir.ot = ir.dflag + OT_WORD;
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
 
       if (ir.mod != 3 && ir.reg == 0)
-	ir.rip_offset = (ir.ot > OT_LONG) ? 4 : (1 << ir.ot);
+        ir.rip_offset = (ir.ot > OT_LONG) ? 4 : (1 << ir.ot);
 
       switch (ir.reg)
-	{
-	case 0:    /* test */
-	  I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
-	  break;
-	case 2:    /* not */
-	case 3:    /* neg */
-	  if (ir.mod != 3)
-	    {
-	      if (i386_record_lea_modrm (&ir))
-		return -1;
-	    }
-	  else
-	    {
-	      ir.rm |= ir.rex_b;
-	      if (ir.ot == OT_BYTE && !ir.regmap[X86_RECORD_R8_REGNUM])
-		ir.rm &= 0x3;
-	      I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm);
-	    }
-	  if (ir.reg == 3)  /* neg */
-	    I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
-	  break;
-	case 4:    /* mul  */
-	case 5:    /* imul */
-	case 6:    /* div  */
-	case 7:    /* idiv */
-	  I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REAX_REGNUM);
-	  if (ir.ot != OT_BYTE)
-	    I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REDX_REGNUM);
-	  I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
-	  break;
-	default:
-	  ir.addr -= 2;
-	  opcode = opcode << 8 | ir.modrm;
-	  goto no_support;
-	  break;
-	}
+        {
+        case 0: /* test */
+          I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
+          break;
+        case 2: /* not */
+        case 3: /* neg */
+          if (ir.mod != 3)
+            {
+              if (i386_record_lea_modrm (&ir))
+                return -1;
+            }
+          else
+            {
+              ir.rm |= ir.rex_b;
+              if (ir.ot == OT_BYTE && !ir.regmap[X86_RECORD_R8_REGNUM])
+                ir.rm &= 0x3;
+              I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm);
+            }
+          if (ir.reg == 3) /* neg */
+            I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
+          break;
+        case 4: /* mul  */
+        case 5: /* imul */
+        case 6: /* div  */
+        case 7: /* idiv */
+          I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REAX_REGNUM);
+          if (ir.ot != OT_BYTE)
+            I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REDX_REGNUM);
+          I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
+          break;
+        default:
+          ir.addr -= 2;
+          opcode = opcode << 8 | ir.modrm;
+          goto no_support;
+          break;
+        }
       break;
 
-    case 0xfe:    /* GRP4 */
-    case 0xff:    /* GRP5 */
+    case 0xfe: /* GRP4 */
+    case 0xff: /* GRP5 */
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
       if (ir.reg >= 2 && opcode == 0xfe)
-	{
-	  ir.addr -= 2;
-	  opcode = opcode << 8 | ir.modrm;
-	  goto no_support;
-	}
+        {
+          ir.addr -= 2;
+          opcode = opcode << 8 | ir.modrm;
+          goto no_support;
+        }
       switch (ir.reg)
-	{
-	case 0:    /* inc */
-	case 1:    /* dec */
-	  if ((opcode & 1) == 0)
-	    ir.ot = OT_BYTE;
-	  else
-	    ir.ot = ir.dflag + OT_WORD;
-	  if (ir.mod != 3)
-	    {
-	      if (i386_record_lea_modrm (&ir))
-		return -1;
-	    }
-	  else
-	    {
-	      ir.rm |= ir.rex_b;
-	      if (ir.ot == OT_BYTE && !ir.regmap[X86_RECORD_R8_REGNUM])
-		ir.rm &= 0x3;
-	      I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm);
-	    }
-	  I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
-	  break;
-	case 2:    /* call */
-	  if (ir.regmap[X86_RECORD_R8_REGNUM] && ir.dflag)
-	    ir.dflag = 2;
-	  if (i386_record_push (&ir, 1 << (ir.dflag + 1)))
-	    return -1;
-	  I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
-	  break;
-	case 3:    /* lcall */
-	  I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_CS_REGNUM);
-	  if (i386_record_push (&ir, 1 << (ir.dflag + 1)))
-	    return -1;
-	  I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
-	  break;
-	case 4:    /* jmp  */
-	case 5:    /* ljmp */
-	  I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
-	  break;
-	case 6:    /* push */
-	  if (ir.regmap[X86_RECORD_R8_REGNUM] && ir.dflag)
-	    ir.dflag = 2;
-	  if (i386_record_push (&ir, 1 << (ir.dflag + 1)))
-	    return -1;
-	  break;
-	default:
-	  ir.addr -= 2;
-	  opcode = opcode << 8 | ir.modrm;
-	  goto no_support;
-	  break;
-	}
+        {
+        case 0: /* inc */
+        case 1: /* dec */
+          if ((opcode & 1) == 0)
+            ir.ot = OT_BYTE;
+          else
+            ir.ot = ir.dflag + OT_WORD;
+          if (ir.mod != 3)
+            {
+              if (i386_record_lea_modrm (&ir))
+                return -1;
+            }
+          else
+            {
+              ir.rm |= ir.rex_b;
+              if (ir.ot == OT_BYTE && !ir.regmap[X86_RECORD_R8_REGNUM])
+                ir.rm &= 0x3;
+              I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm);
+            }
+          I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
+          break;
+        case 2: /* call */
+          if (ir.regmap[X86_RECORD_R8_REGNUM] && ir.dflag)
+            ir.dflag = 2;
+          if (i386_record_push (&ir, 1 << (ir.dflag + 1)))
+            return -1;
+          I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
+          break;
+        case 3: /* lcall */
+          I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_CS_REGNUM);
+          if (i386_record_push (&ir, 1 << (ir.dflag + 1)))
+            return -1;
+          I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
+          break;
+        case 4: /* jmp  */
+        case 5: /* ljmp */
+          I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
+          break;
+        case 6: /* push */
+          if (ir.regmap[X86_RECORD_R8_REGNUM] && ir.dflag)
+            ir.dflag = 2;
+          if (i386_record_push (&ir, 1 << (ir.dflag + 1)))
+            return -1;
+          break;
+        default:
+          ir.addr -= 2;
+          opcode = opcode << 8 | ir.modrm;
+          goto no_support;
+          break;
+        }
       break;
 
-    case 0x84:    /* test */
+    case 0x84: /* test */
     case 0x85:
     case 0xa8:
     case 0xa9:
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
-    case 0x98:    /* CWDE/CBW */
+    case 0x98: /* CWDE/CBW */
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REAX_REGNUM);
       break;
 
-    case 0x99:    /* CDQ/CWD */
+    case 0x99: /* CDQ/CWD */
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REAX_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REDX_REGNUM);
       break;
 
-    case 0x0faf:  /* imul */
+    case 0x0faf: /* imul */
     case 0x69:
     case 0x6b:
       ir.ot = ir.dflag + OT_WORD;
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
       if (opcode == 0x69)
-	ir.rip_offset = (ir.ot > OT_LONG) ? 4 : (1 << ir.ot);
+        ir.rip_offset = (ir.ot > OT_LONG) ? 4 : (1 << ir.ot);
       else if (opcode == 0x6b)
-	ir.rip_offset = 1;
+        ir.rip_offset = 1;
       ir.reg |= rex_r;
       if (ir.ot == OT_BYTE && !ir.regmap[X86_RECORD_R8_REGNUM])
-	ir.reg &= 0x3;
+        ir.reg &= 0x3;
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.reg);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
-    case 0x0fc0:  /* xadd */
+    case 0x0fc0: /* xadd */
     case 0x0fc1:
       if ((opcode & 1) == 0)
-	ir.ot = OT_BYTE;
+        ir.ot = OT_BYTE;
       else
-	ir.ot = ir.dflag + OT_WORD;
+        ir.ot = ir.dflag + OT_WORD;
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
       ir.reg |= rex_r;
       if (ir.mod == 3)
-	{
-	  if (ir.ot == OT_BYTE && !ir.regmap[X86_RECORD_R8_REGNUM])
-	    ir.reg &= 0x3;
-	  I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.reg);
-	  if (ir.ot == OT_BYTE && !ir.regmap[X86_RECORD_R8_REGNUM])
-	    ir.rm &= 0x3;
-	  I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm);
-	}
+        {
+          if (ir.ot == OT_BYTE && !ir.regmap[X86_RECORD_R8_REGNUM])
+            ir.reg &= 0x3;
+          I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.reg);
+          if (ir.ot == OT_BYTE && !ir.regmap[X86_RECORD_R8_REGNUM])
+            ir.rm &= 0x3;
+          I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm);
+        }
       else
-	{
-	  if (i386_record_lea_modrm (&ir))
-	    return -1;
-	  if (ir.ot == OT_BYTE && !ir.regmap[X86_RECORD_R8_REGNUM])
-	    ir.reg &= 0x3;
-	  I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.reg);
-	}
+        {
+          if (i386_record_lea_modrm (&ir))
+            return -1;
+          if (ir.ot == OT_BYTE && !ir.regmap[X86_RECORD_R8_REGNUM])
+            ir.reg &= 0x3;
+          I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.reg);
+        }
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
-    case 0x0fb0:  /* cmpxchg */
+    case 0x0fb0: /* cmpxchg */
     case 0x0fb1:
       if ((opcode & 1) == 0)
-	ir.ot = OT_BYTE;
+        ir.ot = OT_BYTE;
       else
-	ir.ot = ir.dflag + OT_WORD;
+        ir.ot = ir.dflag + OT_WORD;
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
       if (ir.mod == 3)
-	{
-	  ir.reg |= rex_r;
-	  I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REAX_REGNUM);
-	  if (ir.ot == OT_BYTE && !ir.regmap[X86_RECORD_R8_REGNUM])
-	    ir.reg &= 0x3;
-	  I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.reg);
-	}
+        {
+          ir.reg |= rex_r;
+          I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REAX_REGNUM);
+          if (ir.ot == OT_BYTE && !ir.regmap[X86_RECORD_R8_REGNUM])
+            ir.reg &= 0x3;
+          I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.reg);
+        }
       else
-	{
-	  I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REAX_REGNUM);
-	  if (i386_record_lea_modrm (&ir))
-	    return -1;
-	}
+        {
+          I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REAX_REGNUM);
+          if (i386_record_lea_modrm (&ir))
+            return -1;
+        }
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
-    case 0x0fc7:    /* cmpxchg8b / rdrand / rdseed */
+    case 0x0fc7: /* cmpxchg8b / rdrand / rdseed */
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
       if (ir.mod == 3)
-	{
-	  /* rdrand and rdseed use the 3 bits of the REG field of ModR/M as
+        {
+          /* rdrand and rdseed use the 3 bits of the REG field of ModR/M as
 	     an extended opcode.  rdrand has bits 110 (/6) and rdseed
 	     has bits 111 (/7).  */
-	  if (ir.reg == 6 || ir.reg == 7)
-	    {
-	      /* The storage register is described by the 3 R/M bits, but the
+          if (ir.reg == 6 || ir.reg == 7)
+            {
+              /* The storage register is described by the 3 R/M bits, but the
 		 REX.B prefix may be used to give access to registers
 		 R8~R15.  In this case ir.rex_b + R/M will give us the register
 		 in the range R8~R15.
@@ -5547,27 +5420,27 @@ i386_process_record (struct gdbarch *gdbarch, struct regcache *regcache,
 		 REX.W may also be used to access 64-bit registers, but we
 		 already record entire registers and not just partial bits
 		 of them.  */
-	      I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rex_b + ir.rm);
-	      /* These instructions also set conditional bits.  */
-	      I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
-	      break;
-	    }
-	  else
-	    {
-	      /* We don't handle this particular instruction yet.  */
-	      ir.addr -= 2;
-	      opcode = opcode << 8 | ir.modrm;
-	      goto no_support;
-	    }
-	}
+              I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rex_b + ir.rm);
+              /* These instructions also set conditional bits.  */
+              I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
+              break;
+            }
+          else
+            {
+              /* We don't handle this particular instruction yet.  */
+              ir.addr -= 2;
+              opcode = opcode << 8 | ir.modrm;
+              goto no_support;
+            }
+        }
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REAX_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REDX_REGNUM);
       if (i386_record_lea_modrm (&ir))
-	return -1;
+        return -1;
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
-    case 0x50:    /* push */
+    case 0x50: /* push */
     case 0x51:
     case 0x52:
     case 0x53:
@@ -5578,46 +5451,46 @@ i386_process_record (struct gdbarch *gdbarch, struct regcache *regcache,
     case 0x68:
     case 0x6a:
       if (ir.regmap[X86_RECORD_R8_REGNUM] && ir.dflag)
-	ir.dflag = 2;
+        ir.dflag = 2;
       if (i386_record_push (&ir, 1 << (ir.dflag + 1)))
-	return -1;
+        return -1;
       break;
 
-    case 0x06:    /* push es */
-    case 0x0e:    /* push cs */
-    case 0x16:    /* push ss */
-    case 0x1e:    /* push ds */
+    case 0x06: /* push es */
+    case 0x0e: /* push cs */
+    case 0x16: /* push ss */
+    case 0x1e: /* push ds */
       if (ir.regmap[X86_RECORD_R8_REGNUM])
-	{
-	  ir.addr -= 1;
-	  goto no_support;
-	}
+        {
+          ir.addr -= 1;
+          goto no_support;
+        }
       if (i386_record_push (&ir, 1 << (ir.dflag + 1)))
-	return -1;
+        return -1;
       break;
 
-    case 0x0fa0:    /* push fs */
-    case 0x0fa8:    /* push gs */
+    case 0x0fa0: /* push fs */
+    case 0x0fa8: /* push gs */
       if (ir.regmap[X86_RECORD_R8_REGNUM])
-	{
-	  ir.addr -= 2;
-	  goto no_support;
-	}
+        {
+          ir.addr -= 2;
+          goto no_support;
+        }
       if (i386_record_push (&ir, 1 << (ir.dflag + 1)))
-	return -1;
+        return -1;
       break;
 
-    case 0x60:    /* pusha */
+    case 0x60: /* pusha */
       if (ir.regmap[X86_RECORD_R8_REGNUM])
-	{
-	  ir.addr -= 1;
-	  goto no_support;
-	}
+        {
+          ir.addr -= 1;
+          goto no_support;
+        }
       if (i386_record_push (&ir, 1 << (ir.dflag + 4)))
-	return -1;
+        return -1;
       break;
 
-    case 0x58:    /* pop */
+    case 0x58: /* pop */
     case 0x59:
     case 0x5a:
     case 0x5b:
@@ -5629,266 +5502,265 @@ i386_process_record (struct gdbarch *gdbarch, struct regcache *regcache,
       I386_RECORD_FULL_ARCH_LIST_ADD_REG ((opcode & 0x7) | ir.rex_b);
       break;
 
-    case 0x61:    /* popa */
+    case 0x61: /* popa */
       if (ir.regmap[X86_RECORD_R8_REGNUM])
-	{
-	  ir.addr -= 1;
-	  goto no_support;
-	}
-      for (regnum = X86_RECORD_REAX_REGNUM; 
-	   regnum <= X86_RECORD_REDI_REGNUM;
-	   regnum++)
-	I386_RECORD_FULL_ARCH_LIST_ADD_REG (regnum);
+        {
+          ir.addr -= 1;
+          goto no_support;
+        }
+      for (regnum = X86_RECORD_REAX_REGNUM; regnum <= X86_RECORD_REDI_REGNUM;
+           regnum++)
+        I386_RECORD_FULL_ARCH_LIST_ADD_REG (regnum);
       break;
 
-    case 0x8f:    /* pop */
+    case 0x8f: /* pop */
       if (ir.regmap[X86_RECORD_R8_REGNUM])
-	ir.ot = ir.dflag ? OT_QUAD : OT_WORD;
+        ir.ot = ir.dflag ? OT_QUAD : OT_WORD;
       else
-	ir.ot = ir.dflag + OT_WORD;
+        ir.ot = ir.dflag + OT_WORD;
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
       if (ir.mod == 3)
-	I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm | ir.rex_b);
+        I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm | ir.rex_b);
       else
-	{
-	  ir.popl_esp_hack = 1 << ir.ot;
-	  if (i386_record_lea_modrm (&ir))
-	    return -1;
-	}
+        {
+          ir.popl_esp_hack = 1 << ir.ot;
+          if (i386_record_lea_modrm (&ir))
+            return -1;
+        }
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_RESP_REGNUM);
       break;
 
-    case 0xc8:    /* enter */
+    case 0xc8: /* enter */
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REBP_REGNUM);
       if (ir.regmap[X86_RECORD_R8_REGNUM] && ir.dflag)
-	ir.dflag = 2;
+        ir.dflag = 2;
       if (i386_record_push (&ir, 1 << (ir.dflag + 1)))
-	return -1;
+        return -1;
       break;
 
-    case 0xc9:    /* leave */
+    case 0xc9: /* leave */
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_RESP_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REBP_REGNUM);
       break;
 
-    case 0x07:    /* pop es */
+    case 0x07: /* pop es */
       if (ir.regmap[X86_RECORD_R8_REGNUM])
-	{
-	  ir.addr -= 1;
-	  goto no_support;
-	}
+        {
+          ir.addr -= 1;
+          goto no_support;
+        }
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_RESP_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_ES_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
-    case 0x17:    /* pop ss */
+    case 0x17: /* pop ss */
       if (ir.regmap[X86_RECORD_R8_REGNUM])
-	{
-	  ir.addr -= 1;
-	  goto no_support;
-	}
+        {
+          ir.addr -= 1;
+          goto no_support;
+        }
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_RESP_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_SS_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
-    case 0x1f:    /* pop ds */
+    case 0x1f: /* pop ds */
       if (ir.regmap[X86_RECORD_R8_REGNUM])
-	{
-	  ir.addr -= 1;
-	  goto no_support;
-	}
+        {
+          ir.addr -= 1;
+          goto no_support;
+        }
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_RESP_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_DS_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
-    case 0x0fa1:    /* pop fs */
+    case 0x0fa1: /* pop fs */
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_RESP_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_FS_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
-    case 0x0fa9:    /* pop gs */
+    case 0x0fa9: /* pop gs */
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_RESP_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_GS_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
-    case 0x88:    /* mov */
+    case 0x88: /* mov */
     case 0x89:
     case 0xc6:
     case 0xc7:
       if ((opcode & 1) == 0)
-	ir.ot = OT_BYTE;
+        ir.ot = OT_BYTE;
       else
-	ir.ot = ir.dflag + OT_WORD;
+        ir.ot = ir.dflag + OT_WORD;
 
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
 
       if (ir.mod != 3)
-	{
-	  if (opcode == 0xc6 || opcode == 0xc7)
-	    ir.rip_offset = (ir.ot > OT_LONG) ? 4 : (1 << ir.ot);
-	  if (i386_record_lea_modrm (&ir))
-	    return -1;
-	}
+        {
+          if (opcode == 0xc6 || opcode == 0xc7)
+            ir.rip_offset = (ir.ot > OT_LONG) ? 4 : (1 << ir.ot);
+          if (i386_record_lea_modrm (&ir))
+            return -1;
+        }
       else
-	{
-	  if (opcode == 0xc6 || opcode == 0xc7)
-	    ir.rm |= ir.rex_b;
-	  if (ir.ot == OT_BYTE && !ir.regmap[X86_RECORD_R8_REGNUM])
-	    ir.rm &= 0x3;
-	  I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm);
-	}
+        {
+          if (opcode == 0xc6 || opcode == 0xc7)
+            ir.rm |= ir.rex_b;
+          if (ir.ot == OT_BYTE && !ir.regmap[X86_RECORD_R8_REGNUM])
+            ir.rm &= 0x3;
+          I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm);
+        }
       break;
 
-    case 0x8a:    /* mov */
+    case 0x8a: /* mov */
     case 0x8b:
       if ((opcode & 1) == 0)
-	ir.ot = OT_BYTE;
+        ir.ot = OT_BYTE;
       else
-	ir.ot = ir.dflag + OT_WORD;
+        ir.ot = ir.dflag + OT_WORD;
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
       ir.reg |= rex_r;
       if (ir.ot == OT_BYTE && !ir.regmap[X86_RECORD_R8_REGNUM])
-	ir.reg &= 0x3;
+        ir.reg &= 0x3;
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.reg);
       break;
 
-    case 0x8c:    /* mov seg */
+    case 0x8c: /* mov seg */
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
       if (ir.reg > 5)
-	{
-	  ir.addr -= 2;
-	  opcode = opcode << 8 | ir.modrm;
-	  goto no_support;
-	}
+        {
+          ir.addr -= 2;
+          opcode = opcode << 8 | ir.modrm;
+          goto no_support;
+        }
 
       if (ir.mod == 3)
-	I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm);
+        I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm);
       else
-	{
-	  ir.ot = OT_WORD;
-	  if (i386_record_lea_modrm (&ir))
-	    return -1;
-	}
+        {
+          ir.ot = OT_WORD;
+          if (i386_record_lea_modrm (&ir))
+            return -1;
+        }
       break;
 
-    case 0x8e:    /* mov seg */
+    case 0x8e: /* mov seg */
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
       switch (ir.reg)
-	{
-	case 0:
-	  regnum = X86_RECORD_ES_REGNUM;
-	  break;
-	case 2:
-	  regnum = X86_RECORD_SS_REGNUM;
-	  break;
-	case 3:
-	  regnum = X86_RECORD_DS_REGNUM;
-	  break;
-	case 4:
-	  regnum = X86_RECORD_FS_REGNUM;
-	  break;
-	case 5:
-	  regnum = X86_RECORD_GS_REGNUM;
-	  break;
-	default:
-	  ir.addr -= 2;
-	  opcode = opcode << 8 | ir.modrm;
-	  goto no_support;
-	  break;
-	}
+        {
+        case 0:
+          regnum = X86_RECORD_ES_REGNUM;
+          break;
+        case 2:
+          regnum = X86_RECORD_SS_REGNUM;
+          break;
+        case 3:
+          regnum = X86_RECORD_DS_REGNUM;
+          break;
+        case 4:
+          regnum = X86_RECORD_FS_REGNUM;
+          break;
+        case 5:
+          regnum = X86_RECORD_GS_REGNUM;
+          break;
+        default:
+          ir.addr -= 2;
+          opcode = opcode << 8 | ir.modrm;
+          goto no_support;
+          break;
+        }
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (regnum);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
-    case 0x0fb6:    /* movzbS */
-    case 0x0fb7:    /* movzwS */
-    case 0x0fbe:    /* movsbS */
-    case 0x0fbf:    /* movswS */
+    case 0x0fb6: /* movzbS */
+    case 0x0fb7: /* movzwS */
+    case 0x0fbe: /* movsbS */
+    case 0x0fbf: /* movswS */
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.reg | rex_r);
       break;
 
-    case 0x8d:      /* lea */
+    case 0x8d: /* lea */
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
       if (ir.mod == 3)
-	{
-	  ir.addr -= 2;
-	  opcode = opcode << 8 | ir.modrm;
-	  goto no_support;
-	}
+        {
+          ir.addr -= 2;
+          opcode = opcode << 8 | ir.modrm;
+          goto no_support;
+        }
       ir.ot = ir.dflag;
       ir.reg |= rex_r;
       if (ir.ot == OT_BYTE && !ir.regmap[X86_RECORD_R8_REGNUM])
-	ir.reg &= 0x3;
+        ir.reg &= 0x3;
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.reg);
       break;
 
-    case 0xa0:    /* mov EAX */
+    case 0xa0: /* mov EAX */
     case 0xa1:
 
-    case 0xd7:    /* xlat */
+    case 0xd7: /* xlat */
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REAX_REGNUM);
       break;
 
-    case 0xa2:    /* mov EAX */
+    case 0xa2: /* mov EAX */
     case 0xa3:
       if (ir.override >= 0)
-	{
-	  if (record_full_memory_query)
-	    {
-	      if (yquery (_("\
+        {
+          if (record_full_memory_query)
+            {
+              if (yquery (_ ("\
 Process record ignores the memory change of instruction at address %s\n\
 because it can't get the value of the segment register.\n\
 Do you want to stop the program?"),
-			  paddress (gdbarch, ir.orig_addr)))
-		return -1;
-	    }
-	}
+                          paddress (gdbarch, ir.orig_addr)))
+                return -1;
+            }
+        }
       else
-	{
-	  if ((opcode & 1) == 0)
-	    ir.ot = OT_BYTE;
-	  else
-	    ir.ot = ir.dflag + OT_WORD;
-	  if (ir.aflag == 2)
-	    {
-	      if (record_read_memory (gdbarch, ir.addr, buf, 8))
-		return -1;
-	      ir.addr += 8;
-	      addr = extract_unsigned_integer (buf, 8, byte_order);
-	    }
-	  else if (ir.aflag)
-	    {
-	      if (record_read_memory (gdbarch, ir.addr, buf, 4))
-		return -1;
-	      ir.addr += 4;
-	      addr = extract_unsigned_integer (buf, 4, byte_order);
-	    }
-	  else
-	    {
-	      if (record_read_memory (gdbarch, ir.addr, buf, 2))
-		return -1;
-	      ir.addr += 2;
-	      addr = extract_unsigned_integer (buf, 2, byte_order);
-	    }
-	  if (record_full_arch_list_add_mem (addr, 1 << ir.ot))
-	    return -1;
-	}
+        {
+          if ((opcode & 1) == 0)
+            ir.ot = OT_BYTE;
+          else
+            ir.ot = ir.dflag + OT_WORD;
+          if (ir.aflag == 2)
+            {
+              if (record_read_memory (gdbarch, ir.addr, buf, 8))
+                return -1;
+              ir.addr += 8;
+              addr = extract_unsigned_integer (buf, 8, byte_order);
+            }
+          else if (ir.aflag)
+            {
+              if (record_read_memory (gdbarch, ir.addr, buf, 4))
+                return -1;
+              ir.addr += 4;
+              addr = extract_unsigned_integer (buf, 4, byte_order);
+            }
+          else
+            {
+              if (record_read_memory (gdbarch, ir.addr, buf, 2))
+                return -1;
+              ir.addr += 2;
+              addr = extract_unsigned_integer (buf, 2, byte_order);
+            }
+          if (record_full_arch_list_add_mem (addr, 1 << ir.ot))
+            return -1;
+        }
       break;
 
-    case 0xb0:    /* mov R, Ib */
+    case 0xb0: /* mov R, Ib */
     case 0xb1:
     case 0xb2:
     case 0xb3:
@@ -5897,11 +5769,11 @@ Do you want to stop the program?"),
     case 0xb6:
     case 0xb7:
       I386_RECORD_FULL_ARCH_LIST_ADD_REG ((ir.regmap[X86_RECORD_R8_REGNUM])
-					  ? ((opcode & 0x7) | ir.rex_b)
-					  : ((opcode & 0x7) & 0x3));
+                                            ? ((opcode & 0x7) | ir.rex_b)
+                                            : ((opcode & 0x7) & 0x3));
       break;
 
-    case 0xb8:    /* mov R, Iv */
+    case 0xb8: /* mov R, Iv */
     case 0xb9:
     case 0xba:
     case 0xbb:
@@ -5912,7 +5784,7 @@ Do you want to stop the program?"),
       I386_RECORD_FULL_ARCH_LIST_ADD_REG ((opcode & 0x7) | ir.rex_b);
       break;
 
-    case 0x91:    /* xchg R, EAX */
+    case 0x91: /* xchg R, EAX */
     case 0x92:
     case 0x93:
     case 0x94:
@@ -5923,101 +5795,101 @@ Do you want to stop the program?"),
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (opcode & 0x7);
       break;
 
-    case 0x86:    /* xchg Ev, Gv */
+    case 0x86: /* xchg Ev, Gv */
     case 0x87:
       if ((opcode & 1) == 0)
-	ir.ot = OT_BYTE;
+        ir.ot = OT_BYTE;
       else
-	ir.ot = ir.dflag + OT_WORD;
+        ir.ot = ir.dflag + OT_WORD;
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
       if (ir.mod == 3)
-	{
-	  ir.rm |= ir.rex_b;
-	  if (ir.ot == OT_BYTE && !ir.regmap[X86_RECORD_R8_REGNUM])
-	    ir.rm &= 0x3;
-	  I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm);
-	}
+        {
+          ir.rm |= ir.rex_b;
+          if (ir.ot == OT_BYTE && !ir.regmap[X86_RECORD_R8_REGNUM])
+            ir.rm &= 0x3;
+          I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm);
+        }
       else
-	{
-	  if (i386_record_lea_modrm (&ir))
-	    return -1;
-	}
+        {
+          if (i386_record_lea_modrm (&ir))
+            return -1;
+        }
       ir.reg |= rex_r;
       if (ir.ot == OT_BYTE && !ir.regmap[X86_RECORD_R8_REGNUM])
-	ir.reg &= 0x3;
+        ir.reg &= 0x3;
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.reg);
       break;
 
-    case 0xc4:    /* les Gv */
-    case 0xc5:    /* lds Gv */
+    case 0xc4: /* les Gv */
+    case 0xc5: /* lds Gv */
       if (ir.regmap[X86_RECORD_R8_REGNUM])
-	{
-	  ir.addr -= 1;
-	  goto no_support;
-	}
+        {
+          ir.addr -= 1;
+          goto no_support;
+        }
       /* FALLTHROUGH */
-    case 0x0fb2:    /* lss Gv */
-    case 0x0fb4:    /* lfs Gv */
-    case 0x0fb5:    /* lgs Gv */
+    case 0x0fb2: /* lss Gv */
+    case 0x0fb4: /* lfs Gv */
+    case 0x0fb5: /* lgs Gv */
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
       if (ir.mod == 3)
-	{
-	  if (opcode > 0xff)
-	    ir.addr -= 3;
-	  else
-	    ir.addr -= 2;
-	  opcode = opcode << 8 | ir.modrm;
-	  goto no_support;
-	}
+        {
+          if (opcode > 0xff)
+            ir.addr -= 3;
+          else
+            ir.addr -= 2;
+          opcode = opcode << 8 | ir.modrm;
+          goto no_support;
+        }
       switch (opcode)
-	{
-	case 0xc4:    /* les Gv */
-	  regnum = X86_RECORD_ES_REGNUM;
-	  break;
-	case 0xc5:    /* lds Gv */
-	  regnum = X86_RECORD_DS_REGNUM;
-	  break;
-	case 0x0fb2:  /* lss Gv */
-	  regnum = X86_RECORD_SS_REGNUM;
-	  break;
-	case 0x0fb4:  /* lfs Gv */
-	  regnum = X86_RECORD_FS_REGNUM;
-	  break;
-	case 0x0fb5:  /* lgs Gv */
-	  regnum = X86_RECORD_GS_REGNUM;
-	  break;
-	}
+        {
+        case 0xc4: /* les Gv */
+          regnum = X86_RECORD_ES_REGNUM;
+          break;
+        case 0xc5: /* lds Gv */
+          regnum = X86_RECORD_DS_REGNUM;
+          break;
+        case 0x0fb2: /* lss Gv */
+          regnum = X86_RECORD_SS_REGNUM;
+          break;
+        case 0x0fb4: /* lfs Gv */
+          regnum = X86_RECORD_FS_REGNUM;
+          break;
+        case 0x0fb5: /* lgs Gv */
+          regnum = X86_RECORD_GS_REGNUM;
+          break;
+        }
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (regnum);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.reg | rex_r);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
-    case 0xc0:    /* shifts */
+    case 0xc0: /* shifts */
     case 0xc1:
     case 0xd0:
     case 0xd1:
     case 0xd2:
     case 0xd3:
       if ((opcode & 1) == 0)
-	ir.ot = OT_BYTE;
+        ir.ot = OT_BYTE;
       else
-	ir.ot = ir.dflag + OT_WORD;
+        ir.ot = ir.dflag + OT_WORD;
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
       if (ir.mod != 3 && (opcode == 0xd2 || opcode == 0xd3))
-	{
-	  if (i386_record_lea_modrm (&ir))
-	    return -1;
-	}
+        {
+          if (i386_record_lea_modrm (&ir))
+            return -1;
+        }
       else
-	{
-	  ir.rm |= ir.rex_b;
-	  if (ir.ot == OT_BYTE && !ir.regmap[X86_RECORD_R8_REGNUM])
-	    ir.rm &= 0x3;
-	  I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm);
-	}
+        {
+          ir.rm |= ir.rex_b;
+          if (ir.ot == OT_BYTE && !ir.regmap[X86_RECORD_R8_REGNUM])
+            ir.rm &= 0x3;
+          I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm);
+        }
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
@@ -6026,20 +5898,20 @@ Do you want to stop the program?"),
     case 0x0fac:
     case 0x0fad:
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
       if (ir.mod == 3)
-	{
-	  if (record_full_arch_list_add_reg (ir.regcache, ir.rm))
-	    return -1;
-	}
+        {
+          if (record_full_arch_list_add_reg (ir.regcache, ir.rm))
+            return -1;
+        }
       else
-	{
-	  if (i386_record_lea_modrm (&ir))
-	    return -1;
-	}
+        {
+          if (i386_record_lea_modrm (&ir))
+            return -1;
+        }
       break;
 
-    case 0xd8:    /* Floats.  */
+    case 0xd8: /* Floats.  */
     case 0xd9:
     case 0xda:
     case 0xdb:
@@ -6048,533 +5920,527 @@ Do you want to stop the program?"),
     case 0xde:
     case 0xdf:
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
       ir.reg |= ((opcode & 7) << 3);
       if (ir.mod != 3)
-	{
-	  /* Memory.  */
-	  uint64_t addr64;
+        {
+          /* Memory.  */
+          uint64_t addr64;
 
-	  if (i386_record_lea_modrm_addr (&ir, &addr64))
-	    return -1;
-	  switch (ir.reg)
-	    {
-	    case 0x02:
-	    case 0x12:
-	    case 0x22:
-	    case 0x32:
-	      /* For fcom, ficom nothing to do.  */
-	      break;
-	    case 0x03:
-	    case 0x13:
-	    case 0x23:
-	    case 0x33:
-	      /* For fcomp, ficomp pop FPU stack, store all.  */
-	      if (i386_record_floats (gdbarch, &ir, I386_SAVE_FPU_REGS))
-		return -1;
-	      break;
-	    case 0x00:
-	    case 0x01:
-	    case 0x04:
-	    case 0x05:
-	    case 0x06:
-	    case 0x07:
-	    case 0x10:
-	    case 0x11:
-	    case 0x14:
-	    case 0x15:
-	    case 0x16:
-	    case 0x17:
-	    case 0x20:
-	    case 0x21:
-	    case 0x24:
-	    case 0x25:
-	    case 0x26:
-	    case 0x27:
-	    case 0x30:
-	    case 0x31:
-	    case 0x34:
-	    case 0x35:
-	    case 0x36:
-	    case 0x37:
-	      /* For fadd, fmul, fsub, fsubr, fdiv, fdivr, fiadd, fimul,
+          if (i386_record_lea_modrm_addr (&ir, &addr64))
+            return -1;
+          switch (ir.reg)
+            {
+            case 0x02:
+            case 0x12:
+            case 0x22:
+            case 0x32:
+              /* For fcom, ficom nothing to do.  */
+              break;
+            case 0x03:
+            case 0x13:
+            case 0x23:
+            case 0x33:
+              /* For fcomp, ficomp pop FPU stack, store all.  */
+              if (i386_record_floats (gdbarch, &ir, I386_SAVE_FPU_REGS))
+                return -1;
+              break;
+            case 0x00:
+            case 0x01:
+            case 0x04:
+            case 0x05:
+            case 0x06:
+            case 0x07:
+            case 0x10:
+            case 0x11:
+            case 0x14:
+            case 0x15:
+            case 0x16:
+            case 0x17:
+            case 0x20:
+            case 0x21:
+            case 0x24:
+            case 0x25:
+            case 0x26:
+            case 0x27:
+            case 0x30:
+            case 0x31:
+            case 0x34:
+            case 0x35:
+            case 0x36:
+            case 0x37:
+              /* For fadd, fmul, fsub, fsubr, fdiv, fdivr, fiadd, fimul,
 		 fisub, fisubr, fidiv, fidivr, modR/M.reg is an extension
 		 of code,  always affects st(0) register.  */
-	      if (i386_record_floats (gdbarch, &ir, I387_ST0_REGNUM (tdep)))
-		return -1;
-	      break;
-	    case 0x08:
-	    case 0x0a:
-	    case 0x0b:
-	    case 0x18:
-	    case 0x19:
-	    case 0x1a:
-	    case 0x1b:
-	    case 0x1d:
-	    case 0x28:
-	    case 0x29:
-	    case 0x2a:
-	    case 0x2b:
-	    case 0x38:
-	    case 0x39:
-	    case 0x3a:
-	    case 0x3b:
-	    case 0x3c:
-	    case 0x3d:
-	      switch (ir.reg & 7)
-		{
-		case 0:
-		  /* Handling fld, fild.  */
-		  if (i386_record_floats (gdbarch, &ir, I386_SAVE_FPU_REGS))
-		    return -1;
-		  break;
-		case 1:
-		  switch (ir.reg >> 4)
-		    {
-		    case 0:
-		      if (record_full_arch_list_add_mem (addr64, 4))
-			return -1;
-		      break;
-		    case 2:
-		      if (record_full_arch_list_add_mem (addr64, 8))
-			return -1;
-		      break;
-		    case 3:
-		      break;
-		    default:
-		      if (record_full_arch_list_add_mem (addr64, 2))
-			return -1;
-		      break;
-		    }
-		  break;
-		default:
-		  switch (ir.reg >> 4)
-		    {
-		    case 0:
-		      if (record_full_arch_list_add_mem (addr64, 4))
-			return -1;
-		      if (3 == (ir.reg & 7))
-			{
-			  /* For fstp m32fp.  */
-			  if (i386_record_floats (gdbarch, &ir,
-						  I386_SAVE_FPU_REGS))
-			    return -1;
-			}
-		      break;
-		    case 1:
-		      if (record_full_arch_list_add_mem (addr64, 4))
-			return -1;
-		      if ((3 == (ir.reg & 7))
-			  || (5 == (ir.reg & 7))
-			  || (7 == (ir.reg & 7)))
-			{
-			  /* For fstp insn.  */
-			  if (i386_record_floats (gdbarch, &ir,
-						  I386_SAVE_FPU_REGS))
-			    return -1;
-			}
-		      break;
-		    case 2:
-		      if (record_full_arch_list_add_mem (addr64, 8))
-			return -1;
-		      if (3 == (ir.reg & 7))
-			{
-			  /* For fstp m64fp.  */
-			  if (i386_record_floats (gdbarch, &ir,
-						  I386_SAVE_FPU_REGS))
-			    return -1;
-			}
-		      break;
-		    case 3:
-		      if ((3 <= (ir.reg & 7)) && (6 <= (ir.reg & 7)))
-			{
-			  /* For fistp, fbld, fild, fbstp.  */
-			  if (i386_record_floats (gdbarch, &ir,
-						  I386_SAVE_FPU_REGS))
-			    return -1;
-			}
-		      /* Fall through */
-		    default:
-		      if (record_full_arch_list_add_mem (addr64, 2))
-			return -1;
-		      break;
-		    }
-		  break;
-		}
-	      break;
-	    case 0x0c:
-	      /* Insn fldenv.  */
-	      if (i386_record_floats (gdbarch, &ir,
-				      I386_SAVE_FPU_ENV_REG_STACK))
-		return -1;
-	      break;
-	    case 0x0d:
-	      /* Insn fldcw.  */
-	      if (i386_record_floats (gdbarch, &ir, I387_FCTRL_REGNUM (tdep)))
-		return -1;
-	      break;
-	    case 0x2c:
-	      /* Insn frstor.  */
-	      if (i386_record_floats (gdbarch, &ir,
-				      I386_SAVE_FPU_ENV_REG_STACK))
-		return -1;
-	      break;
-	    case 0x0e:
-	      if (ir.dflag)
-		{
-		  if (record_full_arch_list_add_mem (addr64, 28))
-		    return -1;
-		}
-	      else
-		{
-		  if (record_full_arch_list_add_mem (addr64, 14))
-		    return -1;
-		}
-	      break;
-	    case 0x0f:
-	    case 0x2f:
-	      if (record_full_arch_list_add_mem (addr64, 2))
-		return -1;
-	      /* Insn fstp, fbstp.  */
-	      if (i386_record_floats (gdbarch, &ir, I386_SAVE_FPU_REGS))
-		return -1;
-	      break;
-	    case 0x1f:
-	    case 0x3e:
-	      if (record_full_arch_list_add_mem (addr64, 10))
-		return -1;
-	      break;
-	    case 0x2e:
-	      if (ir.dflag)
-		{
-		  if (record_full_arch_list_add_mem (addr64, 28))
-		    return -1;
-		  addr64 += 28;
-		}
-	      else
-		{
-		  if (record_full_arch_list_add_mem (addr64, 14))
-		    return -1;
-		  addr64 += 14;
-		}
-	      if (record_full_arch_list_add_mem (addr64, 80))
-		return -1;
-	      /* Insn fsave.  */
-	      if (i386_record_floats (gdbarch, &ir,
-				      I386_SAVE_FPU_ENV_REG_STACK))
-		return -1;
-	      break;
-	    case 0x3f:
-	      if (record_full_arch_list_add_mem (addr64, 8))
-		return -1;
-	      /* Insn fistp.  */
-	      if (i386_record_floats (gdbarch, &ir, I386_SAVE_FPU_REGS))
-		return -1;
-	      break;
-	    default:
-	      ir.addr -= 2;
-	      opcode = opcode << 8 | ir.modrm;
-	      goto no_support;
-	      break;
-	    }
-	}
+              if (i386_record_floats (gdbarch, &ir, I387_ST0_REGNUM (tdep)))
+                return -1;
+              break;
+            case 0x08:
+            case 0x0a:
+            case 0x0b:
+            case 0x18:
+            case 0x19:
+            case 0x1a:
+            case 0x1b:
+            case 0x1d:
+            case 0x28:
+            case 0x29:
+            case 0x2a:
+            case 0x2b:
+            case 0x38:
+            case 0x39:
+            case 0x3a:
+            case 0x3b:
+            case 0x3c:
+            case 0x3d:
+              switch (ir.reg & 7)
+                {
+                case 0:
+                  /* Handling fld, fild.  */
+                  if (i386_record_floats (gdbarch, &ir, I386_SAVE_FPU_REGS))
+                    return -1;
+                  break;
+                case 1:
+                  switch (ir.reg >> 4)
+                    {
+                    case 0:
+                      if (record_full_arch_list_add_mem (addr64, 4))
+                        return -1;
+                      break;
+                    case 2:
+                      if (record_full_arch_list_add_mem (addr64, 8))
+                        return -1;
+                      break;
+                    case 3:
+                      break;
+                    default:
+                      if (record_full_arch_list_add_mem (addr64, 2))
+                        return -1;
+                      break;
+                    }
+                  break;
+                default:
+                  switch (ir.reg >> 4)
+                    {
+                    case 0:
+                      if (record_full_arch_list_add_mem (addr64, 4))
+                        return -1;
+                      if (3 == (ir.reg & 7))
+                        {
+                          /* For fstp m32fp.  */
+                          if (i386_record_floats (gdbarch, &ir,
+                                                  I386_SAVE_FPU_REGS))
+                            return -1;
+                        }
+                      break;
+                    case 1:
+                      if (record_full_arch_list_add_mem (addr64, 4))
+                        return -1;
+                      if ((3 == (ir.reg & 7)) || (5 == (ir.reg & 7))
+                          || (7 == (ir.reg & 7)))
+                        {
+                          /* For fstp insn.  */
+                          if (i386_record_floats (gdbarch, &ir,
+                                                  I386_SAVE_FPU_REGS))
+                            return -1;
+                        }
+                      break;
+                    case 2:
+                      if (record_full_arch_list_add_mem (addr64, 8))
+                        return -1;
+                      if (3 == (ir.reg & 7))
+                        {
+                          /* For fstp m64fp.  */
+                          if (i386_record_floats (gdbarch, &ir,
+                                                  I386_SAVE_FPU_REGS))
+                            return -1;
+                        }
+                      break;
+                    case 3:
+                      if ((3 <= (ir.reg & 7)) && (6 <= (ir.reg & 7)))
+                        {
+                          /* For fistp, fbld, fild, fbstp.  */
+                          if (i386_record_floats (gdbarch, &ir,
+                                                  I386_SAVE_FPU_REGS))
+                            return -1;
+                        }
+                      /* Fall through */
+                    default:
+                      if (record_full_arch_list_add_mem (addr64, 2))
+                        return -1;
+                      break;
+                    }
+                  break;
+                }
+              break;
+            case 0x0c:
+              /* Insn fldenv.  */
+              if (i386_record_floats (gdbarch, &ir,
+                                      I386_SAVE_FPU_ENV_REG_STACK))
+                return -1;
+              break;
+            case 0x0d:
+              /* Insn fldcw.  */
+              if (i386_record_floats (gdbarch, &ir, I387_FCTRL_REGNUM (tdep)))
+                return -1;
+              break;
+            case 0x2c:
+              /* Insn frstor.  */
+              if (i386_record_floats (gdbarch, &ir,
+                                      I386_SAVE_FPU_ENV_REG_STACK))
+                return -1;
+              break;
+            case 0x0e:
+              if (ir.dflag)
+                {
+                  if (record_full_arch_list_add_mem (addr64, 28))
+                    return -1;
+                }
+              else
+                {
+                  if (record_full_arch_list_add_mem (addr64, 14))
+                    return -1;
+                }
+              break;
+            case 0x0f:
+            case 0x2f:
+              if (record_full_arch_list_add_mem (addr64, 2))
+                return -1;
+              /* Insn fstp, fbstp.  */
+              if (i386_record_floats (gdbarch, &ir, I386_SAVE_FPU_REGS))
+                return -1;
+              break;
+            case 0x1f:
+            case 0x3e:
+              if (record_full_arch_list_add_mem (addr64, 10))
+                return -1;
+              break;
+            case 0x2e:
+              if (ir.dflag)
+                {
+                  if (record_full_arch_list_add_mem (addr64, 28))
+                    return -1;
+                  addr64 += 28;
+                }
+              else
+                {
+                  if (record_full_arch_list_add_mem (addr64, 14))
+                    return -1;
+                  addr64 += 14;
+                }
+              if (record_full_arch_list_add_mem (addr64, 80))
+                return -1;
+              /* Insn fsave.  */
+              if (i386_record_floats (gdbarch, &ir,
+                                      I386_SAVE_FPU_ENV_REG_STACK))
+                return -1;
+              break;
+            case 0x3f:
+              if (record_full_arch_list_add_mem (addr64, 8))
+                return -1;
+              /* Insn fistp.  */
+              if (i386_record_floats (gdbarch, &ir, I386_SAVE_FPU_REGS))
+                return -1;
+              break;
+            default:
+              ir.addr -= 2;
+              opcode = opcode << 8 | ir.modrm;
+              goto no_support;
+              break;
+            }
+        }
       /* Opcode is an extension of modR/M byte.  */
       else
-	{
-	  switch (opcode)
-	    {
-	    case 0xd8:
-	      if (i386_record_floats (gdbarch, &ir, I387_ST0_REGNUM (tdep)))
-		return -1;
-	      break;
-	    case 0xd9:
-	      if (0x0c == (ir.modrm >> 4))
-		{
-		  if ((ir.modrm & 0x0f) <= 7)
-		    {
-		      if (i386_record_floats (gdbarch, &ir,
-					      I386_SAVE_FPU_REGS))
-			return -1;
-		    }
-		  else
-		    {
-		      if (i386_record_floats (gdbarch, &ir,
-					      I387_ST0_REGNUM (tdep)))
-			return -1;
-		      /* If only st(0) is changing, then we have already
+        {
+          switch (opcode)
+            {
+            case 0xd8:
+              if (i386_record_floats (gdbarch, &ir, I387_ST0_REGNUM (tdep)))
+                return -1;
+              break;
+            case 0xd9:
+              if (0x0c == (ir.modrm >> 4))
+                {
+                  if ((ir.modrm & 0x0f) <= 7)
+                    {
+                      if (i386_record_floats (gdbarch, &ir,
+                                              I386_SAVE_FPU_REGS))
+                        return -1;
+                    }
+                  else
+                    {
+                      if (i386_record_floats (gdbarch, &ir,
+                                              I387_ST0_REGNUM (tdep)))
+                        return -1;
+                      /* If only st(0) is changing, then we have already
 			 recorded.  */
-		      if ((ir.modrm & 0x0f) - 0x08)
-			{
-			  if (i386_record_floats (gdbarch, &ir,
-						  I387_ST0_REGNUM (tdep) +
-						  ((ir.modrm & 0x0f) - 0x08)))
-			    return -1;
-			}
-		    }
-		}
-	      else
-		{
-		  switch (ir.modrm)
-		    {
-		    case 0xe0:
-		    case 0xe1:
-		    case 0xf0:
-		    case 0xf5:
-		    case 0xf8:
-		    case 0xfa:
-		    case 0xfc:
-		    case 0xfe:
-		    case 0xff:
-		      if (i386_record_floats (gdbarch, &ir,
-					      I387_ST0_REGNUM (tdep)))
-			return -1;
-		      break;
-		    case 0xf1:
-		    case 0xf2:
-		    case 0xf3:
-		    case 0xf4:
-		    case 0xf6:
-		    case 0xf7:
-		    case 0xe8:
-		    case 0xe9:
-		    case 0xea:
-		    case 0xeb:
-		    case 0xec:
-		    case 0xed:
-		    case 0xee:
-		    case 0xf9:
-		    case 0xfb:
-		      if (i386_record_floats (gdbarch, &ir,
-					      I386_SAVE_FPU_REGS))
-			return -1;
-		      break;
-		    case 0xfd:
-		      if (i386_record_floats (gdbarch, &ir,
-					      I387_ST0_REGNUM (tdep)))
-			return -1;
-		      if (i386_record_floats (gdbarch, &ir,
-					      I387_ST0_REGNUM (tdep) + 1))
-			return -1;
-		      break;
-		    }
-		}
-	      break;
-	    case 0xda:
-	      if (0xe9 == ir.modrm)
-		{
-		  if (i386_record_floats (gdbarch, &ir, I386_SAVE_FPU_REGS))
-		    return -1;
-		}
-	      else if ((0x0c == ir.modrm >> 4) || (0x0d == ir.modrm >> 4))
-		{
-		  if (i386_record_floats (gdbarch, &ir,
-					  I387_ST0_REGNUM (tdep)))
-		    return -1;
-		  if (((ir.modrm & 0x0f) > 0) && ((ir.modrm & 0x0f) <= 7))
-		    {
-		      if (i386_record_floats (gdbarch, &ir,
-					      I387_ST0_REGNUM (tdep) +
-					      (ir.modrm & 0x0f)))
-			return -1;
-		    }
-		  else if ((ir.modrm & 0x0f) - 0x08)
-		    {
-		      if (i386_record_floats (gdbarch, &ir,
-					      I387_ST0_REGNUM (tdep) +
-					      ((ir.modrm & 0x0f) - 0x08)))
-			return -1;
-		    }
-		}
-	      break;
-	    case 0xdb:
-	      if (0xe3 == ir.modrm)
-		{
-		  if (i386_record_floats (gdbarch, &ir, I386_SAVE_FPU_ENV))
-		    return -1;
-		}
-	      else if ((0x0c == ir.modrm >> 4) || (0x0d == ir.modrm >> 4))
-		{
-		  if (i386_record_floats (gdbarch, &ir,
-					  I387_ST0_REGNUM (tdep)))
-		    return -1;
-		  if (((ir.modrm & 0x0f) > 0) && ((ir.modrm & 0x0f) <= 7))
-		    {
-		      if (i386_record_floats (gdbarch, &ir,
-					      I387_ST0_REGNUM (tdep) +
-					      (ir.modrm & 0x0f)))
-			return -1;
-		    }
-		  else if ((ir.modrm & 0x0f) - 0x08)
-		    {
-		      if (i386_record_floats (gdbarch, &ir,
-					      I387_ST0_REGNUM (tdep) +
-					      ((ir.modrm & 0x0f) - 0x08)))
-			return -1;
-		    }
-		}
-	      break;
-	    case 0xdc:
-	      if ((0x0c == ir.modrm >> 4)
-		  || (0x0d == ir.modrm >> 4)
-		  || (0x0f == ir.modrm >> 4))
-		{
-		  if ((ir.modrm & 0x0f) <= 7)
-		    {
-		      if (i386_record_floats (gdbarch, &ir,
-					      I387_ST0_REGNUM (tdep) +
-					      (ir.modrm & 0x0f)))
-			return -1;
-		    }
-		  else
-		    {
-		      if (i386_record_floats (gdbarch, &ir,
-					      I387_ST0_REGNUM (tdep) +
-					      ((ir.modrm & 0x0f) - 0x08)))
-			return -1;
-		    }
-		}
-	      break;
-	    case 0xdd:
-	      if (0x0c == ir.modrm >> 4)
-		{
-		  if (i386_record_floats (gdbarch, &ir,
-					  I387_FTAG_REGNUM (tdep)))
-		    return -1;
-		}
-	      else if ((0x0d == ir.modrm >> 4) || (0x0e == ir.modrm >> 4))
-		{
-		  if ((ir.modrm & 0x0f) <= 7)
-		    {
-		      if (i386_record_floats (gdbarch, &ir,
-					      I387_ST0_REGNUM (tdep) +
-					      (ir.modrm & 0x0f)))
-			return -1;
-		    }
-		  else
-		    {
-		      if (i386_record_floats (gdbarch, &ir,
-					      I386_SAVE_FPU_REGS))
-			return -1;
-		    }
-		}
-	      break;
-	    case 0xde:
-	      if ((0x0c == ir.modrm >> 4)
-		  || (0x0e == ir.modrm >> 4)
-		  || (0x0f == ir.modrm >> 4)
-		  || (0xd9 == ir.modrm))
-		{
-		  if (i386_record_floats (gdbarch, &ir, I386_SAVE_FPU_REGS))
-		    return -1;
-		}
-	      break;
-	    case 0xdf:
-	      if (0xe0 == ir.modrm)
-		{
-		  if (record_full_arch_list_add_reg (ir.regcache,
-						     I386_EAX_REGNUM))
-		    return -1;
-		}
-	      else if ((0x0f == ir.modrm >> 4) || (0x0e == ir.modrm >> 4))
-		{
-		  if (i386_record_floats (gdbarch, &ir, I386_SAVE_FPU_REGS))
-		    return -1;
-		}
-	      break;
-	    }
-	}
+                      if ((ir.modrm & 0x0f) - 0x08)
+                        {
+                          if (i386_record_floats (gdbarch, &ir,
+                                                  I387_ST0_REGNUM (tdep)
+                                                    + ((ir.modrm & 0x0f)
+                                                       - 0x08)))
+                            return -1;
+                        }
+                    }
+                }
+              else
+                {
+                  switch (ir.modrm)
+                    {
+                    case 0xe0:
+                    case 0xe1:
+                    case 0xf0:
+                    case 0xf5:
+                    case 0xf8:
+                    case 0xfa:
+                    case 0xfc:
+                    case 0xfe:
+                    case 0xff:
+                      if (i386_record_floats (gdbarch, &ir,
+                                              I387_ST0_REGNUM (tdep)))
+                        return -1;
+                      break;
+                    case 0xf1:
+                    case 0xf2:
+                    case 0xf3:
+                    case 0xf4:
+                    case 0xf6:
+                    case 0xf7:
+                    case 0xe8:
+                    case 0xe9:
+                    case 0xea:
+                    case 0xeb:
+                    case 0xec:
+                    case 0xed:
+                    case 0xee:
+                    case 0xf9:
+                    case 0xfb:
+                      if (i386_record_floats (gdbarch, &ir,
+                                              I386_SAVE_FPU_REGS))
+                        return -1;
+                      break;
+                    case 0xfd:
+                      if (i386_record_floats (gdbarch, &ir,
+                                              I387_ST0_REGNUM (tdep)))
+                        return -1;
+                      if (i386_record_floats (gdbarch, &ir,
+                                              I387_ST0_REGNUM (tdep) + 1))
+                        return -1;
+                      break;
+                    }
+                }
+              break;
+            case 0xda:
+              if (0xe9 == ir.modrm)
+                {
+                  if (i386_record_floats (gdbarch, &ir, I386_SAVE_FPU_REGS))
+                    return -1;
+                }
+              else if ((0x0c == ir.modrm >> 4) || (0x0d == ir.modrm >> 4))
+                {
+                  if (i386_record_floats (gdbarch, &ir,
+                                          I387_ST0_REGNUM (tdep)))
+                    return -1;
+                  if (((ir.modrm & 0x0f) > 0) && ((ir.modrm & 0x0f) <= 7))
+                    {
+                      if (i386_record_floats (gdbarch, &ir,
+                                              I387_ST0_REGNUM (tdep)
+                                                + (ir.modrm & 0x0f)))
+                        return -1;
+                    }
+                  else if ((ir.modrm & 0x0f) - 0x08)
+                    {
+                      if (i386_record_floats (gdbarch, &ir,
+                                              I387_ST0_REGNUM (tdep)
+                                                + ((ir.modrm & 0x0f) - 0x08)))
+                        return -1;
+                    }
+                }
+              break;
+            case 0xdb:
+              if (0xe3 == ir.modrm)
+                {
+                  if (i386_record_floats (gdbarch, &ir, I386_SAVE_FPU_ENV))
+                    return -1;
+                }
+              else if ((0x0c == ir.modrm >> 4) || (0x0d == ir.modrm >> 4))
+                {
+                  if (i386_record_floats (gdbarch, &ir,
+                                          I387_ST0_REGNUM (tdep)))
+                    return -1;
+                  if (((ir.modrm & 0x0f) > 0) && ((ir.modrm & 0x0f) <= 7))
+                    {
+                      if (i386_record_floats (gdbarch, &ir,
+                                              I387_ST0_REGNUM (tdep)
+                                                + (ir.modrm & 0x0f)))
+                        return -1;
+                    }
+                  else if ((ir.modrm & 0x0f) - 0x08)
+                    {
+                      if (i386_record_floats (gdbarch, &ir,
+                                              I387_ST0_REGNUM (tdep)
+                                                + ((ir.modrm & 0x0f) - 0x08)))
+                        return -1;
+                    }
+                }
+              break;
+            case 0xdc:
+              if ((0x0c == ir.modrm >> 4) || (0x0d == ir.modrm >> 4)
+                  || (0x0f == ir.modrm >> 4))
+                {
+                  if ((ir.modrm & 0x0f) <= 7)
+                    {
+                      if (i386_record_floats (gdbarch, &ir,
+                                              I387_ST0_REGNUM (tdep)
+                                                + (ir.modrm & 0x0f)))
+                        return -1;
+                    }
+                  else
+                    {
+                      if (i386_record_floats (gdbarch, &ir,
+                                              I387_ST0_REGNUM (tdep)
+                                                + ((ir.modrm & 0x0f) - 0x08)))
+                        return -1;
+                    }
+                }
+              break;
+            case 0xdd:
+              if (0x0c == ir.modrm >> 4)
+                {
+                  if (i386_record_floats (gdbarch, &ir,
+                                          I387_FTAG_REGNUM (tdep)))
+                    return -1;
+                }
+              else if ((0x0d == ir.modrm >> 4) || (0x0e == ir.modrm >> 4))
+                {
+                  if ((ir.modrm & 0x0f) <= 7)
+                    {
+                      if (i386_record_floats (gdbarch, &ir,
+                                              I387_ST0_REGNUM (tdep)
+                                                + (ir.modrm & 0x0f)))
+                        return -1;
+                    }
+                  else
+                    {
+                      if (i386_record_floats (gdbarch, &ir,
+                                              I386_SAVE_FPU_REGS))
+                        return -1;
+                    }
+                }
+              break;
+            case 0xde:
+              if ((0x0c == ir.modrm >> 4) || (0x0e == ir.modrm >> 4)
+                  || (0x0f == ir.modrm >> 4) || (0xd9 == ir.modrm))
+                {
+                  if (i386_record_floats (gdbarch, &ir, I386_SAVE_FPU_REGS))
+                    return -1;
+                }
+              break;
+            case 0xdf:
+              if (0xe0 == ir.modrm)
+                {
+                  if (record_full_arch_list_add_reg (ir.regcache,
+                                                     I386_EAX_REGNUM))
+                    return -1;
+                }
+              else if ((0x0f == ir.modrm >> 4) || (0x0e == ir.modrm >> 4))
+                {
+                  if (i386_record_floats (gdbarch, &ir, I386_SAVE_FPU_REGS))
+                    return -1;
+                }
+              break;
+            }
+        }
       break;
       /* string ops */
-    case 0xa4:    /* movsS */
+    case 0xa4: /* movsS */
     case 0xa5:
-    case 0xaa:    /* stosS */
+    case 0xaa: /* stosS */
     case 0xab:
-    case 0x6c:    /* insS */
+    case 0x6c: /* insS */
     case 0x6d:
       regcache_raw_read_unsigned (ir.regcache,
-				  ir.regmap[X86_RECORD_RECX_REGNUM],
-				  &addr);
+                                  ir.regmap[X86_RECORD_RECX_REGNUM], &addr);
       if (addr)
-	{
-	  ULONGEST es, ds;
+        {
+          ULONGEST es, ds;
 
-	  if ((opcode & 1) == 0)
-	    ir.ot = OT_BYTE;
-	  else
-	    ir.ot = ir.dflag + OT_WORD;
-	  regcache_raw_read_unsigned (ir.regcache,
-				      ir.regmap[X86_RECORD_REDI_REGNUM],
-				      &addr);
+          if ((opcode & 1) == 0)
+            ir.ot = OT_BYTE;
+          else
+            ir.ot = ir.dflag + OT_WORD;
+          regcache_raw_read_unsigned (ir.regcache,
+                                      ir.regmap[X86_RECORD_REDI_REGNUM],
+                                      &addr);
 
-	  regcache_raw_read_unsigned (ir.regcache,
-				      ir.regmap[X86_RECORD_ES_REGNUM],
-				      &es);
-	  regcache_raw_read_unsigned (ir.regcache,
-				      ir.regmap[X86_RECORD_DS_REGNUM],
-				      &ds);
-	  if (ir.aflag && (es != ds))
-	    {
-	      /* addr += ((uint32_t) read_register (I386_ES_REGNUM)) << 4; */
-	      if (record_full_memory_query)
-		{
-		  if (yquery (_("\
+          regcache_raw_read_unsigned (ir.regcache,
+                                      ir.regmap[X86_RECORD_ES_REGNUM], &es);
+          regcache_raw_read_unsigned (ir.regcache,
+                                      ir.regmap[X86_RECORD_DS_REGNUM], &ds);
+          if (ir.aflag && (es != ds))
+            {
+              /* addr += ((uint32_t) read_register (I386_ES_REGNUM)) << 4; */
+              if (record_full_memory_query)
+                {
+                  if (yquery (_ ("\
 Process record ignores the memory change of instruction at address %s\n\
 because it can't get the value of the segment register.\n\
 Do you want to stop the program?"),
-			      paddress (gdbarch, ir.orig_addr)))
-		    return -1;
-		}
-	    }
-	  else
-	    {
-	      if (record_full_arch_list_add_mem (addr, 1 << ir.ot))
-		return -1;
-	    }
+                              paddress (gdbarch, ir.orig_addr)))
+                    return -1;
+                }
+            }
+          else
+            {
+              if (record_full_arch_list_add_mem (addr, 1 << ir.ot))
+                return -1;
+            }
 
-	  if (prefixes & (PREFIX_REPZ | PREFIX_REPNZ))
-	    I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_RECX_REGNUM);
-	  if (opcode == 0xa4 || opcode == 0xa5)
-	    I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_RESI_REGNUM);
-	  I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REDI_REGNUM);
-	  I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
-	}
+          if (prefixes & (PREFIX_REPZ | PREFIX_REPNZ))
+            I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_RECX_REGNUM);
+          if (opcode == 0xa4 || opcode == 0xa5)
+            I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_RESI_REGNUM);
+          I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REDI_REGNUM);
+          I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
+        }
       break;
 
-    case 0xa6:    /* cmpsS */
+    case 0xa6: /* cmpsS */
     case 0xa7:
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REDI_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_RESI_REGNUM);
       if (prefixes & (PREFIX_REPZ | PREFIX_REPNZ))
-	I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_RECX_REGNUM);
+        I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_RECX_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
-    case 0xac:    /* lodsS */
+    case 0xac: /* lodsS */
     case 0xad:
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REAX_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_RESI_REGNUM);
       if (prefixes & (PREFIX_REPZ | PREFIX_REPNZ))
-	I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_RECX_REGNUM);
+        I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_RECX_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
-    case 0xae:    /* scasS */
+    case 0xae: /* scasS */
     case 0xaf:
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REDI_REGNUM);
       if (prefixes & (PREFIX_REPZ | PREFIX_REPNZ))
-	I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_RECX_REGNUM);
+        I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_RECX_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
-    case 0x6e:    /* outsS */
+    case 0x6e: /* outsS */
     case 0x6f:
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_RESI_REGNUM);
       if (prefixes & (PREFIX_REPZ | PREFIX_REPNZ))
-	I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_RECX_REGNUM);
+        I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_RECX_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
-    case 0xe4:    /* port I/O */
+    case 0xe4: /* port I/O */
     case 0xe5:
     case 0xec:
     case 0xed:
@@ -6589,42 +6455,42 @@ Do you want to stop the program?"),
       break;
 
       /* control */
-    case 0xc2:    /* ret im */
-    case 0xc3:    /* ret */
+    case 0xc2: /* ret im */
+    case 0xc3: /* ret */
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_RESP_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
-    case 0xca:    /* lret im */
-    case 0xcb:    /* lret */
-    case 0xcf:    /* iret */
+    case 0xca: /* lret im */
+    case 0xcb: /* lret */
+    case 0xcf: /* iret */
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_CS_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_RESP_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
-    case 0xe8:    /* call im */
+    case 0xe8: /* call im */
       if (ir.regmap[X86_RECORD_R8_REGNUM] && ir.dflag)
-	ir.dflag = 2;
+        ir.dflag = 2;
       if (i386_record_push (&ir, 1 << (ir.dflag + 1)))
-	return -1;
+        return -1;
       break;
 
-    case 0x9a:    /* lcall im */
+    case 0x9a: /* lcall im */
       if (ir.regmap[X86_RECORD_R8_REGNUM])
-	{
-	  ir.addr -= 1;
-	  goto no_support;
-	}
+        {
+          ir.addr -= 1;
+          goto no_support;
+        }
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_CS_REGNUM);
       if (i386_record_push (&ir, 1 << (ir.dflag + 1)))
-	return -1;
+        return -1;
       break;
 
-    case 0xe9:    /* jmp im */
-    case 0xea:    /* ljmp im */
-    case 0xeb:    /* jmp Jb */
-    case 0x70:    /* jcc Jb */
+    case 0xe9: /* jmp im */
+    case 0xea: /* ljmp im */
+    case 0xeb: /* jmp Jb */
+    case 0x70: /* jcc Jb */
     case 0x71:
     case 0x72:
     case 0x73:
@@ -6640,7 +6506,7 @@ Do you want to stop the program?"),
     case 0x7d:
     case 0x7e:
     case 0x7f:
-    case 0x0f80:  /* jcc Jv */
+    case 0x0f80: /* jcc Jv */
     case 0x0f81:
     case 0x0f82:
     case 0x0f83:
@@ -6658,7 +6524,7 @@ Do you want to stop the program?"),
     case 0x0f8f:
       break;
 
-    case 0x0f90:  /* setcc Gv */
+    case 0x0f90: /* setcc Gv */
     case 0x0f91:
     case 0x0f92:
     case 0x0f93:
@@ -6677,18 +6543,18 @@ Do you want to stop the program?"),
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       ir.ot = OT_BYTE;
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
       if (ir.mod == 3)
-	I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rex_b ? (ir.rm | ir.rex_b)
-					    : (ir.rm & 0x3));
+        I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rex_b ? (ir.rm | ir.rex_b)
+                                                     : (ir.rm & 0x3));
       else
-	{
-	  if (i386_record_lea_modrm (&ir))
-	    return -1;
-	}
+        {
+          if (i386_record_lea_modrm (&ir))
+            return -1;
+        }
       break;
 
-    case 0x0f40:    /* cmov Gv, Ev */
+    case 0x0f40: /* cmov Gv, Ev */
     case 0x0f41:
     case 0x0f42:
     case 0x0f43:
@@ -6705,210 +6571,205 @@ Do you want to stop the program?"),
     case 0x0f4e:
     case 0x0f4f:
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
       ir.reg |= rex_r;
       if (ir.dflag == OT_BYTE)
-	ir.reg &= 0x3;
+        ir.reg &= 0x3;
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.reg);
       break;
 
       /* flags */
-    case 0x9c:    /* pushf */
+    case 0x9c: /* pushf */
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       if (ir.regmap[X86_RECORD_R8_REGNUM] && ir.dflag)
-	ir.dflag = 2;
+        ir.dflag = 2;
       if (i386_record_push (&ir, 1 << (ir.dflag + 1)))
-	return -1;
+        return -1;
       break;
 
-    case 0x9d:    /* popf */
+    case 0x9d: /* popf */
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_RESP_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
-    case 0x9e:    /* sahf */
+    case 0x9e: /* sahf */
       if (ir.regmap[X86_RECORD_R8_REGNUM])
-	{
-	  ir.addr -= 1;
-	  goto no_support;
-	}
+        {
+          ir.addr -= 1;
+          goto no_support;
+        }
       /* FALLTHROUGH */
-    case 0xf5:    /* cmc */
-    case 0xf8:    /* clc */
-    case 0xf9:    /* stc */
-    case 0xfc:    /* cld */
-    case 0xfd:    /* std */
+    case 0xf5: /* cmc */
+    case 0xf8: /* clc */
+    case 0xf9: /* stc */
+    case 0xfc: /* cld */
+    case 0xfd: /* std */
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
-    case 0x9f:    /* lahf */
+    case 0x9f: /* lahf */
       if (ir.regmap[X86_RECORD_R8_REGNUM])
-	{
-	  ir.addr -= 1;
-	  goto no_support;
-	}
+        {
+          ir.addr -= 1;
+          goto no_support;
+        }
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REAX_REGNUM);
       break;
 
       /* bit operations */
-    case 0x0fba:    /* bt/bts/btr/btc Gv, im */
+    case 0x0fba: /* bt/bts/btr/btc Gv, im */
       ir.ot = ir.dflag + OT_WORD;
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
       if (ir.reg < 4)
-	{
-	  ir.addr -= 2;
-	  opcode = opcode << 8 | ir.modrm;
-	  goto no_support;
-	}
+        {
+          ir.addr -= 2;
+          opcode = opcode << 8 | ir.modrm;
+          goto no_support;
+        }
       if (ir.reg != 4)
-	{
-	  if (ir.mod == 3)
-	    I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm | ir.rex_b);
-	  else
-	    {
-	      if (i386_record_lea_modrm (&ir))
-		return -1;
-	    }
-	}
+        {
+          if (ir.mod == 3)
+            I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm | ir.rex_b);
+          else
+            {
+              if (i386_record_lea_modrm (&ir))
+                return -1;
+            }
+        }
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
-    case 0x0fa3:    /* bt Gv, Ev */
+    case 0x0fa3: /* bt Gv, Ev */
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
-    case 0x0fab:    /* bts */
-    case 0x0fb3:    /* btr */
-    case 0x0fbb:    /* btc */
+    case 0x0fab: /* bts */
+    case 0x0fb3: /* btr */
+    case 0x0fbb: /* btc */
       ir.ot = ir.dflag + OT_WORD;
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
       if (ir.mod == 3)
-	I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm | ir.rex_b);
+        I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm | ir.rex_b);
       else
-	{
-	  uint64_t addr64;
-	  if (i386_record_lea_modrm_addr (&ir, &addr64))
-	    return -1;
-	  regcache_raw_read_unsigned (ir.regcache,
-				      ir.regmap[ir.reg | rex_r],
-				      &addr);
-	  switch (ir.dflag)
-	    {
-	    case 0:
-	      addr64 += ((int16_t) addr >> 4) << 4;
-	      break;
-	    case 1:
-	      addr64 += ((int32_t) addr >> 5) << 5;
-	      break;
-	    case 2:
-	      addr64 += ((int64_t) addr >> 6) << 6;
-	      break;
-	    }
-	  if (record_full_arch_list_add_mem (addr64, 1 << ir.ot))
-	    return -1;
-	  if (i386_record_lea_modrm (&ir))
-	    return -1;
-	}
+        {
+          uint64_t addr64;
+          if (i386_record_lea_modrm_addr (&ir, &addr64))
+            return -1;
+          regcache_raw_read_unsigned (ir.regcache, ir.regmap[ir.reg | rex_r],
+                                      &addr);
+          switch (ir.dflag)
+            {
+            case 0:
+              addr64 += ((int16_t) addr >> 4) << 4;
+              break;
+            case 1:
+              addr64 += ((int32_t) addr >> 5) << 5;
+              break;
+            case 2:
+              addr64 += ((int64_t) addr >> 6) << 6;
+              break;
+            }
+          if (record_full_arch_list_add_mem (addr64, 1 << ir.ot))
+            return -1;
+          if (i386_record_lea_modrm (&ir))
+            return -1;
+        }
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
-    case 0x0fbc:    /* bsf */
-    case 0x0fbd:    /* bsr */
+    case 0x0fbc: /* bsf */
+    case 0x0fbd: /* bsr */
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.reg | rex_r);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
       /* bcd */
-    case 0x27:    /* daa */
-    case 0x2f:    /* das */
-    case 0x37:    /* aaa */
-    case 0x3f:    /* aas */
-    case 0xd4:    /* aam */
-    case 0xd5:    /* aad */
+    case 0x27: /* daa */
+    case 0x2f: /* das */
+    case 0x37: /* aaa */
+    case 0x3f: /* aas */
+    case 0xd4: /* aam */
+    case 0xd5: /* aad */
       if (ir.regmap[X86_RECORD_R8_REGNUM])
-	{
-	  ir.addr -= 1;
-	  goto no_support;
-	}
+        {
+          ir.addr -= 1;
+          goto no_support;
+        }
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REAX_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
       /* misc */
-    case 0x90:    /* nop */
+    case 0x90: /* nop */
       if (prefixes & PREFIX_LOCK)
-	{
-	  ir.addr -= 1;
-	  goto no_support;
-	}
+        {
+          ir.addr -= 1;
+          goto no_support;
+        }
       break;
 
-    case 0x9b:    /* fwait */
+    case 0x9b: /* fwait */
       if (record_read_memory (gdbarch, ir.addr, &opcode8, 1))
-	return -1;
+        return -1;
       opcode = (uint32_t) opcode8;
       ir.addr++;
       goto reswitch;
       break;
 
       /* XXX */
-    case 0xcc:    /* int3 */
-      gdb_printf (gdb_stderr,
-		  _("Process record does not support instruction "
-		    "int3.\n"));
+    case 0xcc: /* int3 */
+      gdb_printf (gdb_stderr, _ ("Process record does not support instruction "
+                                 "int3.\n"));
       ir.addr -= 1;
       goto no_support;
       break;
 
       /* XXX */
-    case 0xcd:    /* int */
+    case 0xcd: /* int */
       {
-	int ret;
-	uint8_t interrupt;
-	if (record_read_memory (gdbarch, ir.addr, &interrupt, 1))
-	  return -1;
-	ir.addr++;
-	if (interrupt != 0x80
-	    || tdep->i386_intx80_record == NULL)
-	  {
-	    gdb_printf (gdb_stderr,
-			_("Process record does not support "
-			  "instruction int 0x%02x.\n"),
-			interrupt);
-	    ir.addr -= 2;
-	    goto no_support;
-	  }
-	ret = tdep->i386_intx80_record (ir.regcache);
-	if (ret)
-	  return ret;
+        int ret;
+        uint8_t interrupt;
+        if (record_read_memory (gdbarch, ir.addr, &interrupt, 1))
+          return -1;
+        ir.addr++;
+        if (interrupt != 0x80 || tdep->i386_intx80_record == NULL)
+          {
+            gdb_printf (gdb_stderr,
+                        _ ("Process record does not support "
+                           "instruction int 0x%02x.\n"),
+                        interrupt);
+            ir.addr -= 2;
+            goto no_support;
+          }
+        ret = tdep->i386_intx80_record (ir.regcache);
+        if (ret)
+          return ret;
       }
       break;
 
       /* XXX */
-    case 0xce:    /* into */
-      gdb_printf (gdb_stderr,
-		  _("Process record does not support "
-		    "instruction into.\n"));
+    case 0xce: /* into */
+      gdb_printf (gdb_stderr, _ ("Process record does not support "
+                                 "instruction into.\n"));
       ir.addr -= 1;
       goto no_support;
       break;
 
-    case 0xfa:    /* cli */
-    case 0xfb:    /* sti */
+    case 0xfa: /* cli */
+    case 0xfb: /* sti */
       break;
 
-    case 0x62:    /* bound */
-      gdb_printf (gdb_stderr,
-		  _("Process record does not support "
-		    "instruction bound.\n"));
+    case 0x62: /* bound */
+      gdb_printf (gdb_stderr, _ ("Process record does not support "
+                                 "instruction bound.\n"));
       ir.addr -= 1;
       goto no_support;
       break;
 
-    case 0x0fc8:    /* bswap reg */
+    case 0x0fc8: /* bswap reg */
     case 0x0fc9:
     case 0x0fca:
     case 0x0fcb:
@@ -6919,349 +6780,344 @@ Do you want to stop the program?"),
       I386_RECORD_FULL_ARCH_LIST_ADD_REG ((opcode & 7) | ir.rex_b);
       break;
 
-    case 0xd6:    /* salc */
+    case 0xd6: /* salc */
       if (ir.regmap[X86_RECORD_R8_REGNUM])
-	{
-	  ir.addr -= 1;
-	  goto no_support;
-	}
+        {
+          ir.addr -= 1;
+          goto no_support;
+        }
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REAX_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
-    case 0xe0:    /* loopnz */
-    case 0xe1:    /* loopz */
-    case 0xe2:    /* loop */
-    case 0xe3:    /* jecxz */
+    case 0xe0: /* loopnz */
+    case 0xe1: /* loopz */
+    case 0xe2: /* loop */
+    case 0xe3: /* jecxz */
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_RECX_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
-    case 0x0f30:    /* wrmsr */
-      gdb_printf (gdb_stderr,
-		  _("Process record does not support "
-		    "instruction wrmsr.\n"));
+    case 0x0f30: /* wrmsr */
+      gdb_printf (gdb_stderr, _ ("Process record does not support "
+                                 "instruction wrmsr.\n"));
       ir.addr -= 2;
       goto no_support;
       break;
 
-    case 0x0f32:    /* rdmsr */
-      gdb_printf (gdb_stderr,
-		  _("Process record does not support "
-		    "instruction rdmsr.\n"));
+    case 0x0f32: /* rdmsr */
+      gdb_printf (gdb_stderr, _ ("Process record does not support "
+                                 "instruction rdmsr.\n"));
       ir.addr -= 2;
       goto no_support;
       break;
 
-    case 0x0f31:    /* rdtsc */
+    case 0x0f31: /* rdtsc */
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REAX_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REDX_REGNUM);
       break;
 
-    case 0x0f34:    /* sysenter */
+    case 0x0f34: /* sysenter */
       {
-	int ret;
-	if (ir.regmap[X86_RECORD_R8_REGNUM])
-	  {
-	    ir.addr -= 2;
-	    goto no_support;
-	  }
-	if (tdep->i386_sysenter_record == NULL)
-	  {
-	    gdb_printf (gdb_stderr,
-			_("Process record does not support "
-			  "instruction sysenter.\n"));
-	    ir.addr -= 2;
-	    goto no_support;
-	  }
-	ret = tdep->i386_sysenter_record (ir.regcache);
-	if (ret)
-	  return ret;
+        int ret;
+        if (ir.regmap[X86_RECORD_R8_REGNUM])
+          {
+            ir.addr -= 2;
+            goto no_support;
+          }
+        if (tdep->i386_sysenter_record == NULL)
+          {
+            gdb_printf (gdb_stderr, _ ("Process record does not support "
+                                       "instruction sysenter.\n"));
+            ir.addr -= 2;
+            goto no_support;
+          }
+        ret = tdep->i386_sysenter_record (ir.regcache);
+        if (ret)
+          return ret;
       }
       break;
 
-    case 0x0f35:    /* sysexit */
-      gdb_printf (gdb_stderr,
-		  _("Process record does not support "
-		    "instruction sysexit.\n"));
+    case 0x0f35: /* sysexit */
+      gdb_printf (gdb_stderr, _ ("Process record does not support "
+                                 "instruction sysexit.\n"));
       ir.addr -= 2;
       goto no_support;
       break;
 
-    case 0x0f05:    /* syscall */
+    case 0x0f05: /* syscall */
       {
-	int ret;
-	if (tdep->i386_syscall_record == NULL)
-	  {
-	    gdb_printf (gdb_stderr,
-			_("Process record does not support "
-			  "instruction syscall.\n"));
-	    ir.addr -= 2;
-	    goto no_support;
-	  }
-	ret = tdep->i386_syscall_record (ir.regcache);
-	if (ret)
-	  return ret;
+        int ret;
+        if (tdep->i386_syscall_record == NULL)
+          {
+            gdb_printf (gdb_stderr, _ ("Process record does not support "
+                                       "instruction syscall.\n"));
+            ir.addr -= 2;
+            goto no_support;
+          }
+        ret = tdep->i386_syscall_record (ir.regcache);
+        if (ret)
+          return ret;
       }
       break;
 
-    case 0x0f07:    /* sysret */
-      gdb_printf (gdb_stderr,
-		  _("Process record does not support "
-		    "instruction sysret.\n"));
+    case 0x0f07: /* sysret */
+      gdb_printf (gdb_stderr, _ ("Process record does not support "
+                                 "instruction sysret.\n"));
       ir.addr -= 2;
       goto no_support;
       break;
 
-    case 0x0fa2:    /* cpuid */
+    case 0x0fa2: /* cpuid */
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REAX_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_RECX_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REDX_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REBX_REGNUM);
       break;
 
-    case 0xf4:    /* hlt */
-      gdb_printf (gdb_stderr,
-		  _("Process record does not support "
-		    "instruction hlt.\n"));
+    case 0xf4: /* hlt */
+      gdb_printf (gdb_stderr, _ ("Process record does not support "
+                                 "instruction hlt.\n"));
       ir.addr -= 1;
       goto no_support;
       break;
 
     case 0x0f00:
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
       switch (ir.reg)
-	{
-	case 0:  /* sldt */
-	case 1:  /* str  */
-	  if (ir.mod == 3)
-	    I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm | ir.rex_b);
-	  else
-	    {
-	      ir.ot = OT_WORD;
-	      if (i386_record_lea_modrm (&ir))
-		return -1;
-	    }
-	  break;
-	case 2:  /* lldt */
-	case 3:  /* ltr */
-	  break;
-	case 4:  /* verr */
-	case 5:  /* verw */
-	  I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
-	  break;
-	default:
-	  ir.addr -= 3;
-	  opcode = opcode << 8 | ir.modrm;
-	  goto no_support;
-	  break;
-	}
+        {
+        case 0: /* sldt */
+        case 1: /* str  */
+          if (ir.mod == 3)
+            I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm | ir.rex_b);
+          else
+            {
+              ir.ot = OT_WORD;
+              if (i386_record_lea_modrm (&ir))
+                return -1;
+            }
+          break;
+        case 2: /* lldt */
+        case 3: /* ltr */
+          break;
+        case 4: /* verr */
+        case 5: /* verw */
+          I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
+          break;
+        default:
+          ir.addr -= 3;
+          opcode = opcode << 8 | ir.modrm;
+          goto no_support;
+          break;
+        }
       break;
 
     case 0x0f01:
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
       switch (ir.reg)
-	{
-	case 0:  /* sgdt */
-	  {
-	    uint64_t addr64;
+        {
+        case 0: /* sgdt */
+          {
+            uint64_t addr64;
 
-	    if (ir.mod == 3)
-	      {
-		ir.addr -= 3;
-		opcode = opcode << 8 | ir.modrm;
-		goto no_support;
-	      }
-	    if (ir.override >= 0)
-	      {
-		if (record_full_memory_query)
-		  {
-		    if (yquery (_("\
+            if (ir.mod == 3)
+              {
+                ir.addr -= 3;
+                opcode = opcode << 8 | ir.modrm;
+                goto no_support;
+              }
+            if (ir.override >= 0)
+              {
+                if (record_full_memory_query)
+                  {
+                    if (yquery (_ ("\
 Process record ignores the memory change of instruction at address %s\n\
 because it can't get the value of the segment register.\n\
 Do you want to stop the program?"),
-				paddress (gdbarch, ir.orig_addr)))
-		      return -1;
-		  }
-	      }
-	    else
-	      {
-		if (i386_record_lea_modrm_addr (&ir, &addr64))
-		  return -1;
-		if (record_full_arch_list_add_mem (addr64, 2))
-		  return -1;
-		addr64 += 2;
-		if (ir.regmap[X86_RECORD_R8_REGNUM])
-		  {
-		    if (record_full_arch_list_add_mem (addr64, 8))
-		      return -1;
-		  }
-		else
-		  {
-		    if (record_full_arch_list_add_mem (addr64, 4))
-		      return -1;
-		  }
-	      }
-	  }
-	  break;
-	case 1:
-	  if (ir.mod == 3)
-	    {
-	      switch (ir.rm)
-		{
-		case 0:  /* monitor */
-		  break;
-		case 1:  /* mwait */
-		  I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
-		  break;
-		default:
-		  ir.addr -= 3;
-		  opcode = opcode << 8 | ir.modrm;
-		  goto no_support;
-		  break;
-		}
-	    }
-	  else
-	    {
-	      /* sidt */
-	      if (ir.override >= 0)
-		{
-		  if (record_full_memory_query)
-		    {
-		      if (yquery (_("\
+                                paddress (gdbarch, ir.orig_addr)))
+                      return -1;
+                  }
+              }
+            else
+              {
+                if (i386_record_lea_modrm_addr (&ir, &addr64))
+                  return -1;
+                if (record_full_arch_list_add_mem (addr64, 2))
+                  return -1;
+                addr64 += 2;
+                if (ir.regmap[X86_RECORD_R8_REGNUM])
+                  {
+                    if (record_full_arch_list_add_mem (addr64, 8))
+                      return -1;
+                  }
+                else
+                  {
+                    if (record_full_arch_list_add_mem (addr64, 4))
+                      return -1;
+                  }
+              }
+          }
+          break;
+        case 1:
+          if (ir.mod == 3)
+            {
+              switch (ir.rm)
+                {
+                case 0: /* monitor */
+                  break;
+                case 1: /* mwait */
+                  I386_RECORD_FULL_ARCH_LIST_ADD_REG (
+                    X86_RECORD_EFLAGS_REGNUM);
+                  break;
+                default:
+                  ir.addr -= 3;
+                  opcode = opcode << 8 | ir.modrm;
+                  goto no_support;
+                  break;
+                }
+            }
+          else
+            {
+              /* sidt */
+              if (ir.override >= 0)
+                {
+                  if (record_full_memory_query)
+                    {
+                      if (yquery (_ ("\
 Process record ignores the memory change of instruction at address %s\n\
 because it can't get the value of the segment register.\n\
 Do you want to stop the program?"),
-				  paddress (gdbarch, ir.orig_addr)))
-			return -1;
-		    }
-		}
-	      else
-		{
-		  uint64_t addr64;
+                                  paddress (gdbarch, ir.orig_addr)))
+                        return -1;
+                    }
+                }
+              else
+                {
+                  uint64_t addr64;
 
-		  if (i386_record_lea_modrm_addr (&ir, &addr64))
-		    return -1;
-		  if (record_full_arch_list_add_mem (addr64, 2))
-		    return -1;
-		  addr64 += 2;
-		  if (ir.regmap[X86_RECORD_R8_REGNUM])
-		    {
-		      if (record_full_arch_list_add_mem (addr64, 8))
-			return -1;
-		    }
-		  else
-		    {
-		      if (record_full_arch_list_add_mem (addr64, 4))
-			return -1;
-		    }
-		}
-	    }
-	  break;
-	case 2:  /* lgdt */
-	  if (ir.mod == 3)
-	    {
-	      /* xgetbv */
-	      if (ir.rm == 0)
-		{
-		  I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REAX_REGNUM);
-		  I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REDX_REGNUM);
-		  break;
-		}
-	      /* xsetbv */
-	      else if (ir.rm == 1)
-		break;
-	    }
-	  /* Fall through.  */
-	case 3:  /* lidt */
-	  if (ir.mod == 3)
-	    {
-	      ir.addr -= 3;
-	      opcode = opcode << 8 | ir.modrm;
-	      goto no_support;
-	    }
-	  break;
-	case 4:  /* smsw */
-	  if (ir.mod == 3)
-	    {
-	      if (record_full_arch_list_add_reg (ir.regcache, ir.rm | ir.rex_b))
-		return -1;
-	    }
-	  else
-	    {
-	      ir.ot = OT_WORD;
-	      if (i386_record_lea_modrm (&ir))
-		return -1;
-	    }
-	  I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
-	  break;
-	case 6:  /* lmsw */
-	  I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
-	  break;
-	case 7:  /* invlpg */
-	  if (ir.mod == 3)
-	    {
-	      if (ir.rm == 0 && ir.regmap[X86_RECORD_R8_REGNUM])
-		I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_GS_REGNUM);
-	      else
-		{
-		  ir.addr -= 3;
-		  opcode = opcode << 8 | ir.modrm;
-		  goto no_support;
-		}
-	    }
-	  else
-	    I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
-	  break;
-	default:
-	  ir.addr -= 3;
-	  opcode = opcode << 8 | ir.modrm;
-	  goto no_support;
-	  break;
-	}
+                  if (i386_record_lea_modrm_addr (&ir, &addr64))
+                    return -1;
+                  if (record_full_arch_list_add_mem (addr64, 2))
+                    return -1;
+                  addr64 += 2;
+                  if (ir.regmap[X86_RECORD_R8_REGNUM])
+                    {
+                      if (record_full_arch_list_add_mem (addr64, 8))
+                        return -1;
+                    }
+                  else
+                    {
+                      if (record_full_arch_list_add_mem (addr64, 4))
+                        return -1;
+                    }
+                }
+            }
+          break;
+        case 2: /* lgdt */
+          if (ir.mod == 3)
+            {
+              /* xgetbv */
+              if (ir.rm == 0)
+                {
+                  I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REAX_REGNUM);
+                  I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REDX_REGNUM);
+                  break;
+                }
+              /* xsetbv */
+              else if (ir.rm == 1)
+                break;
+            }
+          /* Fall through.  */
+        case 3: /* lidt */
+          if (ir.mod == 3)
+            {
+              ir.addr -= 3;
+              opcode = opcode << 8 | ir.modrm;
+              goto no_support;
+            }
+          break;
+        case 4: /* smsw */
+          if (ir.mod == 3)
+            {
+              if (record_full_arch_list_add_reg (ir.regcache,
+                                                 ir.rm | ir.rex_b))
+                return -1;
+            }
+          else
+            {
+              ir.ot = OT_WORD;
+              if (i386_record_lea_modrm (&ir))
+                return -1;
+            }
+          I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
+          break;
+        case 6: /* lmsw */
+          I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
+          break;
+        case 7: /* invlpg */
+          if (ir.mod == 3)
+            {
+              if (ir.rm == 0 && ir.regmap[X86_RECORD_R8_REGNUM])
+                I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_GS_REGNUM);
+              else
+                {
+                  ir.addr -= 3;
+                  opcode = opcode << 8 | ir.modrm;
+                  goto no_support;
+                }
+            }
+          else
+            I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
+          break;
+        default:
+          ir.addr -= 3;
+          opcode = opcode << 8 | ir.modrm;
+          goto no_support;
+          break;
+        }
       break;
 
-    case 0x0f08:    /* invd */
-    case 0x0f09:    /* wbinvd */
+    case 0x0f08: /* invd */
+    case 0x0f09: /* wbinvd */
       break;
 
-    case 0x63:    /* arpl */
+    case 0x63: /* arpl */
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
       if (ir.mod == 3 || ir.regmap[X86_RECORD_R8_REGNUM])
-	{
-	  I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.regmap[X86_RECORD_R8_REGNUM]
-					      ? (ir.reg | rex_r) : ir.rm);
-	}
+        {
+          I386_RECORD_FULL_ARCH_LIST_ADD_REG (
+            ir.regmap[X86_RECORD_R8_REGNUM] ? (ir.reg | rex_r) : ir.rm);
+        }
       else
-	{
-	  ir.ot = ir.dflag ? OT_LONG : OT_WORD;
-	  if (i386_record_lea_modrm (&ir))
-	    return -1;
-	}
+        {
+          ir.ot = ir.dflag ? OT_LONG : OT_WORD;
+          if (i386_record_lea_modrm (&ir))
+            return -1;
+        }
       if (!ir.regmap[X86_RECORD_R8_REGNUM])
-	I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
+        I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
-    case 0x0f02:    /* lar */
-    case 0x0f03:    /* lsl */
+    case 0x0f02: /* lar */
+    case 0x0f03: /* lsl */
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.reg | rex_r);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
     case 0x0f18:
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
       if (ir.mod == 3 && ir.reg == 3)
-	{
-	  ir.addr -= 3;
-	  opcode = opcode << 8 | ir.modrm;
-	  goto no_support;
-	}
+        {
+          ir.addr -= 3;
+          opcode = opcode << 8 | ir.modrm;
+          goto no_support;
+        }
       break;
 
     case 0x0f19:
@@ -7274,115 +7130,115 @@ Do you want to stop the program?"),
       /* nop (multi byte) */
       break;
 
-    case 0x0f20:    /* mov reg, crN */
-    case 0x0f22:    /* mov crN, reg */
+    case 0x0f20: /* mov reg, crN */
+    case 0x0f22: /* mov crN, reg */
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
       if ((ir.modrm & 0xc0) != 0xc0)
-	{
-	  ir.addr -= 3;
-	  opcode = opcode << 8 | ir.modrm;
-	  goto no_support;
-	}
+        {
+          ir.addr -= 3;
+          opcode = opcode << 8 | ir.modrm;
+          goto no_support;
+        }
       switch (ir.reg)
-	{
-	case 0:
-	case 2:
-	case 3:
-	case 4:
-	case 8:
-	  if (opcode & 2)
-	    I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
-	  else
-	    I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm | ir.rex_b);
-	  break;
-	default:
-	  ir.addr -= 3;
-	  opcode = opcode << 8 | ir.modrm;
-	  goto no_support;
-	  break;
-	}
+        {
+        case 0:
+        case 2:
+        case 3:
+        case 4:
+        case 8:
+          if (opcode & 2)
+            I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
+          else
+            I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm | ir.rex_b);
+          break;
+        default:
+          ir.addr -= 3;
+          opcode = opcode << 8 | ir.modrm;
+          goto no_support;
+          break;
+        }
       break;
 
-    case 0x0f21:    /* mov reg, drN */
-    case 0x0f23:    /* mov drN, reg */
+    case 0x0f21: /* mov reg, drN */
+    case 0x0f23: /* mov drN, reg */
       if (i386_record_modrm (&ir))
-	return -1;
-      if ((ir.modrm & 0xc0) != 0xc0 || ir.reg == 4
-	  || ir.reg == 5 || ir.reg >= 8)
-	{
-	  ir.addr -= 3;
-	  opcode = opcode << 8 | ir.modrm;
-	  goto no_support;
-	}
+        return -1;
+      if ((ir.modrm & 0xc0) != 0xc0 || ir.reg == 4 || ir.reg == 5
+          || ir.reg >= 8)
+        {
+          ir.addr -= 3;
+          opcode = opcode << 8 | ir.modrm;
+          goto no_support;
+        }
       if (opcode & 2)
-	I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
+        I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       else
-	I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm | ir.rex_b);
+        I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm | ir.rex_b);
       break;
 
-    case 0x0f06:    /* clts */
+    case 0x0f06: /* clts */
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       break;
 
-    /* MMX 3DNow! SSE SSE2 SSE3 SSSE3 SSE4 */
+      /* MMX 3DNow! SSE SSE2 SSE3 SSSE3 SSE4 */
 
-    case 0x0f0d:    /* 3DNow! prefetch */
+    case 0x0f0d: /* 3DNow! prefetch */
       break;
 
-    case 0x0f0e:    /* 3DNow! femms */
-    case 0x0f77:    /* emms */
-      if (i386_fpc_regnum_p (gdbarch, I387_FTAG_REGNUM(tdep)))
-	goto no_support;
-      record_full_arch_list_add_reg (ir.regcache, I387_FTAG_REGNUM(tdep));
+    case 0x0f0e: /* 3DNow! femms */
+    case 0x0f77: /* emms */
+      if (i386_fpc_regnum_p (gdbarch, I387_FTAG_REGNUM (tdep)))
+        goto no_support;
+      record_full_arch_list_add_reg (ir.regcache, I387_FTAG_REGNUM (tdep));
       break;
 
-    case 0x0f0f:    /* 3DNow! data */
+    case 0x0f0f: /* 3DNow! data */
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
       if (record_read_memory (gdbarch, ir.addr, &opcode8, 1))
-	return -1;
+        return -1;
       ir.addr++;
       switch (opcode8)
-	{
-	case 0x0c:    /* 3DNow! pi2fw */
-	case 0x0d:    /* 3DNow! pi2fd */
-	case 0x1c:    /* 3DNow! pf2iw */
-	case 0x1d:    /* 3DNow! pf2id */
-	case 0x8a:    /* 3DNow! pfnacc */
-	case 0x8e:    /* 3DNow! pfpnacc */
-	case 0x90:    /* 3DNow! pfcmpge */
-	case 0x94:    /* 3DNow! pfmin */
-	case 0x96:    /* 3DNow! pfrcp */
-	case 0x97:    /* 3DNow! pfrsqrt */
-	case 0x9a:    /* 3DNow! pfsub */
-	case 0x9e:    /* 3DNow! pfadd */
-	case 0xa0:    /* 3DNow! pfcmpgt */
-	case 0xa4:    /* 3DNow! pfmax */
-	case 0xa6:    /* 3DNow! pfrcpit1 */
-	case 0xa7:    /* 3DNow! pfrsqit1 */
-	case 0xaa:    /* 3DNow! pfsubr */
-	case 0xae:    /* 3DNow! pfacc */
-	case 0xb0:    /* 3DNow! pfcmpeq */
-	case 0xb4:    /* 3DNow! pfmul */
-	case 0xb6:    /* 3DNow! pfrcpit2 */
-	case 0xb7:    /* 3DNow! pmulhrw */
-	case 0xbb:    /* 3DNow! pswapd */
-	case 0xbf:    /* 3DNow! pavgusb */
-	  if (!i386_mmx_regnum_p (gdbarch, I387_MM0_REGNUM (tdep) + ir.reg))
-	    goto no_support_3dnow_data;
-	  record_full_arch_list_add_reg (ir.regcache, ir.reg);
-	  break;
+        {
+        case 0x0c: /* 3DNow! pi2fw */
+        case 0x0d: /* 3DNow! pi2fd */
+        case 0x1c: /* 3DNow! pf2iw */
+        case 0x1d: /* 3DNow! pf2id */
+        case 0x8a: /* 3DNow! pfnacc */
+        case 0x8e: /* 3DNow! pfpnacc */
+        case 0x90: /* 3DNow! pfcmpge */
+        case 0x94: /* 3DNow! pfmin */
+        case 0x96: /* 3DNow! pfrcp */
+        case 0x97: /* 3DNow! pfrsqrt */
+        case 0x9a: /* 3DNow! pfsub */
+        case 0x9e: /* 3DNow! pfadd */
+        case 0xa0: /* 3DNow! pfcmpgt */
+        case 0xa4: /* 3DNow! pfmax */
+        case 0xa6: /* 3DNow! pfrcpit1 */
+        case 0xa7: /* 3DNow! pfrsqit1 */
+        case 0xaa: /* 3DNow! pfsubr */
+        case 0xae: /* 3DNow! pfacc */
+        case 0xb0: /* 3DNow! pfcmpeq */
+        case 0xb4: /* 3DNow! pfmul */
+        case 0xb6: /* 3DNow! pfrcpit2 */
+        case 0xb7: /* 3DNow! pmulhrw */
+        case 0xbb: /* 3DNow! pswapd */
+        case 0xbf: /* 3DNow! pavgusb */
+          if (!i386_mmx_regnum_p (gdbarch, I387_MM0_REGNUM (tdep) + ir.reg))
+            goto no_support_3dnow_data;
+          record_full_arch_list_add_reg (ir.regcache, ir.reg);
+          break;
 
-	default:
-no_support_3dnow_data:
-	  opcode = (opcode << 8) | opcode8;
-	  goto no_support;
-	  break;
-	}
+        default:
+        no_support_3dnow_data:
+          opcode = (opcode << 8) | opcode8;
+          goto no_support;
+          break;
+        }
       break;
 
-    case 0x0faa:    /* rsm */
+    case 0x0faa: /* rsm */
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_REAX_REGNUM);
       I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_RECX_REGNUM);
@@ -7396,82 +7252,83 @@ no_support_3dnow_data:
 
     case 0x0fae:
       if (i386_record_modrm (&ir))
-	return -1;
-      switch(ir.reg)
-	{
-	case 0:    /* fxsave */
-	  {
-	    uint64_t tmpu64;
+        return -1;
+      switch (ir.reg)
+        {
+        case 0: /* fxsave */
+          {
+            uint64_t tmpu64;
 
-	    I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
-	    if (i386_record_lea_modrm_addr (&ir, &tmpu64))
-	      return -1;
-	    if (record_full_arch_list_add_mem (tmpu64, 512))
-	      return -1;
-	  }
-	  break;
+            I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
+            if (i386_record_lea_modrm_addr (&ir, &tmpu64))
+              return -1;
+            if (record_full_arch_list_add_mem (tmpu64, 512))
+              return -1;
+          }
+          break;
 
-	case 1:    /* fxrstor */
-	  {
-	    int i;
+        case 1: /* fxrstor */
+          {
+            int i;
 
-	    I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
+            I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
 
-	    for (i = I387_MM0_REGNUM (tdep);
-		 i386_mmx_regnum_p (gdbarch, i); i++)
-	      record_full_arch_list_add_reg (ir.regcache, i);
+            for (i = I387_MM0_REGNUM (tdep); i386_mmx_regnum_p (gdbarch, i);
+                 i++)
+              record_full_arch_list_add_reg (ir.regcache, i);
 
-	    for (i = I387_XMM0_REGNUM (tdep);
-		 i386_xmm_regnum_p (gdbarch, i); i++)
-	      record_full_arch_list_add_reg (ir.regcache, i);
+            for (i = I387_XMM0_REGNUM (tdep); i386_xmm_regnum_p (gdbarch, i);
+                 i++)
+              record_full_arch_list_add_reg (ir.regcache, i);
 
-	    if (i386_mxcsr_regnum_p (gdbarch, I387_MXCSR_REGNUM(tdep)))
-	      record_full_arch_list_add_reg (ir.regcache,
-					     I387_MXCSR_REGNUM(tdep));
+            if (i386_mxcsr_regnum_p (gdbarch, I387_MXCSR_REGNUM (tdep)))
+              record_full_arch_list_add_reg (ir.regcache,
+                                             I387_MXCSR_REGNUM (tdep));
 
-	    for (i = I387_ST0_REGNUM (tdep);
-		 i386_fp_regnum_p (gdbarch, i); i++)
-	      record_full_arch_list_add_reg (ir.regcache, i);
+            for (i = I387_ST0_REGNUM (tdep); i386_fp_regnum_p (gdbarch, i);
+                 i++)
+              record_full_arch_list_add_reg (ir.regcache, i);
 
-	    for (i = I387_FCTRL_REGNUM (tdep);
-		 i386_fpc_regnum_p (gdbarch, i); i++)
-	      record_full_arch_list_add_reg (ir.regcache, i);
-	  }
-	  break;
+            for (i = I387_FCTRL_REGNUM (tdep); i386_fpc_regnum_p (gdbarch, i);
+                 i++)
+              record_full_arch_list_add_reg (ir.regcache, i);
+          }
+          break;
 
-	case 2:    /* ldmxcsr */
-	  if (!i386_mxcsr_regnum_p (gdbarch, I387_MXCSR_REGNUM(tdep)))
-	    goto no_support;
-	  record_full_arch_list_add_reg (ir.regcache, I387_MXCSR_REGNUM(tdep));
-	  break;
+        case 2: /* ldmxcsr */
+          if (!i386_mxcsr_regnum_p (gdbarch, I387_MXCSR_REGNUM (tdep)))
+            goto no_support;
+          record_full_arch_list_add_reg (ir.regcache,
+                                         I387_MXCSR_REGNUM (tdep));
+          break;
 
-	case 3:    /* stmxcsr */
-	  ir.ot = OT_LONG;
-	  if (i386_record_lea_modrm (&ir))
-	    return -1;
-	  break;
+        case 3: /* stmxcsr */
+          ir.ot = OT_LONG;
+          if (i386_record_lea_modrm (&ir))
+            return -1;
+          break;
 
-	case 5:    /* lfence */
-	case 6:    /* mfence */
-	case 7:    /* sfence clflush */
-	  break;
+        case 5: /* lfence */
+        case 6: /* mfence */
+        case 7: /* sfence clflush */
+          break;
 
-	default:
-	  opcode = (opcode << 8) | ir.modrm;
-	  goto no_support;
-	  break;
-	}
+        default:
+          opcode = (opcode << 8) | ir.modrm;
+          goto no_support;
+          break;
+        }
       break;
 
-    case 0x0fc3:    /* movnti */
+    case 0x0fc3: /* movnti */
       ir.ot = (ir.dflag == 2) ? OT_QUAD : OT_LONG;
       if (i386_record_modrm (&ir))
-	return -1;
+        return -1;
       if (ir.mod == 3)
-	goto no_support;
+        goto no_support;
       ir.reg |= rex_r;
       if (i386_record_lea_modrm (&ir))
-	return -1;
+        return -1;
       break;
 
     /* Add prefix to opcode.  */
@@ -7591,541 +7448,541 @@ no_support_3dnow_data:
     case 0x0ffe:
       /* Mask out PREFIX_ADDR.  */
       switch ((prefixes & ~PREFIX_ADDR))
-	{
-	case PREFIX_REPNZ:
-	  opcode |= 0xf20000;
-	  break;
-	case PREFIX_DATA:
-	  opcode |= 0x660000;
-	  break;
-	case PREFIX_REPZ:
-	  opcode |= 0xf30000;
-	  break;
-	}
-reswitch_prefix_add:
+        {
+        case PREFIX_REPNZ:
+          opcode |= 0xf20000;
+          break;
+        case PREFIX_DATA:
+          opcode |= 0x660000;
+          break;
+        case PREFIX_REPZ:
+          opcode |= 0xf30000;
+          break;
+        }
+    reswitch_prefix_add:
       switch (opcode)
-	{
-	case 0x0f38:
-	case 0x660f38:
-	case 0xf20f38:
-	case 0x0f3a:
-	case 0x660f3a:
-	  if (record_read_memory (gdbarch, ir.addr, &opcode8, 1))
-	    return -1;
-	  ir.addr++;
-	  opcode = (uint32_t) opcode8 | opcode << 8;
-	  goto reswitch_prefix_add;
-	  break;
+        {
+        case 0x0f38:
+        case 0x660f38:
+        case 0xf20f38:
+        case 0x0f3a:
+        case 0x660f3a:
+          if (record_read_memory (gdbarch, ir.addr, &opcode8, 1))
+            return -1;
+          ir.addr++;
+          opcode = (uint32_t) opcode8 | opcode << 8;
+          goto reswitch_prefix_add;
+          break;
 
-	case 0x0f10:        /* movups */
-	case 0x660f10:      /* movupd */
-	case 0xf30f10:      /* movss */
-	case 0xf20f10:      /* movsd */
-	case 0x0f12:        /* movlps */
-	case 0x660f12:      /* movlpd */
-	case 0xf30f12:      /* movsldup */
-	case 0xf20f12:      /* movddup */
-	case 0x0f14:        /* unpcklps */
-	case 0x660f14:      /* unpcklpd */
-	case 0x0f15:        /* unpckhps */
-	case 0x660f15:      /* unpckhpd */
-	case 0x0f16:        /* movhps */
-	case 0x660f16:      /* movhpd */
-	case 0xf30f16:      /* movshdup */
-	case 0x0f28:        /* movaps */
-	case 0x660f28:      /* movapd */
-	case 0x0f2a:        /* cvtpi2ps */
-	case 0x660f2a:      /* cvtpi2pd */
-	case 0xf30f2a:      /* cvtsi2ss */
-	case 0xf20f2a:      /* cvtsi2sd */
-	case 0x0f2c:        /* cvttps2pi */
-	case 0x660f2c:      /* cvttpd2pi */
-	case 0x0f2d:        /* cvtps2pi */
-	case 0x660f2d:      /* cvtpd2pi */
-	case 0x660f3800:    /* pshufb */
-	case 0x660f3801:    /* phaddw */
-	case 0x660f3802:    /* phaddd */
-	case 0x660f3803:    /* phaddsw */
-	case 0x660f3804:    /* pmaddubsw */
-	case 0x660f3805:    /* phsubw */
-	case 0x660f3806:    /* phsubd */
-	case 0x660f3807:    /* phsubsw */
-	case 0x660f3808:    /* psignb */
-	case 0x660f3809:    /* psignw */
-	case 0x660f380a:    /* psignd */
-	case 0x660f380b:    /* pmulhrsw */
-	case 0x660f3810:    /* pblendvb */
-	case 0x660f3814:    /* blendvps */
-	case 0x660f3815:    /* blendvpd */
-	case 0x660f381c:    /* pabsb */
-	case 0x660f381d:    /* pabsw */
-	case 0x660f381e:    /* pabsd */
-	case 0x660f3820:    /* pmovsxbw */
-	case 0x660f3821:    /* pmovsxbd */
-	case 0x660f3822:    /* pmovsxbq */
-	case 0x660f3823:    /* pmovsxwd */
-	case 0x660f3824:    /* pmovsxwq */
-	case 0x660f3825:    /* pmovsxdq */
-	case 0x660f3828:    /* pmuldq */
-	case 0x660f3829:    /* pcmpeqq */
-	case 0x660f382a:    /* movntdqa */
-	case 0x660f3a08:    /* roundps */
-	case 0x660f3a09:    /* roundpd */
-	case 0x660f3a0a:    /* roundss */
-	case 0x660f3a0b:    /* roundsd */
-	case 0x660f3a0c:    /* blendps */
-	case 0x660f3a0d:    /* blendpd */
-	case 0x660f3a0e:    /* pblendw */
-	case 0x660f3a0f:    /* palignr */
-	case 0x660f3a20:    /* pinsrb */
-	case 0x660f3a21:    /* insertps */
-	case 0x660f3a22:    /* pinsrd pinsrq */
-	case 0x660f3a40:    /* dpps */
-	case 0x660f3a41:    /* dppd */
-	case 0x660f3a42:    /* mpsadbw */
-	case 0x660f3a60:    /* pcmpestrm */
-	case 0x660f3a61:    /* pcmpestri */
-	case 0x660f3a62:    /* pcmpistrm */
-	case 0x660f3a63:    /* pcmpistri */
-	case 0x0f51:        /* sqrtps */
-	case 0x660f51:      /* sqrtpd */
-	case 0xf20f51:      /* sqrtsd */
-	case 0xf30f51:      /* sqrtss */
-	case 0x0f52:        /* rsqrtps */
-	case 0xf30f52:      /* rsqrtss */
-	case 0x0f53:        /* rcpps */
-	case 0xf30f53:      /* rcpss */
-	case 0x0f54:        /* andps */
-	case 0x660f54:      /* andpd */
-	case 0x0f55:        /* andnps */
-	case 0x660f55:      /* andnpd */
-	case 0x0f56:        /* orps */
-	case 0x660f56:      /* orpd */
-	case 0x0f57:        /* xorps */
-	case 0x660f57:      /* xorpd */
-	case 0x0f58:        /* addps */
-	case 0x660f58:      /* addpd */
-	case 0xf20f58:      /* addsd */
-	case 0xf30f58:      /* addss */
-	case 0x0f59:        /* mulps */
-	case 0x660f59:      /* mulpd */
-	case 0xf20f59:      /* mulsd */
-	case 0xf30f59:      /* mulss */
-	case 0x0f5a:        /* cvtps2pd */
-	case 0x660f5a:      /* cvtpd2ps */
-	case 0xf20f5a:      /* cvtsd2ss */
-	case 0xf30f5a:      /* cvtss2sd */
-	case 0x0f5b:        /* cvtdq2ps */
-	case 0x660f5b:      /* cvtps2dq */
-	case 0xf30f5b:      /* cvttps2dq */
-	case 0x0f5c:        /* subps */
-	case 0x660f5c:      /* subpd */
-	case 0xf20f5c:      /* subsd */
-	case 0xf30f5c:      /* subss */
-	case 0x0f5d:        /* minps */
-	case 0x660f5d:      /* minpd */
-	case 0xf20f5d:      /* minsd */
-	case 0xf30f5d:      /* minss */
-	case 0x0f5e:        /* divps */
-	case 0x660f5e:      /* divpd */
-	case 0xf20f5e:      /* divsd */
-	case 0xf30f5e:      /* divss */
-	case 0x0f5f:        /* maxps */
-	case 0x660f5f:      /* maxpd */
-	case 0xf20f5f:      /* maxsd */
-	case 0xf30f5f:      /* maxss */
-	case 0x660f60:      /* punpcklbw */
-	case 0x660f61:      /* punpcklwd */
-	case 0x660f62:      /* punpckldq */
-	case 0x660f63:      /* packsswb */
-	case 0x660f64:      /* pcmpgtb */
-	case 0x660f65:      /* pcmpgtw */
-	case 0x660f66:      /* pcmpgtd */
-	case 0x660f67:      /* packuswb */
-	case 0x660f68:      /* punpckhbw */
-	case 0x660f69:      /* punpckhwd */
-	case 0x660f6a:      /* punpckhdq */
-	case 0x660f6b:      /* packssdw */
-	case 0x660f6c:      /* punpcklqdq */
-	case 0x660f6d:      /* punpckhqdq */
-	case 0x660f6e:      /* movd */
-	case 0x660f6f:      /* movdqa */
-	case 0xf30f6f:      /* movdqu */
-	case 0x660f70:      /* pshufd */
-	case 0xf20f70:      /* pshuflw */
-	case 0xf30f70:      /* pshufhw */
-	case 0x660f74:      /* pcmpeqb */
-	case 0x660f75:      /* pcmpeqw */
-	case 0x660f76:      /* pcmpeqd */
-	case 0x660f7c:      /* haddpd */
-	case 0xf20f7c:      /* haddps */
-	case 0x660f7d:      /* hsubpd */
-	case 0xf20f7d:      /* hsubps */
-	case 0xf30f7e:      /* movq */
-	case 0x0fc2:        /* cmpps */
-	case 0x660fc2:      /* cmppd */
-	case 0xf20fc2:      /* cmpsd */
-	case 0xf30fc2:      /* cmpss */
-	case 0x660fc4:      /* pinsrw */
-	case 0x0fc6:        /* shufps */
-	case 0x660fc6:      /* shufpd */
-	case 0x660fd0:      /* addsubpd */
-	case 0xf20fd0:      /* addsubps */
-	case 0x660fd1:      /* psrlw */
-	case 0x660fd2:      /* psrld */
-	case 0x660fd3:      /* psrlq */
-	case 0x660fd4:      /* paddq */
-	case 0x660fd5:      /* pmullw */
-	case 0xf30fd6:      /* movq2dq */
-	case 0x660fd8:      /* psubusb */
-	case 0x660fd9:      /* psubusw */
-	case 0x660fda:      /* pminub */
-	case 0x660fdb:      /* pand */
-	case 0x660fdc:      /* paddusb */
-	case 0x660fdd:      /* paddusw */
-	case 0x660fde:      /* pmaxub */
-	case 0x660fdf:      /* pandn */
-	case 0x660fe0:      /* pavgb */
-	case 0x660fe1:      /* psraw */
-	case 0x660fe2:      /* psrad */
-	case 0x660fe3:      /* pavgw */
-	case 0x660fe4:      /* pmulhuw */
-	case 0x660fe5:      /* pmulhw */
-	case 0x660fe6:      /* cvttpd2dq */
-	case 0xf20fe6:      /* cvtpd2dq */
-	case 0xf30fe6:      /* cvtdq2pd */
-	case 0x660fe8:      /* psubsb */
-	case 0x660fe9:      /* psubsw */
-	case 0x660fea:      /* pminsw */
-	case 0x660feb:      /* por */
-	case 0x660fec:      /* paddsb */
-	case 0x660fed:      /* paddsw */
-	case 0x660fee:      /* pmaxsw */
-	case 0x660fef:      /* pxor */
-	case 0xf20ff0:      /* lddqu */
-	case 0x660ff1:      /* psllw */
-	case 0x660ff2:      /* pslld */
-	case 0x660ff3:      /* psllq */
-	case 0x660ff4:      /* pmuludq */
-	case 0x660ff5:      /* pmaddwd */
-	case 0x660ff6:      /* psadbw */
-	case 0x660ff8:      /* psubb */
-	case 0x660ff9:      /* psubw */
-	case 0x660ffa:      /* psubd */
-	case 0x660ffb:      /* psubq */
-	case 0x660ffc:      /* paddb */
-	case 0x660ffd:      /* paddw */
-	case 0x660ffe:      /* paddd */
-	  if (i386_record_modrm (&ir))
-	    return -1;
-	  ir.reg |= rex_r;
-	  if (!i386_xmm_regnum_p (gdbarch, I387_XMM0_REGNUM (tdep) + ir.reg))
-	    goto no_support;
-	  record_full_arch_list_add_reg (ir.regcache,
-					 I387_XMM0_REGNUM (tdep) + ir.reg);
-	  if ((opcode & 0xfffffffc) == 0x660f3a60)
-	    I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
-	  break;
+        case 0x0f10:     /* movups */
+        case 0x660f10:   /* movupd */
+        case 0xf30f10:   /* movss */
+        case 0xf20f10:   /* movsd */
+        case 0x0f12:     /* movlps */
+        case 0x660f12:   /* movlpd */
+        case 0xf30f12:   /* movsldup */
+        case 0xf20f12:   /* movddup */
+        case 0x0f14:     /* unpcklps */
+        case 0x660f14:   /* unpcklpd */
+        case 0x0f15:     /* unpckhps */
+        case 0x660f15:   /* unpckhpd */
+        case 0x0f16:     /* movhps */
+        case 0x660f16:   /* movhpd */
+        case 0xf30f16:   /* movshdup */
+        case 0x0f28:     /* movaps */
+        case 0x660f28:   /* movapd */
+        case 0x0f2a:     /* cvtpi2ps */
+        case 0x660f2a:   /* cvtpi2pd */
+        case 0xf30f2a:   /* cvtsi2ss */
+        case 0xf20f2a:   /* cvtsi2sd */
+        case 0x0f2c:     /* cvttps2pi */
+        case 0x660f2c:   /* cvttpd2pi */
+        case 0x0f2d:     /* cvtps2pi */
+        case 0x660f2d:   /* cvtpd2pi */
+        case 0x660f3800: /* pshufb */
+        case 0x660f3801: /* phaddw */
+        case 0x660f3802: /* phaddd */
+        case 0x660f3803: /* phaddsw */
+        case 0x660f3804: /* pmaddubsw */
+        case 0x660f3805: /* phsubw */
+        case 0x660f3806: /* phsubd */
+        case 0x660f3807: /* phsubsw */
+        case 0x660f3808: /* psignb */
+        case 0x660f3809: /* psignw */
+        case 0x660f380a: /* psignd */
+        case 0x660f380b: /* pmulhrsw */
+        case 0x660f3810: /* pblendvb */
+        case 0x660f3814: /* blendvps */
+        case 0x660f3815: /* blendvpd */
+        case 0x660f381c: /* pabsb */
+        case 0x660f381d: /* pabsw */
+        case 0x660f381e: /* pabsd */
+        case 0x660f3820: /* pmovsxbw */
+        case 0x660f3821: /* pmovsxbd */
+        case 0x660f3822: /* pmovsxbq */
+        case 0x660f3823: /* pmovsxwd */
+        case 0x660f3824: /* pmovsxwq */
+        case 0x660f3825: /* pmovsxdq */
+        case 0x660f3828: /* pmuldq */
+        case 0x660f3829: /* pcmpeqq */
+        case 0x660f382a: /* movntdqa */
+        case 0x660f3a08: /* roundps */
+        case 0x660f3a09: /* roundpd */
+        case 0x660f3a0a: /* roundss */
+        case 0x660f3a0b: /* roundsd */
+        case 0x660f3a0c: /* blendps */
+        case 0x660f3a0d: /* blendpd */
+        case 0x660f3a0e: /* pblendw */
+        case 0x660f3a0f: /* palignr */
+        case 0x660f3a20: /* pinsrb */
+        case 0x660f3a21: /* insertps */
+        case 0x660f3a22: /* pinsrd pinsrq */
+        case 0x660f3a40: /* dpps */
+        case 0x660f3a41: /* dppd */
+        case 0x660f3a42: /* mpsadbw */
+        case 0x660f3a60: /* pcmpestrm */
+        case 0x660f3a61: /* pcmpestri */
+        case 0x660f3a62: /* pcmpistrm */
+        case 0x660f3a63: /* pcmpistri */
+        case 0x0f51:     /* sqrtps */
+        case 0x660f51:   /* sqrtpd */
+        case 0xf20f51:   /* sqrtsd */
+        case 0xf30f51:   /* sqrtss */
+        case 0x0f52:     /* rsqrtps */
+        case 0xf30f52:   /* rsqrtss */
+        case 0x0f53:     /* rcpps */
+        case 0xf30f53:   /* rcpss */
+        case 0x0f54:     /* andps */
+        case 0x660f54:   /* andpd */
+        case 0x0f55:     /* andnps */
+        case 0x660f55:   /* andnpd */
+        case 0x0f56:     /* orps */
+        case 0x660f56:   /* orpd */
+        case 0x0f57:     /* xorps */
+        case 0x660f57:   /* xorpd */
+        case 0x0f58:     /* addps */
+        case 0x660f58:   /* addpd */
+        case 0xf20f58:   /* addsd */
+        case 0xf30f58:   /* addss */
+        case 0x0f59:     /* mulps */
+        case 0x660f59:   /* mulpd */
+        case 0xf20f59:   /* mulsd */
+        case 0xf30f59:   /* mulss */
+        case 0x0f5a:     /* cvtps2pd */
+        case 0x660f5a:   /* cvtpd2ps */
+        case 0xf20f5a:   /* cvtsd2ss */
+        case 0xf30f5a:   /* cvtss2sd */
+        case 0x0f5b:     /* cvtdq2ps */
+        case 0x660f5b:   /* cvtps2dq */
+        case 0xf30f5b:   /* cvttps2dq */
+        case 0x0f5c:     /* subps */
+        case 0x660f5c:   /* subpd */
+        case 0xf20f5c:   /* subsd */
+        case 0xf30f5c:   /* subss */
+        case 0x0f5d:     /* minps */
+        case 0x660f5d:   /* minpd */
+        case 0xf20f5d:   /* minsd */
+        case 0xf30f5d:   /* minss */
+        case 0x0f5e:     /* divps */
+        case 0x660f5e:   /* divpd */
+        case 0xf20f5e:   /* divsd */
+        case 0xf30f5e:   /* divss */
+        case 0x0f5f:     /* maxps */
+        case 0x660f5f:   /* maxpd */
+        case 0xf20f5f:   /* maxsd */
+        case 0xf30f5f:   /* maxss */
+        case 0x660f60:   /* punpcklbw */
+        case 0x660f61:   /* punpcklwd */
+        case 0x660f62:   /* punpckldq */
+        case 0x660f63:   /* packsswb */
+        case 0x660f64:   /* pcmpgtb */
+        case 0x660f65:   /* pcmpgtw */
+        case 0x660f66:   /* pcmpgtd */
+        case 0x660f67:   /* packuswb */
+        case 0x660f68:   /* punpckhbw */
+        case 0x660f69:   /* punpckhwd */
+        case 0x660f6a:   /* punpckhdq */
+        case 0x660f6b:   /* packssdw */
+        case 0x660f6c:   /* punpcklqdq */
+        case 0x660f6d:   /* punpckhqdq */
+        case 0x660f6e:   /* movd */
+        case 0x660f6f:   /* movdqa */
+        case 0xf30f6f:   /* movdqu */
+        case 0x660f70:   /* pshufd */
+        case 0xf20f70:   /* pshuflw */
+        case 0xf30f70:   /* pshufhw */
+        case 0x660f74:   /* pcmpeqb */
+        case 0x660f75:   /* pcmpeqw */
+        case 0x660f76:   /* pcmpeqd */
+        case 0x660f7c:   /* haddpd */
+        case 0xf20f7c:   /* haddps */
+        case 0x660f7d:   /* hsubpd */
+        case 0xf20f7d:   /* hsubps */
+        case 0xf30f7e:   /* movq */
+        case 0x0fc2:     /* cmpps */
+        case 0x660fc2:   /* cmppd */
+        case 0xf20fc2:   /* cmpsd */
+        case 0xf30fc2:   /* cmpss */
+        case 0x660fc4:   /* pinsrw */
+        case 0x0fc6:     /* shufps */
+        case 0x660fc6:   /* shufpd */
+        case 0x660fd0:   /* addsubpd */
+        case 0xf20fd0:   /* addsubps */
+        case 0x660fd1:   /* psrlw */
+        case 0x660fd2:   /* psrld */
+        case 0x660fd3:   /* psrlq */
+        case 0x660fd4:   /* paddq */
+        case 0x660fd5:   /* pmullw */
+        case 0xf30fd6:   /* movq2dq */
+        case 0x660fd8:   /* psubusb */
+        case 0x660fd9:   /* psubusw */
+        case 0x660fda:   /* pminub */
+        case 0x660fdb:   /* pand */
+        case 0x660fdc:   /* paddusb */
+        case 0x660fdd:   /* paddusw */
+        case 0x660fde:   /* pmaxub */
+        case 0x660fdf:   /* pandn */
+        case 0x660fe0:   /* pavgb */
+        case 0x660fe1:   /* psraw */
+        case 0x660fe2:   /* psrad */
+        case 0x660fe3:   /* pavgw */
+        case 0x660fe4:   /* pmulhuw */
+        case 0x660fe5:   /* pmulhw */
+        case 0x660fe6:   /* cvttpd2dq */
+        case 0xf20fe6:   /* cvtpd2dq */
+        case 0xf30fe6:   /* cvtdq2pd */
+        case 0x660fe8:   /* psubsb */
+        case 0x660fe9:   /* psubsw */
+        case 0x660fea:   /* pminsw */
+        case 0x660feb:   /* por */
+        case 0x660fec:   /* paddsb */
+        case 0x660fed:   /* paddsw */
+        case 0x660fee:   /* pmaxsw */
+        case 0x660fef:   /* pxor */
+        case 0xf20ff0:   /* lddqu */
+        case 0x660ff1:   /* psllw */
+        case 0x660ff2:   /* pslld */
+        case 0x660ff3:   /* psllq */
+        case 0x660ff4:   /* pmuludq */
+        case 0x660ff5:   /* pmaddwd */
+        case 0x660ff6:   /* psadbw */
+        case 0x660ff8:   /* psubb */
+        case 0x660ff9:   /* psubw */
+        case 0x660ffa:   /* psubd */
+        case 0x660ffb:   /* psubq */
+        case 0x660ffc:   /* paddb */
+        case 0x660ffd:   /* paddw */
+        case 0x660ffe:   /* paddd */
+          if (i386_record_modrm (&ir))
+            return -1;
+          ir.reg |= rex_r;
+          if (!i386_xmm_regnum_p (gdbarch, I387_XMM0_REGNUM (tdep) + ir.reg))
+            goto no_support;
+          record_full_arch_list_add_reg (ir.regcache,
+                                         I387_XMM0_REGNUM (tdep) + ir.reg);
+          if ((opcode & 0xfffffffc) == 0x660f3a60)
+            I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
+          break;
 
-	case 0x0f11:        /* movups */
-	case 0x660f11:      /* movupd */
-	case 0xf30f11:      /* movss */
-	case 0xf20f11:      /* movsd */
-	case 0x0f13:        /* movlps */
-	case 0x660f13:      /* movlpd */
-	case 0x0f17:        /* movhps */
-	case 0x660f17:      /* movhpd */
-	case 0x0f29:        /* movaps */
-	case 0x660f29:      /* movapd */
-	case 0x660f3a14:    /* pextrb */
-	case 0x660f3a15:    /* pextrw */
-	case 0x660f3a16:    /* pextrd pextrq */
-	case 0x660f3a17:    /* extractps */
-	case 0x660f7f:      /* movdqa */
-	case 0xf30f7f:      /* movdqu */
-	  if (i386_record_modrm (&ir))
-	    return -1;
-	  if (ir.mod == 3)
-	    {
-	      if (opcode == 0x0f13 || opcode == 0x660f13
-		  || opcode == 0x0f17 || opcode == 0x660f17)
-		goto no_support;
-	      ir.rm |= ir.rex_b;
-	      if (!i386_xmm_regnum_p (gdbarch,
-				      I387_XMM0_REGNUM (tdep) + ir.rm))
-		goto no_support;
-	      record_full_arch_list_add_reg (ir.regcache,
-					     I387_XMM0_REGNUM (tdep) + ir.rm);
-	    }
-	  else
-	    {
-	      switch (opcode)
-		{
-		  case 0x660f3a14:
-		    ir.ot = OT_BYTE;
-		    break;
-		  case 0x660f3a15:
-		    ir.ot = OT_WORD;
-		    break;
-		  case 0x660f3a16:
-		    ir.ot = OT_LONG;
-		    break;
-		  case 0x660f3a17:
-		    ir.ot = OT_QUAD;
-		    break;
-		  default:
-		    ir.ot = OT_DQUAD;
-		    break;
-		}
-	      if (i386_record_lea_modrm (&ir))
-		return -1;
-	    }
-	  break;
+        case 0x0f11:     /* movups */
+        case 0x660f11:   /* movupd */
+        case 0xf30f11:   /* movss */
+        case 0xf20f11:   /* movsd */
+        case 0x0f13:     /* movlps */
+        case 0x660f13:   /* movlpd */
+        case 0x0f17:     /* movhps */
+        case 0x660f17:   /* movhpd */
+        case 0x0f29:     /* movaps */
+        case 0x660f29:   /* movapd */
+        case 0x660f3a14: /* pextrb */
+        case 0x660f3a15: /* pextrw */
+        case 0x660f3a16: /* pextrd pextrq */
+        case 0x660f3a17: /* extractps */
+        case 0x660f7f:   /* movdqa */
+        case 0xf30f7f:   /* movdqu */
+          if (i386_record_modrm (&ir))
+            return -1;
+          if (ir.mod == 3)
+            {
+              if (opcode == 0x0f13 || opcode == 0x660f13 || opcode == 0x0f17
+                  || opcode == 0x660f17)
+                goto no_support;
+              ir.rm |= ir.rex_b;
+              if (!i386_xmm_regnum_p (gdbarch,
+                                      I387_XMM0_REGNUM (tdep) + ir.rm))
+                goto no_support;
+              record_full_arch_list_add_reg (ir.regcache,
+                                             I387_XMM0_REGNUM (tdep) + ir.rm);
+            }
+          else
+            {
+              switch (opcode)
+                {
+                case 0x660f3a14:
+                  ir.ot = OT_BYTE;
+                  break;
+                case 0x660f3a15:
+                  ir.ot = OT_WORD;
+                  break;
+                case 0x660f3a16:
+                  ir.ot = OT_LONG;
+                  break;
+                case 0x660f3a17:
+                  ir.ot = OT_QUAD;
+                  break;
+                default:
+                  ir.ot = OT_DQUAD;
+                  break;
+                }
+              if (i386_record_lea_modrm (&ir))
+                return -1;
+            }
+          break;
 
-	case 0x0f2b:      /* movntps */
-	case 0x660f2b:    /* movntpd */
-	case 0x0fe7:      /* movntq */
-	case 0x660fe7:    /* movntdq */
-	  if (ir.mod == 3)
-	    goto no_support;
-	  if (opcode == 0x0fe7)
-	    ir.ot = OT_QUAD;
-	  else
-	    ir.ot = OT_DQUAD;
-	  if (i386_record_lea_modrm (&ir))
-	    return -1;
-	  break;
+        case 0x0f2b:   /* movntps */
+        case 0x660f2b: /* movntpd */
+        case 0x0fe7:   /* movntq */
+        case 0x660fe7: /* movntdq */
+          if (ir.mod == 3)
+            goto no_support;
+          if (opcode == 0x0fe7)
+            ir.ot = OT_QUAD;
+          else
+            ir.ot = OT_DQUAD;
+          if (i386_record_lea_modrm (&ir))
+            return -1;
+          break;
 
-	case 0xf30f2c:      /* cvttss2si */
-	case 0xf20f2c:      /* cvttsd2si */
-	case 0xf30f2d:      /* cvtss2si */
-	case 0xf20f2d:      /* cvtsd2si */
-	case 0xf20f38f0:    /* crc32 */
-	case 0xf20f38f1:    /* crc32 */
-	case 0x0f50:        /* movmskps */
-	case 0x660f50:      /* movmskpd */
-	case 0x0fc5:        /* pextrw */
-	case 0x660fc5:      /* pextrw */
-	case 0x0fd7:        /* pmovmskb */
-	case 0x660fd7:      /* pmovmskb */
-	  I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.reg | rex_r);
-	  break;
+        case 0xf30f2c:   /* cvttss2si */
+        case 0xf20f2c:   /* cvttsd2si */
+        case 0xf30f2d:   /* cvtss2si */
+        case 0xf20f2d:   /* cvtsd2si */
+        case 0xf20f38f0: /* crc32 */
+        case 0xf20f38f1: /* crc32 */
+        case 0x0f50:     /* movmskps */
+        case 0x660f50:   /* movmskpd */
+        case 0x0fc5:     /* pextrw */
+        case 0x660fc5:   /* pextrw */
+        case 0x0fd7:     /* pmovmskb */
+        case 0x660fd7:   /* pmovmskb */
+          I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.reg | rex_r);
+          break;
 
-	case 0x0f3800:    /* pshufb */
-	case 0x0f3801:    /* phaddw */
-	case 0x0f3802:    /* phaddd */
-	case 0x0f3803:    /* phaddsw */
-	case 0x0f3804:    /* pmaddubsw */
-	case 0x0f3805:    /* phsubw */
-	case 0x0f3806:    /* phsubd */
-	case 0x0f3807:    /* phsubsw */
-	case 0x0f3808:    /* psignb */
-	case 0x0f3809:    /* psignw */
-	case 0x0f380a:    /* psignd */
-	case 0x0f380b:    /* pmulhrsw */
-	case 0x0f381c:    /* pabsb */
-	case 0x0f381d:    /* pabsw */
-	case 0x0f381e:    /* pabsd */
-	case 0x0f382b:    /* packusdw */
-	case 0x0f3830:    /* pmovzxbw */
-	case 0x0f3831:    /* pmovzxbd */
-	case 0x0f3832:    /* pmovzxbq */
-	case 0x0f3833:    /* pmovzxwd */
-	case 0x0f3834:    /* pmovzxwq */
-	case 0x0f3835:    /* pmovzxdq */
-	case 0x0f3837:    /* pcmpgtq */
-	case 0x0f3838:    /* pminsb */
-	case 0x0f3839:    /* pminsd */
-	case 0x0f383a:    /* pminuw */
-	case 0x0f383b:    /* pminud */
-	case 0x0f383c:    /* pmaxsb */
-	case 0x0f383d:    /* pmaxsd */
-	case 0x0f383e:    /* pmaxuw */
-	case 0x0f383f:    /* pmaxud */
-	case 0x0f3840:    /* pmulld */
-	case 0x0f3841:    /* phminposuw */
-	case 0x0f3a0f:    /* palignr */
-	case 0x0f60:      /* punpcklbw */
-	case 0x0f61:      /* punpcklwd */
-	case 0x0f62:      /* punpckldq */
-	case 0x0f63:      /* packsswb */
-	case 0x0f64:      /* pcmpgtb */
-	case 0x0f65:      /* pcmpgtw */
-	case 0x0f66:      /* pcmpgtd */
-	case 0x0f67:      /* packuswb */
-	case 0x0f68:      /* punpckhbw */
-	case 0x0f69:      /* punpckhwd */
-	case 0x0f6a:      /* punpckhdq */
-	case 0x0f6b:      /* packssdw */
-	case 0x0f6e:      /* movd */
-	case 0x0f6f:      /* movq */
-	case 0x0f70:      /* pshufw */
-	case 0x0f74:      /* pcmpeqb */
-	case 0x0f75:      /* pcmpeqw */
-	case 0x0f76:      /* pcmpeqd */
-	case 0x0fc4:      /* pinsrw */
-	case 0x0fd1:      /* psrlw */
-	case 0x0fd2:      /* psrld */
-	case 0x0fd3:      /* psrlq */
-	case 0x0fd4:      /* paddq */
-	case 0x0fd5:      /* pmullw */
-	case 0xf20fd6:    /* movdq2q */
-	case 0x0fd8:      /* psubusb */
-	case 0x0fd9:      /* psubusw */
-	case 0x0fda:      /* pminub */
-	case 0x0fdb:      /* pand */
-	case 0x0fdc:      /* paddusb */
-	case 0x0fdd:      /* paddusw */
-	case 0x0fde:      /* pmaxub */
-	case 0x0fdf:      /* pandn */
-	case 0x0fe0:      /* pavgb */
-	case 0x0fe1:      /* psraw */
-	case 0x0fe2:      /* psrad */
-	case 0x0fe3:      /* pavgw */
-	case 0x0fe4:      /* pmulhuw */
-	case 0x0fe5:      /* pmulhw */
-	case 0x0fe8:      /* psubsb */
-	case 0x0fe9:      /* psubsw */
-	case 0x0fea:      /* pminsw */
-	case 0x0feb:      /* por */
-	case 0x0fec:      /* paddsb */
-	case 0x0fed:      /* paddsw */
-	case 0x0fee:      /* pmaxsw */
-	case 0x0fef:      /* pxor */
-	case 0x0ff1:      /* psllw */
-	case 0x0ff2:      /* pslld */
-	case 0x0ff3:      /* psllq */
-	case 0x0ff4:      /* pmuludq */
-	case 0x0ff5:      /* pmaddwd */
-	case 0x0ff6:      /* psadbw */
-	case 0x0ff8:      /* psubb */
-	case 0x0ff9:      /* psubw */
-	case 0x0ffa:      /* psubd */
-	case 0x0ffb:      /* psubq */
-	case 0x0ffc:      /* paddb */
-	case 0x0ffd:      /* paddw */
-	case 0x0ffe:      /* paddd */
-	  if (i386_record_modrm (&ir))
-	    return -1;
-	  if (!i386_mmx_regnum_p (gdbarch, I387_MM0_REGNUM (tdep) + ir.reg))
-	    goto no_support;
-	  record_full_arch_list_add_reg (ir.regcache,
-					 I387_MM0_REGNUM (tdep) + ir.reg);
-	  break;
+        case 0x0f3800: /* pshufb */
+        case 0x0f3801: /* phaddw */
+        case 0x0f3802: /* phaddd */
+        case 0x0f3803: /* phaddsw */
+        case 0x0f3804: /* pmaddubsw */
+        case 0x0f3805: /* phsubw */
+        case 0x0f3806: /* phsubd */
+        case 0x0f3807: /* phsubsw */
+        case 0x0f3808: /* psignb */
+        case 0x0f3809: /* psignw */
+        case 0x0f380a: /* psignd */
+        case 0x0f380b: /* pmulhrsw */
+        case 0x0f381c: /* pabsb */
+        case 0x0f381d: /* pabsw */
+        case 0x0f381e: /* pabsd */
+        case 0x0f382b: /* packusdw */
+        case 0x0f3830: /* pmovzxbw */
+        case 0x0f3831: /* pmovzxbd */
+        case 0x0f3832: /* pmovzxbq */
+        case 0x0f3833: /* pmovzxwd */
+        case 0x0f3834: /* pmovzxwq */
+        case 0x0f3835: /* pmovzxdq */
+        case 0x0f3837: /* pcmpgtq */
+        case 0x0f3838: /* pminsb */
+        case 0x0f3839: /* pminsd */
+        case 0x0f383a: /* pminuw */
+        case 0x0f383b: /* pminud */
+        case 0x0f383c: /* pmaxsb */
+        case 0x0f383d: /* pmaxsd */
+        case 0x0f383e: /* pmaxuw */
+        case 0x0f383f: /* pmaxud */
+        case 0x0f3840: /* pmulld */
+        case 0x0f3841: /* phminposuw */
+        case 0x0f3a0f: /* palignr */
+        case 0x0f60:   /* punpcklbw */
+        case 0x0f61:   /* punpcklwd */
+        case 0x0f62:   /* punpckldq */
+        case 0x0f63:   /* packsswb */
+        case 0x0f64:   /* pcmpgtb */
+        case 0x0f65:   /* pcmpgtw */
+        case 0x0f66:   /* pcmpgtd */
+        case 0x0f67:   /* packuswb */
+        case 0x0f68:   /* punpckhbw */
+        case 0x0f69:   /* punpckhwd */
+        case 0x0f6a:   /* punpckhdq */
+        case 0x0f6b:   /* packssdw */
+        case 0x0f6e:   /* movd */
+        case 0x0f6f:   /* movq */
+        case 0x0f70:   /* pshufw */
+        case 0x0f74:   /* pcmpeqb */
+        case 0x0f75:   /* pcmpeqw */
+        case 0x0f76:   /* pcmpeqd */
+        case 0x0fc4:   /* pinsrw */
+        case 0x0fd1:   /* psrlw */
+        case 0x0fd2:   /* psrld */
+        case 0x0fd3:   /* psrlq */
+        case 0x0fd4:   /* paddq */
+        case 0x0fd5:   /* pmullw */
+        case 0xf20fd6: /* movdq2q */
+        case 0x0fd8:   /* psubusb */
+        case 0x0fd9:   /* psubusw */
+        case 0x0fda:   /* pminub */
+        case 0x0fdb:   /* pand */
+        case 0x0fdc:   /* paddusb */
+        case 0x0fdd:   /* paddusw */
+        case 0x0fde:   /* pmaxub */
+        case 0x0fdf:   /* pandn */
+        case 0x0fe0:   /* pavgb */
+        case 0x0fe1:   /* psraw */
+        case 0x0fe2:   /* psrad */
+        case 0x0fe3:   /* pavgw */
+        case 0x0fe4:   /* pmulhuw */
+        case 0x0fe5:   /* pmulhw */
+        case 0x0fe8:   /* psubsb */
+        case 0x0fe9:   /* psubsw */
+        case 0x0fea:   /* pminsw */
+        case 0x0feb:   /* por */
+        case 0x0fec:   /* paddsb */
+        case 0x0fed:   /* paddsw */
+        case 0x0fee:   /* pmaxsw */
+        case 0x0fef:   /* pxor */
+        case 0x0ff1:   /* psllw */
+        case 0x0ff2:   /* pslld */
+        case 0x0ff3:   /* psllq */
+        case 0x0ff4:   /* pmuludq */
+        case 0x0ff5:   /* pmaddwd */
+        case 0x0ff6:   /* psadbw */
+        case 0x0ff8:   /* psubb */
+        case 0x0ff9:   /* psubw */
+        case 0x0ffa:   /* psubd */
+        case 0x0ffb:   /* psubq */
+        case 0x0ffc:   /* paddb */
+        case 0x0ffd:   /* paddw */
+        case 0x0ffe:   /* paddd */
+          if (i386_record_modrm (&ir))
+            return -1;
+          if (!i386_mmx_regnum_p (gdbarch, I387_MM0_REGNUM (tdep) + ir.reg))
+            goto no_support;
+          record_full_arch_list_add_reg (ir.regcache,
+                                         I387_MM0_REGNUM (tdep) + ir.reg);
+          break;
 
-	case 0x0f71:    /* psllw */
-	case 0x0f72:    /* pslld */
-	case 0x0f73:    /* psllq */
-	  if (i386_record_modrm (&ir))
-	    return -1;
-	  if (!i386_mmx_regnum_p (gdbarch, I387_MM0_REGNUM (tdep) + ir.rm))
-	    goto no_support;
-	  record_full_arch_list_add_reg (ir.regcache,
-					 I387_MM0_REGNUM (tdep) + ir.rm);
-	  break;
+        case 0x0f71: /* psllw */
+        case 0x0f72: /* pslld */
+        case 0x0f73: /* psllq */
+          if (i386_record_modrm (&ir))
+            return -1;
+          if (!i386_mmx_regnum_p (gdbarch, I387_MM0_REGNUM (tdep) + ir.rm))
+            goto no_support;
+          record_full_arch_list_add_reg (ir.regcache,
+                                         I387_MM0_REGNUM (tdep) + ir.rm);
+          break;
 
-	case 0x660f71:    /* psllw */
-	case 0x660f72:    /* pslld */
-	case 0x660f73:    /* psllq */
-	  if (i386_record_modrm (&ir))
-	    return -1;
-	  ir.rm |= ir.rex_b;
-	  if (!i386_xmm_regnum_p (gdbarch, I387_XMM0_REGNUM (tdep) + ir.rm))
-	    goto no_support;
-	  record_full_arch_list_add_reg (ir.regcache,
-					 I387_XMM0_REGNUM (tdep) + ir.rm);
-	  break;
+        case 0x660f71: /* psllw */
+        case 0x660f72: /* pslld */
+        case 0x660f73: /* psllq */
+          if (i386_record_modrm (&ir))
+            return -1;
+          ir.rm |= ir.rex_b;
+          if (!i386_xmm_regnum_p (gdbarch, I387_XMM0_REGNUM (tdep) + ir.rm))
+            goto no_support;
+          record_full_arch_list_add_reg (ir.regcache,
+                                         I387_XMM0_REGNUM (tdep) + ir.rm);
+          break;
 
-	case 0x0f7e:      /* movd */
-	case 0x660f7e:    /* movd */
-	  if (i386_record_modrm (&ir))
-	    return -1;
-	  if (ir.mod == 3)
-	    I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm | ir.rex_b);
-	  else
-	    {
-	      if (ir.dflag == 2)
-		ir.ot = OT_QUAD;
-	      else
-		ir.ot = OT_LONG;
-	      if (i386_record_lea_modrm (&ir))
-		return -1;
-	    }
-	  break;
+        case 0x0f7e:   /* movd */
+        case 0x660f7e: /* movd */
+          if (i386_record_modrm (&ir))
+            return -1;
+          if (ir.mod == 3)
+            I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.rm | ir.rex_b);
+          else
+            {
+              if (ir.dflag == 2)
+                ir.ot = OT_QUAD;
+              else
+                ir.ot = OT_LONG;
+              if (i386_record_lea_modrm (&ir))
+                return -1;
+            }
+          break;
 
-	case 0x0f7f:    /* movq */
-	  if (i386_record_modrm (&ir))
-	    return -1;
-	  if (ir.mod == 3)
-	    {
-	      if (!i386_mmx_regnum_p (gdbarch, I387_MM0_REGNUM (tdep) + ir.rm))
-		goto no_support;
-	      record_full_arch_list_add_reg (ir.regcache,
-					     I387_MM0_REGNUM (tdep) + ir.rm);
-	    }
-	  else
-	    {
-	      ir.ot = OT_QUAD;
-	      if (i386_record_lea_modrm (&ir))
-		return -1;
-	    }
-	  break;
+        case 0x0f7f: /* movq */
+          if (i386_record_modrm (&ir))
+            return -1;
+          if (ir.mod == 3)
+            {
+              if (!i386_mmx_regnum_p (gdbarch, I387_MM0_REGNUM (tdep) + ir.rm))
+                goto no_support;
+              record_full_arch_list_add_reg (ir.regcache,
+                                             I387_MM0_REGNUM (tdep) + ir.rm);
+            }
+          else
+            {
+              ir.ot = OT_QUAD;
+              if (i386_record_lea_modrm (&ir))
+                return -1;
+            }
+          break;
 
-	case 0xf30fb8:    /* popcnt */
-	  if (i386_record_modrm (&ir))
-	    return -1;
-	  I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.reg);
-	  I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
-	  break;
+        case 0xf30fb8: /* popcnt */
+          if (i386_record_modrm (&ir))
+            return -1;
+          I386_RECORD_FULL_ARCH_LIST_ADD_REG (ir.reg);
+          I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
+          break;
 
-	case 0x660fd6:    /* movq */
-	  if (i386_record_modrm (&ir))
-	    return -1;
-	  if (ir.mod == 3)
-	    {
-	      ir.rm |= ir.rex_b;
-	      if (!i386_xmm_regnum_p (gdbarch,
-				      I387_XMM0_REGNUM (tdep) + ir.rm))
-		goto no_support;
-	      record_full_arch_list_add_reg (ir.regcache,
-					     I387_XMM0_REGNUM (tdep) + ir.rm);
-	    }
-	  else
-	    {
-	      ir.ot = OT_QUAD;
-	      if (i386_record_lea_modrm (&ir))
-		return -1;
-	    }
-	  break;
+        case 0x660fd6: /* movq */
+          if (i386_record_modrm (&ir))
+            return -1;
+          if (ir.mod == 3)
+            {
+              ir.rm |= ir.rex_b;
+              if (!i386_xmm_regnum_p (gdbarch,
+                                      I387_XMM0_REGNUM (tdep) + ir.rm))
+                goto no_support;
+              record_full_arch_list_add_reg (ir.regcache,
+                                             I387_XMM0_REGNUM (tdep) + ir.rm);
+            }
+          else
+            {
+              ir.ot = OT_QUAD;
+              if (i386_record_lea_modrm (&ir))
+                return -1;
+            }
+          break;
 
-	case 0x660f3817:    /* ptest */
-	case 0x0f2e:        /* ucomiss */
-	case 0x660f2e:      /* ucomisd */
-	case 0x0f2f:        /* comiss */
-	case 0x660f2f:      /* comisd */
-	  I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
-	  break;
+        case 0x660f3817: /* ptest */
+        case 0x0f2e:     /* ucomiss */
+        case 0x660f2e:   /* ucomisd */
+        case 0x0f2f:     /* comiss */
+        case 0x660f2f:   /* comisd */
+          I386_RECORD_FULL_ARCH_LIST_ADD_REG (X86_RECORD_EFLAGS_REGNUM);
+          break;
 
-	case 0x0ff7:    /* maskmovq */
-	  regcache_raw_read_unsigned (ir.regcache,
-				      ir.regmap[X86_RECORD_REDI_REGNUM],
-				      &addr);
-	  if (record_full_arch_list_add_mem (addr, 64))
-	    return -1;
-	  break;
+        case 0x0ff7: /* maskmovq */
+          regcache_raw_read_unsigned (ir.regcache,
+                                      ir.regmap[X86_RECORD_REDI_REGNUM],
+                                      &addr);
+          if (record_full_arch_list_add_mem (addr, 64))
+            return -1;
+          break;
 
-	case 0x660ff7:    /* maskmovdqu */
-	  regcache_raw_read_unsigned (ir.regcache,
-				      ir.regmap[X86_RECORD_REDI_REGNUM],
-				      &addr);
-	  if (record_full_arch_list_add_mem (addr, 128))
-	    return -1;
-	  break;
+        case 0x660ff7: /* maskmovdqu */
+          regcache_raw_read_unsigned (ir.regcache,
+                                      ir.regmap[X86_RECORD_REDI_REGNUM],
+                                      &addr);
+          if (record_full_arch_list_add_mem (addr, 128))
+            return -1;
+          break;
 
-	default:
-	  goto no_support;
-	  break;
-	}
+        default:
+          goto no_support;
+          break;
+        }
       break;
 
     default:
@@ -8140,23 +7997,38 @@ reswitch_prefix_add:
 
   return 0;
 
- no_support:
+no_support:
   gdb_printf (gdb_stderr,
-	      _("Process record does not support instruction 0x%02x "
-		"at address %s.\n"),
-	      (unsigned int) (opcode),
-	      paddress (gdbarch, ir.orig_addr));
+              _ ("Process record does not support instruction 0x%02x "
+                 "at address %s.\n"),
+              (unsigned int) (opcode), paddress (gdbarch, ir.orig_addr));
   return -1;
 }
 
-static const int i386_record_regmap[] =
-{
-  I386_EAX_REGNUM, I386_ECX_REGNUM, I386_EDX_REGNUM, I386_EBX_REGNUM,
-  I386_ESP_REGNUM, I386_EBP_REGNUM, I386_ESI_REGNUM, I386_EDI_REGNUM,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  I386_EIP_REGNUM, I386_EFLAGS_REGNUM, I386_CS_REGNUM, I386_SS_REGNUM,
-  I386_DS_REGNUM, I386_ES_REGNUM, I386_FS_REGNUM, I386_GS_REGNUM
-};
+static const int i386_record_regmap[] = { I386_EAX_REGNUM,
+                                          I386_ECX_REGNUM,
+                                          I386_EDX_REGNUM,
+                                          I386_EBX_REGNUM,
+                                          I386_ESP_REGNUM,
+                                          I386_EBP_REGNUM,
+                                          I386_ESI_REGNUM,
+                                          I386_EDI_REGNUM,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          I386_EIP_REGNUM,
+                                          I386_EFLAGS_REGNUM,
+                                          I386_CS_REGNUM,
+                                          I386_SS_REGNUM,
+                                          I386_DS_REGNUM,
+                                          I386_ES_REGNUM,
+                                          I386_FS_REGNUM,
+                                          I386_GS_REGNUM };
 
 /* Check that the given address appears suitable for a fast
    tracepoint, which on x86-64 means that we need an instruction of at
@@ -8170,7 +8042,7 @@ static const int i386_record_regmap[] =
 
 static int
 i386_fast_tracepoint_valid_at (struct gdbarch *gdbarch, CORE_ADDR addr,
-			       std::string *msg)
+                               std::string *msg)
 {
   int len, jumplen;
 
@@ -8203,15 +8075,15 @@ i386_fast_tracepoint_valid_at (struct gdbarch *gdbarch, CORE_ADDR addr,
       /* Return a bit of target-specific detail to add to the caller's
 	 generic failure message.  */
       if (msg)
-	*msg = string_printf (_("; instruction is only %d bytes long, "
-				"need at least %d bytes for the jump"),
-			      len, jumplen);
+        *msg = string_printf (_ ("; instruction is only %d bytes long, "
+                                 "need at least %d bytes for the jump"),
+                              len, jumplen);
       return 0;
     }
   else
     {
       if (msg)
-	msg->clear ();
+        msg->clear ();
       return 1;
     }
 }
@@ -8221,20 +8093,16 @@ i386_fast_tracepoint_valid_at (struct gdbarch *gdbarch, CORE_ADDR addr,
    If no suitable type is found, return NULL.  */
 
 static const struct floatformat **
-i386_floatformat_for_type (struct gdbarch *gdbarch,
-			   const char *name, int len)
+i386_floatformat_for_type (struct gdbarch *gdbarch, const char *name, int len)
 {
   if (len == 128 && name)
-    if (strcmp (name, "__float128") == 0
-	|| strcmp (name, "_Float128") == 0
-	|| strcmp (name, "complex _Float128") == 0
-	|| strcmp (name, "complex(kind=16)") == 0
-	|| strcmp (name, "complex*32") == 0
-	|| strcmp (name, "COMPLEX*32") == 0
-	|| strcmp (name, "quad complex") == 0
-	|| strcmp (name, "real(kind=16)") == 0
-	|| strcmp (name, "real*16") == 0
-	|| strcmp (name, "REAL*16") == 0)
+    if (strcmp (name, "__float128") == 0 || strcmp (name, "_Float128") == 0
+        || strcmp (name, "complex _Float128") == 0
+        || strcmp (name, "complex(kind=16)") == 0
+        || strcmp (name, "complex*32") == 0 || strcmp (name, "COMPLEX*32") == 0
+        || strcmp (name, "quad complex") == 0
+        || strcmp (name, "real(kind=16)") == 0 || strcmp (name, "real*16") == 0
+        || strcmp (name, "REAL*16") == 0)
       return floatformats_ieee_quad;
 
   return default_floatformat_for_type (gdbarch, name, len);
@@ -8242,16 +8110,16 @@ i386_floatformat_for_type (struct gdbarch *gdbarch,
 
 static int
 i386_validate_tdesc_p (i386_gdbarch_tdep *tdep,
-		       struct tdesc_arch_data *tdesc_data)
+                       struct tdesc_arch_data *tdesc_data)
 {
   const struct target_desc *tdesc = tdep->tdesc;
   const struct tdesc_feature *feature_core;
 
   const struct tdesc_feature *feature_sse, *feature_avx, *feature_mpx,
-			     *feature_avx512, *feature_pkeys, *feature_segments;
+    *feature_avx512, *feature_pkeys, *feature_segments;
   int i, num_regs, valid_p;
 
-  if (! tdesc_has_registers (tdesc))
+  if (!tdesc_has_registers (tdesc))
     return 0;
 
   /* Get core registers.  */
@@ -8284,65 +8152,66 @@ i386_validate_tdesc_p (i386_gdbarch_tdep *tdep,
     {
       /* AVX512 register description requires AVX register description.  */
       if (!feature_avx)
-	return 0;
+        return 0;
 
       tdep->xcr0 = X86_XSTATE_AVX_AVX512_MASK;
 
       /* It may have been set by OSABI initialization function.  */
       if (tdep->k0_regnum < 0)
-	{
-	  tdep->k_register_names = i386_k_names;
-	  tdep->k0_regnum = I386_K0_REGNUM;
-	}
+        {
+          tdep->k_register_names = i386_k_names;
+          tdep->k0_regnum = I386_K0_REGNUM;
+        }
 
       for (i = 0; i < I387_NUM_K_REGS; i++)
-	valid_p &= tdesc_numbered_register (feature_avx512, tdesc_data,
-					    tdep->k0_regnum + i,
-					    i386_k_names[i]);
+        valid_p
+          &= tdesc_numbered_register (feature_avx512, tdesc_data,
+                                      tdep->k0_regnum + i, i386_k_names[i]);
 
       if (tdep->num_zmm_regs == 0)
-	{
-	  tdep->zmmh_register_names = i386_zmmh_names;
-	  tdep->num_zmm_regs = 8;
-	  tdep->zmm0h_regnum = I386_ZMM0H_REGNUM;
-	}
+        {
+          tdep->zmmh_register_names = i386_zmmh_names;
+          tdep->num_zmm_regs = 8;
+          tdep->zmm0h_regnum = I386_ZMM0H_REGNUM;
+        }
 
       for (i = 0; i < tdep->num_zmm_regs; i++)
-	valid_p &= tdesc_numbered_register (feature_avx512, tdesc_data,
-					    tdep->zmm0h_regnum + i,
-					    tdep->zmmh_register_names[i]);
+        valid_p &= tdesc_numbered_register (feature_avx512, tdesc_data,
+                                            tdep->zmm0h_regnum + i,
+                                            tdep->zmmh_register_names[i]);
 
       for (i = 0; i < tdep->num_xmm_avx512_regs; i++)
-	valid_p &= tdesc_numbered_register (feature_avx512, tdesc_data,
-					    tdep->xmm16_regnum + i,
-					    tdep->xmm_avx512_register_names[i]);
+        valid_p
+          &= tdesc_numbered_register (feature_avx512, tdesc_data,
+                                      tdep->xmm16_regnum + i,
+                                      tdep->xmm_avx512_register_names[i]);
 
       for (i = 0; i < tdep->num_ymm_avx512_regs; i++)
-	valid_p &= tdesc_numbered_register (feature_avx512, tdesc_data,
-					    tdep->ymm16h_regnum + i,
-					    tdep->ymm16h_register_names[i]);
+        valid_p &= tdesc_numbered_register (feature_avx512, tdesc_data,
+                                            tdep->ymm16h_regnum + i,
+                                            tdep->ymm16h_register_names[i]);
     }
   if (feature_avx)
     {
       /* AVX register description requires SSE register description.  */
       if (!feature_sse)
-	return 0;
+        return 0;
 
       if (!feature_avx512)
-	tdep->xcr0 = X86_XSTATE_AVX_MASK;
+        tdep->xcr0 = X86_XSTATE_AVX_MASK;
 
       /* It may have been set by OSABI initialization function.  */
       if (tdep->num_ymm_regs == 0)
-	{
-	  tdep->ymmh_register_names = i386_ymmh_names;
-	  tdep->num_ymm_regs = 8;
-	  tdep->ymm0h_regnum = I386_YMM0H_REGNUM;
-	}
+        {
+          tdep->ymmh_register_names = i386_ymmh_names;
+          tdep->num_ymm_regs = 8;
+          tdep->ymm0h_regnum = I386_YMM0H_REGNUM;
+        }
 
       for (i = 0; i < tdep->num_ymm_regs; i++)
-	valid_p &= tdesc_numbered_register (feature_avx, tdesc_data,
-					    tdep->ymm0h_regnum + i,
-					    tdep->ymmh_register_names[i]);
+        valid_p &= tdesc_numbered_register (feature_avx, tdesc_data,
+                                            tdep->ymm0h_regnum + i,
+                                            tdep->ymmh_register_names[i]);
     }
   else if (feature_sse)
     tdep->xcr0 = X86_XSTATE_SSE_MASK;
@@ -8355,15 +8224,15 @@ i386_validate_tdesc_p (i386_gdbarch_tdep *tdep,
   num_regs = tdep->num_core_regs;
   for (i = 0; i < num_regs; i++)
     valid_p &= tdesc_numbered_register (feature_core, tdesc_data, i,
-					tdep->register_names[i]);
+                                        tdep->register_names[i]);
 
   if (feature_sse)
     {
       /* Need to include %mxcsr, so add one.  */
       num_regs += tdep->num_xmm_regs + 1;
       for (; i < num_regs; i++)
-	valid_p &= tdesc_numbered_register (feature_sse, tdesc_data, i,
-					    tdep->register_names[i]);
+        valid_p &= tdesc_numbered_register (feature_sse, tdesc_data, i,
+                                            tdep->register_names[i]);
     }
 
   if (feature_mpx)
@@ -8371,48 +8240,46 @@ i386_validate_tdesc_p (i386_gdbarch_tdep *tdep,
       tdep->xcr0 |= X86_XSTATE_MPX_MASK;
 
       if (tdep->bnd0r_regnum < 0)
-	{
-	  tdep->mpx_register_names = i386_mpx_names;
-	  tdep->bnd0r_regnum = I386_BND0R_REGNUM;
-	  tdep->bndcfgu_regnum = I386_BNDCFGU_REGNUM;
-	}
+        {
+          tdep->mpx_register_names = i386_mpx_names;
+          tdep->bnd0r_regnum = I386_BND0R_REGNUM;
+          tdep->bndcfgu_regnum = I386_BNDCFGU_REGNUM;
+        }
 
       for (i = 0; i < I387_NUM_MPX_REGS; i++)
-	valid_p &= tdesc_numbered_register (feature_mpx, tdesc_data,
-	    I387_BND0R_REGNUM (tdep) + i,
-	    tdep->mpx_register_names[i]);
+        valid_p &= tdesc_numbered_register (feature_mpx, tdesc_data,
+                                            I387_BND0R_REGNUM (tdep) + i,
+                                            tdep->mpx_register_names[i]);
     }
 
   if (feature_segments)
     {
       if (tdep->fsbase_regnum < 0)
-	tdep->fsbase_regnum = I386_FSBASE_REGNUM;
+        tdep->fsbase_regnum = I386_FSBASE_REGNUM;
       valid_p &= tdesc_numbered_register (feature_segments, tdesc_data,
-					  tdep->fsbase_regnum, "fs_base");
+                                          tdep->fsbase_regnum, "fs_base");
       valid_p &= tdesc_numbered_register (feature_segments, tdesc_data,
-					  tdep->fsbase_regnum + 1, "gs_base");
+                                          tdep->fsbase_regnum + 1, "gs_base");
     }
 
   if (feature_pkeys)
     {
       tdep->xcr0 |= X86_XSTATE_PKRU;
       if (tdep->pkru_regnum < 0)
-	{
-	  tdep->pkeys_register_names = i386_pkeys_names;
-	  tdep->pkru_regnum = I386_PKRU_REGNUM;
-	  tdep->num_pkeys_regs = 1;
-	}
+        {
+          tdep->pkeys_register_names = i386_pkeys_names;
+          tdep->pkru_regnum = I386_PKRU_REGNUM;
+          tdep->num_pkeys_regs = 1;
+        }
 
       for (i = 0; i < I387_NUM_PKEYS_REGS; i++)
-	valid_p &= tdesc_numbered_register (feature_pkeys, tdesc_data,
-					    I387_PKRU_REGNUM (tdep) + i,
-					    tdep->pkeys_register_names[i]);
+        valid_p &= tdesc_numbered_register (feature_pkeys, tdesc_data,
+                                            I387_PKRU_REGNUM (tdep) + i,
+                                            tdep->pkeys_register_names[i]);
     }
 
   return valid_p;
 }
-
-
 
 /* Implement the type_align gdbarch function.  */
 
@@ -8423,21 +8290,19 @@ i386_type_align (struct gdbarch *gdbarch, struct type *type)
 
   if (gdbarch_ptr_bit (gdbarch) == 32)
     {
-      if ((type->code () == TYPE_CODE_INT
-	   || type->code () == TYPE_CODE_FLT)
-	  && type->length () > 4)
-	return 4;
+      if ((type->code () == TYPE_CODE_INT || type->code () == TYPE_CODE_FLT)
+          && type->length () > 4)
+        return 4;
 
       /* Handle x86's funny long double.  */
       if (type->code () == TYPE_CODE_FLT
-	  && gdbarch_long_double_bit (gdbarch) == type->length () * 8)
-	return 4;
+          && gdbarch_long_double_bit (gdbarch) == type->length () * 8)
+        return 4;
     }
 
   return 0;
 }
 
-
 /* Note: This is called for both i386 and amd64.  */
 
 static struct gdbarch *
@@ -8513,10 +8378,10 @@ i386_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_floatformat_for_type (gdbarch, i386_floatformat_for_type);
 
   /* Register numbers of various important registers.  */
-  set_gdbarch_sp_regnum (gdbarch, I386_ESP_REGNUM); /* %esp */
-  set_gdbarch_pc_regnum (gdbarch, I386_EIP_REGNUM); /* %eip */
+  set_gdbarch_sp_regnum (gdbarch, I386_ESP_REGNUM);    /* %esp */
+  set_gdbarch_pc_regnum (gdbarch, I386_EIP_REGNUM);    /* %eip */
   set_gdbarch_ps_regnum (gdbarch, I386_EFLAGS_REGNUM); /* %eflags */
-  set_gdbarch_fp0_regnum (gdbarch, I386_ST0_REGNUM); /* %st(0) */
+  set_gdbarch_fp0_regnum (gdbarch, I386_ST0_REGNUM);   /* %st(0) */
 
   /* NOTE: kettenis/20040418: GCC does have two possible register
      numbering schemes on the i386: dbx and SVR4.  These schemes
@@ -8569,7 +8434,7 @@ i386_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_frame_align (gdbarch, i386_frame_align);
 
   set_gdbarch_convert_register_p (gdbarch, i386_convert_register_p);
-  set_gdbarch_register_to_value (gdbarch,  i386_register_to_value);
+  set_gdbarch_register_to_value (gdbarch, i386_register_to_value);
   set_gdbarch_value_to_register (gdbarch, i386_value_to_register);
 
   set_gdbarch_return_value (gdbarch, i386_return_value);
@@ -8615,10 +8480,10 @@ i386_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* Pseudo registers may be changed by amd64_init_abi.  */
   set_gdbarch_pseudo_register_read_value (gdbarch,
-					  i386_pseudo_register_read_value);
+                                          i386_pseudo_register_read_value);
   set_gdbarch_pseudo_register_write (gdbarch, i386_pseudo_register_write);
   set_gdbarch_ax_pseudo_register_collect (gdbarch,
-					  i386_ax_pseudo_register_collect);
+                                          i386_ax_pseudo_register_collect);
 
   set_tdesc_pseudo_register_type (gdbarch, i386_pseudo_register_type);
   set_tdesc_pseudo_register_name (gdbarch, i386_pseudo_register_name);
@@ -8636,7 +8501,7 @@ i386_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* Get the x86 target description from INFO.  */
   tdesc = info.target_desc;
-  if (! tdesc_has_registers (tdesc))
+  if (!tdesc_has_registers (tdesc))
     tdesc = i386_target_description (X86_XSTATE_SSE_MASK, false);
   tdep->tdesc = tdesc;
 
@@ -8709,14 +8574,12 @@ i386_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* Wire in pseudo registers.  Number of pseudo registers may be
      changed.  */
-  set_gdbarch_num_pseudo_regs (gdbarch, (tdep->num_byte_regs
-					 + tdep->num_word_regs
-					 + tdep->num_dword_regs
-					 + tdep->num_mmx_regs
-					 + tdep->num_ymm_regs
-					 + num_bnd_cooked
-					 + tdep->num_ymm_avx512_regs
-					 + tdep->num_zmm_regs));
+  set_gdbarch_num_pseudo_regs (gdbarch,
+                               (tdep->num_byte_regs + tdep->num_word_regs
+                                + tdep->num_dword_regs + tdep->num_mmx_regs
+                                + tdep->num_ymm_regs + num_bnd_cooked
+                                + tdep->num_ymm_avx512_regs
+                                + tdep->num_zmm_regs));
 
   /* Target description may be changed.  */
   tdesc = tdep->tdesc;
@@ -8779,9 +8642,9 @@ i386_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     tdep->mm0_regnum = -1;
 
   if (tdep->bnd0r_regnum > 0)
-      tdep->bnd0_regnum = bnd0_regnum;
+    tdep->bnd0_regnum = bnd0_regnum;
   else
-    tdep-> bnd0_regnum = -1;
+    tdep->bnd0_regnum = -1;
 
   /* Hook in the legacy prologue-based unwinders last (fallback).  */
   frame_unwind_append_unwinder (gdbarch, &i386_stack_tramp_frame_unwind);
@@ -8792,32 +8655,30 @@ i386_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
      support, unless it has already been enabled.  */
   if (tdep->gregset_reg_offset
       && !gdbarch_iterate_over_regset_sections_p (gdbarch))
-    set_gdbarch_iterate_over_regset_sections
-      (gdbarch, i386_iterate_over_regset_sections);
+    set_gdbarch_iterate_over_regset_sections (
+      gdbarch, i386_iterate_over_regset_sections);
 
   set_gdbarch_fast_tracepoint_valid_at (gdbarch,
-					i386_fast_tracepoint_valid_at);
+                                        i386_fast_tracepoint_valid_at);
 
   return gdbarch;
 }
-
-
 
 /* Return the target description for a specified XSAVE feature mask.  */
 
 const struct target_desc *
 i386_target_description (uint64_t xcr0, bool segments)
 {
-  static target_desc *i386_tdescs \
-    [2/*SSE*/][2/*AVX*/][2/*MPX*/][2/*AVX512*/][2/*PKRU*/][2/*segments*/] = {};
+  static target_desc *i386_tdescs[2 /*SSE*/][2 /*AVX*/][2 /*MPX*/]
+                                 [2 /*AVX512*/][2 /*PKRU*/][2 /*segments*/]
+    = {};
   target_desc **tdesc;
 
   tdesc = &i386_tdescs[(xcr0 & X86_XSTATE_SSE) ? 1 : 0]
-    [(xcr0 & X86_XSTATE_AVX) ? 1 : 0]
-    [(xcr0 & X86_XSTATE_MPX) ? 1 : 0]
-    [(xcr0 & X86_XSTATE_AVX512) ? 1 : 0]
-    [(xcr0 & X86_XSTATE_PKRU) ? 1 : 0]
-    [segments ? 1 : 0];
+                      [(xcr0 & X86_XSTATE_AVX) ? 1 : 0]
+                      [(xcr0 & X86_XSTATE_MPX) ? 1 : 0]
+                      [(xcr0 & X86_XSTATE_AVX512) ? 1 : 0]
+                      [(xcr0 & X86_XSTATE_PKRU) ? 1 : 0][segments ? 1 : 0];
 
   if (*tdesc == NULL)
     *tdesc = i386_create_target_description (xcr0, false, segments);
@@ -8843,7 +8704,7 @@ i386_mpx_bd_base (void)
   regstatus = regcache_raw_read_unsigned (rcache, tdep->bndcfgu_regnum, &ret);
 
   if (regstatus != REG_VALID)
-    error (_("BNDCFGU register invalid, read status %d."), regstatus);
+    error (_ ("BNDCFGU register invalid, read status %d."), regstatus);
 
   return ret & MPX_BASE_MASK;
 }
@@ -8858,10 +8719,10 @@ i386_mpx_enabled (void)
   return (tdesc_find_feature (tdesc, "org.gnu.gdb.i386.mpx") != NULL);
 }
 
-#define MPX_BD_MASK     0xfffffff00000ULL	/* select bits [47:20]  */
-#define MPX_BT_MASK     0x0000000ffff8	        /* select bits [19:3]   */
-#define MPX_BD_MASK_32  0xfffff000	        /* select bits [31:12]  */
-#define MPX_BT_MASK_32  0x00000ffc	        /* select bits [11:2]   */
+#define MPX_BD_MASK 0xfffffff00000ULL /* select bits [47:20]  */
+#define MPX_BT_MASK 0x0000000ffff8    /* select bits [19:3]   */
+#define MPX_BD_MASK_32 0xfffff000     /* select bits [31:12]  */
+#define MPX_BT_MASK_32 0x00000ffc     /* select bits [11:2]   */
 
 /* Find the bound table entry given the pointer location and the base
    address of the table.  */
@@ -8879,7 +8740,6 @@ i386_mpx_get_bt_entry (CORE_ADDR ptr, CORE_ADDR bd_base)
   struct gdbarch *gdbarch = get_current_arch ();
   struct type *data_ptr_type = builtin_type (gdbarch)->builtin_data_ptr;
 
-
   if (gdbarch_ptr_bit (gdbarch) == 64)
     {
       mpx_bd_mask = (CORE_ADDR) MPX_BD_MASK;
@@ -8889,8 +8749,8 @@ i386_mpx_get_bt_entry (CORE_ADDR ptr, CORE_ADDR bd_base)
       bt_select_l_shift = 5;
       bt_mask = (CORE_ADDR) MPX_BT_MASK;
 
-      if ( sizeof (CORE_ADDR) == 4)
-	error (_("bound table examination not supported\
+      if (sizeof (CORE_ADDR) == 4)
+        error (_ ("bound table examination not supported\
  for 64-bit process with 32-bit GDB"));
     }
   else
@@ -8908,8 +8768,8 @@ i386_mpx_get_bt_entry (CORE_ADDR ptr, CORE_ADDR bd_base)
   bd_entry = read_memory_typed_address (bd_entry_addr, data_ptr_type);
 
   if ((bd_entry & 0x1) == 0)
-    error (_("Invalid bounds directory entry at %s."),
-	   paddress (get_current_arch (), bd_entry_addr));
+    error (_ ("Invalid bounds directory entry at %s."),
+           paddress (get_current_arch (), bd_entry_addr));
 
   /* Clearing status bit.  */
   bd_entry--;
@@ -8950,9 +8810,9 @@ i386_mpx_print_bounds (const CORE_ADDR bt_entry[4])
       uiout->field_core_addr ("pointer-value", gdbarch, bt_entry[2]);
 
       if (gdbarch_ptr_bit (gdbarch) == 64)
-	size = ( (~(int64_t) bt_entry[1]) - (int64_t) bt_entry[0]);
+        size = ((~(int64_t) bt_entry[1]) - (int64_t) bt_entry[0]);
       else
-	size = ( ~((int32_t) bt_entry[1]) - (int32_t) bt_entry[0]);
+        size = (~((int32_t) bt_entry[1]) - (int32_t) bt_entry[0]);
 
       /* In case the bounds are 0x0 and 0xffff... the difference will be -1.
 	 -1 represents in this sense full memory access, and there is no need
@@ -8984,14 +8844,14 @@ i386_mpx_info_bounds (const char *args, int from_tty)
   if (gdbarch_bfd_arch_info (gdbarch)->arch != bfd_arch_i386
       || !i386_mpx_enabled ())
     {
-      gdb_printf (_("Intel Memory Protection Extensions not "
-		    "supported on this target.\n"));
+      gdb_printf (_ ("Intel Memory Protection Extensions not "
+                     "supported on this target.\n"));
       return;
     }
 
   if (args == NULL)
     {
-      gdb_printf (_("Address of pointer variable expected.\n"));
+      gdb_printf (_ ("Address of pointer variable expected.\n"));
       return;
     }
 
@@ -9004,8 +8864,8 @@ i386_mpx_info_bounds (const char *args, int from_tty)
 
   for (i = 0; i < 4; i++)
     bt_entry[i] = read_memory_typed_address (bt_entry_addr
-					     + i * data_ptr_type->length (),
-					     data_ptr_type);
+                                               + i * data_ptr_type->length (),
+                                             data_ptr_type);
 
   i386_mpx_print_bounds (bt_entry);
 }
@@ -9027,40 +8887,40 @@ i386_mpx_set_bounds (const char *args, int from_tty)
 
   if (gdbarch_bfd_arch_info (gdbarch)->arch != bfd_arch_i386
       || !i386_mpx_enabled ())
-    error (_("Intel Memory Protection Extensions not supported\
+    error (_ ("Intel Memory Protection Extensions not supported\
  on this target."));
 
   if (args == NULL)
-    error (_("Pointer value expected."));
+    error (_ ("Pointer value expected."));
 
   addr = value_as_address (parse_to_comma_and_eval (&input));
 
   if (input[0] == ',')
     ++input;
   if (input[0] == '\0')
-    error (_("wrong number of arguments: missing lower and upper bound."));
+    error (_ ("wrong number of arguments: missing lower and upper bound."));
   lower = value_as_address (parse_to_comma_and_eval (&input));
 
   if (input[0] == ',')
     ++input;
   if (input[0] == '\0')
-    error (_("Wrong number of arguments; Missing upper bound."));
+    error (_ ("Wrong number of arguments; Missing upper bound."));
   upper = value_as_address (parse_to_comma_and_eval (&input));
 
   bd_base = i386_mpx_bd_base ();
   bt_entry_addr = i386_mpx_get_bt_entry (addr, bd_base);
   for (i = 0; i < 2; i++)
     bt_entry[i] = read_memory_typed_address (bt_entry_addr
-					     + i * data_ptr_type->length (),
-					     data_ptr_type);
+                                               + i * data_ptr_type->length (),
+                                             data_ptr_type);
   bt_entry[0] = (uint64_t) lower;
   bt_entry[1] = ~(uint64_t) upper;
 
   for (i = 0; i < 2; i++)
     write_memory_unsigned_integer (bt_entry_addr
-				   + i * data_ptr_type->length (),
-				   data_ptr_type->length (), byte_order,
-				   bt_entry[i]);
+                                     + i * data_ptr_type->length (),
+                                   data_ptr_type->length (), byte_order,
+                                   bt_entry[i]);
 }
 
 static struct cmd_list_element *mpx_set_cmdlist, *mpx_show_cmdlist;
@@ -9073,50 +8933,52 @@ _initialize_i386_tdep ()
 
   /* Add the variable that controls the disassembly flavor.  */
   add_setshow_enum_cmd ("disassembly-flavor", no_class, valid_flavors,
-			&disassembly_flavor, _("\
-Set the disassembly flavor."), _("\
-Show the disassembly flavor."), _("\
+                        &disassembly_flavor, _ ("\
+Set the disassembly flavor."),
+                        _ ("\
+Show the disassembly flavor."),
+                        _ ("\
 The valid values are \"att\" and \"intel\", and the default value is \"att\"."),
-			NULL,
-			NULL, /* FIXME: i18n: */
-			&setlist, &showlist);
+                        NULL, NULL, /* FIXME: i18n: */
+                        &setlist, &showlist);
 
   /* Add the variable that controls the convention for returning
      structs.  */
   add_setshow_enum_cmd ("struct-convention", no_class, valid_conventions,
-			&struct_convention, _("\
-Set the convention for returning small structs."), _("\
-Show the convention for returning small structs."), _("\
+                        &struct_convention, _ ("\
+Set the convention for returning small structs."),
+                        _ ("\
+Show the convention for returning small structs."),
+                        _ ("\
 Valid values are \"default\", \"pcc\" and \"reg\", and the default value\n\
 is \"default\"."),
-			NULL,
-			NULL, /* FIXME: i18n: */
-			&setlist, &showlist);
+                        NULL, NULL, /* FIXME: i18n: */
+                        &setlist, &showlist);
 
   /* Add "mpx" prefix for the set and show commands.  */
 
-  add_setshow_prefix_cmd
-    ("mpx", class_support,
-     _("Set Intel Memory Protection Extensions specific variables."),
-     _("Show Intel Memory Protection Extensions specific variables."),
-     &mpx_set_cmdlist, &mpx_show_cmdlist, &setlist, &showlist);
+  add_setshow_prefix_cmd (
+    "mpx", class_support,
+    _ ("Set Intel Memory Protection Extensions specific variables."),
+    _ ("Show Intel Memory Protection Extensions specific variables."),
+    &mpx_set_cmdlist, &mpx_show_cmdlist, &setlist, &showlist);
 
   /* Add "bound" command for the show mpx commands list.  */
 
   add_cmd ("bound", no_class, i386_mpx_info_bounds,
-	   "Show the memory bounds for a given array/pointer storage\
+           "Show the memory bounds for a given array/pointer storage\
  in the bound table.",
-	   &mpx_show_cmdlist);
+           &mpx_show_cmdlist);
 
   /* Add "bound" command for the set mpx commands list.  */
 
   add_cmd ("bound", no_class, i386_mpx_set_bounds,
-	   "Set the memory bounds for a given array/pointer storage\
+           "Set the memory bounds for a given array/pointer storage\
  in the bound table.",
-	   &mpx_set_cmdlist);
+           &mpx_set_cmdlist);
 
   gdbarch_register_osabi (bfd_arch_i386, 0, GDB_OSABI_SVR4,
-			  i386_svr4_init_abi);
+                          i386_svr4_init_abi);
 
   /* Initialize the i386-specific register groups.  */
   i386_init_reggroups ();

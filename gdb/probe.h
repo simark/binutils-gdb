@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (PROBE_H)
+#if !defined(PROBE_H)
 #define PROBE_H 1
 
 #include "symtab.h"
@@ -29,15 +29,15 @@ struct linespec_result;
    `gen_ui_out_table_header'.  */
 
 struct info_probe_column
-  {
-    /* The internal name of the field.  This string cannot be capitalized nor
+{
+  /* The internal name of the field.  This string cannot be capitalized nor
        localized, e.g., "extra_field".  */
-    const char *field_name;
+  const char *field_name;
 
-    /* The field name to be printed in the `info probes' command.  This
+  /* The field name to be printed in the `info probes' command.  This
        string can be capitalized and localized, e.g., _("Extra Field").  */
-    const char *print_name;
-  };
+  const char *print_name;
+};
 
 /* Operations that act on probes, but are specific to each backend.
    These methods do not go into the 'class probe' because they do not
@@ -65,7 +65,7 @@ public:
 
   /* Function that should fill PROBES with known probes from OBJFILE.  */
   virtual void get_probes (std::vector<std::unique_ptr<probe>> *probes,
-			    struct objfile *objfile) const = 0;
+                           struct objfile *objfile) const = 0;
 
   /* Return a pointer to a name identifying the probe type.  This is
      the string that will be displayed in the "Type" column of the
@@ -73,10 +73,7 @@ public:
   virtual const char *type_name () const = 0;
 
   /* Return true if the probe can be enabled; false otherwise.  */
-  virtual bool can_enable () const
-  {
-    return false;
-  }
+  virtual bool can_enable () const { return false; }
 
   /* Function responsible for providing the extra fields that will be
      printed in the `info probes' command.  It should fill HEADS
@@ -84,7 +81,7 @@ public:
      required by the probe backend, the method EMIT_INFO_PROBES_FIELDS
      should return false.  */
   virtual std::vector<struct info_probe_column>
-    gen_info_probes_table_header () const = 0;
+  gen_info_probes_table_header () const = 0;
 };
 
 /* Definition of a vector of static_probe_ops.  */
@@ -97,7 +94,7 @@ extern std::vector<const static_probe_ops *> all_static_probe_ops;
    is returned.  */
 
 extern int probe_is_linespec_by_keyword (const char **linespecp,
-					 const char *const *keywords);
+                                         const char *const *keywords);
 
 /* Return specific STATIC_PROBE_OPS * matching *LINESPECP and possibly
    updating LINESPECP to skip its "-probe-type " prefix.  Return
@@ -106,7 +103,7 @@ extern int probe_is_linespec_by_keyword (const char **linespecp,
    any known probe type, *LINESPECP is not modified in such case.  */
 
 extern const static_probe_ops *
-  probe_linespec_to_static_ops (const char **linespecp);
+probe_linespec_to_static_ops (const char **linespecp);
 
 /* The probe itself.  The class contains generic information about the
    probe.  */
@@ -116,14 +113,16 @@ class probe
 public:
   /* Default constructor for a probe.  */
   probe (std::string &&name_, std::string &&provider_, CORE_ADDR address_,
-	 struct gdbarch *arch_)
-    : m_name (std::move (name_)), m_provider (std::move (provider_)),
-      m_address (address_), m_arch (arch_)
-  {}
+         struct gdbarch *arch_)
+    : m_name (std::move (name_)),
+      m_provider (std::move (provider_)),
+      m_address (address_),
+      m_arch (arch_)
+  {
+  }
 
   /* Virtual destructor.  */
-  virtual ~probe ()
-  {}
+  virtual ~probe () {}
 
   /* Compute the probe's relocated address.  OBJFILE is the objfile
      in which the probe originated.  */
@@ -142,28 +141,29 @@ public:
   /* Evaluate the Nth argument from the probe, returning a value
      corresponding to it.  The argument number is represented N.
      This function can throw an exception.  */
-  virtual struct value *evaluate_argument (unsigned n,
-					   frame_info_ptr frame) = 0;
+  virtual struct value *evaluate_argument (unsigned n, frame_info_ptr frame)
+    = 0;
 
   /* Compile the Nth argument of the probe to an agent expression.
      The argument number is represented by N.  */
   virtual void compile_to_ax (struct agent_expr *aexpr,
-			      struct axs_value *axs_value,
-			      unsigned n) = 0;
+                              struct axs_value *axs_value, unsigned n)
+    = 0;
 
   /* Set the semaphore associated with the probe.  This function only
      makes sense if the probe has a concept of semaphore associated to
      a probe.  */
-  virtual void set_semaphore (struct objfile *objfile,
-			      struct gdbarch *gdbarch)
-  {}
+  virtual void set_semaphore (struct objfile *objfile, struct gdbarch *gdbarch)
+  {
+  }
 
   /* Clear the semaphore associated with the probe.  This function
      only makes sense if the probe has a concept of semaphore
      associated to a probe.  */
   virtual void clear_semaphore (struct objfile *objfile,
-				struct gdbarch *gdbarch)
-  {}
+                                struct gdbarch *gdbarch)
+  {
+  }
 
   /* Return the pointer to the static_probe_ops instance related to
      the probe type.  */
@@ -186,38 +186,24 @@ public:
 
   /* Enable the probe.  The semantics of "enabling" a probe depend on
      the specific backend.  This function can throw an exception.  */
-  virtual void enable ()
-  {}
+  virtual void enable () {}
 
   /* Disable the probe.  The semantics of "disabling" a probe depend
      on the specific backend.  This function can throw an
      exception.  */
-  virtual void disable ()
-  {}
+  virtual void disable () {}
 
   /* Getter for M_NAME.  */
-  const std::string &get_name () const
-  {
-    return m_name;
-  }
+  const std::string &get_name () const { return m_name; }
 
   /* Getter for M_PROVIDER.  */
-  const std::string &get_provider () const
-  {
-    return m_provider;
-  }
+  const std::string &get_provider () const { return m_provider; }
 
   /* Getter for M_ADDRESS.  */
-  CORE_ADDR get_address () const
-  {
-    return m_address;
-  }
+  CORE_ADDR get_address () const { return m_address; }
 
   /* Getter for M_ARCH.  */
-  struct gdbarch *get_gdbarch () const
-  {
-    return m_arch;
-  }
+  struct gdbarch *get_gdbarch () const { return m_arch; }
 
 private:
   /* The name of the probe.  */
@@ -243,13 +229,14 @@ private:
 struct bound_probe
 {
   /* Create an empty bound_probe object.  */
-  bound_probe ()
-  {}
+  bound_probe () {}
 
   /* Create and initialize a bound_probe object using PROBE and OBJFILE.  */
   bound_probe (probe *probe_, struct objfile *objfile_)
-  : prob (probe_), objfile (objfile_)
-  {}
+    : prob (probe_),
+      objfile (objfile_)
+  {
+  }
 
   /* The probe.  */
   probe *prob = NULL;
@@ -262,10 +249,9 @@ struct bound_probe
    returns a std::vector<symtab_and_line> object and updates LOC or
    throws an error.  */
 
-extern std::vector<symtab_and_line> parse_probes
-  (const location_spec *locspec,
-   struct program_space *pspace,
-   struct linespec_result *canon);
+extern std::vector<symtab_and_line>
+parse_probes (const location_spec *locspec, struct program_space *pspace,
+              struct linespec_result *canon);
 
 /* Given a PC, find an associated probe.  If a probe is found, return
    it.  If no probe is found, return a bound probe whose fields are
@@ -278,8 +264,8 @@ extern struct bound_probe find_probe_by_pc (CORE_ADDR pc);
    return an empty vector.  */
 
 extern std::vector<probe *> find_probes_in_objfile (struct objfile *objfile,
-						    const char *provider,
-						    const char *name);
+                                                    const char *provider,
+                                                    const char *name);
 
 /* Generate a `info probes' command output for probes associated with
    SPOPS.  If SPOPS is related to the "any probe" type, then all probe
@@ -287,7 +273,7 @@ extern std::vector<probe *> find_probes_in_objfile (struct objfile *objfile,
    the probe backends to print their `info probe TYPE'.  */
 
 extern void info_probes_for_spops (const char *arg, int from_tty,
-				   const static_probe_ops *spops);
+                                   const static_probe_ops *spops);
 
 /* Return the `cmd_list_element' associated with the `info probes' command,
    or create a new one if it doesn't exist.  Helper function that serves the
@@ -302,6 +288,6 @@ extern struct cmd_list_element **info_probes_cmdlist_get (void);
    this returns NULL.  */
 
 extern struct value *probe_safe_evaluate_at_pc (frame_info_ptr frame,
-						unsigned n);
+                                                unsigned n);
 
 #endif /* !defined (PROBE_H) */

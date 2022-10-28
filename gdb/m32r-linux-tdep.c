@@ -38,8 +38,6 @@
 #include "linux-tdep.h"
 #include "gdbarch.h"
 
-
-
 /* Recognizing signal handler frames.  */
 
 /* GNU/Linux has two flavors of signals.  Normal signal handlers, and
@@ -78,7 +76,10 @@
    supported too.  */
 
 static const gdb_byte linux_sigtramp_code[] = {
-  0x67, 0x77, 0x10, 0xf2,
+  0x67,
+  0x77,
+  0x10,
+  0xf2,
 };
 
 /* If PC is in a sigtramp routine, return the address of the start of
@@ -99,16 +100,16 @@ m32r_linux_sigtramp_start (CORE_ADDR pc, frame_info_ptr this_frame)
 
   if (pc % 2 != 0)
     {
-      if (!safe_frame_unwind_memory (this_frame, pc, {buf, 2}))
-	return 0;
+      if (!safe_frame_unwind_memory (this_frame, pc, { buf, 2 }))
+        return 0;
 
       if (memcmp (buf, linux_sigtramp_code, 2) == 0)
-	pc -= 2;
+        pc -= 2;
       else
-	return 0;
+        return 0;
     }
 
-  if (!safe_frame_unwind_memory (this_frame, pc, {buf, 4}))
+  if (!safe_frame_unwind_memory (this_frame, pc, { buf, 4 }))
     return 0;
 
   if (memcmp (buf, linux_sigtramp_code, 4) != 0)
@@ -148,24 +149,24 @@ m32r_linux_rt_sigtramp_start (CORE_ADDR pc, frame_info_ptr this_frame)
   if (pc % 2 != 0)
     return 0;
 
-  if (!safe_frame_unwind_memory (this_frame, pc, {buf, 4}))
+  if (!safe_frame_unwind_memory (this_frame, pc, { buf, 4 }))
     return 0;
 
   if (memcmp (buf, linux_rt_sigtramp_code, 4) == 0)
     {
-      if (!safe_frame_unwind_memory (this_frame, pc + 4, {buf, 4}))
-	return 0;
+      if (!safe_frame_unwind_memory (this_frame, pc + 4, { buf, 4 }))
+        return 0;
 
       if (memcmp (buf, linux_rt_sigtramp_code + 4, 4) == 0)
-	return pc;
+        return pc;
     }
   else if (memcmp (buf, linux_rt_sigtramp_code + 4, 4) == 0)
     {
-      if (!safe_frame_unwind_memory (this_frame, pc - 4, {buf, 4}))
-	return 0;
+      if (!safe_frame_unwind_memory (this_frame, pc - 4, { buf, 4 }))
+        return 0;
 
       if (memcmp (buf, linux_rt_sigtramp_code, 4) == 0)
-	return pc - 4;
+        return pc - 4;
     }
 
   return 0;
@@ -173,7 +174,7 @@ m32r_linux_rt_sigtramp_start (CORE_ADDR pc, frame_info_ptr this_frame)
 
 static int
 m32r_linux_pc_in_sigtramp (CORE_ADDR pc, const char *name,
-			   frame_info_ptr this_frame)
+                           frame_info_ptr this_frame)
 {
   /* If we have NAME, we can optimize the search.  The trampolines are
      named __restore and __restore_rt.  However, they aren't dynamically
@@ -182,38 +183,38 @@ m32r_linux_pc_in_sigtramp (CORE_ADDR pc, const char *name,
      __sigaction, or __libc_sigaction (all aliases to the same function).  */
   if (name == NULL || strstr (name, "sigaction") != NULL)
     return (m32r_linux_sigtramp_start (pc, this_frame) != 0
-	    || m32r_linux_rt_sigtramp_start (pc, this_frame) != 0);
+            || m32r_linux_rt_sigtramp_start (pc, this_frame) != 0);
 
   return (strcmp ("__restore", name) == 0
-	  || strcmp ("__restore_rt", name) == 0);
+          || strcmp ("__restore_rt", name) == 0);
 }
 
 /* From <asm/sigcontext.h>.  */
 static int m32r_linux_sc_reg_offset[] = {
-  4 * 4,			/* r0 */
-  5 * 4,			/* r1 */
-  6 * 4,			/* r2 */
-  7 * 4,			/* r3 */
-  0 * 4,			/* r4 */
-  1 * 4,			/* r5 */
-  2 * 4,			/* r6 */
-  8 * 4,			/* r7 */
-  9 * 4,			/* r8 */
-  10 * 4,			/* r9 */
-  11 * 4,			/* r10 */
-  12 * 4,			/* r11 */
-  13 * 4,			/* r12 */
-  21 * 4,			/* fp */
-  22 * 4,			/* lr */
-  -1 * 4,			/* sp */
-  16 * 4,			/* psw */
-  -1 * 4,			/* cbr */
-  23 * 4,			/* spi */
-  20 * 4,			/* spu */
-  19 * 4,			/* bpc */
-  17 * 4,			/* pc */
-  15 * 4,			/* accl */
-  14 * 4			/* acch */
+  4 * 4,  /* r0 */
+  5 * 4,  /* r1 */
+  6 * 4,  /* r2 */
+  7 * 4,  /* r3 */
+  0 * 4,  /* r4 */
+  1 * 4,  /* r5 */
+  2 * 4,  /* r6 */
+  8 * 4,  /* r7 */
+  9 * 4,  /* r8 */
+  10 * 4, /* r9 */
+  11 * 4, /* r10 */
+  12 * 4, /* r11 */
+  13 * 4, /* r12 */
+  21 * 4, /* fp */
+  22 * 4, /* lr */
+  -1 * 4, /* sp */
+  16 * 4, /* psw */
+  -1 * 4, /* cbr */
+  23 * 4, /* spi */
+  20 * 4, /* spu */
+  19 * 4, /* bpc */
+  17 * 4, /* pc */
+  15 * 4, /* accl */
+  14 * 4  /* acch */
 };
 
 struct m32r_frame_cache
@@ -223,8 +224,7 @@ struct m32r_frame_cache
 };
 
 static struct m32r_frame_cache *
-m32r_linux_sigtramp_frame_cache (frame_info_ptr this_frame,
-				 void **this_cache)
+m32r_linux_sigtramp_frame_cache (frame_info_ptr this_frame, void **this_cache)
 {
   struct m32r_frame_cache *cache;
   CORE_ADDR sigcontext_addr, addr;
@@ -247,9 +247,9 @@ m32r_linux_sigtramp_frame_cache (frame_info_ptr this_frame,
 	 accordingly.  */
       addr = m32r_linux_rt_sigtramp_start (cache->pc, this_frame);
       if (addr)
-	sigcontext_addr += 128;
+        sigcontext_addr += 128;
       else
-	addr = get_frame_func (this_frame);
+        addr = get_frame_func (this_frame);
     }
   cache->pc = addr;
 
@@ -258,8 +258,8 @@ m32r_linux_sigtramp_frame_cache (frame_info_ptr this_frame,
   for (regnum = 0; regnum < sizeof (m32r_linux_sc_reg_offset) / 4; regnum++)
     {
       if (m32r_linux_sc_reg_offset[regnum] >= 0)
-	cache->saved_regs[regnum].set_addr (sigcontext_addr
-					    + m32r_linux_sc_reg_offset[regnum]);
+        cache->saved_regs[regnum].set_addr (
+          sigcontext_addr + m32r_linux_sc_reg_offset[regnum]);
     }
 
   return cache;
@@ -267,29 +267,28 @@ m32r_linux_sigtramp_frame_cache (frame_info_ptr this_frame,
 
 static void
 m32r_linux_sigtramp_frame_this_id (frame_info_ptr this_frame,
-				   void **this_cache,
-				   struct frame_id *this_id)
+                                   void **this_cache, struct frame_id *this_id)
 {
-  struct m32r_frame_cache *cache =
-    m32r_linux_sigtramp_frame_cache (this_frame, this_cache);
+  struct m32r_frame_cache *cache
+    = m32r_linux_sigtramp_frame_cache (this_frame, this_cache);
 
   (*this_id) = frame_id_build (cache->base, cache->pc);
 }
 
 static struct value *
 m32r_linux_sigtramp_frame_prev_register (frame_info_ptr this_frame,
-					 void **this_cache, int regnum)
+                                         void **this_cache, int regnum)
 {
-  struct m32r_frame_cache *cache =
-    m32r_linux_sigtramp_frame_cache (this_frame, this_cache);
+  struct m32r_frame_cache *cache
+    = m32r_linux_sigtramp_frame_cache (this_frame, this_cache);
 
   return trad_frame_get_prev_register (this_frame, cache->saved_regs, regnum);
 }
 
 static int
 m32r_linux_sigtramp_frame_sniffer (const struct frame_unwind *self,
-				   frame_info_ptr this_frame,
-				   void **this_cache)
+                                   frame_info_ptr this_frame,
+                                   void **this_cache)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
   const char *name;
@@ -301,44 +300,43 @@ m32r_linux_sigtramp_frame_sniffer (const struct frame_unwind *self,
   return 0;
 }
 
-static const struct frame_unwind m32r_linux_sigtramp_frame_unwind = {
-  "m32r linux sigtramp",
-  SIGTRAMP_FRAME,
-  default_frame_unwind_stop_reason,
-  m32r_linux_sigtramp_frame_this_id,
-  m32r_linux_sigtramp_frame_prev_register,
-  NULL,
-  m32r_linux_sigtramp_frame_sniffer
-};
+static const struct frame_unwind m32r_linux_sigtramp_frame_unwind
+  = { "m32r linux sigtramp",
+      SIGTRAMP_FRAME,
+      default_frame_unwind_stop_reason,
+      m32r_linux_sigtramp_frame_this_id,
+      m32r_linux_sigtramp_frame_prev_register,
+      NULL,
+      m32r_linux_sigtramp_frame_sniffer };
 
 /* Mapping between the registers in `struct pt_regs'
    format and GDB's register array layout.  */
 
 static int m32r_pt_regs_offset[] = {
-  4 * 4,			/* r0 */
-  4 * 5,			/* r1 */
-  4 * 6,			/* r2 */
-  4 * 7,			/* r3 */
-  4 * 0,			/* r4 */
-  4 * 1,			/* r5 */
-  4 * 2,			/* r6 */
-  4 * 8,			/* r7 */
-  4 * 9,			/* r8 */
-  4 * 10,			/* r9 */
-  4 * 11,			/* r10 */
-  4 * 12,			/* r11 */
-  4 * 13,			/* r12 */
-  4 * 24,			/* fp */
-  4 * 25,			/* lr */
-  4 * 23,			/* sp */
-  4 * 19,			/* psw */
-  4 * 19,			/* cbr */
-  4 * 26,			/* spi */
-  4 * 23,			/* spu */
-  4 * 22,			/* bpc */
-  4 * 20,			/* pc */
-  4 * 16,			/* accl */
-  4 * 15			/* acch */
+  4 * 4,  /* r0 */
+  4 * 5,  /* r1 */
+  4 * 6,  /* r2 */
+  4 * 7,  /* r3 */
+  4 * 0,  /* r4 */
+  4 * 1,  /* r5 */
+  4 * 2,  /* r6 */
+  4 * 8,  /* r7 */
+  4 * 9,  /* r8 */
+  4 * 10, /* r9 */
+  4 * 11, /* r10 */
+  4 * 12, /* r11 */
+  4 * 13, /* r12 */
+  4 * 24, /* fp */
+  4 * 25, /* lr */
+  4 * 23, /* sp */
+  4 * 19, /* psw */
+  4 * 19, /* cbr */
+  4 * 26, /* spi */
+  4 * 23, /* spu */
+  4 * 22, /* bpc */
+  4 * 20, /* pc */
+  4 * 16, /* accl */
+  4 * 15  /* acch */
 };
 
 #define PSW_OFFSET (4 * 19)
@@ -350,12 +348,11 @@ static int m32r_pt_regs_offset[] = {
 
 static void
 m32r_linux_supply_gregset (const struct regset *regset,
-			   struct regcache *regcache, int regnum,
-			   const void *gregs, size_t size)
+                           struct regcache *regcache, int regnum,
+                           const void *gregs, size_t size)
 {
   const gdb_byte *regs = (const gdb_byte *) gregs;
-  enum bfd_endian byte_order =
-    gdbarch_byte_order (regcache->arch ());
+  enum bfd_endian byte_order = gdbarch_byte_order (regcache->arch ());
   ULONGEST psw, bbpsw;
   gdb_byte buf[4];
   const gdb_byte *p;
@@ -368,24 +365,24 @@ m32r_linux_supply_gregset (const struct regset *regset,
   for (i = 0; i < ARRAY_SIZE (m32r_pt_regs_offset); i++)
     {
       if (regnum != -1 && regnum != i)
-	continue;
+        continue;
 
       switch (i)
-	{
-	case PSW_REGNUM:
-	  store_unsigned_integer (buf, 4, byte_order, psw);
-	  p = buf;
-	  break;
-	case CBR_REGNUM:
-	  store_unsigned_integer (buf, 4, byte_order, psw & 1);
-	  p = buf;
-	  break;
-	case M32R_SP_REGNUM:
-	  p = regs + ((psw & 0x80) ? SPU_OFFSET : SPI_OFFSET);
-	  break;
-	default:
-	  p = regs + m32r_pt_regs_offset[i];
-	}
+        {
+        case PSW_REGNUM:
+          store_unsigned_integer (buf, 4, byte_order, psw);
+          p = buf;
+          break;
+        case CBR_REGNUM:
+          store_unsigned_integer (buf, 4, byte_order, psw & 1);
+          p = buf;
+          break;
+        case M32R_SP_REGNUM:
+          p = regs + ((psw & 0x80) ? SPU_OFFSET : SPI_OFFSET);
+          break;
+        default:
+          p = regs + m32r_pt_regs_offset[i];
+        }
 
       regcache->raw_supply (i, p);
     }
@@ -393,13 +390,12 @@ m32r_linux_supply_gregset (const struct regset *regset,
 
 static void
 m32r_linux_collect_gregset (const struct regset *regset,
-			    const struct regcache *regcache,
-			    int regnum, void *gregs, size_t size)
+                            const struct regcache *regcache, int regnum,
+                            void *gregs, size_t size)
 {
   gdb_byte *regs = (gdb_byte *) gregs;
   int i;
-  enum bfd_endian byte_order =
-    gdbarch_byte_order (regcache->arch ());
+  enum bfd_endian byte_order = gdbarch_byte_order (regcache->arch ());
   ULONGEST psw;
   gdb_byte buf[4];
 
@@ -409,47 +405,45 @@ m32r_linux_collect_gregset (const struct regset *regset,
   for (i = 0; i < ARRAY_SIZE (m32r_pt_regs_offset); i++)
     {
       if (regnum != -1 && regnum != i)
-	continue;
+        continue;
 
       switch (i)
-	{
-	case PSW_REGNUM:
-	  store_unsigned_integer (regs + PSW_OFFSET, 4, byte_order,
-				  (psw & 0xc1) << 8);
-	  store_unsigned_integer (regs + BBPSW_OFFSET, 4, byte_order,
-				  (psw >> 8) & 0xc1);
-	  break;
-	case CBR_REGNUM:
-	  break;
-	case M32R_SP_REGNUM:
-	  regcache->raw_collect
-	    (i, regs + ((psw & 0x80) ? SPU_OFFSET : SPI_OFFSET));
-	  break;
-	default:
-	  regcache->raw_collect (i, regs + m32r_pt_regs_offset[i]);
-	}
+        {
+        case PSW_REGNUM:
+          store_unsigned_integer (regs + PSW_OFFSET, 4, byte_order,
+                                  (psw & 0xc1) << 8);
+          store_unsigned_integer (regs + BBPSW_OFFSET, 4, byte_order,
+                                  (psw >> 8) & 0xc1);
+          break;
+        case CBR_REGNUM:
+          break;
+        case M32R_SP_REGNUM:
+          regcache->raw_collect (i,
+                                 regs
+                                   + ((psw & 0x80) ? SPU_OFFSET : SPI_OFFSET));
+          break;
+        default:
+          regcache->raw_collect (i, regs + m32r_pt_regs_offset[i]);
+        }
     }
 }
 
-static const struct regset m32r_linux_gregset = {
-  NULL,
-  m32r_linux_supply_gregset, m32r_linux_collect_gregset
-};
+static const struct regset m32r_linux_gregset
+  = { NULL, m32r_linux_supply_gregset, m32r_linux_collect_gregset };
 
 static void
 m32r_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
-					 iterate_over_regset_sections_cb *cb,
-					 void *cb_data,
-					 const struct regcache *regcache)
+                                         iterate_over_regset_sections_cb *cb,
+                                         void *cb_data,
+                                         const struct regcache *regcache)
 {
-  cb (".reg", M32R_LINUX_GREGS_SIZE, M32R_LINUX_GREGS_SIZE, &m32r_linux_gregset,
-      NULL, cb_data);
+  cb (".reg", M32R_LINUX_GREGS_SIZE, M32R_LINUX_GREGS_SIZE,
+      &m32r_linux_gregset, NULL, cb_data);
 }
 
 static void
 m32r_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-
   linux_init_abi (info, gdbarch, 0);
 
   /* Since EVB register is not available for native debug, we reduce
@@ -460,16 +454,16 @@ m32r_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   /* GNU/Linux uses SVR4-style shared libraries.  */
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, linux_ilp32_fetch_link_map_offsets);
+  set_solib_svr4_fetch_link_map_offsets (gdbarch,
+                                         linux_ilp32_fetch_link_map_offsets);
 
   /* Core file support.  */
-  set_gdbarch_iterate_over_regset_sections
-    (gdbarch, m32r_linux_iterate_over_regset_sections);
+  set_gdbarch_iterate_over_regset_sections (
+    gdbarch, m32r_linux_iterate_over_regset_sections);
 
   /* Enable TLS support.  */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
-					     svr4_fetch_objfile_link_map);
+                                             svr4_fetch_objfile_link_map);
 }
 
 void _initialize_m32r_linux_tdep ();
@@ -477,5 +471,5 @@ void
 _initialize_m32r_linux_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_m32r, 0, GDB_OSABI_LINUX,
-			  m32r_linux_init_abi);
+                          m32r_linux_init_abi);
 }

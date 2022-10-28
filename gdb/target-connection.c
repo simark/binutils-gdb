@@ -63,8 +63,7 @@ std::string
 make_target_connection_string (process_stratum_target *t)
 {
   if (t->connection_string () != NULL)
-    return string_printf ("%s %s", t->shortname (),
-			  t->connection_string ());
+    return string_printf ("%s %s", t->shortname (), t->connection_string ());
   else
     return t->shortname ();
 }
@@ -85,7 +84,7 @@ print_connection (struct ui_out *uiout, const char *requested_connections)
   for (const auto &it : process_targets)
     {
       if (!number_is_in_list (requested_connections, it.first))
-	continue;
+        continue;
 
       ++count;
 
@@ -93,20 +92,20 @@ print_connection (struct ui_out *uiout, const char *requested_connections)
 
       size_t l = strlen (t->shortname ());
       if (t->connection_string () != NULL)
-	l += 1 + strlen (t->connection_string ());
+        l += 1 + strlen (t->connection_string ());
 
       if (l > what_len)
-	what_len = l;
+        what_len = l;
     }
 
   if (count == 0)
     {
-      uiout->message (_("No connections.\n"));
+      uiout->message (_ ("No connections.\n"));
       return;
     }
 
   ui_out_emit_table table_emitter (uiout, 4, process_targets.size (),
-				   "connections");
+                                   "connections");
 
   uiout->table_header (1, ui_left, "current", "");
   uiout->table_header (4, ui_left, "number", "Num");
@@ -126,14 +125,14 @@ print_connection (struct ui_out *uiout, const char *requested_connections)
       process_stratum_target *t = it.second;
 
       if (!number_is_in_list (requested_connections, t->connection_number))
-	continue;
+        continue;
 
       ui_out_emit_tuple tuple_emitter (uiout, NULL);
 
       if (current_inferior ()->process_target () == t)
-	uiout->field_string ("current", "*");
+        uiout->field_string ("current", "*");
       else
-	uiout->field_skip ("current");
+        uiout->field_skip ("current");
 
       uiout->field_signed ("number", t->connection_number);
 
@@ -158,8 +157,7 @@ void _initialize_target_connection ();
 void
 _initialize_target_connection ()
 {
-  add_info ("connections", info_connections_command,
-	    _("\
+  add_info ("connections", info_connections_command, _ ("\
 Target connections in use.\n\
 Shows the list of target connections currently in use."));
 }

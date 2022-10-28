@@ -24,8 +24,8 @@
 /* See memtag.h */
 
 bool
-get_next_core_memtag_section (bfd *abfd, asection *section,
-			      CORE_ADDR address, memtag_section_info &info)
+get_next_core_memtag_section (bfd *abfd, asection *section, CORE_ADDR address,
+                              memtag_section_info &info)
 {
   /* If the caller provided no SECTION to start from, search from the
      beginning.  */
@@ -42,26 +42,25 @@ get_next_core_memtag_section (bfd *abfd, asection *section,
       /* Empty memory range or empty tag dump should not happen.  Warn about
 	 it but keep going through the sections.  */
       if (memtag_range_size == 0 || tags_size == 0)
-	{
-	  warning (_("Found memtag section with empty memory "
-		     "range or empty tag dump"));
-	  continue;
-	}
+        {
+          warning (_ ("Found memtag section with empty memory "
+                      "range or empty tag dump"));
+          continue;
+        }
       else
-	{
-	  CORE_ADDR start_address = bfd_section_vma (section);
-	  CORE_ADDR end_address = start_address + memtag_range_size;
+        {
+          CORE_ADDR start_address = bfd_section_vma (section);
+          CORE_ADDR end_address = start_address + memtag_range_size;
 
-	  /* Is the address within [start_address, end_address)?  */
-	  if (address >= start_address
-	      && address < end_address)
-	    {
-	      info.start_address = start_address;
-	      info.end_address = end_address;
-	      info.memtag_section = section;
-	      return true;
-	    }
-	}
+          /* Is the address within [start_address, end_address)?  */
+          if (address >= start_address && address < end_address)
+            {
+              info.start_address = start_address;
+              info.end_address = end_address;
+              info.memtag_section = section;
+              return true;
+            }
+        }
       section = bfd_get_next_section_by_name (abfd, section);
     }
   return false;

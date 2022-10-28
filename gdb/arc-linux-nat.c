@@ -54,7 +54,7 @@
 /* Linux starting with 4.12 supports NT_ARC_V2 note type, which adds R30,
    R58 and R59 registers, which are specific to ARC HS and aren't
    available in ARC 700.  */
-#if defined (NT_ARC_V2) && defined (__ARCHS__)
+#if defined(NT_ARC_V2) && defined(__ARCHS__)
 #define ARC_HAS_V2_REGSET
 #endif
 
@@ -87,7 +87,7 @@ fetch_gregs (struct regcache *regcache, int regnum)
   iov.iov_len = sizeof (gdb_gregset_t);
 
   if (ptrace (PTRACE_GETREGSET, tid, NT_PRSTATUS, (void *) &iov) < 0)
-    perror_with_name (_("Couldn't get general registers"));
+    perror_with_name (_ ("Couldn't get general registers"));
   else
     arc_linux_supply_gregset (NULL, regcache, regnum, &regs, 0);
 }
@@ -107,7 +107,7 @@ fetch_v2_regs (struct regcache *regcache, int regnum)
   iov.iov_len = ARC_LINUX_SIZEOF_V2_REGSET;
 
   if (ptrace (PTRACE_GETREGSET, tid, NT_ARC_V2, (void *) &iov) < 0)
-    perror_with_name (_("Couldn't get ARC HS registers"));
+    perror_with_name (_ ("Couldn't get ARC HS registers"));
   else
     arc_linux_supply_v2_regset (NULL, regcache, regnum, v2_buffer, 0);
 }
@@ -126,13 +126,13 @@ store_gregs (const struct regcache *regcache, int regnum)
   iov.iov_len = sizeof (gdb_gregset_t);
 
   if (ptrace (PTRACE_GETREGSET, tid, NT_PRSTATUS, (void *) &iov) < 0)
-    perror_with_name (_("Couldn't get general registers"));
+    perror_with_name (_ ("Couldn't get general registers"));
   else
     {
       arc_linux_collect_gregset (NULL, regcache, regnum, regs, 0);
 
       if (ptrace (PTRACE_SETREGSET, tid, NT_PRSTATUS, (void *) &iov) < 0)
-	perror_with_name (_("Couldn't write general registers"));
+        perror_with_name (_ ("Couldn't write general registers"));
     }
 }
 
@@ -150,13 +150,13 @@ store_v2_regs (const struct regcache *regcache, int regnum)
   iov.iov_len = ARC_LINUX_SIZEOF_V2_REGSET;
 
   if (ptrace (PTRACE_GETREGSET, tid, NT_ARC_V2, (void *) &iov) < 0)
-    perror_with_name (_("Couldn't get ARC HS registers"));
+    perror_with_name (_ ("Couldn't get ARC HS registers"));
   else
     {
       arc_linux_collect_v2_regset (NULL, regcache, regnum, v2_buffer, 0);
 
       if (ptrace (PTRACE_SETREGSET, tid, NT_ARC_V2, (void *) &iov) < 0)
-	perror_with_name (_("Couldn't write ARC HS registers"));
+        perror_with_name (_ ("Couldn't write ARC HS registers"));
     }
 }
 #endif
@@ -167,16 +167,13 @@ store_v2_regs (const struct regcache *regcache, int regnum)
 void
 arc_linux_nat_target::fetch_registers (struct regcache *regcache, int regnum)
 {
-
   if (regnum == -1 || regnum <= ARC_LAST_REGNUM)
     fetch_gregs (regcache, regnum);
 
 #ifdef ARC_HAS_V2_REGSET
-  if (regnum == -1
-      || regnum == ARC_R30_REGNUM
-      || regnum == ARC_R58_REGNUM
+  if (regnum == -1 || regnum == ARC_R30_REGNUM || regnum == ARC_R58_REGNUM
       || regnum == ARC_R59_REGNUM)
-      fetch_v2_regs (regcache, regnum);
+    fetch_v2_regs (regcache, regnum);
 #endif
 }
 
@@ -190,9 +187,7 @@ arc_linux_nat_target::store_registers (struct regcache *regcache, int regnum)
     store_gregs (regcache, regnum);
 
 #ifdef ARC_HAS_V2_REGSET
-  if (regnum == -1
-      || regnum == ARC_R30_REGNUM
-      || regnum == ARC_R58_REGNUM
+  if (regnum == -1 || regnum == ARC_R30_REGNUM || regnum == ARC_R58_REGNUM
       || regnum == ARC_R59_REGNUM)
     store_v2_regs (regcache, regnum);
 #endif
@@ -202,8 +197,8 @@ arc_linux_nat_target::store_registers (struct regcache *regcache, int regnum)
    This function is exported to proc-service.c  */
 
 void
-fill_gregset (const struct regcache *regcache,
-	      gdb_gregset_t *gregs, int regnum)
+fill_gregset (const struct regcache *regcache, gdb_gregset_t *gregs,
+              int regnum)
 {
   arc_linux_collect_gregset (NULL, regcache, regnum, gregs, 0);
 }
@@ -221,8 +216,8 @@ supply_gregset (struct regcache *regcache, const gdb_gregset_t *gregs)
    to proc-service.c.  */
 
 void
-fill_fpregset (const struct regcache *regcache,
-	       gdb_fpregset_t *fpregsetp, int regnum)
+fill_fpregset (const struct regcache *regcache, gdb_fpregset_t *fpregsetp,
+               int regnum)
 {
   arc_linux_nat_debug_printf ("called");
 }
@@ -282,10 +277,10 @@ arc_linux_nat_target::low_prepare_to_resume (struct lwp_info *lwp)
      value and will skip write.  */
   ULONGEST new_pc;
   regcache_cooked_read_unsigned (regcache, gdbarch_pc_regnum (gdbarch),
-				 &new_pc);
+                                 &new_pc);
   regcache->invalidate (gdbarch_pc_regnum (gdbarch));
   regcache_cooked_write_unsigned (regcache, gdbarch_pc_regnum (gdbarch),
-				  new_pc);
+                                  new_pc);
 }
 
 /* Fetch the thread-local storage pointer for libthread_db.  Note that
@@ -294,7 +289,7 @@ arc_linux_nat_target::low_prepare_to_resume (struct lwp_info *lwp)
 
 ps_err_e
 ps_get_thread_area (struct ps_prochandle *ph, lwpid_t lwpid, int idx,
-		    void **base)
+                    void **base)
 {
   arc_linux_nat_debug_printf ("called");
 

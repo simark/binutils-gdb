@@ -19,16 +19,16 @@
 #define AARCH32_LINUX_NAT_H
 
 void aarch32_gp_regcache_supply (struct regcache *regcache, uint32_t *regs,
-				 int arm_apcs_32);
+                                 int arm_apcs_32);
 
 void aarch32_gp_regcache_collect (const struct regcache *regcache,
-				  uint32_t *regs, int arm_apcs_32);
+                                  uint32_t *regs, int arm_apcs_32);
 
 void aarch32_vfp_regcache_supply (struct regcache *regcache, gdb_byte *regs,
-				  const int vfp_register_count);
+                                  const int vfp_register_count);
 
 void aarch32_vfp_regcache_collect (const struct regcache *regcache,
-				   gdb_byte *regs,
-				   const int vfp_register_count);
+                                   gdb_byte *regs,
+                                   const int vfp_register_count);
 
 #endif /* AARCH32_LINUX_NAT_H */

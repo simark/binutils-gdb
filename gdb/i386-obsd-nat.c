@@ -58,7 +58,7 @@ i386obsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
   if (pcb->pcb_esp == 0)
     return 0;
 
-  /* Read the stack frame, and check its validity.  We do this by
+    /* Read the stack frame, and check its validity.  We do this by
      checking if the saved interrupt priority level in the stack frame
      looks reasonable..  */
 #ifdef PCB_SAVECTX
@@ -77,8 +77,8 @@ i386obsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
     {
       /* No, the pcb must have been last updated by savectx().  */
       pcb->pcb_esp = pcb->pcb_ebp;
-      pcb->pcb_ebp = read_memory_integer(pcb->pcb_esp, 4, byte_order);
-      sf.sf_eip = read_memory_integer(pcb->pcb_esp + 4, 4, byte_order);
+      pcb->pcb_ebp = read_memory_integer (pcb->pcb_esp, 4, byte_order);
+      sf.sf_eip = read_memory_integer (pcb->pcb_esp + 4, 4, byte_order);
       regcache->raw_supply (I386_EIP_REGNUM, &sf.sf_eip);
     }
 
@@ -119,8 +119,8 @@ _initialize_i386obsd_nat ()
     len = sizeof (_ps);
     if (sysctl (mib, 2, &_ps, &len, NULL, 0) == 0)
       {
-	i386obsd_sigtramp_start_addr = (u_long) _ps.val - 128;
-	i386obsd_sigtramp_end_addr = (u_long) _ps.val;
+        i386obsd_sigtramp_start_addr = (u_long) _ps.val - 128;
+        i386obsd_sigtramp_end_addr = (u_long) _ps.val;
       }
   }
 #endif

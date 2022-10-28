@@ -25,8 +25,10 @@
 struct osdata_column
 {
   osdata_column (std::string &&name_, std::string &&value_)
-  : name (std::move (name_)), value (std::move (value_))
-  {}
+    : name (std::move (name_)),
+      value (std::move (value_))
+  {
+  }
 
   std::string name;
   std::string value;
@@ -39,9 +41,7 @@ struct osdata_item
 
 struct osdata
 {
-  osdata (std::string &&type_)
-  : type (std::move (type_))
-  {}
+  osdata (std::string &&type_) : type (std::move (type_)) {}
 
   std::string type;
   std::vector<osdata_item> items;
@@ -50,7 +50,7 @@ struct osdata
 std::unique_ptr<osdata> osdata_parse (const char *xml);
 std::unique_ptr<osdata> get_osdata (const char *type);
 const std::string *get_osdata_column (const osdata_item &item,
-				      const char *name);
+                                      const char *name);
 
 /* Dump TYPE info to the current uiout builder.  If TYPE is either
    NULL or empty, then dump the top level table that lists the

@@ -66,14 +66,13 @@ cli_ui_out::do_table_end ()
 
 void
 cli_ui_out::do_table_header (int width, ui_align alignment,
-			     const std::string &col_name,
-			     const std::string &col_hdr)
+                             const std::string &col_name,
+                             const std::string &col_hdr)
 {
   if (m_suppress_output)
     return;
 
-  do_field_string (0, width, alignment, 0, col_hdr.c_str (),
-		   ui_file_style ());
+  do_field_string (0, width, alignment, 0, col_hdr.c_str (), ui_file_style ());
 }
 
 /* Mark beginning of a list */
@@ -94,39 +93,38 @@ cli_ui_out::do_end (ui_out_type type)
 
 void
 cli_ui_out::do_field_signed (int fldno, int width, ui_align alignment,
-			     const char *fldname, LONGEST value)
+                             const char *fldname, LONGEST value)
 {
   if (m_suppress_output)
     return;
 
   do_field_string (fldno, width, alignment, fldname, plongest (value),
-		   ui_file_style ());
+                   ui_file_style ());
 }
 
 /* output an unsigned field */
 
 void
 cli_ui_out::do_field_unsigned (int fldno, int width, ui_align alignment,
-			       const char *fldname, ULONGEST value)
+                               const char *fldname, ULONGEST value)
 {
   if (m_suppress_output)
     return;
 
   do_field_string (fldno, width, alignment, fldname, pulongest (value),
-		   ui_file_style ());
+                   ui_file_style ());
 }
 
 /* used to omit a field */
 
 void
 cli_ui_out::do_field_skip (int fldno, int width, ui_align alignment,
-			   const char *fldname)
+                           const char *fldname)
 {
   if (m_suppress_output)
     return;
 
-  do_field_string (fldno, width, alignment, fldname, "",
-		   ui_file_style ());
+  do_field_string (fldno, width, alignment, fldname, "", ui_file_style ());
 }
 
 /* other specific cli_field_* end up here so alignment and field
@@ -134,8 +132,8 @@ cli_ui_out::do_field_skip (int fldno, int width, ui_align alignment,
 
 void
 cli_ui_out::do_field_string (int fldno, int width, ui_align align,
-			     const char *fldname, const char *string,
-			     const ui_file_style &style)
+                             const char *fldname, const char *string,
+                             const ui_file_style &style)
 {
   int before = 0;
   int after = 0;
@@ -147,23 +145,23 @@ cli_ui_out::do_field_string (int fldno, int width, ui_align align,
     {
       before = width - strlen (string);
       if (before <= 0)
-	before = 0;
+        before = 0;
       else
-	{
-	  if (align == ui_right)
-	    after = 0;
-	  else if (align == ui_left)
-	    {
-	      after = before;
-	      before = 0;
-	    }
-	  else
-	    /* ui_center */
-	    {
-	      after = before / 2;
-	      before -= after;
-	    }
-	}
+        {
+          if (align == ui_right)
+            after = 0;
+          else if (align == ui_left)
+            {
+              after = before;
+              before = 0;
+            }
+          else
+            /* ui_center */
+            {
+              after = before / 2;
+              before -= after;
+            }
+        }
     }
 
   if (before)
@@ -188,8 +186,8 @@ cli_ui_out::do_field_string (int fldno, int width, ui_align align,
 
 void
 cli_ui_out::do_field_fmt (int fldno, int width, ui_align align,
-			  const char *fldname, const ui_file_style &style,
-			  const char *format, va_list args)
+                          const char *fldname, const ui_file_style &style,
+                          const char *format, va_list args)
 {
   if (m_suppress_output)
     return;
@@ -218,8 +216,8 @@ cli_ui_out::do_text (const char *string)
 }
 
 void
-cli_ui_out::do_message (const ui_file_style &style,
-			const char *format, va_list args)
+cli_ui_out::do_message (const ui_file_style &style, const char *format,
+                        va_list args)
 {
   if (m_suppress_output)
     return;
@@ -330,7 +328,7 @@ cli_ui_out::do_progress_notify (double howmuch)
       max = width * howmuch;
       gdb_printf (stream, "\r[");
       for (i = 0; i < width; ++i)
-	gdb_printf (stream, i < max ? "#" : " ");
+        gdb_printf (stream, i < max ? "#" : " ");
       gdb_printf (stream, "]");
       gdb_flush (stream);
       meter.printing = PROGRESS;
@@ -355,7 +353,7 @@ cli_ui_out::do_progress_end ()
 
       gdb_printf (stream, "\r");
       for (i = 0; i < width + 2; ++i)
-	gdb_printf (stream, " ");
+        gdb_printf (stream, " ");
       gdb_printf (stream, "\r");
       gdb_flush (stream);
     }
@@ -374,17 +372,15 @@ cli_ui_out::field_separator ()
 /* Constructor for cli_ui_out.  */
 
 cli_ui_out::cli_ui_out (ui_file *stream, ui_out_flags flags)
-: ui_out (flags),
-  m_suppress_output (false)
+  : ui_out (flags),
+    m_suppress_output (false)
 {
   gdb_assert (stream != NULL);
 
   m_streams.push_back (stream);
 }
 
-cli_ui_out::~cli_ui_out ()
-{
-}
+cli_ui_out::~cli_ui_out () {}
 
 ui_file *
 cli_ui_out::set_stream (struct ui_file *stream)

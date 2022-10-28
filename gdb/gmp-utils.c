@@ -43,11 +43,11 @@ gmp_string_printf (const char *fmt, ...)
 
 void
 gdb_mpz::read (gdb::array_view<const gdb_byte> buf, enum bfd_endian byte_order,
-	       bool unsigned_p)
+               bool unsigned_p)
 {
   mpz_import (val, 1 /* count */, -1 /* order */, buf.size () /* size */,
-	      byte_order == BFD_ENDIAN_BIG ? 1 : -1 /* endian */,
-	      0 /* nails */, buf.data () /* op */);
+              byte_order == BFD_ENDIAN_BIG ? 1 : -1 /* endian */,
+              0 /* nails */, buf.data () /* op */);
 
   if (!unsigned_p)
     {
@@ -58,7 +58,7 @@ gdb_mpz::read (gdb::array_view<const gdb_byte> buf, enum bfd_endian byte_order,
 
       mpz_ui_pow_ui (max.val, 2, buf.size () * HOST_CHAR_BIT - 1);
       if (mpz_cmp (val, max.val) >= 0)
-	mpz_submul_ui (val, max.val, 2);
+        mpz_submul_ui (val, max.val, 2);
     }
 }
 
@@ -66,17 +66,17 @@ gdb_mpz::read (gdb::array_view<const gdb_byte> buf, enum bfd_endian byte_order,
 
 void
 gdb_mpz::write (gdb::array_view<gdb_byte> buf, enum bfd_endian byte_order,
-		bool unsigned_p) const
+                bool unsigned_p) const
 {
-  this->safe_export
-    (buf, byte_order == BFD_ENDIAN_BIG ? 1 : -1 /* endian */, unsigned_p);
+  this->safe_export (buf, byte_order == BFD_ENDIAN_BIG ? 1 : -1 /* endian */,
+                     unsigned_p);
 }
 
 /* See gmp-utils.h.  */
 
 void
-gdb_mpz::safe_export (gdb::array_view<gdb_byte> buf,
-		      int endian, bool unsigned_p) const
+gdb_mpz::safe_export (gdb::array_view<gdb_byte> buf, int endian,
+                      bool unsigned_p) const
 {
   gdb_assert (buf.size () > 0);
 
@@ -112,13 +112,11 @@ gdb_mpz::safe_export (gdb::array_view<gdb_byte> buf,
     }
 
   if (mpz_cmp (val, lo.val) < 0 || mpz_cmp (val, hi.val) > 0)
-    error (_("Cannot export value %s as %zu-bits %s integer"
-	     " (must be between %s and %s)"),
-	   this->str ().c_str (),
-	   max_usable_bits,
-	   unsigned_p ? _("unsigned") : _("signed"),
-	   lo.str ().c_str (),
-	   hi.str ().c_str ());
+    error (_ ("Cannot export value %s as %zu-bits %s integer"
+              " (must be between %s and %s)"),
+           this->str ().c_str (), max_usable_bits,
+           unsigned_p ? _ ("unsigned") : _ ("signed"), lo.str ().c_str (),
+           hi.str ().c_str ());
 
   gdb_mpz exported_val (val);
 
@@ -144,9 +142,9 @@ gdb_mpz::safe_export (gdb::array_view<gdb_byte> buf,
      copy the data over to BUF.  */
 
   size_t word_countp;
-  gdb::unique_xmalloc_ptr<void> exported
-    (mpz_export (NULL, &word_countp, -1 /* order */, buf.size () /* size */,
-		 endian, 0 /* nails */, exported_val.val));
+  gdb::unique_xmalloc_ptr<void> exported (
+    mpz_export (NULL, &word_countp, -1 /* order */, buf.size () /* size */,
+                endian, 0 /* nails */, exported_val.val));
 
   gdb_assert (word_countp == 1);
 
@@ -169,8 +167,8 @@ gdb_mpq::get_rounded () const
      towards zero.  */
 
   gdb_mpz quotient, remainder;
-  mpz_fdiv_qr (quotient.val, remainder.val,
-	       mpq_numref (abs_val.val), mpq_denref (abs_val.val));
+  mpz_fdiv_qr (quotient.val, remainder.val, mpq_numref (abs_val.val),
+               mpq_denref (abs_val.val));
 
   /* Multiply the remainder by 2, and see if it is greater or equal
      to abs_val's denominator.  If yes, round to the next integer.  */
@@ -190,8 +188,8 @@ gdb_mpq::get_rounded () const
 
 void
 gdb_mpq::read_fixed_point (gdb::array_view<const gdb_byte> buf,
-			   enum bfd_endian byte_order, bool unsigned_p,
-			   const gdb_mpq &scaling_factor)
+                           enum bfd_endian byte_order, bool unsigned_p,
+                           const gdb_mpq &scaling_factor)
 {
   gdb_mpz vz;
   vz.read (buf, byte_order, unsigned_p);
@@ -204,8 +202,8 @@ gdb_mpq::read_fixed_point (gdb::array_view<const gdb_byte> buf,
 
 void
 gdb_mpq::write_fixed_point (gdb::array_view<gdb_byte> buf,
-			    enum bfd_endian byte_order, bool unsigned_p,
-			    const gdb_mpq &scaling_factor) const
+                            enum bfd_endian byte_order, bool unsigned_p,
+                            const gdb_mpq &scaling_factor) const
 {
   gdb_mpq unscaled (val);
 

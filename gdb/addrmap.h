@@ -37,7 +37,7 @@
 /* The type of a function used to iterate over the map.
    OBJ is NULL for unmapped regions.  */
 typedef gdb::function_view<int (CORE_ADDR start_addr, void *obj)>
-     addrmap_foreach_fn;
+  addrmap_foreach_fn;
 
 /* The base class for addrmaps.  */
 struct addrmap
@@ -81,8 +81,8 @@ struct addrmap
      semantics than to provide an interface which allows it to be
      implemented efficiently, but doesn't reveal too much of the
      representation.  */
-  virtual void set_empty (CORE_ADDR start, CORE_ADDR end_inclusive,
-			  void *obj) = 0;
+  virtual void set_empty (CORE_ADDR start, CORE_ADDR end_inclusive, void *obj)
+    = 0;
 
   /* Return the object associated with ADDR in MAP.  */
   virtual void *find (CORE_ADDR addr) const = 0;
@@ -101,22 +101,19 @@ struct addrmap
 struct addrmap_mutable;
 
 /* Fixed address maps.  */
-struct addrmap_fixed : public addrmap,
-		       public allocate_on_obstack
+struct addrmap_fixed : public addrmap, public allocate_on_obstack
 {
 public:
-
   addrmap_fixed (struct obstack *obstack, addrmap_mutable *mut);
   DISABLE_COPY_AND_ASSIGN (addrmap_fixed);
 
   void set_empty (CORE_ADDR start, CORE_ADDR end_inclusive,
-		  void *obj) override;
+                  void *obj) override;
   void *find (CORE_ADDR addr) const override;
   void relocate (CORE_ADDR offset) override;
   int foreach (addrmap_foreach_fn fn) override;
 
 private:
-
   /* A transition: a point in an address map where the value changes.
      The map maps ADDR to VALUE, but if ADDR > 0, it maps ADDR-1 to
      something else.  */
@@ -142,19 +139,17 @@ private:
 struct addrmap_mutable : public addrmap
 {
 public:
-
   addrmap_mutable ();
   ~addrmap_mutable ();
   DISABLE_COPY_AND_ASSIGN (addrmap_mutable);
 
   void set_empty (CORE_ADDR start, CORE_ADDR end_inclusive,
-		  void *obj) override;
+                  void *obj) override;
   void *find (CORE_ADDR addr) const override;
   void relocate (CORE_ADDR offset) override;
   int foreach (addrmap_foreach_fn fn) override;
 
 private:
-
   /* A splay tree, with a node for each transition; there is a
      transition at address T if T-1 and T map to different objects.
 
@@ -184,11 +179,10 @@ private:
   void splay_tree_insert (CORE_ADDR key, void *value);
 };
 
-
 /* Dump the addrmap to OUTFILE.  If PAYLOAD is non-NULL, only dump any
    components that map to PAYLOAD.  (If PAYLOAD is NULL, the entire
    map is dumped.)  */
 void addrmap_dump (struct addrmap *map, struct ui_file *outfile,
-		   void *payload);
+                   void *payload);
 
 #endif /* ADDRMAP_H */

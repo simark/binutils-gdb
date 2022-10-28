@@ -51,59 +51,71 @@ void aarch64_remove_debug_reg_state (pid_t pid);
    *ADDR_P.  */
 
 bool aarch64_stopped_data_address (const struct aarch64_debug_reg_state *state,
-				   CORE_ADDR addr_trap, CORE_ADDR *addr_p);
+                                   CORE_ADDR addr_trap, CORE_ADDR *addr_p);
 
 /* Helper functions used by aarch64_nat_target below.  See their
    definitions.  */
 
 int aarch64_can_use_hw_breakpoint (enum bptype type, int cnt, int othertype);
 int aarch64_insert_watchpoint (CORE_ADDR addr, int len,
-			       enum target_hw_bp_type type,
-			       struct expression *cond);
+                               enum target_hw_bp_type type,
+                               struct expression *cond);
 int aarch64_remove_watchpoint (CORE_ADDR addr, int len,
-			       enum target_hw_bp_type type,
-			       struct expression *cond);
+                               enum target_hw_bp_type type,
+                               struct expression *cond);
 int aarch64_insert_hw_breakpoint (struct gdbarch *gdbarch,
-				  struct bp_target_info *bp_tgt);
+                                  struct bp_target_info *bp_tgt);
 int aarch64_remove_hw_breakpoint (struct gdbarch *gdbarch,
-				  struct bp_target_info *bp_tgt);
+                                  struct bp_target_info *bp_tgt);
 int aarch64_stopped_by_hw_breakpoint ();
 
 /* Convenience template mixin used to add aarch64 watchpoints support to a
    target.  */
 
-template <typename BaseTarget>
+template<typename BaseTarget>
 struct aarch64_nat_target : public BaseTarget
 {
   /* Hook in common aarch64 hardware watchpoints/breakpoints support.  */
 
   int can_use_hw_breakpoint (enum bptype type, int cnt, int othertype) override
-  { return aarch64_can_use_hw_breakpoint (type, cnt, othertype); }
+  {
+    return aarch64_can_use_hw_breakpoint (type, cnt, othertype);
+  }
 
   int region_ok_for_hw_watchpoint (CORE_ADDR addr, int len) override
-  { return aarch64_region_ok_for_watchpoint (addr, len); }
+  {
+    return aarch64_region_ok_for_watchpoint (addr, len);
+  }
 
-  int insert_watchpoint (CORE_ADDR addr, int len,
-			 enum target_hw_bp_type type,
-			 struct expression *cond) override
-  { return aarch64_insert_watchpoint (addr, len, type, cond); }
+  int insert_watchpoint (CORE_ADDR addr, int len, enum target_hw_bp_type type,
+                         struct expression *cond) override
+  {
+    return aarch64_insert_watchpoint (addr, len, type, cond);
+  }
 
-  int remove_watchpoint (CORE_ADDR addr, int len,
-			 enum target_hw_bp_type type,
-			 struct expression *cond) override
-  { return aarch64_remove_watchpoint (addr, len, type, cond); }
+  int remove_watchpoint (CORE_ADDR addr, int len, enum target_hw_bp_type type,
+                         struct expression *cond) override
+  {
+    return aarch64_remove_watchpoint (addr, len, type, cond);
+  }
 
   int insert_hw_breakpoint (struct gdbarch *gdbarch,
-			    struct bp_target_info *bp_tgt) override
-  { return aarch64_insert_hw_breakpoint (gdbarch, bp_tgt); }
+                            struct bp_target_info *bp_tgt) override
+  {
+    return aarch64_insert_hw_breakpoint (gdbarch, bp_tgt);
+  }
 
   int remove_hw_breakpoint (struct gdbarch *gdbarch,
-			    struct bp_target_info *bp_tgt) override
-  { return aarch64_remove_hw_breakpoint (gdbarch, bp_tgt); }
+                            struct bp_target_info *bp_tgt) override
+  {
+    return aarch64_remove_hw_breakpoint (gdbarch, bp_tgt);
+  }
 
   bool watchpoint_addr_within_range (CORE_ADDR addr, CORE_ADDR start,
-				     int length) override
-  { return start <= addr && start + length - 1 >= addr; }
+                                     int length) override
+  {
+    return start <= addr && start + length - 1 >= addr;
+  }
 };
 
 #endif /* AARCH64_NAT_H */

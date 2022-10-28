@@ -44,21 +44,20 @@
    format and GDB's register cache layout.  */
 
 /* From <x86/context.h>.  */
-static int i386nto_gregset_reg_offset[] =
-{
-  7 * 4,			/* %eax */
-  6 * 4,			/* %ecx */
-  5 * 4,			/* %edx */
-  4 * 4,			/* %ebx */
-  11 * 4,			/* %esp */
-  2 * 4,			/* %epb */
-  1 * 4,			/* %esi */
-  0 * 4,			/* %edi */
-  8 * 4,			/* %eip */
-  10 * 4,			/* %eflags */
-  9 * 4,			/* %cs */
-  12 * 4,			/* %ss */
-  -1				/* filler */
+static int i386nto_gregset_reg_offset[] = {
+  7 * 4,  /* %eax */
+  6 * 4,  /* %ecx */
+  5 * 4,  /* %edx */
+  4 * 4,  /* %ebx */
+  11 * 4, /* %esp */
+  2 * 4,  /* %epb */
+  1 * 4,  /* %esi */
+  0 * 4,  /* %edi */
+  8 * 4,  /* %eip */
+  10 * 4, /* %eflags */
+  9 * 4,  /* %cs */
+  12 * 4, /* %ss */
+  -1      /* filler */
 };
 
 /* Given a GDB register number REGNUM, return the offset into
@@ -80,8 +79,8 @@ i386nto_supply_gregset (struct regcache *regcache, char *gpregs)
   i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
 
   gdb_assert (tdep->gregset_reg_offset == i386nto_gregset_reg_offset);
-  i386_gregset.supply_regset (&i386_gregset, regcache, -1,
-			      gpregs, NUM_GPREGS * 4);
+  i386_gregset.supply_regset (&i386_gregset, regcache, -1, gpregs,
+                              NUM_GPREGS * 4);
 }
 
 static void
@@ -119,12 +118,12 @@ i386nto_regset_id (int regno)
   else if (regno < I386_SSE_NUM_REGS)
     return NTO_REG_FLOAT; /* We store xmm registers in fxsave_area.  */
 
-  return -1;			/* Error.  */
+  return -1; /* Error.  */
 }
 
 static int
-i386nto_register_area (struct gdbarch *gdbarch,
-		       int regno, int regset, unsigned *off)
+i386nto_register_area (struct gdbarch *gdbarch, int regno, int regset,
+                       unsigned *off)
 {
   i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
 
@@ -132,11 +131,11 @@ i386nto_register_area (struct gdbarch *gdbarch,
   if (regset == NTO_REG_GENERAL)
     {
       if (regno == -1)
-	return NUM_GPREGS * 4;
+        return NUM_GPREGS * 4;
 
       *off = nto_reg_offset (regno);
       if (*off == -1)
-	return 0;
+        return 0;
       return 4;
     }
   else if (regset == NTO_REG_FLOAT)
@@ -144,96 +143,96 @@ i386nto_register_area (struct gdbarch *gdbarch,
       unsigned off_adjust, regsize, regset_size, regno_base;
       /* The following are flags indicating number in our fxsave_area.  */
       int first_four = (regno >= I387_FCTRL_REGNUM (tdep)
-			&& regno <= I387_FISEG_REGNUM (tdep));
+                        && regno <= I387_FISEG_REGNUM (tdep));
       int second_four = (regno > I387_FISEG_REGNUM (tdep)
-			 && regno <= I387_FOP_REGNUM (tdep));
+                         && regno <= I387_FOP_REGNUM (tdep));
       int st_reg = (regno >= I387_ST0_REGNUM (tdep)
-		    && regno < I387_ST0_REGNUM (tdep) + 8);
+                    && regno < I387_ST0_REGNUM (tdep) + 8);
       int xmm_reg = (regno >= I387_XMM0_REGNUM (tdep)
-		     && regno < I387_MXCSR_REGNUM (tdep));
+                     && regno < I387_MXCSR_REGNUM (tdep));
 
       if (nto_cpuinfo_valid && nto_cpuinfo_flags | X86_CPU_FXSR)
-	{
-	  off_adjust = 32;
-	  regsize = 16;
-	  regset_size = 512;
-	  /* fxsave_area structure.  */
-	  if (first_four)
-	    {
-	      /* fpu_control_word, fpu_status_word, fpu_tag_word, fpu_operand
+        {
+          off_adjust = 32;
+          regsize = 16;
+          regset_size = 512;
+          /* fxsave_area structure.  */
+          if (first_four)
+            {
+              /* fpu_control_word, fpu_status_word, fpu_tag_word, fpu_operand
 		 registers.  */
-	      regsize = 2; /* Two bytes each.  */
-	      off_adjust = 0;
-	      regno_base = I387_FCTRL_REGNUM (tdep);
-	    }
-	  else if (second_four)
-	    {
-	      /* fpu_ip, fpu_cs, fpu_op, fpu_ds registers.  */
-	      regsize = 4;
-	      off_adjust = 8;
-	      regno_base = I387_FISEG_REGNUM (tdep) + 1;
-	    }
-	  else if (st_reg)
-	    {
-	      /* ST registers.  */
-	      regsize = 16;
-	      off_adjust = 32;
-	      regno_base = I387_ST0_REGNUM (tdep);
-	    }
-	  else if (xmm_reg)
-	    {
-	      /* XMM registers.  */
-	      regsize = 16;
-	      off_adjust = 160;
-	      regno_base = I387_XMM0_REGNUM (tdep);
-	    }
-	  else if (regno == I387_MXCSR_REGNUM (tdep))
-	    {
-	      regsize = 4;
-	      off_adjust = 24;
-	      regno_base = I387_MXCSR_REGNUM (tdep);
-	    }
-	  else
-	    {
-	      /* Whole regset.  */
-	      gdb_assert (regno == -1);
-	      off_adjust = 0;
-	      regno_base = 0;
-	      regsize = regset_size;
-	    }
-	}
+              regsize = 2; /* Two bytes each.  */
+              off_adjust = 0;
+              regno_base = I387_FCTRL_REGNUM (tdep);
+            }
+          else if (second_four)
+            {
+              /* fpu_ip, fpu_cs, fpu_op, fpu_ds registers.  */
+              regsize = 4;
+              off_adjust = 8;
+              regno_base = I387_FISEG_REGNUM (tdep) + 1;
+            }
+          else if (st_reg)
+            {
+              /* ST registers.  */
+              regsize = 16;
+              off_adjust = 32;
+              regno_base = I387_ST0_REGNUM (tdep);
+            }
+          else if (xmm_reg)
+            {
+              /* XMM registers.  */
+              regsize = 16;
+              off_adjust = 160;
+              regno_base = I387_XMM0_REGNUM (tdep);
+            }
+          else if (regno == I387_MXCSR_REGNUM (tdep))
+            {
+              regsize = 4;
+              off_adjust = 24;
+              regno_base = I387_MXCSR_REGNUM (tdep);
+            }
+          else
+            {
+              /* Whole regset.  */
+              gdb_assert (regno == -1);
+              off_adjust = 0;
+              regno_base = 0;
+              regsize = regset_size;
+            }
+        }
       else
-	{
-	  regset_size = 108;
-	  /* fsave_area structure.  */
-	  if (first_four || second_four)
-	    {
-	      /* fpu_control_word, ... , fpu_ds registers.  */
-	      regsize = 4;
-	      off_adjust = 0;
-	      regno_base = I387_FCTRL_REGNUM (tdep);
-	    }
-	  else if (st_reg)
-	    {
-	      /* One of ST registers.  */
-	      regsize = 10;
-	      off_adjust = 7 * 4;
-	      regno_base = I387_ST0_REGNUM (tdep);
-	    }
-	  else
-	    {
-	      /* Whole regset.  */
-	      gdb_assert (regno == -1);
-	      off_adjust = 0;
-	      regno_base = 0;
-	      regsize = regset_size;
-	    }
-	}
+        {
+          regset_size = 108;
+          /* fsave_area structure.  */
+          if (first_four || second_four)
+            {
+              /* fpu_control_word, ... , fpu_ds registers.  */
+              regsize = 4;
+              off_adjust = 0;
+              regno_base = I387_FCTRL_REGNUM (tdep);
+            }
+          else if (st_reg)
+            {
+              /* One of ST registers.  */
+              regsize = 10;
+              off_adjust = 7 * 4;
+              regno_base = I387_ST0_REGNUM (tdep);
+            }
+          else
+            {
+              /* Whole regset.  */
+              gdb_assert (regno == -1);
+              off_adjust = 0;
+              regno_base = 0;
+              regsize = regset_size;
+            }
+        }
 
       if (regno != -1)
-	*off = off_adjust + (regno - regno_base) * regsize;
+        *off = off_adjust + (regno - regno_base) * regsize;
       else
-	*off = 0;
+        *off = 0;
       return regsize;
     }
   return -1;
@@ -247,18 +246,18 @@ i386nto_regset_fill (const struct regcache *regcache, int regset, char *data)
       int regno;
 
       for (regno = 0; regno < NUM_GPREGS; regno++)
-	{
-	  int offset = nto_reg_offset (regno);
-	  if (offset != -1)
-	    regcache->raw_collect (regno, data + offset);
-	}
+        {
+          int offset = nto_reg_offset (regno);
+          if (offset != -1)
+            regcache->raw_collect (regno, data + offset);
+        }
     }
   else if (regset == NTO_REG_FLOAT)
     {
       if (nto_cpuinfo_valid && nto_cpuinfo_flags | X86_CPU_FXSR)
-	i387_collect_fxsave (regcache, -1, data);
+        i387_collect_fxsave (regcache, -1, data);
       else
-	i387_collect_fsave (regcache, -1, data);
+        i387_collect_fsave (regcache, -1, data);
     }
   else
     return -1;
@@ -308,8 +307,7 @@ init_i386nto_ops (void)
   nto_supply_regset = i386nto_supply_regset;
   nto_register_area = i386nto_register_area;
   nto_regset_fill = i386nto_regset_fill;
-  nto_fetch_link_map_offsets =
-    svr4_ilp32_fetch_link_map_offsets;
+  nto_fetch_link_map_offsets = svr4_ilp32_fetch_link_map_offsets;
 }
 
 static void
@@ -338,10 +336,10 @@ i386nto_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tdep->sc_num_regs = ARRAY_SIZE (i386nto_gregset_reg_offset);
 
   /* Setjmp()'s return PC saved in EDX (5).  */
-  tdep->jb_pc_offset = 20;	/* 5x32 bit ints in.  */
+  tdep->jb_pc_offset = 20; /* 5x32 bit ints in.  */
 
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, svr4_ilp32_fetch_link_map_offsets);
+  set_solib_svr4_fetch_link_map_offsets (gdbarch,
+                                         svr4_ilp32_fetch_link_map_offsets);
 
   /* Initialize this lazily, to avoid an initialization order
      dependency on solib-svr4.c's _initialize routine.  */
@@ -351,15 +349,13 @@ i386nto_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
       /* Our loader handles solib relocations differently than svr4.  */
       nto_svr4_so_ops.relocate_section_addresses
-	= nto_relocate_section_addresses;
+        = nto_relocate_section_addresses;
 
       /* Supply a nice function to find our solibs.  */
-      nto_svr4_so_ops.find_and_open_solib
-	= nto_find_and_open_solib;
+      nto_svr4_so_ops.find_and_open_solib = nto_find_and_open_solib;
 
       /* Our linker code is in libc.  */
-      nto_svr4_so_ops.in_dynsym_resolve_code
-	= nto_in_dynsym_resolve_code;
+      nto_svr4_so_ops.in_dynsym_resolve_code = nto_in_dynsym_resolve_code;
     }
   set_gdbarch_so_ops (gdbarch, &nto_svr4_so_ops);
 
@@ -373,7 +369,7 @@ _initialize_i386nto_tdep ()
 {
   init_i386nto_ops ();
   gdbarch_register_osabi (bfd_arch_i386, 0, GDB_OSABI_QNXNTO,
-			  i386nto_init_abi);
+                          i386nto_init_abi);
   gdbarch_register_osabi_sniffer (bfd_arch_i386, bfd_target_elf_flavour,
-				  nto_elf_osabi_sniffer);
+                                  nto_elf_osabi_sniffer);
 }

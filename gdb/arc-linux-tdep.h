@@ -28,25 +28,25 @@
 /* Reads registers from the NT_PRSTATUS data array into the regcache.  */
 
 void arc_linux_supply_gregset (const struct regset *regset,
-			       struct regcache *regcache, int regnum,
-			       const void *gregs, size_t size);
+                               struct regcache *regcache, int regnum,
+                               const void *gregs, size_t size);
 
 /* Reads regsiters from the NT_ARC_V2 data array into the regcache.  */
 
 void arc_linux_supply_v2_regset (const struct regset *regset,
-				 struct regcache *regcache, int regnum,
-				 const void *v2_regs, size_t size);
+                                 struct regcache *regcache, int regnum,
+                                 const void *v2_regs, size_t size);
 
 /* Writes registers from the regcache into the NT_PRSTATUS data array.  */
 
 void arc_linux_collect_gregset (const struct regset *regset,
-				const struct regcache *regcache,
-				int regnum, void *gregs, size_t size);
+                                const struct regcache *regcache, int regnum,
+                                void *gregs, size_t size);
 
 /* Writes registers from the regcache into the NT_ARC_V2 data array.  */
 
 void arc_linux_collect_v2_regset (const struct regset *regset,
-				  const struct regcache *regcache,
-				  int regnum, void *v2_regs, size_t size);
+                                  const struct regcache *regcache, int regnum,
+                                  void *v2_regs, size_t size);
 
 #endif /* ARC_LINUX_TDEP_H */
